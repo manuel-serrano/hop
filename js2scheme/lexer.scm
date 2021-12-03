@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:33:09 2013                          */
-;*    Last change :  Tue Jul 13 12:26:43 2021 (serrano)                */
+;*    Last change :  Fri Oct  1 11:39:48 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript lexer                                                 */
@@ -211,7 +211,7 @@
 	   (ignore)))
 
       ;; type comments
-      ((: "/*:" (+ letter) "*/")
+      ((: "/*:" (* #\Space) (+ letter) (* #\Space) "*/")
        (let ((typ (string->symbol (the-substring 3 -2))))
 	  (if (config-get conf :type-annotations #f)
 	      (token 'TYPE typ (-fx (the-length) 5))
@@ -229,6 +229,13 @@
 	  (+ #\*) "/")
        (token 'NEWLINE #\newline 1))
 
+      ;; builtin decorator
+      ((: (? (: "//" (or #\space #\tab))) "@record" (+ blank) "class")
+       (if (config-get conf :record-decorator #f)
+	   (token 'record 'record (the-length))
+	   (token 'class 'class (the-length))))
+
+      ;; numbers
       (#\0
        (token 'NUMBER 0 (the-length)))
       ((+ #\0)
@@ -359,6 +366,9 @@
 	      (token symbol symbol (the-length)))
 	     (else
 	      (token 'ID symbol (the-length))))))
+      ((: #\# id_start (* id_part))
+       (let ((symbol (the-symbol)))
+	  (token 'SHARPID symbol (the-length))))
 
       ((: id_start_u (* id_part_u))
        (let ((str (the-string)))

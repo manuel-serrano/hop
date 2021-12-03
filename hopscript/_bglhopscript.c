@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Wed Apr 29 17:41:08 2020 (serrano)                */
+/*    Last change :  Sun Nov 14 17:40:21 2021 (serrano)                */
 /*    Copyright   :  2016-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -18,7 +18,7 @@
 /*---------------------------------------------------------------------*/
 /*    Bigloo backward compatibility                                    */
 /*---------------------------------------------------------------------*/
-#if( defined( BGL_NAN_TAGGING ) )
+#if (defined(BGL_NAN_TAGGING))
 #  define vector_t vector
 #  define FILLER_COMMA 
 #else
@@ -35,43 +35,52 @@ extern obj_t BGl_JsFunctionz00zz__hopscript_typesz00;
 extern obj_t BGl_JsMethodz00zz__hopscript_typesz00;
 extern obj_t BGl_JsProcedurez00zz__hopscript_typesz00;
 extern obj_t BGl_JsStringLiteralASCIIz00zz__hopscript_typesz00;
+extern obj_t BGl_JsGeneratorz00zz__hopscript_typesz00;
+extern obj_t BGl_JsYieldz00zz__hopscript_typesz00;
 
-extern obj_t string_append( obj_t, obj_t );
+extern obj_t string_append(obj_t, obj_t);
 
 #define JSOBJECT_SIZE \
-   sizeof( struct BgL_jsobjectz00_bgl )
-#define JSOBJECT_CLASS_INDEX \
-   BGL_CLASS_INDEX( BGl_JsObjectz00zz__hopscript_typesz00 )
+   sizeof(struct BgL_jsobjectz00_bgl)
+#define JSOBJECT_CLASS_NUM \
+   BGL_CLASS_NUM(BGl_JsObjectz00zz__hopscript_typesz00)
+#define JSYIELD_CLASS_NUM \
+   BGL_CLASS_NUM(BGl_JsYieldz00zz__hopscript_typesz00)
 
 #define JSPROXY_SIZE \
-   sizeof( struct BgL_jsproxyz00_bgl )
-#define JSPROXY_CLASS_INDEX \
-   BGL_CLASS_INDEX( BGl_JsProxyz00zz__hopscript_typesz00 )
+   sizeof(struct BgL_jsproxyz00_bgl)
+#define JSPROXY_CLASS_NUM \
+   BGL_CLASS_NUM(BGl_JsProxyz00zz__hopscript_typesz00)
 
 #define JSFUNCTION_SIZE \
-   sizeof( struct BgL_jsfunctionz00_bgl )
-#define JSFUNCTION_CLASS_INDEX \
-   BGL_CLASS_INDEX( BGl_JsFunctionz00zz__hopscript_typesz00 )
+   sizeof(struct BgL_jsfunctionz00_bgl)
+#define JSFUNCTION_CLASS_NUM \
+   BGL_CLASS_NUM(BGl_JsFunctionz00zz__hopscript_typesz00)
 
 #define JSMETHOD_SIZE \
-   sizeof( struct BgL_jsmethodz00_bgl )
-#define JSMETHOD_CLASS_INDEX \
-   BGL_CLASS_INDEX( BGl_JsMethodz00zz__hopscript_typesz00 )
+   sizeof(struct BgL_jsmethodz00_bgl)
+#define JSMETHOD_CLASS_NUM \
+   BGL_CLASS_NUM(BGl_JsMethodz00zz__hopscript_typesz00)
 
 #define JSPROCEDURE_SIZE \
-   sizeof( struct BgL_jsprocedurez00_bgl )
-#define JSPROCEDURE_CLASS_INDEX \
-   BGL_CLASS_INDEX( BGl_JsProcedurez00zz__hopscript_typesz00 )
+   sizeof(struct BgL_jsprocedurez00_bgl)
+#define JSPROCEDURE_CLASS_NUM \
+   BGL_CLASS_NUM(BGl_JsProcedurez00zz__hopscript_typesz00)
 
 #define JSARRAY_SIZE \
-   sizeof( struct BgL_jsarrayz00_bgl )
-#define JSARRAY_CLASS_INDEX \
-   BGL_CLASS_INDEX( BGl_JsArrayz00zz__hopscript_typesz00 )
+   sizeof(struct BgL_jsarrayz00_bgl)
+#define JSARRAY_CLASS_NUM \
+   BGL_CLASS_NUM(BGl_JsArrayz00zz__hopscript_typesz00)
 
 #define JSSTRINGLITERALASCII_SIZE \
-   sizeof( struct BgL_jsstringliteralasciiz00_bgl )
-#define JSSTRINGLITERALASCII_CLASS_INDEX \
-   BGL_CLASS_INDEX( BGl_JsStringLiteralASCIIz00zz__hopscript_typesz00 )
+   sizeof(struct BgL_jsstringliteralasciiz00_bgl)
+#define JSSTRINGLITERALASCII_CLASS_NUM \
+   BGL_CLASS_NUM(BGl_JsStringLiteralASCIIz00zz__hopscript_typesz00)
+
+#define JSGENERATOR_SIZE \
+   sizeof(struct BgL_jsgeneratorz00_bgl)
+#define JSGENERATOR_CLASS_NUM \
+   BGL_CLASS_NUM(BGl_JsGeneratorz00zz__hopscript_typesz00)
 
 extern obj_t bgl_js_profile_allocs;
 obj_t bgl_profile_pcache_tables = BNIL;
@@ -80,6 +89,7 @@ extern int GC_pthread_create();
 static uint32_t jsobject_mode;
 
 static obj_t jsproxy_constrmap, jsproxy_elements;
+static uint32_t jsproxy_mode;
 
 static obj_t jsfunction_elements, jsfunction_alloc;
 static BgL_jsconstructmapz00_bglt jsfunction_constrmap, jsfunction_cmap;
@@ -98,6 +108,9 @@ static uint32_t jsstringliteralascii_normalize_threshold;
 
 static obj_t empty_vector;
 
+// yield objects have two fields, value and done
+#define JSYIELD_OBJECT_CONSTRSIZE 2
+
 /*---------------------------------------------------------------------*/
 /*    type alias                                                       */
 /*---------------------------------------------------------------------*/
@@ -110,7 +123,7 @@ typedef struct BgL_jspropertycachez00_bgl pcache_t;
 #define HOP_ALLOC_TLS 2
 #define HOP_ALLOC_SPINLOCK 3
 
-#if( !defined( HOP_ALLOC_POLICY ) )
+#if (!defined(HOP_ALLOC_POLICY))
 #  if BGL_HAS_THREAD_LOCALSTORAGE == 1
 #    define HOP_ALLOC_POLICY HOP_ALLOC_TLS
 #  elif BGL_HAVE_SPINLOCK
@@ -136,42 +149,42 @@ typedef struct BgL_jspropertycachez00_bgl pcache_t;
 #undef HOP_ALLOC_JSMETHOD_POLICY
 #define HOP_ALLOC_JSMETHOD_POLICY HOP_ALLOC_CLASSIC
 
-extern obj_t bgl_make_jsobject( int constrsize, obj_t constrmap, obj_t __proto__, uint32_t mode );
+extern obj_t bgl_make_jsobject(int constrsize, obj_t constrmap, obj_t __proto__, uint32_t mode);
 
 #if HOP_ALLOC_JSOBJECT_POLICY != HOP_ALLOC_CLASSIC
-static obj_t bgl_make_jsobject_sans( int constrsize, obj_t constrmap,
-				     obj_t __proto__, uint32_t mode );
+static obj_t bgl_make_jsobject_sans(int constrsize, obj_t constrmap,
+				     obj_t __proto__, uint32_t mode);
 #endif
 
 #if HOP_ALLOC_JSPROXY_POLICY != HOP_ALLOC_CLASSIC
-static obj_t bgl_make_jsproxy_sans( obj_t target, obj_t handler,
+static obj_t bgl_make_jsproxy_sans(obj_t target, obj_t handler,
 				    obj_t gcache, obj_t scache, obj_t acache,
-				    uint32_t mode );
+				    uint32_t mode);
 #endif
 
 #if HOP_ALLOC_JSFUNCTION_POLICY != HOP_ALLOC_CLASSIC
-static obj_t bgl_make_jsfunction_sans( obj_t procedure,
+static obj_t bgl_make_jsfunction_sans(obj_t procedure,
 				       long arity,
 				       long constrsize,
-				       obj_t __proto__, obj_t info );
+				       obj_t __proto__, obj_t info);
 #endif
 
 #if HOP_ALLOC_JSMETHOD_POLICY != HOP_ALLOC_CLASSIC
-static obj_t bgl_make_jsmethod_sans( obj_t procedure, obj_t method,
+static obj_t bgl_make_jsmethod_sans(obj_t procedure, obj_t method,
 				       long arity,
 				       long constrsize,
-				       obj_t __proto__, obj_t info );
+				       obj_t __proto__, obj_t info);
 #endif
 
 #if HOP_ALLOC_JSPROCEDURE_POLICY != HOP_ALLOC_CLASSIC
-static obj_t bgl_make_jsprocedure_sans( obj_t procedure, long arity, obj_t __proto__ );
+static obj_t bgl_make_jsprocedure_sans(obj_t procedure, long arity, obj_t __proto__);
 #endif
 
 #if HOP_ALLOC_JSSTRINGLITERALASCII_POLICY != HOP_ALLOC_CLASSIC
-static obj_t bgl_make_jsstringliteralascii_sans( uint32_t len, obj_t left, obj_t right );
+static obj_t bgl_make_jsstringliteralascii_sans(uint32_t len, obj_t left, obj_t right);
 #endif
 
-#define POOLSZ( sz )				\
+#define POOLSZ(sz)				\
    ((sz == 0) ? 0 :				\
     ((sz == 1) ? 512 :				\
      ((sz == 2) ? 512 :				\
@@ -182,12 +195,12 @@ static obj_t bgl_make_jsstringliteralascii_sans( uint32_t len, obj_t left, obj_t
 	  ((sz == 7) ? 64 :			\
 	   ((sz == 8) ? 64 :			\
 	    32)))))))))
-#define JSOBJECT_POOLSZ( z ) POOLSZ( z )
-#define JSPROXY_POOLSZ POOLSZ( 3 )
-#define JSFUNCTION_POOLSZ POOLSZ( 4 )
-#define JSMETHOD_POOLSZ POOLSZ( 4 )
-#define JSPROCEDURE_POOLSZ POOLSZ( 4 )
-#define JSSTRINGLITERALASCII_POOLSZ POOLSZ( 3 )
+#define JSOBJECT_POOLSZ(z) POOLSZ(z)
+#define JSPROXY_POOLSZ POOLSZ(3)
+#define JSFUNCTION_POOLSZ POOLSZ(4)
+#define JSMETHOD_POOLSZ POOLSZ(4)
+#define JSPROCEDURE_POOLSZ POOLSZ(4)
+#define JSSTRINGLITERALASCII_POOLSZ POOLSZ(3)
 #define WORK_NUMBER 1
 
 /*---------------------------------------------------------------------*/
@@ -196,9 +209,9 @@ static obj_t bgl_make_jsstringliteralascii_sans( uint32_t len, obj_t left, obj_t
 #define ALLOC_STATS 0
 
 #if ALLOC_STATS
-#  define ALLOC_STAT( x ) (x)
+#  define ALLOC_STAT(x) (x)
 #else
-#  define ALLOC_STAT( x )
+#  define ALLOC_STAT(x)
 #endif
 
 /*---------------------------------------------------------------------*/
@@ -212,13 +225,13 @@ static pthread_spinlock_t lockmethod;
 static pthread_spinlock_t lockprocedure;
 static pthread_spinlock_t lockstringliteralascii;
 
-#  define alloc_spin_init( x, attr ) pthread_spin_init( x, attr )
-#  define alloc_spin_lock( x ) pthread_spin_lock( x )
-#  define alloc_spin_unlock( x ) pthread_spin_unlock( x )
+#  define alloc_spin_init(x, attr) pthread_spin_init(x, attr)
+#  define alloc_spin_lock(x) pthread_spin_lock(x)
+#  define alloc_spin_unlock(x) pthread_spin_unlock(x)
 #else
-#  define alloc_spin_init( x, attr ) 
-#  define alloc_spin_lock( x ) 
-#  define alloc_spin_unlock( x ) 
+#  define alloc_spin_init(x, attr) 
+#  define alloc_spin_lock(x) 
+#  define alloc_spin_unlock(x) 
 #endif
 
 /*---------------------------------------------------------------------*/
@@ -239,7 +252,7 @@ typedef union apayload {
 } apayload_t;
 
 typedef struct apool {
-   void (*fill_buffer)( struct apool *pool, void *arg );
+   void (*fill_buffer)(struct apool *pool, void *arg);
    obj_t *buffer;
    const uint32_t size;
    uint32_t idx;
@@ -250,12 +263,12 @@ typedef struct apool {
 /*---------------------------------------------------------------------*/
 /*    buffer fillers ...                                               */
 /*---------------------------------------------------------------------*/
-static void jsobject_fill_buffer( apool_t *pool, void *arg );
-static void jsproxy_fill_buffer( apool_t *pool, void *arg );
-static void jsfunction_fill_buffer( apool_t *pool, void *arg );
-static void jsmethod_fill_buffer( apool_t *pool, void *arg );
-static void jsprocedure_fill_buffer( apool_t *pool, void *arg );
-static void jsstringliteralascii_fill_buffer( apool_t *pool, void *arg );
+static void jsobject_fill_buffer(apool_t *pool, void *arg);
+static void jsproxy_fill_buffer(apool_t *pool, void *arg);
+static void jsfunction_fill_buffer(apool_t *pool, void *arg);
+static void jsmethod_fill_buffer(apool_t *pool, void *arg);
+static void jsprocedure_fill_buffer(apool_t *pool, void *arg);
+static void jsstringliteralascii_fill_buffer(apool_t *pool, void *arg);
 
 /*---------------------------------------------------------------------*/
 /*    alloc pools                                                      */
@@ -268,16 +281,16 @@ static apool_t **pool_queue = 0;;
 static pthread_mutex_t alloc_pool_mutex;
 static pthread_cond_t alloc_pool_cond;
 
-#define APOOL_JSOBJECT_INIT( pool_num, sz ) {\
+#define APOOL_JSOBJECT_INIT(pool_num, sz) {\
    .fill_buffer = &jsobject_fill_buffer, \
    .buffer = 0L, \
-   .idx = JSOBJECT_POOLSZ( sz ), \
+   .idx = JSOBJECT_POOLSZ(sz), \
    .pool_number = pool_num, \
-   .size = JSOBJECT_POOLSZ( sz ), \
+   .size = JSOBJECT_POOLSZ(sz), \
    .payload = { .objsize = sz } \
 };
 
-#define APOOL_JSPROXY_INIT( pool_num ) { \
+#define APOOL_JSPROXY_INIT(pool_num) { \
    .fill_buffer = &jsproxy_fill_buffer,	\
    .buffer = 0L, \
    .idx = JSPROXY_POOLSZ, \
@@ -286,7 +299,7 @@ static pthread_cond_t alloc_pool_cond;
    .payload = { .dummy = 0 } \
 };
 
-#define APOOL_JSFUNCTION_INIT( pool_num ) { \
+#define APOOL_JSFUNCTION_INIT(pool_num) { \
    .fill_buffer = &jsfunction_fill_buffer, \
    .buffer = 0L, \
    .idx = JSFUNCTION_POOLSZ, \
@@ -295,7 +308,7 @@ static pthread_cond_t alloc_pool_cond;
    .payload = { .dummy = 0 } \
 };
 
-#define APOOL_JSMETHOD_INIT( pool_num ) { \
+#define APOOL_JSMETHOD_INIT(pool_num) { \
    .fill_buffer = &jsmethod_fill_buffer, \
    .buffer = 0L, \
    .idx = JSMETHOD_POOLSZ, \
@@ -304,7 +317,7 @@ static pthread_cond_t alloc_pool_cond;
    .payload = { .dummy = 0 } \
 };
 
-#define APOOL_JSPROCEDURE_INIT( pool_num ) { \
+#define APOOL_JSPROCEDURE_INIT(pool_num) { \
    .fill_buffer = &jsprocedure_fill_buffer, \
    .buffer = 0L, \
    .idx = JSPROCEDURE_POOLSZ, \
@@ -313,7 +326,7 @@ static pthread_cond_t alloc_pool_cond;
    .payload = { .dummy = 0 } \
 };
 
-#define APOOL_JSSTRINGLITERALASCII_INIT( pool_num ) {	\
+#define APOOL_JSSTRINGLITERALASCII_INIT(pool_num) {	\
    .fill_buffer = &jsstringliteralascii_fill_buffer, \
    .buffer = 0L, \
    .idx = JSSTRINGLITERALASCII_POOLSZ, \
@@ -322,44 +335,44 @@ static pthread_cond_t alloc_pool_cond;
    .payload = { .dummy = 0 } \
 };
 
-static HOP_ALLOC_THREAD_DECL apool_t pool1 = APOOL_JSOBJECT_INIT( 0, 1 );
-static HOP_ALLOC_THREAD_DECL apool_t npool1 = APOOL_JSOBJECT_INIT( 0, 1 );
+static HOP_ALLOC_THREAD_DECL apool_t pool1 = APOOL_JSOBJECT_INIT(0, 1);
+static HOP_ALLOC_THREAD_DECL apool_t npool1 = APOOL_JSOBJECT_INIT(0, 1);
 
-static HOP_ALLOC_THREAD_DECL apool_t pool2 = APOOL_JSOBJECT_INIT( 1, 2 );
-static HOP_ALLOC_THREAD_DECL apool_t npool2 = APOOL_JSOBJECT_INIT( 1, 2 );
+static HOP_ALLOC_THREAD_DECL apool_t pool2 = APOOL_JSOBJECT_INIT(1, 2);
+static HOP_ALLOC_THREAD_DECL apool_t npool2 = APOOL_JSOBJECT_INIT(1, 2);
 
-static HOP_ALLOC_THREAD_DECL apool_t pool3 = APOOL_JSOBJECT_INIT( 2, 3 );
-static HOP_ALLOC_THREAD_DECL apool_t npool3 = APOOL_JSOBJECT_INIT( 2, 3 );
+static HOP_ALLOC_THREAD_DECL apool_t pool3 = APOOL_JSOBJECT_INIT(2, 3);
+static HOP_ALLOC_THREAD_DECL apool_t npool3 = APOOL_JSOBJECT_INIT(2, 3);
 
-static HOP_ALLOC_THREAD_DECL apool_t pool4 = APOOL_JSOBJECT_INIT( 3, 4 );
-static HOP_ALLOC_THREAD_DECL apool_t npool4 = APOOL_JSOBJECT_INIT( 3, 4 );
+static HOP_ALLOC_THREAD_DECL apool_t pool4 = APOOL_JSOBJECT_INIT(3, 4);
+static HOP_ALLOC_THREAD_DECL apool_t npool4 = APOOL_JSOBJECT_INIT(3, 4);
 
-static HOP_ALLOC_THREAD_DECL apool_t pool5 = APOOL_JSOBJECT_INIT( 4, 5 );
-static HOP_ALLOC_THREAD_DECL apool_t npool5 = APOOL_JSOBJECT_INIT( 4, 5 );
+static HOP_ALLOC_THREAD_DECL apool_t pool5 = APOOL_JSOBJECT_INIT(4, 5);
+static HOP_ALLOC_THREAD_DECL apool_t npool5 = APOOL_JSOBJECT_INIT(4, 5);
 
-static HOP_ALLOC_THREAD_DECL apool_t pool6 = APOOL_JSOBJECT_INIT( 5, 6 );
-static HOP_ALLOC_THREAD_DECL apool_t npool6 = APOOL_JSOBJECT_INIT( 5, 6 );
+static HOP_ALLOC_THREAD_DECL apool_t pool6 = APOOL_JSOBJECT_INIT(5, 6);
+static HOP_ALLOC_THREAD_DECL apool_t npool6 = APOOL_JSOBJECT_INIT(5, 6);
 
-static HOP_ALLOC_THREAD_DECL apool_t pool7 = APOOL_JSOBJECT_INIT( 6, 7 );
-static HOP_ALLOC_THREAD_DECL apool_t npool7 = APOOL_JSOBJECT_INIT( 6, 7 );
+static HOP_ALLOC_THREAD_DECL apool_t pool7 = APOOL_JSOBJECT_INIT(6, 7);
+static HOP_ALLOC_THREAD_DECL apool_t npool7 = APOOL_JSOBJECT_INIT(6, 7);
 
-static HOP_ALLOC_THREAD_DECL apool_t pool8 = APOOL_JSOBJECT_INIT( 7, 8 );
-static HOP_ALLOC_THREAD_DECL apool_t npool8 = APOOL_JSOBJECT_INIT( 7, 8 );
+static HOP_ALLOC_THREAD_DECL apool_t pool8 = APOOL_JSOBJECT_INIT(7, 8);
+static HOP_ALLOC_THREAD_DECL apool_t npool8 = APOOL_JSOBJECT_INIT(7, 8);
 
-static HOP_ALLOC_THREAD_DECL apool_t poolproxy = APOOL_JSPROXY_INIT( 8 );
-static HOP_ALLOC_THREAD_DECL apool_t npoolproxy = APOOL_JSPROXY_INIT( 8 );
+static HOP_ALLOC_THREAD_DECL apool_t poolproxy = APOOL_JSPROXY_INIT(8);
+static HOP_ALLOC_THREAD_DECL apool_t npoolproxy = APOOL_JSPROXY_INIT(8);
 
-static HOP_ALLOC_THREAD_DECL apool_t poolfunction = APOOL_JSFUNCTION_INIT( 9 );
-static HOP_ALLOC_THREAD_DECL apool_t npoolfunction = APOOL_JSFUNCTION_INIT( 9 );
+static HOP_ALLOC_THREAD_DECL apool_t poolfunction = APOOL_JSFUNCTION_INIT(9);
+static HOP_ALLOC_THREAD_DECL apool_t npoolfunction = APOOL_JSFUNCTION_INIT(9);
 
-static HOP_ALLOC_THREAD_DECL apool_t poolmethod = APOOL_JSMETHOD_INIT( 10 );
-static HOP_ALLOC_THREAD_DECL apool_t npoolmethod = APOOL_JSMETHOD_INIT( 10 );
+static HOP_ALLOC_THREAD_DECL apool_t poolmethod = APOOL_JSMETHOD_INIT(10);
+static HOP_ALLOC_THREAD_DECL apool_t npoolmethod = APOOL_JSMETHOD_INIT(10);
 
-static HOP_ALLOC_THREAD_DECL apool_t poolprocedure = APOOL_JSPROCEDURE_INIT( 11 );
-static HOP_ALLOC_THREAD_DECL apool_t npoolprocedure = APOOL_JSPROCEDURE_INIT( 11 );
+static HOP_ALLOC_THREAD_DECL apool_t poolprocedure = APOOL_JSPROCEDURE_INIT(11);
+static HOP_ALLOC_THREAD_DECL apool_t npoolprocedure = APOOL_JSPROCEDURE_INIT(11);
 
-static HOP_ALLOC_THREAD_DECL apool_t poolstringliteralascii = APOOL_JSSTRINGLITERALASCII_INIT( 12 );
-static HOP_ALLOC_THREAD_DECL apool_t npoolstringliteralascii = APOOL_JSSTRINGLITERALASCII_INIT( 12 );
+static HOP_ALLOC_THREAD_DECL apool_t poolstringliteralascii = APOOL_JSSTRINGLITERALASCII_INIT(12);
+static HOP_ALLOC_THREAD_DECL apool_t npoolstringliteralascii = APOOL_JSSTRINGLITERALASCII_INIT(12);
 
 long inl1 = 0, snd1 = 0, slow1 = 1;
 long inl2 = 0, snd2 = 0, slow2 = 1;
@@ -382,27 +395,27 @@ long inlstringliteralascii = 0, sndstringliteralascii = 0, slowstringliteralasci
 /*---------------------------------------------------------------------*/
 #if ALLOC_STATS
 static void
-alloc_stats_dump( int _ ) {
-   fprintf( stderr, "jsobject...\n" );
-   fprintf( stderr, "  1 (%4d): slow=%d outbuf=%d inl=%d %d%%\n", pool1.size, slow1, snd1, inl1, (inl1 * 100) / (inl1 + slow1) );
-   fprintf( stderr, "  2 (%4d): slow=%d outbuf=%d inl=%d %d%%\n", pool2.size, slow2, snd2, inl2, (inl2 * 100) / (inl2 + slow2) );
-   fprintf( stderr, "  3 (%4d): slow=%d outbuf=%d inl=%d %d%%\n", pool3.size, slow3, snd3, inl3, (inl3 * 100) / (inl3 + slow3) );
-   fprintf( stderr, "  4 (%4d): slow=%d outbuf=%d inl=%d %d%%\n", pool4.size, slow4, snd4, inl4, (inl4 * 100) / (inl4 + slow4) );
-   fprintf( stderr, "  5 (%4d): slow=%d outbuf=%d inl=%d %d%%\n", pool5.size, slow5, snd5, inl5, (inl5 * 100) / (inl5 + slow5) );
-   fprintf( stderr, "  6 (%4d): slow=%d outbuf=%d inl=%d %d%%\n", pool6.size, slow6, snd6, inl6, (inl6 * 100) / (inl6 + slow6) );
-   fprintf( stderr, "  7 (%4d): slow=%d outbuf=%d inl=%d %d%%\n", pool7.size, slow7, snd7, inl7, (inl7 * 100) / (inl7 + slow7) );
-   fprintf( stderr, "  8 (%4d): slow=%d outbuf=%d inl=%d %d%%\n", pool8.size, slow8, snd8, inl8, (inl8 * 100) / (inl8 + slow8) );
-   fprintf( stderr, "jsproxy...\n" );
-   fprintf( stderr, "    (%4d): slow=%d outbuf=%d inl=%d %d%%\n", poolproxy.size, slowproxy, sndproxy, inlproxy, (inlproxy * 100) / (inlproxy + slowproxy) );
-   fprintf( stderr, "jsfunction...\n" );
-   fprintf( stderr, "    (%4d): slow=%d outbuf=%d inl=%d %d%%\n", poolfunction.size, slowfunction, sndfunction, inlfunction, (inlfunction * 100) / (inlfunction + slowfunction) );
-   fprintf( stderr, "jsprocedure...\n" );
-   fprintf( stderr, "    (%4d): slow=%d outbuf=%d inl=%d %d%%\n", poolprocedure.size, slowprocedure, sndprocedure, inlprocedure, (inlprocedure * 100) / (inlprocedure + slowprocedure) );
-   fprintf( stderr, "jsmethod...\n" );
-   fprintf( stderr, "    (%4d): slow=%d outbuf=%d inl=%d %d%%\n", poolmethod.size, slowmethod, sndmethod, inlmethod, (inlmethod * 100) / (inlmethod + slowmethod) );
+alloc_stats_dump(int _) {
+   fprintf(stderr, "jsobject...\n");
+   fprintf(stderr, "  1 (%4d): slow=%d outbuf=%d inl=%d %d%%\n", pool1.size, slow1, snd1, inl1, (inl1 * 100) / (inl1 + slow1));
+   fprintf(stderr, "  2 (%4d): slow=%d outbuf=%d inl=%d %d%%\n", pool2.size, slow2, snd2, inl2, (inl2 * 100) / (inl2 + slow2));
+   fprintf(stderr, "  3 (%4d): slow=%d outbuf=%d inl=%d %d%%\n", pool3.size, slow3, snd3, inl3, (inl3 * 100) / (inl3 + slow3));
+   fprintf(stderr, "  4 (%4d): slow=%d outbuf=%d inl=%d %d%%\n", pool4.size, slow4, snd4, inl4, (inl4 * 100) / (inl4 + slow4));
+   fprintf(stderr, "  5 (%4d): slow=%d outbuf=%d inl=%d %d%%\n", pool5.size, slow5, snd5, inl5, (inl5 * 100) / (inl5 + slow5));
+   fprintf(stderr, "  6 (%4d): slow=%d outbuf=%d inl=%d %d%%\n", pool6.size, slow6, snd6, inl6, (inl6 * 100) / (inl6 + slow6));
+   fprintf(stderr, "  7 (%4d): slow=%d outbuf=%d inl=%d %d%%\n", pool7.size, slow7, snd7, inl7, (inl7 * 100) / (inl7 + slow7));
+   fprintf(stderr, "  8 (%4d): slow=%d outbuf=%d inl=%d %d%%\n", pool8.size, slow8, snd8, inl8, (inl8 * 100) / (inl8 + slow8));
+   fprintf(stderr, "jsproxy...\n");
+   fprintf(stderr, "    (%4d): slow=%d outbuf=%d inl=%d %d%%\n", poolproxy.size, slowproxy, sndproxy, inlproxy, (inlproxy * 100) / (inlproxy + slowproxy));
+   fprintf(stderr, "jsfunction...\n");
+   fprintf(stderr, "    (%4d): slow=%d outbuf=%d inl=%d %d%%\n", poolfunction.size, slowfunction, sndfunction, inlfunction, (inlfunction * 100) / (inlfunction + slowfunction));
+   fprintf(stderr, "jsprocedure...\n");
+   fprintf(stderr, "    (%4d): slow=%d outbuf=%d inl=%d %d%%\n", poolprocedure.size, slowprocedure, sndprocedure, inlprocedure, (inlprocedure * 100) / (inlprocedure + slowprocedure));
+   fprintf(stderr, "jsmethod...\n");
+   fprintf(stderr, "    (%4d): slow=%d outbuf=%d inl=%d %d%%\n", poolmethod.size, slowmethod, sndmethod, inlmethod, (inlmethod * 100) / (inlmethod + slowmethod));
 #if HOP_ALLOC_JSSTRINGLITERALASCII_POLICY != HOP_ALLOC_CLASSIC
-   fprintf( stderr, "jsstring...\n" );
-   fprintf( stderr, "    (%4d): slow=%d outbuf=%d inl=%d %d%%\n", poolstringliteralascii.size, slowstringliteralascii, sndstringliteralascii, inlstringliteralascii, (inlstringliteralascii * 100) / (inlstringliteralascii + slowstringliteralascii) );
+   fprintf(stderr, "jsstring...\n");
+   fprintf(stderr, "    (%4d): slow=%d outbuf=%d inl=%d %d%%\n", poolstringliteralascii.size, slowstringliteralascii, sndstringliteralascii, inlstringliteralascii, (inlstringliteralascii * 100) / (inlstringliteralascii + slowstringliteralascii));
 #endif   
 }
 #endif
@@ -411,11 +424,11 @@ alloc_stats_dump( int _ ) {
 /*    static void                                                      */
 /*    pool_queue_add ...                                               */
 /*---------------------------------------------------------------------*/
-static void pool_queue_add( apool_t *pool ) {
-   pthread_mutex_lock( &alloc_pool_mutex );
-   pool_queue[ pool_queue_idx++ ] = pool;
-   pthread_cond_signal( &alloc_pool_cond );
-   pthread_mutex_unlock( &alloc_pool_mutex );
+static void pool_queue_add(apool_t *pool) {
+   pthread_mutex_lock(&alloc_pool_mutex);
+   pool_queue[pool_queue_idx++] = pool;
+   pthread_cond_signal(&alloc_pool_cond);
+   pthread_mutex_unlock(&alloc_pool_mutex);
 }
 
 /*---------------------------------------------------------------------*/
@@ -424,22 +437,22 @@ static void pool_queue_add( apool_t *pool ) {
 /*---------------------------------------------------------------------*/
 #if HOP_ALLOC_POLICY != HOP_ALLOC_CLASSIC
 static void *
-thread_alloc_worker( void *arg ) {
+thread_alloc_worker(void *arg) {
    apool_t *pool;
 
-   while( 1 ) {
-      pthread_mutex_lock( &alloc_pool_mutex );
-      while( pool_queue_idx == 0 ) {
-	 pthread_cond_wait( &alloc_pool_cond, &alloc_pool_mutex );
+   while (1) {
+      pthread_mutex_lock(&alloc_pool_mutex);
+      while (pool_queue_idx == 0) {
+	 pthread_cond_wait(&alloc_pool_cond, &alloc_pool_mutex);
       }
       
-      if( pool_queue_idx < 0 ) {
-	 fprintf( stderr, "BAD INDEX %d\n", pool_queue_idx );
+      if (pool_queue_idx < 0) {
+	 fprintf(stderr, "BAD INDEX %d\n", pool_queue_idx);
       }
-      pool = pool_queue[ --pool_queue_idx ];
-      pthread_mutex_unlock( &alloc_pool_mutex );
+      pool = pool_queue[--pool_queue_idx];
+      pthread_mutex_unlock(&alloc_pool_mutex);
 
-      pool->fill_buffer( pool, arg );
+      pool->fill_buffer(pool, arg);
       pool->idx = 0;
    }
 }
@@ -450,15 +463,15 @@ thread_alloc_worker( void *arg ) {
 /*    jsobject_buffer_fill ...                                         */
 /*---------------------------------------------------------------------*/
 static void
-jsobject_fill_buffer( apool_t *pool, void *arg ) {
+jsobject_fill_buffer(apool_t *pool, void *arg) {
 #if HOP_ALLOC_JSOBJECT_POLICY != HOP_ALLOC_CLASSIC
    int i;
    obj_t *buffer = pool->buffer;
    const uint32_t size = pool->size;
    const uint32_t objsize = pool->payload.objsize;
 
-   for( i = 0; i < size; i++ ) {
-      buffer[ i ] = bgl_make_jsobject_sans( objsize, 0L, 0L, (uint32_t)(long)arg );
+   for (i = 0; i < size; i++) {
+      buffer[i] = bgl_make_jsobject_sans(objsize, 0L, 0L, (uint32_t)(long)arg);
    }
 #endif   
 }
@@ -468,15 +481,15 @@ jsobject_fill_buffer( apool_t *pool, void *arg ) {
 /*    jsproxy_buffer_fill ...                                          */
 /*---------------------------------------------------------------------*/
 static void
-jsproxy_fill_buffer( apool_t *pool, void *arg ) {
+jsproxy_fill_buffer(apool_t *pool, void *arg) {
 #if HOP_ALLOC_JSPROXY_POLICY != HOP_ALLOC_CLASSIC
    int i;
    obj_t *buffer = pool->buffer;
    const uint32_t size = pool->size;
 
-   for( i = 0; i < size; i++ ) {
-      buffer[ i ] =
-	 bgl_make_jsproxy_sans( 0L, 0L, 0L, 0L, 0L, (uint32_t)(long)arg );
+   for (i = 0; i < size; i++) {
+      buffer[i] =
+	 bgl_make_jsproxy_sans(0L, 0L, 0L, 0L, 0L, jsproxy_mode);
    }
 #endif   
 }
@@ -486,15 +499,15 @@ jsproxy_fill_buffer( apool_t *pool, void *arg ) {
 /*    jsfunction_buffer_fill ...                                       */
 /*---------------------------------------------------------------------*/
 static void
-jsfunction_fill_buffer( apool_t *pool, void *arg ) {
+jsfunction_fill_buffer(apool_t *pool, void *arg) {
 #if HOP_ALLOC_JSFUNCTION_POLICY != HOP_ALLOC_CLASSIC
    int i;
    obj_t *buffer = pool->buffer;
    const uint32_t size = pool->size;
 
-   for( i = 0; i < size; i++ ) {
-      buffer[ i ] =
-	 bgl_make_jsfunction_sans( 0L, 0L, 0L, 0L, 0L );
+   for (i = 0; i < size; i++) {
+      buffer[i] =
+	 bgl_make_jsfunction_sans(0L, 0L, 0L, 0L, 0L);
    }
 #endif   
 }
@@ -504,14 +517,14 @@ jsfunction_fill_buffer( apool_t *pool, void *arg ) {
 /*    jsmethod_buffer_fill ...                                         */
 /*---------------------------------------------------------------------*/
 static void
-jsmethod_fill_buffer( apool_t *pool, void *arg ) {
+jsmethod_fill_buffer(apool_t *pool, void *arg) {
 #if HOP_ALLOC_JSMETHOD_POLICY != HOP_ALLOC_CLASSIC
    int i;
    obj_t *buffer = pool->buffer;
    const uint32_t size = pool->size;
 
-   for( i = 0; i < size; i++ ) {
-      buffer[ i ] = bgl_make_jsmethod_sans( 0L, 0L, 0L, 0L, 0L, 0L );
+   for (i = 0; i < size; i++) {
+      buffer[i] = bgl_make_jsmethod_sans(0L, 0L, 0L, 0L, 0L, 0L);
    }
 #endif   
 }
@@ -521,14 +534,14 @@ jsmethod_fill_buffer( apool_t *pool, void *arg ) {
 /*    jsprocedure_buffer_fill ...                                      */
 /*---------------------------------------------------------------------*/
 static void
-jsprocedure_fill_buffer( apool_t *pool, void *arg ) {
+jsprocedure_fill_buffer(apool_t *pool, void *arg) {
 #if HOP_ALLOC_JSPROCEDURE_POLICY != HOP_ALLOC_CLASSIC
    int i;
    obj_t *buffer = pool->buffer;
    const uint32_t size = pool->size;
 
-   for( i = 0; i < size; i++ ) {
-      buffer[ i ] = bgl_make_jsprocedure_sans( 0L, 0L, 0L );
+   for (i = 0; i < size; i++) {
+      buffer[i] = bgl_make_jsprocedure_sans(0L, 0L, 0L);
    }
 #endif   
 }
@@ -538,14 +551,14 @@ jsprocedure_fill_buffer( apool_t *pool, void *arg ) {
 /*    jsstringliteralascii_buffer_fill ...                             */
 /*---------------------------------------------------------------------*/
 static void
-jsstringliteralascii_fill_buffer( apool_t *pool, void *arg ) {
+jsstringliteralascii_fill_buffer(apool_t *pool, void *arg) {
 #if HOP_ALLOC_JSSTRINGLITERALASCII_POLICY != HOP_ALLOC_CLASSIC
    int i;
    obj_t *buffer = pool->buffer;
    const uint32_t size = pool->size;
 
-   for( i = 0; i < size; i++ ) {
-      buffer[ i ] = bgl_make_jsstringliteralascii_sans( 0, 0L, 0L );
+   for (i = 0; i < size; i++) {
+      buffer[i] = bgl_make_jsstringliteralascii_sans(0, 0L, 0L);
    }
 #endif   
 }
@@ -559,27 +572,27 @@ jsstringliteralascii_fill_buffer( apool_t *pool, void *arg ) {
 /*---------------------------------------------------------------------*/
 void
 bgl_init_jsalloc_locks() {
-   pthread_mutex_init( &alloc_pool_mutex, 0L );
-   pthread_cond_init( &alloc_pool_cond, 0L );
+   pthread_mutex_init(&alloc_pool_mutex, 0L);
+   pthread_cond_init(&alloc_pool_cond, 0L);
    
-   alloc_spin_init( &lock1, 0L );
-   alloc_spin_init( &lock2, 0L );
-   alloc_spin_init( &lock3, 0L );
-   alloc_spin_init( &lock4, 0L );
-   alloc_spin_init( &lock5, 0L );
-   alloc_spin_init( &lock6, 0L );
-   alloc_spin_init( &lock7, 0L );
-   alloc_spin_init( &lock8, 0L );
-   alloc_spin_init( &lockproxy, 0L );
-   alloc_spin_init( &lockfunction, 0L );
-   alloc_spin_init( &lockmethod, 0L );
-   alloc_spin_init( &lockprocedure, 0L );
-   alloc_spin_init( &lockstringliteralascii, 0L );
+   alloc_spin_init(&lock1, 0L);
+   alloc_spin_init(&lock2, 0L);
+   alloc_spin_init(&lock3, 0L);
+   alloc_spin_init(&lock4, 0L);
+   alloc_spin_init(&lock5, 0L);
+   alloc_spin_init(&lock6, 0L);
+   alloc_spin_init(&lock7, 0L);
+   alloc_spin_init(&lock8, 0L);
+   alloc_spin_init(&lockproxy, 0L);
+   alloc_spin_init(&lockfunction, 0L);
+   alloc_spin_init(&lockmethod, 0L);
+   alloc_spin_init(&lockprocedure, 0L);
+   alloc_spin_init(&lockstringliteralascii, 0L);
 
-   empty_vector = create_vector_uncollectable( 0 );
+   empty_vector = create_vector_uncollectable(0);
 
 #if ALLOC_STATS
-   atexit( (void (*)(void))alloc_stats_dump );
+   atexit((void (*)(void))alloc_stats_dump);
 #endif
 }
 
@@ -589,12 +602,12 @@ bgl_init_jsalloc_locks() {
 /*    -------------------------------------------------------------    */
 /*    Initialized the multithreaded background allocator.              */
 /*---------------------------------------------------------------------*/
-int bgl_init_jsalloc( uint32_t md ) {
+int bgl_init_jsalloc(uint32_t md) {
 #if HOP_ALLOC_JSOBJECT_POLICY != HOP_ALLOC_CLASSIC
    static int jsinit = 0;
    int i;
 
-   if( jsinit ) return 1;
+   if (jsinit) return 1;
 
    jsinit = 1;
 
@@ -605,15 +618,15 @@ int bgl_init_jsalloc( uint32_t md ) {
 
    /* initialize the pool queue */
    pool_queue_len = MAX_POOL_QUEUE_SIZE;
-   pool_queue = malloc( pool_queue_len * sizeof( apool_t * ) );
+   pool_queue = malloc(pool_queue_len * sizeof(apool_t *));
    
    /* start the allocator workers */
-   for( i = 0; i < WORK_NUMBER; i++ ) {
+   for (i = 0; i < WORK_NUMBER; i++) {
       pthread_t th;
       pthread_attr_t thattr;
-      pthread_attr_init( &thattr );
-      pthread_attr_setdetachstate( &thattr, PTHREAD_CREATE_DETACHED );
-      GC_pthread_create( &th, &thattr, thread_alloc_worker, (void *)(long)md );
+      pthread_attr_init(&thattr);
+      pthread_attr_setdetachstate(&thattr, PTHREAD_CREATE_DETACHED);
+      GC_pthread_create(&th, &thattr, thread_alloc_worker, (void *)(long)md);
    }
 
    return 0;
@@ -629,11 +642,11 @@ int bgl_init_jsalloc( uint32_t md ) {
 /*---------------------------------------------------------------------*/
 int
 bgl_init_worker_jsalloc() {
-   pthread_mutex_lock( &alloc_pool_mutex );
+   pthread_mutex_lock(&alloc_pool_mutex);
 
    pool_queue_len += MAX_POOL_QUEUE_SIZE;
-   pool_queue = realloc( pool_queue, pool_queue_len * sizeof( apool_t * ) );
-   pthread_mutex_unlock( &alloc_pool_mutex );
+   pool_queue = realloc(pool_queue, pool_queue_len * sizeof(apool_t *));
+   pthread_mutex_unlock(&alloc_pool_mutex);
 }
 
 /*---------------------------------------------------------------------*/
@@ -641,16 +654,17 @@ bgl_init_worker_jsalloc() {
 /*    bgl_init_jsalloc_proxy ...                                       */
 /*---------------------------------------------------------------------*/
 int
-bgl_init_jsalloc_proxy( obj_t constrmap, obj_t elements ) {
+bgl_init_jsalloc_proxy(obj_t constrmap, obj_t elements, uint32_t mode) {
    static int jsinit = 0;
    int i;
 
-   if( jsinit ) return 1;
+   if (jsinit) return 1;
 
    jsinit = 1;
 
    jsproxy_constrmap = constrmap;
    jsproxy_elements = elements;
+   jsproxy_mode = mode;
 }
 
 /*---------------------------------------------------------------------*/
@@ -658,14 +672,14 @@ bgl_init_jsalloc_proxy( obj_t constrmap, obj_t elements ) {
 /*    bgl_init_jsalloc_function ...                                    */
 /*---------------------------------------------------------------------*/
 int
-bgl_init_jsalloc_function( BgL_jsconstructmapz00_bglt constrmap,
+bgl_init_jsalloc_function(BgL_jsconstructmapz00_bglt constrmap,
 			   BgL_jsconstructmapz00_bglt cmap,
 			   obj_t elements, obj_t alloc,
-			   uint32_t mode ) {
+			   uint32_t mode) {
    static int jsinit = 0;
    int i;
 
-   if( jsinit ) return 1;
+   if (jsinit) return 1;
 
    jsinit = 1;
 
@@ -681,14 +695,14 @@ bgl_init_jsalloc_function( BgL_jsconstructmapz00_bglt constrmap,
 /*    bgl_init_jsalloc_method ...                                      */
 /*---------------------------------------------------------------------*/
 int
-bgl_init_jsalloc_method( BgL_jsconstructmapz00_bglt constrmap,
+bgl_init_jsalloc_method(BgL_jsconstructmapz00_bglt constrmap,
 			   BgL_jsconstructmapz00_bglt cmap,
 			   obj_t elements, obj_t alloc,
-			   uint32_t mode ) {
+			   uint32_t mode) {
    static int jsinit = 0;
    int i;
 
-   if( jsinit ) return 1;
+   if (jsinit) return 1;
 
    jsinit = 1;
 
@@ -704,12 +718,12 @@ bgl_init_jsalloc_method( BgL_jsconstructmapz00_bglt constrmap,
 /*    bgl_init_jsalloc_procedure ...                                   */
 /*---------------------------------------------------------------------*/
 int
-bgl_init_jsalloc_procedure( BgL_jsconstructmapz00_bglt cmap,
-			    uint32_t mode ) {
+bgl_init_jsalloc_procedure(BgL_jsconstructmapz00_bglt cmap,
+			    uint32_t mode) {
    static int jsinit = 0;
    int i;
 
-   if( jsinit ) return 1;
+   if (jsinit) return 1;
 
    jsinit = 1;
 
@@ -722,11 +736,11 @@ bgl_init_jsalloc_procedure( BgL_jsconstructmapz00_bglt cmap,
 /*    bgl_init_jsalloc_stringliteralascii ...                          */
 /*---------------------------------------------------------------------*/
 int
-bgl_init_jsalloc_stringliteralascii( uint32_t mode, uint32_t normmode, obj_t not_a_string_cache, uint32_t threshold ) {
+bgl_init_jsalloc_stringliteralascii(uint32_t mode, uint32_t normmode, obj_t not_a_string_cache, uint32_t threshold) {
    static int jsinit = 0;
    int i;
 
-   if( jsinit ) return 1;
+   if (jsinit) return 1;
 
    jsinit = 1;
 
@@ -753,69 +767,68 @@ bgl_init_jsalloc_stringliteralascii( uint32_t mode, uint32_t normmode, obj_t not
 #   define BGL_MAKE_JSOBJECT_SANS obj_t bgl_make_jsobject
 #endif
 
-BGL_MAKE_JSOBJECT_SANS( int constrsize, obj_t constrmap, obj_t __proto__, uint32_t mode ) {
-   long bsize = JSOBJECT_SIZE + VECTOR_SIZE + ( (constrsize-1) * OBJ_SIZE );
-   BgL_jsobjectz00_bglt o = (BgL_jsobjectz00_bglt)HOP_MALLOC( bsize );
+BGL_MAKE_JSOBJECT_SANS(int constrsize, obj_t constrmap, obj_t __proto__, uint32_t mode) {
+   long bsize = JSOBJECT_SIZE + VECTOR_SIZE + ((constrsize-1) * OBJ_SIZE);
+   BgL_jsobjectz00_bglt o = (BgL_jsobjectz00_bglt)HOP_MALLOC(bsize);
    obj_t vector;
-   int i;
 
    // class initialization
-   BGL_OBJECT_CLASS_NUM_SET( BNANOBJECT( o ), JSOBJECT_CLASS_INDEX );
+   BGL_OBJECT_CLASS_NUM_SET(BNANOBJECT(o), JSOBJECT_CLASS_NUM);
    
    // fields init
    o->BgL_cmapz00 = (BgL_jsconstructmapz00_bglt)constrmap;
-   BGL_OBJECT_HEADER_SIZE_SET( BNANOBJECT( o ), (long)mode );
-   BGL_OBJECT_WIDENING_SET( BNANOBJECT( o ), __proto__ );
+   o->BgL_elementsz00 = empty_vector;
+
+   BGL_OBJECT_HEADER_SIZE_SET(BNANOBJECT(o), (long)mode);
+   BGL_OBJECT_WIDENING_SET(BNANOBJECT(o), __proto__);
    
    // elements initialization
    vector = (obj_t)(&(o->BgL_elementsz00) + 1);
 
-#if( !defined( TAG_VECTOR ) )
-   vector->vector.header = MAKE_HEADER( VECTOR_TYPE, 0 );
+#if (!defined(TAG_VECTOR))
+   vector->vector.header = MAKE_HEADER(VECTOR_TYPE, 0);
 #endif		
    vector->vector.length = constrsize;
-   vector = BVECTOR( vector );
+   vector = BVECTOR(vector);
    
-   o->BgL_elementsz00 = vector;
-
-   for( i = 0; i < constrsize; i++ ) {
-      VECTOR_SET( vector, i, BUNSPEC );
+   for (int i = 0; i < constrsize; i++) {
+      VECTOR_SET(vector, i, BUNSPEC);
    }
 
-#if( defined( HOP_PROFILE ) )
+#if (defined(HOP_PROFILE))
    {
-      long i = ( constrsize >= VECTOR_LENGTH( bgl_js_profile_allocs ) - 2
-		 ? VECTOR_LENGTH( bgl_js_profile_allocs ) -1
-		 : constrsize );
-      long cnt = BLLONG_TO_LLONG( VECTOR_REF( bgl_js_profile_allocs, i ) );
-      VECTOR_SET( bgl_js_profile_allocs, i, LLONG_TO_BLLONG( cnt + 1 ) );
+      long i = (constrsize >= VECTOR_LENGTH(bgl_js_profile_allocs) - 2
+		 ? VECTOR_LENGTH(bgl_js_profile_allocs) -1
+		 : constrsize);
+      long cnt = BLLONG_TO_LLONG(VECTOR_REF(bgl_js_profile_allocs, i));
+      VECTOR_SET(bgl_js_profile_allocs, i, LLONG_TO_BLLONG(cnt + 1));
    }
 #endif
 
-   return BNANOBJECT( o );
+   return BNANOBJECT(o);
 }
 
 /*---------------------------------------------------------------------*/
 /*    BGL_MAKE_JSOBJECT ...                                            */
 /*---------------------------------------------------------------------*/
-#define BGL_MAKE_JSOBJECT( sz ) \
-   static obj_t bgl_make_jsobject##sz( obj_t constrmap, obj_t __proto__ ) { \
-   alloc_spin_lock( &lock##sz ); \
-   if( pool##sz.idx < JSOBJECT_POOLSZ( sz ) ) { \
-      obj_t o = pool##sz.buffer[ pool##sz.idx ]; \
-      pool##sz.buffer[ pool##sz.idx++ ] = 0; \
-      alloc_spin_unlock( &lock##sz ); \
-      BGL_OBJECT_WIDENING_SET( o, __proto__ ); \
-      ((BgL_jsobjectz00_bglt)(COBJECT( o )))->BgL_cmapz00 = (BgL_jsconstructmapz00_bglt)constrmap; \
-      ALLOC_STAT( inl##sz++ ); \
+#define BGL_MAKE_JSOBJECT(sz) \
+   static obj_t bgl_make_jsobject##sz(obj_t constrmap, obj_t __proto__) { \
+   alloc_spin_lock(&lock##sz); \
+   if (pool##sz.idx < JSOBJECT_POOLSZ(sz)) { \
+      obj_t o = pool##sz.buffer[pool##sz.idx]; \
+      pool##sz.buffer[pool##sz.idx++] = 0; \
+      alloc_spin_unlock(&lock##sz); \
+      BGL_OBJECT_WIDENING_SET(o, __proto__); \
+      ((BgL_jsobjectz00_bglt)(COBJECT(o)))->BgL_cmapz00 = (BgL_jsconstructmapz00_bglt)constrmap; \
+      ALLOC_STAT(inl##sz++); \
       return o; \
-   } else if( npool##sz.idx == 0 ) { \
+   } else if (npool##sz.idx == 0) { \
       /* swap the two pools */ \
       obj_t *buffer = pool##sz.buffer; \
       obj_t *nbuffer = npool##sz.buffer; \
-      obj_t o = nbuffer[ 0 ]; \
+      obj_t o = nbuffer[0]; \
       \
-      nbuffer[ 0 ] = 0; \
+      nbuffer[0] = 0; \
       pool##sz.buffer = nbuffer; \
       pool##sz.idx = 1; \
       \
@@ -823,40 +836,40 @@ BGL_MAKE_JSOBJECT_SANS( int constrsize, obj_t constrmap, obj_t __proto__, uint32
       npool##sz.idx = npool##sz.size; \
       \
       /* add the pool to the pool queue */ \
-      pool_queue_add( &npool##sz ); \
+      pool_queue_add(&npool##sz); \
       \
-      BGL_OBJECT_WIDENING_SET( o, __proto__ ); \
-      ((BgL_jsobjectz00_bglt)(COBJECT( o )))->BgL_cmapz00 = (BgL_jsconstructmapz00_bglt)constrmap; \
+      BGL_OBJECT_WIDENING_SET(o, __proto__); \
+      ((BgL_jsobjectz00_bglt)(COBJECT(o)))->BgL_cmapz00 = (BgL_jsconstructmapz00_bglt)constrmap; \
       \
-      ALLOC_STAT( snd##sz++ ); \
-      alloc_spin_unlock( &lock##sz ); \
+      ALLOC_STAT(snd##sz++); \
+      alloc_spin_unlock(&lock##sz); \
       return o; \
    } else { \
       /* initialize the two alloc pools */ \
-      if( !pool##sz.buffer ) { \
+      if (!pool##sz.buffer) { \
 	 pool##sz.buffer = \
-	    (obj_t *)GC_MALLOC_UNCOLLECTABLE( sizeof(obj_t)*JSOBJECT_POOLSZ( sz ) ); \
+	    (obj_t *)GC_MALLOC_UNCOLLECTABLE(sizeof(obj_t)*JSOBJECT_POOLSZ(sz)); \
 	 npool##sz.buffer =						\
-	    (obj_t *)GC_MALLOC_UNCOLLECTABLE( sizeof(obj_t)*JSOBJECT_POOLSZ( sz ) ); \
-	 pool_queue_add( &npool##sz );					\
+	    (obj_t *)GC_MALLOC_UNCOLLECTABLE(sizeof(obj_t)*JSOBJECT_POOLSZ(sz)); \
+	 pool_queue_add(&npool##sz);					\
       } \
       \
       /* default slow alloc */ \
-      ALLOC_STAT( slow##sz++ ); \
-      alloc_spin_unlock( &lock##sz ); \
-      return bgl_make_jsobject_sans( sz, constrmap, __proto__, jsobject_mode ); \
+      ALLOC_STAT(slow##sz++); \
+      alloc_spin_unlock(&lock##sz); \
+      return bgl_make_jsobject_sans(sz, constrmap, __proto__, jsobject_mode); \
    } \
 }
 
 #if HOP_ALLOC_JSOBJECT_POLICY != HOP_ALLOC_CLASSIC
-BGL_MAKE_JSOBJECT( 1 )
-BGL_MAKE_JSOBJECT( 2 )
-BGL_MAKE_JSOBJECT( 3 )
-BGL_MAKE_JSOBJECT( 4 )
-BGL_MAKE_JSOBJECT( 5 )
-BGL_MAKE_JSOBJECT( 6 )
-BGL_MAKE_JSOBJECT( 7 )
-BGL_MAKE_JSOBJECT( 8 )
+BGL_MAKE_JSOBJECT(1)
+BGL_MAKE_JSOBJECT(2)
+BGL_MAKE_JSOBJECT(3)
+BGL_MAKE_JSOBJECT(4)
+BGL_MAKE_JSOBJECT(5)
+BGL_MAKE_JSOBJECT(6)
+BGL_MAKE_JSOBJECT(7)
+BGL_MAKE_JSOBJECT(8)
 #endif
 
 /*---------------------------------------------------------------------*/
@@ -865,20 +878,31 @@ BGL_MAKE_JSOBJECT( 8 )
 /*---------------------------------------------------------------------*/
 #if HOP_ALLOC_JSOBJECT_POLICY != HOP_ALLOC_CLASSIC
 obj_t
-bgl_make_jsobject( int constrsize, obj_t constrmap, obj_t __proto__, uint32_t mode ) {
-   switch( constrsize ) {
-      case 1: return bgl_make_jsobject1( constrmap, __proto__ );
-      case 2: return bgl_make_jsobject2( constrmap, __proto__ );
-      case 3: return bgl_make_jsobject3( constrmap, __proto__ );
-      case 4: return bgl_make_jsobject4( constrmap, __proto__ );
-      case 5: return bgl_make_jsobject5( constrmap, __proto__ );
-      case 6: return bgl_make_jsobject6( constrmap, __proto__ );
-      case 7: return bgl_make_jsobject7( constrmap, __proto__ );
-      case 8: return bgl_make_jsobject8( constrmap, __proto__ );
-      default: return bgl_make_jsobject_sans( (int)constrsize, constrmap, __proto__, mode );
+bgl_make_jsobject(int constrsize, obj_t constrmap, obj_t __proto__, uint32_t mode) {
+   switch(constrsize) {
+      case 1: return bgl_make_jsobject1(constrmap, __proto__);
+      case 2: return bgl_make_jsobject2(constrmap, __proto__);
+      case 3: return bgl_make_jsobject3(constrmap, __proto__);
+      case 4: return bgl_make_jsobject4(constrmap, __proto__);
+      case 5: return bgl_make_jsobject5(constrmap, __proto__);
+      case 6: return bgl_make_jsobject6(constrmap, __proto__);
+      case 7: return bgl_make_jsobject7(constrmap, __proto__);
+      case 8: return bgl_make_jsobject8(constrmap, __proto__);
+      default: return bgl_make_jsobject_sans((int)constrsize, constrmap, __proto__, mode);
    }
 }
 #endif
+
+/*---------------------------------------------------------------------*/
+/*    obj_t                                                            */
+/*    bgl_make_jsobject_bmem ...                                       */
+/*    -------------------------------------------------------------    */
+/*    Only for bmem wrapping                                           */
+/*---------------------------------------------------------------------*/
+obj_t
+bgl_make_jsobject_bmem(int constrsize, obj_t constrmap, obj_t __proto__, uint32_t mode) {
+   return bgl_make_jsobject_sans((int)constrsize, constrmap, __proto__, mode);
+}
 
 /*---------------------------------------------------------------------*/
 /*    obj_t                                                            */
@@ -897,18 +921,18 @@ bgl_make_jsobject( int constrsize, obj_t constrmap, obj_t __proto__, uint32_t mo
 #  define BGL_MAKE_JSPROXY_SANS obj_t bgl_make_jsproxy
 #endif
    
-BGL_MAKE_JSPROXY_SANS( obj_t target, obj_t handler,
+BGL_MAKE_JSPROXY_SANS(obj_t target, obj_t handler,
 		       obj_t getcache, obj_t setcache, obj_t applycache,
-		       uint32_t mode ) {   
+		       uint32_t mode) {   
    long bsize = JSPROXY_SIZE;
-   BgL_jsproxyz00_bglt o = (BgL_jsproxyz00_bglt)HOP_MALLOC( bsize );
+   BgL_jsproxyz00_bglt o = (BgL_jsproxyz00_bglt)HOP_MALLOC(bsize);
 
    // class initialization
-   BGL_OBJECT_CLASS_NUM_SET( BNANOBJECT( o ), JSPROXY_CLASS_INDEX );
+   BGL_OBJECT_CLASS_NUM_SET(BNANOBJECT(o), JSPROXY_CLASS_NUM);
    
    // fields init
-   BGL_OBJECT_HEADER_SIZE_SET( BNANOBJECT( o ), (long)mode );
-   BGL_OBJECT_WIDENING_SET( BNANOBJECT( o ), target );
+   BGL_OBJECT_HEADER_SIZE_SET(BNANOBJECT(o), (long)mode);
+   BGL_OBJECT_WIDENING_SET(BNANOBJECT(o), target);
    
    o->BgL_handlerz00 = (struct BgL_jsobjectz00_bgl *)handler;
    o->BgL_getcachez00 = getcache;
@@ -918,7 +942,7 @@ BGL_MAKE_JSPROXY_SANS( obj_t target, obj_t handler,
    o->BgL_cmapz00 = (BgL_jsconstructmapz00_bglt)jsproxy_constrmap;
    o->BgL_elementsz00 = jsproxy_elements;
    
-   return BNANOBJECT( o );
+   return BNANOBJECT(o);
 }
 
 /*---------------------------------------------------------------------*/
@@ -934,63 +958,63 @@ BGL_MAKE_JSPROXY_SANS( obj_t target, obj_t handler,
 /*---------------------------------------------------------------------*/
 #if HOP_ALLOC_JSPROXY_POLICY != HOP_ALLOC_CLASSIC
 obj_t
-bgl_make_jsproxy( obj_t target, obj_t handler,
+bgl_make_jsproxy(obj_t target, obj_t handler,
 		  obj_t getcache, obj_t setcache, obj_t applycache,
-		  uint32_t md ) {
-   alloc_spin_lock( &lockproxy ); 
-   if( poolproxy.idx < JSPROXY_POOLSZ ) { 
-      obj_t o = poolproxy.buffer[ poolproxy.idx ]; 
-      poolproxy.buffer[ poolproxy.idx++ ] = 0; 
-      alloc_spin_unlock( &lockproxy );
+		  uint32_t md) {
+   alloc_spin_lock(&lockproxy); 
+   if (poolproxy.idx < JSPROXY_POOLSZ) { 
+      obj_t o = poolproxy.buffer[poolproxy.idx]; 
+      poolproxy.buffer[poolproxy.idx++] = 0; 
+      alloc_spin_unlock(&lockproxy);
       
-      BGL_OBJECT_WIDENING_SET( o, target );
-      ((BgL_jsproxyz00_bglt)(COBJECT( o )))->BgL_handlerz00 = (BgL_jsobjectz00_bglt)handler; 
-      ((BgL_jsproxyz00_bglt)(COBJECT( o )))->BgL_getcachez00 = getcache; 
-      ((BgL_jsproxyz00_bglt)(COBJECT( o )))->BgL_setcachez00 = setcache; 
-      ((BgL_jsproxyz00_bglt)(COBJECT( o )))->BgL_applycachez00 = applycache; 
-      ALLOC_STAT( inlproxy++ );
+      BGL_OBJECT_WIDENING_SET(o, target);
+      ((BgL_jsproxyz00_bglt)(COBJECT(o)))->BgL_handlerz00 = (BgL_jsobjectz00_bglt)handler; 
+      ((BgL_jsproxyz00_bglt)(COBJECT(o)))->BgL_getcachez00 = getcache; 
+      ((BgL_jsproxyz00_bglt)(COBJECT(o)))->BgL_setcachez00 = setcache; 
+      ((BgL_jsproxyz00_bglt)(COBJECT(o)))->BgL_applycachez00 = applycache; 
+      ALLOC_STAT(inlproxy++);
       return o; 
-   } else if( npoolproxy.idx == 0 ) { 
+   } else if (npoolproxy.idx == 0) { 
       /* swap the two pools */ 
       obj_t *buffer = poolproxy.buffer; 
-      obj_t o = npoolproxy.buffer[ 0 ]; 
+      obj_t o = npoolproxy.buffer[0]; 
       
       poolproxy.buffer = npoolproxy.buffer; 
-      poolproxy.buffer[ 0 ] = 0; 
+      poolproxy.buffer[0] = 0; 
       poolproxy.idx = 1; 
       
       npoolproxy.buffer = buffer; 
       npoolproxy.idx = npoolproxy.size; 
       
       /* add the pool to the pool queue */ 
-      pool_queue_add( &npoolproxy ); 
+      pool_queue_add(&npoolproxy); 
       
-      BGL_OBJECT_WIDENING_SET( o, target );
-      ((BgL_jsproxyz00_bglt)(COBJECT( o )))->BgL_handlerz00 = (BgL_jsobjectz00_bglt)handler; 
-      ((BgL_jsproxyz00_bglt)(COBJECT( o )))->BgL_getcachez00 = getcache; 
-      ((BgL_jsproxyz00_bglt)(COBJECT( o )))->BgL_setcachez00 = setcache; 
-      ((BgL_jsproxyz00_bglt)(COBJECT( o )))->BgL_applycachez00 = applycache; 
+      BGL_OBJECT_WIDENING_SET(o, target);
+      ((BgL_jsproxyz00_bglt)(COBJECT(o)))->BgL_handlerz00 = (BgL_jsobjectz00_bglt)handler; 
+      ((BgL_jsproxyz00_bglt)(COBJECT(o)))->BgL_getcachez00 = getcache; 
+      ((BgL_jsproxyz00_bglt)(COBJECT(o)))->BgL_setcachez00 = setcache; 
+      ((BgL_jsproxyz00_bglt)(COBJECT(o)))->BgL_applycachez00 = applycache; 
       
-      ALLOC_STAT( sndproxy++ ); 
-      alloc_spin_unlock( &lockproxy ); 
+      ALLOC_STAT(sndproxy++); 
+      alloc_spin_unlock(&lockproxy); 
       return o; 
    } else { 
       /* initialize the two alloc pools */ 
-      if( !poolproxy.buffer ) { 
+      if (!poolproxy.buffer) { 
 	 poolproxy.buffer = 
-	    (obj_t *)GC_MALLOC_UNCOLLECTABLE( sizeof(obj_t)*JSPROXY_POOLSZ ); 
+	    (obj_t *)GC_MALLOC_UNCOLLECTABLE(sizeof(obj_t)*JSPROXY_POOLSZ); 
 	 poolproxy.idx = JSPROXY_POOLSZ; 
 	 npoolproxy.buffer = 
-	    (obj_t *)GC_MALLOC_UNCOLLECTABLE( sizeof(obj_t)*JSPROXY_POOLSZ ); 
+	    (obj_t *)GC_MALLOC_UNCOLLECTABLE(sizeof(obj_t)*JSPROXY_POOLSZ); 
 	 npoolproxy.idx = JSPROXY_POOLSZ; 
-	 pool_queue_add( &npoolproxy ); 
+	 pool_queue_add(&npoolproxy); 
       } 
       
       /* default slow alloc */ 
-      ALLOC_STAT( slowproxy++ ); 
-      alloc_spin_unlock( &lockproxy ); 
-      return bgl_make_jsproxy_sans( target, handler,
-				    getcache, setcache, applycache, md ); 
+      ALLOC_STAT(slowproxy++); 
+      alloc_spin_unlock(&lockproxy);
+      return bgl_make_jsproxy_sans(target, handler,
+				    getcache, setcache, applycache, jsproxy_mode); 
    } 
 }
 #endif
@@ -1012,45 +1036,45 @@ bgl_make_jsproxy( obj_t target, obj_t handler,
 #   define BGL_MAKE_JSFUNCTION_SANS obj_t bgl_make_jsfunction
 #endif
 
-BGL_MAKE_JSFUNCTION_SANS( obj_t procedure,
+BGL_MAKE_JSFUNCTION_SANS(obj_t procedure,
 			  long arity, long constrsize,
-			  obj_t __proto__, obj_t info ) {
-   BgL_jsfunctionz00_bglt o = (BgL_jsfunctionz00_bglt)HOP_MALLOC( JSFUNCTION_SIZE );
+			  obj_t __proto__, obj_t info) {
+   BgL_jsfunctionz00_bglt o = (BgL_jsfunctionz00_bglt)HOP_MALLOC(JSFUNCTION_SIZE);
 
    // class initialization
-   BGL_OBJECT_CLASS_NUM_SET( BNANOBJECT( o ), JSFUNCTION_CLASS_INDEX );
+   BGL_OBJECT_CLASS_NUM_SET(BNANOBJECT(o), JSFUNCTION_CLASS_NUM);
 
    // immutable fields init
-   BGL_OBJECT_HEADER_SIZE_SET( BNANOBJECT( o ), (long)jsfunction_mode );
+   BGL_OBJECT_HEADER_SIZE_SET(BNANOBJECT(o), (long)jsfunction_mode);
    o->BgL_allocz00 = jsfunction_alloc;
    o->BgL_constrmapz00 = jsfunction_constrmap;
    o->BgL_elementsz00 = jsfunction_elements;
    o->BgL_cmapz00 = jsfunction_cmap;
-   o->BgL_prototypez00 = BCHAR( 'F' );
+   o->BgL_prototypez00 = BCHAR('F');
 
    // mutable fields
 #if HOP_ALLOC_JSFUNCTION_POLICY != HOP_ALLOC_CLASSIC
-   if( procedure )
+   if (procedure)
 #endif
    {
-      BGL_OBJECT_WIDENING_SET( BNANOBJECT( o ), __proto__ );
+      BGL_OBJECT_WIDENING_SET(BNANOBJECT(o), __proto__);
       o->BgL_procedurez00 = procedure;
       o->BgL_arityz00 = arity;
       o->BgL_infoz00 = info;
       o->BgL_constrsiza7eza7 = constrsize;
    }
    
-#if( defined( HOP_PROFILE ) )
+#if (defined(HOP_PROFILE))
    {
-      long i = ( constrsize >= VECTOR_LENGTH( bgl_js_profile_allocs ) - 2
-		 ? VECTOR_LENGTH( bgl_js_profile_allocs ) -1
-		 : constrsize );
-      long cnt = BLLONG_TO_LLONG( VECTOR_REF( bgl_js_profile_allocs, i ) );
-      VECTOR_SET( bgl_js_profile_allocs, i, LLONG_TO_BLLONG( cnt + 1 ) );
+      long i = (constrsize >= VECTOR_LENGTH(bgl_js_profile_allocs) - 2
+		 ? VECTOR_LENGTH(bgl_js_profile_allocs) -1
+		 : constrsize);
+      long cnt = BLLONG_TO_LLONG(VECTOR_REF(bgl_js_profile_allocs, i));
+      VECTOR_SET(bgl_js_profile_allocs, i, LLONG_TO_BLLONG(cnt + 1));
    }
 #endif
 
-   return BNANOBJECT( o );
+   return BNANOBJECT(o);
 }
 
 /*---------------------------------------------------------------------*/
@@ -1066,67 +1090,67 @@ BGL_MAKE_JSFUNCTION_SANS( obj_t procedure,
 /*---------------------------------------------------------------------*/
 #if HOP_ALLOC_JSFUNCTION_POLICY != HOP_ALLOC_CLASSIC
 obj_t
-bgl_make_jsfunction( obj_t procedure,
+bgl_make_jsfunction(obj_t procedure,
 		     long arity, long constrsize,
-		     obj_t __proto__, obj_t info ) {
-   alloc_spin_lock( &lockfunction );
+		     obj_t __proto__, obj_t info) {
+   alloc_spin_lock(&lockfunction);
 
-   if( poolfunction.idx < JSFUNCTION_POOLSZ ) { 
-      obj_t o = poolfunction.buffer[ poolfunction.idx ]; 
-      poolfunction.buffer[ poolfunction.idx++ ] = 0; 
-      alloc_spin_unlock( &lockfunction );
+   if (poolfunction.idx < JSFUNCTION_POOLSZ) { 
+      obj_t o = poolfunction.buffer[poolfunction.idx]; 
+      poolfunction.buffer[poolfunction.idx++] = 0; 
+      alloc_spin_unlock(&lockfunction);
       
-      BGL_OBJECT_WIDENING_SET( o, __proto__ );
-      ((BgL_jsfunctionz00_bglt)(COBJECT( o )))->BgL_procedurez00 = procedure;
-      ((BgL_jsfunctionz00_bglt)(COBJECT( o )))->BgL_arityz00 = arity;
-      ((BgL_jsfunctionz00_bglt)(COBJECT( o )))->BgL_infoz00 = info;
-      ((BgL_jsfunctionz00_bglt)(COBJECT( o )))->BgL_constrsiza7eza7 = constrsize;
+      BGL_OBJECT_WIDENING_SET(o, __proto__);
+      ((BgL_jsfunctionz00_bglt)(COBJECT(o)))->BgL_procedurez00 = procedure;
+      ((BgL_jsfunctionz00_bglt)(COBJECT(o)))->BgL_arityz00 = arity;
+      ((BgL_jsfunctionz00_bglt)(COBJECT(o)))->BgL_infoz00 = info;
+      ((BgL_jsfunctionz00_bglt)(COBJECT(o)))->BgL_constrsiza7eza7 = constrsize;
       
-      ALLOC_STAT( inlfunction++ ); 
+      ALLOC_STAT(inlfunction++); 
       return o; 
-   } else if( npoolfunction.idx == 0 ) { 
+   } else if (npoolfunction.idx == 0) { 
       /* swap the two pools */ 
       obj_t *buffer = poolfunction.buffer; 
-      obj_t o = npoolfunction.buffer[ 0 ]; 
+      obj_t o = npoolfunction.buffer[0]; 
       
       poolfunction.buffer = npoolfunction.buffer; 
-      poolfunction.buffer[ 0 ] = 0; 
+      poolfunction.buffer[0] = 0; 
       poolfunction.idx = 1; 
       
       npoolfunction.buffer = buffer; 
       npoolfunction.idx = npoolfunction.size; 
       
       /* add the pool to the pool queue */ 
-      pool_queue_add( &npoolfunction ); 
+      pool_queue_add(&npoolfunction); 
       
-      BGL_OBJECT_WIDENING_SET( o, __proto__ );
-      ((BgL_jsfunctionz00_bglt)(COBJECT( o )))->BgL_procedurez00 = procedure;
-      ((BgL_jsfunctionz00_bglt)(COBJECT( o )))->BgL_arityz00 = arity;
-      ((BgL_jsfunctionz00_bglt)(COBJECT( o )))->BgL_infoz00 = info;
-      ((BgL_jsfunctionz00_bglt)(COBJECT( o )))->BgL_constrsiza7eza7 = constrsize;
+      BGL_OBJECT_WIDENING_SET(o, __proto__);
+      ((BgL_jsfunctionz00_bglt)(COBJECT(o)))->BgL_procedurez00 = procedure;
+      ((BgL_jsfunctionz00_bglt)(COBJECT(o)))->BgL_arityz00 = arity;
+      ((BgL_jsfunctionz00_bglt)(COBJECT(o)))->BgL_infoz00 = info;
+      ((BgL_jsfunctionz00_bglt)(COBJECT(o)))->BgL_constrsiza7eza7 = constrsize;
       
-      ALLOC_STAT( sndfunction++ ); 
-      alloc_spin_unlock( &lockfunction );
+      ALLOC_STAT(sndfunction++); 
+      alloc_spin_unlock(&lockfunction);
 
       return o; 
    } else { 
       /* initialize the two alloc pools */ 
-      if( !poolfunction.buffer ) { 
+      if (!poolfunction.buffer) { 
 	 poolfunction.buffer = 
-	    (obj_t *)GC_MALLOC_UNCOLLECTABLE( sizeof(obj_t)*JSFUNCTION_POOLSZ ); 
+	    (obj_t *)GC_MALLOC_UNCOLLECTABLE(sizeof(obj_t)*JSFUNCTION_POOLSZ); 
 	 poolfunction.idx = JSFUNCTION_POOLSZ; 
 	 npoolfunction.buffer = 
-	    (obj_t *)GC_MALLOC_UNCOLLECTABLE( sizeof(obj_t)*JSFUNCTION_POOLSZ ); 
+	    (obj_t *)GC_MALLOC_UNCOLLECTABLE(sizeof(obj_t)*JSFUNCTION_POOLSZ); 
 	 npoolfunction.idx = JSFUNCTION_POOLSZ; 
-	 pool_queue_add( &npoolfunction ); 
+	 pool_queue_add(&npoolfunction); 
       } 
 
       /* default slow alloc */ 
-      ALLOC_STAT( slowfunction++ ); 
-      alloc_spin_unlock( &lockfunction ); 
-      return bgl_make_jsfunction_sans( procedure,
+      ALLOC_STAT(slowfunction++); 
+      alloc_spin_unlock(&lockfunction); 
+      return bgl_make_jsfunction_sans(procedure,
 				       arity, constrsize,
-				       __proto__, info );
+				       __proto__, info);
    } 
 }
 #endif
@@ -1148,28 +1172,28 @@ bgl_make_jsfunction( obj_t procedure,
 #   define BGL_MAKE_JSMETHOD_SANS obj_t bgl_make_jsmethod
 #endif
 
-BGL_MAKE_JSMETHOD_SANS( obj_t procedure, obj_t method,
+BGL_MAKE_JSMETHOD_SANS(obj_t procedure, obj_t method,
 			  long arity, long constrsize,
-			  obj_t __proto__, obj_t info ) {
-   BgL_jsmethodz00_bglt o = (BgL_jsmethodz00_bglt)HOP_MALLOC( JSMETHOD_SIZE );
+			  obj_t __proto__, obj_t info) {
+   BgL_jsmethodz00_bglt o = (BgL_jsmethodz00_bglt)HOP_MALLOC(JSMETHOD_SIZE);
 
    // class initialization
-   BGL_OBJECT_CLASS_NUM_SET( BNANOBJECT( o ), JSMETHOD_CLASS_INDEX );
+   BGL_OBJECT_CLASS_NUM_SET(BNANOBJECT(o), JSMETHOD_CLASS_NUM);
 
    // immutable fields init
-   BGL_OBJECT_HEADER_SIZE_SET( BNANOBJECT( o ), (long)jsmethod_mode );
+   BGL_OBJECT_HEADER_SIZE_SET(BNANOBJECT(o), (long)jsmethod_mode);
    o->BgL_allocz00 = jsmethod_alloc;
    o->BgL_constrmapz00 = jsmethod_constrmap;
    o->BgL_elementsz00 = jsmethod_elements;
    o->BgL_cmapz00 = jsmethod_cmap;
-   o->BgL_prototypez00 = BCHAR( 'F' );
+   o->BgL_prototypez00 = BCHAR('F');
 
    // mutable fields
 #if HOP_ALLOC_JSMETHOD_POLICY != HOP_ALLOC_CLASSIC
-   if( procedure )
+   if (procedure)
 #endif
    {
-      BGL_OBJECT_WIDENING_SET( BNANOBJECT( o ), __proto__ );
+      BGL_OBJECT_WIDENING_SET(BNANOBJECT(o), __proto__);
       o->BgL_procedurez00 = procedure;
       o->BgL_methodz00 = method;
       o->BgL_arityz00 = arity;
@@ -1177,17 +1201,17 @@ BGL_MAKE_JSMETHOD_SANS( obj_t procedure, obj_t method,
       o->BgL_constrsiza7eza7 = constrsize;
    }
    
-#if( defined( HOP_PROFILE ) )
+#if (defined(HOP_PROFILE))
    {
-      long i = ( constrsize >= VECTOR_LENGTH( bgl_js_profile_allocs ) - 2
-		 ? VECTOR_LENGTH( bgl_js_profile_allocs ) -1
-		 : constrsize );
-      long cnt = BLLONG_TO_LLONG( VECTOR_REF( bgl_js_profile_allocs, i ) );
-      VECTOR_SET( bgl_js_profile_allocs, i, LLONG_TO_BLLONG( cnt + 1 ) );
+      long i = (constrsize >= VECTOR_LENGTH(bgl_js_profile_allocs) - 2
+		 ? VECTOR_LENGTH(bgl_js_profile_allocs) -1
+		 : constrsize);
+      long cnt = BLLONG_TO_LLONG(VECTOR_REF(bgl_js_profile_allocs, i));
+      VECTOR_SET(bgl_js_profile_allocs, i, LLONG_TO_BLLONG(cnt + 1));
    }
 #endif
 
-   return BNANOBJECT( o );
+   return BNANOBJECT(o);
 }
 
 /*---------------------------------------------------------------------*/
@@ -1203,69 +1227,69 @@ BGL_MAKE_JSMETHOD_SANS( obj_t procedure, obj_t method,
 /*---------------------------------------------------------------------*/
 #if HOP_ALLOC_JSMETHOD_POLICY != HOP_ALLOC_CLASSIC
 obj_t
-bgl_make_jsmethod( obj_t procedure, obj_t method,
+bgl_make_jsmethod(obj_t procedure, obj_t method,
 		     long arity, long constrsize,
-		     obj_t __proto__, obj_t info ) {
-   alloc_spin_lock( &lockmethod );
+		     obj_t __proto__, obj_t info) {
+   alloc_spin_lock(&lockmethod);
 
-   if( poolmethod.idx < JSMETHOD_POOLSZ ) { 
-      obj_t o = poolmethod.buffer[ poolmethod.idx ]; 
-      poolmethod.buffer[ poolmethod.idx++ ] = 0; 
-      alloc_spin_unlock( &lockmethod );
+   if (poolmethod.idx < JSMETHOD_POOLSZ) { 
+      obj_t o = poolmethod.buffer[poolmethod.idx]; 
+      poolmethod.buffer[poolmethod.idx++] = 0; 
+      alloc_spin_unlock(&lockmethod);
       
-      BGL_OBJECT_WIDENING_SET( o, __proto__ );
-      ((BgL_jsmethodz00_bglt)(COBJECT( o )))->BgL_procedurez00 = procedure;
-      ((BgL_jsmethodz00_bglt)(COBJECT( o )))->BgL_methodz00 = method;
-      ((BgL_jsmethodz00_bglt)(COBJECT( o )))->BgL_arityz00 = arity;
-      ((BgL_jsmethodz00_bglt)(COBJECT( o )))->BgL_infoz00 = info;
-      ((BgL_jsmethodz00_bglt)(COBJECT( o )))->BgL_constrsiza7eza7 = constrsize;
+      BGL_OBJECT_WIDENING_SET(o, __proto__);
+      ((BgL_jsmethodz00_bglt)(COBJECT(o)))->BgL_procedurez00 = procedure;
+      ((BgL_jsmethodz00_bglt)(COBJECT(o)))->BgL_methodz00 = method;
+      ((BgL_jsmethodz00_bglt)(COBJECT(o)))->BgL_arityz00 = arity;
+      ((BgL_jsmethodz00_bglt)(COBJECT(o)))->BgL_infoz00 = info;
+      ((BgL_jsmethodz00_bglt)(COBJECT(o)))->BgL_constrsiza7eza7 = constrsize;
       
-      ALLOC_STAT( inlmethod++ ); 
+      ALLOC_STAT(inlmethod++); 
       return o; 
-   } else if( npoolmethod.idx == 0 ) { 
+   } else if (npoolmethod.idx == 0) { 
       /* swap the two pools */ 
       obj_t *buffer = poolmethod.buffer; 
-      obj_t o = npoolmethod.buffer[ 0 ]; 
+      obj_t o = npoolmethod.buffer[0]; 
       
       poolmethod.buffer = npoolmethod.buffer; 
-      poolmethod.buffer[ 0 ] = 0; 
+      poolmethod.buffer[0] = 0; 
       poolmethod.idx = 1; 
       
       npoolmethod.buffer = buffer; 
       npoolmethod.idx = npoolmethod.size; 
       
       /* add the pool to the pool queue */ 
-      pool_queue_add( &npoolmethod ); 
+      pool_queue_add(&npoolmethod); 
       
-      BGL_OBJECT_WIDENING_SET( o, __proto__ );
-      ((BgL_jsmethodz00_bglt)(COBJECT( o )))->BgL_procedurez00 = procedure;
-      ((BgL_jsmethodz00_bglt)(COBJECT( o )))->BgL_methodz00 = method;
-      ((BgL_jsmethodz00_bglt)(COBJECT( o )))->BgL_arityz00 = arity;
-      ((BgL_jsmethodz00_bglt)(COBJECT( o )))->BgL_infoz00 = info;
-      ((BgL_jsmethodz00_bglt)(COBJECT( o )))->BgL_constrsiza7eza7 = constrsize;
+      BGL_OBJECT_WIDENING_SET(o, __proto__);
+      ((BgL_jsmethodz00_bglt)(COBJECT(o)))->BgL_procedurez00 = procedure;
+      ((BgL_jsmethodz00_bglt)(COBJECT(o)))->BgL_methodz00 = method;
+      ((BgL_jsmethodz00_bglt)(COBJECT(o)))->BgL_arityz00 = arity;
+      ((BgL_jsmethodz00_bglt)(COBJECT(o)))->BgL_infoz00 = info;
+      ((BgL_jsmethodz00_bglt)(COBJECT(o)))->BgL_constrsiza7eza7 = constrsize;
       
-      ALLOC_STAT( sndmethod++ ); 
-      alloc_spin_unlock( &lockmethod );
+      ALLOC_STAT(sndmethod++); 
+      alloc_spin_unlock(&lockmethod);
 
       return o; 
    } else { 
       /* initialize the two alloc pools */ 
-      if( !poolmethod.buffer ) { 
+      if (!poolmethod.buffer) { 
 	 poolmethod.buffer = 
-	    (obj_t *)GC_MALLOC_UNCOLLECTABLE( sizeof(obj_t)*JSMETHOD_POOLSZ ); 
+	    (obj_t *)GC_MALLOC_UNCOLLECTABLE(sizeof(obj_t)*JSMETHOD_POOLSZ); 
 	 poolmethod.idx = JSMETHOD_POOLSZ; 
 	 npoolmethod.buffer = 
-	    (obj_t *)GC_MALLOC_UNCOLLECTABLE( sizeof(obj_t)*JSMETHOD_POOLSZ ); 
+	    (obj_t *)GC_MALLOC_UNCOLLECTABLE(sizeof(obj_t)*JSMETHOD_POOLSZ); 
 	 npoolmethod.idx = JSMETHOD_POOLSZ; 
-	 pool_queue_add( &npoolmethod ); 
+	 pool_queue_add(&npoolmethod); 
       } 
 
       /* default slow alloc */ 
-      ALLOC_STAT( slowmethod++ ); 
-      alloc_spin_unlock( &lockmethod ); 
-      return bgl_make_jsmethod_sans( procedure, method, 
+      ALLOC_STAT(slowmethod++); 
+      alloc_spin_unlock(&lockmethod); 
+      return bgl_make_jsmethod_sans(procedure, method, 
 				       arity, constrsize,
-				       __proto__, info );
+				       __proto__, info);
    } 
 }
 #endif
@@ -1280,21 +1304,21 @@ bgl_make_jsmethod( obj_t procedure, obj_t method,
 #   define BGL_MAKE_JSPROCEDURE_SANS obj_t bgl_make_jsprocedure
 #endif
 
-BGL_MAKE_JSPROCEDURE_SANS( obj_t procedure, long arity, obj_t __proto__ ) {
-   BgL_jsprocedurez00_bglt o = (BgL_jsprocedurez00_bglt)HOP_MALLOC( JSPROCEDURE_SIZE );
+BGL_MAKE_JSPROCEDURE_SANS(obj_t procedure, long arity, obj_t __proto__) {
+   BgL_jsprocedurez00_bglt o = (BgL_jsprocedurez00_bglt)HOP_MALLOC(JSPROCEDURE_SIZE);
 
    // class initialization
-   BGL_OBJECT_CLASS_NUM_SET( BNANOBJECT( o ), JSPROCEDURE_CLASS_INDEX );
+   BGL_OBJECT_CLASS_NUM_SET(BNANOBJECT(o), JSPROCEDURE_CLASS_NUM);
 
    // immutable fields init
-   BGL_OBJECT_WIDENING_SET( BNANOBJECT( o ), __proto__ );
-   BGL_OBJECT_HEADER_SIZE_SET( BNANOBJECT( o ), (long)jsprocedure_mode );
+   BGL_OBJECT_WIDENING_SET(BNANOBJECT(o), __proto__);
+   BGL_OBJECT_HEADER_SIZE_SET(BNANOBJECT(o), (long)jsprocedure_mode);
    o->BgL_cmapz00 = jsfunction_cmap;
    o->BgL_elementsz00 = empty_vector;
       
    // mutable fields init
 #if HOP_ALLOC_JSPROCEDURE_POLICY != HOP_ALLOC_CLASSIC
-   if( procedure )
+   if (procedure)
 #endif
    {
       o->BgL_procedurez00 = procedure;
@@ -1302,7 +1326,7 @@ BGL_MAKE_JSPROCEDURE_SANS( obj_t procedure, long arity, obj_t __proto__ ) {
       o->BgL_cmapz00 = jsprocedure_cmap;
    }
 
-   return BNANOBJECT( o );
+   return BNANOBJECT(o);
 }
 
 /*---------------------------------------------------------------------*/
@@ -1311,62 +1335,71 @@ BGL_MAKE_JSPROCEDURE_SANS( obj_t procedure, long arity, obj_t __proto__ ) {
 /*---------------------------------------------------------------------*/
 #if HOP_ALLOC_JSPROCEDURE_POLICY != HOP_ALLOC_CLASSIC
 obj_t
-bgl_make_jsprocedure( obj_t procedure, long arity, obj_t __proto__ ) {
-   alloc_spin_lock( &lockprocedure );
+bgl_make_jsprocedure(obj_t procedure, long arity, obj_t __proto__) {
+   alloc_spin_lock(&lockprocedure);
 
-   if( poolprocedure.idx < JSPROCEDURE_POOLSZ ) { 
-      obj_t o = poolprocedure.buffer[ poolprocedure.idx ]; 
-      poolprocedure.buffer[ poolprocedure.idx++ ] = 0; 
-      alloc_spin_unlock( &lockprocedure );
+   if (poolprocedure.idx < JSPROCEDURE_POOLSZ) { 
+      obj_t o = poolprocedure.buffer[poolprocedure.idx]; 
+      poolprocedure.buffer[poolprocedure.idx++] = 0; 
+      alloc_spin_unlock(&lockprocedure);
       
-      BGL_OBJECT_WIDENING_SET( o, __proto__ );
-      ((BgL_jsprocedurez00_bglt)(COBJECT( o )))->BgL_procedurez00 = procedure;
-      ((BgL_jsprocedurez00_bglt)(COBJECT( o )))->BgL_arityz00 = arity;
+      BGL_OBJECT_WIDENING_SET(o, __proto__);
+      ((BgL_jsprocedurez00_bglt)(COBJECT(o)))->BgL_procedurez00 = procedure;
+      ((BgL_jsprocedurez00_bglt)(COBJECT(o)))->BgL_arityz00 = arity;
       
-      ALLOC_STAT( inlprocedure++ ); 
+      ALLOC_STAT(inlprocedure++); 
       return o; 
-   } else if( npoolprocedure.idx == 0 ) { 
+   } else if (npoolprocedure.idx == 0) { 
       /* swap the two pools */ 
       obj_t *buffer = poolprocedure.buffer; 
-      obj_t o = npoolprocedure.buffer[ 0 ]; 
+      obj_t o = npoolprocedure.buffer[0]; 
       
       poolprocedure.buffer = npoolprocedure.buffer; 
-      poolprocedure.buffer[ 0 ] = 0; 
+      poolprocedure.buffer[0] = 0; 
       poolprocedure.idx = 1; 
       
       npoolprocedure.buffer = buffer; 
       npoolprocedure.idx = npoolprocedure.size; 
       
       /* add the pool to the pool queue */ 
-      pool_queue_add( &npoolprocedure ); 
+      pool_queue_add(&npoolprocedure); 
       
-      BGL_OBJECT_WIDENING_SET( o, __proto__ );
-      ((BgL_jsprocedurez00_bglt)(COBJECT( o )))->BgL_procedurez00 = procedure;
-      ((BgL_jsprocedurez00_bglt)(COBJECT( o )))->BgL_arityz00 = arity;
+      BGL_OBJECT_WIDENING_SET(o, __proto__);
+      ((BgL_jsprocedurez00_bglt)(COBJECT(o)))->BgL_procedurez00 = procedure;
+      ((BgL_jsprocedurez00_bglt)(COBJECT(o)))->BgL_arityz00 = arity;
       
-      ALLOC_STAT( sndprocedure++ ); 
-      alloc_spin_unlock( &lockprocedure );
+      ALLOC_STAT(sndprocedure++); 
+      alloc_spin_unlock(&lockprocedure);
 
       return o; 
    } else { 
       /* initialize the two alloc pools */ 
-      if( !poolprocedure.buffer ) { 
+      if (!poolprocedure.buffer) { 
 	 poolprocedure.buffer = 
-	    (obj_t *)GC_MALLOC_UNCOLLECTABLE( sizeof(obj_t)*JSPROCEDURE_POOLSZ ); 
+	    (obj_t *)GC_MALLOC_UNCOLLECTABLE(sizeof(obj_t)*JSPROCEDURE_POOLSZ); 
 	 poolprocedure.idx = JSPROCEDURE_POOLSZ; 
 	 npoolprocedure.buffer = 
-	    (obj_t *)GC_MALLOC_UNCOLLECTABLE( sizeof(obj_t)*JSPROCEDURE_POOLSZ ); 
+	    (obj_t *)GC_MALLOC_UNCOLLECTABLE(sizeof(obj_t)*JSPROCEDURE_POOLSZ); 
 	 npoolprocedure.idx = JSPROCEDURE_POOLSZ; 
-	 pool_queue_add( &npoolprocedure ); 
+	 pool_queue_add(&npoolprocedure); 
       } 
 
       /* default slow alloc */ 
-      ALLOC_STAT( slowprocedure++ ); 
-      alloc_spin_unlock( &lockprocedure ); 
-      return bgl_make_jsprocedure_sans( procedure, arity, __proto__ );
+      ALLOC_STAT(slowprocedure++); 
+      alloc_spin_unlock(&lockprocedure); 
+      return bgl_make_jsprocedure_sans(procedure, arity, __proto__);
    } 
 }
 #endif
+
+/*---------------------------------------------------------------------*/
+/*    obj_t                                                            */
+/*    bgl_make_jsprocedure_bmem ...                                    */
+/*---------------------------------------------------------------------*/
+obj_t
+bgl_make_jsprocedure_bmem(obj_t procedure, long arity, obj_t __proto__) {
+   return bgl_make_jsprocedure_sans(procedure, arity, __proto__);
+}
 
 /*---------------------------------------------------------------------*/
 /*    obj_t                                                            */
@@ -1378,11 +1411,11 @@ bgl_make_jsprocedure( obj_t procedure, long arity, obj_t __proto__ ) {
 #   define BGL_MAKE_JSSTRINGLITERALASCII_SANS obj_t bgl_make_jsstringliteralascii
 #endif
 
-BGL_MAKE_JSSTRINGLITERALASCII_SANS( uint32_t len, obj_t left, obj_t right ) {
-   BgL_jsstringliteralasciiz00_bglt o = (BgL_jsstringliteralasciiz00_bglt)HOP_MALLOC( JSSTRINGLITERALASCII_SIZE );
+BGL_MAKE_JSSTRINGLITERALASCII_SANS(uint32_t len, obj_t left, obj_t right) {
+   BgL_jsstringliteralasciiz00_bglt o = (BgL_jsstringliteralasciiz00_bglt)HOP_MALLOC(JSSTRINGLITERALASCII_SIZE);
 
    // class initialization
-   BGL_OBJECT_CLASS_NUM_SET( BNANOBJECT( o ), JSSTRINGLITERALASCII_CLASS_INDEX );
+   BGL_OBJECT_CLASS_NUM_SET(BNANOBJECT(o), JSSTRINGLITERALASCII_CLASS_NUM);
 
    // field init
    o->BgL_lengthz00 = len;
@@ -1390,10 +1423,10 @@ BGL_MAKE_JSSTRINGLITERALASCII_SANS( uint32_t len, obj_t left, obj_t right ) {
    o->BgL_rightz00 = right;
    
    // immutable fields init
-   BGL_OBJECT_WIDENING_SET( BNANOBJECT( o ), BFALSE );
-   BGL_OBJECT_HEADER_SIZE_SET( BNANOBJECT( o ), (long)jsstringliteralascii_mode );
+   BGL_OBJECT_WIDENING_SET(BNANOBJECT(o), BFALSE);
+   BGL_OBJECT_HEADER_SIZE_SET(BNANOBJECT(o), (long)jsstringliteralascii_mode);
 
-   return BNANOBJECT( o );
+   return BNANOBJECT(o);
 }
 
 /*---------------------------------------------------------------------*/
@@ -1402,60 +1435,60 @@ BGL_MAKE_JSSTRINGLITERALASCII_SANS( uint32_t len, obj_t left, obj_t right ) {
 /*---------------------------------------------------------------------*/
 #if HOP_ALLOC_JSSTRINGLITERALASCII_POLICY != HOP_ALLOC_CLASSIC
 obj_t
-bgl_make_jsstringliteralascii( uint32_t len, obj_t left, obj_t right ) {
-   alloc_spin_lock( &lockstringliteralascii );
+bgl_make_jsstringliteralascii(uint32_t len, obj_t left, obj_t right) {
+   alloc_spin_lock(&lockstringliteralascii);
 
-   if( poolstringliteralascii.idx < JSSTRINGLITERALASCII_POOLSZ ) {
-      obj_t o = poolstringliteralascii.buffer[ poolstringliteralascii.idx ];
-      poolstringliteralascii.buffer[ poolstringliteralascii.idx++ ] = 0;
-      alloc_spin_unlock( &lockstringliteralascii );
+   if (poolstringliteralascii.idx < JSSTRINGLITERALASCII_POOLSZ) {
+      obj_t o = poolstringliteralascii.buffer[poolstringliteralascii.idx];
+      poolstringliteralascii.buffer[poolstringliteralascii.idx++] = 0;
+      alloc_spin_unlock(&lockstringliteralascii);
 
-      ((BgL_jsstringliteralasciiz00_bglt)(COBJECT( o )))->BgL_lengthz00 = len; 
-      ((BgL_jsstringliteralasciiz00_bglt)(COBJECT( o )))->BgL_leftz00 = left; 
-      ((BgL_jsstringliteralasciiz00_bglt)(COBJECT( o )))->BgL_rightz00 = right;
+      ((BgL_jsstringliteralasciiz00_bglt)(COBJECT(o)))->BgL_lengthz00 = len; 
+      ((BgL_jsstringliteralasciiz00_bglt)(COBJECT(o)))->BgL_leftz00 = left; 
+      ((BgL_jsstringliteralasciiz00_bglt)(COBJECT(o)))->BgL_rightz00 = right;
 
-      ALLOC_STAT( inlstringliteralascii++ );
+      ALLOC_STAT(inlstringliteralascii++);
       return o;
-   } else if( npoolstringliteralascii.idx == 0 ) {
+   } else if (npoolstringliteralascii.idx == 0) {
       /* swap the two pools */
       obj_t *buffer = poolstringliteralascii.buffer;
       obj_t *nbuffer = npoolstringliteralascii.buffer;
-      obj_t o = nbuffer[ 0 ];
+      obj_t o = nbuffer[0];
 
       poolstringliteralascii.buffer = nbuffer;
-      poolstringliteralascii.buffer[ 0 ] = 0;
+      poolstringliteralascii.buffer[0] = 0;
       poolstringliteralascii.idx = 1;
 
       npoolstringliteralascii.buffer = buffer;
       npoolstringliteralascii.idx = npoolstringliteralascii.size;
 
       /* add the pool to the pool queue */
-      pool_queue_add( &npoolstringliteralascii );
+      pool_queue_add(&npoolstringliteralascii);
 
-      ((BgL_jsstringliteralasciiz00_bglt)(COBJECT( o )))->BgL_lengthz00 = len; 
-      ((BgL_jsstringliteralasciiz00_bglt)(COBJECT( o )))->BgL_leftz00 = left; 
-      ((BgL_jsstringliteralasciiz00_bglt)(COBJECT( o )))->BgL_rightz00 = right;
+      ((BgL_jsstringliteralasciiz00_bglt)(COBJECT(o)))->BgL_lengthz00 = len; 
+      ((BgL_jsstringliteralasciiz00_bglt)(COBJECT(o)))->BgL_leftz00 = left; 
+      ((BgL_jsstringliteralasciiz00_bglt)(COBJECT(o)))->BgL_rightz00 = right;
       
-      ALLOC_STAT( sndstringliteralascii++ );
-      alloc_spin_unlock( &lockstringliteralascii );
+      ALLOC_STAT(sndstringliteralascii++);
+      alloc_spin_unlock(&lockstringliteralascii);
 
       return o;
    } else {
       /* initialize the two alloc pools */
-      if( !poolstringliteralascii.buffer ) {
+      if (!poolstringliteralascii.buffer) {
 	 poolstringliteralascii.buffer =
-	    (obj_t *)GC_MALLOC_UNCOLLECTABLE( sizeof(obj_t)*JSSTRINGLITERALASCII_POOLSZ );
+	    (obj_t *)GC_MALLOC_UNCOLLECTABLE(sizeof(obj_t)*JSSTRINGLITERALASCII_POOLSZ);
 	 poolstringliteralascii.idx = JSSTRINGLITERALASCII_POOLSZ;
 	 npoolstringliteralascii.buffer =
-	    (obj_t *)GC_MALLOC_UNCOLLECTABLE( sizeof(obj_t)*JSSTRINGLITERALASCII_POOLSZ );
+	    (obj_t *)GC_MALLOC_UNCOLLECTABLE(sizeof(obj_t)*JSSTRINGLITERALASCII_POOLSZ);
 	 npoolstringliteralascii.idx = JSSTRINGLITERALASCII_POOLSZ;
-	 pool_queue_add( &npoolstringliteralascii );
+	 pool_queue_add(&npoolstringliteralascii);
       }
 
       /* default slow alloc */
-      ALLOC_STAT( slowstringliteralascii++ );
-      alloc_spin_unlock( &lockstringliteralascii );
-      return bgl_make_jsstringliteralascii_sans( len, left, right );
+      ALLOC_STAT(slowstringliteralascii++);
+      alloc_spin_unlock(&lockstringliteralascii);
+      return bgl_make_jsstringliteralascii_sans(len, left, right);
    }
 }
 #endif
@@ -1467,57 +1500,57 @@ bgl_make_jsstringliteralascii( uint32_t len, obj_t left, obj_t right ) {
 /*    This version is not used currently                               */
 /*---------------------------------------------------------------------*/
 obj_t
-bgl_jsstring_append_ascii( obj_t left, obj_t right ) {
-   uint32_t len = ((BgL_jsstringliteralasciiz00_bglt)(COBJECT( left )))->BgL_lengthz00
-      + ((BgL_jsstringliteralasciiz00_bglt)(COBJECT( right )))->BgL_lengthz00;
+bgl_jsstring_append_ascii(obj_t left, obj_t right) {
+   uint32_t len = ((BgL_jsstringliteralasciiz00_bglt)(COBJECT(left)))->BgL_lengthz00
+      + ((BgL_jsstringliteralasciiz00_bglt)(COBJECT(right)))->BgL_lengthz00;
 
-   alloc_spin_lock( &lockstringliteralascii );
+   alloc_spin_lock(&lockstringliteralascii);
    
-   if( len < jsstringliteralascii_normalize_threshold ) {
+   if (len < jsstringliteralascii_normalize_threshold) {
       obj_t nleft = string_append(
-	 ((BgL_jsstringliteralasciiz00_bglt)(COBJECT( left )))->BgL_leftz00,
-	 ((BgL_jsstringliteralasciiz00_bglt)(COBJECT( right )))->BgL_leftz00 );
+	 ((BgL_jsstringliteralasciiz00_bglt)(COBJECT(left)))->BgL_leftz00,
+	 ((BgL_jsstringliteralasciiz00_bglt)(COBJECT(right)))->BgL_leftz00);
       obj_t nright = jsstringliteralascii_not_a_string_cache;
 
-      if( poolstringliteralascii.idx < JSSTRINGLITERALASCII_POOLSZ ) {
-	 obj_t o = poolstringliteralascii.buffer[ poolstringliteralascii.idx ];
-	 poolstringliteralascii.buffer[ poolstringliteralascii.idx++ ] = 0;
-	 alloc_spin_unlock( &lockstringliteralascii );
+      if (poolstringliteralascii.idx < JSSTRINGLITERALASCII_POOLSZ) {
+	 obj_t o = poolstringliteralascii.buffer[poolstringliteralascii.idx];
+	 poolstringliteralascii.buffer[poolstringliteralascii.idx++] = 0;
+	 alloc_spin_unlock(&lockstringliteralascii);
 
-	 BGL_OBJECT_HEADER_SIZE_SET( o, (long)jsstringliteralascii_normmode );
+	 BGL_OBJECT_HEADER_SIZE_SET(o, (long)jsstringliteralascii_normmode);
 	 
-	 ((BgL_jsstringliteralasciiz00_bglt)(COBJECT( o )))->BgL_lengthz00 = len; 
-	 ((BgL_jsstringliteralasciiz00_bglt)(COBJECT( o )))->BgL_leftz00 = nleft; 
-	 ((BgL_jsstringliteralasciiz00_bglt)(COBJECT( o )))->BgL_rightz00 = nright;
+	 ((BgL_jsstringliteralasciiz00_bglt)(COBJECT(o)))->BgL_lengthz00 = len; 
+	 ((BgL_jsstringliteralasciiz00_bglt)(COBJECT(o)))->BgL_leftz00 = nleft; 
+	 ((BgL_jsstringliteralasciiz00_bglt)(COBJECT(o)))->BgL_rightz00 = nright;
 
-	 ALLOC_STAT( inlstringliteralascii++ );
+	 ALLOC_STAT(inlstringliteralascii++);
 	 return o;
       } else {
-	 alloc_spin_unlock( &lockstringliteralascii );
+	 alloc_spin_unlock(&lockstringliteralascii);
 
 	 {
-	    obj_t o = bgl_make_jsstringliteralascii( len, nleft, nright );
-	    BGL_OBJECT_HEADER_SIZE_SET( o, (long)jsstringliteralascii_normmode );
+	    obj_t o = bgl_make_jsstringliteralascii(len, nleft, nright);
+	    BGL_OBJECT_HEADER_SIZE_SET(o, (long)jsstringliteralascii_normmode);
 	    return o;
 	 }
       }
    } else {
-      if( poolstringliteralascii.idx < JSSTRINGLITERALASCII_POOLSZ ) {
-	 obj_t o = poolstringliteralascii.buffer[ poolstringliteralascii.idx ];
-	 poolstringliteralascii.buffer[ poolstringliteralascii.idx++ ] = 0;
-	 alloc_spin_unlock( &lockstringliteralascii );
+      if (poolstringliteralascii.idx < JSSTRINGLITERALASCII_POOLSZ) {
+	 obj_t o = poolstringliteralascii.buffer[poolstringliteralascii.idx];
+	 poolstringliteralascii.buffer[poolstringliteralascii.idx++] = 0;
+	 alloc_spin_unlock(&lockstringliteralascii);
 
-	 ((BgL_jsstringliteralasciiz00_bglt)(COBJECT( o )))->BgL_lengthz00 = len; 
-	 ((BgL_jsstringliteralasciiz00_bglt)(COBJECT( o )))->BgL_leftz00 = left; 
-	 ((BgL_jsstringliteralasciiz00_bglt)(COBJECT( o )))->BgL_rightz00 = right;
+	 ((BgL_jsstringliteralasciiz00_bglt)(COBJECT(o)))->BgL_lengthz00 = len; 
+	 ((BgL_jsstringliteralasciiz00_bglt)(COBJECT(o)))->BgL_leftz00 = left; 
+	 ((BgL_jsstringliteralasciiz00_bglt)(COBJECT(o)))->BgL_rightz00 = right;
 
-	 ALLOC_STAT( inlstringliteralascii++ );
+	 ALLOC_STAT(inlstringliteralascii++);
 	 return o;
       } else {
-	 alloc_spin_unlock( &lockstringliteralascii );
+	 alloc_spin_unlock(&lockstringliteralascii);
 
 	 {
-	    return bgl_make_jsstringliteralascii( len, left, right );
+	    return bgl_make_jsstringliteralascii(len, left, right);
 	 }
       }
    }
@@ -1527,18 +1560,58 @@ bgl_jsstring_append_ascii( obj_t left, obj_t right ) {
 /*    static obj_t                                                     */
 /*    empty_vector ...                                                 */
 /*---------------------------------------------------------------------*/
-#if( !defined( TAG_VECTOR ) )
+#if (!defined(TAG_VECTOR))
 static struct {
    __CNST_ALIGN header_t header;
    long length;
-} _empty_vector = { __CNST_FILLER MAKE_HEADER( VECTOR_TYPE, 0 ), 0 };
-static obj_t empty_vector = BVECTOR( &(_empty_vector.header ) );
+} _empty_vector = { __CNST_FILLER MAKE_HEADER(VECTOR_TYPE, 0), 0 };
+static obj_t empty_vector = BVECTOR(&(_empty_vector.header));
 #else   
 static struct {
    __CNST_ALIGN long length;
 } _empty_vector = { __CNST_FILLER 0 };
-static obj_t empty_vector = BVECTOR( &(_empty_vector.length ) );
+static obj_t empty_vector = BVECTOR(&(_empty_vector.length));
 #endif   
+
+/*---------------------------------------------------------------------*/
+/*    BGL_MAKE_JSARRAY_SANS_INIT                                       */
+/*---------------------------------------------------------------------*/
+#if (!defined(TAG_VECTOR))
+#define BGL_TAG_VECTOR(_vec) \
+   _vec->vector.header = MAKE_HEADER(VECTOR_TYPE, 0)
+#else
+#define BGL_TAG_VECTOR(_vec) \
+   0
+#endif
+
+
+#define BGL_MAKE_JSARRAY_SANS_INIT(o, size, len, ilen, constrmap, __proto___, mode) \
+   long bsize = JSARRAY_SIZE + VECTOR_SIZE + ((size-1) * OBJ_SIZE); \
+   BgL_jsarrayz00_bglt o = (BgL_jsarrayz00_bglt)HOP_MALLOC(bsize);  \
+   obj_t vector;						      \
+								      \
+   /* class initialization */					      \
+   BGL_OBJECT_CLASS_NUM_SET(BNANOBJECT(o), JSARRAY_CLASS_NUM);  \
+								      \
+   /* fields init */						      \
+   o->BgL_cmapz00 = (BgL_jsconstructmapz00_bglt)constrmap;	      \
+   o->BgL_elementsz00 = empty_vector;				      \
+   o->BgL_lengthz00 = len;					      \
+   o->BgL_ilenz00 = ilen;					      \
+   BGL_OBJECT_HEADER_SIZE_SET(BNANOBJECT(o), (long)mode);	      \
+   BGL_OBJECT_WIDENING_SET(BNANOBJECT(o), __proto__);	      \
+								      \
+   /* vector initialization */					      \
+   if (size > 0) {						      \
+      vector = (obj_t)(&(o->BgL_vecz00) + 1);			      \
+      BGL_TAG_VECTOR(vector);					      \
+      vector->vector.length = size;				      \
+      vector = BVECTOR(vector);				      \
+   } else {							      \
+      vector = empty_vector;					      \
+   }								      \
+								      \
+   o->BgL_vecz00 = vector;					      \
    
 /*---------------------------------------------------------------------*/
 /*    obj_t                                                            */
@@ -1554,35 +1627,9 @@ static obj_t empty_vector = BVECTOR( &(_empty_vector.length ) );
 /*    GC has to be configured with INNER_POINTER activated.            */
 /*---------------------------------------------------------------------*/
 obj_t
-bgl_make_jsarray_sans_init( long size, uint32_t len, uint32_t ilen, obj_t constrmap, obj_t __proto__, uint32_t mode ) {
-   long bsize = JSARRAY_SIZE + VECTOR_SIZE + ( (size-1) * OBJ_SIZE );
-   BgL_jsarrayz00_bglt o = (BgL_jsarrayz00_bglt)HOP_MALLOC( bsize );
-   obj_t vector;
-   int i;
-
-   // class initialization
-   BGL_OBJECT_CLASS_NUM_SET( BNANOBJECT( o ), JSARRAY_CLASS_INDEX );
-   
-   // fields init
-   o->BgL_cmapz00 = (BgL_jsconstructmapz00_bglt)constrmap;
-   o->BgL_elementsz00 = empty_vector;
-   o->BgL_lengthz00 = len;
-   o->BgL_ilenz00 = ilen;
-   BGL_OBJECT_HEADER_SIZE_SET( BNANOBJECT( o ), (long)mode );
-   BGL_OBJECT_WIDENING_SET( BNANOBJECT( o ), __proto__ );
-  
-   // vector initialization
-   vector = (obj_t)(&(o->BgL_vecz00) + 1);
-
-#if( !defined( TAG_VECTOR ) )
-   vector->vector.header = MAKE_HEADER( VECTOR_TYPE, 0 );
-#endif		
-   vector->vector.length = size;
-   vector = BVECTOR( vector );
-   
-   o->BgL_vecz00 = vector;
-
-   return BNANOBJECT( o );
+bgl_make_jsarray_sans_init(long size, uint32_t len, uint32_t ilen, obj_t constrmap, obj_t __proto__, uint32_t mode) {
+   BGL_MAKE_JSARRAY_SANS_INIT(o, size, len, ilen, constrmap, __proto__, mode);
+   return BNANOBJECT(o);
 }
 
 /*---------------------------------------------------------------------*/
@@ -1590,17 +1637,19 @@ bgl_make_jsarray_sans_init( long size, uint32_t len, uint32_t ilen, obj_t constr
 /*    bgl_make_jsarray ...                                             */
 /*---------------------------------------------------------------------*/
 obj_t
-bgl_make_jsarray( long size, uint32_t len, obj_t constrmap, obj_t __proto__, obj_t absent, uint32_t mode ) {
-   obj_t array = bgl_make_jsarray_sans_init( size, len, 0, constrmap, __proto__, mode );
-   BgL_jsarrayz00_bglt o = (BgL_jsarrayz00_bglt)COBJECT( array );
-   obj_t vector = o->BgL_vecz00;
-   int i;
+bgl_make_jsarray(long size, uint32_t len, obj_t constrmap, obj_t __proto__, obj_t absent, uint32_t mode) {
+   BGL_MAKE_JSARRAY_SANS_INIT(array, size, len, 0, constrmap, __proto__, mode);
+   BgL_jsarrayz00_bglt o = (BgL_jsarrayz00_bglt)(array);
 
-   for( i = 0; i < size; i++ ) {
-      VECTOR_SET( vector, i, absent );
+   if (size > 0) {
+      obj_t ivector = o->BgL_vecz00;
+      
+      for (int i = 0; i < size; i++) {
+	 VECTOR_SET(ivector, i, absent);
+      }
    }
 
-   return array;
+   return BNANOBJECT(array);
 }
 
 /*---------------------------------------------------------------------*/
@@ -1608,19 +1657,18 @@ bgl_make_jsarray( long size, uint32_t len, obj_t constrmap, obj_t __proto__, obj
 /*    bgl_jsarray_shift_builtin ...                                    */
 /*---------------------------------------------------------------------*/
 obj_t
-bgl_jsarray_shift_builtin( obj_t array ) {
-   BgL_jsarrayz00_bglt o = (BgL_jsarrayz00_bglt)COBJECT( array );
-   obj_t vec = CVECTOR( o->BgL_vecz00 );
-   obj_t res = VECTOR_REF( BVECTOR( vec ), 0 );
-   long size = VECTOR_LENGTH( BVECTOR( vec ) );
+bgl_jsarray_shift_builtin(obj_t array) {
+   BgL_jsarrayz00_bglt o = (BgL_jsarrayz00_bglt)COBJECT(array);
+   obj_t vec = CVECTOR(o->BgL_vecz00);
+   obj_t res = VECTOR_REF(BVECTOR(vec), 0);
+   long size = VECTOR_LENGTH(BVECTOR(vec));
    obj_t nvec = (obj_t)(((obj_t *)vec) + 1);
 
-#if( !defined( TAG_VECTOR ) )
-   nvec->vector.header = MAKE_HEADER( VECTOR_TYPE, 0 );
-#endif		
+   BGL_TAG_VECTOR(nvec);
    nvec->vector.length = size - 1;
-   nvec = BVECTOR( nvec );
-   
+   nvec = BVECTOR(nvec);
+
+   // assign to remember that this array is fully inlined
    *(&(o->BgL_vecz00) + 1) = nvec;
    o->BgL_vecz00 = nvec;
 
@@ -1632,21 +1680,19 @@ bgl_jsarray_shift_builtin( obj_t array ) {
 /*    bgl_init_vector ...                                              */
 /*---------------------------------------------------------------------*/
 obj_t
-bgl_init_vector( obj_t vector, long len, obj_t init ) {
-#if(  VECTOR_SIZE_TAG_NB_BIT != 0 )
-   if( len & ~(VECTOR_LENGTH_MASK) ) {
-      C_FAILURE( "create_vector", "vector too large", BINT( len ) );
+bgl_init_vector(obj_t vector, long len, obj_t init) {
+#if ( VECTOR_SIZE_TAG_NB_BIT != 0)
+   if (len & ~(VECTOR_LENGTH_MASK)) {
+      C_FAILURE("create_vector", "vector too large", BINT(len));
       return BUNSPEC;
    } else
 #endif
    {
-#if( !defined( TAG_VECTOR ) )
-      vector->vector.header = MAKE_HEADER( VECTOR_TYPE, 0 );
-#endif
+      BGL_TAG_VECTOR(vector);
       vector->vector.length = len;
 
-      bgl_fill_vector( BVECTOR( vector ), 0, len, init );
-      return BVECTOR( vector );
+      bgl_fill_vector(BVECTOR(vector), 0, len, init);
+      return BVECTOR(vector);
    }
 }
 
@@ -1655,20 +1701,18 @@ bgl_init_vector( obj_t vector, long len, obj_t init ) {
 /*    bgl_init_vector_sans_fill ...                                    */
 /*---------------------------------------------------------------------*/
 obj_t
-bgl_init_vector_sans_fill( obj_t vector, long len ) {
-#if(  VECTOR_SIZE_TAG_NB_BIT != 0 )
-   if( len & ~(VECTOR_LENGTH_MASK) ) {
-      C_FAILURE( "create_vector", "vector too large", BINT( len ) );
+bgl_init_vector_sans_fill(obj_t vector, long len) {
+#if ( VECTOR_SIZE_TAG_NB_BIT != 0)
+   if (len & ~(VECTOR_LENGTH_MASK)) {
+      C_FAILURE("create_vector", "vector too large", BINT(len));
       return BUNSPEC;
    } else
 #endif
    {
-#if( !defined( TAG_VECTOR ) )
-      vector->vector.header = MAKE_HEADER( VECTOR_TYPE, 0 );
-#endif
+      BGL_TAG_VECTOR(vector);
       vector->vector.length = len;
 
-      return BVECTOR( vector );
+      return BVECTOR(vector);
    }
 }
 
@@ -1677,8 +1721,8 @@ bgl_init_vector_sans_fill( obj_t vector, long len ) {
 /*    bgl_vector_bytesize ...                                          */
 /*---------------------------------------------------------------------*/
 long
-bgl_vector_bytesize( long len ) {
-   return VECTOR_SIZE + ( (len-1) * OBJ_SIZE );
+bgl_vector_bytesize(long len) {
+   return VECTOR_SIZE + ((len-1) * OBJ_SIZE);
 }
 
 /*---------------------------------------------------------------------*/
@@ -1689,15 +1733,15 @@ bgl_vector_bytesize( long len ) {
 /*    entries.                                                         */
 /*---------------------------------------------------------------------*/
 obj_t
-bgl_make_pcache_table( obj_t obj, int len, obj_t src, obj_t thread, obj_t template ) {
+bgl_make_pcache_table(obj_t obj, int len, obj_t src, obj_t thread, obj_t template) {
    pcache_t *pcache = (pcache_t *)obj;
    int i;
 
-   for( i = 0; i < len; i++ ) {
-      memcpy( &(pcache[ i ]), COBJECT( template ), sizeof( pcache_t ) );
+   for (i = 0; i < len; i++) {
+      memcpy(&(pcache[i]), COBJECT(template), sizeof(pcache_t));
    }
 
-   bgl_profile_pcache_tables = MAKE_PAIR( MAKE_PAIR( (obj_t)pcache, BINT( len ) ), bgl_profile_pcache_tables );
+   bgl_profile_pcache_tables = MAKE_PAIR(MAKE_PAIR((obj_t)pcache, BINT(len)), bgl_profile_pcache_tables);
 
    return obj;
 }
@@ -1715,17 +1759,83 @@ bgl_profile_get_pcaches() {
    obj_t res = BNIL;
    obj_t tables = bgl_profile_pcache_tables;
 
-   while( PAIRP( tables ) ) {
-      obj_t table = CAR( tables );
-      long i = CINT( CDR( table ) );
-      pcache_t *pcache = (pcache_t *)CAR( table );
+   while (PAIRP(tables)) {
+      obj_t table = CAR(tables);
+      long i = CINT(CDR(table));
+      pcache_t *pcache = (pcache_t *)CAR(table);
 
-      while( --i >= 0 ) {
-	 res = MAKE_PAIR( BNANOBJECT( &(pcache[ i ]) ), res );
+      while (--i >= 0) {
+	 res = MAKE_PAIR(BNANOBJECT(&(pcache[i])), res);
       }
 
-      tables = CDR( tables );
+      tables = CDR(tables);
    }
    return res;
 }
 
+/*---------------------------------------------------------------------*/
+/*    obj_t                                                            */
+/*    bgl_make_jsgenerator ...                                         */
+/*---------------------------------------------------------------------*/
+obj_t
+bgl_make_jsgenerator(obj_t constrmap, obj_t __proto__, long sz, obj_t next, uint32_t mode) {
+   long bsize = JSGENERATOR_SIZE + VECTOR_SIZE + ((sz-1) * OBJ_SIZE);
+   BgL_jsgeneratorz00_bglt o = (BgL_jsgeneratorz00_bglt)HOP_MALLOC(bsize);
+   obj_t env;
+
+   /* class initialization */
+   BGL_OBJECT_CLASS_NUM_SET(BNANOBJECT(o), JSGENERATOR_CLASS_NUM);
+
+   /* fields init */
+   o->BgL_cmapz00 = (BgL_jsconstructmapz00_bglt)constrmap;
+   o->BgL_elementsz00 = empty_vector;
+   BGL_OBJECT_HEADER_SIZE_SET(BNANOBJECT(o), (long)mode);
+   BGL_OBJECT_WIDENING_SET(BNANOBJECT(o), __proto__);
+
+   /* vector initialization */
+   env = (obj_t)(&(o->BgL_z52envz52) + 1);
+   BGL_TAG_VECTOR(env);
+   env->vector.length = sz;
+   env = BVECTOR(env);
+
+   /* generator field initialization */
+   o->BgL_z52nextz52 = next;
+   o->BgL_z52envz52 = env;
+
+   return BNANOBJECT(o);
+}
+
+/*---------------------------------------------------------------------*/
+/*    obj_t                                                            */
+/*    bgl_init_jsyield_object ...                                      */
+/*---------------------------------------------------------------------*/
+obj_t
+bgl_init_jsyield_object(obj_t p) {
+   BgL_jsobjectz00_bglt o = (BgL_jsobjectz00_bglt)p;
+   obj_t vector;
+
+   // class initialization
+   BGL_OBJECT_CLASS_NUM_SET(BNANOBJECT(o), JSYIELD_CLASS_NUM);
+
+   // fields init
+   o->BgL_elementsz00 = empty_vector;
+   BGL_OBJECT_HEADER_SIZE_SET(BNANOBJECT(o), jsobject_mode);
+   
+   // elements initialization
+   vector = (obj_t)(&(o->BgL_elementsz00) + 1);
+
+#if (!defined(TAG_VECTOR))
+   vector->vector.header = MAKE_HEADER(VECTOR_TYPE, 0);
+#endif		
+   vector->vector.length = JSYIELD_OBJECT_CONSTRSIZE;
+
+#if (defined(DEBUG))
+   vector = BVECTOR(vector);
+
+   for (int i = 0; i < 2; i++) {
+      VECTOR_SET(vector, i, BUNSPEC);
+   }
+#endif
+   
+   return BNANOBJECT(o);
+}

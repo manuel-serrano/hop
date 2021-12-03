@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Apr 28 09:27:42 2021 (serrano)                */
+;*    Last change :  Sun Sep 26 18:55:18 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Math                         */
@@ -42,7 +42,9 @@
 	   (js-math-round ::obj)
 	   (js-math-roundfl ::double)
 	   (js-math-atan2fl::double ::double ::double)
-	   (js-math-atan2::double ::obj ::obj)))
+	   (js-math-atan2::double ::obj ::obj)
+	   (js-math-signfl::obj ::double)
+	   (js-math-sign::obj ::obj ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
@@ -369,7 +371,19 @@
 	 :configurable #t
 	 :enumerable #f
 	 :hidden-class #f)
-      
+
+      ;; sign
+      ;; https://tc39.es/ecma262/multipage/numbers-and-dates.html#sec-math.sign
+      (js-bind! %this js-math (& "sign")
+	 :value (js-make-function %this
+		   (lambda (this x) (js-math-sign x %this))
+		   (js-function-arity 1 0)
+		   (js-function-info :name "round" :len 1))
+	 :writable #t
+	 :configurable #t
+	 :enumerable #f
+	 :hidden-class #f)
+	 
       ;; sin
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.8.2.16
       (define (js-math-sin this x)
@@ -588,6 +602,35 @@
 	  (else
 	   0.0))
        (atan y x)))
+
+;*---------------------------------------------------------------------*/
+;*    js-math-sign ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (js-math-sign x %this)
+   (let loop ((x x))
+      (cond
+	 ((flonum? x)
+	  (js-math-signfl x))
+	 ((fixnum? x)
+	  (cond
+	     ((>fx x 0) 1)
+	     ((<fx x 0) -1)
+	     (else 0)))
+	 (else
+	  (loop (js-tonumber x %this))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-math-signfl ...                                               */
+;*---------------------------------------------------------------------*/
+(define (js-math-signfl x)
+   (cond
+      ((=fl x 0.0)
+       (cond
+	  ((>fx (signbitfl x) 0) +0.0)
+	  ((<fx (signbitfl x) 0) -0.0)
+	  (else 0)))
+      ((>fx (signbitfl x) 0) 1)
+      (else -1)))
 
 ;*---------------------------------------------------------------------*/
 ;*    &end!                                                            */

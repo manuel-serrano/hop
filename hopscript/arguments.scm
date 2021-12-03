@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Wed Jun 16 17:59:41 2021 (serrano)                */
+;*    Last change :  Mon Aug 30 16:51:21 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
@@ -155,17 +155,17 @@
 	       (configurable #f))))
       ;; arguments cmap
       (let ((arguments-cmap-props
-	       `#(,(prop (& "length") (property-flags #t #f #t #f))
-		  ,(prop (& "callee") (property-flags #t #f #t #f)))))
+	       `#(,(prop (& "length") (property-flags #t #f #t #f #f))
+		  ,(prop (& "callee") (property-flags #t #f #t #f #f)))))
 	 (set! js-arguments-cmap
 	    (js-make-jsconstructmap
 	       :methods (make-vector (vector-length arguments-cmap-props))
 	       :props arguments-cmap-props)))
       ;; strict arguments cmap
       (let ((strict-arguments-cmap-props
-	       `#(,(prop (& "length") (property-flags #t #f #t #f))
-		  ,(prop (& "callee") (property-flags #t #f #f #t))
-		  ,(prop (& "caller") (property-flags #t #f #f #t)))))
+	       `#(,(prop (& "length") (property-flags #t #f #t #f #f))
+		  ,(prop (& "callee") (property-flags #t #f #f #t #f))
+		  ,(prop (& "caller") (property-flags #t #f #f #t #f)))))
 	 (set! js-strict-arguments-cmap
 	    (js-make-jsconstructmap
 	       :methods (make-vector (vector-length strict-arguments-cmap-props))
@@ -557,13 +557,11 @@
 ;*---------------------------------------------------------------------*/
 (define (js-arguments %this::JsGlobalObject vec::vector)
    (with-access::JsGlobalObject %this (js-arguments-cmap)
-      (let ((a (instantiateJsArguments
-		  (vec vec)
-		  (cmap js-arguments-cmap)
-		  (elements (vector (vector-length vec) (js-undefined)))
-		  (__proto__ (js-object-proto %this)))))
-	 (js-object-mode-inline-set! a #f)
-	 a)))
+      (instantiateJsArguments
+	 (vec vec)
+	 (cmap js-arguments-cmap)
+	 (elements (vector (vector-length vec) (js-undefined)))
+	 (__proto__ (js-object-proto %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-strict-arguments ...                                          */
@@ -584,18 +582,16 @@
 	 (configurable #t)
 	 (enumerable #t)))
    
-   (let* ((len (vector-length vec)))
+   (let ((len (vector-length vec)))
       ;; build the arguments object
-      (let ((a (with-access::JsGlobalObject %this (js-strict-arguments-cmap)
-		  (instantiateJsArguments
-		     (vec vec)
-		     (cmap js-strict-arguments-cmap)
-		     (elements (vector (vector-length vec)
-				  strict-callee-property
-				  strict-caller-property))
-		     (__proto__ (js-object-proto %this))))))
-	 (js-object-mode-inline-set! a #t)
-	 a)))
+      (with-access::JsGlobalObject %this (js-strict-arguments-cmap)
+	 (instantiateJsArguments
+	    (vec vec)
+	    (cmap js-strict-arguments-cmap)
+	    (elements (vector (vector-length vec)
+			 strict-callee-property
+			 strict-caller-property))
+	    (__proto__ (js-object-proto %this))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-arguments->vector..                                           */

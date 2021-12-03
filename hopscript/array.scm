@@ -120,6 +120,7 @@
 	   (js-array-construct1::JsArray ::JsGlobalObject ::JsArray ::obj)
 	   (js-array-construct-alloc ::JsGlobalObject ::obj)
 	   (js-array-construct-alloc/length ::JsGlobalObject ::obj)
+	   (js-array-construct-alloc-init/length ::JsGlobalObject ::obj ::obj)
 	   (inline js-array-construct-alloc-small::JsArray ::JsGlobalObject ::uint32)
 	   (inline js-array-construct-alloc-small-sans-init::JsArray ::JsGlobalObject ::uint32)
 	   (inline js-array-construct-alloc/lengthu32::JsArray ::JsGlobalObject ::uint32)
@@ -128,7 +129,12 @@
 	   (jsarray->list::pair-nil ::JsArray ::JsGlobalObject)
 	   (jsarray->vector::vector ::JsArray ::JsGlobalObject)
 	   (js-array-concat ::obj args::pair-nil ::JsGlobalObject)
+	   (js-array-concat-apply vec::JsArray ::JsGlobalObject)
 	   (js-array-maybe-concat ::obj args::pair-nil ::JsGlobalObject ::obj)
+	   (js-array-concat0 ::JsArray ::JsGlobalObject ::obj)
+	   (js-array-concat0-empty ::JsGlobalObject ::obj)
+	   (js-array-concat0-create ::obj ::JsGlobalObject ::obj)
+	   (js-array-maybe-concat0 ::obj ::JsGlobalObject ::obj)
 	   (js-array-concat1 ::JsArray ::JsArray ::JsGlobalObject ::obj)
 	   (js-array-concat1-empty ::JsArray ::JsGlobalObject ::obj)
 	   (js-array-concat1-create ::obj ::JsArray ::JsGlobalObject ::obj)
@@ -159,6 +165,7 @@
 	   (js-array-maybe-filter-map this proc thisarg %this cache)
 	   (js-array-filter-map-procedure ::JsArray proc::procedure ::obj ::JsGlobalObject ::obj)
 	   (js-array-maybe-filter-map-procedure ::JsArray proc::procedure ::obj ::JsGlobalObject ::obj)
+	   (js-array-filter-map2-procedure ::JsArray procf::procedure procm::procedure ::obj ::JsGlobalObject ::obj ::obj)
 	   (js-array-flatmap ::JsArray ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-array-maybe-flatmap ::obj ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-array-flatmap-procedure ::JsArray proc::procedure ::obj ::JsGlobalObject ::obj)
@@ -175,17 +182,29 @@
 	   (js-array-maybe-reverse ::obj ::JsGlobalObject ::obj)
 	   (js-array-indexof ::JsArray ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-array-indexof0 ::JsArray ::obj ::JsGlobalObject ::obj)
+	   (js-array-maybe-indexof0 ::obj ::obj ::JsGlobalObject ::obj)
+	   (js-array-maybe-indexof ::obj ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-array-prototype-slice ::obj ::obj ::obj ::JsGlobalObject)
 	   (js-array-maybe-slice0 ::obj ::JsGlobalObject ::obj)
 	   (js-array-maybe-slice1 ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-array-prototype-maybe-slice1 this start ::JsGlobalObject)
 	   (js-array-maybe-slice2 ::obj ::obj ::obj ::JsGlobalObject ::obj)
+	   (js-array-maybe-splice2 ::obj ::obj ::obj ::JsGlobalObject ::obj)
+	   (js-array-maybe-splice2-sans-result ::obj ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-array-maybe-shift0 ::obj ::JsGlobalObject ::obj)
+	   (js-array-reduce ::JsArray ::obj ::obj ::JsGlobalObject ::obj)
+	   (js-array-maybe-reduce ::obj ::obj ::obj ::JsGlobalObject ::obj)
+	   (js-array-reduce-procedure this::JsArray proc::procedure ::obj ::JsGlobalObject cache)
+	   (js-array-maybe-reduce-procedure this::obj proc::procedure ::obj ::JsGlobalObject cache)
 	   (js-array-sort ::JsArray ::obj ::JsGlobalObject ::obj)
 	   (js-array-maybe-sort ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-array-sort-procedure this::JsArray proc::procedure ::JsGlobalObject cache)
 	   (js-array-maybe-sort-procedure this::obj proc::procedure ::JsGlobalObject cache)
 	   (js-array-maybe-some ::obj ::obj ::obj ::JsGlobalObject ::obj)
+	   (js-array-copywithin ::JsArray ::obj ::obj ::obj ::JsGlobalObject cache)
+	   (js-array-copywithin-fixnum ::JsArray ::obj ::obj ::obj ::JsGlobalObject cache)
+	   (js-array-maybe-copywithin ::JsArray ::obj ::obj ::obj ::JsGlobalObject cache)
+
 	   (js-iterator-to-array ::obj ::long ::JsGlobalObject)
 	   (js-call-with-stack-vector ::vector ::procedure)
 	   
@@ -196,6 +215,7 @@
    (export (js-array-alloc-ctor::JsArray ::JsGlobalObject ::JsFunction))
 
    (pragma (js-array-concat (args-noescape args))
+	   (js-array-concat-apply (args-noescape vec))
 	   (js-array-maybe-concat (args-noescape args))
 	   (js-array-map-procedure (args-noescape proc))
 	   (js-array-maybe-map-procedure (args-noescape proc))
@@ -206,7 +226,9 @@
 	   (js-array-filter-map-procedure (args-noescape proc))
 	   (js-array-maybe-filter-map-procedure (args-noescape proc))
 	   (js-array-sort-procedure (args-noescape proc))
-	   (js-array-maybe-sort-procedure (args-noescape proc))))
+	   (js-array-maybe-sort-procedure (args-noescape proc))
+	   (js-array-reduce-procedure (args-noescape proc))
+	   (js-array-maybe-reduce-procedure (args-noescape proc))))
 
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
@@ -220,13 +242,13 @@
    (call-next-method)
    (with-access::JsArray obj (vec ilen length)
       (fprint (current-error-port)
-	 " ilen=" ilen " length=" length " vlen=" (vector-length vec)
-	 " plain=" (js-object-mode-plain? obj)
-	 " a.inl=" (js-array-inlined? obj)
-	 " mode.inl=" (js-object-mode-inline? obj)
-	 " holey=" (js-object-mode-holey? obj))
+	 "   ilen=" ilen " length=" length " vlen=" (vector-length vec)
+	 "\n   plain=" (js-object-mode-plain? obj)
+	 " inl=" (js-array-inlined? obj)
+	 " ainl=" (js-object-mode-arrayinline? obj)
+	 " aholey=" (js-object-mode-arrayholey? obj))
       (if (<fx (vector-length vec) 20)
-	  (fprint (current-error-port) " vec=" vec)
+	  (fprint (current-error-port) "   vec=" vec)
 	  (let ((v (copy-vector vec 20)))
 	     (vector-set! v 19 "...")
 	     (fprint (current-error-port) " vec=" v)))
@@ -269,13 +291,15 @@
 ;*    code the default init slot value.                                */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-create-vector len)
-   (make-vector len (js-absent)))
+   (if (=fx len 0)
+       '#()
+       (make-vector len (js-absent))))
 
 ;*---------------------------------------------------------------------*/
 ;*    gc-cleanup-inline-vector! ...                                    */
 ;*---------------------------------------------------------------------*/
 (define (gc-cleanup-inline-vector! arr::JsArray vec::vector)
-   (when ($jsobject-vector-inline? arr)
+   (when ($js-object-vector-inline? arr)
       (vector-fill! vec #unspecified)))
 
 ;*---------------------------------------------------------------------*/
@@ -283,6 +307,8 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (DEFAULT-EMPTY-ARRAY-SIZE) 4)
 
+(define-inline (LARGE-ARRAY-SIZE::uint32)
+   #u32:8192)
 (define-inline (MAX-EXPANDABLE-ARRAY-SIZE::uint32)
    (bit-lshu32 #u32:1 20))
 (define-inline (MAX-EXPANDABLE-ARRAY-SIZE/2::uint32)
@@ -317,8 +343,8 @@
       (display "#<JsArray " op)
       (display length op)
       (cond
-	 ((js-array-inlined? obj) (display " inline>" op))
-	 ((js-object-mode-holey? obj) (display " holey>" op))
+	 ((js-object-mode-arrayinline? obj) (display " inline>" op))
+	 ((js-object-mode-arrayholey? obj) (display " holey>" op))
 	 (else (display ">" op)))))
 
 ;*---------------------------------------------------------------------*/
@@ -336,10 +362,10 @@
 	       (with-access::JsArray nobj ((nlength length) (nilen ilen))
 		  (set! nlength length)
 		  (set! nilen ilen)
-		  (js-object-mode-inline-set! nobj
-		     (js-object-mode-inline? obj))
-		  (js-object-mode-holey-set! nobj
-		     (js-object-mode-holey? obj)))
+		  (js-object-mode-arrayinline-set! nobj
+		     (js-object-mode-arrayinline? obj))
+		  (js-object-mode-arrayholey-set! nobj
+		     (js-object-mode-arrayholey? obj)))
 	       ;; donate the value of the array
 	       (js-for-in obj
 		  (lambda (k %this)
@@ -503,6 +529,7 @@
 	 (instantiateJsArray
 	    (vec '#())
 	    (__proto__ (js-object-proto %this))
+	    (mode (js-array-default-mode))
 	    (cmap js-array-cmap)
 	    (elements (vector
 			 ;; cannot be defined with js-bind! because
@@ -637,6 +664,25 @@
       js-array))
 
 ;*---------------------------------------------------------------------*/
+;*    vector-blit! ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (vector-blit! target tstart source sstart send)
+   (let loop ((i sstart)
+	      (j tstart))
+      (when (<fx i send)
+	 (vector-set-ur! target j (vector-ref-ur source i))
+	 (loop (+fx i 1) (+fx j 1)))))
+
+;*---------------------------------------------------------------------*/
+;*    array-expand-len ...                                             */
+;*---------------------------------------------------------------------*/
+(define (array-expand-len len idx)
+   (let ((candidate (if (>fx len (uint32->fixnum (LARGE-ARRAY-SIZE)))
+			(+fx len (/fx len 4))
+			(*fx len 2))))
+      (max candidate (+fx (uint32->fixnum idx) 1))))
+
+;*---------------------------------------------------------------------*/
 ;*    *JS-ARRAY-MARK* ...                                              */
 ;*---------------------------------------------------------------------*/
 (define *JS-ARRAY-MARK* 0)
@@ -677,7 +723,7 @@
 ;*    js-array-full-inlined? ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-array-full-inlined? arr::JsArray)
-   (and (js-array-inlined? arr) (js-object-mode-inline? arr)))
+   (and (js-array-inlined? arr) (js-object-mode-arrayinline? arr)))
 
 ;*---------------------------------------------------------------------*/
 ;*    %assert-array! ...                                               */
@@ -711,7 +757,7 @@
 		 (loop (+u32 j #u32:1))))
 	    ((=u32 j length)
 	     (set! ilen length)
-	     (js-object-mode-inline-set! arr #t))
+	     (js-object-mode-arrayinline-set! arr #t))
 	    (else
 	     (set! ilen (+u32 end 1)))))))
 
@@ -733,7 +779,7 @@
    
    (define (add-length-property! arr::JsArray)
       (js-object-unmap! arr)
-      (with-access::JsObject arr (elements cmap)
+      (with-access::JsArray arr (elements cmap)
 	 (let ((prop (instantiate::JsValueDescriptor
 			(name (& "length"))
 			(value (js-uint32-tointeger (js-array-length arr)))
@@ -841,9 +887,10 @@
 ;*    js-array-index-noinl-ref ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (js-array-index-noinl-ref arr::JsArray idx::uint32 %this)
-   (with-access::JsArray arr (vec ilen)
+   (with-access::JsArray arr (vec ilen length)
       (cond
-	 ((and (js-object-mode-holey? arr)
+	 ((and (js-object-mode-arrayholey? arr)
+	       (<u32 idx length)
 	       (<u32 idx (fixnum->uint32 (vector-length vec))))
 	  (let ((v (vector-ref vec (uint32->fixnum idx))))
 	     (if (js-absent? v)
@@ -884,7 +931,7 @@
 (define (js-array-fixnum-noinl-ref arr::JsArray idx::long %this)
    (with-access::JsArray arr (vec ilen)
       (cond
-	 ((and (js-object-mode-holey? arr)
+	 ((and (js-object-mode-arrayholey? arr)
 	       (cond-expand
 		  ((or bint30 bint32)
 		   (<u32 (fixnum->uint32 idx) (fixnum->uint32 (vector-length vec))))
@@ -927,7 +974,7 @@
 	 ((<u32 idx ilen)
 	  (vector-ref vec (uint32->fixnum idx)))
 	 ((<u32 idx (fixnum->uint32 (vector-length vec)))
-	  (if (js-object-mode-holey? arr)
+	  (if (js-object-mode-arrayholey? arr)
 	      (let ((v (u32vref vec idx)))
 		 (if (js-absent? v)
 		     (js-get-fixnum arr (uint32->fixnum idx) %this)
@@ -1073,34 +1120,34 @@
 	      (cond
 		 ((js-has-fixnum-property arr (js-uint32-tointeger idx) %this)
 		  (js-array-put! arr (js-uint32-tointeger idx) val throw %this))
-		 ((and (=u32 idx ilen) (js-object-mode-inline? arr))
+		 ((and (=u32 idx ilen) (js-object-mode-arrayinline? arr))
 		  (vector-set! vec (uint32->fixnum idx) val)
 		  (let ((nilen (+u32 ilen #u32:1)))
 		     (set! ilen nilen)
 		     (when (>=u32 idx length)
 			(set! length nilen)))
 		  val)
-		 ((js-object-mode-holey? arr)
+		 ((js-object-mode-arrayholey? arr)
 		  (vector-set! vec (uint32->fixnum idx) val)
 		  (cond
 		     ((>=u32 idx length)
-		      (js-object-mode-inline-set! arr #f)
+		      (js-object-mode-arrayinline-set! arr #f)
 		      (set! length (+u32 idx #u32:1)))
 		     ((=u32 idx ilen)
 		      ;; update ilen and check inliness again
 		      (let ((len (-fx (vector-length vec) 1)))
 			 (js-array-update-ilen! arr ilen (fixnum->uint32 len)))
-		      (js-object-mode-inline-set! arr (=u32 ilen length)))
+		      (js-object-mode-arrayinline-set! arr (=u32 ilen length)))
 		     (else
-		      (js-object-mode-inline-set! arr #f)))
+		      (js-object-mode-arrayinline-set! arr #f)))
 		  val)
 		 (else
 		  (js-array-put! arr (js-uint32-tointeger idx) val throw %this))))
-	     ((js-object-mode-inline? arr)
+	     ((js-object-mode-arrayinline? arr)
 	      (vector-set! vec (uint32->fixnum idx) val)
 	      (cond
 		 ((>u32 idx ilen)
-		  (js-object-mode-inline-set! arr #f)
+		  (js-object-mode-arrayinline-set! arr #f)
 		  (set! ilen #u32:0))
 		 ((=u32 idx ilen)
 		  (set! ilen (+u32 idx 1))))
@@ -1123,7 +1170,7 @@
       :value js-array :enumerable #f
       :hidden-class #t)
    
-   ;; tostring
+   ;; toString
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.4.4.2
    (define (array-prototype-tostring this::obj)
       (let* ((o (js-toobject %this this))
@@ -1194,58 +1241,7 @@
    ;; copyWithin
    ;; https://www.ecma-international.org/ecma-262/7.0/#sec-array.prototype.copywithin
    (define (array-prototype-copywithin this::obj target start end)
-      (let* ((o (js-toobject %this this))
-	     (len (js-get-length o %this))
-	     (relativetarget (js-tointeger target %this))
-	     (to (if (< relativetarget 0)
-		     (max (+ len relativetarget) 0)
-		     (min relativetarget len)))
-	     (relativestart (js-tointeger start %this))
-	     (from (if (< relativestart 0)
-		       (max (+ len relativestart) 0)
-		       (min relativestart len)))
-	     (relativeend (if (eq? end (js-undefined))
-			      len
-			      (js-tointeger end %this)))
-	     (final (if (< relativeend 0)
-			(max (+ len relativeend) 0)
-			(min relativeend len)))
-	     (count (min (- final from) (- len to)))
-	     (direction 1))
-	 ;; step 10
-	 (when (and (< from to) (< to (+ from count)))
-	    (set! direction -1)
-	    (set! from (- (+ from count) 1))
-	    (set! o (- (- to count) 1)))
-	 (if (and (js-array? o) (js-array-inlined? o))
-	     (with-access::JsArray o (vec)
-		(let loop ((from (->fixnum from))
-			   (to (->fixnum to))
-			   (count count))
-		   (when (>fx count 0)
-		      ;; step 12.d
-		      (let ((fromval (vector-ref vec from)))
-			 (vector-set! vec to fromval))
-		      ;; step 12.3
-		      (loop (+ from direction)
-			 (+ to direction)
-			 (-fx count 1)))))
-	     (let loop ((from from)
-			(to to)
-			(count count))
-		(when (>fx count 0)
-		   (let ((toi (js-tointeger to %this))
-			 (fromi (js-tointeger from %this)))
-		      (if (js-has-property o fromi %this)
-			  ;; step 12.d
-			  (let ((fromval (js-get o fromi %this)))
-			     (js-put! o toi fromval #f %this))
-			  ;; step 12.3
-			  (js-delete! o toi #t %this))
-		      (loop (+ from direction)
-			 (+ to direction)
-			 (-fx count 1))))))
-	 o))
+      (js-array-prototype-copywithin this target start end %this))
 
    (js-bind! %this js-array-prototype (& "copyWithin")
       :value (js-make-function %this array-prototype-copywithin
@@ -1398,7 +1394,7 @@
 		(cond
 		   ((=u32 length #u32:0)
 		    (js-undefined))
-		   ((js-object-mode-inline? o)
+		   ((js-object-mode-arrayinline? o)
 		    ;; ilen guard is needed when shifting array
 		    ;; with prototype fields
 		    (vector-shift! o length))
@@ -1463,7 +1459,7 @@
 	       ;; populate the result vector
 	       (when (<fx actualstart alen)
 		  ;; from the inlined vector
-		  (vector-copy! vres 0 vec actualstart
+		  (vector-blit! vres 0 vec actualstart
 		     (minfx alen (+fx actualstart actualdeletecount))))
  	       (when (>fx actualdeletecount (-fx alen actualstart))
 		  ;;  from the protype object
@@ -1479,8 +1475,8 @@
 		   (let ((tmp (make-vector nlen)))
 		      (cond-expand
 			 (profile (profile-vector-extension nlen len)))
-		      (vector-copy! tmp 0 vec 0 actualstart)
-		      (vector-copy! tmp (-fx nlen (-fx len cstart))
+		      (vector-blit! tmp 0 vec 0 actualstart)
+		      (vector-blit! tmp (-fx nlen (-fx len cstart))
 			 vec cstart len)
 		      (set! ilen (fixnum->uint32 nlen))
 		      (set! vec tmp)))
@@ -1540,7 +1536,7 @@
 	     (array-splice this len actualstart actualdeletecount)
 	     (with-access::JsArray this (vec)
 		(cond
-		   ((js-object-mode-inline? o)
+		   ((js-object-mode-arrayinline? o)
 		    (vector-splice this len
 		       (->fixnum actualstart) (->fixnum actualdeletecount)))
 		   (else
@@ -1564,7 +1560,7 @@
 		   (nlen (+u32 vlength (fixnum->uint32 litems)))
 		   (nvec ($create-vector (uint32->fixnum nlen))))
 	       ;; copy the existing inlined elements
-	       (vector-copy! nvec litems vec)
+	       (vector-blit! nvec litems vec 0 (vector-length vec))
 	       ;; insert the new elements
 	       (let ((i 0))
 		  (for-each (lambda (el)
@@ -1604,7 +1600,7 @@
 		(cond
 		   ((null? items)
 		    (js-uint32-tointeger length))
-		   ((js-object-mode-inline? this)
+		   ((js-object-mode-arrayinline? this)
 		    (vector-unshift this))
 		   (else
 		    (array-unshift this length))))
@@ -1685,11 +1681,11 @@
 	 (if (js-array? o)
 	     (with-access::JsArray o (vec ilen)
 		(cond
-		   ((and (js-object-mode-inline? o) (<u32 k ilen))
+		   ((and (js-object-mode-arrayinline? o) (<u32 k ilen))
 		    (vector-lastindexof o vec
 		       (minfx (uint32->fixnum k)
 			  (uint32->fixnum (-u32 ilen #u32:1)))))
-		   ((js-object-mode-holey? o)
+		   ((js-object-mode-arrayholey? o)
 		    (vector-holey-lastindexof o vec
 		       (minfx (uint32->fixnum k)
 			  (-fx (vector-length vec) 1))))
@@ -1731,11 +1727,11 @@
       (define (vector-every this o len::uint32 proc t i::uint32 %this)
 	 (with-access::JsArray o (vec ilen)
 	    (let ((ilen0 ilen)
-		  (full0 (js-object-mode-inline? o)))
+		  (full0 (js-object-mode-arrayinline? o)))
 	       (let loop ((i i))
 		  (cond
 		     ((>=u32 i ilen)
-		      (or (js-object-mode-inline? o)
+		      (or (js-object-mode-arrayinline? o)
 			  (array-every this o len proc t i %this)))
 		     ((>=u32 i ilen0)
 		      (or full0 (array-every this o len proc t i %this)))
@@ -1875,7 +1871,7 @@
 	    (let loop ((i i))
 	       (cond
 		  ((>=u32 i ilen)
-		   (unless (js-object-mode-inline? o)
+		   (unless (js-object-mode-arrayinline? o)
 		      (array-find this o len proc t i %this)))
 		  (else
 		   (let ((v (vector-ref vec (uint32->fixnum i))))
@@ -1918,7 +1914,7 @@
 	    (let loop ((i i))
 	       (cond
 		  ((>=u32 i ilen)
-		   (if (js-object-mode-inline? o)
+		   (if (js-object-mode-arrayinline? o)
 		       -1
 		       (array-find-idx this o len proc t i %this)))
 		  (else
@@ -2029,35 +2025,10 @@
    ;; reduce
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.4.4.21
    (define (array-prototype-reduce this::obj proc . init)
-      
-      (define (reduce/accumulator o len::uint32 i::uint32 accumulator)
-	 (let loop ((i i)
-		    (acc accumulator))
-	    (if (<u32 i len)
-		(let ((pv (js-get-property-value o o i %this)))
-		   (if (js-absent? pv)
-		       (loop (+u32 i #u32:1) acc)
-		       (let ((v pv))
-			  (loop (+u32 i #u32:1)
-			     (js-call2-4 %this proc (js-undefined) acc v
-				(js-uint32-tointeger i) o)))))
-		acc)))
-      
-      (let* ((o (js-toobject %this this))
-	     (len::uint32 (js-get-lengthu32 o %this)))
-	 (if (not (js-procedure? proc))
-	     (js-raise-type-error %this "not a procedure ~s" proc)
-	     ;; find the accumulator init value
-	     (if (null? init)
-		 (let loop ((i #u32:0))
-		    (if (<u32 i len)
-			(let ((pv (js-get-property-value o o i %this)))
-			   (if (js-absent? pv)
-			       (loop (+u32 i #u32:1))
-			       (reduce/accumulator o len (+u32 i #u32:1) pv)))
-			(js-raise-type-error %this
-			   "reduce: cannot find accumulator ~s" this)))
-		 (reduce/accumulator o len #u32:0 (car init))))))
+      (let ((o (js-toobject %this this)))
+	 (if (null? init)
+	     (js-array-prototype-reduce-sans o proc %this)
+	     (js-array-prototype-reduce o proc (car init) %this))))
    
    (js-bind! %this js-array-prototype (& "reduce")
       :value (js-make-function %this array-prototype-reduce
@@ -2219,6 +2190,7 @@
 (define (js-array-alloc::JsArray %this)
    (with-access::JsGlobalObject %this (js-array-prototype js-array-cmap)
       (instantiateJsArray
+	 (mode (js-array-default-mode))
 	 (cmap js-array-cmap)
 	 (__proto__ js-array-prototype))))
 
@@ -2231,12 +2203,14 @@
 	  (begin
 	     (set! js-new-target constructor)
 	     (instantiateJsArray
+		(mode (js-array-default-mode))
 		(cmap js-array-cmap)
 		(__proto__ js-array-prototype)))
 	  (let ((proto (js-get-jsobject-name/cache constructor (& "prototype") #f %this
 			  (js-pcache-ref js-array-pcache 0))))
 	     (set! js-new-target constructor)
 	     (let ((arr (instantiateJsArray
+			   (mode (js-array-default-mode))
 			   (cmap js-array-cmap)
 			   (__proto__ proto))))
 		(unless (eq? proto js-array-prototype)
@@ -2419,6 +2393,19 @@
        (js-array-construct/length %this (js-array-alloc %this) len)))
        
 ;*---------------------------------------------------------------------*/
+;*    js-array-construct-alloc-init/length ...                         */
+;*---------------------------------------------------------------------*/
+(define (js-array-construct-alloc-init/length %this::JsGlobalObject len init)
+   (if (and (>=fx len 0) (<fx len 1024))
+       (let ((v (js-array-construct-alloc-small-sans-init-len %this (fixnum->uint32 len))))
+	  (with-access::JsArray v (vec)
+	     ($vector-fill! vec 0 len init))
+	  v)
+       (let ((v (js-array-construct/length %this (js-array-alloc %this) len)))
+	  (js-array-prototype-fill1 v init %this)
+	  v)))
+       
+;*---------------------------------------------------------------------*/
 ;*    js-array-construct-alloc ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (js-array-construct-alloc %this::JsGlobalObject item-or-len)
@@ -2437,6 +2424,7 @@
    (let ((len (vector-length vec)))
       (with-access::JsGlobalObject %this (js-array-prototype js-array-cmap)
 	 (instantiateJsArray
+	    (mode (js-array-default-mode))
 	    (cmap js-array-cmap)
 	    (__proto__ js-array-prototype)
 	    (length (fixnum->uint32 len))
@@ -2496,8 +2484,8 @@
 ;*---------------------------------------------------------------------*/
 (define (js-vector->sparse-jsarray vec::vector %this::JsGlobalObject)
    (let ((arr (js-vector->jsarray vec %this)))
-      (js-object-mode-inline-set! arr #f)
-      (js-object-mode-holey-set! arr #t)
+      (js-object-mode-arrayinline-set! arr #f)
+      (js-object-mode-arrayholey-set! arr #t)
       (js-array-update-ilen! arr 0 (fixnum->uint32 (-fx (vector-length vec) 1)))
       arr))
 
@@ -2532,7 +2520,7 @@
        (let ((v (js-vector-alloc (fixnum->uint32 (vector-length vec)) %this)))
 	  (tprint "WARNING js-species->jsarray VECTOR " (vector-length vec))
 	  (with-access::JsArray v ((nvec vec))
-	     (vector-copy! nvec 0 vec 0 (vector-length vec))
+	     (vector-blit! nvec 0 vec 0 (vector-length vec))
 	     v))
        (js-vector->jsarray/proto vec (js-object-proto this) %this)))
 
@@ -2543,6 +2531,7 @@
    (with-access::JsGlobalObject %this (js-array-cmap js-array-prototype)
       (let* ((len (vector-length vec))
 	     (arr (instantiateJsArray
+		     (mode (js-array-default-mode))
 		     (cmap js-array-cmap)
 		     (__proto__ proto)
 		     (length (fixnum->uint32 len))
@@ -2584,7 +2573,7 @@
 	 (cond
 	    ((<u32 i ilen) #t)
 	    ((js-isname? p (& "length") %this) #t)
-	    ((and (js-object-mode-holey? o)
+	    ((and (js-object-mode-arrayholey? o)
 		  (<u32 i (fixnum->uint32 (vector-length vec)))
 		  (<u32 i length))
 	     (if (js-absent? (u32vref vec i)) (call-next-method) #t))
@@ -2599,7 +2588,7 @@
 	 (cond
 	    ((<u32 i ilen) #t)
 	    ((js-isname? p (& "length") %this) #t)
-	    ((and (js-object-mode-holey? o)
+	    ((and (js-object-mode-arrayholey? o)
 		  (<u32 i (fixnum->uint32 (vector-length vec)))
 		  (<u32 i length))
 	     (if (js-absent? (u32vref vec i)) (call-next-method) #t))
@@ -2627,7 +2616,7 @@
 	     (if (eq? p (& "length"))
 		 (js-array-update-length-property! o)
 		 (call-next-method)))
-	    ((and (js-object-mode-holey? o)
+	    ((and (js-object-mode-arrayholey? o)
 		  (<u32 i (fixnum->uint32 (vector-length vec))))
 	     (if (>=u32 i length)
 		 (js-undefined)
@@ -2664,7 +2653,7 @@
 	     (if (eq? p (& "length"))
 		 (js-array-update-length-property! o)
 		 (call-next-method)))
-	    ((and (js-object-mode-holey? o)
+	    ((and (js-object-mode-arrayholey? o)
 		  (<u32 i (fixnum->uint32 (vector-length vec))))
 	     (if (>=u32 i length)
 		 (js-undefined)
@@ -2696,7 +2685,7 @@
 	     (if (eq? p (& "length"))
 		 (js-uint32-tointeger length)
 		 (call-next-method)))
-	    ((and (js-object-mode-holey? o)
+	    ((and (js-object-mode-arrayholey? o)
 		  (<u32 i (fixnum->uint32 (vector-length vec))))
 	     (if (>=u32 i length)
 		 (call-next-method)
@@ -2721,7 +2710,7 @@
 		((not (js-isindex? i))
 		 (set! p (js-toname p %this))
 		 (call-next-method))
-		((and (js-object-mode-holey? o)
+		((and (js-object-mode-arrayholey? o)
 		      (<u32 i (fixnum->uint32 (vector-length vec))))
 		 (if (>=u32 i length)
 		     (call-next-method)
@@ -2804,7 +2793,7 @@
 	     (if (eq? p (& "length"))
 		 (js-uint32-tointeger length)
 		 (call-next-method)))
-	    ((and (js-object-mode-holey? o)
+	    ((and (js-object-mode-arrayholey? o)
 		  (<u32 i (fixnum->uint32 (vector-length vec))))
 	     (let ((v (u32vref vec i)))
 		(if (js-absent? v)
@@ -2845,18 +2834,18 @@
 ;*    uninline-array! ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (uninline-array! arr::JsArray %this::JsGlobalObject)
-   (when (js-object-mode-inline? arr)
+   (when (js-object-mode-arrayinline? arr)
       ;; this function switches from a fast inlined array representation
       ;; to a slow inefficient object representation
       (with-access::JsArray arr (vec ilen elements)
-	 (js-object-mode-inline-set! arr #f)
-	 (js-object-mode-holey-set! arr #t)
+	 (js-object-mode-arrayinline-set! arr #f)
+	 (js-object-mode-arrayholey-set! arr #t)
 	 (js-array-update-length-property! arr)
 	 (when (>fx (vector-length vec) 0)
 	    (let* ((len (vector-length elements))
 		   (nvec (make-vector (+fx len (uint32->fixnum ilen)))))
 	       (vector-fill-properties! arr nvec)
-	       (vector-copy! nvec (uint32->fixnum ilen) elements 0)
+	       (vector-blit! nvec (uint32->fixnum ilen) elements 0 len)
 	       (set! elements nvec)
 	       (set! ilen #u32:0)
 	       (js-array-mark-invalidate!)))
@@ -2886,8 +2875,8 @@
 (define (reinline-array! o::JsArray nilen %this)
    (with-access::JsArray o (vec ilen length cmap elements)
       (if (=u32 ilen length)
-	  (js-object-mode-inline-set! o #t)
-	  (js-object-mode-holey-set! o #t))
+	  (js-object-mode-arrayinline-set! o #t)
+	  (js-object-mode-arrayholey-set! o #t))
       (let ((len (u32min (fixnum->uint32 (vector-length vec)) length)))
 	 (let loop ((i nilen))
 	    (if (<u32 i len)
@@ -2942,12 +2931,12 @@
 ;*    unholey-array! ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (unholey-array! arr::JsArray %this::JsGlobalObject)
-   (when (js-object-mode-holey? arr)
+   (when (js-object-mode-arrayholey? arr)
       ;; this function switches from a fast holey array representation
       ;; to a slow inefficient object representation
       (with-access::JsArray arr (vec ilen elements)
-	 (js-object-mode-inline-set! arr #f)
-	 (js-object-mode-holey-set! arr #f)
+	 (js-object-mode-arrayinline-set! arr #f)
+	 (js-object-mode-arrayholey-set! arr #f)
 	 (js-array-update-length-property! arr)
 	 (set! ilen 0)
 	 (when (>fx (vector-length vec) 0)
@@ -2955,7 +2944,7 @@
 		   (vlen (js-array-holey-elements-length arr))
 		   (nvec (make-vector (+fx len vlen))))
 	       (vector-fill-holey-properties arr nvec vlen)
-	       (vector-copy! nvec vlen elements 0)
+	       (vector-blit! nvec vlen elements 0 len)
 	       (set! elements nvec)
 	       (js-array-mark-invalidate!)))
 	 arr)))
@@ -3062,36 +3051,37 @@
 			   (js-raise-type-error %this
 			      "cannot add property ~a, object is not extensible" p)
 			   v))
-		      ((and (=u32 idx ilen) (js-object-mode-inline? o))
+		      ((and (=u32 idx ilen) (js-object-mode-arrayinline? o))
 		       (vector-set! vec (uint32->fixnum idx) v)
 		       (let ((nilen (+u32 ilen #u32:1)))
 			  (set! ilen nilen)
 			  (when (>=u32 idx length)
 			     (set! length nilen)))
 		       v)
-		      ((js-object-mode-holey? o)
-		       (js-object-mode-inline-set! o #f)
+		      ((js-object-mode-arrayholey? o)
+		       (js-object-mode-arrayinline-set! o #f)
 		       (vector-set! vec (uint32->fixnum idx) v)
 		       (when (>=u32 idx length)
 			  (set! length (+u32 idx #u32:1)))
 		       v)
-		      ((js-object-mode-inline? o)
-		       (js-object-mode-inline-set! o #f)
-		       (js-object-mode-holey-set! o #t)
+		      ((js-object-mode-arrayinline? o)
+		       (js-object-mode-arrayinline-set! o #f)
+		       (js-object-mode-arrayholey-set! o #t)
 		       (loop))
 		      (else
 		       (aput! o (js-toname p %this) v))))))
 	    ((and (=u32 idx (fixnum->uint32 (vector-length vec)))
 		  (array-extensible? o)
 		  ;; MS: 21 aug 2020
-		  ;; used to be (js-object-mode-inline? o) only
-		  (or (js-object-mode-inline? o) (js-object-mode-holey? o)))
+		  ;; used to be (js-object-mode-arrayinline? o) only
+		  (or (js-object-mode-arrayinline? o)
+		      (js-object-mode-arrayholey? o)))
 	     (js-object-mode-hasnumeralprop-set! o #t)
 	     ;; extend the inlined vector
 	     (with-access::JsArray o (length vec ilen)
 		;; use max when vector-length == 0
 		(let* ((len (vector-length vec))
-		       (nlen (max (*fx len 2) (+fx (uint32->fixnum idx) 1)))
+		       (nlen (array-expand-len len idx))
 		       (nvec (copy-vector-fill! vec nlen (js-absent))))
 		   (cond-expand (profile (profile-vector-extension nlen len)))
 		   (gc-cleanup-inline-vector! o vec)
@@ -3100,20 +3090,21 @@
 		(if (=u32 ilen idx)
 		    (set! ilen (+u32 idx #u32:1))
 		    (begin
-		       (js-object-mode-inline-set! o #f)
-		       (js-object-mode-holey-set! o #t)))
+		       (js-object-mode-arrayinline-set! o #f)
+		       (js-object-mode-arrayholey-set! o #t)))
 		(when (>=u32 idx length)
 		   (set! length (+u32 idx #u32:1)))
 		v))
 	    ((and (js-isindex? idx)
 		  (array-extensible? o)
-		  (js-object-mode-inline? o)
+		  (js-object-mode-arrayinline? o)
 		  (<u32 idx (MAX-EXPANDABLE-ARRAY-SIZE)))
 	     (let* ((len (vector-length vec))
-		    (nlen (max (*fx len 2) (+fx (uint32->fixnum idx) 1)))
+		    (nlen (array-expand-len len idx))
 		    (nvec (copy-vector-fill! vec nlen (js-absent))))
 		 (cond-expand (profile (profile-vector-extension nlen len)))
 		 (with-access::JsArray o (vec)
+		    (gc-cleanup-inline-vector! o vec)
 		    (set! vec nvec))
 		 (js-array-put! o p v throw %this)))
 	    ((and (js-isindex? idx) (js-vector? o))
@@ -3182,9 +3173,9 @@
 	 ((<u32 len ilen)
 	  (js-array-mark-invalidate!)
 	  (set! ilen len))
-	 ((js-object-mode-inline? o)
-	  (js-object-mode-inline-set! o #f)
-	  (js-object-mode-holey-set! o #t)))
+	 ((js-object-mode-arrayinline? o)
+	  (js-object-mode-arrayinline-set! o #f)
+	  (js-object-mode-arrayholey-set! o #t)))
       (%assert-array! o "js-put-length!")))
    
 ;*---------------------------------------------------------------------*/
@@ -3194,11 +3185,11 @@
    (with-access::JsArray o (vec length ilen)
       (let ((i::uint32 (js-toindex p)))
 	 (cond
-	    ((and (<u32 i ilen) (js-object-mode-inline? o))
+	    ((and (<u32 i ilen) (js-object-mode-arrayinline? o))
 	     (unless (or (js-object-mode-frozen? o) (js-vector? o))
 		(js-array-mark-invalidate!)
-		(js-object-mode-inline-set! o #f)
-		(js-object-mode-holey-set! o #t)
+		(js-object-mode-arrayinline-set! o #f)
+		(js-object-mode-arrayholey-set! o #t)
 		(u32vset! vec i (js-absent))
 		(set! ilen i)
 		#t))
@@ -3228,7 +3219,7 @@
 (define (expandable-array vec::JsArray index::uint32 len::uint32)
    ;; Check is an inline array can be expanded based
    ;; on a simple heuristic.
-   (when (or (js-array-inlined? vec) (js-object-mode-holey? vec))
+   (when (or (js-array-inlined? vec) (js-object-mode-arrayholey? vec))
       ;; the vector is inlined, make the real check
       (when (<u32 index (MAX-EXPANDABLE-ARRAY-SIZE))
 	 (cond
@@ -3265,7 +3256,7 @@
 		(set! writable #t)
 		r))))
    
-   (define (js-array-property-names arr)
+   (define (js-array-property-names arr::JsArray)
       (let loop ((o arr))
 	 (with-access::JsObject o (cmap elements)
 	    (append (if (not (eq? cmap (js-not-a-cmap)))
@@ -3356,9 +3347,9 @@
 			   ((<u32 ulen ilen)
 			    (set! ilen ulen))
 			   ((>u32 ulen ilen)
-			    (when (js-object-mode-inline? a)
-			       (js-object-mode-holey-set! a #t)
-			       (js-object-mode-inline-set! a #f)))))))
+			    (when (js-object-mode-arrayinline? a)
+			       (js-object-mode-arrayholey-set! a #t)
+			       (js-object-mode-arrayinline-set! a #f)))))))
 	       r))))
    
    (define (define-own-property-length oldlendesc)
@@ -3385,8 +3376,8 @@
 			      ;; 3.g
 			      (reject "property read-only \"~a\"")
 			      ;; 3.h
-			      (let* ((inlp (or (js-object-mode-inline? a)
-					       (js-object-mode-holey? a)))
+			      (let* ((inlp (or (js-object-mode-arrayinline? a)
+					       (js-object-mode-arrayholey? a)))
 				     (deferredwritable (newwritable!
 							  oldlendesc newlendesc))
 				     (desc (js-define-own-length% a
@@ -3464,16 +3455,16 @@
 		    (reinline-array! a (+u32 ilen #u32:1) %this)
 		    #t)
 		   ((and (<u32 p (fixnum->uint32 (vector-length vec)))
-			 (js-object-mode-holey? a))
+			 (js-object-mode-arrayholey? a))
 		    (uninline-array! a %this)
 		    (u32vset! vec p value)
 		    #t)
 		   (else
 		    ;; MS: 22 feb 2017
 		    (cond
-		       ((js-object-mode-inline? a)
+		       ((js-object-mode-arrayinline? a)
 			(uninline-array! a %this))
-		       ((js-object-mode-holey? a)
+		       ((js-object-mode-arrayholey? a)
 			(unholey-array! a %this)))
 		    (js-object-mode-plain-set! a #f)
 		    (js-define-own-property% a (js-toname p %this) desc #f %this)))))
@@ -3622,7 +3613,7 @@
 		    (loop (+u32 i #u32:1)))
 		   (else
 		    (call-next-method))))))
-	 ((js-object-mode-holey? o)
+	 ((js-object-mode-arrayholey? o)
 	  (let ((len ilen)
 		(vlen (fixnum->uint32 (vector-length vec))))
 	     (let loop ((i #u32:0))
@@ -3630,7 +3621,7 @@
 		   ((<u32 i len)
 		    (proc (js-integer->jsstring (uint32->fixnum i)) %this)
 		    (loop (+u32 i #u32:1)))
-		   ((js-object-mode-inline? o)
+		   ((js-object-mode-arrayinline? o)
 		    (call-next-method))
 		   ((<u32 i vlen)
 		    (unless (js-absent? (u32vref vec i))
@@ -3689,7 +3680,7 @@
 (define (js-array-concat this l %this)
    
    (define (copy-array-slow target tstart src sstart send)
-      (js-object-mode-inline-set! target #f)
+      (js-object-mode-arrayinline-set! target #f)
       ;; slow copy, elements by elements
       (let loop ((i sstart)
 		 (j tstart))
@@ -3697,14 +3688,14 @@
 	     j
 	     (let ((d (js-get-property src i %this)))
 		(if (eq? d (js-undefined))
-		    (js-object-mode-holey-set! target #t)
+		    (js-object-mode-arrayholey-set! target #t)
 		    (js-define-own-property target (js-toname j %this)
 		       d #f %this))
 		(loop (+ i 1) (+ j 1))))))
    
    (define (copy-array src dst i)
-      (if (and (js-object-mode-inline? src)
-	       (js-object-mode-inline? dst))
+      (if (and (js-object-mode-arrayinline? src)
+	       (js-object-mode-arrayinline? dst))
 	  (with-access::JsArray src ((vsrc vec))
 	     (with-access::JsArray dst ((vdst vec) ilen)
 		;; try to use a vector copy
@@ -3717,7 +3708,7 @@
 		       (when (>fx (+fx i alen) (vector-length vdst))
 			  (set! vdst
 			     (copy-vector vdst (*fx (+fx i alen) 2))))
-		       (vector-copy! vdst i vsrc 0 alen)
+		       (vector-blit! vdst i vsrc 0 alen)
 		       (set! ilen (fixnum->uint32 (+fx i alen)))
 		       (if (> slen lsrc)
 			   (copy-array-slow dst (+fx i lsrc) src lsrc slen)
@@ -3753,7 +3744,7 @@
 	  (with-access::JsArray arr (vec ilen length)
 	     (let ((vdst vec))
 		(with-access::JsArray o ((ovec vec) (oilen ilen))
-		   (vector-copy! vdst 0 ovec 0 (uint32->fixnum oilen))
+		   (vector-blit! vdst 0 ovec 0 (uint32->fixnum oilen))
 		   (let loop ((l l)
 			      (i (uint32->fixnum oilen)))
 		      (if (null? l)
@@ -3762,7 +3753,7 @@
 			     (set! length (fixnum->uint32 new-len))
 			     arr)
 			  (with-access::JsArray (car l) (vec ilen)
-			     (vector-copy! vdst i vec 0 (uint32->fixnum ilen))
+			     (vector-blit! vdst i vec 0 (uint32->fixnum ilen))
 			     (loop (cdr l) (+fx i (uint32->fixnum ilen)))))))))
 	  (with-access::JsArray arr (vec ilen)
 	     ;; fill the vector
@@ -3782,13 +3773,70 @@
 		   ((<u32 i ilen)
 		    (vector-set! vec (uint32->fixnum i) (car l))
 		    (loop (cdr l) (+u32 i #u32:1)))
-		   ((js-object-mode-inline? arr)
+		   ((js-object-mode-arrayinline? arr)
 		    (js-array-index-set! arr i (car l) #f %this)
 		    (loop (cdr l) (+u32 i #u32:1)))
 		   (else
 		    (js-array-fixnum-set! arr (uint32->fixnum i) (car l) #f %this)
 		    (loop (cdr l) (+u32 i #u32:1)))))))))
 
+;*---------------------------------------------------------------------*/
+;*    js-array-contact-apply ...                                       */
+;*    -------------------------------------------------------------    */
+;*    Used to append to arrays contained in the argument without       */
+;*    using apply.                                                     */
+;*---------------------------------------------------------------------*/
+(define (js-array-concat-apply this::JsArray %this)
+   
+   (define (alllen this)
+      (if (js-object-mode-arrayinline? this)
+	  (with-access::JsArray this (ilen vec)
+	     (let ((vec vec))
+		(let loop ((alen #u32:0)
+			   (i (-fx (uint32->fixnum ilen) 1)))
+		   (if (=fx i -1)
+		       (uint32->fixnum alen)
+		       (let ((a (vector-ref vec i)))
+			  (if (js-array? a)
+			      (if (js-object-mode-arrayinline? a)
+				  (loop (+u32 alen (js-array-length a))
+				     (-fx i 1))
+				  -1)
+			      (loop (+u32 alen #u32:1)
+				 (-fx i 1))))))))
+	  -1))
+   
+   (let ((alen (alllen this)))
+      (if (<fx alen 0)
+	  ;; slow path, one argument is not an inlined array
+	  (js-array-concat (js-array-construct-alloc-small %this #u32:0)
+	     (jsarray->list this %this)
+	     %this)
+	  (with-access::JsGlobalObject %this (js-array-cmap js-array-prototype)
+	     (let ((arr ($js-make-jsarray-sans-init alen
+			   (fixnum->uint32 alen)
+			   (fixnum->uint32 alen)
+			   js-array-cmap
+			   js-array-prototype
+			   (js-array-default-mode))))
+		(with-access::JsArray this (ilen vec)
+		   (let ((srcilen (uint32->fixnum ilen))
+			 (srcvec vec))
+		      (with-access::JsArray arr (vec)
+			 (let ((vdst vec))
+			    (let loop ((i 0)
+				       (w 0))
+			       (if (=fx i srcilen)
+				   arr
+				   (let ((a (vector-ref srcvec i)))
+				      (if (js-array? a)
+					  (with-access::JsArray a (vec ilen)
+					     (vector-blit! vdst w vec 0 (uint32->fixnum ilen))
+					     (loop (+fx i 1) (+fx w (uint32->fixnum ilen))))
+					  (begin
+					     (vector-set! vdst w a)
+					     (loop (+fx i 1) (+fx w 1))))))))))))))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    js-array-maybe-concat ...                                        */
 ;*---------------------------------------------------------------------*/
@@ -3814,7 +3862,7 @@
 	     (arr (js-array-construct-alloc/length %this new-len)))
 	 (with-access::JsArray arr ((vdst vec) ilen)
 	    (vector-set! vdst 0 this)
-	    (vector-copy! vdst 1 avec 0 (uint32->fixnum ailen))
+	    (vector-blit! vdst 1 avec 0 (uint32->fixnum ailen))
 	    (set! ilen (fixnum->uint32 new-len)))
 	 arr)))
 
@@ -3836,18 +3884,18 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-array-prototype-concat-add ...                                */
 ;*    -------------------------------------------------------------    */
-;*    This functin is used when concat is used with a non array        */
+;*    This function is used when concat is used with a non array       */
 ;*    argument.                                                        */
 ;*---------------------------------------------------------------------*/
 (define (js-array-prototype-concat-add this arg %this cache)
-   (if (js-array-inlined? this)
+   (if (js-object-mode-arrayinline? this)
        (with-access::JsArray this ((tvec vec) (tilen ilen))
 	  (let* ((ailen #u32:1)
 		 (new-len (+fx/overflow (uint32->fixnum tilen)
 			     (uint32->fixnum ailen)))
 		 (arr (js-array-species-create %this this new-len)))
 	     (with-access::JsArray arr ((vdst vec) ilen)
-		(vector-copy! vdst 0
+		(vector-blit! vdst 0
 		   tvec 0 (uint32->fixnum tilen))
 		(vector-set! vdst (uint32->fixnum tilen)
 		   arg)
@@ -3858,6 +3906,60 @@
 	     (js-get-jsobject-name/cache this (& "concat") #f %this
 		(or cache (js-pcache-ref js-array-pcache 15)))
 	     this arg))))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-concat0 ...                                             */
+;*---------------------------------------------------------------------*/
+(define (js-array-concat0 this::JsArray %this cache)
+   
+   (define (array-concat0 this %this)
+      (with-access::JsArray this ((avec vec) (ailen ilen))
+	 (let ((arr (js-array-construct-alloc/lengthu32 %this ailen)))
+	    (with-access::JsArray arr ((vdst vec) ilen)
+	       (vector-blit! vdst 0 avec 0 (uint32->fixnum ailen))
+	       (set! ilen ailen))
+	    arr)))
+
+   (if (js-object-mode-arrayinline? this)
+       (array-concat0 this %this)
+       (with-access::JsGlobalObject %this (js-array-pcache)
+	  (js-call0 %this
+	     (js-get-jsobject-name/cache this (& "concat") #f %this
+		(or cache (js-pcache-ref js-array-pcache 15)))
+	     this))))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-concat0-empty ...                                       */
+;*    -------------------------------------------------------------    */
+;*    Concat from an empty array.                                      */
+;*---------------------------------------------------------------------*/
+(define (js-array-concat0-empty %this cache)
+   (js-array-construct-alloc/lengthu32 %this #u32:0))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-concat0-create ...                                      */
+;*    -------------------------------------------------------------    */
+;*    Concat from a literal array of one element.                      */
+;*---------------------------------------------------------------------*/
+(define (js-array-concat0-create el::obj %this cache)
+   (let ((arr (js-array-construct-alloc/lengthu32 %this #u32:1)))
+      (with-access::JsArray arr (vec length ilen)
+	 (set! length #u32:1)
+	 (set! ilen #u32:1)
+	 (vector-set! vec 0 el)
+	 arr)))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-maybe-concat0 ...                                       */
+;*---------------------------------------------------------------------*/
+(define (js-array-maybe-concat0 this::obj %this cache)
+   (if (js-array? this)
+       (js-array-concat0 this %this cache)
+       (with-access::JsGlobalObject %this (js-array-pcache)
+	  (js-call0 %this
+	     (js-get-name/cache this (& "concat") #f %this
+		(or cache (js-pcache-ref js-array-pcache 16)))
+	     this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-concat1 ...                                             */
@@ -3871,14 +3973,15 @@
 			       (uint32->fixnum ailen)))
 		   (arr (js-array-species-create %this this new-len)))
 	       (with-access::JsArray arr ((vdst vec) ilen)
-		  (vector-copy! vdst 0
+		  (vector-blit! vdst 0
 		     tvec 0 (uint32->fixnum tilen))
-		  (vector-copy! vdst (uint32->fixnum tilen)
+		  (vector-blit! vdst (uint32->fixnum tilen)
 		     avec 0 (uint32->fixnum ailen))
 		  (set! ilen (uint32->fixnum (+u32 tilen ailen))))
 	       arr))))
    
-   (if (and (js-array-inlined? this) (js-array-inlined? arg))
+   (if (and (js-object-mode-arrayinline? this)
+	    (js-object-mode-arrayinline? arg))
        (array-concat1 this arg %this)
        (with-access::JsGlobalObject %this (js-array-pcache)
 	  (js-call1 %this
@@ -3896,12 +3999,13 @@
    (define (array-concat1-empty arg %this)
       (with-access::JsArray arg ((avec vec) (ailen ilen))
 	 (let ((arr (js-array-construct-alloc/lengthu32 %this ailen)))
-	    (with-access::JsArray arr ((vdst vec) ilen)
-	       (vector-copy! vdst 0 avec 0 (uint32->fixnum ailen))
-	       (set! ilen ailen))
+	    (with-access::JsArray arr ((vdst vec) ilen length)
+	       (vector-blit! vdst 0 avec 0 (uint32->fixnum ailen))
+	       (set! ilen ailen)
+	       (set! length ailen))
 	    arr)))
 
-   (if (js-array-inlined? arg)
+   (if (js-object-mode-arrayinline? arg)
        (array-concat1-empty arg %this)
        (with-access::JsGlobalObject %this (js-array-pcache)
 	  (let ((this (js-empty-vector->jsarray %this)))
@@ -3923,11 +4027,11 @@
 		(arr (js-array-construct-alloc/length %this new-len)))
 	    (with-access::JsArray arr ((vdst vec) ilen)
 	       (vector-set! vdst 0 el)
-	       (vector-copy! vdst 1 avec 0 (uint32->fixnum ailen))
+	       (vector-blit! vdst 1 avec 0 (uint32->fixnum ailen))
 	       (set! ilen (+u32 #u32:1 ailen)))
 	    arr)))
    
-   (if (js-array-inlined? arg)
+   (if (js-object-mode-arrayinline? arg)
        (array-concat1-create el arg %this)
        (with-access::JsGlobalObject %this (js-array-pcache)
 	  (let ((this (js-vector->jsarray (vector el) %this)))
@@ -3974,15 +4078,17 @@
 (define (js-array-prototype-noarray-join o::obj separator %this)
    
    (define (el->jsstring el)
-      (if (or (eq? el (js-undefined)) (eq? el (js-null)))
-	  (& "")
-	  (js-tojsstring el %this)))
-
+      (cond
+	 ((js-jsstring? el) el)
+	 ((or (eq? el (js-undefined)) (eq? el (js-null))) (& ""))
+	 (else (js-tojsstring el %this))))
+   
    (let* ((o (js-toobject-fast o %this))
 	  (lenval::uint32 (js-get-lengthu32 o %this))
-	  (sep (if (eq? separator (js-undefined))
-		   (& ",")
-		   (js-tojsstring separator %this))))
+	  (sep (cond
+		  ((eq? separator (js-undefined)) (& ","))
+		  ((js-jsstring? separator) separator)
+		  (else (js-tojsstring separator %this)))))
       (cond
 	 ((=u32 lenval #u32:0)
 	  (& ""))
@@ -4009,20 +4115,27 @@
 (define (js-array-prototype-array-join o::JsArray separator %this)
    
    (define (el->jsstring el)
-      (if (or (eq? el (js-undefined)) (eq? el (js-null)))
-	  (& "")
-	  (js-tojsstring el %this)))
+      (cond
+	 ((js-jsstring? el) el)
+	 ((or (eq? el (js-undefined)) (eq? el (js-null))) (& ""))
+	 (else (js-tojsstring el %this))))
    
    (let* ((lenval::uint32 (js-get-lengthu32 o %this))
-	  (sep (if (eq? separator (js-undefined))
-		   (& ",")
-		   (js-tojsstring separator %this))))
+	  (sep (cond
+		  ((eq? separator (js-undefined)) (& ","))
+		  ((js-jsstring? separator) separator)
+		  (else (js-tojsstring separator %this)))))
       (cond
 	 ((=u32 lenval #u32:0)
 	  (& ""))
 	 ((=u32 lenval #u32:1)
-	  (el->jsstring (js-array-index-ref o (-u32 lenval #u32:1) %this)))
-	 (else
+	  (el->jsstring (js-array-index-ref o #u32:0 %this)))
+	 ((=u32 lenval #u32:2)
+	  (js-jsstring-append3
+	     (el->jsstring (js-array-index-ref o 0 %this))
+	     sep
+	     (el->jsstring (js-array-index-ref o 1 %this))))
+	 ((<=u32 lenval #u32:4)
 	  (let loop ((r (js-jsstring-append sep
 			   (el->jsstring
 			      (js-array-index-ref o (-u32 lenval #u32:1)
@@ -4035,7 +4148,17 @@
 		 (let ((v (js-array-index-ref o i %this)))
 		    (loop (js-jsstring-append sep
 			     (js-jsstring-append (el->jsstring v) r))
-		       (-u32 i #u32:1)))))))))
+		       (-u32 i #u32:1))))))
+	 (else
+	  (let loop ((i #u32:1)
+		     (buffer (js-jsstring-append-buffer (js-string->jsbuffer "")
+				(el->jsstring (js-array-index-ref o #u32:0 %this)))))
+	     (if (=u32 i lenval)
+		 (js-buffer->jsstring buffer)
+		 (let ((buffer (js-jsstring-append-buffer buffer sep)))
+		    (loop (+u32 i #u32:1)
+		       (js-jsstring-append-buffer buffer
+			  (el->jsstring (js-array-index-ref o i %this)))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-join ...                                                */
@@ -4146,7 +4269,7 @@
 			    (u32min (js-touint32 relend %this) len))))))
       (with-access::JsArray this (vec ilen length)
 	 (cond
-	    ((js-object-mode-inline? this)
+	    ((js-object-mode-arrayinline? this)
 	     (let loop ((i k))
 		(if (<u32 i final)
 		    (begin
@@ -4173,9 +4296,14 @@
    (with-access::JsArray this (vec ilen length)
       (let ((final length))
 	 (cond
-	    ((js-object-mode-inline? this)
-	     ($vector-fill! vec 0 (uint32->fixnum length) value)
-	     (set! ilen length))
+	    ((js-object-mode-arrayinline? this)
+	     (cond
+		((<=u32 (fixnum->uint32 (vector-length vec)) final)
+		 (set! ilen final)
+		 ($vector-fill! vec 0 (uint32->fixnum final) value))
+		(else
+		 (set! vec (make-vector (uint32->fixnum final) value))
+		 (set! ilen final))))
 	    (else
 	     (let loop ((i #u32:0))
 		(if (<u32 i final)
@@ -4184,7 +4312,7 @@
 			   (vector-set! vec (uint32->fixnum i) value)    
 			   (js-put! this i value #f %this))
 		       (loop (+u32 i #u32:1)))
-		    (when (>u32 i length)
+		    (when (>u32 i final)
 		       (js-put-length! this (js-uint32-tointeger i) #f #f %this))))))
 	 this)))
 
@@ -4245,7 +4373,7 @@
    
    (define (vector-foreach this o len::uint32 proc t i::uint32 %this)
       (cond
-	 ((not (js-object-mode-inline? o))
+	 ((not (js-object-mode-arrayinline? o))
 	  (array-foreach this o len proc t i %this))
 	 ((and (js-procedure? proc)
 	       (with-access::JsProcedure proc (arity)
@@ -4258,7 +4386,7 @@
 		      (cond
 			 ((>=u32 i ilen)
 			  (js-undefined))
-			 ((not (js-object-mode-inline? o))
+			 ((not (js-object-mode-arrayinline? o))
 			  (array-foreach this o len proc t i %this))
 			 (else
 			  (let ((v (vector-ref vec (uint32->fixnum i))))
@@ -4270,7 +4398,7 @@
 		(cond
 		   ((>=u32 i ilen)
 		    (js-undefined))
-		   ((not (js-object-mode-inline? o))
+		   ((not (js-object-mode-arrayinline? o))
 		    (array-foreach this o len proc t i %this))
 		   (else
 		    (let ((v (vector-ref vec (uint32->fixnum i))))
@@ -4324,7 +4452,7 @@
 	    (cond
 	       ((>=u32 i ilen)
 		(js-undefined))
-	       ((not (js-object-mode-inline? o))
+	       ((not (js-object-mode-arrayinline? o))
 		(array-foreach o len proc thisarg i))
 	       (else
 		(let ((v (vector-ref vec (uint32->fixnum i))))
@@ -4397,8 +4525,8 @@
 	     (let ((pv (js-get-property-value o o i %this)))
 		(if (js-absent? pv)
 		    (with-access::JsArray a (ilen)
-		       (when (js-object-mode-inline? a)
-			  (js-object-mode-inline-set! a #f)
+		       (when (js-object-mode-arrayinline? a)
+			  (js-object-mode-arrayinline-set! a #f)
 			  (if (>u32 i 0)
 			      (set! ilen (-u32 i #u32:1))
 			      (set! ilen #u32:0))))
@@ -4504,8 +4632,8 @@
 	     (let ((pv (js-get-property-value o o i %this)))
 		(if (js-absent? pv)
 		    (with-access::JsArray a (ilen)
-		       (when (js-object-mode-inline? a)
-			  (js-object-mode-inline-set! a #f)
+		       (when (js-object-mode-arrayinline? a)
+			  (js-object-mode-arrayinline-set! a #f)
 			  (if (>u32 i 0)
 			      (set! ilen (-u32 i #u32:1))
 			      (set! ilen #u32:0))))
@@ -4527,9 +4655,8 @@
    
    (define (inline-map o len::uint32 proc thisarg i::uint32)
       (with-access::JsArray o (vec ilen length)
-	 (let ((v (js-create-vector (vector-length vec)))
-	       (l length)
-	       (ilen ilen))
+	 (let ((v (js-create-vector (uint32->fixnum length)))
+	       (l length))
 	    (let loop ((i i))
 	       (cond
 		  ((or (>=u32 i ilen) (>=u32 i l))
@@ -4546,10 +4673,35 @@
 		      (vector-set! v (uint32->fixnum i)
 			 (proc thisarg val (js-uint32-tointeger i) o %this))
 		      (loop (+u32 i 1)))))))))
-
+   
+   (define (full-inline-map o len::uint32 proc thisarg i::uint32)
+      (with-access::JsArray o (vec ilen length)
+	 (let ((a (with-access::JsGlobalObject %this (js-array-prototype js-array-cmap)
+		     ($js-make-jsarray-sans-init (uint32->fixnum ilen)
+			ilen ilen 
+			js-array-cmap
+			js-array-prototype
+			(js-array-default-mode)))))
+	    (with-access::JsArray a ((nvec vec))
+	       (let ((v nvec)
+		     (l length))
+		  (let loop ((i i))
+		     (cond
+			((or (>=u32 i ilen) (>=u32 i l))
+			 (if (=u32 i len)
+			     a
+			     ;; the array has been uninlined by the callback
+			     (array-map/array o len proc thisarg i a)))
+			(else
+			 (let ((val (vector-ref vec (uint32->fixnum i))))
+			    (vector-set! v (uint32->fixnum i)
+			       (proc thisarg val (js-uint32-tointeger i) o %this))
+			    (loop (+u32 i 1)))))))))))
+   
    (define (vector-map o len::uint32 proc thisarg i::uint32)
       (with-access::JsArray o (vec ilen length)
-	 (let* ((l ilen)
+	 ;; vector's ilen are constant
+	 (let* ((ilen ilen)
 		(a (js-vector-alloc ilen %this))
 		(v (with-access::JsArray a ((nvec vec)) nvec)))
 	    (let loop ((i i))
@@ -4559,11 +4711,21 @@
 		      (vector-set! v (uint32->fixnum i)
 			 (proc thisarg val (uint32->fixnum i) o %this))
 		      (loop (+u32 i 1))))))))
-
+   
    (with-access::JsArray this (length)
-      (if (js-vector? this)
-	  (vector-map this length proc thisarg #u32:0)
-	  (inline-map this length proc thisarg #u32:0))))
+      (cond
+	 ((=u32 length 0)
+	  (with-access::JsGlobalObject %this (js-array-prototype js-array-cmap)
+	     ($js-make-jsarray 0 #u32:0
+		js-array-cmap
+		js-array-prototype
+		(js-absent) (js-array-default-mode))))
+	 ((js-vector? this)
+	  (vector-map this length proc thisarg #u32:0))
+	 ((js-array-full-inlined? this)
+	  (full-inline-map this length proc thisarg #u32:0))
+	 (else
+	  (inline-map this length proc thisarg #u32:0)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-map-procedure ...                                       */
@@ -4649,9 +4811,9 @@
 		       (cond
 			  ((=u32 l #u32:0)
 			   (loop (+u32 i #u32:1) j))
-			  ((js-object-mode-inline? val)
+			  ((js-object-mode-arrayinline? val)
 			   (with-access::JsArray val (vec)
-			      (vector-copy! fvec (uint32->fixnum j)
+			      (vector-blit! fvec (uint32->fixnum j)
 				 vec 0 (uint32->fixnum l)))
 			   (loop (+u32 i #u32:1) (+u32 j l)))
 			  (else
@@ -4850,8 +5012,8 @@
 	     (let ((pv (js-get-property-value o o i %this)))
 		(if (js-absent? pv)
 		    (with-access::JsArray a (ilen)
-		       (when (js-object-mode-inline? a)
-			  (js-object-mode-inline-set! a #f)
+		       (when (js-object-mode-arrayinline? a)
+			  (js-object-mode-arrayinline-set! a #f)
 			  (if (>u32 i 0)
 			      (set! ilen (-u32 i #u32:1))
 			      (set! ilen #u32:0)))
@@ -4875,7 +5037,7 @@
    (define (vector-filter this o len::uint32 proc t i::uint32 %this)
       [%assert-array! o "vector-filter"]
       (with-access::JsArray o (vec ilen length)
-	 (if (js-object-mode-inline? o)
+	 (if (js-object-mode-arrayinline? o)
 	     (let ((v (js-create-vector (vector-length vec))))
 		(let loop ((i i)
 			   (j 0))
@@ -4885,7 +5047,7 @@
 			  (with-access::JsArray a (length ilen)
 			     (set! length j)
 			     (set! ilen j)
-			     (if (js-object-mode-inline? o)
+			     (if (js-object-mode-arrayinline? o)
 				 a
 				 (array-filter/array this o len proc t i j a %this)))))
 		      (else
@@ -4941,8 +5103,8 @@
 	     (let ((pv (js-get-property-value o o i %this)))
 		(if (js-absent? pv)
 		    (with-access::JsArray a (ilen)
-		       (when (js-object-mode-inline? a)
-			  (js-object-mode-inline-set! a #f)
+		       (when (js-object-mode-arrayinline? a)
+			  (js-object-mode-arrayinline-set! a #f)
 			  (if (>u32 i 0)
 			      (set! ilen (-u32 i #u32:1))
 			      (set! ilen #u32:0)))
@@ -4973,7 +5135,7 @@
 		      (with-access::JsArray a (length ilen)
 			 (set! length j)
 			 (set! ilen j)
-			 (if (js-object-mode-inline? o)
+			 (if (js-object-mode-arrayinline? o)
 			     a
 			     (array-filter/array o len proc t i j a %this)))))
 		  (else
@@ -5036,8 +5198,8 @@
 	     (let ((pv (js-get-property-value o o i %this)))
 		(if (js-absent? pv)
 		    (with-access::JsArray a (ilen)
-		       (when (js-object-mode-inline? a)
-			  (js-object-mode-inline-set! a #f)
+		       (when (js-object-mode-arrayinline? a)
+			  (js-object-mode-arrayinline-set! a #f)
 			  (if (>u32 i 0)
 			      (set! ilen (-u32 i #u32:1))
 			      (set! ilen #u32:0)))
@@ -5062,7 +5224,7 @@
    (define (vector-filter-map this o len::uint32 proc t i::uint32 %this)
       [%assert-array! o "vector-filter-map"]
       (with-access::JsArray o (vec ilen length)
-	 (if (js-object-mode-inline? o)
+	 (if (js-object-mode-arrayinline? o)
 	     (let ((v (js-create-vector (vector-length vec))))
 		(let loop ((i i)
 			   (j 0))
@@ -5072,7 +5234,7 @@
 			  (with-access::JsArray a (length ilen)
 			     (set! length j)
 			     (set! ilen j)
-			     (if (js-object-mode-inline? o)
+			     (if (js-object-mode-arrayinline? o)
 				 a
 				 (array-filter-map/array this o len proc t i j a %this)))))
 		      (else
@@ -5129,8 +5291,8 @@
 	     (let ((pv (js-get-property-value o o i %this)))
 		(if (js-absent? pv)
 		    (with-access::JsArray a (ilen)
-		       (when (js-object-mode-inline? a)
-			  (js-object-mode-inline-set! a #f)
+		       (when (js-object-mode-arrayinline? a)
+			  (js-object-mode-arrayinline-set! a #f)
 			  (if (>u32 i 0)
 			      (set! ilen (-u32 i #u32:1))
 			      (set! ilen #u32:0)))
@@ -5162,7 +5324,7 @@
 		      (with-access::JsArray a (length ilen)
 			 (set! length j)
 			 (set! ilen j)
-			 (if (js-object-mode-inline? o)
+			 (if (js-object-mode-arrayinline? o)
 			     a
 			     (array-filter-map/array o len proc t i j a %this)))))
 		  (else
@@ -5215,6 +5377,80 @@
 		this jsproc thisarg)))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-array-prototype-filter-map2-procedure ...                     */
+;*---------------------------------------------------------------------*/
+(define (js-array-prototype-filter-map2-procedure this::JsArray procf::procedure procm thisarg %this)
+   
+   (define (array-filter-map/array o len procf procm t i::uint32 j::uint32 a %this)
+      (let loop ((i i)
+		 (j::uint32 j))
+	 (if (<u32 i len)
+	     (let ((pv (js-get-property-value o o i %this)))
+		(if (js-absent? pv)
+		    (with-access::JsArray a (ilen)
+		       (when (js-object-mode-arrayinline? a)
+			  (js-object-mode-arrayinline-set! a #f)
+			  (if (>u32 i 0)
+			      (set! ilen (-u32 i #u32:1))
+			      (set! ilen #u32:0)))
+		       (loop (+u32 i 1) j))
+		    (let* ((v pv)
+			   (nj (js-toname j %this))
+			   (r (procf t v (js-uint32-tointeger i) o %this)))
+		       (if (js-totest r)
+			   (let* ((r (procm t v (js-uint32-tointeger i) o %this))
+				  (newdesc (instantiate::JsValueDescriptor
+					      (name nj)
+					      (value r)
+					      (writable #t)
+					      (enumerable #t)
+					      (configurable #t))))
+			      ;; 6
+			      (js-define-own-property a nj newdesc #f %this)
+			      (loop (+u32 i 1) (+u32 j 1)))
+			   (loop (+u32 i 1) j)))))
+	     a)))
+   
+   (define (vector-filter-map o len::uint32 procf procm t i::uint32 %this)
+      (with-access::JsArray o (vec ilen length)
+	 (let ((v (js-create-vector (vector-length vec))))
+	    (let loop ((i i)
+		       (j 0))
+	       (cond
+		  ((>=u32 i ilen)
+		   (let ((a (js-species->jsarray this v %this)))
+		      (with-access::JsArray a (length ilen)
+			 (set! length j)
+			 (set! ilen j)
+			 (if (js-object-mode-arrayinline? o)
+			     a
+			     (array-filter-map/array o len procf procm t i j a %this)))))
+		  (else
+		   (let* ((val (vector-ref vec (uint32->fixnum i)))
+			  (res (procf t val (js-uint32-tointeger i) o %this)))
+		      (cond
+			 ((js-totest res)
+			  (let ((res (procm t val (js-uint32-tointeger i) o %this)))
+			     (vector-set! v (uint32->fixnum j) res))
+			  (loop (+u32 i 1) (+u32 j 1)))
+			 (else
+			  (loop (+u32 i 1) j))))))))))
+   
+   (with-access::JsArray this (length)
+      (vector-filter-map this length procf procm thisarg #u32:0 %this)))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-filter-map2-procedure ...                               */
+;*---------------------------------------------------------------------*/
+(define (js-array-filter-map2-procedure this::JsArray procf procm thisarg %this cachef cachem)
+   (if (js-object-mode-plain? this)
+       (js-array-prototype-filter-map2-procedure this procf procm thisarg %this)
+       ;; proc is a stack allocated procedure
+       (js-array-map-procedure 
+	  (js-array-filter-procedure this procf thisarg %this cachef)
+	  procm thisarg %this cachem)))
+
+;*---------------------------------------------------------------------*/
 ;*    js-array-prototype-push ...                                      */
 ;*    -------------------------------------------------------------    */
 ;*    This is the method initial bound in Array.prototype.             */
@@ -5224,34 +5460,57 @@
 ;*---------------------------------------------------------------------*/
 (define (js-array-prototype-push o::JsArray item %this::JsGlobalObject)
    (with-access::JsArray o (length ilen vec)
+      
+      (define (default n)
+	 (if (<u32 length #u32:4294967295)
+	     (js-array-put! o (uint32->fixnum n) item #f %this)
+	     (js-put! o n item #f %this))
+	 (if (=u32 (+u32 n #u32:1) #u32:0)
+	     (js-raise-range-error %this "illegal length: ~s"
+		(js-tostring #l4294967296 %this))
+	     (js-uint32-tointeger (+u32 #u32:1 n))))
+      
+      (define (push n)
+	 (let ((len (vector-length vec)))
+	    (cond
+	       ((and (<u32 ilen (fixnum->uint32 len))
+		     (or (js-object-mode-arrayinline? o)
+			 (not (js-has-fixnum-property o (uint32->fixnum n) %this))))
+		(let ((idx (+u32 n 1)))
+		   (vector-set! vec (uint32->fixnum n) item)
+		   (set! ilen idx)
+		   (set! length idx)
+		   (js-uint32-tointeger idx)))
+	       ((and (=fx len 0)
+		     (not (js-has-fixnum-property o 0 %this)))
+		(set! vec (make-vector (DEFAULT-EMPTY-ARRAY-SIZE)))
+		(set! ilen #u32:1)
+		(set! length #u32:1)
+		(vector-set! vec 0 item)
+		1)
+	       ((and (=u32 n ilen) (js-object-mode-arrayinline? o))
+		;; fast path
+		(js-object-mode-hasnumeralprop-set! o #t)
+		;; extend the inlined vector
+		(with-access::JsArray o (length vec ilen)
+		   ;; use max when vector-length == 0
+		   (let* ((nlen (array-expand-len len n))
+			  (nvec (copy-vector-fill! vec nlen (js-absent))))
+		      (cond-expand (profile (profile-vector-extension nlen len)))
+		      (gc-cleanup-inline-vector! o vec)
+		      (set! vec nvec))
+		   (let ((idx (+u32 n 1)))
+		      (vector-set! vec (uint32->fixnum n) item)
+		      (set! ilen idx)
+		      (set! length idx)
+		      (js-uint32-tointeger idx))))
+	       (else
+		(default n)))))
+      
       (let ((n length))
-	 (cond
-	    ((and (=u32 n ilen)
-		  (<u32 ilen (fixnum->uint32 (vector-length vec)))
-		  (or (js-object-mode-inline? o)
-		      (not (js-has-fixnum-property o (uint32->fixnum n) %this))))
-	     (let ((idx (+u32 n 1)))
-		(vector-set! vec (uint32->fixnum n) item)
-		(set! ilen idx)
-		(set! length idx)
-		(js-uint32-tointeger idx)))
-	    ((and (=fx (vector-length vec) 0)
-		  (=uint32 n #u32:0)
-		  (not (js-has-fixnum-property o 0 %this)))
-	     (set! vec (js-create-vector (DEFAULT-EMPTY-ARRAY-SIZE)))
-	     (set! ilen #u32:1)
-	     (set! length #u32:1)
-	     (vector-set! vec 0 item)
-	     1)
-	    (else
-	     (if (<u32 length #u32:4294967295)
-		 (js-array-put! o (uint32->fixnum n) item #f %this)
-		 (js-put! o n item #f %this))
-	     (if (=u32 (+u32 n #u32:1) #u32:0)
-		 (js-raise-range-error %this
-		    "illegal length: ~s"
-		    (js-tostring #l4294967296 %this))
-		 (js-uint32-tointeger (+u32 #u32:1 n))))))))
+	 (if (=u32 n ilen)
+	     (push n)
+	     (default n)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-push ...                                                */
@@ -5407,7 +5666,7 @@
 		  (loop ni))))))
 
    (with-access::JsArray this (vec)
-      (if (js-object-mode-inline? this)
+      (if (js-object-mode-arrayinline? this)
 	  ;; fast path
 	  (with-access::JsArray this (ilen)
 	     (vector-reverse! vec (uint32->fixnum ilen))
@@ -5432,7 +5691,7 @@
 (define (js-array-prototype-slice this::obj start end %this::JsGlobalObject)
    (if (and (js-array? this)
 	    (js-object-mode-plain? this)
-	    (js-object-mode-inline? this)
+	    (js-object-mode-arrayinline? this)
 	    (fixnum? start))
        (cond
 	  ((fixnum? end)
@@ -5523,11 +5782,11 @@
 (define (js-array-maybe-slice0 this %this::JsGlobalObject cache)
    (if (and (js-array? this)
 	    (js-object-mode-plain? this)
-	    (js-object-mode-inline? this))
+	    (js-object-mode-arrayinline? this))
        (with-access::JsArray this (ilen vec)
 	  (let ((o (js-array-species-create %this this (uint32->fixnum ilen))))
 	     (with-access::JsArray o ((vdst vec) (idst ilen))
-		(vector-copy! vdst 0 vec 0 (uint32->fixnum ilen))
+		(vector-blit! vdst 0 vec 0 (uint32->fixnum ilen))
 		(set! idst ilen))
 	     o))
        (with-access::JsGlobalObject %this (js-array-pcache)
@@ -5543,7 +5802,7 @@
    (cond
       ((and (js-array? this)
 	    (js-object-mode-plain? this)
-	    (js-object-mode-inline? this)
+	    (js-object-mode-arrayinline? this)
 	    (fixnum? start))
        (with-access::JsArray this (ilen)
 	  (js-array-inlined-slice2 this start (uint32->fixnum ilen) %this)))
@@ -5566,7 +5825,7 @@
    (cond
       ((and (js-array? this)
 	    (js-object-mode-plain? this)
-	    (js-object-mode-inline? this)
+	    (js-object-mode-arrayinline? this)
 	    (fixnum? start))
        (with-access::JsArray this (ilen)
 	  (js-array-inlined-slice2 this start (uint32->fixnum ilen) %this)))
@@ -5584,7 +5843,7 @@
    (cond
       ((and (js-array? this)
 	    (js-object-mode-plain? this)
-	    (js-object-mode-inline? this)
+	    (js-object-mode-arrayinline? this)
 	    (fixnum? start)
 	    (fixnum? end))
        (js-array-inlined-slice2 this start end %this))
@@ -5621,11 +5880,124 @@
 		(let* ((l (-fx final k))
 		       (o (js-array-species-create %this this l)))
 		   (with-access::JsArray o ((vdst vec) (idst ilen))
-		      (vector-copy! vdst 0 vec k final)
+		      (vector-blit! vdst 0 vec k final)
 		      (set! idst l))
 		   o)))
 	    (else
 	     (js-array-slice this start end %this))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-maybe-splice2 ...                                       */
+;*---------------------------------------------------------------------*/
+(define (js-array-maybe-splice2 this start end %this::JsGlobalObject cache)
+   (cond
+      ((and (js-array? this)
+	    (js-object-mode-plain? this)
+	    (js-object-mode-arrayinline? this)
+	    (fixnum? start)
+	    (fixnum? end))
+       (js-array-inlined-splice2 this start end %this))
+      (else
+       (with-access::JsGlobalObject %this (js-array-pcache)
+	  (js-call2 %this
+	     (js-get-name/cache this (& "splice") #f %this
+		(or cache (js-pcache-ref js-array-pcache 17)))
+	     this start end)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-inlined-splice2 ...                                     */
+;*---------------------------------------------------------------------*/
+(define (js-array-inlined-splice2 this start end %this::JsGlobalObject)
+   
+   (define (vector-splice this len actualstart actualdeletecount)
+      (with-access::JsArray this (vec ilen length)
+	 (let* ((alen (vector-length vec))
+		(rlen (+fx actualstart actualdeletecount))
+		(nlen (-fx len actualdeletecount))
+		(cstart (+fx actualstart actualdeletecount))
+		(vres (js-create-vector actualdeletecount))
+		(res (js-species->jsarray this vres %this)))
+	    ;; populate the result vector
+	    (when (<fx actualstart alen)
+	       ;; from the inlined vector
+	       (vector-blit! vres 0 vec actualstart
+		  (minfx alen (+fx actualstart actualdeletecount))))
+	    (when (>fx actualdeletecount (-fx alen actualstart))
+	       ;;  from the prototype object
+	       (let loop ((k (+fx actualstart (-fx alen actualstart))))
+		  (when (<fx k actualdeletecount)
+		     (let ((o (js-get this k %this)))
+			(vector-set! vres k o)
+			(loop (+fx k 1))))))
+	    ;; modify the source array
+	    (if (<=fx nlen 0)
+		(begin
+		   (set! vec '#())
+		   (set! ilen 0)
+		   (set! length 0))
+		(begin
+		   ;; shift the vector
+		   (set! ilen (fixnum->uint32 nlen))
+		   (set! length (fixnum->uint32 nlen))
+		   (vector-copy! vec (-fx nlen (-fx len cstart))
+		      vec cstart len)))
+	    res)))
+   
+   (let* ((len (uint32->fixnum (js-get-lengthu32 this %this)))
+	  (actualstart (if (<fx start 0)
+			   (maxfx (+fx len start) 0)
+			   (minfx start len)))
+	  (actualdeletecount (min (maxfx (js-tointeger end %this) 0)
+				(-fx len actualstart))))
+      (vector-splice this len actualstart actualdeletecount)))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-maybe-splice2-sans-result ...                           */
+;*---------------------------------------------------------------------*/
+(define (js-array-maybe-splice2-sans-result this start end %this::JsGlobalObject cache)
+   (cond
+      ((and (js-array? this)
+	    (js-object-mode-plain? this)
+	    (js-object-mode-arrayinline? this)
+	    (fixnum? start)
+	    (fixnum? end))
+       (js-array-inlined-splice2-sans-result this start end %this))
+      (else
+       (with-access::JsGlobalObject %this (js-array-pcache)
+	  (js-call2 %this
+	     (js-get-name/cache this (& "splice") #f %this
+		(or cache (js-pcache-ref js-array-pcache 17)))
+	     this start end)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-inlined-splice2-sans-result ...                         */
+;*---------------------------------------------------------------------*/
+(define (js-array-inlined-splice2-sans-result this start end %this::JsGlobalObject)
+   
+   (define (vector-splice this len actualstart actualdeletecount)
+      (with-access::JsArray this (vec ilen length)
+	 (let* ((nlen (-fx len actualdeletecount))
+		(cstart (+fx actualstart actualdeletecount)))
+	    ;; modify the source array
+	    (if (<=fx nlen 0)
+		(begin
+		   (set! vec '#())
+		   (set! ilen 0)
+		   (set! length 0))
+		(begin
+		   ;; shift the vector
+		   (set! ilen (fixnum->uint32 nlen))
+		   (set! length (fixnum->uint32 nlen))
+		   (vector-copy! vec (-fx nlen (-fx len cstart))
+		      vec cstart len))))))
+   
+   (let* ((len (uint32->fixnum (js-get-lengthu32 this %this)))
+	  (actualstart (if (<fx start 0)
+			   (maxfx (+fx len start) 0)
+			   (minfx start len)))
+	  (actualdeletecount (min (maxfx (js-tointeger end %this) 0)
+				(-fx len actualstart))))
+      (vector-splice this len actualstart actualdeletecount)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-maybe-shift0 ...                                        */
@@ -5633,26 +6005,26 @@
 (define (js-array-maybe-shift0 this %this cache)
    (if (and (js-array? this)
 	    (js-object-mode-plain? this)
-	    (js-object-mode-inline? this))
+	    (js-object-mode-arrayinline? this))
        (with-access::JsArray this (vec ilen length)
 	  (cond
 	     ((=u32 ilen 0)
 	      (js-undefined))
-	     (($jsobject-vector-inline? this)
-	      ;; fast path for shifting an array. when the the array
+	     ((and ($js-object-vector-inline? this) (>u32 ilen #u32:8))
+	      ;; fast path for shifting an array. when the array
 	      ;; is builtin (the JsArray object contains the Scheme vector)
 	      ;; instead of shifting inside the Scheme array, we merely
 	      ;; shift the inner pointer to the Scheme array
 	      (let ((first ($js-jsarray-shift-builtin this))
-		    (len (-u32 ilen 1)))
-		 (set! length len)
-		 (set! ilen len)
+		    (nlen (-u32 ilen #u32:1)))
+		 (set! length nlen)
+		 (set! ilen nlen)
 		 first))
 	     (else
 	      (with-access::JsArray this (vec length ilen)
 		 (let ((first (vector-ref vec 0))
 		       (nlen (-u32 ilen #u32:1)))
-		    (vector-copy! vec 0 vec 1)
+		    (vector-copy! vec 0 vec 1 (uint32->fixnum ilen))
 		    (vector-set! vec (uint32->fixnum nlen) (js-absent))
 		    (set! length nlen)
 		    (set! ilen nlen)
@@ -5688,7 +6060,7 @@
 	    (let loop ((i i))
 	       (cond
 		  ((>=u32 i ilen)
-		   (unless (js-object-mode-inline? o)
+		   (unless (js-object-mode-arrayinline? o)
 		      (array-some this o len proc t i %this)))
 		  (else
 		   (let ((v (vector-ref vec (uint32->fixnum i))))
@@ -5768,7 +6140,9 @@
 		 (make-compare comparefn))))))
    
    (define (vector-sort this comparefn)
-      (with-access::JsArray this (vec)
+      (with-access::JsArray this (vec ilen)
+	 ;; force vector resize otherwise sort will access elements out of range
+	 (vector-shrink! vec (uint32->fixnum ilen))
 	 (if (and (js-procedure? comparefn)
 		  (with-access::JsProcedure comparefn (arity)
 		     (=fx arity 3)))
@@ -5776,15 +6150,15 @@
 	     (with-access::JsProcedure comparefn (procedure)
 		(let ((proc procedure))
 		   ($sort-vector vec
-		      (lambda (x y)
-			 (cond
-			    ((eq? x (js-undefined)) (eq? y (js-undefined)))
-			    ((eq? y (js-undefined)) #t)
-			    (else
-			     (let ((t (proc (js-undefined) x y)))
-				(if (fixnum? t)
-				    (<=fx t 0)
-				    (<= (js-tointeger t %this) 0)))))))))
+			       (lambda (x y)
+				  (cond
+				     ((eq? x (js-undefined)) (eq? y (js-undefined)))
+				     ((eq? y (js-undefined)) #t)
+				     (else
+				      (let ((t (proc (js-undefined) x y)))
+					 (if (fixnum? t)
+					     (<=fx t 0)
+					     (<= (js-tointeger t %this) 0)))))))))
 	     ($sort-vector vec (get-compare comparefn)))
 	 this))
    
@@ -5824,13 +6198,12 @@
 	 (unless (< len 2)
 	    (quicksort arr cmp 0 (- len 1)))
 	 arr))
-   
    (let ((o this))
       (if (not (js-array? this))
 	  (array-sort this (get-compare comparefn))
 	  (with-access::JsArray this (vec)
 	     (cond
-		((js-object-mode-inline? this)
+		((js-object-mode-arrayinline? this)
 		 (vector-sort this comparefn))
 		((=u32 (js-get-lengthu32 o %this) #u32:0)
 		 this)
@@ -5917,7 +6290,7 @@
 	  (array-sort this (make-compare-proc3 comparefn))
 	  (with-access::JsArray this (vec)
 	     (cond
-		((js-object-mode-inline? this)
+		((js-object-mode-arrayinline? this)
 		 (vector-sort this comparefn))
 		((=u32 (js-get-lengthu32 o %this) #u32:0)
 		 this)
@@ -5987,17 +6360,201 @@
 		this jsproc)))))
 
 ;*---------------------------------------------------------------------*/
+;*    object-reduce/accumulator-procedure2 ...                         */
+;*---------------------------------------------------------------------*/
+(define (object-reduce/accumulator-procedure2 o proc len::uint32 i::uint32 accumulator %this)
+   (let loop ((i i)
+	      (acc accumulator))
+      (if (<u32 i len)
+	  (let ((pv (js-get-property-value o o i %this)))
+	     (if (js-absent? pv)
+		 (loop (+u32 i #u32:1) acc)
+		 (let ((v pv))
+		    (loop (+u32 i #u32:1) (proc (js-undefined) acc v)))))
+	  acc)))
+
+;*---------------------------------------------------------------------*/
+;*    vector-reduce/accumulator-procedure2 ...                         */
+;*---------------------------------------------------------------------*/
+(define (vector-reduce/accumulator-procedure2 o proc len::uint32 i::uint32 accumulator %this)
+   (with-access::JsArray o (vec)
+      (let loop ((i i)
+		 (acc accumulator))
+	 (if (<u32 i len)
+	     (let ((v (vector-ref vec (uint32->fixnum i))))
+		(if (js-absent? v)
+		    (object-reduce/accumulator-procedure2 o proc len i acc %this)
+		    (loop (+u32 i #u32:1) (proc (js-undefined) acc v))))
+	     acc))))
+
+;*---------------------------------------------------------------------*/
+;*    object-reduce/accumulator ...                                    */
+;*---------------------------------------------------------------------*/
+(define (object-reduce/accumulator o proc len::uint32 i::uint32 accumulator %this)
+   (with-access::JsProcedure proc (arity procedure)
+      (if (=fx arity 3)
+	  (object-reduce/accumulator-procedure2
+	     o procedure len i accumulator %this)
+	  (let loop ((i i)
+		     (acc accumulator))
+	     (if (<u32 i len)
+		 (let ((pv (js-get-property-value o o i %this)))
+		    (if (js-absent? pv)
+			(loop (+u32 i #u32:1) acc)
+			(let ((v pv))
+			   (loop (+u32 i #u32:1)
+			      (js-call2-4 %this proc (js-undefined) acc v
+				 (js-uint32-tointeger i) o)))))
+		 acc)))))
+
+;*---------------------------------------------------------------------*/
+;*    vector-reduce/accumulator ...                                    */
+;*---------------------------------------------------------------------*/
+(define (vector-reduce/accumulator o proc len::uint32 i::uint32 accumulator %this)
+   (with-access::JsProcedure proc (arity procedure)
+      (if (=fx arity 3)
+	  (vector-reduce/accumulator-procedure2
+	     o procedure len i accumulator %this)
+	  (with-access::JsArray o (vec)
+	     (let loop ((i i)
+			(acc accumulator))
+		(if (<u32 i len)
+		    (let ((v (vector-ref vec (uint32->fixnum i))))
+		       (if (js-absent? v)
+			   (object-reduce/accumulator o proc len i acc %this)
+			   (loop (+u32 i #u32:1)
+			      (js-call2-4 %this proc (js-undefined) acc v
+				 (js-uint32-tointeger i) o))))
+		    acc))))))
+
+;*---------------------------------------------------------------------*/
+;*    reduce/accumulator ...                                           */
+;*---------------------------------------------------------------------*/
+(define (reduce/accumulator o proc len::uint32 i::uint32 accumulator %this)
+   (if (and (js-array? o) (js-object-mode-arrayinline? o))
+       (vector-reduce/accumulator o proc len i accumulator %this)
+       (object-reduce/accumulator o proc len i accumulator %this)))
+       
+;*---------------------------------------------------------------------*/
+;*    reduce/accumulator-procedure2 ...                                */
+;*---------------------------------------------------------------------*/
+(define (reduce/accumulator-procedure2 o proc len::uint32 i::uint32 accumulator %this)
+   (if (and (js-array? o) (js-object-mode-arrayinline? o))
+       (vector-reduce/accumulator-procedure2 o proc len i accumulator %this)
+       (object-reduce/accumulator-procedure2 o proc len i accumulator %this)))
+       
+;*---------------------------------------------------------------------*/
+;*    js-array-prototype-reduce-sans ...                               */
+;*---------------------------------------------------------------------*/
+(define (js-array-prototype-reduce-sans this proc %this)
+   (let ((len::uint32 (js-get-lengthu32 this %this)))
+      (if (not (js-procedure? proc))
+	  (js-raise-type-error %this "not a procedure ~s" proc)
+	  ;; find the accumulator init value
+	  (let loop ((i #u32:0))
+	     (if (<u32 i len)
+		 (let ((pv (js-get-property-value this this i %this)))
+		    (if (js-absent? pv)
+			(loop (+u32 i #u32:1))
+			(reduce/accumulator this proc len (+u32 i #u32:1) pv %this)))
+		 (js-raise-type-error %this
+		    "reduce: cannot find accumulator ~s" this))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-prototype-reduce ...                                    */
+;*---------------------------------------------------------------------*/
+(define (js-array-prototype-reduce this proc init %this)
+   (let ((len::uint32 (js-get-lengthu32 this %this)))
+      (if (not (js-procedure? proc))
+	  (js-raise-type-error %this "not a procedure ~s" proc)
+	  (reduce/accumulator this proc len #u32:0 init %this))))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-prototype-reduce-procedure2 ...                         */
+;*---------------------------------------------------------------------*/
+(define (js-array-prototype-reduce-procedure2 this::JsArray proc init %this)
+   (let ((len::uint32 (js-array-length this)))
+      (reduce/accumulator-procedure2 this proc len #u32:0 init %this)))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-reduce ...                                              */
+;*---------------------------------------------------------------------*/
+(define (js-array-reduce this::JsArray fn init %this cache)
+   (if (js-object-mode-plain? this)
+       (js-array-prototype-reduce this fn init %this)
+       (with-access::JsGlobalObject %this (js-array-pcache)
+	  (js-call2 %this
+	     (js-get-jsobject-name/cache this (& "reduce") #f %this
+		(or cache (js-pcache-ref js-array-pcache 18)))
+	     this fn init))))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-maybe-reduce ...                                        */
+;*---------------------------------------------------------------------*/
+(define (js-array-maybe-reduce this::obj fn init %this cache)
+   (if (and (js-array? this) (js-object-mode-plain? this))
+       (js-array-prototype-reduce this fn init %this)
+       (with-access::JsGlobalObject %this (js-array-pcache)
+	  (js-call2 %this
+	     (js-get-name/cache this (& "reduce") #f %this
+		(or cache (js-pcache-ref js-array-pcache 18)))
+	     this fn init))))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-reduce-procedure ...                                    */
+;*---------------------------------------------------------------------*/
+(define (js-array-reduce-procedure this::JsArray fn init %this cache)
+   (if (and (js-array? this)
+	    (js-object-mode-plain? this)
+	    (=fx (procedure-arity fn) 3))
+       (js-array-prototype-reduce-procedure2 this fn init %this)
+       (let* ((fn ($dup-procedure fn))
+	      (jsproc (js-make-function %this
+			 (lambda (_this x y i o) (fn _this x y i o))
+			 (js-function-arity 4 0)
+			 (js-function-info :name "fn" :len 4)
+			 :constrsize 0
+			 :alloc js-object-alloc)))
+	  (with-access::JsGlobalObject %this (js-array-pcache)
+	     (js-call2 %this
+		(js-get-jsobject-name/cache this (& "reduce") #f %this
+		   (or cache (js-pcache-ref js-array-pcache 18)))
+		this jsproc init)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-maybe-reduce-procedure ...                              */
+;*---------------------------------------------------------------------*/
+(define (js-array-maybe-reduce-procedure this::obj fn init %this cache)
+   (if (js-array? this)
+       (js-array-reduce-procedure this fn init %this cache)
+       (let* ((fn ($dup-procedure fn))
+	      (jsproc (js-make-function %this
+			 (lambda (_this x y i o) (fn _this x y i o))
+			 (js-function-arity 4 0)
+			 (js-function-info :name "fn" :len 4)
+			 :constrsize 0
+			 :alloc js-object-alloc)))
+	  (with-access::JsGlobalObject %this (js-array-pcache)
+	     (js-call2 %this
+		(js-get-name/cache this (& "reduce") #f %this
+		   (or cache (js-pcache-ref js-array-pcache 18)))
+		this jsproc init)))))
+
+;*---------------------------------------------------------------------*/
 ;*    vector-indexof ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (vector-indexof::long arr vec el k::long len::long)
-   (let loop ((k k))
-      (cond
-	 ((>=fx k len)
-	  -1)
-	 ((js-strict-equal? (vector-ref vec k) el)
-	  k)
-	 (else
-	  (loop (+fx k 1))))))
+(define-inline (vector-indexof::long arr vec el k::long len::long)
+   (if (and (fixnum? el) (not (=fx el 0)))
+       (let loop ((k k))
+	  (cond
+	     ((>=fx k len) -1)
+	     ((eq? (vector-ref vec k) el) k)
+	     (else (loop (+fx k 1)))))
+       (let loop ((k k))
+	  (cond
+	     ((>=fx k len) -1)
+	     ((js-strict-equal? (vector-ref vec k) el) k)
+	     (else (loop (+fx k 1)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    vector-holey-indexof ...                                         */
@@ -6023,8 +6580,6 @@
 ;*    The THIS argument is intentionally not required to be a JsArray  */
 ;*---------------------------------------------------------------------*/
 (define (js-array-prototype-indexof this::JsObject el indx %this)
-   
-   
    
    (define (array-indexof::int arr k::uint32 len::uint32)
       (let ((k (js-uint32-tointeger k))
@@ -6053,34 +6608,16 @@
 	     (cond
 		((not (js-array? this))
 		 (array-indexof this k len))
-		((js-object-mode-inline? this)
+		((js-object-mode-arrayinline? this)
 		 (with-access::JsArray this (vec ilen)
 		    (vector-indexof this vec el (uint32->fixnum k)
 		       (uint32->fixnum ilen))))
-		((js-object-mode-holey? this)
+		((js-object-mode-arrayholey? this)
 		 (with-access::JsArray this (vec ilen)
 		    (vector-holey-indexof this vec el (uint32->fixnum k)
 		       (vector-length vec) %this)))
 		(else
 		 (array-indexof this k len)))))))
-
-;*---------------------------------------------------------------------*/
-;*    js-array-indexof0 ...                                            */
-;*---------------------------------------------------------------------*/
-(define (js-array-indexof0 o::JsArray el %this cache)
-   (cond
-      ((js-array-inlined? o)
-       (with-access::JsArray o (vec ilen)
-	  (vector-indexof o vec el 0 (uint32->fixnum ilen))))
-      ((js-object-mode-holey? o)
-       (with-access::JsArray o (vec ilen)
-	  (vector-holey-indexof o vec el 0 (vector-length vec) %this)))
-      (else
-       (with-access::JsGlobalObject %this (js-array-pcache)
-	  (js-call1 %this
-	     (js-get-jsobject-name/cache o (& "indexOf") #f %this
-		(or cache (js-pcache-ref js-array-pcache 10)))
-	     o el)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-indexof ...                                             */
@@ -6094,6 +6631,230 @@
 		(or cache (js-pcache-ref js-array-pcache 10)))
 	     o el indx))))
 
+;*---------------------------------------------------------------------*/
+;*    js-array-indexof0 ...                                            */
+;*---------------------------------------------------------------------*/
+(define (js-array-indexof0 o::JsArray el %this cache)
+   (cond
+      ((js-array-inlined? o)
+       (with-access::JsArray o (vec ilen)
+	  (vector-indexof o vec el 0 (uint32->fixnum ilen))))
+      ((js-object-mode-arrayholey? o)
+       (with-access::JsArray o (vec ilen)
+	  (vector-holey-indexof o vec el 0 (vector-length vec) %this)))
+      (else
+       (with-access::JsGlobalObject %this (js-array-pcache)
+	  (js-call1 %this
+	     (js-get-jsobject-name/cache o (& "indexOf") #f %this
+		(or cache (js-pcache-ref js-array-pcache 10)))
+	     o el)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-maybe-indexof ...                                       */
+;*---------------------------------------------------------------------*/
+(define (js-array-maybe-indexof this search position %this cache)
+   (with-access::JsGlobalObject %this (js-string-pcache)
+      (let loop ((this this))
+	 (cond
+	    ((js-array? this)
+	     (js-array-indexof this search position %this cache))
+	    ((js-object? this)
+	     (js-call2 %this
+		(js-get-jsobject-name/cache this (& "indexOf") #f %this
+		   (or cache (js-pcache-ref js-string-pcache 23)))
+		this search position))
+	    (else
+	     (loop (js-toobject %this this)))))))
+   
+;*---------------------------------------------------------------------*/
+;*    js-array-maybe-indexof0 ...                                      */
+;*---------------------------------------------------------------------*/
+(define (js-array-maybe-indexof0 this search %this cache)
+   (with-access::JsGlobalObject %this (js-string-pcache)
+      (let loop ((this this))
+	 (cond
+	    ((js-array? this)
+	     (js-array-indexof0 this search %this cache))
+	    ((js-object? this)
+	     (js-call1 %this
+		(js-get-jsobject-name/cache this (& "indexOf") #f %this
+		   (or cache (js-pcache-ref js-string-pcache 23)))
+		this search))
+	    (else
+	     (loop (js-toobject %this this)))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-inline-copywithin ...                                   */
+;*---------------------------------------------------------------------*/
+(define (js-array-inline-copywithin o::JsArray target start end %this)
+   (let* ((len (js-uint32-tointeger (js-array-length o)))
+	  (relativetarget (js-tointeger target %this))
+	  (to (if (< relativetarget 0)
+		  (max (+ len relativetarget) 0)
+		  (min relativetarget len)))
+	  (relativestart (js-tointeger start %this))
+	  (from (if (< relativestart 0)
+		    (max (+ len relativestart) 0)
+		    (min relativestart len)))
+	  (relativeend (if (eq? end (js-undefined))
+			   len
+			   (js-tointeger end %this)))
+	  (final (if (< relativeend 0)
+		     (max (+ len relativeend) 0)
+		     (min relativeend len)))
+	  (count (min (- final from) (- len to)))
+	  (direction 1))
+      ;; step 10
+      (when (and (< from to) (< to (+ from count)))
+	 (set! direction -1)
+	 (set! to (+ from count))
+	 (set! from (- to target)))
+      (with-access::JsArray o (vec)
+	 (let loop ((from (->fixnum from))
+		    (to (->fixnum to))
+		    (count count))
+	    (when (>fx count 0)
+	       ;; step 12.d
+	       (let ((fromval (vector-ref vec from)))
+		  (vector-set! vec to fromval))
+	       ;; step 12.3
+	       (loop (+fx from direction)
+		  (+fx to direction)
+		  (-fx count 1)))))
+      o))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-inline-copywithin-fixnum ...                            */
+;*---------------------------------------------------------------------*/
+(define (js-array-inline-copywithin-fixnum o::JsArray target start end %this)
+   (with-access::JsArray o (length)
+      (let* ((len (uint32->fixnum length))
+	     (relativetarget target)
+	     (to (if (<fx relativetarget 0)
+		     (maxfx (+fx len relativetarget) 0)
+		     (minfx relativetarget len)))
+	     (relativestart start)
+	     (from (if (<fx relativestart 0)
+		       (maxfx (+fx len relativestart) 0)
+		       (min relativestart len)))
+	     (relativeend end)
+	     (final (if (<fx relativeend 0)
+			(maxfx (+fx len relativeend) 0)
+			(minfx relativeend len)))
+	     (count (min (-fx final from) (-fx len to)))
+	     (direction 1))
+	 ;; step 10
+	 (when (and (<fx from to) (<fx to (+fx from count)))
+	    (set! direction -1)
+	    (set! to (+fx from count))
+	    (set! from (-fx to target)))
+	 (with-access::JsArray o (vec)
+	    (let loop ((from from)
+		       (to to)
+		       (count count))
+	       (when (>fx count 0)
+		  ;; step 12.d
+		  (let ((fromval (vector-ref vec from)))
+		     (vector-set! vec to fromval))
+		  ;; step 12.3
+		  (loop (+fx from direction)
+		     (+fx to direction)
+		     (-fx count 1)))))
+	 o)))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-prototytpe-copywithin ...                               */
+;*---------------------------------------------------------------------*/
+(define (js-array-prototype-copywithin this::obj target start end %this)
+   (let* ((o (js-toobject %this this))
+	  (len (js-get-length o %this))
+	  (relativetarget (js-tointeger target %this))
+	  (to (if (< relativetarget 0)
+		  (max (+ len relativetarget) 0)
+		  (min relativetarget len)))
+	  (relativestart (js-tointeger start %this))
+	  (from (if (< relativestart 0)
+		    (max (+ len relativestart) 0)
+		    (min relativestart len)))
+	  (relativeend (if (eq? end (js-undefined))
+			   len
+			   (js-tointeger end %this)))
+	  (final (if (< relativeend 0)
+		     (max (+ len relativeend) 0)
+		     (min relativeend len)))
+	  (count (min (- final from) (- len to)))
+	  (direction 1))
+      ;; step 10
+      (when (and (< from to) (< to (+ from count)))
+	 (set! direction -1)
+	 (set! to (+ from count))
+	 (set! from (- to target)))
+      (if (and (js-array? o) (js-array-inlined? o))
+	  (with-access::JsArray o (vec)
+	     (let loop ((from (->fixnum from))
+			(to (->fixnum to))
+			(count count))
+		(when (>fx count 0)
+		   ;; step 12.d
+		   (let ((fromval (vector-ref vec from)))
+		      (vector-set! vec to fromval))
+		   ;; step 12.3
+		   (loop (+fx from direction)
+		      (+fx to direction)
+		      (-fx count 1)))))
+	  (let loop ((from from)
+		     (to to)
+		     (count count))
+	     (when (>fx count 0)
+		(let ((toi (js-tointeger to %this))
+		      (fromi (js-tointeger from %this)))
+		   (if (js-has-property o fromi %this)
+		       ;; step 12.d
+		       (let ((fromval (js-get o fromi %this)))
+			  (js-put! o toi fromval #f %this))
+		       ;; step 12.3
+		       (js-delete! o toi #t %this))
+		   (loop (+fx from direction)
+		      (+fx to direction)
+		      (-fx count 1))))))
+      o))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-copywithin ...                                          */
+;*---------------------------------------------------------------------*/
+(define (js-array-copywithin o::JsArray target start end %this cache)
+   (if (js-object-mode-plain? o)
+       (js-array-inline-copywithin o target start end %this)
+       (with-access::JsGlobalObject %this (js-array-pcache)
+	  (js-call3 %this
+	     (js-get-jsobject-name/cache o (& "copywithin") #f %this
+		(or cache (js-pcache-ref js-array-pcache 10)))
+	     o target start end ))))
+;
+;*---------------------------------------------------------------------*/
+;*    js-array-copywithin-fixnum ...                                   */
+;*---------------------------------------------------------------------*/
+(define (js-array-copywithin-fixnum o::JsArray target start end %this cache)
+   (if (js-object-mode-plain? o)
+       (js-array-inline-copywithin-fixnum o target start end %this)
+       (with-access::JsGlobalObject %this (js-array-pcache)
+	  (js-call3 %this
+	     (js-get-jsobject-name/cache o (& "copywithin") #f %this
+		(or cache (js-pcache-ref js-array-pcache 10)))
+	     o target start end ))))
+;
+;*---------------------------------------------------------------------*/
+;*    js-array-maybe-copywithin ...                                    */
+;*---------------------------------------------------------------------*/
+(define (js-array-maybe-copywithin o target start end %this cache)
+   (if (and (js-array? o) (js-object-mode-plain? o))
+       (js-array-inline-copywithin o target start end %this)
+       (with-access::JsGlobalObject %this (js-array-pcache)
+	  (js-call3 %this
+	     (js-get-jsobject-name/cache o (& "copywithin") #f %this
+		(or cache (js-pcache-ref js-array-pcache 10)))
+	     o target start end ))))
+;
 ;*---------------------------------------------------------------------*/
 ;*    js-iterator-to-array ...                                         */
 ;*    -------------------------------------------------------------    */

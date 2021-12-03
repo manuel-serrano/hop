@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Sun Aug  8 09:46:07 2021 (serrano)                */
+;*    Last change :  Mon Nov  8 07:43:16 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Array functions.            */
@@ -51,10 +51,17 @@
 	   (j2s-array-flatmap obj args mode return conf)
 	   (j2s-array-maybe-flatmap obj args mode return conf)
 	   (j2s-array-maybe-join obj args mode return conf)
+	   (j2s-array-concat0 obj args mode return conf)
+	   (j2s-array-maybe-concat0 obj args mode return conf)
 	   (j2s-array-concat1 obj args mode return conf)
 	   (j2s-array-maybe-concat1 obj args mode return conf)
+	   (j2s-array-fill1 obj args mode return conf)
 	   (j2s-array-sort obj args mode return conf)
-	   (j2s-array-maybe-sort obj args mode return conf)))
+	   (j2s-array-maybe-sort obj args mode return conf)
+	   (j2s-array-reduce obj args mode return conf)
+	   (j2s-array-maybe-reduce obj args mode return conf)
+	   (j2s-array-maybe-splice2 ::J2SCall obj args mode return conf)
+	   (j2s-array-copywithin obj args mode return conf)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-array-builtin-method ...                                     */
@@ -632,11 +639,6 @@
 	       ((boxed-type? (j2s-type rhs))
 		(with-access::J2SExpr rhs (loc)
 		   (loop (J2SCast 'any rhs))))
-;* 		(with-access::J2SExpr rhs (loc type)                   */
-;* 		   (let ((tmp (gensym)))                               */
-;* 		      `(let ((,tmp ,(j2s-scheme rhs mode return ctx))) */
-;* 			  ,(loop (J2SCast 'any (J2SHopRef/type tmp type))) */
-;* 			  ,tmp))))                                     */
 	       ((eq? (j2s-type field) 'uint32)
 		`(js-vector-index-set! ,(j2s-scheme obj mode return ctx)
 		    ,(j2s-scheme-as-uint32 field mode return ctx)
@@ -694,7 +696,7 @@
 	 ((and (isa? fun J2SFun) (not (isa? fun J2SSvc)))
 	  (with-access::J2SFun fun (generator vararg)
 	     (unless (or generator vararg)
-		(let ((proc (jsfun->lambda fun mode return ctx #f #f))
+		(let ((proc (jsfun->lambda fun mode return ctx #f))
 		      (iterator (symbol-append iterator '-procedure)))
 		   (match-case proc
 		      ((?lambda (?this ?v) ?body)
@@ -753,8 +755,16 @@
 ;*    j2s-array-map ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (j2s-array-map obj args mode return ctx)
-   (j2s-array-iterator 'js-array-map
-      obj args mode return ctx))
+   (let ((r (j2s-array-iterator 'js-array-map
+	       obj args mode return ctx)))
+      (match-case r
+	 ((js-array-map-procedure
+	     (js-array-filter-procedure ?obj ?procf ?thisargs ?%this ?cachef)
+	     ?procm ?thisargs ?%this ?cachem)
+	  `(js-array-filter-map2-procedure ,obj ,procf ,procm
+	      ,thisargs ,%this ,cachef ,cachem))
+	 (else
+	  r))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-array-maybe-map ...                                          */
@@ -822,6 +832,40 @@
        #f)))
 
 ;*---------------------------------------------------------------------*/
+;*    j2s-array-concat0 ...                                            */
+;*---------------------------------------------------------------------*/
+(define (j2s-array-concat0 obj args mode return ctx)
+   (cond
+      ((isa? obj J2SArray)
+       (with-access::J2SArray obj (exprs)
+	  (cond
+	     ((null? exprs)
+	      `(js-array-concat0-empty
+		  ,@args))
+	     ((null? (cdr exprs))
+	      `(js-array-concat0-create
+		  ,(j2s-scheme (car exprs) mode return ctx)
+		  ,@args))
+	     (else
+	      `(js-array-concat0 ,(j2s-scheme obj mode return ctx)
+		  ,@args)))))
+      (else
+       `(js-array-concat0 ,(j2s-scheme obj mode return ctx)
+	   ,@args))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-array-maybe-concat0 ...                                      */
+;*---------------------------------------------------------------------*/
+(define (j2s-array-maybe-concat0 obj args mode return ctx)
+   (let ((arg (j2s-scheme (car args) mode return ctx)))
+      (cond
+	 ((isa? obj J2SArray)
+	  (j2s-array-concat0 obj args mode return ctx))
+	 (else
+	  `(js-array-maybe-concat0 ,(j2s-scheme obj mode return ctx)
+	      ,@args)))))
+
+;*---------------------------------------------------------------------*/
 ;*    j2s-array-concat1 ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (j2s-array-concat1 obj args mode return ctx)
@@ -868,6 +912,22 @@
 	      ,arg ,@(cdr args))))))
 
 ;*---------------------------------------------------------------------*/
+;*    j2s-array-fill1 ...                                              */
+;*---------------------------------------------------------------------*/
+(define (j2s-array-fill1 obj args mode return ctx)
+   (let ((obj (j2s-scheme obj mode return ctx))
+	 (arg (j2s-scheme (car args) mode return ctx)))
+      (match-case obj
+	 ((js-array-construct-alloc/length ?%this ?len)
+	  `(js-array-construct-alloc-init/length ,%this ,len ,arg))
+	 ((js-array-construct-alloc ?%this ?len)
+	  `(js-array-construct-alloc-init/length ,%this ,len ,arg))
+	 ((js-array-construct-alloc-small ?%this ?len)
+	  `(js-array-construct-alloc-init/length ,%this (uint32->fixnum ,len) ,arg))
+	 (else
+	  `(js-array-fill1 ,obj ,arg ,@(cdr args))))))
+
+;*---------------------------------------------------------------------*/
 ;*    array-sort ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (array-sort sortfn obj args mode return ctx)
@@ -880,7 +940,7 @@
 	 ((and (isa? fun J2SFun) (not (isa? fun J2SSvc)))
 	  (with-access::J2SFun fun (generator vararg)
 	     (unless (or generator vararg)
-		(let ((proc (jsfun->lambda fun mode return ctx #f #f))
+		(let ((proc (jsfun->lambda fun mode return ctx #f))
 		      (sortfn (symbol-append sortfn '-procedure)))
 		   (match-case proc
 		      ((?lambda (?this ?x ?y) ?body)
@@ -898,7 +958,7 @@
 	     obj (j2s-scheme fun mode return ctx) %this cache))))
 
    (match-case args
-      ((?fun ?%this ?cache) (sort  obj fun %this cache))
+      ((?fun ?%this ?cache) (sort obj fun %this cache))
       (else #f)))
 	   
 ;*---------------------------------------------------------------------*/
@@ -915,3 +975,100 @@
    (array-sort 'js-array-maybe-sort
       obj args mode return ctx))
 
+;*---------------------------------------------------------------------*/
+;*    array-reduce ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (array-reduce reducefn obj args mode return ctx)
+   
+   (define (j2s-reduce js-reduce obj proc init %this cache)
+      `(,js-reduce ,(j2s-scheme obj mode return ctx) ,proc ,init ,%this ,cache))
+   
+   (define (reduce obj fun init %this cache)
+      (cond
+	 ((and (isa? fun J2SFun) (not (isa? fun J2SSvc)))
+	  (with-access::J2SFun fun (generator vararg)
+	     (unless (or generator vararg)
+		(let ((proc (jsfun->lambda fun mode return ctx #f))
+		      (reducefn (symbol-append reducefn '-procedure)))
+		   (match-case proc
+		      ((?lambda (?this ?x ?y) ?body)
+		       (j2s-reduce reducefn obj
+			  `(lambda (,this ,x ,y) ,body)
+			  (j2s-scheme init mode return ctx)
+			  %this cache))
+		      ((labels ((?id (?this ?x ?y) ?body)) ?id)
+		       (j2s-reduce reducefn obj
+			  `(labels ((,id (,this ,x ,y) ,body)) ,id)
+			  (j2s-scheme init mode return ctx)
+			  %this cache))
+		      (else
+		       #f))))))
+	 (else
+	  (j2s-reduce reducefn
+	     obj
+	     (j2s-scheme fun mode return ctx)
+	     (j2s-scheme init mode return ctx) %this cache))))
+
+   (match-case args
+      ((?fun ?init ?%this ?cache) (reduce obj fun init %this cache))
+      (else #f)))
+	   
+;*---------------------------------------------------------------------*/
+;*    j2s-array-reduce ...                                             */
+;*---------------------------------------------------------------------*/
+(define (j2s-array-reduce obj args mode return ctx)
+   (array-reduce 'js-array-reduce
+      obj args mode return ctx))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-array-maybe-reduce ...                                       */
+;*---------------------------------------------------------------------*/
+(define (j2s-array-maybe-reduce obj args mode return ctx)
+   (array-reduce 'js-array-maybe-reduce
+      obj args mode return ctx))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-array-maybe-splice2 ...                                      */
+;*---------------------------------------------------------------------*/
+(define (j2s-array-maybe-splice2 this::J2SCall obj args mode return ctx)
+   (with-access::J2SCall this (%info)
+      `(,(if (eq? %info 'void)
+	     'js-array-maybe-splice2-sans-result
+	     'js-array-maybe-splice2)
+	,(j2s-scheme obj mode return ctx)
+	,(j2s-scheme (car args) mode return ctx)
+	,(j2s-scheme (cadr args) mode return ctx)
+	,(j2s-scheme (caddr args) mode return ctx)
+	,(j2s-scheme (cadddr args) mode return ctx))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-array-copywithin ...                                         */
+;*---------------------------------------------------------------------*/
+(define (j2s-array-copywithin obj args mode return ctx)
+   
+   (define (fix? val)
+      (cond
+	 ((isa? val J2SCast)
+	  (with-access::J2SCast val (expr)
+	     (fix? expr)))
+	 ((isa? val J2SParen)
+	  (with-access::J2SParen val (expr)
+	     (fix? expr)))
+	 ((eq? (j2s-type val) 'int32)
+	  (inrange-int32? val))
+	 ((memq (j2s-type val) '(uint32 int53))
+	  (or (inrange-int32? val)) (m64? (context-conf ctx)))
+	 (else
+	  #f)))
+   
+   (let ((fix* (and (fix? (car args)) (fix? (cadr args)) (fix? (caddr args)))))
+      `(,(if fix*
+	     'js-array-copywithin-fixnum
+	     'js-array-copywithin)
+	,(j2s-scheme obj mode return ctx)
+	,(j2s-scheme (car args) mode return ctx)
+	,(j2s-scheme (cadr args) mode return ctx)
+	,(j2s-scheme (caddr args) mode return ctx)
+	,(j2s-scheme (cadddr args) mode return ctx)
+	,@(cddddr args))))
+       

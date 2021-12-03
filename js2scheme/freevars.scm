@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.4.x/js2scheme/freevars.scm            */
+;*    serrano/prgm/project/hop/hop/js2scheme/freevars.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri May 21 06:42:40 2021                          */
-;*    Last change :  Fri May 21 06:44:51 2021 (serrano)                */
+;*    Last change :  Sun Oct 17 10:58:21 2021 (serrano)                */
 ;*    Copyright   :  2021 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    FREE-VARS? is true if and only if the ast THIS uses              */
@@ -56,7 +56,7 @@
    (with-access::J2SRef this (decl loc)
       (with-access::J2SDecl decl (scope id)
 	 (when (and (not (isa? decl J2SDeclExtern))
-		    (not (eq? scope '%scope))
+		    (not (memq scope '(%scope global tls)))
 		    (not (memq decl env)))
 	    (cell-set! res #t)))))
 
@@ -73,10 +73,16 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (free-vars this::J2SLetBlock env res)
    (unless (cell-ref res)
-      (with-access::J2SLetBlock this (decls nodes)
-	 (let ((env (append decls env)))
-	    (find (lambda (n) (free-vars n env res)) nodes)))))
-   
+      (with-access::J2SLetBlock this (decls nodes rec)
+	 (let* ((benv (append decls env))
+		(denv (if rec benv env)))
+	    (or (find (lambda (d)
+			 (when (isa? d J2SDeclInit)
+			    (with-access::J2SDeclInit d (val)
+			       (free-vars val denv res))))
+		   decls)
+		(find (lambda (n) (free-vars n benv res)) nodes))))))
+	     
 ;*---------------------------------------------------------------------*/
 ;*    free-vars ::J2SBlock ...                                         */
 ;*---------------------------------------------------------------------*/
@@ -98,3 +104,11 @@
 	       (else
 		(find (lambda (n) (free-vars n env res)) nodes)))))))
    
+;*---------------------------------------------------------------------*/
+;*    free-vars ::J2SCatch ...                                         */
+;*---------------------------------------------------------------------*/
+(define-method (free-vars this::J2SCatch env res)
+   (unless (cell-ref res)
+      (with-access::J2SCatch this (param body)
+	 (free-vars body (cons param env) res))))
+

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 18:25:11 2006                          */
-;*    Last change :  Sat Aug 21 15:08:35 2021 (serrano)                */
+;*    Last change :  Sun Nov 21 10:45:39 2021 (serrano)                */
 ;*    Copyright   :  2006-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript expanders installer                                    */
@@ -36,6 +36,10 @@
 	     ,js-pcache-emap-expander))
    (eval `(define-expander js-pcache-amap
 	     ,js-pcache-amap-expander))
+   (eval `(define-expander js-pcache-nextemap
+	     ,js-pcache-nextemap-expander))
+   (eval `(define-expander js-pcache-nextnmap
+	     ,js-pcache-nextnmap-expander))
    (eval `(define-expander js-pcache-iindex
 	     ,js-pcache-iindex-expander))
    (eval `(define-expander js-pcache-eindex
@@ -56,6 +60,16 @@
 	     ,js-pcache-method-expander))
    (eval `(define-expander js-pcache-function
 	     ,js-pcache-function-expander))
+
+   (eval `(define-expander js-record-cache-check-proto-method
+	     ,js-record-cache-check-proto-method-expander))
+   (eval `(define-expander js-record-cmap-cache-check-proto-method
+	     ,js-record-cmap-cache-check-proto-method-expander))
+   (eval `(define-expander js-object-cache-check-proto-method
+	     ,js-object-cache-check-proto-method-expander))
+   (eval `(define-expander js-object-cmap-cache-check-proto-method
+	     ,js-object-cmap-cache-check-proto-method-expander))
+   
    (eval `(define-expander js-get-name/cache
 	     ,js-get-name/cache-expander))
 
@@ -80,7 +94,7 @@
 	     ,js-get-jsobject-name/cache-expander))
    (eval `(define-expander js-global-object-get-name/cache
 	     ,js-global-object-get-name/cache-expander))
-   
+
    (eval `(define-expander js-get-length
 	     ,js-get-length-expander))
    (eval `(define-expander js-get-lengthu32
@@ -93,12 +107,12 @@
 	     ,js-get-length-maybe-arguments-expander))
    (eval `(define-expander js-get-lengthu32-maybe-arguments
 	     ,js-get-lengthu32-maybe-arguments-expander))
-   
+
    (eval `(define-expander js-put-name/cache!
 	     ,js-put-name/cache-expander))
    (eval `(define-expander js-put-jsobject-name/cache!
 	     ,js-put-jsobject-name/cache-expander))
-   
+
    (eval `(define-expander js-call/cache
 	     ,js-call/cache-expander))
    (eval `(define-expander js-method-call-name/cache
@@ -107,6 +121,8 @@
 	     ,js-method-jsobject-call-name/cache-expander))
    (eval `(define-expander js-method-non-jsobject-call-name
 	     ,js-method-non-jsobject-call-name-expander))
+   (eval `(define-expander js-method-jsrecord-call-index
+	     ,js-method-jsrecord-call-index-expander))
    
    (eval `(define-expander js-let-set!
 	     ,js-let-set!-expander))
@@ -116,6 +132,12 @@
 	     ,js-tonumber-expander))
    (eval `(define-expander js-tonumber-for-flonum
 	     ,js-tonumber-for-flonum-expander))
+   (eval `(define-expander js-tonumeric
+	     ,js-tonumeric-expander))
+   (eval `(define-expander js-tonumeric-for-fixnum
+	     ,js-tonumeric-for-fixnum-expander))
+   (eval `(define-expander js-math-floorfl
+	     ,js-math-floorfl-expander))
    (eval `(define-expander js-toprimitive-for-string
 	     ,js-toprimitive-for-string-expander))
    (eval `(define-expander js-nullish
@@ -233,5 +255,20 @@
    (eval `(define-expander js-call-jsprocedure
 	     ,js-call-jsprocedure-expander))
    (eval `(define-expander js-new
-	     ,js-new-expander)))
+	     ,js-new-expander))
+   (eval `(define-expander js-call-with-stack-yield
+	     ,js-call-with-stack-yield-expander))
+
+   (eval `(define-expander js-jsobject->jsarray
+	     ,js-jsobject->jsarray-expander))
+
+   (eval `(define-expander js-generator-ref
+	     ,js-generator-ref-expander))
+   (eval `(define-expander js-generator-set!
+	     ,js-generator-set!-expander))
+   
+   (eval `(define-expander declare-tls
+	     ,js-declare-tls-expander))
+   (eval `(define-expander define-tls
+	     ,js-define-tls-expander)))
       

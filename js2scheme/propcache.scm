@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Wed Aug 18 07:44:47 2021 (serrano)                */
+;*    Last change :  Fri Oct  1 17:56:41 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Add caches to object property lookups                            */
@@ -129,6 +129,15 @@
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
+;*    propcache* ::J2SObjInit ...                                      */
+;*---------------------------------------------------------------------*/
+(define-walk-method (propcache* this::J2SObjInit count env ccall assig infunloop shared-pcache conf)
+   (with-access::J2SObjInit this (inits)
+      (if (>=fx (length inits) (config-get conf :max-objinit-optim-size))
+	  '()
+	  (call-default-walker))))
+
+;*---------------------------------------------------------------------*/
 ;*    propcache* ::J2SMeta ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (propcache* this::J2SMeta count env ccall assig infunloop shared-pcache conf)
@@ -210,12 +219,16 @@
        (call-default-walker)))
 
 ;*---------------------------------------------------------------------*/
-;*    propcache* ::J2SDataPropertyInit ...                             */
+;*    propcache* ::J2SPropertyInit ...                                 */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (propcache* this::J2SDataPropertyInit count env ccall assig infunloop shared-pcache conf)
-   (with-access::J2SDataPropertyInit this (cache)
-      (set! cache (inc! count))
-      (cons cache (call-next-method))))
+(define-walk-method (propcache* this::J2SPropertyInit count env ccall assig infunloop shared-pcache conf)
+   (with-access::J2SPropertyInit this (cache)
+      (if (or (isa? this J2SMethodPropertyInit)
+	      (isa? this J2SAccessorPropertyInit))
+	  (call-next-method)
+	  (begin
+	     (set! cache (inc! count))
+	     (cons cache (call-next-method))))))
 	 
 ;*---------------------------------------------------------------------*/
 ;*    read-only-function? ...                                          */

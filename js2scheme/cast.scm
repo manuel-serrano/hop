@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Sun Aug  8 11:26:25 2021 (serrano)                */
+;*    Last change :  Wed Oct 13 07:53:49 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -82,7 +82,7 @@
 
 (define *any-types*
    '(undefined null bool integer number object function arrow
-     string real array regexp arguments class record))
+     string real array regexp arguments class record map weakmap set weakset))
 
 ;*---------------------------------------------------------------------*/
 ;*    cast-expr ...                                                    */
@@ -235,9 +235,11 @@
 	 (or (and (eq? totype 'bool)
 		  (memq type '(int32 uint32 integer number))))))
    
-   (with-access::J2SCast this (expr type loc)
+   (with-access::J2SCast this (expr type loc static)
       (type-cast! expr '*)
       (cond
+	 (static
+	  this)
 	 ((optimize-cast? totype type)
 	  (set! type totype)
 	  this)
@@ -272,7 +274,7 @@
 			  (set! args (reverse! nvals))))
 		      (else
 		       (error "js2scheme" "internal call error"
-			  (j2s->list this))))
+			  (j2s->sexp this))))
 		   (cast-expr this rtype totype))
 		  ((null? params)
 		   (loop params '()
@@ -313,7 +315,7 @@
 		     (with-access::J2SMethod val (function method)
 			(known-fun this function)))
 		    (else
-		     (error "js2scheme" "Bad declfun value" (j2s->list val))))))
+		     (error "js2scheme" "Bad declfun value" (j2s->sexp val))))))
 	     (else
 	      (unknown-fun this)))))
       (else
@@ -323,9 +325,9 @@
 ;*    type-cast! ::J2SCall ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-method (type-cast! this::J2SCall totype)
-   (with-access::J2SCall this (fun args thisarg loc)
-      (when (pair? thisarg)
-	 (set-car! thisarg (type-cast! (car thisarg) 'any)))
+   (with-access::J2SCall this (fun args thisargs loc)
+      (when (pair? thisargs)
+	 (set-car! thisargs (type-cast! (car thisargs) 'any)))
       (type-call-cast! this fun args totype)))
 
 ;*---------------------------------------------------------------------*/
@@ -425,7 +427,9 @@
 	  (let* ((id (gensym 'assig))
 		 (tr (j2s-type rhs))
 		 (d (J2SLetOpt/vtype tr '(get) id (type-cast! rhs tr))))
-	     (set! rhs (type-cast! (J2SRef d :type tr) '*))
+	     ;; ms 13oct2021
+	     ;;(set! rhs (type-cast! (J2SRef d :type tr) '*))
+	     (set! rhs (type-cast! (J2SRef d :type tr) (j2s-type lhs)))
 	     (let ((tyb (if (eq? totype '*) type totype)))
 		(J2SBindExit/type tyb #f 
 		   (J2SLetRecBlock #f  (list d)

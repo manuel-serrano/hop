@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 20 14:34:39 2016                          */
-;*    Last change :  Thu Jul 15 12:15:09 2021 (serrano)                */
+;*    Last change :  Thu Nov 11 14:48:47 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    AST Alpha conversion                                             */
@@ -55,7 +55,7 @@
 			     (%oinfo %info)))))
 		   (else
 		    (error "j2s-alpha/proc" "Illegal expression"
-		       (j2s->list old)))))
+		       (j2s->sexp old)))))
       olds news)
    (let ((newbody (proc node)))
       (for-each (lambda (old)
@@ -68,7 +68,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::AlphaInfo ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list o::AlphaInfo)
+(define-method (j2s->list o::AlphaInfo stack)
    (with-access::AlphaInfo o (new)
       (if (isa? new J2SDecl)
 	  (with-access::J2SDecl new (id)
@@ -108,6 +108,27 @@
       inst))
 
 ;*---------------------------------------------------------------------*/
+;*    alpha ::J2SProgram ...                                           */
+;*---------------------------------------------------------------------*/
+(define-method (alpha this::J2SProgram)
+   (with-access::J2SProgram this (nodes decls)
+      (set! decls (map (lambda (old)
+			  (let ((nd (with-access::J2SDecl old (%info id)
+				       (if (isa? %info AlphaInfo)
+					   (with-access::AlphaInfo %info (new)
+					      (if (isa? new J2SDecl)
+						  new
+						  old))
+					   old))))
+			     (if (isa? nd J2SDeclInit)
+				 (with-access::J2SDeclInit nd (val)
+				    (set! val (alpha val))))
+			     nd))
+		     decls))
+      (set! nodes (map alpha nodes))
+      this))
+	 
+;*---------------------------------------------------------------------*/
 ;*    alpha/targetinfo ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (alpha/targetinfo this::J2SNode)
@@ -138,30 +159,38 @@
 ;*    alpha ::J2SDecl ...                                              */
 ;*---------------------------------------------------------------------*/
 (define-method (alpha this::J2SDecl)
-   (let* ((clazz (object-class this))
-	  (ctor (class-constructor clazz))
-	  (inst ((class-allocator clazz)))
-	  (fields (class-all-fields clazz)))
-      (with-access::J2SDecl this (%info)
-	 (set! %info
-	    (instantiate::AlphaInfo
-	       (%oinfo %info)
-	       (new inst))))
-      ;; instance fields
-      (let loop ((i (-fx (vector-length fields) 1)))
-	 (when (>=fx i 0)
-	    (let* ((f (vector-ref-ur fields i))
-		   (v ((class-field-accessor f) this))
-		   (fi (class-field-info f))
-		   (nv (cond
-			  ((and (pair? fi) (member "notraverse" fi)) v)
-			  ((pair? v) (map alpha v))
-			  (else (alpha v)))))
-	       ((class-field-mutator f) inst nv)
-	       (loop (-fx i 1)))))
-      ;; constructor
-      (when (procedure? ctor) ctor inst)
-      inst))
+   (with-access::J2SDecl this (%info id)
+      (if (isa? %info AlphaInfo)
+	  (with-access::AlphaInfo %info (new)
+	     (if (isa? new J2SDecl)
+		 new
+		 this))
+	  (let* ((clazz (object-class this))
+		 (ctor (class-constructor clazz))
+		 (inst ((class-allocator clazz)))
+		 (fields (class-all-fields clazz)))
+	     (set! %info
+		(instantiate::AlphaInfo
+		   (%oinfo %info)
+		   (new inst)))
+	     ;; instance fields
+	     (let loop ((i (-fx (vector-length fields) 1)))
+		(when (>=fx i 0)
+		   (let* ((f (vector-ref-ur fields i))
+			  (v ((class-field-accessor f) this))
+			  (fi (class-field-info f))
+			  (nv (cond
+				 ((and (pair? fi) (member "notraverse" fi)) v)
+				 ((pair? v) (map alpha v))
+				 (else (alpha v)))))
+		      ((class-field-mutator f) inst nv)
+		      (loop (-fx i 1)))))
+	     ;; decl key
+	     (with-access::J2SDecl inst (key)
+		(set! key (ast-decl-key)))
+	     ;; constructor
+	     (when (procedure? ctor) ctor inst)
+	     inst))))
 
 ;*---------------------------------------------------------------------*/
 ;*    alpha ::J2SLoop ...                                              */
@@ -244,8 +273,8 @@
 	 ((not (memq y '(any unknown))) y)
 	 (else x)))
    
-   (with-access::J2SRef this (decl type)
-      (with-access::J2SDecl decl (%info)
+   (with-access::J2SRef this (decl type loc)
+      (with-access::J2SDecl decl (%info id)
 	 (if (isa? %info AlphaInfo)
 	     (with-access::AlphaInfo %info (new)
 		(cond
@@ -257,40 +286,108 @@
 		   ((isa? new J2SExpr)
 		    (alpha new))
 		   (else
-		    (error "alpha" "new must be a decl or an expr" new))))
+		    (error "alpha"
+		       (format "ref: new must be a decl or an expr (~a)"
+			  (typeof new))
+		       new))))
 	     (duplicate::J2SRef this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    alpha ::J2SThis ...                                              */
 ;*---------------------------------------------------------------------*/
 (define-method (alpha this::J2SThis)
-   (with-access::J2SThis this (decl)
+   (with-access::J2SThis this (decl type)
       (with-access::J2SDecl decl (%info)
 	 (if (isa? %info AlphaInfo)
 	     (with-access::AlphaInfo %info (new)
 		(cond
+		   ((isa? new J2SThis)
+		    (with-access::J2SDecl new (vtype)
+		       (duplicate::J2SThis this
+			  (type (min-type type vtype))
+			  (decl new))))
 		   ((isa? new J2SDecl)
-		    (duplicate::J2SThis this
-		       (decl new)))
+		    (with-access::J2SDecl new (vtype)
+		       (duplicate::J2SThis this
+			  (type (min-type type vtype))
+			  (decl new))))
 		   ((isa? new J2SExpr)
 		    (alpha new))
 		   (else
-		    (error "alpha" "new must be a decl or an expr" new))))
+		    (error "alpha"
+		       (format "this: new must be a decl or an expr (~a)"
+			  (typeof new))
+		       new))))
 	     (duplicate::J2SThis this)))))
+
+;*---------------------------------------------------------------------*/
+;*    alpha ::J2SSuper ...                                             */
+;*---------------------------------------------------------------------*/
+(define-method (alpha this::J2SSuper)
+   (with-access::J2SSuper this (decl type)
+      (with-access::J2SDecl decl (%info)
+	 (if (isa? %info AlphaInfo)
+	     (with-access::AlphaInfo %info (new)
+		(cond
+		   ((isa? new J2SSuper)
+		    (with-access::J2SDecl new (vtype)
+		       (duplicate::J2SSuper this
+			  (type (min-type type vtype))
+			  (decl new))))
+		   ((isa? new J2SDecl)
+		    (with-access::J2SDecl new (vtype)
+		       (duplicate::J2SSuper this
+			  (type (min-type type vtype))
+			  (decl new))))
+		   ((isa? new J2SExpr)
+		    (alpha new))
+		   (else
+		    (error "alpha"
+		       (format "super: new must be a decl or an expr (~a)"
+			  (typeof new))
+		       new))))
+	     (duplicate::J2SSuper this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    alpha ::J2SFun ...                                               */
 ;*---------------------------------------------------------------------*/
 (define-method (alpha this::J2SFun)
-   (with-access::J2SFun this (params body method)
-      (let* ((nparams (map j2sdecl-duplicate params))
-	     (nfun (duplicate::J2SFun this
-		      (params nparams)
-		      (method (alpha method))
-		      (body body))))
-	 (with-access::J2SFun nfun (body)
-	    (set! body (j2s-alpha body (cons this params) (cons nfun nparams))))
-	 nfun)))
+   
+   (define (alpha-fun/decl this)
+      (with-access::J2SFun this (params body method decl name)
+	 (let* ((ndecl (duplicate::J2SDeclFun decl
+			  (key (ast-decl-key))))
+		(nparams (map j2sdecl-duplicate params))
+		(nfun (duplicate::J2SFun this
+			 (decl ndecl)
+			 (params nparams)
+			 (method (when method
+				    (j2s-alpha method (list decl) (list ndecl))))
+			 (body body))))
+	    (with-access::J2SFun nfun (body)
+	       (with-access::J2SDeclFun ndecl (val)
+		  (set! val nfun))
+	       (set! body
+		  (j2s-alpha body
+		     (cons* decl this params) (cons* ndecl nfun nparams))))
+	    nfun)))
+   
+   (define (alpha-fun/w-decl this)
+      (with-access::J2SFun this (params body method name)
+	 (let* ((nparams (map j2sdecl-duplicate params))
+		(nfun (duplicate::J2SFun this
+			 (params nparams)
+			 (method (alpha method))
+			 (body body))))
+	    (with-access::J2SFun nfun (body)
+	       (set! body
+		  (j2s-alpha body (cons this params) (cons nfun nparams))))
+	    nfun)))
+   
+   (with-access::J2SFun this (decl)
+      (if (isa? decl J2SDeclFun)
+	  (alpha-fun/decl this)
+	  (alpha-fun/w-decl this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    alpha ::J2SMethod ...                                            */
@@ -304,6 +401,35 @@
 	 (duplicate::J2SMethod this
 	    (function nfunction)
 	    (method nmethod)))))
+
+;*---------------------------------------------------------------------*/
+;*    alpha ::J2SSvc ...                                               */
+;*---------------------------------------------------------------------*/
+(define-method (alpha this::J2SSvc)
+   (with-access::J2SSvc this (params body init)
+      (let ((nparams (map j2sdecl-duplicate params)))
+	 (set! init (alpha init))
+	 (let ((nsvc (duplicate::J2SSvc this
+			(params nparams)
+			(body body))))
+	    (with-access::J2SSvc nsvc (body)
+	       (set! body
+		  (j2s-alpha body (cons this params) (cons nsvc nparams))))
+	    nsvc))))
+
+;*---------------------------------------------------------------------*/
+;*    alpha ::J2SArrow ...                                             */
+;*---------------------------------------------------------------------*/
+(define-method (alpha this::J2SArrow)
+   (with-access::J2SArrow this (params body)
+      (let* ((nparams (map j2sdecl-duplicate params))
+	     (narrow (duplicate::J2SArrow this
+			(params nparams)
+			(body body))))
+	 (with-access::J2SArrow narrow (body)
+	    (set! body
+	       (j2s-alpha body (cons this params) (cons narrow nparams))))
+	 narrow)))
 
 ;*---------------------------------------------------------------------*/
 ;*    alpha ::J2SCatch ...                                             */
@@ -361,33 +487,28 @@
 	    (nodes (map (lambda (n) (j2s-alpha n decls ndecls)) nodes))))))
 
 ;*---------------------------------------------------------------------*/
-;*    alpha ::J2SSvc ...                                               */
+;*    alpha ::J2SClass ...                                             */
 ;*---------------------------------------------------------------------*/
-(define-method (alpha this::J2SSvc)
-   (with-access::J2SSvc this (params body init)
-      (let ((nparams (map j2sdecl-duplicate params)))
-	 (set! init (alpha init))
-	 (let ((nsvc (duplicate::J2SSvc this
-			(params nparams)
-			(body body))))
-	    (with-access::J2SSvc nsvc (body)
-	       (set! body
-		  (j2s-alpha body (cons this params) (cons nsvc nparams))))
-	    nsvc))))
+(define-method (alpha this::J2SClass)
+   (with-access::J2SClass this (decl name elements super)
+      (when decl
+	 (with-access::J2SDecl decl (%info)
+	    (when (isa? %info AlphaInfo)
+	       (with-access::AlphaInfo %info (new)
+		  (when (isa? new J2SDecl)
+		     (set! decl new))))))
+      (set! super (alpha super))
+      (set! elements (map alpha elements))
+      this))
 
 ;*---------------------------------------------------------------------*/
-;*    alpha ::J2SArrow ...                                             */
+;*    alpha ::J2SClassElement ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-method (alpha this::J2SArrow)
-   (with-access::J2SArrow this (params body)
-      (let* ((nparams (map j2sdecl-duplicate params))
-	     (narrow (duplicate::J2SArrow this
-			(params nparams)
-			(body body))))
-	 (with-access::J2SArrow narrow (body)
-	    (set! body
-	       (j2s-alpha body (cons this params) (cons narrow nparams))))
-	 narrow)))
+(define-method (alpha this::J2SClassElement)
+   (with-access::J2SClassElement this (prop)
+      ;; cannot create new class element because of private@J2SString
+      (set! prop (alpha prop))
+      this))
 
 ;*---------------------------------------------------------------------*/
 ;*    alpha ::J2SKont ...                                              */
@@ -420,26 +541,33 @@
 	 (expr (alpha expr)))))
 
 ;*---------------------------------------------------------------------*/
+;*    alpha ::J2SImport ...                                            */
+;*---------------------------------------------------------------------*/
+(define-method (alpha this::J2SImport)
+   (with-access::J2SImport this (mvar)
+      (set! mvar (alpha mvar))
+      this))
+
+;*---------------------------------------------------------------------*/
 ;*    j2sdecl-duplicate ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (j2sdecl-duplicate p::J2SDecl)
    (cond
       ((isa? p J2SDeclFunType)
-       (with-access::J2SDeclFun p (val)
-	  (duplicate::J2SDeclFunType p
-	     (key (ast-decl-key)))))
+       (duplicate::J2SDeclFunType p
+	  (key (ast-decl-key))))
       ((isa? p J2SDeclFun)
-       (with-access::J2SDeclFun p (val)
-	  (duplicate::J2SDeclFun p
-	     (key (ast-decl-key)))))
+       (duplicate::J2SDeclFun p
+	  (key (ast-decl-key))))
       ((isa? p J2SDeclClass)
-       (with-access::J2SDeclClass p (val)
-	  (duplicate::J2SDeclClass p
-	     (key (ast-decl-key)))))
+       (duplicate::J2SDeclClass p
+	  (key (ast-decl-key))))
       ((isa? p J2SDeclInit)
-       (with-access::J2SDeclInit p (val)
-	  (duplicate::J2SDeclInit p
-	     (key (ast-decl-key)))))
+       (duplicate::J2SDeclInit p
+	  (key (ast-decl-key))))
+       ((isa? p J2SDeclRest)
+	(duplicate::J2SDeclRest p
+	   (key (ast-decl-key))))
       (else
        (duplicate::J2SDecl p
 	  (key (ast-decl-key))))))

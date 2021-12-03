@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.2.x/test/hopjs/noserv/string.js       */
+/*    serrano/prgm/project/hop/hop/test/hopjs/noserv/string.js         */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:02 2014                          */
-/*    Last change :  Sat Oct  5 07:30:49 2019 (serrano)                */
-/*    Copyright   :  2014-20 Manuel Serrano                            */
+/*    Last change :  Sun Oct 31 06:57:17 2021 (serrano)                */
+/*    Copyright   :  2014-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing strings                                                  */
 /*=====================================================================*/
@@ -223,6 +223,21 @@ assert.equal( str1.replace( re2, function( s ) { return "!" + s + "!" } ), "foo!
 assert.equal( re2.lastIndex, 0 );
 
 assert.equal( "foo".indexOf( "" ), 0, "indexOf with empty string" );
+
+/*---------------------------------------------------------------------*/
+/*    replaceAll                                                       */
+/*---------------------------------------------------------------------*/
+function mdnReplaceAll() {
+   const p = 'The quick brown for jumps over the lazy dog. If the dog reacted, was it really lazy?';
+   const ra = p.replaceAll('dog', 'monkey');
+   assert.equal(ra, 'The quick brown for jumps over the lazy monkey. If the monkey reacted, was it really lazy?');
+   
+   const regex = /Dog/ig;
+   const rb = p.replaceAll(regex, 'ferret');
+   assert.equal(rb, 'The quick brown for jumps over the lazy ferret. If the ferret reacted, was it really lazy?');
+}
+
+mdnReplaceAll();
 
 /*---------------------------------------------------------------------*/
 /*    keys                                                             */

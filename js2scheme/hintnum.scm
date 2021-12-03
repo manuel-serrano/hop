@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May  1 16:06:44 2018                          */
-;*    Last change :  Sun May 30 07:51:59 2021 (serrano)                */
+;*    Last change :  Sun Nov 21 10:02:50 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    hint typing of numerical values.                                 */
@@ -177,17 +177,25 @@
 ;*    hintnum-binary ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (hintnum-binary this op lhs rhs fix)
-   (when (memq (j2s-type lhs) '(any number))
-      (add-expr-hint! lhs (expr-hint this) #t fix))
-   (when (memq (j2s-type rhs) '(any number))
-      (add-expr-hint! rhs (expr-hint this) #t fix))
+   
+   (define (hintnum-result!)
+      (when (memq (j2s-type lhs) '(any number))
+	 (add-expr-hint! lhs (expr-hint this) #t fix))
+      (when (memq (j2s-type rhs) '(any number))
+	 (add-expr-hint! rhs (expr-hint this) #t fix)))
+   
    (case op
       ((+ ++)
+       (hintnum-result!)
+       (when (eq? op '++)
+	  (add-expr-hint! lhs '((integer . 2)) #f fix)
+	  (add-expr-hint! this '((integer . 2)) #f fix))
        (when (memq (j2s-type lhs) '(any number))
 	  (let ((hint (union-hint! (expr-hint this) (expr-hint rhs))))
 	     (add-expr-hint! lhs hint #t fix)
 	     (add-expr-hint! this hint #f fix))))
       ((-)
+       (hintnum-result!)
        (unless (eq? (j2s-type lhs) 'any)
 	  (unhint-string-ref lhs fix))
        (unless (eq? (j2s-type rhs) 'any)
@@ -203,8 +211,12 @@
 		(add-expr-hint! rhs (cons `(string . ,(minvalfx)) hint) #t fix))
 	     (add-expr-hint! this hint #f fix))))
       ((-- *)
+       (hintnum-result!)
        (unhint-string-ref lhs fix)
        (unhint-string-ref rhs fix)
+       (when (eq? op '--)
+	  (add-expr-hint! lhs '((integer . 2)) #f fix)
+	  (add-expr-hint! this '((integer . 2)) #f fix))
        (when (memq (j2s-type lhs) '(any number))
 	  (let ((hint (union-hint! (expr-hint this) (expr-hint rhs))))
 	     (add-expr-hint! lhs (cons `(string . ,(minvalfx)) hint) #t fix)
@@ -214,6 +226,7 @@
 	     (add-expr-hint! rhs (cons `(string . ,(minvalfx)) hint) #t fix)
 	     (add-expr-hint! this hint #f fix))))
       ((/ %)
+       (hintnum-result!)
        (unhint-string-ref lhs fix)
        (unhint-string-ref rhs fix)
        (when (memq (j2s-type lhs) '(any number))
@@ -231,15 +244,21 @@
 	  (unless (eq? (j2s-type lhs) 'any)
 	     (unhint-string-ref lhs fix))
 	  (let ((hint (expr-hint rhs)))
-	     (add-expr-hint! lhs hint #t fix)))
+	     (when (and (pair? hint) (eq? op '>=))
+		(add-expr-hint! lhs hint #t fix))))
        (when (memq (j2s-type rhs) '(any number))
 	  (unless (eq? (j2s-type rhs) 'any)
 	     (unhint-string-ref rhs fix))
 	  (let ((hint (expr-hint lhs)))
 	     (add-expr-hint! rhs hint #t fix))))
       ((>> >>> << BIT_OR & ^)
+       (hintnum-result!)
        (unhint-string-ref lhs fix)
-       (unhint-string-ref rhs fix))))
+       (unhint-string-ref rhs fix))
+      ((&& ||)
+       (hintnum-result!)
+       (hintnum lhs #f fix)
+       (hintnum rhs #f fix))))
 
 ;*---------------------------------------------------------------------*/
 ;*    unhint-string-ref ...                                            */
@@ -332,18 +351,25 @@
    (with-access::J2SAssig this (lhs rhs)
       (hintnum lhs #t fix)
       (hintnum rhs #f fix)
-      (with-access::J2SAssig this (lhs rhs)
-	 (cond
-	    ((is-hint? lhs 'real)
-	     (add-expr-hint! rhs (expr-hint lhs) #f fix))
-	    ((is-hint? rhs 'real)
-	     (add-expr-hint! this (expr-hint rhs) #f fix)
-	     (when (isa? lhs J2SRef)
-		(add-expr-hint! lhs (expr-hint rhs) #t fix)))
-	    ((eq? (j2s-type rhs) 'real)
-	     (add-expr-hint! this '((real . 20)) #f fix)
-	     (when (isa? lhs J2SRef)
-		(add-expr-hint! lhs '((real . 20)) #t fix)))))))
+      ;; propagate all the negative types of the lhs
+      (when (isa? lhs J2SRef)
+	 (with-access::J2SRef lhs (decl)
+	    (with-access::J2SDecl decl (hint)
+	       (for-each (lambda (h)
+			    (when (=fx (cdr h) (minvalfx))
+			       (add-expr-hint! rhs (list h) #t fix)))
+		  hint))))
+      (cond
+	 ((is-hint? lhs 'real)
+	  (add-expr-hint! rhs (expr-hint lhs) #f fix))
+	 ((is-hint? rhs 'real)
+	  (add-expr-hint! this (expr-hint rhs) #f fix)
+	  (when (isa? lhs J2SRef)
+	     (add-expr-hint! lhs (expr-hint rhs) #t fix)))
+	 ((eq? (j2s-type rhs) 'real)
+	  (add-expr-hint! this '((real . 20)) #f fix)
+	  (when (isa? lhs J2SRef)
+	     (add-expr-hint! lhs '((real . 20)) #t fix))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hinthum ::J2SCall ...                                            */
@@ -371,7 +397,7 @@
 	  (add-expr-hint! (car args) '((real . 40)) #f fix)
 	  (add-expr-hint! this '((real . 40)) #f fix))
 	 ((math-call? fun args)
-	  (add-expr-hint! (car args) '((real . 40)) #f fix)))))
+	  (add-expr-hint! (car args) '((real . 2)) #f fix)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    type<? ...                                                       */
@@ -411,6 +437,28 @@
 	    (when (memq type '(number integer))
 	       (set! type 'real)
 	       (cell-set! fix #f))))))
+
+;*---------------------------------------------------------------------*/
+;*    propagate-types ::J2SPrefix ...                                  */
+;*---------------------------------------------------------------------*/
+(define-walk-method (propagate-types this::J2SPrefix fix::cell)
+   (call-default-walker)
+   (with-access::J2SPrefix this (rhs type)
+      (when (eq? (j2s-type rhs) 'real)
+	 (when (memq type '(number integer))
+	    (set! type 'real)
+	    (cell-set! fix #f)))))
+
+;*---------------------------------------------------------------------*/
+;*    propagate-types ::J2SPostfix ...                                 */
+;*---------------------------------------------------------------------*/
+(define-walk-method (propagate-types this::J2SPostfix fix::cell)
+   (call-default-walker)
+   (with-access::J2SPostfix this (rhs type)
+      (when (eq? (j2s-type rhs) 'real)
+	 (when (memq type '(number integer))
+	    (set! type 'real)
+	    (cell-set! fix #f)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    propagate-types ::J2SUnary ...                                   */

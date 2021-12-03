@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Wed Jun 16 19:31:10 2021 (serrano)                */
+/*    Last change :  Thu Aug 26 13:24:47 2021 (serrano)                */
 /*    Copyright   :  2014-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing basic ECMA 262, 5.1 features                             */
@@ -218,14 +218,20 @@ function bar6() {
    return arguments[ 2 ] + bar.apply( this, arguments );
 }
 
-assert.equal( foo1( 10 ), 55, "foo1" );
-assert.equal( foo2( 10 ), 10, "foo2" );
-assert.equal( bar1( 10 ), 55, "bar1" );
-assert.equal( bar2( 10 ), 55, "bar2" );
-assert.strictEqual( bar3( 1, 2, 3, 4, 5, 6 ), true, "arguments.length" );
-assert.strictEqual( bar4( 10 ), 3, "arguments overriding" );
-assert.strictEqual( bar5(), true, "arguments length" );
-assert.strictEqual( bar6( 1, 2 ), 23, "arguments.__proto__" );
+var xxxx = 4;
+if (xxxx > 10) {
+   var yyyy = 3;
+}
+
+assert.equal(foo1(10), 55, "foo1");
+assert.equal(foo2(10), 10, "foo2");
+assert.equal(bar1(10), 55, "bar1");
+assert.equal(bar2(10), 55, "bar2");
+assert.strictEqual(bar3(1, 2, 3, 4, 5, 6), true, "arguments.length");
+assert.strictEqual(bar4(10), 3, "arguments overriding");
+assert.strictEqual(bar5(), true, "arguments length");
+assert.strictEqual(bar6(1, 2), 23, "arguments.__proto__");
+assert.equal(yyyy, undefined, "global lifting");
 
 /*---------------------------------------------------------------------*/
 /*    undefined                                                        */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 29 21:14:17 2015                          */
-;*    Last change :  Wed Apr 28 09:26:24 2021 (serrano)                */
+;*    Last change :  Tue Oct 26 15:28:01 2021 (serrano)                */
 ;*    Copyright   :  2015-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript generators                   */
@@ -20,7 +20,7 @@
    
    (library hop)
    
-   (include "types.sch" "stringliteral.sch" "names.sch" "property.sch")
+   (include "types.sch" "stringliteral.sch" "names.sch" "property.sch" "public.sch")
    
    (import __hopscript_types
 	   __hopscript_arithmetic
@@ -35,15 +35,28 @@
 	   __hopscript_error
 	   __hopscript_worker
 	   __hopscript_spawn)
+
+   (extern ($bgl-init-jsyield-object!::JsObject (::obj)
+	      "bgl_init_jsyield_object"))
    
    (export (js-init-generator! ::JsGlobalObject)
-	   (js-make-generator::JsGenerator ::procedure ::JsObject ::JsGlobalObject)
+	   (js-generator-done ::obj ::obj ::JsGenerator ::JsObject ::JsGlobalObject)
+	   (js-make-generator::JsGenerator ::long ::procedure ::JsObject ::JsGlobalObject)
 	   (js-make-iterator ::obj ::JsGlobalObject)
 	   (js-make-map-iterator ::object ::procedure ::JsGlobalObject)
 	   (js-make-vector-iterator ::vector ::procedure ::JsGlobalObject)
 	   (js-make-list-iterator ::pair-nil ::procedure ::JsGlobalObject)
-	   (js-generator-yield ::JsGenerator ::obj ::bool ::obj ::JsGlobalObject)
-	   (js-generator-yield* ::JsGenerator ::obj ::bool ::obj ::JsGlobalObject)))
+	   (inline js-make-yield ::obj ::bool ::JsGlobalObject)
+	   (inline js-init-yield!::JsObject ::JsObject ::JsGlobalObject)
+	   (inline js-yield-set!::JsObject ::JsObject ::obj ::bool)
+	   (inline js-generator-yield ::JsGenerator ::JsObject ::obj ::bool ::obj ::JsGlobalObject)
+	   (js-generator-yield* ::JsGenerator ::JsObject ::obj ::bool ::obj ::JsGlobalObject)
+	   (js-generator-maybe-next ::obj ::obj ::JsGlobalObject ::obj)
+	   (js-generator-maybe-next0 ::obj ::JsGlobalObject ::obj)
+	   (js-generator-maybe-stack-next0 ::obj ::JsYield ::JsGlobalObject)
+	   (js-generator-maybe-stack-next1 ::obj ::JsYield ::obj ::JsGlobalObject)
+	   (js-generator-maybe-stack-next2 ::obj ::JsYield ::obj ::obj ::JsGlobalObject)
+	   (js-generator-maybe-stack-next-spread ::obj ::JsYield ::JsArray ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
@@ -83,22 +96,23 @@
 ;*---------------------------------------------------------------------*/
 (define (js-init-generator! %this::JsGlobalObject)
    (unless (vector? __js_strings) (set! __js_strings (&init!)))
-   (js-init-generator-yield-cmap! %this)
+   (js-init-generator-cmap! %this)
    (with-access::JsGlobalObject %this (js-function-prototype
 					 js-generator-prototype
 					 js-generatorfunction-prototype
 					 js-symbol-iterator
 					 js-symbol-tostringtag
-					 js-yield-cmap)
+					 js-yield-cmap
+					 js-generator-pcache)
       
       (define js-gen-proto-proto
 	 (let ((proto (instantiateJsObject
-			 (cmap (js-make-jsconstructmap :inline #t))			 (__proto__ (js-object-proto %this))
+			 (cmap (js-make-jsconstructmap))
+			 (__proto__ (js-object-proto %this))
 			 (elements ($create-vector 1)))))
 	    (js-bind! %this proto js-symbol-iterator
 	       :value (js-make-function %this
-			 (lambda (this)
-			    this)
+			 (lambda (this) this)
 			 (js-function-arity 0 0)
 			 (js-function-info :name "@@iterator" :len 0)
 			 :prototype (js-undefined))
@@ -107,48 +121,50 @@
       
       (define js-gen-proto
 	 (instantiateJsObject
-	    (cmap (js-make-jsconstructmap :inline #t))
+	    (cmap (js-make-jsconstructmap))
 	    (__proto__ js-gen-proto-proto)
 	    (elements ($create-vector 4))))
       
       (define js-genfun-proto
-	 (instantiateJsObject
-	    (cmap (js-make-jsconstructmap :inline #t))
-	    (__proto__ js-function-prototype)
-	    (elements ($create-vector 2))))
-      
-      (define (js-generator-done)
-	 (instantiateJsObject
-	    (cmap js-yield-cmap)
-	    (__proto__ (js-object-proto %this))
-	    (elements (vector (js-undefined) #t))))
-      
-      (define (js-generator-next this val exn)
+	 (let ((v ($create-vector 2)))
+	    ;; force a non-inline allocation for vector
+	    (instantiateJsObject
+	       (cmap (js-make-jsconstructmap))
+	       (__proto__ js-function-prototype)
+	       (elements v))))
+
+      (define (js-next this val)
 	 (if (isa? this JsGenerator)
 	     (with-access::JsGenerator this (%next)
-		(if (procedure? %next)
-		    (%next val exn)
-		    (js-generator-done)))
+		(let ((y (js-make-yield #f #f %this)))
+		   (js-generator-next val #f this y %this)))
+	     (js-raise-type-error %this "argument not a generator ~a"
+		(typeof this))))
+
+      (define (js-throw this val)
+	 (if (isa? this JsGenerator)
+	     (with-access::JsGenerator this (%next)
+		(let ((y (js-make-yield #f #f %this)))
+		   (js-generator-next val #t this y %this)))
 	     (js-raise-type-error %this "argument not a generator ~a"
 		(typeof this))))
       
-      (define (js-generator-return this val exn)
+      (define (js-generator-return this val)
 	 (if (isa? this JsGenerator)
 	     (with-access::JsGenerator this (%next)
 		(let ((done (instantiateJsObject
 			       (cmap js-yield-cmap)
 			       (__proto__ (js-object-proto %this))
 			       (elements (vector val #t)))))
-		   (set! %next #f)
+		   (set! %next js-generator-done)
 		   done))
 	     (js-raise-type-error %this "argument not a generator ~a"
 		(typeof this))))
       
       (define (js-generator-construct this . args)
 	 (if (null? args)
-	     (js-make-generator
-		(lambda (val exn)
-		   (js-generator-done))
+	     (js-make-generator 0
+		js-generator-done
 		js-generator-prototype
 		%this)
 	     (let* ((len (length args))
@@ -160,12 +176,14 @@
 		(call-with-input-string fun
 		   (lambda (ip)
 		      (%js-eval ip 'eval %this this %this))))))
+
+      (set! js-generator-pcache
+	 ((@ js-make-pcache-table __hopscript_property) 7 "generator"))
       
       (js-bind! %this js-gen-proto (& "next")
 	 :configurable #f :enumerable #f
 	 :value (js-make-function %this
-		   (lambda (this val)
-		      (js-generator-next this val #f))
+		   js-next
 		   (js-function-arity 1 0)
 		   (js-function-info :name "next" :len 1))
 	 :hidden-class #t)
@@ -173,8 +191,7 @@
       (js-bind! %this js-gen-proto (& "return")
 	 :configurable #f :enumerable #f
 	 :value (js-make-function %this
-		   (lambda (this val)
-		      (js-generator-return this val #f))
+		   js-generator-return
 		   (js-function-arity 1 0)
 		   (js-function-info :name "return" :len 1))
 	 :hidden-class #t)
@@ -182,8 +199,7 @@
       (js-bind! %this js-gen-proto (& "throw")
 	 :configurable #f :enumerable #f
 	 :value (js-make-function %this
-		   (lambda (this val)
-		      (js-generator-next this val #t))
+		   js-throw
 		   (js-function-arity 1 0)
 		   (js-function-info :name "throw" :len 1))
 	 :hidden-class #t)
@@ -210,16 +226,26 @@
       ))
 
 ;*---------------------------------------------------------------------*/
-;*    js-init-generator-yield-cmap! ...                                */
+;*    js-generator-done ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (js-init-generator-yield-cmap! %this::JsGlobalObject)
-   (with-access::JsGlobalObject %this (js-yield-cmap)
+(define (js-generator-done val exn %gen %yield %this)
+   (js-yield-set! %yield (js-undefined) #t))
+
+;*---------------------------------------------------------------------*/
+;*    js-init-generator-cmap! ...                                      */
+;*---------------------------------------------------------------------*/
+(define (js-init-generator-cmap! %this::JsGlobalObject)
+   (with-access::JsGlobalObject %this (js-yield-cmap js-generator-cmap)
+      ;; the order of "value" and "done" is used by
+      ;; JS-GENERATOR-YIELD, JS-GENERATOR-YIELD*, and JS-YIELD-SET!
       (set! js-yield-cmap
-	 (let ((props `#(,(prop (& "value") (property-flags #t #t #t #f))
-			 ,(prop (& "done") (property-flags #t #t #t #f)))))
+	 (let ((props `#(,(prop (& "value") (property-flags #t #t #t #f #f))
+			 ,(prop (& "done") (property-flags #t #t #t #f #f)))))
 	    (js-make-jsconstructmap
 	       :props props
-	       :methods (make-vector (vector-length props)))))))
+	       :methods (make-vector (vector-length props)))))
+      (set! js-generator-cmap
+	 (js-make-jsconstructmap))))
 	    
 ;*---------------------------------------------------------------------*/
 ;*    js-function-construct ...                                        */
@@ -246,107 +272,164 @@
 		   (%js-eval ip 'eval %this this %this)))))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-put! ::JsGenerator ...                                        */
-;*    -------------------------------------------------------------    */
-;*    The first time [[PUT]] is called on a generator it is            */
-;*    de-optimized (see JS-MAKE-CONSTRUCT).                            */
+;*    js-jsobject->jsarray ::JsObject ...                              */
 ;*---------------------------------------------------------------------*/
-(define-method (js-put! this::JsGenerator prop v throw %this)
-   (with-access::JsGenerator this (cmap elements)
-      (when (isa? cmap JsConstructMap)
-	 ;; de-optimze the generator first
-	 (js-object-unmap! this))
-      ;; regular [[PUT]] invocation
-      (call-next-method)))
+(define-method (js-jsobject->jsarray o::JsGenerator %this::JsGlobalObject)
+
+   (define (acc->jsarray!::JsArray ilen acc %this)
+      (with-access::JsGlobalObject %this (js-array-prototype js-array-cmap)
+	 (let ((a ($js-make-jsarray-sans-init (uint32->fixnum ilen)
+		     ilen ilen 
+		     js-array-cmap
+		     js-array-prototype
+		     (js-array-default-mode))))
+	    (with-access::JsArray a (vec)
+	       (let ((vec vec))
+		  (let loop ((i (-fx (uint32->fixnum ilen) 1))
+			     (acc acc))
+		     (if (>=fx i 0)
+			 (begin
+			    (vector-set! vec i (car acc))
+			    (loop (-fx i 1) (cdr acc)))
+			 a)))))))
+      
+   (define (js-jsgenerator->jsarray o %this)
+      (js-call-with-stack-yield (js-make-yield #unspecified #f %this)
+	 (lambda (y)
+	    (let loop ((acc '())
+		       (l 0))
+	       (let ((n (js-generator-next (js-undefined) #f o y %this)))
+		  (if (eq? (js-object-inline-ref n 1) #t)
+		      (acc->jsarray! (fixnum->uint32 l) acc %this)
+		      (let ((val (js-object-inline-ref n 0)))
+			 (loop (cons val acc) (+fx l 1)))))))))
+   
+   (with-access::JsGlobalObject %this (js-symbol-iterator)
+      (if (js-object-mode-plain? o)
+	  (js-jsgenerator->jsarray o %this)
+	  (let ((fun (js-get o js-symbol-iterator %this))
+		(acc '()))
+	     (if (js-procedure? fun)
+		 (begin
+		    (js-for-of-iterator (js-call0 %this fun o) o
+		       (lambda (e %this)
+			  (set! acc (cons e acc))) #f %this)
+		    (js-vector->jsarray (list->vector (reverse! acc)) %this))
+		 (js-raise-type-error %this "call: not an interator ~s"
+		    o))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-make-generator ...                                            */
-;*    -------------------------------------------------------------    */
-;*    Generators use a special encoding. They directly point to the    */
-;*    elements and cmap of their prototype. This optimizes "next"      */
-;*    and "throw" access. To preserve the semantics, JS-PUT! is        */
-;*    overriden for that class.                                        */
 ;*---------------------------------------------------------------------*/
-(define (js-make-generator proc proto %this)
-   (with-access::JsGlobalObject %this (js-generatorfunction-prototype)
-      (with-access::JsObject js-generatorfunction-prototype (cmap elements)
-	 (instantiateJsGenerator
-	    (cmap cmap)
-	    (elements elements)
-	    (__proto__ proto)
-	    (%next proc)))))
+(define (js-make-generator size proc proto %this)
+   (with-access::JsGlobalObject %this (js-generator-cmap)
+      (instantiateJsGenerator
+	 (cmap js-generator-cmap)
+	 (elements '#())
+	 (__proto__ proto)
+	 (%next proc)
+	 (%env (if (>fx size 0) (make-vector size) '#())))))
+
+;*---------------------------------------------------------------------*/
+;*    js-init-yield! ...                                               */
+;*---------------------------------------------------------------------*/
+(define-inline (js-init-yield! o::JsObject %this)
+   (with-access::JsGlobalObject %this (js-yield-cmap)
+      (js-object-proto-set! o (js-object-proto %this))
+      (with-access::JsObject o (cmap) (set! cmap js-yield-cmap))
+      o))
+
+;*---------------------------------------------------------------------*/
+;*    js-yield-set! ...                                                */
+;*---------------------------------------------------------------------*/
+(define-inline (js-yield-set! o::JsObject val done)
+   (js-object-inline-set! o 0 val)
+   (js-object-inline-set! o 1 done)
+   o)
+   
+;*---------------------------------------------------------------------*/
+;*    js-make-yield ...                                                */
+;*---------------------------------------------------------------------*/
+(define-inline (js-make-yield val done %this)
+   (with-access::JsGlobalObject %this (js-yield-cmap)
+      (let ((o (js-make-jsobject 2 js-yield-cmap (js-object-proto %this))))
+	 (js-yield-set! o val done))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-make-map-iterator ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (js-make-map-iterator obj proc %this)
-   (letrec ((%gen (js-make-generator
-		     (lambda (%v %e)
-			(let ((i 0))
-			   (let loop ((%v %v) (%e %e))
-			      (let ((len (js-get obj (& "length") %this)))
-				 (if (>=fx i len)
-				     (js-generator-yield %gen
-					(js-undefined) #t
-					loop %this)
-				     (let ((val (proc i (js-get obj i %this))))
-					(set! i (+fx i 1))
-					(js-generator-yield %gen
-					   val #f
-					   loop %this)))))))
-		     (with-access::JsGlobalObject %this (js-generator-prototype)
-			js-generator-prototype)
-		     %this)))
-      %gen))
+   (js-make-generator 0
+      (lambda (%v %e %gen %yield %this)
+	 (let ((i 0))
+	    (let loop ((%v %v) (%e %e) (%gen %gen) (%yield %yield) (%this %this))
+	       (let ((len (js-get obj (& "length") %this)))
+		  (if (>=fx i len)
+		      (js-generator-yield %gen %yield
+			 (js-undefined) #t
+			 loop %this)
+		      (let ((val (proc i (js-get obj i %this))))
+			 (set! i (+fx i 1))
+			 (js-generator-yield %gen %yield
+			    val #f
+			    loop %this)))))))
+      (with-access::JsGlobalObject %this (js-generator-prototype)
+	 js-generator-prototype)
+      %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-make-vector-iterator ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (js-make-vector-iterator obj::vector proc %this)
-   (letrec ((%gen (js-make-generator
-		     (lambda (%v %e)
-			(let ((l obj)
-			      (i 0))
-			   (let laap ((%v %v) (%e %e))
-			      (if (=fx i (vector-length obj))
-				  (js-generator-yield %gen
-				     (js-undefined) #t
-				     laap %this)
-				  (let ((val (vector-ref obj i)))
-				     (set! i (+fx i 1))
-				     (if (eq? val (js-absent))
-					 (laap %v %e) 
-					 (js-generator-yield %gen
-					    (proc %this val) #f
-					    laap %this)))))))
-		     (with-access::JsGlobalObject %this (js-generator-prototype)
-			js-generator-prototype)
-		     %this)))
-      %gen))
+   (let ((gen (js-make-generator 4
+		 (lambda (%v %e %gen %yield %this)
+		    (let laap ((%v %v) (%e %e) (%gen %gen) (%yield %yield) (%this %this))
+		       (let ((obj (js-generator-ref %gen 0))
+			     (i (js-generator-ref %gen 1))
+			     (l (js-generator-ref %gen 2)))
+			  (if (=fx i l)
+			      (js-generator-yield %gen %yield
+				 (js-undefined) #t
+				 laap %this)
+			      (let ((val (vector-ref obj i)))
+				 (js-generator-set! %gen 1 (+fx i 1))
+				 (if (eq? val (js-absent))
+				     (laap %v %e %gen %yield %this)
+				     (let ((proc (js-generator-ref %gen 3)))
+					(js-generator-yield %gen %yield
+					   (proc %this val) #f
+					   laap %this))))))))
+		 (with-access::JsGlobalObject %this (js-generator-prototype)
+		    js-generator-prototype)
+		 %this)))
+      (js-generator-set! gen 0 obj)
+      (js-generator-set! gen 1 0)
+      (js-generator-set! gen 2 (vector-length obj))
+      (js-generator-set! gen 3 proc)
+      gen))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-make-list-iterator ...                                        */
 ;*---------------------------------------------------------------------*/
 (define (js-make-list-iterator obj::pair-nil proc %this)
-   '(letrec ((%gen (js-make-generator
-		     (lambda (%v %e)
-			(let ((l obj))
-			   (let loop ((%v %v) (%e %e))
-			      (if (null? l)
-				  (js-generator-yield %gen
-				     (js-undefined) #t
-				     loop %this)
-				  (let ((val (car l)))
-				     (set! l (cdr l))
-				     (if (eq? val (js-absent))
-					 (loop %v %e)
-					 (js-generator-yield %gen
-					    (proc %this val) #f
-					    loop %this)))))))
-		     (with-access::JsGlobalObject %this (js-generator-prototype)
-			js-generator-prototype)
-		     %this)))
-      %gen))
+   (js-make-generator 0
+      (lambda (%v %e %gen %yield %this)
+	 (let ((l obj))
+	    (let loop ((%v %v) (%e %e) (%gen %gen) (%yield %yield) (%this %this))
+	       (if (null? l)
+		   (js-generator-yield %gen %yield
+		      (js-undefined) #t
+		      loop %this)
+		   (let ((val (car l)))
+		      (set! l (cdr l))
+		      (if (eq? val (js-absent))
+			  (loop %v %e %gen %yield %this)
+			  (js-generator-yield %gen %yield
+			     (proc %this val) #f
+			     loop %this)))))))
+      (with-access::JsGlobalObject %this (js-generator-prototype)
+	 js-generator-prototype)
+      %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-make-iterator ...                                             */
@@ -355,45 +438,210 @@
    (js-make-map-iterator obj (lambda (key val) val) %this))
 
 ;*---------------------------------------------------------------------*/
+;*    js-generator-next ...                                            */
+;*---------------------------------------------------------------------*/
+(define-inline (js-generator-next val exn this::JsGenerator yield %this)
+   (with-access::JsGenerator this (%next)
+      (let loop ((v (%next val exn this yield %this)))
+	 (if (eq? v #t)
+	     ;; bouncing
+	     (loop ((js-generator-ref this 1)
+		    (js-generator-ref this 0)
+		    #f this yield %this))
+	     v))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-generator-yield ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (js-generator-yield gen val done kont %this)
+(define-inline (js-generator-yield gen yield val done kont %this)
    (with-access::JsGenerator gen (%next)
       (set! %next kont)
-      (with-access::JsGlobalObject %this (js-yield-cmap)
-	 (instantiateJsObject
-	    (cmap js-yield-cmap)
-	    (__proto__ (js-object-proto %this))
-	    (elements (vector val done))))))
+      (js-yield-set! yield val done)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-generator-yield* ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (js-generator-yield* gen val done kont %this)
+(define (js-generator-yield* gen yield val done kont %this)
+
+   (define (yield*-loop-sans-bounce v e gen yield %this)
+      ;; currently not used, see js-generator-next
+      (let ((val (js-generator-ref gen 0)))
+	 (let* ((n (js-generator-next (js-undefined) #f val yield %this))
+		(done (js-object-inline-ref n 1))
+		(value (js-object-inline-ref n 0)))
+	    (if done
+		(let ((kont (js-generator-ref gen 1))
+		      (value (js-object-inline-ref n 0)))
+		   (kont value #f gen yield %this))
+		n))))
+
+   (define (yield*-loop v e gen yield %this)
+      (let ((val (js-generator-ref gen 0)))
+	 (let* ((n (js-generator-next (js-undefined) #f val yield %this))
+		(done (js-object-inline-ref n 1))
+		(value (js-object-inline-ref n 0)))
+	    (if done
+		(let ((value (js-object-inline-ref n 0)))
+		   (js-generator-set! gen 0 value)
+		   ;; bouncing to avoid stack growth
+		   #t)
+		n))))
    
-   (define (yield* val)
-      (let ((next (js-get val (& "next") %this)))
-	 (let loop ((v (js-undefined)) (e #f))
-	    (let* ((n (js-call0 %this next val))
-		   (value (js-get n (& "value") %this))
-		   (done (js-get n (& "done") %this)))
-	       (if done
-		   (kont value #f)
-		   (js-generator-yield gen value #f
-		      loop %this))))))
+   (define (yield*-generator val %this)
+      (with-access::JsGenerator gen (%next)
+	 (set! %next yield*-loop)
+	 (js-generator-set! gen 0 val)
+	 (js-generator-set! gen 1 kont))
+      (yield*-loop (js-undefined) #f gen yield %this))
+
+   (define (yield*-procedure next val %this js-generator-pcache)
+      (define (loop v e g y %this)
+	 (let* ((n (next val (js-undefined)))
+		(done (js-get-name/cache n (& "done") #f %this
+			 (vector-ref js-generator-pcache 2))))
+	    (if done
+		(let ((value (js-get-name/cache n (& "value") #f %this
+				(vector-ref js-generator-pcache 1))))
+		   (kont value #f g y %this))
+		n)))
+      (with-access::JsGenerator gen (%next)
+	 (set! %next loop))
+      (loop (js-undefined) #f gen yield %this))
+
+   (define (yield*-obj next val %this js-generator-pcache)
+      (define (loop v e g y %this)
+	 (let* ((n (js-call0 %this next val))
+		(done (js-get-name/cache n (& "done") #f %this
+			 (vector-ref js-generator-pcache 2))))
+	    (if done
+		(let ((value (js-get-name/cache n (& "value") #f %this
+				(vector-ref js-generator-pcache 1))))
+		   (kont value #f g y %this))
+		n)))
+      (with-access::JsGenerator gen (%next)
+	 (set! %next loop))
+      (loop (js-undefined) #f gen yield %this))
+
+   (define (yield*-sans-generator val %this)
+      (with-access::JsGlobalObject %this (js-generator-pcache)
+	 (let ((next (js-get-name/cache val (& "next") #f %this
+			(vector-ref js-generator-pcache 0))))
+	    (if (and (js-procedure? next) (=fx (js-procedure-arity next) 2))
+		(yield*-procedure (js-procedure-procedure next) val %this js-generator-pcache)
+		(yield*-obj next val %this js-generator-pcache)))))
+   
+   (define (yield* val %this)
+      (if (and (isa? val JsGenerator) (js-object-mode-plain? val))
+	  (yield*-generator val %this)
+	  (yield*-sans-generator val %this)))
 
    (with-access::JsGlobalObject %this (js-symbol-iterator)
       (cond
 	 ((isa? val JsGenerator)
-	  (yield* val))
+	  (if (js-object-mode-plain? val)
+	      (yield*-generator val %this)
+	      (yield*-sans-generator val %this)))
 	 ((js-get val js-symbol-iterator %this)
 	  =>
 	  (lambda (g)
-	     (yield* (js-call0 %this g val))))
+	     (yield* (js-call0 %this g val) %this)))
 	 (else
-	  (yield* val)))))
+	  (yield* val %this)))))
+ 
+;*---------------------------------------------------------------------*/
+;*    js-generator-maybe-next ...                                      */
+;*---------------------------------------------------------------------*/
+(define (js-generator-maybe-next this val %this cache)
+   (if (and (isa? this JsGenerator) (js-object-mode-plain? this))
+       (let ((yield (js-make-yield #unspecified #t %this)))
+	  (js-generator-next val #f this yield %this))
+       (let ((next (js-get-name/cache this (& "next") #f %this cache)))
+	  (js-call1 %this next this val))))
 
+;*---------------------------------------------------------------------*/
+;*    js-generator-maybe-next0 ...                                     */
+;*---------------------------------------------------------------------*/
+(define (js-generator-maybe-next0 this %this cache)
+   (if (and (isa? this JsGenerator) (js-object-mode-plain? this))
+       (let ((yield (js-make-yield #unspecified #t %this)))
+	  (js-generator-next (js-undefined) #f this yield %this))
+       (let ((next (js-get-name/cache this (& "next") #f %this cache)))
+	  (js-call0 %this next this))))
 
+;*---------------------------------------------------------------------*/
+;*    js-generator-maybe-stack-next0 ...                               */
+;*    -------------------------------------------------------------    */
+;*    !!! WARNING !!! WARNING !!! WARNING !!! WARNING !!! WARNING !!!  */
+;*    -------------------------------------------------------------    */
+;*    Although the type JsYield is never used, the XXX-stack-next      */
+;*    functions must use it in their prototype in order to force       */
+;*    Bigloo generating the C declaration of that type. Otherwise      */
+;*    the C compiler won't be able to compile inline yield stack       */
+;*    allocations.                                                     */
+;*---------------------------------------------------------------------*/
+(define (js-generator-maybe-stack-next0 this yield::JsYield %this)
+   (if (and (isa? this JsGenerator) (js-object-mode-plain? this))
+       (js-generator-next (js-undefined) #f this yield %this)
+       (with-access::JsGlobalObject %this (js-generator-pcache)
+	  (let ((next (js-get-name/cache this (& "next") #f %this
+			 (vector-ref js-generator-pcache 3))))
+	     (js-call0 %this next this)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-generator-maybe-stack-next1 ...                               */
+;*---------------------------------------------------------------------*/
+(define (js-generator-maybe-stack-next1 this yield::JsYield val %this)
+   (if (and (isa? this JsGenerator) (js-object-mode-plain? this))
+       (js-generator-next val #f this yield %this)
+       (with-access::JsGlobalObject %this (js-generator-pcache)
+	  (let ((next (js-get-name/cache this (& "next") #f %this
+			 (vector-ref js-generator-pcache 4))))
+	     (js-call1 %this next this val)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-generator-maybe-stack-next2 ...                               */
+;*---------------------------------------------------------------------*/
+(define (js-generator-maybe-stack-next2 this yield::JsYield val throw %this)
+   (if (and (isa? this JsGenerator) (js-object-mode-plain? this))
+       (js-generator-next val (js-totest throw) this yield %this)
+       (with-access::JsGlobalObject %this (js-generator-pcache)
+	  (let ((next (js-get-name/cache this (& "next") #f %this
+			 (vector-ref js-generator-pcache 5))))
+	     (js-call2 %this next this val throw)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-generator-maybe-stack-next-spread ...                         */
+;*---------------------------------------------------------------------*/
+(define (js-generator-maybe-stack-next-spread this yield::JsYield args %this)
+   (if (and (isa? this JsGenerator) (js-object-mode-plain? this))
+       (if (js-object-mode-arrayinline? args)
+	   (with-access::JsArray args (ilen vec)
+	      (case ilen
+		 ((#u32:0)
+		  (js-generator-next (js-undefined) #f this yield %this))
+		 ((#u32:1)
+		  (js-generator-next (vector-ref vec 0) #f this yield %this))
+		 (else
+		  (js-generator-next (vector-ref vec 0)
+		     (js-totest (vector-ref vec 1)) this yield %this))))
+	   (with-access::JsArray args (length)
+	      (case length
+		 ((#u32:0)
+		  (js-generator-next (js-undefined)
+		     #f this yield %this))
+		 ((#u32:1)
+		  (js-generator-next (js-array-ref args 0 %this)
+		     #f this yield %this))
+		 (else
+		  (js-generator-next (js-array-ref args 0 %this)
+		     (js-totest (js-array-ref args 1 %this))
+		     this yield %this)))))
+       (js-function-maybe-apply %this
+	  (with-access::JsGlobalObject %this (js-generator-pcache)
+	     (js-get-name/cache this (& "next") #f %this
+		(vector-ref js-generator-pcache 6)))
+	  this args #f)))
+   
 ;*---------------------------------------------------------------------*/
 ;*    &end!                                                            */
 ;*---------------------------------------------------------------------*/

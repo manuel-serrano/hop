@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/make_lib.scm            */
+;*    serrano/prgm/project/hop/hop/js2scheme/make_lib.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug  9 14:00:32 2013                          */
-;*    Last change :  Wed Nov 14 08:48:50 2018 (serrano)                */
-;*    Copyright   :  2013-18 Manuel Serrano                            */
+;*    Last change :  Tue Oct 12 09:50:51 2021 (serrano)                */
+;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    THe module used to build the js2scheme heap file.                */
 ;*=====================================================================*/
@@ -98,8 +98,8 @@
 	   (class J2SNew)
 	   (class J2SInit)
 	   (class J2SAssigOp)
-	   (class J2SVAssig)
-	   (class J2SCAssig)
+;* 	   (class J2SVAssig)                                           */
+;* 	   (class J2SCAssig)                                           */
 	   (class J2SFunBinding)
 	   (class J2SObjInit)
 	   (class J2SPropertyInit)

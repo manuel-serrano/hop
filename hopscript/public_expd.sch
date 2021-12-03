@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 23 07:35:40 2017                          */
-;*    Last change :  Sat Aug 21 15:08:19 2021 (serrano)                */
+;*    Last change :  Sun Nov 21 10:44:57 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript public expanders                                       */
@@ -56,21 +56,75 @@
 	  (e `(let ((,tmp ,expr)) (js-tonumber ,tmp ,%this)) e)))
       (else
        (map (lambda (x) (e x e)) x))))
-      
+
 ;*---------------------------------------------------------------------*/
 ;*    js-tonumber-for-flonum-expander ...                              */
 ;*---------------------------------------------------------------------*/
 (define (js-tonumber-for-flonum-expander x e)
    (match-case x
       ((?- (and (? symbol?) ?expr) ?%this)
-       (e `(if (flonum? ,expr)
-	       ,expr
+       (e `(cond
+	      ((flonum? ,expr)
+	       ,expr)
+	      ((fixnum? ,expr)
+	       (fixnum->flonum ,expr))
+	      (else
 	       ((@ js-toflonum __hopscript_arithmetic)
-		((@ js-tonumber __hopscript_public) ,expr ,%this)))
+		((@ js-tonumber __hopscript_public) ,expr ,%this))))
 	  e))
       ((?- ?expr ?%this)
        (let ((tmp (gensym '%e)))
 	  (e `(let ((,tmp ,expr)) (js-tonumber-for-flonum ,tmp ,%this)) e)))
+      (else
+       (map (lambda (x) (e x e)) x))))
+
+;*---------------------------------------------------------------------*/
+;*    js-tonumeric-expander ...                                        */
+;*---------------------------------------------------------------------*/
+(define (js-tonumeric-expander x e)
+   (match-case x
+      ((?- (and (? symbol?) ?expr) ?%this)
+       (e `(if (js-number? ,expr)
+	       ,expr
+	       ((@ js-tonumeric __hopscript_public) ,expr ,%this))
+	  e))
+      ((?- ?expr ?%this)
+       (let ((tmp (gensym '%e)))
+	  (e `(let ((,tmp ,expr)) (js-tonumeric ,tmp ,%this)) e)))
+      (else
+       (map (lambda (x) (e x e)) x))))
+
+;*---------------------------------------------------------------------*/
+;*    js-tonumeric-for-fixnum-expander ...                             */
+;*---------------------------------------------------------------------*/
+(define (js-tonumeric-for-fixnum-expander x e)
+   (match-case x
+      ((?- (and (? symbol?) ?expr) ?%this)
+       (e `(if (fixnum? ,expr)
+	       ,expr
+	       ((@ js-tonumeric __hopscript_public) ,expr ,%this))
+	  e))
+      ((?- ?expr ?%this)
+       (let ((tmp (gensym '%e)))
+	  (e `(let ((,tmp ,expr)) (js-tonumeric ,tmp ,%this)) e)))
+      (else
+       (map (lambda (x) (e x e)) x))))
+
+;*---------------------------------------------------------------------*/
+;*    js-math-floorfl-expander ...                                     */
+;*---------------------------------------------------------------------*/
+(define (js-math-floorfl-expander x e)
+   (match-case x
+      ((?- (and ?f (js-tonumber-for-flonum (and (? symbol?) ?val) %this)))
+       (e `(if (fixnum? ,val)
+	       (overflowfx ,val)
+	       ((@ js-math-floorfl __hopscript_math) ,f))
+	  e))
+      ((?- (js-tonumber-for-flonum ?val %this))
+       (let ((tmp (gensym 'tmp)))
+	  (e `(let ((,tmp ,val))
+		 (js-math-floorfl (js-tonumber-for-flonum ,tmp %this)))
+	     e)))
       (else
        (map (lambda (x) (e x e)) x))))
       
@@ -114,7 +168,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-with-handler-no-unwind ...                                    */
 ;*    -------------------------------------------------------------    */
-;*    Simplied version of with-handle that is used when no             */
+;*    Simplied version of with-handler used only when no               */
 ;*    "RETURN", "BREAK", or "CONTINUE" is used in the body.            */
 ;*---------------------------------------------------------------------*/
 (define (js-with-handler-no-unwind-expander x e)
@@ -265,3 +319,27 @@
 	  (e `(let ((,f ,fun)) (js-new ,%this ,f ,@args)) e)))
       (else
        (error "js-new" "bad form" x))))
+
+;*---------------------------------------------------------------------*/
+;*    js-call-with-stack-yield ...                                     */
+;*    -------------------------------------------------------------    */
+;*    Yield values stack allocation (when supported by the back-end).  */
+;*---------------------------------------------------------------------*/
+(define (js-call-with-stack-yield-expander x e)
+   (match-case x
+      ((?- (and ?yield (js-make-yield ?val ?done ?%this))
+	  (and ?proc (lambda (?y) . ?body)))
+       (cond-expand
+	  ((and bigloo-c (not devel) (not debug))
+	   (let ((tmp (gensym 'aux)))
+	      (e `(let ()
+		     (pragma ,(format "struct BgL_jsyieldz00_bgl ~a;" tmp))
+		     ($bgl-init-jsyield-object! (pragma::obj ,(format "(obj_t)(&~a)" tmp)))
+		     (let ((,y (pragma::obj ,(format "(obj_t)BNANOBJECT(&~a)" tmp))))
+			(js-init-yield! ,y %this)
+			,@body))
+		 e)))
+	  (else
+	   (e `(,proc ,yield) e))))
+      (else
+       (error "js-call-with-stack-yield" "bad form" x))))

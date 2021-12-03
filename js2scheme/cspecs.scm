@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Apr  2 19:46:13 2017                          */
-;*    Last change :  Sun Apr 19 08:23:15 2020 (serrano)                */
+;*    Last change :  Sun Oct 17 10:58:13 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Annotate property accesses with cache level information          */
@@ -742,7 +742,7 @@
 	  (with-access::J2SRef expr (decl)
 	     (with-access::J2SDecl decl (id scope)
 		(and (eq? id clazz)
-		     (eq? scope '%scope)
+		     (memq scope '(%scope tls))
 		     (not (decl-usage-has? decl '(assig assig set delete eval)))))))
 	 (else
 	  #f)))

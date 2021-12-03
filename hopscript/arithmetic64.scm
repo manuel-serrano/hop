@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Sun Aug  8 08:43:49 2021 (serrano)                */
+;*    Last change :  Mon Nov 22 20:28:49 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on 64 bit platforms                        */
@@ -64,18 +64,22 @@
 	  (inline +s32/overflow::obj ::int32 ::int32)
 	  (inline +u32/overflow::obj ::uint32 ::uint32)
 	  (+/overflow::obj ::obj ::obj)
+	  (+/overflowfl::double ::obj ::obj)
 	  (+/overflow!::obj ::obj ::obj)
 	  
 	  (inline -fx/overflow::obj ::long ::long)
 	  (inline -s32/overflow::long ::int32 ::int32)
 	  (inline -u32/overflow::long ::uint32 ::uint32)
 	  (-/overflow::obj ::obj ::obj)
+	  (-/overflowfl::double ::obj ::obj)
 	  (-/overflow!::obj ::obj ::obj)
 	  
 	  (inline *fx/overflow::obj ::long ::long)
+	  (inline *fx/overflow-sans-zero::obj ::long ::long)
 	  (inline *s32/overflow::obj ::int32 ::int32)
 	  (inline *u32/overflow::obj ::uint32 ::uint32)
 	  (*/overflow ::obj ::obj)
+	  (*/overflowfl::double ::obj ::obj)
 	  (*/overflow!::obj ::obj ::obj)))))
 
 ;*---------------------------------------------------------------------*/
@@ -449,7 +453,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    todouble ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (todouble::double x)
+(define-inline (todouble::double x)
    (cond
       ((flonum? x) x)
       ((fixnum? x) (fixnum->flonum x))
@@ -502,6 +506,12 @@
 		 (+fx/overflow ll rl)
 		 (+fl (todouble x) (todouble y))))
 	  (+fl (todouble x) (todouble y)))))
+
+;*---------------------------------------------------------------------*/
+;*    +/overflowfl ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (+/overflowfl::double x::obj y::obj)
+   (+fl (todouble x) (todouble y)))
 
 ;*---------------------------------------------------------------------*/
 ;*    +/overflow! ...                                                  */
@@ -557,6 +567,12 @@
 		 (-fx/overflow ll rl)
 		 (-fl (todouble x) (todouble y))))
 	  (-fl (todouble x) (todouble y)))))
+
+;*---------------------------------------------------------------------*/
+;*    -/overflowfl ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (-/overflowfl::double x::obj y::obj)
+   (-fl (todouble x) (todouble y)))
 
 ;*---------------------------------------------------------------------*/
 ;*    -/overflow! ...                                                  */
@@ -621,10 +637,52 @@
 	      r))))))
 
 ;*---------------------------------------------------------------------*/
+;*    *fx/overflow-sans-zero ...                                       */
+;*---------------------------------------------------------------------*/
+(define-inline (*fx/overflow-sans-zero x::long y::long)
+   (cond-expand
+      ((and bigloo-c (config have-overflow #t))
+       (let ((res::long 0))
+	  (cond
+	     ((pragma::bool "__builtin_smull_overflow((long)$1, (long)$2, &$3)"
+		 x y (pragma res))
+	      (pragma::real "DOUBLE_TO_REAL(((double)($1)) * ((double)($2)))"
+		 x y))
+	     (else
+	      (overflow53 res)))))
+      (else
+       (let ((r (* x y)))
+	  (cond
+	     ((fixnum? r)
+	      (if (=fx r 0)
+		  (overflow53 r)))
+	     ((flonum? r)
+	      r)
+	     ((bignum? r)
+	      (bignum->flonum r))
+	     ((elong? r)
+	      (elong->flonum r))
+	     ((llong? r)
+	      (llong->flonum r))
+	     (else
+	      r))))))
+
+;*---------------------------------------------------------------------*/
 ;*    *s32/overflow ...                                                */
 ;*---------------------------------------------------------------------*/
 (define-inline (*s32/overflow x::int32 y::int32)
-   (*fx/overflow (int32->fixnum x) (int32->fixnum y)))
+;*    (*fx/overflow-sans-zero (int32->fixnum x) (int32->fixnum y))     */
+   (cond-expand
+      ((and bigloo-c (config have-overflow #t))
+       (let ((res::long 0))
+	  ;; left align the 32bit numbers (64-53-1)=10
+	  (if (pragma::bool "__builtin_smull_overflow($1 << 10, $2, &$3)"
+		 x y (pragma res))
+	      (pragma::real "DOUBLE_TO_REAL(((double)($1))*((double)($2)))"
+		 x y)
+	      (pragma::obj "BINT(($1) >> 10)" res))))
+      (else
+       (*fx/overflow-sans-zero (int32->fixnum x) (int32->fixnum y)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *u32/overflow ...                                                */
@@ -657,6 +715,12 @@
 		 (*fx/overflow ll rl)
 		 (*fl (todouble x) (todouble y))))
 	  (*fl (todouble x) (todouble y)))))
+
+;*---------------------------------------------------------------------*/
+;*    */overflowfl ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (*/overflowfl x y)
+   (*fl (todouble x) (todouble y)))
 
 ;*---------------------------------------------------------------------*/
 ;*    */overflow! ...                                                  */

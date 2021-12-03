@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Thu Aug 19 11:33:35 2021 (serrano)                */
+;*    Last change :  Wed Nov 10 07:34:04 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -31,6 +31,7 @@
 	   __hopscript_worker
 	   __hopscript_array
 	   __hopscript_arguments
+	   __hopscript_proxy
 	   __hopscript_profile)
    
    (export (js-init-function! ::JsGlobalObject)
@@ -54,7 +55,7 @@
 	      __proto__ prototype
 	      (strict 'normal) (minlen -1)
 	      (size 0) (constrsize 3)
-	      (constrmap (js-not-a-cmap)) (shared-cmap #t))
+	      (constrmap (js-not-a-cmap)) (shared-cmap #t) (clazz #f))
 	   (js-make-function-strict::JsFunction ::JsGlobalObject
 	      ::procedure ::int ::vector ::long
 	      #!key
@@ -80,17 +81,20 @@
 	      ::procedure ::int loc)
 	   
 	   (inline js-function-prototype-get ::obj ::JsFunction ::obj ::JsGlobalObject)
+	   (js-function-maybe-prototype-get ::obj ::obj ::obj ::JsGlobalObject)
 	   (js-function-setup-prototype!::JsObject ::JsGlobalObject ::JsFunction)
 	   
 	   (js-function-apply-vec ::JsGlobalObject ::JsProcedure ::obj ::vector ::uint32)
 	   (js-function-apply ::JsGlobalObject ::obj ::obj ::obj ::obj)
 	   (js-apply-array ::JsGlobalObject ::obj ::obj ::obj)
 	   (js-apply-vec ::JsGlobalObject ::obj ::obj ::vector ::uint32)
+	   (js-function-maybe-apply-vec ::JsGlobalObject ::obj ::obj ::vector ::uint32 ::obj)
 	   (js-function-maybe-apply ::JsGlobalObject ::obj ::obj ::obj ::obj)
 	   (js-function-maybe-call0 ::JsGlobalObject ::obj ::obj ::obj)
 	   (js-function-maybe-call1 ::JsGlobalObject ::obj ::obj ::obj ::obj)
 	   (js-function-maybe-call2 ::JsGlobalObject ::obj ::obj ::obj ::obj ::obj)
-	   (js-function-maybe-call3 ::JsGlobalObject ::obj ::obj ::obj ::obj ::obj ::obj)))
+	   (js-function-maybe-call3 ::JsGlobalObject ::obj ::obj ::obj ::obj ::obj ::obj)
+	   (js-function-maybe-extend-cmap::JsConstructMap fun cmap::JsConstructMap)))
 
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
@@ -296,8 +300,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    make-cmap ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define-inline (make-cmap inline props)
-   (js-make-jsconstructmap :inline inline 
+(define-inline (make-cmap props)
+   (js-make-jsconstructmap 
       :methods (make-vector (vector-length props))
       :props props))
 
@@ -340,7 +344,7 @@
 					 js-function-strict-prototype
 					 js-function js-function-pcache)
       (set! js-function-pcache
-	 ((@ js-make-pcache-table __hopscript_property) 5 "function"))
+	 ((@ js-make-pcache-table __hopscript_property) 6 "function"))
       
       (let ((proc (lambda l (js-undefined)))
 	    (js-object-prototype (js-object-proto %this)))
@@ -357,7 +361,7 @@
 
       (set! js-function-strict-prototype
 	 (instantiateJsObject
-	    (cmap (js-make-jsconstructmap :inline #t))
+	    (cmap (js-make-jsconstructmap))
 	    (__proto__ js-function-prototype)
 	    (elements (make-vector 10 (js-undefined)))))
       
@@ -488,7 +492,7 @@
 	       (configurable #f)
 	       (writable #f)
 	       (%get (lambda (obj owner propname %this)
-			(with-access::JsFunction owner (info)
+			(with-access::JsFunction obj (info)
 			   (vector-ref info 1))))
 	       (%set list))
 	    (instantiate::JsWrapperDescriptor
@@ -497,7 +501,7 @@
 	       (configurable #f)
 	       (writable #f)
 	       (%get (lambda (obj owner propname %this)
-			(with-access::JsFunction owner (info)
+			(with-access::JsFunction obj (info)
 			   (js-string->jsstring (vector-ref info 0)))))
 	       (%set list))
 	    (instantiate::JsAccessorDescriptor
@@ -529,50 +533,50 @@
 					 js-function-writable-strict-cmap
 					 js-function-prototype-cmap)
       (set! js-function-cmap
-	 (make-cmap #f
-	    `#(,(prop (& "prototype") (property-flags #f #f #f #f))
-	       ,(prop (& "length") (property-flags #f #f #f #f))
-	       ,(prop (& "name") (property-flags #f #f #t #f)))))
+	 (make-cmap 
+	    `#(,(prop (& "prototype") (property-flags #f #f #f #f #f))
+	       ,(prop (& "length") (property-flags #f #f #f #f #f))
+	       ,(prop (& "name") (property-flags #f #f #t #f #f)))))
       
       (set! js-function-sans-prototype-cmap
-	 (make-cmap #f
-	    `#(,(prop (& "%null") (property-flags #f #f #f #f))
-	       ,(prop (& "length") (property-flags #f #f #f #f))
-	       ,(prop (& "name") (property-flags #f #f #t #f)))))
+	 (make-cmap 
+	    `#(,(prop (& "%null") (property-flags #f #f #f #f #f))
+	       ,(prop (& "length") (property-flags #f #f #f #f #f))
+	       ,(prop (& "name") (property-flags #f #f #t #f #f)))))
       
       (set! js-function-strict-bind-cmap
-	 (make-cmap #f
-	    `#(,(prop (& "%bind") (property-flags #f #f #f #f))
-	       ,(prop (& "length") (property-flags #f #f #f #f))
-	       ,(prop (& "name") (property-flags #f #f #t #f))
-	       ,(prop (& "arguments") (property-flags #f #f #f #f))
-	       ,(prop (& "caller") (property-flags #f #f #f #f)))))
+	 (make-cmap 
+	    `#(,(prop (& "%bind") (property-flags #f #f #f #f #f))
+	       ,(prop (& "length") (property-flags #f #f #f #f #f))
+	       ,(prop (& "name") (property-flags #f #f #t #f #f))
+	       ,(prop (& "arguments") (property-flags #f #f #f #f #f))
+	       ,(prop (& "caller") (property-flags #f #f #f #f #f)))))
 
       (set! js-function-strict-cmap
-	 (make-cmap #f
-	    `#(,(prop (& "prototype") (property-flags #f #f #f #f))
-	       ,(prop (& "length") (property-flags #f #f #f #f))
-	       ,(prop (& "name") (property-flags #f #f #t #f))
-	       ,(prop (& "arguments") (property-flags #f #f #f #f))
-	       ,(prop (& "caller") (property-flags #f #f #f #f)))))
+	 (make-cmap 
+	    `#(,(prop (& "prototype") (property-flags #f #f #f #f #f))
+	       ,(prop (& "length") (property-flags #f #f #f #f #f))
+	       ,(prop (& "name") (property-flags #f #f #t #f #f))
+	       ,(prop (& "arguments") (property-flags #f #f #f #f #f))
+	       ,(prop (& "caller") (property-flags #f #f #f #f #f)))))
       
       (set! js-function-writable-cmap
-	 (make-cmap #f
-	    `#(,(prop (& "prototype") (property-flags #t #f #f #f))
-	       ,(prop (& "length") (property-flags #f #f #f #f))
-	       ,(prop (& "name") (property-flags #f #f #t #f)))))
+	 (make-cmap 
+	    `#(,(prop (& "prototype") (property-flags #t #f #f #f #f))
+	       ,(prop (& "length") (property-flags #f #f #f #f #f))
+	       ,(prop (& "name") (property-flags #f #f #t #f #f)))))
       
       (set! js-function-writable-strict-cmap
-	 (make-cmap #f
-	    `#(,(prop (& "prototype") (property-flags #t #f #f #f))
-	       ,(prop (& "length") (property-flags #f #f #f #f))
-	       ,(prop (& "name") (property-flags #f #f #t #f))
-	       ,(prop (& "arguments") (property-flags #f #f #f #f))
-	       ,(prop (& "caller") (property-flags #f #f #f #f)))))
+	 (make-cmap 
+	    `#(,(prop (& "prototype") (property-flags #t #f #f #f #f))
+	       ,(prop (& "length") (property-flags #f #f #f #f #f))
+	       ,(prop (& "name") (property-flags #f #f #t #f #f))
+	       ,(prop (& "arguments") (property-flags #f #f #f #f #f))
+	       ,(prop (& "caller") (property-flags #f #f #f #f #f)))))
       
       (set! js-function-prototype-cmap
-	 (make-cmap #t
-	    `#(,(prop (& "constructor") (property-flags #t #f #t #f)))))))
+	 (make-cmap 
+	    `#(,(prop (& "constructor") (property-flags #t #f #t #f #t)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    %js-function ...                                                 */
@@ -611,7 +615,8 @@
 	   __proto__ prototype
 	   (strict 'normal) (minlen -1) 
 	   (size 0) (constrsize 3)
-	   (constrmap (js-not-a-cmap)) (shared-cmap #t))
+	   (constrmap (js-not-a-cmap)) (shared-cmap #t)
+	   (clazz #f))
    (with-access::JsGlobalObject %this (js-function js-object
 					 js-function-cmap
 					 js-function-strict-cmap
@@ -667,10 +672,11 @@
 				   (duplicate::JsConstructMap cmap
 				      (%id (gencmapid)))))
 			 (prototype #\F)))
-		     (constructor
+		     (clazz
 		      (instantiateJsClass
 			 (procedure procedure)
 			 (constructor constructor)
+			 (clazz clazz)
 			 (alloc (or alloc js-not-a-constructor-alloc))
 			 (arity arity)
 			 (__proto__ (or __proto__ (js-object-proto js-function)))
@@ -880,6 +886,20 @@
       (when (eq? prototype #\F)
 	 (js-function-setup-prototype! %this owner))
       prototype))
+
+;*---------------------------------------------------------------------*/
+;*    js-function-maybe-prototype-get ...                              */
+;*---------------------------------------------------------------------*/
+(define (js-function-maybe-prototype-get obj owner propname %this)
+   (let loop ((owner owner))
+      (cond
+	 ((js-function? owner)
+	  (js-function-prototype-get obj owner propname %this))
+	 ((js-proxy-function? owner)
+	  (loop (js-proxy-target owner)))
+	 (else
+	  (js-raise-type-error %this "prototype: not a function ~s"
+	     (js-typeof owner %this))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-function-prototype-set ...                                    */
@@ -1100,10 +1120,10 @@
       ((js-array? argarray)
        (with-access::JsArray argarray (vec ilen)
 	  (cond
-	     ((js-object-mode-inline? argarray)
+	     ((js-object-mode-arrayinline? argarray)
 	      ;; fast path
 	      (js-apply-vec %this this thisarg vec ilen))
-	     ((js-object-mode-holey? argarray)
+	     ((js-object-mode-arrayholey? argarray)
 	      ;; fast path
 	      (let ((len (js-get argarray (& "length") %this)))
 		 (js-apply %this this thisarg
@@ -1307,6 +1327,24 @@
        (js-raise-type-error %this "apply: argument not a function ~s" this))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-function-maybe-apply-vec ...                                  */
+;*---------------------------------------------------------------------*/
+(define (js-function-maybe-apply-vec %this this thisarg vec ilen::uint32 cache)
+   (let loop ((this this))
+      (cond
+	 ((js-procedure? this)
+	  (js-function-apply-vec %this this thisarg vec ilen))
+	 ((js-object? this)
+	  (let ((argarray (js-vector->jsarray (vector-copy vec) %this)))
+	     (with-access::JsGlobalObject %this (js-function-pcache)
+		(js-call2 %this
+		   (js-get-jsobject-name/cache this (& "apply") #f %this
+		      (or cache (js-pcache-ref js-function-pcache 3)))
+		   this thisarg argarray))))
+	 (else
+	  (loop (js-toobject %this this))))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-function-maybe-apply ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (js-function-maybe-apply %this this thisarg argarray cache)
@@ -1316,10 +1354,13 @@
 	  (js-function-apply %this this thisarg argarray cache))
 	 ((js-object? this)
 	  (with-access::JsGlobalObject %this (js-function-pcache)
-	     (js-call2 %this
-		(js-get-jsobject-name/cache this (& "apply") #f %this
-		   (or cache (js-pcache-ref js-function-pcache 3)))
-		this thisarg argarray)))
+	     (js-method-call-name/cache %this this (& "apply")
+		(or cache (js-pcache-ref js-function-pcache 3))
+		(js-pcache-ref js-function-pcache 5)
+		0
+		'(pmap cmap vtable poly)
+		'(imap vtable)
+		thisarg argarray)))
 	 (else
 	  (loop (js-toobject %this this))))))
 
@@ -1332,7 +1373,8 @@
        (with-access::JsGlobalObject %this (js-function-pcache)
 	  (js-call1 %this
 	     (js-get-jsobject-name/cache this (& "call") #f %this
-		(or cache (js-pcache-ref js-function-pcache 4)))
+		(or cache (js-pcache-ref js-function-pcache 4))
+		'(imap emap cmap vtable))
 	     this thisarg))))
 
 ;*---------------------------------------------------------------------*/
@@ -1529,6 +1571,25 @@
        (error "js-function-arity"
 	  "illegal arity" (vector req opl protocol)))))
 
+;*---------------------------------------------------------------------*/
+;*    js-function-maybe-extend-cmap ...                                */
+;*    -------------------------------------------------------------    */
+;*    This function is used when declaring a class to merge to         */
+;*    cmap of the super class and the newly defined class. This is     */
+;*    require to handle correctly super class private fields.          */
+;*    See js2scheme/scheme-class.scm                                   */
+;*---------------------------------------------------------------------*/
+(define (js-function-maybe-extend-cmap::JsConstructMap this cmap::JsConstructMap)
+   (let loop ((this this))
+      (cond
+	 ((js-function? this)
+	  (with-access::JsFunction this (constrmap)
+	     (merge-cmap! cmap constrmap)))
+	 ((js-proxy-function? this)
+	  (loop (js-proxy-target this)))
+	 (else
+	  cmap))))
+	 
 ;*---------------------------------------------------------------------*/
 ;*    &end!                                                            */
 ;*---------------------------------------------------------------------*/

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.4.x/hopscript/stringliteral.scm       */
+;*    serrano/prgm/project/hop/hop/hopscript/stringliteral.scm         */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Fri May 21 19:24:53 2021 (serrano)                */
+;*    Last change :  Sun Nov 14 12:18:52 2021 (serrano)                */
 ;*    Copyright   :  2014-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -138,6 +138,7 @@
 	   (js-jsstring-replace-string ::obj ::bool ::obj ::obj ::JsGlobalObject)
 	   (js-jsstring-replace ::obj ::bool ::obj ::obj ::JsGlobalObject)
 	   (js-jsstring-prototype-replace ::obj ::obj ::obj ::JsGlobalObject)
+	   (js-jsstring-prototype-replace-all ::obj ::obj ::obj ::JsGlobalObject)
 	   (js-jsstring-maybe-replace ::obj ::bool ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-jsstring-match ::JsStringLiteral ::obj ::JsGlobalObject)
 	   (js-jsstring-match-regexp-from-string ::JsStringLiteral ::JsStringLiteral ::JsRegExp ::JsGlobalObject)
@@ -148,6 +149,8 @@
 	   (js-jsstring-localecompare ::JsStringLiteral ::obj ::JsGlobalObject)
 	   (js-jsstring-maybe-localecompare ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-jsstring-trim ::JsStringLiteral ::JsGlobalObject)
+	   (js-jsstring-trimend ::JsStringLiteral ::JsGlobalObject)
+	   (js-jsstring-trimstart ::JsStringLiteral ::JsGlobalObject)
 	   (js-jsstring-maybe-trim ::obj ::JsGlobalObject ::obj)
 	   (js-jsstring-fromcharcode ::obj ::JsGlobalObject)
 	   (js-jsstring-escape ::JsStringLiteral)
@@ -290,7 +293,11 @@
 		      ;; an utf8 name (deprectated, should use name/culen)
 		      (let ((str (vector-ref el 1)))
 			 (js-utf8-name->jsstring/culen str
-			    (utf8-codeunit-length str)))))))
+			    (utf8-codeunit-length str))))
+		     ((4)
+		      ;; private name
+		      (let ((str (vector-ref el 1)))
+			 (js-string->private-name (vector-ref el 1)))))))
 	    (loop (-fx i 1))))
       (synchronize jsstring-init-lock
 	 (set! gcroots (cons cnsts gcroots)))
@@ -943,7 +950,7 @@
       (+fx i len))
    
    (define (normalize-small! js)
-      (with-access::JsStringLiteralUTF8 js (length %idxutf8 %idxstr)
+      (with-access::JsStringLiteralUTF8 js (length)
 	 ;; small strings, no need for tail recursion
 	 (let* ((len length)
 		(buffer (make-string (uint32->fixnum len))))
@@ -1439,6 +1446,23 @@
       (js-uint32-tointeger (js-toindex this))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-tonumeric ::JsStringLiteral ...                               */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-9.3          */
+;*---------------------------------------------------------------------*/
+(define-method (js-tonumeric this::JsStringLiteral %this)
+   (js-jsstring-tonumber this %this))
+
+;*---------------------------------------------------------------------*/
+;*    js-tonumeric ::JsStringLiteral ...                               */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-9.3          */
+;*---------------------------------------------------------------------*/
+(define-method (js-tonumeric this::JsStringLiteralIndex %this)
+   (with-access::JsStringLiteralIndex this (index)
+      (js-uint32-tointeger (js-toindex this))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-tointeger ::JsStringLiteral ...                               */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-9.3          */
@@ -1487,9 +1511,6 @@
 					   (rstart right))
 	 (let ((len (+u32 llen rlen)))
 	    (if (<u32 len (string-append-auto-normalize-threshold))
-		;; if the sum len if smaller than 18, both string
-		;; lengthes are smaller than 18 too, and there cannot
-		;; be a non normalized small string
 		(let* ((buffer (make-string (uint32->fixnum len)))
 		       (s (instantiate::JsStringLiteralASCII
 			     (length len)
@@ -1640,6 +1661,8 @@
        (cond
 	  ((js-jsstring-normalized? right)
 	   (js-jsstring-append-buffer-ascii left right))
+	  ((js-jsstring-substring? right)
+	   (js-jsstring-append-buffer-substring-ascii left right))
 	  ((<u32 (js-jsstring-length right) (string-append-auto-normalize-threshold))
 	   (js-jsstring-normalize-ASCII! right)
 	   (js-jsstring-append-buffer-ascii left right))
@@ -1665,6 +1688,30 @@
 		       ;; enlarge the buffer
 		       (blit-string! buffer 0 nbuf 0 (uint32->fixnum llen))
 		       (blit-string! rright 0 nbuf (uint32->fixnum llen)
+			  (uint32->fixnum rlen))
+		       (set! llen nlen)
+		       (set! buffer nbuf)
+		       left)))))
+       (js-jsstring-append left right)))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-append-buffer-substring-ascii ...                    */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-append-buffer-substring-ascii::JsStringLiteral left::JsStringLiteral right::JsStringLiteral)
+   (if (js-jsstring-buffer? left)
+       (with-access::JsStringLiteralBuffer left ((llen length) (buffer left))
+	  (with-access::JsStringLiteral right ((rlen length) (rright left) (rstart right))
+	     (let ((nlen (+u32 llen rlen)))
+		(if (<u32 nlen (fixnum->uint32 (string-length buffer)))
+		    (begin
+		       (blit-string! rright rstart buffer (uint32->fixnum llen)
+			  (uint32->fixnum rlen))
+		       (set! llen nlen)
+		       left)
+		    (let ((nbuf (make-string (*fx (uint32->fixnum nlen) 2))))
+		       ;; enlarge the buffer
+		       (blit-string! buffer 0 nbuf 0 (uint32->fixnum llen))
+		       (blit-string! rright rstart nbuf (uint32->fixnum llen)
 			  (uint32->fixnum rlen))
 		       (set! llen nlen)
 		       (set! buffer nbuf)
@@ -1783,7 +1830,7 @@
 ;*    string.                                                          */
 ;*---------------------------------------------------------------------*/
 (define (utf8-codeunit-ref this::JsStringLiteralUTF8 str::bstring i::long)
-
+   
    (define (return-utf8 this str i j c s r u)
       (with-access::JsStringLiteralUTF8 this (%idxutf8 %idxstr)
 	 (set! %idxstr r)
@@ -1838,11 +1885,18 @@
    (let ((len (string-length str)))
       (with-access::JsStringLiteralUTF8 this (%idxutf8 %idxstr)
 	 ;; adjust with respect to the last position
-	 (if (and (<fx i %idxutf8)
+	 (cond
+	    ((=fx i 0)
+	     (let* ((c (string-ref-ur str 0))
+		    (s (utf8-char-size c))
+		    (u (codepoint-length c)))
+		(return-utf8 this str 0 0 c s 0 0)))
+	    ((and (<fx i %idxutf8)
 		  (>fx i 0)
 		  (>=fx i (- %idxutf8 i)))
 	     ;; rollback utf8 indexes
-	     (rollback-utf8 this str i)
+	     (rollback-utf8 this str i))
+	    (else
 	     ;; look forward
 	     (let loop ((r (if (>=fx i %idxutf8) %idxstr 0))
 			(j (if (>=fx i %idxutf8) (-fx i %idxutf8) i)))
@@ -1853,7 +1907,7 @@
 			   (u (codepoint-length c)))
 		       (if (>=fx j u)
 			   (loop (+fx r s) (-fx j u))
-			   (return-utf8 this str i j c s r (-fx i j))))))))))
+			   (return-utf8 this str i j c s r (-fx i j)))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    utf8-codepoint-ref ...                                           */
@@ -3079,8 +3133,19 @@
 ;*---------------------------------------------------------------------*/
 (define (js-jsstring-tolowercase this)
 
+   (define (ascii-lowercase? s)
+      (let loop ((i (-fx (string-length s) 1)))
+	 (if (=fx i -1)
+	     #t
+	     (let ((c (string-ref s i)))
+		(if (and (char>=? c #\A) (char<=? c #\Z))
+		    #f
+		    (loop (-fx i 1)))))))
+	    
    (define (ascii-tolowercase s)
-      (js-ascii->jsstring (string-downcase s)))
+      (if (ascii-lowercase? s)
+	  this
+	  (js-ascii->jsstring (string-downcase s))))
 
    (define (utf8-tolowercase s)
       (with-access::JsStringLiteralUTF8 this (%culen)
@@ -3168,8 +3233,19 @@
 ;*---------------------------------------------------------------------*/
 (define (js-jsstring-touppercase this)
    
+   (define (ascii-uppercase? s)
+      (let loop ((i (-fx (string-length s) 1)))
+	 (if (=fx i -1)
+	     #t
+	     (let ((c (string-ref s i)))
+		(if (and (char>=? c #\a) (char<=? c #\z))
+		    #f
+		    (loop (-fx i 1)))))))
+	    
    (define (ascii-touppercase s)
-      (js-ascii->jsstring (string-upcase s)))
+      (if (ascii-uppercase? s)
+	  this
+	  (js-ascii->jsstring (string-upcase s))))
 
    (define (utf8-touppercase s)
       (js-string->jsstring
@@ -4238,6 +4314,58 @@
 	     this searchvalue replacevalue)))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-jsstring-replace-string-all ...                               */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-replace-string-all this::obj need22 searchstr replacevalue %this)
+   (let loop ((this this))
+      (let ((s (js-jsstring-replace-string this
+		  need22 searchstr replacevalue %this)))
+	 (if (eq? s this)
+	     s
+	     (loop s)))))
+      
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-replace-all ...                                      */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.11    */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-replace-all this::obj need22 searchvalue replacevalue %this)
+   
+   (define (fun1? v)
+      (when (js-procedure? v)
+	 (with-access::JsProcedure v (procedure)
+	    (correct-arity? procedure 2))))
+   
+   (define (fun1 v)
+      (with-access::JsProcedure v (procedure)
+	 procedure))
+   
+   (cond
+      ((isa? searchvalue JsRegExp)
+       (js-jsstring-replace this need22 searchvalue replacevalue %this))
+      ((js-jsstring? searchvalue)
+       (js-jsstring-replace-string-all this need22 searchvalue replacevalue %this))
+      (else
+       (js-jsstring-replace-string-all this need22 (js-tojsstring searchvalue %this) replacevalue %this)
+       )))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-prototype-replace-all ...                            */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-prototype-replace-all this searchvalue replacevalue %this)
+   (let loop ((this this))
+      (cond
+	 ((js-jsstring? this)
+	  (js-jsstring-replace-all this #t searchvalue replacevalue %this))
+	 ((isa? this JsString)
+	  (with-access::JsString this (val)
+	     (loop val)))
+	 ((js-object? this)
+	  (loop (js-tojsstring this %this)))
+	 (else
+	  (loop (js-tojsstring (js-toobject %this this) %this))))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-jsstring-match-regexp ...                                     */
 ;*    -------------------------------------------------------------    */
 ;*    This function is used when the second argument is an existing    */
@@ -4590,6 +4718,28 @@
 		this)))
 	 (else
 	  (loop (js-toobject %this this))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-trimend ...                                          */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-trimend this %this)
+   (let ((s (js-jsstring->string this)))
+      (multiple-value-bind (start end)
+	 (trim-whitespaces s #f #t #f)
+	 (if start
+	     (js-substring s start end %this)
+	     this))))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-trimstart ...                                        */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-trimstart this %this)
+   (let ((s (js-jsstring->string this)))
+      (multiple-value-bind (start end)
+	 (trim-whitespaces s #t #f #f)
+	 (if start
+	     (js-substring s start end %this)
+	     this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-fromcharcode ...                                     */

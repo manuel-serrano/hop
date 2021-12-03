@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec 18 08:02:30 2016                          */
-;*    Last change :  Sat Dec  7 18:59:46 2019 (serrano)                */
+;*    Last change :  Thu Oct 21 14:37:59 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Array macros for js2scheme                                       */
@@ -63,7 +63,7 @@
 		(>=fx ,i 0)
 		(<u32 (fixnum->uint32 ,i) ,alen)
 		(eq? ,mark (js-array-mark)))
-	   (vector-ref-ur ,avec ,i)
+	   (vector-ref ,avec ,i)
 	   (js-array-ref ,arr ,i ,%this)))
    
    (%make-ref idx ref))
@@ -76,7 +76,7 @@
 		   (>=fx ,i 0)
 		   (<u32 (fixnum->uint32 ,i) ,alen)
 		   (eq? ,mark (js-array-mark)))
-	      (vector-set-ur! ,avec ,i ,v)
+	      (vector-set! ,avec ,i ,v)
 	      (let ((,tmp (js-array-set! ,arr ,i ,v ,throw ,%this)))
 		 (set! ,alen (js-array-ilen ,arr))
 		 (set! ,avec (js-array-vec ,arr))
@@ -91,7 +91,7 @@
 	 `(if (and (fixnum? ,i)
 		   (>=fx ,i 0)
 		   (<u32 (fixnum->uint32 ,i) ,alen))
-	      (vector-ref-ur ,avec ,i)
+	      (vector-ref ,avec ,i)
 	      (let ((,tmp (js-array-ref-ur ,arr (fixnum->uint32 ,i) ,%this)))
 		 ,@(%update-deps deps)
 		 ,tmp))))
@@ -105,7 +105,7 @@
 	 `(if (and (fixnum? ,i)
 		   (>=fx ,i 0)
 		   (<u32 (fixnum->uint32 ,i) ,alen))
-	      (vector-set-ur! ,avec ,i ,v)
+	      (vector-set! ,avec ,i ,v)
 	      (let ((,tmp (js-array-set-ur! ,arr (fixnum->uint32 ,i)
 			     ,v ,throw ,%this)))
 		 ,@(%update-deps deps)
@@ -122,7 +122,7 @@
       `(if (and (>=fx ,i 0)
 		(<u32 (fixnum->uint32 ,i) ,alen)
 		(eq? ,mark (js-array-mark)))
-	   (vector-ref-ur ,avec ,i)
+	   (vector-ref ,avec ,i)
 	   (js-array-ref ,arr ,i ,%this)))
    
    (%make-ref idx ref))
@@ -133,7 +133,7 @@
       `(if (and (>=fx ,i 0)
 		(<u32 (fixnum->uint32 ,i) ,alen)
 		(eq? ,mark (js-array-mark)))
-	   (vector-set-ur! ,avec ,i ,v)
+	   (vector-set! ,avec ,i ,v)
 	   (js-array-set-ur! ,arr (fixnum->uint32 ,i) ,v ,throw ,%this)))
 
    (%make-set idx val set))
@@ -143,7 +143,7 @@
    (define (ref i)
       (let ((tmp (gensym 'tmp)))
 	 `(if (and (>=fx ,i 0) (<u32 (fixnum->uint32 ,i) ,alen))
-	      (vector-ref-ur ,avec ,i)
+	      (vector-ref ,avec ,i)
 	      (let ((,tmp (js-array-ref-ur ,arr (fixnum->uint32 ,i) ,%this)))
 		 ,@(%update-deps deps)
 		 ,tmp))))
@@ -155,7 +155,7 @@
    (define (set i v)
       (let ((tmp (gensym 'tmp)))
 	 `(if (and (>=fx ,i 0) (<u32 (fixnum->uint32 ,i) ,alen))
-	      (vector-set-ur! ,avec ,i ,v)
+	      (vector-set! ,avec ,i ,v)
 	      (let ((,tmp (js-array-set-ur! ,arr (fixnum->uint32 ,i)
 			     ,v ,throw ,%this)))
 		 ,@(%update-deps deps)
@@ -170,7 +170,7 @@
    
    (define (ref i)
       `(if (and (<u32 ,i ,alen) (eq? ,mark (js-array-mark)))
-	   (vector-ref-ur ,avec (uint32->fixnum ,i))
+	   (vector-ref ,avec (uint32->fixnum ,i))
 	   (js-array-index-ref ,arr ,i ,%this)))
 
    (%make-ref idx ref))
@@ -179,7 +179,7 @@
    
    (define (set i v)
       `(if (and (<u32 ,i ,alen) (eq? ,mark (js-array-mark)))
-	   (vector-set-ur! ,avec (uint32->fixnum ,i) ,v)
+	   (vector-set! ,avec (uint32->fixnum ,i) ,v)
 	   (js-array-index-set! ,arr ,i ,v ,throw ,%this)))
    
    (%make-set idx val set))
@@ -201,7 +201,7 @@
    (define (set i v)
       (let ((tmp (gensym 'tmp)))
 	 `(if (<u32 ,i ,alen)
-	      (vector-set-ur! ,avec (uint32->fixnum ,i) ,v)
+	      (vector-set! ,avec (uint32->fixnum ,i) ,v)
 	      (let ((,tmp (js-array-index-set! ,arr ,i ,v ,throw ,%this)))
 		 ,@(%update-deps deps)
 		 ,tmp))))
@@ -219,6 +219,13 @@
 ;*---------------------------------------------------------------------*/
 (define-macro (js-call-with-stack-vector vec proc)
    (match-case vec
+      ((vector)
+       (match-case proc
+	  ((lambda (?v) . ?body)
+	   `(,proc '#()))
+	  (else
+	   (error "js-call-with-stack-vector" "bad form"
+	      `(js-call-with-stack-vector ,vec ,proc)))))
       ((vector . ?args)
        (match-case proc
 	  ((lambda (?v) . ?body)
@@ -232,7 +239,7 @@
 			     p (length args)))
 		      (let ((,v (pragma::vector ,(format "bgl_init_vector_sans_fill( &(~a), ~a )" p (length args)))))
 			 ,@(map (lambda (i o)
-				   `(vector-set-ur! ,v ,i ,o))
+				   `(vector-set! ,v ,i ,o))
 			      (iota len) args)
 			 ,@body))))
 	      (else
@@ -275,7 +282,7 @@
 		      (let ((,v (pragma::vector ,(format "bgl_init_vector_sans_fill( &(~a), $1 )" p) ,len)))
 			 (let loop ((,i ,start))
 			    (when (<fx ,i ,end)
-			       (vector-set-ur! ,v (-fx ,i ,start) (vector-ref-ur ,vec ,i))
+			       (vector-set! ,v (-fx ,i ,start) (vector-ref ,vec ,i))
 			       (loop (+fx ,i 1))))
 			 ,@body))))
 	      (else

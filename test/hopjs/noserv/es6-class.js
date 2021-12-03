@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep  2 01:49:55 2017                          */
-/*    Last change :  Wed Aug 25 10:22:05 2021 (serrano)                */
+/*    Last change :  Wed Nov 10 09:39:14 2021 (serrano)                */
 /*    Copyright   :  2017-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 1.6 classes                                   */
@@ -451,8 +451,176 @@ function misca() {
    return passed;
 }
 
+function misca2() {
+   let passed = false;
+   
+   function FArray( a ) {
+      passed = (a === 20) && new.target !== undefined;
+   }
+
+   class C extends FArray {}
+   
+   var c = new C( 20 );
+   
+   return passed;
+}
+
+function misca3() {
+   let passed = false;
+   
+   function FArray( a ) {
+      passed = (a === 20) && new.target !== undefined;
+   }
+
+   class C extends { f: FArray }.f {}
+   
+   var c = new C( 20 );
+   
+   return passed;
+}
+
+function misca4() {
+   let passed = false;
+   
+   class Carray {
+      constructor(a) {
+      	 passed = (a === 20) && new.target !== undefined;
+      }
+   }
+
+   class C extends { c: Carray }.c {}
+   
+   var c = new C( 20 );
+   
+   return passed;
+}
+
+function miscb() {
+   let passed = false;
+   
+   function FArray( a, b ) {
+      passed = ((a === 20) && (b === undefined));
+   }
+
+   class C extends FArray {}
+   
+   var c = new C( 20 );
+   
+   return passed;
+}
+
+function miscb2() {
+   let passed = false;
+   
+   function FArray( a, b ) {
+      passed = ((a === 20) && (b === undefined) && new.target !== undefined);
+   }
+
+   class C extends FArray {}
+   
+   var c = new C( 20 );
+   
+   return passed;
+}
+
+function miscb3() {
+   let passed = false;
+   
+   function FArray( a, b ) {
+      passed = ((a === 20) && (b === undefined) && new.target !== undefined);
+   }
+
+   class C extends { f: FArray }.f {}
+   
+   var c = new C( 20 );
+   
+   return passed;
+}
+
+function miscb4() {
+   let passed = false;
+   
+   class CArray {
+      constructur( a, b ) {
+      	 passed = ((a === 20) && (b === undefined) && new.target !== undefined);
+      }
+   }
+
+   class C extends { c: CArray }.c {}
+   
+   var c = new C( 20 );
+   
+   return passed;
+}
+
+function miscc() {
+   let passed = false;
+   
+   function FArray( a, b, c ) {
+      passed = ((a === 20) && (b === 30) && (c == 40));
+   }
+
+   class C extends FArray {}
+   
+   var c = new C( 20, 30, 40, 50 );
+   
+   return passed;
+}
+
+function miscc2() {
+   let passed = false;
+   
+   function FArray( a, b, c ) {
+      passed = ((a === 20) && (b === 30) && (c == 40) && new.target !== undefined);
+   }
+
+   class C extends FArray {}
+   
+   var c = new C( 20, 30, 40, 50 );
+   
+   return passed;
+}
+
+function miscc3() {
+   let passed = false;
+   
+   function FArray( a, b, c ) {
+      passed = ((a === 20) && (b === 30) && (c == 40) && new.target !== undefined);
+   }
+
+   class C extends { f: FArray }.f {}
+   
+   var c = new C( 20, 30, 40, 50 );
+   
+   return passed;
+}
+
+function miscc4() {
+   let passed = false;
+   
+   class CArray {
+      constructor( a, b, c ) {
+      	 passed = ((a === 20) && (b === 30) && (c == 40) && new.target !== undefined);
+      }
+   }
+
+   class C extends { c: CArray }.c {}
+   
+   var c = new C( 20, 30, 40, 50 );
+   
+   return passed;
+}
+
 console.log( "misc" );
 console.log( "   misca()" ); assert.ok( misca(), "misca" );
+console.log( "   misca2()" ); assert.ok( misca2(), "misca2" );
+console.log( "   misca3()" ); assert.ok( misca3(), "misca3" );
+console.log( "   miscb()" ); assert.ok( miscb(), "miscb" );
+console.log( "   miscb2()" ); assert.ok( miscb2(), "miscb2" );
+console.log( "   miscb3()" ); assert.ok( miscb3(), "miscb3" );
+console.log( "   miscc()" ); assert.ok( miscc(), "miscc" );
+console.log( "   miscc2()" ); assert.ok( miscc2(), "miscc2" );
+console.log( "   miscc3()" ); assert.ok( miscc3(), "miscc3" );
 
 /*---------------------------------------------------------------------*/
 /*    kangax                                                           */
@@ -829,3 +997,68 @@ assert.ok( kangaxB(), "kangaxB" );
 
 console.log( "   kangaxC()" );
 assert.ok( kangaxC(), "kangaxC" );
+
+/*---------------------------------------------------------------------*/
+/*    private fields                                                   */
+/*---------------------------------------------------------------------*/
+function priv(useproxy) {
+   const classHandler = {
+      construct(target, args) {
+      	 return new target(...args);
+      }
+   }
+
+   function registerClass(c) {
+      if (useproxy) {
+      	 return new Proxy(c, classHandler);
+      } else {
+	 return c;
+      }
+   }
+
+   const ClassWithPrivateField = registerClass(class a {
+     name;					       
+     #privateField;
+     constructor() {
+     	this.name = "a";
+    	this.#privateField = 42;
+    	if (new.target === ClassWithPrivateField) {
+       	   Object.seal(this);
+    	}
+     }
+     toString() {
+     	if (!(this instanceof ClassWithPrivateField)) {
+	   throw "type error";
+     	}
+     	return `#privateField=${this.#privateField}`;
+     }});
+
+   const SubClass = registerClass(class b extends ClassWithPrivateField {
+      #subPrivateField;
+      constructor() {
+    	 super();
+     	 this.name = "b";
+    	 if (new.target === SubClass) Object.seal(this);
+    	 this.#subPrivateField = 23;
+      }
+      toString() {
+     	 if (!(this instanceof SubClass)) {
+	    throw "type error";
+     	 }
+     	 return `#subPrivateField=${this.#subPrivateField} ${super.toString()}`;
+      }});
+   
+   const insta = new ClassWithPrivateField();
+   const instb = new SubClass();
+   
+   return (insta.toString() === "#privateField=42")
+      && (instb.toString() === "#subPrivateField=23 #privateField=42")
+      && (insta.name === "a")
+      && (instb.name === "b");
+}
+
+console.log("   private fields");
+assert.ok(priv(false), "priv(false)");
+assert.ok(priv(true), "priv(true)");
+
+

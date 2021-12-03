@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Wed Aug 11 14:44:53 2021 (serrano)                */
+;*    Last change :  Sun Nov 21 19:58:10 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Casting values from JS types to SCM implementation types.        */
@@ -19,6 +19,7 @@
    (import __js2scheme_ast
 	   __js2scheme_dump
 	   __js2scheme_utils
+	   __js2scheme_classutils
 	   __js2scheme_scheme-test
 	   __js2scheme_scheme-utils
 	   __js2scheme_scheme-constant)
@@ -66,7 +67,7 @@
 	 (any ,js-int32->integer)))
      (uint32
 	((uint29 nop)
-	 (int32 uint32->int32)
+	 (int32 ,js-uint32->int32)
 	 (length nop)
 	 (int53 ,js-uint32->fixnum)
 	 (integer ,js-uint32->fixnum)
@@ -212,6 +213,12 @@
 	   ((scmstring ,js->scmstring)
 	    (iterable ,(lambda (v expr ctx) `(js-jsobject->jsarray ,v %this)))
 	    (any nop)))
+     (set
+	((length ,(lambda (v expr ctx) `(js-tolength ,v %this)))
+	 (iterable ,(lambda (v expr ctx) `(js-jsobject->jsarray ,v %this)))))
+     (map
+	((length ,(lambda (v expr ctx) `(js-tolength ,v %this)))
+	 (iterable ,(lambda (v expr ctx) `(js-jsobject->jsarray ,v %this)))))
      (any
 	((int32 ,js->int32)
 	 (uint32 ,js->uint32)
@@ -419,6 +426,12 @@
 	 (iterable ,(lambda (v expr ctx) `(js-jsobject->jsarray ,v %this)))
 	 (length ,(lambda (v expr ctx) `(js-tolength ,v %this)))
 	 (any nop)))
+     (set
+	((length ,(lambda (v expr ctx) `(js-tolength ,v %this)))
+	 (iterable ,(lambda (v expr ctx) `(js-jsobject->jsarray ,v %this)))))
+     (map
+	((length ,(lambda (v expr ctx) `(js-tolength ,v %this)))
+	 (iterable ,(lambda (v expr ctx) `(js-jsobject->jsarray ,v %this)))))
      (any
 	((propname nop)
 	 (undefined nop)
@@ -498,7 +511,13 @@
 ;*    uint32->xxx ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (js-uint32->int32 v expr ctx)
-   (if (uint32? v) (uint32->int32 v) `(uint32->int32 ,v)))
+   (if (uint32? v)
+       (uint32->int32 v)
+       (match-case v
+	  ((int32->uint32 ?x)
+	   x)
+	  (else
+	   `(uint32->int32 ,v)))))
 
 (define (js-uint32->integer v expr ctx)
    (let ((conf (context-conf ctx)))
@@ -608,7 +627,7 @@
 (define (js->number v expr ctx)
    (if (memq (j2s-type expr) '(uint32 int32 integer bint number))
        v
-       `(js-tonumber ,v %this)))
+       `(js-tonumeric ,v %this)))
 
 (define (js->string v expr ctx)
    (match-case v
@@ -669,9 +688,7 @@
 		  v)
 	       `(js-toint32 ,v %this)))
 	  (else
-	   (if (symbol? v)
-	       `(if (fixnum? ,v) (fixnum->int32 ,v) (js-toint32 ,v %this))
-	       `(js-toint32 ,v %this)))))))
+	   `(js-toint32 ,v %this))))))
 
 (define (js->uint32 v expr ctx)
    (cond
@@ -688,9 +705,7 @@
       ((eq? (j2s-type expr) 'uint32)
        `(fixnum->uint32 ,v))
       (else
-       (if (symbol? v)
-	   `(if (fixnum? ,v) (fixnum->uint32 ,v) (js-touint32 ,v %this))
-	   `(js-touint32 ,v %this)))))
+       `(js-touint32 ,v %this))))
 
 (define (js-number->int32 v expr ctx)
    (let ((conf (context-conf ctx)))
@@ -920,33 +935,53 @@
 	 (else
 	  `(js-tojsstring ,sexp %this))))
 
-   (define (default sexp expr from to ctx)
-      (if (or (eq? from to) (eq? to '*))
+   (define (torecord sexp)
+      (let ((o (gensym 'o)))
+	 `(let loop ((,o ,sexp))
+	     (cond
+		((,(class-predicate-id to) ,o)
+		 ,o)
+		((js-proxy? ,o)
+		 (loop (js-proxy-target ,o)))
+		(else
+		 (js-raise-type-error %this
+		    ,(format "Not ~s instance: ~~a"
+			(with-access::J2SRecord to (name) name))
+		    ,o))))))
+   
+   (define (default sexp expr fromid toid ctx)
+      (if (or (eq? fromid toid) (eq? toid '*))
 	  sexp
 	  (cond
-	     ((eq? to 'int32)
+	     ((eq? toid 'int32)
 	      (js->int32 sexp expr ctx))
-	     ((eq? to 'uint32)
+	     ((eq? toid 'uint32)
 	      (js->uint32 sexp expr ctx))
+	     ((and (eq? fromid 'any) (isa? to J2SRecord))
+	      (if (symbol? sexp)
+		  (torecord sexp)
+		  (let ((tmp (gensym 'tmp)))
+		     `(let ((,tmp ,sexp))
+			 ,(torecord tmp)))))
 	     (else
-	      (case from
+	      (case fromid
 		 ((index uint32 length)
-		  (case to
+		  (case toid
 		     ((uint32 index length) sexp)
 		     ((bool) `(> ,sexp 0))
 		     (else sexp)))
 		 ((int53)
-		  (case to
-		     ((index uint32 length) (cast-error sexp from to))
+		  (case toid
+		     ((index uint32 length) (cast-error sexp fromid toid))
 		     ((bool) `(not (= ,sexp 0)))
 		     (else sexp)))
 		 ((integer number)
-		  (case to
+		  (case toid
 		     ((index uint32 length) (js-fixnum->uint32 sexp expr ctx))
 		     ((bool) `(not (= ,sexp 0)))
 		     (else sexp)))
 		 (else
-		  (case to
+		  (case toid
 		     ((string) (tostring sexp))
 		     ((index uint32 length) (js-fixnum->uint32 sexp expr ctx))
 		     ((bool) (j2s-totest sexp))

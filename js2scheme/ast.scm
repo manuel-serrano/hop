@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Thu Sep  9 08:33:29 2021 (serrano)                */
+;*    Last change :  Sat Nov 13 09:09:50 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -67,6 +67,8 @@
 	      (key (default (ast-decl-key)) (info '("notraverse")))
 	      ;; writable=#f iff decl is const
 	      (writable (default #t) (info '("notraverse")))
+	      ;; either: global, %scope, tls, local, letblock, letvar,
+	      ;;   kont, export
 	      (scope::symbol (default 'local) (info '("notraverse")))
 	      (usecnt::int (default 0) (info '("notraverse")))
 	      (useinloop::bool (default #f) (info '("notraverse")))
@@ -82,6 +84,8 @@
 	      (itype (default 'unknown) (info '("notraverse")))
 	      ;; computed variable type value
 	      (vtype (default 'unknown) (info '("notraverse")))
+	      ;; the maximum type of the variable (for classes)
+	      (mtype (default 'unknown) (info '("notraverse")))
 	      ;; initial parameter range
 	      (irange::obj (default #unspecified) (info '("notraverse")))
 	      ;; computed variable range
@@ -119,7 +123,9 @@
 	      (raise-on-write::bool read-only (default #f))
 	      ;; extern are sweepable (i.e., removable) when not used
 	      ;; by the code generator to optimize expressions
-	      (sweepable::bool read-only (default #f))
+	      ;; the value is a symbol a tell when it can be sweeped
+	      ;; its value are: never, scheme, always
+	      (sweepable::symbol read-only (default 'scheme))
 	      (configurable::bool read-only (default #t)))
 
 	   (final-class J2SDeclImport::J2SDecl
@@ -128,11 +134,14 @@
 	      (import::obj read-only (info '("notraverse"))))
 
 	   (abstract-class J2SExpr::J2SNode
+	      ;; the type of the expression
 	      (type (default 'unknown) (info '("notraverse")))
+	      ;; the possible types of that expression
 	      (hint::pair-nil (default '()) (info '("notraverse")))
 	      (range::obj (default #unspecified) (info '("notraverse"))))
 
 	   (class J2SCast::J2SExpr
+	      (static::bool (default #f))
 	      (expr::J2SExpr (info '("ast"))))
 	   
 	   (class J2SCheck::J2SExpr
@@ -148,6 +157,8 @@
 
 	   (final-class J2SPrecache::J2SIf
 	      (accesses::pair-nil read-only (default '())))
+	   
+	   (final-class J2SIfIsRecord::J2SIf)
 	   
 	   (final-class J2SVarDecls::J2SStmt
 	      (decls::pair (info '("ast"))))
@@ -239,7 +250,9 @@
 	      (mode::symbol (default 'normal) (info '("notraverse")))
 	      (decl (default #f) (info '("jsonref" "notraverse")))
 	      (need-bind-exit-return::bool (default #f) (info '("notraverse")))
+	      ;; new-target: unknown | no | global | argument
 	      (new-target::symbol (default 'unknown) (info '("notraverse")))
+	      ;; #f | rest | arguments
 	      (vararg::obj (default #f) (info '("notraverse")))
 	      (name::symbol (info '("notraverse")))
 	      (generator::bool (default #f) (info '("notraverse")))
@@ -275,16 +288,19 @@
 	      (constrsize::int (default 0) (info '("notraverse")))
 	      (cmap (default #f))
 	      (need-super-check::bool (default #f) (info '("notraverse")))
-	      (need-dead-zone-check::bool (default #f) (info '("notraverse"))))
+	      (need-dead-zone-check::bool (default #f) (info '("notraverse")))
+	      (methods::obj (default #unspecified) (info '("notraverse"))))
 
 	   (class J2SRecord::J2SClass)
 
 	   (class J2SClassElement::J2SNode
 	      (static::bool read-only)
 	      (prop::J2SPropertyInit (info '("ast")))
-	      (private::bool read-only (default #f))
 	      (type (default 'any))
-	      (clazz (default #f) (info '("notraverse"))))
+	      (clazz (default #f) (info '("notraverse")))
+	      (index::long (default -1) (info '("notraverse")))
+	      ;; see usage-bit.sch
+	      (usage::uint32 (default (usage '()))))
 	   
 	   (final-class J2SCatch::J2SStmt
 	      param::J2SDecl
@@ -332,6 +348,11 @@
 	      (alen::J2SDecl read-only)
 	      (amark::obj read-only)
 	      (deps::pair-nil read-only))
+
+	   (final-class J2SKontRef::J2SExpr
+	      (gen::obj read-only)
+	      (index::int read-only)
+	      (id::symbol read-only))
 	   
 	   (final-class J2SThis::J2SRef)
 	   
@@ -356,7 +377,9 @@
 	   (class J2SNativeString::J2SLiteralValue)
 	   
 	   (class J2SString::J2SLiteralValue
-	      (escape::pair-nil read-only (default '())))
+	      (escape::pair-nil read-only (default '()))
+	      ;; either #f, #t (after parsing), a J2SClassElement (after symbol)
+	      (private (default #f) (info '("notraverse"))))
 	   (final-class J2SBool::J2SLiteralValue)
 	   (class J2SNumber::J2SLiteralValue)
 	   (final-class J2SOctalNumber::J2SNumber)
@@ -399,8 +422,8 @@
 	   
 	   (class J2SInit::J2SAssig)
 	   
-	   (final-class J2SVAssig::J2SAssig)
-	   (final-class J2SCAssig::J2SAssig)
+;* 	   (final-class J2SVAssig::J2SAssig)                           */
+;* 	   (final-class J2SCAssig::J2SAssig)                           */
 
 	   (final-class J2SFunBinding::J2SInit)
 	   
@@ -426,8 +449,10 @@
 	      (field::J2SExpr (info '("ast"))))
 
 	   (final-class J2SCacheCheck::J2SExpr
-	      (prop::symbol read-only)
+	      ;; proto-method | instanceof | method | cmap-proto-method
+	      prop::symbol
 	      (cache read-only (info '("notraverse")))
+	      (owner::obj read-only (default #f) (info '("notraverse")))
 	      (obj::J2SExpr (info '("ast")))
 	      fields::pair-nil)
 
@@ -442,7 +467,7 @@
 	      (cspecs (default '()) (info '("nojson" "notraverse")))
 	      (fun::J2SExpr (info '("ast")))
 	      (protocol::symbol (default 'direct) (info '("notraverse")))
-	      (thisarg::pair-nil (info '("ast")))
+	      (thisargs::pair-nil (info '("ast")))
 	      (args::pair-nil (default '()) (info '("ast"))))
 	   
 	   (final-class J2STilde::J2SExpr
@@ -457,12 +482,12 @@
 	      (protocol::symbol (default 'direct) (info '("notraverse")))
 	      (args::pair-nil (info '("ast"))))
 
-	   (abstract-class J2SPropertyInit::J2SNode
-	      (name::J2SExpr (info '("ast"))))
+	   (class J2SPropertyInit::J2SNode
+	      (name::J2SExpr (info '("ast")))
+	      (cache (default #f) (info '("nojson" "notraverse"))))
 	   
 	   (class J2SDataPropertyInit::J2SPropertyInit
-	      (val::J2SExpr (info '("ast")))
-	      (cache (default #f) (info '("nojson" "notraverse"))))
+	      (val::J2SExpr (info '("ast"))))
 	   
 	   (final-class J2SMethodPropertyInit::J2SDataPropertyInit
 	      (inlinecachevar (default #f)))
@@ -541,15 +566,6 @@
 	      (aliases::pair-nil read-only (info '("notraverse")))
 	      (program (default #f) (info '("notraverse"))))
 
-;* 	   ;; types                                                    */
-;* 	   (abstract-class J2SType                                     */
-;* 	      (id::symbol read-only))                                  */
-;* 	                                                               */
-;* 	   (final-class J2STypeBuiltin::J2SType)                       */
-;* 	                                                               */
-;* 	   (final-class J2STypeRecord::J2SType                         */
-;* 	      (clazz::J2SClass read-only))                             */
-	   
 	   (generic walk0 n::J2SNode p::procedure)
 	   (generic walk1 n::J2SNode p::procedure a0)
 	   (generic walk2 n::J2SNode p::procedure a0 a1)
@@ -604,9 +620,11 @@
 	   (j2s-export?::bool ::J2SDecl)
 	   (j2s-global?::bool ::J2SDecl)
 	   (j2s-let-opt?::bool ::J2SDecl)
+	   (j2s-let-class?::bool ::J2SDecl)
 	   (j2s-new-target?::bool ::J2SNode)
 	   (j2s-decl-class?::bool ::J2SDecl)
-	   
+	   (j2s-decl-record?::bool ::J2SDecl)
+
 	   (j2s-field-name::obj ::J2SNode)
 	   (inline j2s-field-length?::bool ::J2SNode)
 
@@ -699,6 +717,14 @@
 	 (else (error "j2s-let-opt?" "wrong binder" (vector loc id binder))))))
 
 ;*---------------------------------------------------------------------*/
+;*    j2s-let-class? ...                                               */
+;*---------------------------------------------------------------------*/
+(define (j2s-let-class? this)
+   (when (and (j2s-let? this) (isa? this J2SDeclClass))
+      (with-access::J2SDeclClass this (val)
+	 (isa? val J2SClass))))
+
+;*---------------------------------------------------------------------*/
 ;*    j2s-new-target? ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (j2s-new-target? this::J2SNode)
@@ -715,6 +741,14 @@
 	 (when (isa? val J2SClass)
 	    (with-access::J2SClass val (need-dead-zone-check)
 	       (not need-dead-zone-check))))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-decl-record? ...                                             */
+;*---------------------------------------------------------------------*/
+(define (j2s-decl-record? this::J2SDecl)
+   (when (isa? this J2SDeclInit)
+      (with-access::J2SDeclInit this (val)
+	 (isa? val J2SRecord))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-access-field ...                                             */
@@ -1109,7 +1143,7 @@
 (gen-walks J2SAccess obj field)
 (gen-walks J2SCacheCheck obj)
 (gen-walks J2SCacheUpdate obj)
-(gen-walks J2SCall fun (thisarg) (args))
+(gen-walks J2SCall fun (thisargs) (args))
 (gen-walks J2SNew clazz (args))
 (gen-walks J2SAssig lhs rhs)
 (gen-walks J2SFun body (params))
@@ -1124,6 +1158,7 @@
 (gen-walks J2SWithRef expr)
 (gen-walks J2SIf test then else)
 (gen-walks J2SPrecache (accesses) test then else)
+(gen-walks J2SIfIsRecord test then else)
 (gen-walks J2SCond test then else)
 (gen-walks J2SDollar node)
 (gen-walks J2SYield expr)

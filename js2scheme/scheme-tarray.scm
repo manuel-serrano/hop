@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Fri Sep 25 07:53:30 2020 (serrano)                */
-;*    Copyright   :  2017-20 Manuel Serrano                            */
+;*    Last change :  Fri Oct  1 16:49:33 2021 (serrano)                */
+;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript TypedArray functions.       */
 ;*=====================================================================*/
@@ -66,7 +66,7 @@
 	  (with-access::J2SGlobalRef clazz (id)
 	     (id-to-type id)))
 	 (else
-	  (error "new-array-type" "Unknown class" (j2s->list clazz)))))
+	  (error "new-array-type" "Unknown class" (j2s->sexp clazz)))))
    
    (with-access::J2SNew this (loc clazz args type)
       (let ((a (uncast (car args)))

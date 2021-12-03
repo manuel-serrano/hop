@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 23 08:18:53 2017                          */
-;*    Last change :  Sun Feb  9 11:04:31 2020 (serrano)                */
-;*    Copyright   :  2017-20 Manuel Serrano                            */
+;*    Last change :  Mon Oct 18 09:05:04 2021 (serrano)                */
+;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript expanders                                              */
 ;*=====================================================================*/
@@ -26,10 +26,12 @@
 	    "function.sch"
 	    "arguments.sch"
 	    "public_expd.sch"
+	    "lib_expd.sch"
 	    "stringliteral_expd.sch"
 	    "types_expd.sch"
 	    "constants_expd.sch"
 	    "names_expd.sch"
+	    "tls_expd.sch"
 	    "expanders.sch")
 
    (import  __hopscript_types
@@ -46,5 +48,3 @@
 	    __hopscript_stringliteral)
 
    (export  (hopscript-install-expanders!)))
-
-

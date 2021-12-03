@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Fri Jun  5 06:58:36 2020 (serrano)                */
-;*    Copyright   :  2017-20 Manuel Serrano                            */
+;*    Last change :  Sun Sep 26 18:54:10 2021 (serrano)                */
+;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Math functions.             */
 ;*=====================================================================*/
@@ -118,6 +118,10 @@
 		(when (=fx (length args) 2)
 		   (j2s-math-inline-atan2
 		      (car args) (cadr args) mode return conf)))
+	       ((string=? val "sign")
+		(when (=fx (length args) 1)
+		   (j2s-math-sign
+		      (car args) mode return conf)))
 	       (else
 		#f))))))
 
@@ -297,6 +301,14 @@
 	   ,(j2s-scheme y mode return conf))
        `(js-math-atan2 ,(j2s-scheme x mode return conf)
 	   ,(j2s-scheme y mode return conf))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-math-sign ...                                                */
+;*---------------------------------------------------------------------*/
+(define (j2s-math-sign x mode return conf)
+   (if (eq? (j2s-type x) 'real)
+       `(js-math-signfl ,(j2s-scheme x mode return conf))
+       `(js-math-sign ,(j2s-scheme x mode return conf) %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-math-inline-min-max ...                                      */

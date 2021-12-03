@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Apr 12 08:09:48 2020                          */
-;*    Last change :  Sun Apr 12 19:16:50 2020 (serrano)                */
-;*    Copyright   :  2020 Manuel Serrano                               */
+;*    Last change :  Tue Nov  2 11:14:14 2021 (serrano)                */
+;*    Copyright   :  2020-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme compilation context                                       */
 ;*=====================================================================*/
@@ -19,7 +19,8 @@
 (define-struct context conf
    program
    %vectors
-   array string regexp math object)
+   array string regexp math map weakmap set weakset bigint
+   object)
 
 ;*---------------------------------------------------------------------*/
 ;*    compiler-context ...                                             */
@@ -56,6 +57,11 @@
 	    ((:string) (context-string-set! ctx (cadr vals)))
 	    ((:regexp) (context-regexp-set! ctx (cadr vals)))
 	    ((:math) (context-math-set! ctx (cadr vals)))
+	    ((:map) (context-map-set! ctx (cadr vals)))
+	    ((:weakmap) (context-weakmap-set! ctx (cadr vals)))
+	    ((:set) (context-set-set! ctx (cadr vals)))
+	    ((:weakset) (context-weakset-set! ctx (cadr vals)))
+	    ((:bigint) (context-bigint-set! ctx (cadr vals)))
 	    ((:object) (context-object-set! ctx (cadr vals)))
 	    (else (error "compiler-context-set!" "unknown property" (car vals))))
 	 (loop (cddr vals))))
@@ -74,5 +80,10 @@
       ((:regexp) (error "context-get" "should use context-regexp" key))
       ((:math) (error "context-get" "should use context-math" key))
       ((:object) (error "context-get" "should use context-object" key))
+      ((:map) (error "context-get" "should use context-object" key))
+      ((:weakmap) (error "context-get" "should use context-object" key))
+      ((:set) (error "context-get" "should use context-object" key))
+      ((:weakset) (error "context-get" "should use context-object" key))
+      ((:bigint) (error "context-get" "should use context-object" key))
       (else (config-get (context-conf ctx) key default))))
 

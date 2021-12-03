@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Wed Apr 28 09:27:34 2021 (serrano)                */
+;*    Last change :  Tue Sep 28 15:52:43 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -40,6 +40,7 @@
 	   (js-with-context ::obj ::bstring ::procedure)
 	   (generic js-obj->jsobject ::obj ::JsGlobalObject)
 	   (js-literal->jsobject::JsObject ::vector ::vector ::JsGlobalObject)
+	   (js-large-literal->jsobject::JsObject ::pair ::JsGlobalObject)
 	   (js-alist->jsobject::JsObject ::pair-nil ::JsGlobalObject)
 	   (js-plist->jsobject::JsObject ::pair-nil ::JsGlobalObject)
 	   (generic js-jsobject->obj ::obj ::JsGlobalObject)
@@ -103,25 +104,24 @@
 	     (vals (vector-ref el 2))
 	     (obj (js-make-jsobject (vector-length vals)
 		     cmap (js-object-proto %this))))
-	 (with-access::JsObject obj (elements)
-	    (let loop ((i (-fx (vector-length vals) 1)))
-	       (if (<fx i 0)
-		   obj
-		   (let ((prop (vector-ref vals i)))
-		      (vector-set! elements i
-			 (case (vector-ref prop 0)
-			    ((0)
-			     (vector-ref cnsts (vector-ref prop 1)))
-			    ((1)
-			     (vector-ref prop 1))
-			    ((2)
-			     (js-ascii->jsstring (vector-ref prop 1)))
-			    ((3)
-			     (js-utf8->jsstring/ulen (vector-ref prop 1)
-				(fixnum->uint32 (vector-ref prop 2))))
-			    (else
-			     (error "constant-objinit" "Illegal prop" prop))))
-		      (loop (-fx i 1))))))))
+	 (let loop ((i (-fx (vector-length vals) 1)))
+	    (if (<fx i 0)
+		obj
+		(let ((prop (vector-ref vals i)))
+		   (js-object-set! obj i
+		      (case (vector-ref prop 0)
+			 ((0)
+			  (vector-ref cnsts (vector-ref prop 1)))
+			 ((1)
+			  (vector-ref prop 1))
+			 ((2)
+			  (js-ascii->jsstring (vector-ref prop 1)))
+			 ((3)
+			  (js-utf8->jsstring/ulen (vector-ref prop 1)
+			     (fixnum->uint32 (vector-ref prop 2))))
+			 (else
+			  (error "constant-objinit" "Illegal prop" prop))))
+		   (loop (-fx i 1)))))))
 
    (let ((cnsts (if (string? str-or-vec) (string->obj str-or-vec) str-or-vec)))
       (let loop ((i 0))
@@ -249,7 +249,7 @@
       (when (list? l)
 	 (every (lambda (e)
 		   (and (pair? e)
-			(or (keyword? (car e)) (symbol? (car e)))
+			(or (keyword? (car e)) (string? (car e)) (symbol? (car e)))
 			(not (null? (cdr (last-pair e))))))
 	    l)))
 
@@ -276,6 +276,42 @@
 	 (elements elements))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-large-literal->jsobject ...                                   */
+;*---------------------------------------------------------------------*/
+(define (js-large-literal->jsobject::JsObject lst %this)
+   
+   (define (obj->jsobj o %this)
+      (cond
+	 ((number? o)
+	  o)
+	 ((string? o)
+	  (js-string->jsstring o))
+	 ((pair? o)
+	  (if (>fx (length o) 192)
+	      (js-large-literal->jsobject o %this)
+	      (js-pair->jsobject o %this)))
+	 ((vector? o)
+	  (js-obj->jsobject o %this))
+	 (else
+	  o)))
+   
+   (let* ((table (create-hashtable
+		    :weak 'open-string
+		    :size (*fx (length lst) 2)))
+	  (o (instantiateJsObject
+		(cmap (js-not-a-cmap))
+		(__proto__ (js-object-proto %this))
+		(elements table))))
+      (js-object-mode-enumerable-set! o #t)
+      (js-object-mode-plain-set! o #f)
+      (for-each (lambda (e)
+		   (let ((k (car e))
+			 (o (obj->jsobj (cdr e) %this)))
+		      (hashtable-put! table k (make-cell o))))
+	 lst)
+      o))
+
+;*---------------------------------------------------------------------*/
 ;*    js-key-name->jsstring ...                                        */
 ;*---------------------------------------------------------------------*/
 (define (js-key-name->jsstring s)
@@ -296,30 +332,28 @@
 	     (props ($create-vector len))
 	     (methods (make-vector len #f))
 	     (cmap (js-make-jsconstructmap
-		      :inline #t
 		      :props props
 		      :methods methods))
 	     (obj (instantiateJsObject
 		     (cmap cmap)
 		     (__proto__ (js-object-proto %this))
-		     (elements ($create-vector len)))))
-	 (with-access::JsObject obj (elements)
-	    (let ((vec elements))
-	       (let loop ((i 0)
-			  (alist alist))
-		  (if (=fx i len)
-		      obj
-		      (let* ((name (js-key-name->jsstring (caar alist)))
-			     (val (if (pair? (cdar alist))
-				      (car (cdar alist))
-				      (cdar alist)))
-			     (jsval (js-obj->jsobject val %this)))
-			 (vector-set! props i
-			    (prop name (property-flags-default)))
-			 (vector-set! vec i jsval)
-			 (when (js-procedure? jsval)
-			    (vector-set! methods i #t))
-			 (loop (+fx i 1) (cdr alist))))))))))
+		     (elements ($create-vector len))))
+	     (elements (js-object-alloc-elements obj)))
+	 (let loop ((i 0)
+		    (alist alist))
+	    (if (=fx i len)
+		obj
+		(let* ((name (js-key-name->jsstring (caar alist)))
+		       (val (if (pair? (cdar alist))
+				(car (cdar alist))
+				(cdar alist)))
+		       (jsval (js-obj->jsobject val %this)))
+		   (vector-set! props i
+		      (prop name (property-flags-default)))
+		   (vector-set! elements i jsval)
+		   (when (js-procedure? jsval)
+		      (vector-set! methods i #t))
+		   (loop (+fx i 1) (cdr alist))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-plist->jsobject ...                                           */
@@ -327,19 +361,20 @@
 (define (js-plist->jsobject plist %this)
    (with-access::JsGlobalObject %this (js-object)
       (let* ((len (/fx (length plist) 2))
-	     (elements ($create-vector len))
 	     (props ($create-vector len))
-	     (methods (make-vector len #f)))
+	     (methods (make-vector len #f))
+	     (cmap (js-make-jsconstructmap
+		      :methods methods
+		      :props props))
+	     (obj (instantiateJsObject
+		     (cmap cmap)
+		     (__proto__ (js-object-proto %this))
+		     (elements ($create-vector len))))
+	     (elements (js-object-alloc-elements obj)))
 	 (let loop ((i 0)
 		    (plist plist))
 	    (if (=fx i len)
-		(let ((cmap (js-make-jsconstructmap
-			       :methods methods
-			       :props props)))
-		   (instantiateJsObject
-		      (cmap cmap)
-		      (__proto__ (js-object-proto %this))
-		      (elements elements)))
+		obj
 		(let* ((name (js-key-name->jsstring (car plist)))
 		       (val (js-obj->jsobject (cadr plist) %this)))
 		   (vector-set! props i (prop name (property-flags-default)))

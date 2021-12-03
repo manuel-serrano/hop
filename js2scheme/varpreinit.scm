@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 21 09:27:29 2017                          */
-;*    Last change :  Fri Jan 31 08:37:17 2020 (serrano)                */
-;*    Copyright   :  2017-20 Manuel Serrano                            */
+;*    Last change :  Sun Oct 17 11:03:39 2021 (serrano)                */
+;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    This optimization consists in "pre-initializating" variables     */
 ;*    declarations in order to improve the variable typing.            */
@@ -354,7 +354,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (patchinit! this::J2SDecl args)
    (with-access::J2SDecl this (scope %info)
-      (if (and (memq scope '(%scope global)) (preinit? %info))
+      (if (and (memq scope '(%scope global tls)) (preinit? %info))
 	  (let ((ndecl (decl->declinit this)))
 	     (set! %info (alphainit ndecl))
 	     ndecl)

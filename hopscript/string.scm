@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Thu Aug 19 11:36:23 2021 (serrano)                */
+;*    Last change :  Sun Oct 31 06:46:26 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -593,6 +593,20 @@
       :enumerable #f
       :hidden-class #t)
    
+   ;; replaceAll
+   ;; https://tc39.es/ecma262/multipage/text-processing.html#sec-string.prototype.replaceall
+   (define (replace-all this::obj searchvalue replacevalue)
+      (js-jsstring-prototype-replace-all (js-cast-string %this this)
+	 searchvalue replacevalue %this))
+      
+   (js-bind! %this obj (& "replaceAll")
+      :value (js-make-function %this replace-all
+		(js-function-arity replace-all)
+		(js-function-info :name "replaceAll" :len 2)
+		:prototype (js-undefined))
+      :enumerable #f
+      :hidden-class #t)
+   
    ;; search
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.12
    (define (search this::obj regexp)
@@ -719,6 +733,32 @@
       :enumerable #f
       :hidden-class #t)
    
+   ;; trimEnd
+   ;; https://tc39.es/ecma262/multipage/text-processing.html#sec-string.prototype.trimend
+   (define (trimend this::obj)
+      (js-jsstring-trimend (js-cast-string-normalize! %this this) %this))
+   
+   (js-bind! %this obj (& "trimEnd")
+      :value (js-make-function %this trimend
+		(js-function-arity trimend)
+		(js-function-info :name "trimEnd" :len 0)
+		:prototype (js-undefined))
+      :enumerable #f
+      :hidden-class #t)
+   
+   ;; trimStart
+   ;; https://tc39.es/ecma262/multipage/text-processing.html#sec-string.prototype.trimstart
+   (define (trimstart this::obj)
+      (js-jsstring-trimstart (js-cast-string-normalize! %this this) %this))
+   
+   (js-bind! %this obj (& "trimStart")
+      :value (js-make-function %this trimstart
+		(js-function-arity trimstart)
+		(js-function-info :name "trimStart" :len 0)
+		:prototype (js-undefined))
+      :enumerable #f
+      :hidden-class #t)
+   
    ;; substr
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-B.2.3
    (define (substr this::obj start length)
@@ -737,19 +777,19 @@
    (define (string-prototype-string-values this::obj)
       ;; because of code point and code units, cannot use the generic
       ;; js-make-iterator (see generator.scm) function
-      (letrec ((%gen (js-make-generator
-			(lambda (%v %e)
+      (letrec ((%gen (js-make-generator 0
+			(lambda (%v %e %gen %yield %this)
 			   (let* ((val (js-cast-string %this this))
 				  (len (js-jsstring-character-length val)))
 			      (let ((i #u32:0))
-				 (let loop ((%v %v) (%e %e))
+				 (let loop ((%v %v) (%e %e) (%gen %gen) (%yield %yield) (%this %this))
 				    (if (>=u32 i len)
-					(js-generator-yield %gen
+					(js-generator-yield %gen %yield
 					   (js-undefined) #t
 					   loop %this)
 					(let ((char (js-jsstring-character-ref val i)))
 					   (set! i (+u32 i #u32:1))
-					   (js-generator-yield %gen
+					   (js-generator-yield %gen %yield
 					      char #f
 					      loop %this)))))))
 			(with-access::JsGlobalObject %this (js-generator-prototype)

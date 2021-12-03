@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Tue Jul 13 20:36:25 2021 (serrano)                */
+;*    Last change :  Fri Oct  1 07:38:12 2021 (serrano)                */
 ;*    Copyright   :  2004-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC global parameters                                           */
@@ -141,6 +141,8 @@
 	    (hopc-j2s-preprocessor::obj)
 	    (hopc-j2s-preprocessor-set! ::obj)
 
+	    (hopc-pp-width)
+	    
 	    (hop-max-threads::int))
 	    
    (eval    (export-exports)))
@@ -432,6 +434,12 @@
    #f)
 
 ;*---------------------------------------------------------------------*/
+;*    hopc-pp-width ...                                                */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-pp-width
+   256)
+
+;*---------------------------------------------------------------------*/
 ;*    hop-max-threads ...                                              */
 ;*    -------------------------------------------------------------    */
 ;*    Merely a compatibility variable with Hop (for tools autoconf)    */
@@ -440,3 +448,4 @@
    (cond-expand
       (enable-threads 12)
       (else 1)))
+

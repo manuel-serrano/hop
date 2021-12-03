@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb  1 13:36:09 2017                          */
-;*    Last change :  Sat Aug 21 17:18:10 2021 (serrano)                */
+;*    Last change :  Tue Oct 12 12:06:58 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Static approximation of constructors size                        */
@@ -68,8 +68,8 @@
 ;*    constrsize! ::J2SFun ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (constrsize! this::J2SFun)
-   (with-access::J2SFun this (body constrsize %info)
-      (unless (constrsize-info? %info)
+   (with-access::J2SFun this (body constrsize %info generator)
+      (unless (or (constrsize-info? %info) generator)
 	 (let ((acc (make-cell '())))
 	    (count-this-assig body acc)
 	    (set! %info (constrsize-info (cell-ref acc)))
@@ -84,7 +84,7 @@
    
    (define (prop-names props)
       (filter-map (lambda (p)
-		     (with-access::J2SDataPropertyInit p (name)
+		     (with-access::J2SPropertyInit p (name)
 			(when (isa? name J2SString)
 			   (with-access::J2SString name (val)
 			      val))))

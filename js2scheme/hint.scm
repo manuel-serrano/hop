@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Thu Aug 26 08:54:10 2021 (serrano)                */
+;*    Last change :  Thu Nov 25 15:40:59 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -27,7 +27,8 @@
 	   __js2scheme_alpha
 	   __js2scheme_node-size
 	   __js2scheme_usage
-	   __js2scheme_scheme-utils)
+	   __js2scheme_scheme-utils
+	   __js2scheme_classutils)
 
    (static (class FunHintInfo
 	      hinted
@@ -92,7 +93,8 @@
 	    record class object promise
 	    null undefined void
 	    cmap scmstring tilde pair
-	    int8array uint8array bigint))
+	    int8array uint8array bigint
+	    map weakmap set weakset))
        ty)
       ((memq ty '(index indexof length)) 'integer)
       ((memq ty '(ureal1 real1 real4)) 'real)
@@ -134,7 +136,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (add-hints! expr::J2SExpr hints::pair-nil)
    
-   (define (add-hint! expr type::symbol inc)
+   (define (add-hint! expr type inc)
       (with-access::J2SExpr expr (hint)
 	 (let ((c (assq type hint)))
 	    (cond
@@ -155,11 +157,11 @@
 	    hints))))
    
 ;*---------------------------------------------------------------------*/
-;*    add-hints! ...                                                   */
+;*    add-hints! ::J2SDecl ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-method (add-hints! decl::J2SDecl hints::pair-nil)
    
-   (define (add-hint! decl type::symbol inc)
+   (define (add-hint! decl type inc)
       (with-access::J2SDecl decl (id hint vtype)
 	 (let ((c (assq type hint)))
 	    (cond
@@ -247,6 +249,7 @@
 	   (j2s-hint lhs `((integer . 2) (real . 2) (string . ,(minvalfx))))
 	   (j2s-hint rhs `((string . ,(minvalfx)))))))
       ((< <= >= >)
+       
        (case (j2s-type lhs)
 	  ((real)
 	   (j2s-hint lhs '())
@@ -395,8 +398,12 @@
 (define-walk-method (j2s-hint this::J2SDeclInit hints)
    (with-access::J2SDeclInit this (val vtype hint loc id)
       (let ((ty (j2s-type val)))
-	 (when (symbol? ty)
-	    (add-hints! this `((,ty . 3)))))
+	 (when (and (symbol? ty) (not (memq ty '(unknown any))))
+	    (add-hints! this `((,ty . 3))))
+	 (when (isa? val J2SRef)
+	    (with-access::J2SRef val (decl)
+	       (with-access::J2SDecl decl (hint)
+		  (add-hints! this hint)))))
       (let ((bc (if (decl-usage-has? this '(get))
 		    100
 		    (multiple-value-bind (bt bc)
@@ -422,7 +429,7 @@
 			(j2s-hint obj `((array . 5) (string . 5) (object . 2) (integer . ,(minvalfx))))
 			(j2s-hint obj `((array . 5) (string . ,(minvalfx)) (object . 2) (integer . ,(minvalfx)))))
 		    (j2s-hint obj '((object . 5))))))
-	    ((isa? field J2SNumber)
+	    ((or (isa? field J2SNumber) (type-number? (j2s-type field)))
 	     (if maybe-string
 		 (j2s-hint obj '((array . 5) (string . 5)))
 		 (j2s-hint obj `((array . 5) (string . ,(minvalfx))))))
@@ -432,8 +439,8 @@
 	    (else
 	     (j2s-hint field '((string . 2) (integer . 2)))
 	     (if maybe-string
-		 (j2s-hint obj '((object . 5)))
-		 (j2s-hint obj `((object . 5) (string . ,(minvalfx))))))))))
+		 (j2s-hint obj '((object . 5) (array . 5)))
+		 (j2s-hint obj `((object . 5) (array . 5) (string . ,(minvalfx))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-hint ::J2SAccess ...                                         */
@@ -656,7 +663,7 @@
 	    (fun (instantiate::J2SRef
 		    (decl orig)
 		    (loc loc)))
-	    (thisarg (list (instantiate::J2SHopRef
+	    (thisargs (list (instantiate::J2SHopRef
 			      (loc loc)
 			      (type 'any)
 			      (id idthis))))
@@ -676,7 +683,7 @@
 		    (id 'js-raise-utype-error)
 		    (rtype 'magic)
 		    (loc loc)))
-	    (thisarg (list (instantiate::J2SHopRef
+	    (thisargs (list (instantiate::J2SHopRef
 			      (loc loc)
 			      (type 'any)
 			      (id '%this))))
@@ -1021,23 +1028,28 @@
 ;*---------------------------------------------------------------------*/
 ;*    hint-type-predicate ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (hint-type-predicate::symbol type::symbol)
-   (case type
-      ((number) 'number?)
-      ((integer) 'fixnum?)
-      ((string) 'js-jsstring?)
-      ((array) 'js-array?)
-      ((jsvector) 'js-vector?)
-      ((object) 'js-object?)
-      ((function) 'js-function?)
-      ((service) 'js-service?)
-      ((arrow) 'js-procedure?)
-      ((bool) 'boolean?)
-      ((undefined) 'js-undefined?)
-      ((null) 'js-null?)
-      ((regexp) 'js-regexp?)
-      ((real) 'flonum?)
-      (else (error "hint-type-predicate" "Unknown hint type predicate" type))))
+(define (hint-type-predicate::symbol type)
+   (cond
+      ((eq? type 'number) 'number?)
+      ((eq? type 'integer) 'fixnum?)
+      ((eq? type 'string) 'js-jsstring?)
+      ((eq? type 'array) 'js-array?)
+      ((eq? type 'jsvector) 'js-vector?)
+      ((eq? type 'object) 'js-object?)
+      ((eq? type 'function) 'js-function?)
+      ((eq? type 'service) 'js-service?)
+      ((eq? type 'arrow) 'js-procedure?)
+      ((eq? type 'bool) 'boolean?)
+      ((eq? type 'undefined) 'js-undefined?)
+      ((eq? type 'null) 'js-null?)
+      ((eq? type 'regexp) 'js-regexp?)
+      ((eq? type 'real) 'flonum?)
+      ((isa? type J2SRecord) (class-predicate-id type))
+      ((isa? type J2SClass) 'js-object?)
+      (else
+       (error "hint-type-predicate"
+	  (format "Unknown hint type predicate (~a)" (typeof type))
+	  (type->sexp type)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    test-hint-decls ...                                              */
@@ -1048,12 +1060,13 @@
       (with-access::J2SDecl param (loc)
 	 (instantiate::J2SCall
 	    (loc loc)
+	    (type 'bool)
 	    (fun (instantiate::J2SHopRef
 		    (loc loc)
 		    (type 'function)
 		    (rtype 'bool)
 		    (id (hint-type-predicate htype))))
-	    (thisarg '())
+	    (thisargs '())
 	    (args (list (instantiate::J2SRef
 			   (loc loc)
 			   (decl param)))))))
@@ -1076,6 +1089,7 @@
 		(instantiate::J2SBinary
 		   (loc loc)
 		   (op '&&)
+		   (type 'bool)
 		   (lhs (test-hint-decl (car decls) htype))
 		   (rhs (loop (cdr decls) (cdr htypes))))))))))
 
@@ -1356,7 +1370,7 @@
 			       (when (isa? hintinfo FunHintInfo)
 				  hintinfo)))))))))))
    
-   (with-access::J2SCall this (fun args thisarg)
+   (with-access::J2SCall this (fun args thisargs)
       (set! args (map! (lambda (n) (j2s-call-hint! n concrete-type conf)) args))
       (set! fun (j2s-call-hint! fun concrete-type conf))
       (let ((hinfo (fun-hint-info fun)))
@@ -1369,7 +1383,7 @@
 			    ((not (=fx (length args) (length types)))
 			     (with-access::J2SFun val (idthis)
 				(duplicate::J2SCall this
-				   (thisarg thisarg)
+				   (thisargs thisargs)
 				   (type (fun-rtype unhinted))
 				   (fun (duplicate::J2SRef fun
 					   (type 'function)
@@ -1396,7 +1410,7 @@
 				(with-access::J2SDecl decl (usecnt)
 				   (set! usecnt (-fx usecnt 1)))
 				(duplicate::J2SCall this
-				   (thisarg thisarg)
+				   (thisargs thisargs)
 				   (type (fun-rtype hinted))
 				   (fun (duplicate::J2SRef fun
 					   (type 'function)
@@ -1420,7 +1434,7 @@
 			    (else
 			     (with-access::J2SFun val (idthis)
 				(duplicate::J2SCall this
-				   (thisarg thisarg)
+				   (thisargs thisargs)
 				   (type (fun-rtype unhinted))
 				   (fun (duplicate::J2SRef fun
 					   (type 'function)
@@ -1543,7 +1557,7 @@
 	  (with-access::J2SDeclInit p (loc)
 	     (duplicate::J2SDeclInit p
 		(key (ast-decl-key))
-		(hint '())
+		;; (hint '())
 		(vtype type)
 		(itype type)
 		(val (J2SRef p loc :type type))))

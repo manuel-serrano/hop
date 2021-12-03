@@ -24,6 +24,7 @@
 	   __js2scheme_stmtassign
 	   __js2scheme_compile
 	   __js2scheme_stage
+	   __js2scheme_classutils
 	   __js2scheme_scheme-cast
 	   __js2scheme_scheme-constant
 	   __js2scheme_scheme)
@@ -39,12 +40,18 @@
 	   (epairify loc expr)
 	   (epairify-deep loc expr)
 	   (strict-mode? mode)
+
+	   (comp-return ::obj)
+	   (acc-return ::obj)
+	   (in-eval?::bool ::obj)
+	   
 	   (j2s-fast-constructor-id id)
 	   (j2s-scheme-id id pref)
 	   (j2s-decl-name ::J2SDecl ::struct)
 	   (j2s-decl-fast-id ::J2SDecl conf)
 	   (j2s-decl-scm-id ::J2SDecl conf)
 	   (j2s-class-id clazz::J2SClass ctx)
+	   (j2s-escape-id ::symbol ::obj)
 	   (js-need-global? ::J2SDecl scope mode)
 	   (flatten-stmt stmt)
 	   (flatten-nodes nodes)
@@ -57,6 +64,9 @@
 	   (maybe-number? expr::J2SNode)
 	   (mightbe-number?::bool field::J2SExpr)
 	   (cannot-integer?::bool field::J2SExpr)
+	   
+	   (mightbe-array?::bool ::J2SExpr)
+	   (mightbe-string?::bool ::J2SExpr)
 	   
 	   (utype-ident ident utype ::pair-nil #!optional compound)
 	   (vtype-ident ident vtype ::pair-nil #!optional compound)
@@ -75,7 +85,6 @@
 	   (is-buffer-cast? ::J2SExpr)
 
 	   (j2s-jsstring val loc ::struct)
-	   (j2s-string->jsstring ::bstring ::struct)
 	   
 	   (j2s-unresolved name throw cache loc ::struct)
 	   (js-not expr)
@@ -167,6 +176,31 @@
    (or (eq? mode 'strict) (eq? mode 'hopscript)))
 
 ;*---------------------------------------------------------------------*/
+;*    comp-return ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (comp-return x)
+   (match-case x
+      ((begin)
+       '(js-undefined))
+      ((begin . ?rest)
+       (let ((inv (reverse rest)))
+	  `(begin ,@(reverse (filter pair? (cdr inv))) ,(car inv))))
+      (else
+       x)))
+
+;*---------------------------------------------------------------------*/
+;*    acc-return ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (acc-return expr)
+   `(set! %acc ,expr))
+
+;*---------------------------------------------------------------------*/
+;*    in-eval? ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (in-eval? r)
+   (not (eq? r comp-return)))
+
+;*---------------------------------------------------------------------*/
 ;*    j2s-profile-id ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (j2s-profile-id id loc ctx)
@@ -206,7 +240,7 @@
 	 (if _scmid
 	     _scmid
 	     (let ((sid (j2s-scheme-id id
-			   (if (eq? scope '%scope)
+			   (if (memq scope '(%scope tls))
 			       '!
 			       (string->symbol
 				  (string-append "^"
@@ -250,13 +284,22 @@
 	  (symbol-append '@ name))))
 
 ;*---------------------------------------------------------------------*/
+;*    j2s-escape-id ...                                                */
+;*---------------------------------------------------------------------*/
+(define (j2s-escape-id escape id)
+   (if (symbol? id)
+       (symbol-append escape '- id)
+       escape))
+
+;*---------------------------------------------------------------------*/
 ;*    js-need-global? ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (js-need-global? decl::J2SDecl scope mode)
    (with-access::J2SDecl decl (usage)
       (or (not (j2s-let-opt? decl))
+	  (not (eq? scope 'record))
 	  (decl-usage-has? decl '(eval))
-	  (not (and (eq? scope '%scope) (eq? mode 'hopscript))))))
+	  (not (and (memq scope '(%scope tls)) (eq? mode 'hopscript))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    flatten-begin ...                                                */
@@ -388,6 +431,26 @@
 		(and (pair? c) (<fx (cdr c) 0))))))))
 
 ;*---------------------------------------------------------------------*/
+;*    mightbe-array? ...                                               */
+;*---------------------------------------------------------------------*/
+(define (mightbe-array?::bool obj::J2SExpr)
+   (with-access::J2SExpr obj (hint type)
+      (or (eq? type 'array)
+	  (let ((c (assq 'array hint)))
+	     (when (pair? c)
+		(>fx (cdr c) 0))))))
+
+;*---------------------------------------------------------------------*/
+;*    mightbe-string? ...                                              */
+;*---------------------------------------------------------------------*/
+(define (mightbe-string?::bool obj::J2SExpr)
+   (with-access::J2SExpr obj (hint type)
+      (or (eq? type 'string)
+	  (let ((c (assq 'string hint)))
+	     (when (pair? c)
+		(>fx (cdr c) 0))))))
+
+;*---------------------------------------------------------------------*/
 ;*    utype-ident ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (utype-ident ident utype conf #!optional compound)
@@ -495,7 +558,7 @@
    (with-access::J2SNode obj (loc)
       (match-case loc
 	 ((at ?fname ?loc)
-	  (error/location proc msg (or str (j2s->list obj)) fname loc))
+	  (error/location proc msg (or str (j2s->sexp obj)) fname loc))
 	 (else
 	  (error proc msg obj)))))
 
@@ -569,7 +632,7 @@
 ;*    j2s-jsstring ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (j2s-jsstring val loc ctx)
-   (epairify loc (j2s-string->jsstring val ctx)))
+   (epairify loc (& val (context-program ctx))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-unresolved ...                                               */
@@ -599,16 +662,20 @@
       (else `(not ,expr))))
 
 ;*---------------------------------------------------------------------*/
-;*    j2s-string->jsstring ...                                         */
-;*---------------------------------------------------------------------*/
-(define (j2s-string->jsstring val::bstring ctx)
-   (& val (context-program ctx)))
-
-;*---------------------------------------------------------------------*/
 ;*    js-pcache ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (js-pcache cache)
    `(js-pcache-ref %pcache ,cache))
+
+
+;*---------------------------------------------------------------------*/
+;*    record-private-field? ...                                        */
+;*---------------------------------------------------------------------*/
+(define (record-private-field? field)
+   (with-access::J2SString field (private)
+      (if (isa? private J2SClassElement)
+	  (with-access::J2SClassElement private (clazz)
+	     (isa? clazz J2SRecord)))))      
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-get ...                                                      */
@@ -627,7 +694,12 @@
    (define (maybe-string? prop typrop)
       (and (not (number? prop))
 	   (not (type-number? typrop))
-	   (not (eq? typrop 'array))))
+	   (not (memq typrop '(array object)))))
+
+   (define (maybe-number? prop typrop)
+      (or (number? prop)
+	  (type-number? typrop)
+	  (not (memq typrop '(string object)))))
 
    (define (js-array-get obj prop typrop)
       (case typrop
@@ -636,7 +708,7 @@
 	 ((int32)
 	  `(js-array-fixnum-ref ,obj (int32->fixnum ,prop) %this))
 	 ((fixnum int53)
-	  `(js-array-fixnum-ref ,obj (int32->fixnum ,prop) %this))
+	  `(js-array-fixnum-ref ,obj ,prop %this))
 	 (else
 	  (cond
 	     ((and (string? prop) (string=? prop "length"))
@@ -647,6 +719,21 @@
 	      `(js-array-ref ,obj ,prop %this))
 	     (else
 	      `(js-array-noindex-ref ,obj ,prop %this))))))
+
+   (define (record-private-access obj field)
+      (with-access::J2SString field (private val)
+	 (if (isa? private J2SClassElement)
+	     (with-access::J2SClassElement private (clazz)
+		(let loop ((obj obj))
+		   (if (symbol? obj)
+		       `(if (,(class-predicate-id clazz) ,obj)
+			    (js-object-inline-ref ,obj
+			       ,(j2s-class-instance-get-property-index
+				   clazz val))
+			    (js-undefined))
+		       (let ((tmp (gensym 'o)))
+			  `(let ((,tmp ,obj))
+			      ,(loop tmp)))))))))
    
    (let ((propstr (match-case prop
 		     ((& ?str . ?-) str)
@@ -704,23 +791,37 @@
 		     ((type-object? tyobj)
 		      `(js-get-jsobject-name/cache ,obj ,prop #f %this
 			  ,(js-pcache cache) ,(loc->point loc) ',cspecs))
+		     ((record-private-field? field)
+		      (record-private-access obj field))
 		     (else
 		      `(js-get-name/cache ,obj ,prop #f %this
 			  ,(js-pcache cache) ,(loc->point loc) ',cspecs)))))
 	     ((memq typrop '(int32 uint32))
 	      (js-get obj (box prop typrop ctx) '%this))
-	     ((and (maybe-string? prop typrop) (symbol? obj))
-	      `(,(if (eq? tyobj 'object)
-		     'js-get-jsobject/name-cache
-		     'js-get/name-cache)
-		,obj ,prop %this))
-	     ((maybe-string? prop typrop)
-	      (let ((tmp (gensym '%tmp)))
-		 `(let ((,tmp ,obj))
-		     (,(if (eq? tyobj 'object)
+	     ((and (maybe-string? prop typrop)
+		   (or (not (maybe-number? prop typrop))
+		       (not (is-hint? field 'integer))))
+	      (if (symbol? obj)
+		  `(,(if (eq? tyobj 'object)
 			 'js-get-jsobject/name-cache
 			 'js-get/name-cache)
-		      ,tmp ,prop %this))))
+		    ,obj ,prop %this)
+		  (let ((tmp (gensym '%tmp)))
+		     `(let ((,tmp ,obj))
+			 (,(if (eq? tyobj 'object)
+			       'js-get-jsobject/name-cache
+			       'js-get/name-cache)
+			  ,tmp ,prop %this)))))
+	     ((and (maybe-number? prop typrop)
+		   (or (not (maybe-string? prop typrop))
+		       (not (is-hint? field 'string))))
+	      (let ((o (gensym '%obj))
+		    (p (gensym '%prop)))
+		 `(let ((,o ,obj)
+			(,p ,(box prop typrop ctx)))
+		     (if (js-array? ,o)
+			 (js-array-ref ,o ,p %this)
+			 ,(js-get obj p '%this)))))
 	     (else
 	      (js-get obj prop '%this))))
 	 ((string? propstr)
@@ -737,6 +838,14 @@
 		 (if (js-array? ,o)
 		     ,(js-array-get o p typrop)
 		     ,(js-get o p '%this)))))
+	 ((maybe-number? prop typrop)
+	  (let ((o (gensym '%obj))
+		(p (gensym '%prop)))
+	     `(let ((,o ,obj)
+		    (,p ,(box prop typrop ctx)))
+		 (if (js-array? ,o)
+		     (js-array-ref ,o ,p %this)
+		     ,(js-get obj p '%this)))))
 	 ((memq typrop '(int32 uint32))
 	  (js-get obj (box prop typrop ctx) '%this))
 	 (else
@@ -770,7 +879,30 @@
    (define (maybe-string? prop typrop)
       (and (not (number? prop))
 	   (not (type-number? typrop))
-	   (not (eq? typrop 'array))))
+	   (not (memq typrop '(array object)))))
+   
+   (define (maybe-number? prop typrop)
+      (or (number? prop)
+	  (type-number? typrop)
+	  (not (memq typrop '(string object)))))
+
+   (define (record-private-assig obj field val loc)
+      (with-access::J2SString field (private (str val))
+	 (if (isa? private J2SClassElement)
+	     (with-access::J2SClassElement private (clazz)
+		(let loop ((obj obj))
+		   (if (symbol? obj)
+		       `(if (,(class-predicate-id clazz) ,obj)
+			    (js-object-inline-set! ,obj
+			       ,(j2s-class-instance-get-property-index
+				   clazz str)
+			       ,val)
+			    (js-raise-type-error/loc %this ',loc
+			       ,(format "[[PUT]], sealed object ~a" str)
+			       ,obj))
+		       (let ((tmp (gensym 'o)))
+			  `(let ((,tmp ,obj))
+			      ,(loop tmp)))))))))
 
    (if (boxed-type? tyval)
        (if (number? val)
@@ -797,6 +929,12 @@
 		      ,val ,mode %this ',loc)))
 	     ((equal? propstr "__proto__")
 	      `(js-setprototypeof ,obj ,val %this "js2scheme"))
+	     ((and (isa? tyobj J2SRecord)
+		   propstr
+		   (j2s-class-instance-get-property-index tyobj propstr))
+	      =>
+	      (lambda (idx)
+		 `(js-object-inline-set! ,obj ,idx ,val)))
 	     ((eq? tyobj 'array)
 	      (case typrop
 		 ((uint32)
@@ -831,30 +969,33 @@
 		 ((int53)
 		  `(js-vector-index-set! ,obj (fixnum->uint32 ,prop) ,val %this))
 		 (else
-		  (tprint "TYPROP=" typrop)
 		  `(js-vector-put! ,obj ,prop ,val %this))))
 	     ((eq? tyobj 'arguments)
 	      `(js-put! ,obj ,prop ,val ,mode %this))
 	     ((and cache cspecs)
 	      (cond
 		 ((string? propstr)
-		  (if (string=? propstr "length")
+		  (cond
+		     ((string=? propstr "length")
 		      `(js-put-length! ,obj ,val
-			  ,mode ,(js-pcache cache) %this)
-		      (if (type-object? tyobj)
-			  `(js-put-jsobject-name/cache! ,obj ,prop
-			      ,val
-			      ,mode %this
-			      ,(js-pcache cache)
-			      ,(loc->point loc) ',cspecs
-			      ,cachefun)
-			  `(js-put-name/cache! ,obj ,prop
-			      ,val
-			      ,mode %this
-			      ,(js-pcache cache) ,(loc->point loc)
-			      ',cspecs
-			      ,cachefun))))
-		 ((memq typrop '(int32 uint32))
+			  ,mode ,(js-pcache cache) %this))
+		     ((type-object? tyobj)
+		      `(js-put-jsobject-name/cache! ,obj ,prop
+			  ,val
+			  ,mode %this
+			  ,(js-pcache cache)
+			  ,(loc->point loc) ',cspecs
+			  ,cachefun))
+		     ((record-private-field? field)
+		      (record-private-assig obj field val loc))
+		     (else
+		      `(js-put-name/cache! ,obj ,prop
+			  ,val
+			  ,mode %this
+			  ,(js-pcache cache) ,(loc->point loc)
+			  ',cspecs
+			  ,cachefun))))
+		 ((memq typrop '(int32 uint32 int53 integer))
 		  `(maybe-array-set! ,obj ,(box prop typrop ctx)
 		      ,val ,mode %this))
 		 ((or (number? prop) (null? cspecs))
@@ -874,7 +1015,10 @@
 			  ,(loc->point loc) ,(loc->src loc))))
 		 (else
 		  `(js-put! ,obj ,prop ,val ,mode %this))))
-	     ((and field (eq? optim 'array) (mightbe-number? field))
+	     ((and field
+		   (or (and (eq? optim 'array) (mightbe-number? field))
+		       (and (maybe-number? field typrop)
+			    (is-hint? field 'integer))))
 	      (maybe-array-set! (box prop typrop ctx) val))
 	     (else
 	      (cond
@@ -1253,12 +1397,6 @@
 
    (define (ultrasimple? expr)
       (cond
-	 ((isa? expr J2SRef)
-	  (with-access::J2SRef expr (decl)
-	     (not (decl-usage-has? decl '(assig)))))
-	 ((isa? expr J2SGlobalRef)
-	  (with-access::J2SGlobalRef expr (decl)
-	     (not (decl-usage-has? decl '(assig)))))
 	 ((isa? expr J2SLiteral)
 	  #t)
 	 ((isa? expr J2SParen)
@@ -1280,10 +1418,10 @@
 	  #t)
 	 ((isa? expr J2SBinary)
 	  (with-access::J2SBinary expr (lhs rhs)
-	     (and (simple? lhs) (simple? rhs))))
+	     (and (ultrasimple? lhs) (ultrasimple? rhs))))
 	 ((isa? expr J2SUnary)
 	  (with-access::J2SUnary expr (expr)
-	     (simple? expr)))
+	     (ultrasimple? expr)))
 	 ((isa? expr J2SParen)
 	  (with-access::J2SParen expr (expr)
 	     (simple? expr)))
@@ -1466,3 +1604,4 @@
 (define-walk-method (side-effect this::J2SObjInit mustp::bool cell)
    (cell-set! cell #t)
    #t)
+

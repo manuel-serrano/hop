@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Thu Aug 19 11:35:30 2021 (serrano)                */
+;*    Last change :  Mon Nov 29 07:20:30 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -194,6 +194,7 @@
 	   (js-toboolean::bool ::obj)
 	   (js-toboolean-no-boolean::bool ::obj)
 	   (generic js-tonumber ::obj ::JsGlobalObject)
+	   (generic js-tonumeric ::obj ::JsGlobalObject)
 	   (macro js-tointeger obj %this)
 	   (generic js-tointeger ::obj ::JsGlobalObject)
 	   (js-touint16::uint16 ::obj ::JsGlobalObject)
@@ -221,7 +222,7 @@
 	   (inline js-equal-sans-flonum?::bool ::obj ::obj ::JsGlobalObject)
 	   (inline js-equal-string?::bool ::JsStringLiteral ::obj ::JsGlobalObject)
 	   (js-equality?::bool ::obj ::obj ::JsGlobalObject)
-	   (js-same-value-zero?::bool ::obj ::obj ::JsGlobalObject)
+	   (inline js-same-value-zero?::bool ::obj ::obj ::JsGlobalObject)
 	   (inline js-strict-equal?::bool ::obj ::obj)
 	   (js-eq-no-eq?::bool ::obj ::obj)
 	   (inline js-strict-equal-no-string?::bool ::obj ::obj)
@@ -389,7 +390,6 @@
 	(let ((,parity (procedure-arity ,procedure)))
 	   (if (js-procedure-hopscript-mode? ,fun)
 	       (begin
-		  ;; (tprint "ICI.10")
 		  (js-raise-arity-error %this ,fun ,(-fx n 1)))
 	       (,procedure ,this ,@args
 		  ,@(make-list (-fx (+fx i 1) n) '(js-undefined))
@@ -420,7 +420,6 @@
 	(let ((,parity (evprocedure-arity ,procedure)))
 	   (if (js-procedure-hopscript-mode? ,fun)
 	       (begin
-		  ;; (tprint "ICI.11 " ,n " parity=" ,parity " i=" ,i " arity=" ,arity)
 		  (js-raise-arity-error %this ,fun ,(-fx n 1)))
 	       (case ,parity
 		  ;; no need to generate [1.. i-1] because parity > -arity
@@ -448,7 +447,6 @@
 			      ((<fx a n)
 			       `(if (js-procedure-hopscript-mode? ,fun)
 				    (begin
-				       ;; (tprint "ICI.12")
 				       (js-raise-arity-error %this ,fun ,(-fx n 1)))
 				    (,procedure ,this ,@(take args (-fx a 1)))))
 			      ((=fx a n)
@@ -457,7 +455,6 @@
 			       `(if (and (js-procedure-hopscript-mode? ,fun)
 					 (<fx ,arity ,(negfx (+fx 1024 i))))
 				    (begin
-				       ;; (tprint "ICI.13 " ,a " " ,n " parity=" ,parity " i=" ,i " arity=" ,arity)
 				       (js-raise-arity-error %this ,fun ,(-fx n 1)))
 				    (,procedure ,this ,@args
 				       ,@(make-list (-fx a n)
@@ -484,7 +481,6 @@
       `((,i)
 	(if (js-procedure-hopscript-mode? ,fun)
 	    (begin
-	       ;; (tprint "ICI.14")
 	       (js-raise-arity-error %this ,fun ,(-fx n 1)))
 	    (,procedure ,this ,@(take args (-fx i 1))))))
    
@@ -492,9 +488,7 @@
       ;; missing fix arguments
       `((,i)
 	(if (js-procedure-hopscript-mode? ,fun)
-	    (begin
-	       ;; (tprint "ICI.1")
-	       (js-raise-arity-error %this ,fun ,(-fx n 1)))
+	    (js-raise-arity-error %this ,fun ,(-fx n 1))
 	    (,procedure ,this ,@args ,@(make-list (-fx i n) '(js-undefined))))))
    
    (define (call-many-arguments-opt-norest)
@@ -506,9 +500,7 @@
 	     ((<fx ,required ,n)
 	      ;; required arguments missing
 	      (if (js-procedure-hopscript-mode? ,fun)
-		  (begin
-		     ;; (tprint "ICI.2")
-		     (js-raise-arity-error %this ,fun ,(-fx n 1)))
+		  (js-raise-arity-error %this ,fun ,(-fx n 1))
 		  (apply ,procedure ,this
 		     ,@args (make-args-list (-fx ,parity ,n)))))
 	     ((<fx ,n ,parity)
@@ -516,9 +508,7 @@
 		 ,@args (make-args-list (-fx ,parity ,n))))
 	     (else
 	      (if (js-procedure-hopscript-mode? ,fun)
-		  (begin
-		     ;; (tprint "ICI.3")
-		     (js-raise-arity-error %this ,fun ,(-fx n 1)))
+		  (js-raise-arity-error %this ,fun ,(-fx n 1))
 		  (apply ,procedure ,this
 		     (take (list ,@args) ,parity)))))))
    
@@ -592,9 +582,7 @@
       `(cond
 	  ((>fx ,arity 0)
 	   (if (js-procedure-hopscript-mode? ,fun)
-	       (begin
-		  ;; (tprint "ICI.5")
-		  (js-raise-arity-error %this ,fun ,(-fx n 1)))
+	       (js-raise-arity-error %this ,fun ,(-fx n 1))
 	       ;; fixed number of arguments
 	       (if (>fx ,arity ,n)
 		   ;; missing arguments
@@ -727,9 +715,7 @@
 	    ((<fx required n)
 	     ;; required arguments missing
 	     (if (js-procedure-hopscript-mode? fun)
-		 (begin
-		    ;; (tprint "ICI.6")
-		    (js-raise-arity-error %this fun (-fx n 1)))
+		 (js-raise-arity-error %this fun (-fx n 1))
 		 (apply procedure this
 		    (append args
 		       (make-list (-fx parity n) (js-undefined))))))
@@ -739,9 +725,7 @@
 		   (make-list (-fx parity n) (js-undefined)))))
 	    (else
 	     (if (js-procedure-hopscript-mode? fun)
-		 (begin
-		    ;; (tprint "ICI.7")
-		    (js-raise-arity-error %this fun (-fx n 1)))
+		 (js-raise-arity-error %this fun (-fx n 1))
 		 (apply procedure this (take args parity)))))))
 
    (define (calln-many-opt-rest arity)
@@ -789,9 +773,7 @@
 	 (cond
 	    ((>fx arity 0)
 	     (if (js-procedure-hopscript-mode? fun)
-		 (begin
-		    ;; (tprint "ICI.9")
-		    (js-raise-arity-error %this fun (-fx n 1)))
+		 (js-raise-arity-error %this fun (-fx n 1))
 		 (if (>fx arity n)
 		     ;; missing arguments
 		     (apply procedure this
@@ -1519,10 +1501,7 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-function-set-constrmap! ctor::JsFunction)
    (with-access::JsFunction ctor (constrmap constrsize)
-      (set! constrmap
-	 (js-make-jsconstructmap
-	    :ctor ctor
-	    :inline #t))
+      (set! constrmap (js-make-jsconstructmap :ctor ctor))
       ctor))
 
 ;*---------------------------------------------------------------------*/
@@ -1555,13 +1534,9 @@
    [assert (r o) (or (js-object? r) (js-object? o))]
    (with-access::JsFunction f (constrsize info)
       (if (js-object? r)
-	  (with-access::JsObject r (elements)
-	     (when (vector? elements)
-		(set! constrsize (vector-length elements)))
-	     r)
-	  (with-access::JsObject o (elements)
-	     (when (vector? elements)
-		(set! constrsize (vector-length elements)))
+	  r
+	  (begin
+	     (set! constrsize (js-object-length o))
 	     o))))
 
 ;*---------------------------------------------------------------------*/
@@ -1569,10 +1544,8 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-new-return-fast ctor o)
    (with-access::JsFunction ctor (constrsize)
-      (with-access::JsObject o (elements)
-	 (when (vector? elements)
-	    (set! constrsize (vector-length elements)))
-	 o)))
+      (set! constrsize (js-object-length o))
+      o))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-new-sans-construct ...                                        */
@@ -1692,23 +1665,25 @@
 ;*    js-ordinary-instanceof? ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (js-ordinary-instanceof? %this v f)
-   (with-access::JsFunction f (prototype)
-      (let ((o prototype))
-	 (let loop ((v v))
-	    (let ((nv (js-object-proto v)))
-	       (cond
-		  ((eq? o nv)
-		   #t)
-		  ((eq? nv (js-null))
+   (if (js-proxy-function? f)
+       (js-ordinary-instanceof? %this v (js-proxy-target f))
+       (with-access::JsFunction f (prototype)
+	  (let ((o prototype))
+	     (let loop ((v v))
+		(let ((nv (js-object-proto v)))
 		   (cond
-		      ((eq? (object-class v) JsProxy)
-		       (loop (js-proxy-target v)))
-		      ((not (js-object? o))
-		       (js-raise-type-error %this "instanceof: no prototype ~s" v))
+		      ((eq? o nv)
+		       #t)
+		      ((eq? nv (js-null))
+		       (cond
+			  ((eq? (object-class v) JsProxy)
+			   (loop (js-proxy-target v)))
+			  ((not (js-object? o))
+			   (js-raise-type-error %this "instanceof: no prototype ~s" v))
+			  (else
+			   #f)))
 		      (else
-		       #f)))
-		  (else
-		   (loop nv))))))))
+		       (loop nv)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-function-instanceof? ...                                      */
@@ -1803,7 +1778,10 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-12.5         */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-totest obj)
-   (if (boolean? obj) obj (js-toboolean-no-boolean obj)))
+   (cond
+      ((boolean? obj) obj)
+      ((js-null-or-undefined? obj) #f)
+      (else (js-toboolean-no-boolean obj))))
       
 ;*---------------------------------------------------------------------*/
 ;*    js-totest-likely-object ...                                      */
@@ -1823,8 +1801,7 @@
    (cond
       ((js-null-or-undefined? obj) #f)
       ((boolean? obj) obj)
-      ((js-jsstring? obj) (js-jsstring-toboolean obj))
-      ((object? obj) #t)
+      ((object? obj) (if (js-jsstring? obj) (js-jsstring-toboolean obj) #t))
       ((fixnum? obj) (not (=fx obj 0)))
       ((flonum? obj) (not (or (=fl obj 0.0) (nanfl? obj))))
       ((bignum? obj) (not (=bx obj #z0)))
@@ -1837,12 +1814,11 @@
 ;*---------------------------------------------------------------------*/
 (define (js-toboolean-no-boolean obj)
    (cond
-      ((js-null-or-undefined? obj) #f)
+      ((object? obj) (if (js-jsstring? obj) (js-jsstring-toboolean obj) #t))
       ((fixnum? obj) (not (=fx obj 0)))
-      ((js-jsstring? obj) (js-jsstring-toboolean obj))
-      ((object? obj) #t)
       ((flonum? obj) (not (or (=fl obj 0.0) (nanfl? obj))))
       ((bignum? obj) (not (=bx obj #z0)))
+      ((js-null-or-undefined? obj) #f)
       (else #t)))
 
 ;*---------------------------------------------------------------------*/
@@ -1852,20 +1828,48 @@
 ;*---------------------------------------------------------------------*/
 (define-generic (js-tonumber obj %this::JsGlobalObject)
    (cond
-      ((number? obj)
+      ((js-number? obj)
        obj)
-      ((eq? obj (js-undefined))
-       +nan.0)
-      ((eq? obj (js-null))
-       0)
+      ((string? obj)
+       (js-string->number obj %this))
+      ((bignum? obj)
+       (js-bigint->number obj))
       ((eq? obj #t)
        1)
       ((eq? obj #f)
        0)
-      ((string? obj)
-       (js-string->number obj %this))
+      ((eq? obj (js-undefined))
+       +nan.0)
+      ((eq? obj (js-null))
+       0)
+      ((number? obj)
+       obj)
       (else
        (bigloo-type-error "toNumber" "JsObject" obj))))
+
+;*---------------------------------------------------------------------*/
+;*    js-tonumeric ...                                                 */
+;*---------------------------------------------------------------------*/
+(define-generic (js-tonumeric obj %this::JsGlobalObject)
+   (cond
+      ((js-number? obj)
+       obj)
+      ((string? obj)
+       (js-string->number obj %this))
+      ((bignum? obj)
+       obj)
+      ((eq? obj #t)
+       1)
+      ((eq? obj #f)
+       0)
+      ((eq? obj (js-undefined))
+       +nan.0)
+      ((eq? obj (js-null))
+       0)
+      ((number? obj)
+       obj)
+      (else
+       (bigloo-type-error "toNumeric" "JsObject" obj))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-tointeger ...                                                 */
@@ -2245,7 +2249,7 @@
 	 ((js-jsstring? x)
 	  (cond
 	     ((js-jsstring? y)
-	      (or (eq? x y) (js-jsstring=? x y)))
+	      (js-jsstring=? x y))
 	     ((js-number? y)
 	      (if (= y 0)
 		  (or (js-jsstring-null? x) (equality? (js-jsstring->number x) y))
@@ -2294,8 +2298,10 @@
 ;*    https://www.ecma-international.org/ecma-262/6.0/                 */
 ;*       #sec-samevaluezero                                            */
 ;*---------------------------------------------------------------------*/
-(define (js-same-value-zero? x y %this::JsGlobalObject)
-   (js-equality? x y %this))
+(define-inline (js-same-value-zero? x y %this::JsGlobalObject)
+   (or (eq? x y)
+       (and (js-jsstring? x) (js-jsstring? y) (js-jsstring=? x y))
+       (js-equality? x y %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-strict-equal?                                                 */
@@ -2303,7 +2309,8 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.9.4       */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-strict-equal? o1 o2)
-   (or (and (eq? o1 o2) (not (flonum? o1))) (js-eq-no-eq? o1 o2)))
+   (or (and (eq? o1 o2) (not (flonum? o1)))
+       (and (not (fixnums? o1 o2)) (js-eq-no-eq? o1 o2))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-eq-no-eq? ...                                                 */

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/html.scm                */
+;*    serrano/prgm/project/hop/hop/js2scheme/html.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jul 23 17:15:52 2015                          */
-;*    Last change :  Fri Jul 27 21:56:49 2018 (serrano)                */
-;*    Copyright   :  2015-18 Manuel Serrano                            */
+;*    Last change :  Fri Oct  1 07:00:29 2021 (serrano)                */
+;*    Copyright   :  2015-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    J2S Html parser                                                  */
 ;*=====================================================================*/
@@ -385,7 +385,7 @@
 	     (instantiate::J2SCall
 		(loc loc)
 		(fun (j2s-tag->expr tag #t))
-		(thisarg (list (J2SUndefined)))
+		(thisargs (list (J2SUndefined)))
 		(args (list (instantiate::J2SNativeString
 			       (val (decoder data))
 			       (loc (the-coord (the-port) (+fx (the-length) 6))))))))))
@@ -618,7 +618,7 @@
 	 (instantiate::J2SCall
 	    (loc loc)
 	    (fun (j2s-tag->expr tag #t))
-	    (thisarg (list (J2SUndefined)))
+	    (thisargs (list (J2SUndefined)))
 	    (args (cons a body))))))
 
 ;*---------------------------------------------------------------------*/

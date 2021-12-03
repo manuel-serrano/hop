@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  manuel serrano                                    */
 ;*    Creation    :  Tue Jul  7 19:27:03 2020                          */
-;*    Last change :  Fri Apr  9 11:37:15 2021 (serrano)                */
+;*    Last change :  Fri Oct  1 16:46:13 2021 (serrano)                */
 ;*    Copyright   :  2020-21 manuel serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Constant lifting optimization.                                   */
@@ -148,11 +148,11 @@
 		   (unless (isa? expr J2SFun)
 		      (error "cnstlift"
 			 "unexpected function transformation"
-			 (j2s->list stmt)))
+			 (j2s->sexp stmt)))
 		   (values decls expr))
 		(error "cnstlift"
 		   "unexpected function transformation"
-		   (j2s->list stmt))))))
+		   (j2s->sexp stmt))))))
 
    (with-access::J2SLetBlock this (decls nodes rec)
       ;; mark declaration depths
@@ -177,7 +177,7 @@
 				((not (isa? nval J2SFun))
 				 (error "cnstlift"
 				    "unexpected function transformation"
-				    (j2s->list nval)))))))
+				    (j2s->sexp nval)))))))
 		      ((isa? decl J2SDeclInit)
 		       (with-access::J2SDeclInit decl (val)
 			  (set! val (j2s-cnstlift-expression! val vars mode depth verb))))))
@@ -268,8 +268,6 @@
 (define-walk-method (j2s-cnstlift-expression! this::J2SExpr vars mode depth verb)
    (if (and (cell? vars) (pair? (cnst-expression-freevars this depth)))
        (with-access::J2SExpr this (loc type)
-	  ;; MS CARE UTYPE
-	  ;; (let ((decl (J2SLetOptVUtype type '(ref) (gensym '%clift) this)))
 	  (let ((decl (J2SLetOptVtype type '(ref) (gensym '%clift) this)))
 	     (cell-set! verb (cons loc (cell-ref verb)))
 	     (cell-set! vars (cons decl (cell-ref vars)))
@@ -323,6 +321,15 @@
    (cell-ref iscnst))
    
 ;*---------------------------------------------------------------------*/
+;*    cnst-expression ::J2SParen ...                                   */
+;*---------------------------------------------------------------------*/
+(define-walk-method (cnst-expression this::J2SParen iscnst freevars depth)
+   (with-access::J2SParen this (expr)
+      (when (cell-ref iscnst)
+	 (cnst-expression expr iscnst freevars depth)))
+   (cell-ref iscnst))
+   
+;*---------------------------------------------------------------------*/
 ;*    cnst-expression ::J2SBinary ...                                  */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (cnst-expression this::J2SBinary iscnst freevars depth)
@@ -338,7 +345,21 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (cnst-expression this::J2SLiteral iscnst freevars depth)
    (cell-ref iscnst))
-   
+
+;*---------------------------------------------------------------------*/
+;*    cnst-expression ::J2SArray ...                                   */
+;*---------------------------------------------------------------------*/
+(define-walk-method (cnst-expression this::J2SArray iscnst freevars depth)
+   (cell-set! iscnst #f)
+   #f)
+
+;*---------------------------------------------------------------------*/
+;*    cnst-expression ::J2SRegExp ...                                  */
+;*---------------------------------------------------------------------*/
+(define-walk-method (cnst-expression this::J2SRegExp iscnst freevars depth)
+   (cell-set! iscnst #f)
+   #f)
+
 ;*---------------------------------------------------------------------*/
 ;*    cnst-expression ::J2SRef ...                                     */
 ;*---------------------------------------------------------------------*/
@@ -349,10 +370,11 @@
    
    (when (cell-ref iscnst)
       (with-access::J2SRef this (decl loc)
-	 
-	 (with-access::J2SDecl decl (scope (vdepth %info))
+	 (with-access::J2SDecl decl (scope escape (vdepth %info))
 	    (cond
 	       ((decl-usage-has? decl '(assig))
+		(cell-set! iscnst #f))
+	       (escape
 		(cell-set! iscnst #f))
 	       ((not (depth? vdepth))
 		(cell-set! iscnst #f))
@@ -363,6 +385,15 @@
 		     (not (memq decl (cell-ref freevars))))
 		(cell-set! freevars (cons decl (cell-ref freevars))))))))
    (cell-ref iscnst))
+
+;*---------------------------------------------------------------------*/
+;*    cnst-expression ::J2SThis ...                                    */
+;*---------------------------------------------------------------------*/
+(define-walk-method (cnst-expression this::J2SThis iscnst freevars depth)
+   (with-access::J2SThis this (decl)
+      (when (decl-usage-has? decl '(assig eval))
+	 (cell-set! iscnst #f))
+      (cell-ref iscnst)))
 
 ;*---------------------------------------------------------------------*/
 ;*    cnst-expression ::J2SAccess ...                                  */
@@ -396,9 +427,10 @@
       #f))
    
 ;*---------------------------------------------------------------------*/
-;*    cnst-expression ::J2SThis ...                                    */
+;*    cnst-expression ::J2SCacheCheck ...                              */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (cnst-expression this::J2SThis iscnst freevars depth)
-   (cell-set! iscnst #f)
-   #f)
-
+(define-walk-method (cnst-expression this::J2SCacheCheck iscnst freevars depth)
+   (with-access::J2SCacheCheck this (obj owner)
+      (when (cnst-expression obj iscnst freevars depth)
+	 (isa? owner J2SRecord))))
+   

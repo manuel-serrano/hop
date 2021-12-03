@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 25 07:41:22 2015                          */
-;*    Last change :  Fri Jul 30 19:48:23 2021 (serrano)                */
+;*    Last change :  Sat Nov 13 09:22:20 2021 (serrano)                */
 ;*    Copyright   :  2015-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Narrow local variable scopes                                     */
@@ -24,7 +24,8 @@
 	   __js2scheme_utils
 	   __js2scheme_compile
 	   __js2scheme_stage
-	   __js2scheme_lexer)
+	   __js2scheme_lexer
+	   __js2scheme_classutils)
 
    (static (class J2SNarrowInfo
 	      (deffun::obj (default #f))
@@ -84,6 +85,10 @@
 			 ((isa? o J2SDeclFun)
 			  (with-access::J2SDeclFun o (val)
 			     (j2s-narrow-fun! val)))
+			 ((isa? o J2SDeclClass)
+			  (with-access::J2SDeclClass o (val)
+			     (when (isa? val J2SDeclClass)
+				(j2s-narrow-class! val))))
 			 ((isa? o J2SDecl)
 			  (j2s-mark-unnarrowable o))))
 	    decls)
@@ -126,15 +131,6 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-blockify! this::J2SBlock)
    
-   (define (is-init? n::J2SNode)
-      (when (isa? n J2SSeq)
-	 (with-access::J2SSeq n (nodes)
-	    (every (lambda (s)
-		      (when (isa? s J2SStmtExpr)
-			 (with-access::J2SStmtExpr s (expr)
-			    (isa? expr J2SInit))))
-	       nodes))))
-
    (with-access::J2SBlock this (nodes)
       (let loop ((nodes nodes)
 		 (prev #f))
@@ -142,7 +138,7 @@
 	    ((null? nodes)
 	     this)
 	    (prev
-	     (if (is-init? (car nodes))
+	     (if (inits? (car nodes))
 		 (with-access::J2SNode (car nodes) (loc)
 		    (let ((nseq (j2s-blockify! (J2SBlock*/w-endloc nodes))))
 		       (set-cdr! prev (list nseq))
@@ -152,7 +148,7 @@
 		    (loop (cdr nodes) nodes))))
 	    (else
 	     (set-car! nodes (j2s-blockify! (car nodes)))
-	     (if (is-init? (car nodes))
+	     (if (inits? (car nodes))
 		 (loop (cdr nodes) #f)
 		 (loop (cdr nodes) nodes)))))))
 
@@ -191,7 +187,7 @@
 ;*    j2s-narrow-fun! ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (j2s-narrow-fun! o::J2SFun)
-   (with-access::J2SFun o (body loc)
+   (with-access::J2SFun o (body loc name)
       ;; find the variables used but not initialized
       (when #f 
 	 (j2s-narrow-fun/w-init! o))
@@ -203,6 +199,16 @@
       (j2s-mark-narrowable body '() #f o (make-cell #f))
       ;; narrow the function body
       (set! body (j2s-lift-inits! (j2s-narrow-body! body)))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-narrow-class! ...                                            */
+;*---------------------------------------------------------------------*/
+(define (j2s-narrow-class! o::J2SClass)
+   (for-each (lambda (el)
+		(with-access::J2SClassElement el (prop)
+		   (with-access::J2SMethodPropertyInit prop (val)
+		      (j2s-narrow-fun! val))))
+      (j2s-class-methods o)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-find-init-blocks! ...                                        */
@@ -236,7 +242,6 @@
 	 (j2s-find-init-blocks rhs block fun)
 	 (when (isa? lhs J2SRef)
 	    (with-access::J2SRef lhs (decl)
-	       ;;(unless (or (j2s-let? decl) (j2s-param? decl))
 	       (unless (j2s-param? decl)
 		  ;; skip let/const declarations
 		  (with-access::J2SDecl decl (%info %%dump binder id)
@@ -297,6 +302,12 @@
       (with-access::J2SBlock this (nodes)
 	 (for-each (lambda (b) (j2s-mark-narrowable b nblocks inloop fun yield))
 	    nodes))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-mark-narrowable ::J2SLetBlock ...                            */
+;*---------------------------------------------------------------------*/
+(define-walk-method (j2s-mark-narrowable this::J2SLetBlock blocks inloop fun yield)
+   (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-mark-narrowable ::J2SRef ...                                 */
@@ -490,7 +501,7 @@
 (define-walk-method (j2s-lift-inits! this::J2SLetBlock)
    
    (define (lift? node::J2SNode decls)
-      ;; lift everything init that is not an initialization of one decls
+      ;; lift every init that is not an initialization of one decls
       (or (not (isa? node J2SStmtExpr))
 	  (with-access::J2SStmtExpr node (expr)
 	     (or (not (isa? expr J2SInit))
@@ -764,4 +775,16 @@
 	  (with-access::J2SRef lhs (decl)
 	     (J2SSequence (duplicate::J2SInit this) (J2SRef decl))))
        (call-default-walker)))
-   
+
+;*---------------------------------------------------------------------*/
+;*    inits? ...                                                       */
+;*---------------------------------------------------------------------*/
+(define (inits? this::J2SNode)
+   (when (isa? this J2SSeq)
+      (with-access::J2SSeq this (nodes)
+	 (every (lambda (s)
+		   (when (isa? s J2SStmtExpr)
+		      (with-access::J2SStmtExpr s (expr)
+			 (when (isa? expr J2SInit)
+			    expr))))
+	    nodes))))

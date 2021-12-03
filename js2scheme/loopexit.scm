@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Sun May  9 17:16:38 2021 (serrano)                */
+;*    Last change :  Fri Oct  1 16:42:59 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript Loopexit -> bind-exit                                 */
@@ -133,7 +133,7 @@
 		    (instantiate::&io-parse-error
 		       (proc "js-loopexit")
 		       (msg (format "Unbound continue \"~a\"" id))
-		       (obj (j2s->list this))
+		       (obj (j2s->sexp this))
 		       (fname (cadr loc))
 		       (location (caddr loc)))))))
 	 ((find (lambda (x) (isa? x J2SLoop)) targets)
@@ -148,7 +148,7 @@
 	     (instantiate::&io-parse-error
 		(proc "js-loopexit")
 		(msg (format "Out of loop continue \"~a\"" id))
-		(obj (j2s->list this))
+		(obj (j2s->sexp this))
 		(fname (cadr loc))
 		(location (caddr loc)))))))
    this)
@@ -164,7 +164,7 @@
 	     (instantiate::&io-parse-error
 		(proc "js-loopexit")
 		(msg "Out of loop break")
-		(obj (j2s->list this))
+		(obj (j2s->sexp this))
 		(fname (cadr loc))
 		(location (caddr loc)))))
 	 (id
@@ -177,7 +177,7 @@
 		    (instantiate::&io-parse-error
 		       (proc "js-loopexit")
 		       (msg (format "Unbound break \"~a\"" id))
-		       (obj (j2s->list this))
+		       (obj (j2s->sexp this))
 		       (fname (cadr loc))
 		       (location (caddr loc)))))))
 	 (else

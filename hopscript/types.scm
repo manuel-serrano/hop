@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Wed Aug 11 16:26:15 2021 (serrano)                */
+;*    Last change :  Tue Nov 30 08:09:52 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -32,11 +32,12 @@
 
    (extern (include "bglhopscript_malloc.h"))
 
-   (extern ($js-init-jsalloc::int (::uint32)
+   (extern (macro $pointer?::bool (::obj) "POINTERP")
+	   ($js-init-jsalloc::int (::uint32)
 	      "bgl_init_jsalloc")
 	   ($js-init-worker-jsalloc::int ()
 	      "bgl_init_worker_jsalloc")
-	   ($js-init-jsalloc-proxy::int (::obj ::obj)
+	   ($js-init-jsalloc-proxy::int (::obj ::obj ::uint32)
 	      "bgl_init_jsalloc_proxy")
 	   ($js-init-jsalloc-function::int (::JsConstructMap ::JsConstructMap
 					      ::obj ::obj
@@ -67,14 +68,16 @@
 	      "bgl_make_jsprocedure")
 	   ($js-make-stringliteralascii::JsStringLiteralASCII (::uint32 ::obj ::obj)
 	      "bgl_make_jsstringliteralascii")
-	   (macro $jsobject-elements-inline?::bool (::JsObject)
-		  "HOP_JSOBJECT_ELEMENTS_INLINEP")
-	   (macro $jsobject-vector-inline?::bool (::JsArray)
+	   ($js-make-jsgenerator::JsGenerator (::obj ::obj ::long ::obj ::uint32)
+	      "bgl_make_jsgenerator")
+	   (macro $js-object-inline-elements::vector (::JsObject)
+		  "HOP_JSOBJECT_INLINE_ELEMENTS")
+	   (macro $js-object-vector-inline?::bool (::JsArray)
 		  "HOP_JSARRAY_VECTOR_INLINEP")
 	   (macro $bgl-object-class-set!::long (::JsObject ::long)
 		  "BGL_OBJECT_CLASS_NUM_SET")
-	   (macro $bgl-class-index::long (::class)
-		  "BGL_CLASS_INDEX"))
+	   (macro $bgl-class-num::long (::class)
+		  "BGL_CLASS_NUM"))
    
    (export (class WorkerHopThread::hopthread
 	      (%loop (default #f))
@@ -123,13 +126,15 @@
 	   
 	   (final-class JsPropertyCache
 	      (js-property-cache-init!)
-	      (imap::obj (default #f))
-	      (emap::obj (default #f))
-	      (cmap::obj (default #f))
-	      (pmap::obj (default (js-not-a-pmap)))
-	      (nmap::obj (default (js-not-a-pmap)))
-	      (amap::obj (default #t))
-	      (xmap::obj (default (js-not-a-pmap)))
+	      (imap::JsConstructMap (default (js-not-a-pmap)))
+	      (emap::JsConstructMap (default (js-not-a-pmap)))
+	      (cmap::JsConstructMap (default (js-not-a-pmap)))
+	      (pmap::JsConstructMap (default (js-not-a-pmap)))
+	      (nmap::JsConstructMap (default (js-not-a-pmap)))
+	      (amap::JsConstructMap (default (js-not-a-pmap)))
+	      (xmap::JsConstructMap (default (js-not-a-pmap)))
+	      (nextemap::obj (default (js-not-a-pmap)))
+	      (nextnmap::obj (default (js-not-a-pmap)))
 	      (iindex::long (default -1))
 	      (eindex::long (default -1))
 	      (cindex::long (default -1))
@@ -157,7 +162,7 @@
 	      (cntvtable::uint32 (default #u32:0)))
 	   
 	   (final-class JsConstructMap
-	      (%id::uint32 read-only (default (gencmapid)))
+	      (%id::uint32 read-only)
 	      (lock read-only (default (make-spinlock "JsConstructMap")))
 	      (props::vector (default '#()))
 	      (methods::vector (default '#()))
@@ -166,16 +171,11 @@
 	      (detachlocs::pair-nil (default '()))
 	      (ctor::obj (default #f))
 	      (single::bool read-only (default #f))
-	      (vlen::long (default 0))
 	      (vtable::vector (default '#()))
-	      (vcache::obj (default #f))
-	      (sibling (default #f))
-	      (inline::bool read-only (default #f))
+	      (mptable::vector (default '#()))
+	      (mntable::vector (default '#()))
 	      (parent::JsConstructMap (default (class-nil JsConstructMap))))
 
-	   (final-class JsConstructMapSibling
-	      (sibling (default #f)))
-	   
 	   ;; Literal strings that are not plain Scheme strings.
 	   ;; For performance sake they are trees.
 	   (abstract-class JsStringLiteral
@@ -196,7 +196,7 @@
 	      (%idxutf8::long (default 0))
 	      (%idxstr::long (default 0))
 	      (%culen::uint32 (default #u32:0)))
-	   
+
 	   (class JsObject
 	      (cmap::JsConstructMap (default (js-not-a-cmap)))
 	      (elements (default '#())))
@@ -275,7 +275,8 @@
 	      (svc::obj read-only))
 
 	   (class JsClass::JsFunction
-	      (constructor::procedure read-only))
+	      (constructor::procedure read-only)
+	      (clazz read-only (default #f)))
 	   
 	   (class JsHopFrame::JsObject
 	      (%this read-only)
@@ -342,8 +343,16 @@
 	      %this
 	      (%name (default (gensym 'promise))))
 	   
-	   (class JsGenerator::JsObject
-	      %next)
+	   (final-class JsGenerator::JsObject
+	      %next
+	      (%env::vector read-only))
+
+	   (abstract-class JsYield::JsObject
+	      ;; only used for stack allocation, (see public_expd.sch)
+	      %vheader
+	      %vlength::ulong
+	      %vobj0
+	      %vobj1)
 
 	   (final-class JsProxy::JsObject
 	      (handler::JsObject (default (class-nil JsObject)))
@@ -355,7 +364,7 @@
 	      (mapdata read-only)
 	      vec::vector
 	      cursor::long)
-	   
+
 	   (class JsGlobalObject::JsObject
 	      (name read-only)
 	      (worker::obj (default #f))
@@ -392,6 +401,7 @@
 	      (js-math::JsObject (default (class-nil JsObject)))
 	      (js-regexp::JsFunction (default (class-nil JsFunction)))
 	      (js-regexp-prototype::JsRegExp (default (class-nil JsRegExp)))
+	      (js-regexp-last-match::vector (default (make-vector 3)))
 	      (js-date::JsFunction (default (class-nil JsFunction)))
 	      (js-date-prototype::JsDate (default (class-nil JsDate)))
 	      (js-json::JsObject (default (class-nil JsObject)))
@@ -451,6 +461,7 @@
 	      (js-number-pcache::vector (default '#()))
 	      (js-json-pcache::vector (default '#()))
 	      (js-proxy-pcache::vector (default '#()))
+	      (js-generator-pcache::vector (default '#()))
 	      ;; cmaps
 	      (js-initial-cmap (default (class-nil JsConstructMap)))
 	      (js-arguments-cmap (default (class-nil JsConstructMap)))
@@ -463,6 +474,7 @@
 	      (js-function-writable-cmap (default (class-nil JsConstructMap)))
 	      (js-function-writable-strict-cmap (default (class-nil JsConstructMap)))
 	      (js-function-prototype-cmap (default (class-nil JsConstructMap)))
+	      (js-generator-cmap (default (class-nil JsConstructMap)))
 	      (js-yield-cmap (default (class-nil JsConstructMap)))
 	      (js-regexp-cmap (default (class-nil JsConstructMap)))
 	      (js-regexp-exec-cmap (default (class-nil JsConstructMap)))
@@ -481,16 +493,23 @@
 	   (inline js-make-jsrecord::JsObject ::int ::obj ::obj ::obj)
 	   (inline js-make-jsconstructmap::JsConstructMap
 	      #!key (%id (gencmapid))
-	      inline single ctor
+	      single ctor
 	      (methods '#()) (props '#()))
+	   
+	   (js-jsconstructmap-size::long ::JsConstructMap)
 
 	   (inline js-object-default-mode::uint32)
+	   (inline js-globalobject-default-mode::uint32)
+	   (inline js-proxy-default-mode::uint32)
 	   (inline js-record-default-mode::uint32)
 	   (inline js-array-default-mode::uint32)
 	   (inline js-vector-default-mode::uint32)
 	   (inline js-function-default-mode::uint32)
 	   (inline js-procedure-default-mode::uint32)
 	   (inline js-procedure-hopscript-mode::uint32)
+	   (inline js-arraybuffer-default-mode::uint32)
+	   (inline js-typedarray-default-mode::uint32)
+	   (inline js-dataview-default-mode::uint32)
 	   (inline js-jsstring-default-ascii-mode::uint32)
 	   (inline js-jsstring-normalized-ascii-mode::uint32)
 	   (inline js-jsstring-default-index-mode::uint32)
@@ -498,6 +517,7 @@
 	   (inline js-jsstring-default-buffer-mode::uint32)
 	   (inline js-jsstring-default-utf8-mode::uint32)
 	   (inline js-jsstring-normalized-utf8-mode)
+	   (inline js-jsstring-normalized-private-mode::uint32)
 	   
 	   (inline js-jsstring-normalized-mode::uint32)
 	   (inline js-jsstring-normalized-index-mode::uint32)
@@ -522,8 +542,11 @@
 	   (inline js-object-mode-hasinstance?::bool ::JsObject)
 	   (inline js-object-mode-hasinstance-set! ::JsObject ::bool)
 	   
-	   (inline js-object-mode-holey?::bool ::JsObject)
-	   (inline js-object-mode-holey-set! ::JsObject ::bool)
+	   (inline js-object-mode-arrayinline?::bool ::JsObject)
+	   (inline js-object-mode-arrayinline-set! ::JsObject ::bool)
+	   
+	   (inline js-object-mode-arrayholey?::bool ::JsObject)
+	   (inline js-object-mode-arrayholey-set! ::JsObject ::bool)
 	   
 	   (inline js-object-mode-plain?::bool ::JsObject)
 	   (inline js-object-mode-plain-set! ::JsObject ::bool)
@@ -556,6 +579,7 @@
 	   (inline JS-OBJECT-MODE-INLINE::uint32)
 	   (inline JS-OBJECT-MODE-ISPROTOOF::uint32)
 	   (inline JS-OBJECT-MODE-HASINSTANCE::uint32)
+	   (inline JS-OBJECT-MODE-JSARRAYINLINE::uint32)
 	   (inline JS-OBJECT-MODE-ENUMERABLE::uint32)
 	   (inline JS-OBJECT-MODE-HASNUMERALPROP::uint32)
 	   (inline JS-OBJECT-MODE-PLAIN::uint32)
@@ -571,6 +595,7 @@
 	   (inline JS-OBJECT-MODE-JSSTRINGUTF8::uint32)
 	   (inline JS-OBJECT-MODE-JSSTRINGSUBSTRING::uint32)
 	   (inline JS-OBJECT-MODE-JSSTRINGBUFFER::uint32)
+	   (inline JS-OBJECT-MODE-JSSTRINGPRIVATE::uint32)
 
 	   (inline JS-REGEXP-FLAG-IGNORECASE::uint32)
 	   (inline JS-REGEXP-FLAG-MULTILINE::uint32)
@@ -582,9 +607,18 @@
 	   (inline js-regexp-flags-global?::bool ::uint32)
 	   (inline js-regexp-flags-unicode?::bool ::uint32)
 
-	   (inline js-object-inline-elements?::bool ::JsObject)
+	   (inline js-object-inline-elements::vector ::JsObject)
+	   (inline js-object-alloc-elements::vector ::JsObject)	   
+	   (inline js-object-noinline-elements::vector ::JsObject)
+	   (inline js-object-inline-length::long ::JsObject)
+	   (inline js-object-noinline-length::long ::JsObject)
+	   (inline js-object-length::long ::JsObject)
 	   (inline js-object-inline-ref ::JsObject ::long)
 	   (inline js-object-inline-set! ::JsObject ::long ::obj)
+	   (inline js-object-noinline-ref ::JsObject ::long)
+	   (inline js-object-noinline-set! ::JsObject ::long ::obj)
+	   (inline js-object-ref ::JsObject ::long)
+	   (inline js-object-set! ::JsObject ::long ::obj)
 
 	   (inline js-vector-inline-ref ::JsArray ::long)
 	   (inline js-vector-inline-set! ::JsArray ::long ::obj)
@@ -611,12 +645,13 @@
 	   (generic js-typedarray-ref::procedure ::JsTypedArray)
 	   (generic js-typedarray-set!::procedure ::JsTypedArray)
 	   
-	   (js-cmap-check-inline cmap)
 	   *js-not-a-cmap*
 	   *js-not-a-pmap*
+	   *js-uncachable-pmap*
 	   *js-not-a-string-cache*
 	   (inline js-not-a-cmap::JsConstructMap)
 	   (inline js-not-a-pmap::JsConstructMap)
+	   (inline js-uncachable-pmap::JsConstructMap)
 	   (inline js-not-a-index::long)
 	   (inline js-not-a-string-cache::pair)
 	   
@@ -631,6 +666,7 @@
 	   (inline js-jsstring-index?::bool ::JsStringLiteral)
 	   (inline js-jsstring-substring?::bool  ::JsStringLiteral)
 	   (inline js-jsstring-buffer?::bool  ::JsStringLiteral)
+	   (inline js-jsstring-private?::bool  ::JsStringLiteral)
 	   (inline js-jsstring-utf8?::bool ::JsStringLiteral)
 	   (inline js-jsstring-normalized?::bool ::JsStringLiteral)
 	   (inline js-jsstring-normalized! ::JsStringLiteral)
@@ -647,6 +683,11 @@
 	   (inline js-proxy?::bool ::obj)
 	   (js-proxy-array?::bool ::obj)
 	   (inline js-proxy-function?::bool ::obj)
+	   (inline js-map?::bool ::obj)
+	   (inline js-weakmap?::bool ::obj)
+	   (inline js-set?::bool ::obj)
+	   (inline js-weakset?::bool ::obj)
+	   
 
 	   (inline js-object-cmap ::JsObject)
 
@@ -666,12 +707,20 @@
 	   
 	   (inline jsindex12-max::uint32)
 	   
-	   (gencmapid::uint32))
+	   (gencmapid::uint32)
+
+	   (inline js-generator-inline-ref ::JsGenerator ::long)
+	   (inline js-generator-inline-set! ::JsGenerator ::long ::obj))
    
    (pragma (js-not-a-cmap side-effect-free)
 	   (js-null side-effect-free)
 	   (js-undefined side-effect-free)
 	   (js-object-default-mode side-effect-free)
+	   (js-globalobject-default-mode side-effect-free)
+	   (js-proxy-default-mode side-effect-free)
+	   (js-array-default-mode side-effect-free)
+	   (js-function-default-mode side-effect-free)
+	   (js-procedure-default-mode side-effect-free)
 	   (js-record-default-mode side-effect-free))
    
    (cond-expand
@@ -696,15 +745,15 @@
 (define-inline (js-make-jsobject constrsize constrmap __proto__)
    (let ((mode (js-object-default-mode)))
       (cond-expand
-	 ((and bigloo-c (not devel) (not debug))
+	 ((and bigloo-c (not disable-inline))
 	  ($js-make-jsobject constrsize constrmap __proto__ mode))
 	 (else
 	  (let ((o (instantiate::JsObject
 		      (cmap constrmap)
 		      (elements (make-vector constrsize (js-undefined))))))
 	     (js-object-proto-set! o __proto__)
-	     (js-object-mode-set! o mode)
-	     (js-object-mode-inline-set! o #f)
+	     (js-object-mode-set! o
+		(bit-andu32 mode (bit-notu32 (JS-OBJECT-MODE-INLINE))))
 	     o)))))
 
 ;*---------------------------------------------------------------------*/
@@ -713,7 +762,7 @@
 (define-inline (js-make-jsrecord constrsize constrmap __proto__ clazz)
    (let ((mode (js-record-default-mode)))
       (let ((o ($js-make-jsobject constrsize constrmap __proto__ mode)))
-	 ($bgl-object-class-set! o ($bgl-class-index clazz))
+	 ($bgl-object-class-set! o ($bgl-class-num clazz))
 	 (js-object-mode-set! o mode)
 	 o)))
 	   
@@ -722,19 +771,22 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-make-jsconstructmap::JsConstructMap
 		  #!key (%id (gencmapid))
-		  inline single ctor
+		  single ctor
 		  (methods '#()) (props '#()))
-   (let ((inl (cond-expand
-		 ((and bigloo-c (not devel) (not debug)) inline)
-		 (else #f))))
-      (instantiate::JsConstructMap
-	 (%id %id)
-	 (single single)
-	 (methods methods)
-	 (props props)
-	 (inline inl)
-	 (ctor ctor))))
-   
+   (instantiate::JsConstructMap
+      (%id %id)
+      (single single)
+      (methods methods)
+      (props props)
+      (ctor ctor)))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsconstructmap-size ...                                       */
+;*---------------------------------------------------------------------*/
+(define (js-jsconstructmap-size::long this::JsConstructMap)
+   (with-access::JsConstructMap this (props)
+      (vector-length props)))
+
 ;*---------------------------------------------------------------------*/
 ;*    js-object-default-mode ...                                       */
 ;*---------------------------------------------------------------------*/
@@ -746,6 +798,14 @@
 	       (bit-oru32 (JS-OBJECT-MODE-ENUMERABLE)
 		  (JS-OBJECT-MODE-HASNUMERALPROP)))))))
 
+(define-inline (js-globalobject-default-mode)
+   (bit-andu32 (js-object-default-mode)
+      (bit-notu32 (JS-OBJECT-MODE-INLINE))))
+
+(define-inline (js-proxy-default-mode)
+   (bit-andu32 (js-object-default-mode)
+      (bit-notu32 (JS-OBJECT-MODE-INLINE))))
+
 (define-inline (js-record-default-mode)
    (bit-oru32 (JS-OBJECT-MODE-SEALED)
       (bit-oru32 (JS-OBJECT-MODE-PLAIN)
@@ -754,12 +814,14 @@
 	       (JS-OBJECT-MODE-ENUMERABLE))))))
 
 (define-inline (js-array-default-mode)
-   (bit-oru32 (js-object-default-mode)
-      (bit-oru32 (JS-OBJECT-MODE-JSARRAYHOLEY)
-	 (bit-oru32 (JS-OBJECT-MODE-JSOBJECTTAG)
-	    (bit-oru32 (JS-OBJECT-MODE-JSARRAYTAG)
-	       (bit-oru32 (JS-OBJECT-MODE-ENUMERABLE)
-		  (JS-OBJECT-MODE-HASNUMERALPROP)))))))
+   (bit-oru32 (bit-andu32 (js-object-default-mode)
+		 (bit-notu32 (JS-OBJECT-MODE-INLINE)))
+      (bit-oru32 (JS-OBJECT-MODE-JSARRAYINLINE)
+	 (bit-oru32 (JS-OBJECT-MODE-JSARRAYHOLEY)
+	    (bit-oru32 (JS-OBJECT-MODE-JSOBJECTTAG)
+	       (bit-oru32 (JS-OBJECT-MODE-JSARRAYTAG)
+		  (bit-oru32 (JS-OBJECT-MODE-ENUMERABLE)
+		     (JS-OBJECT-MODE-HASNUMERALPROP))))))))
 
 (define-inline (js-vector-default-mode)
    (bit-oru32 (JS-OBJECT-MODE-JSVECTORTAG)
@@ -800,6 +862,11 @@
    (bit-oru32 (js-jsstring-default-utf8-mode)
       (js-jsstring-normalized-mode)))
 
+(define-inline (js-jsstring-normalized-private-mode)
+   (bit-oru32 (JS-OBJECT-MODE-JSSTRINGTAG)
+      (bit-oru32 (JS-OBJECT-MODE-JSSTRINGPRIVATE)
+	 (JS-OBJECT-MODE-JSSTRINGNORMALIZED))))
+
 (define-inline (js-jsstring-normalized-mode)
    (bit-oru32 (JS-OBJECT-MODE-JSSTRINGTAG)
       (JS-OBJECT-MODE-JSSTRINGNORMALIZED)))
@@ -815,25 +882,35 @@
 (define-inline (js-function-default-mode)
    (bit-oru32 (JS-OBJECT-MODE-EXTENSIBLE)
       (bit-oru32 (JS-OBJECT-MODE-PLAIN)
-	 (bit-oru32 (JS-OBJECT-MODE-INLINE)
-	    (bit-oru32 (JS-OBJECT-MODE-JSOBJECTTAG)
-	       (bit-oru32 (JS-OBJECT-MODE-JSFUNCTIONTAG)
-		  (bit-oru32 (JS-OBJECT-MODE-JSPROCEDURETAG)
-		     (bit-oru32 (JS-OBJECT-MODE-ENUMERABLE)
-			(JS-OBJECT-MODE-HASNUMERALPROP)))))))))
-
-(define-inline (js-procedure-default-mode)
-   (bit-oru32 (JS-OBJECT-MODE-EXTENSIBLE)
-      (bit-oru32 (JS-OBJECT-MODE-PLAIN)
-	 (bit-oru32 (JS-OBJECT-MODE-INLINE)
-	    (bit-oru32 (JS-OBJECT-MODE-JSOBJECTTAG)
+	 (bit-oru32 (JS-OBJECT-MODE-JSOBJECTTAG)
+	    (bit-oru32 (JS-OBJECT-MODE-JSFUNCTIONTAG)
 	       (bit-oru32 (JS-OBJECT-MODE-JSPROCEDURETAG)
 		  (bit-oru32 (JS-OBJECT-MODE-ENUMERABLE)
 		     (JS-OBJECT-MODE-HASNUMERALPROP))))))))
 
+(define-inline (js-procedure-default-mode)
+   (bit-oru32 (JS-OBJECT-MODE-EXTENSIBLE)
+      (bit-oru32 (JS-OBJECT-MODE-PLAIN)
+	 (bit-oru32 (JS-OBJECT-MODE-JSOBJECTTAG)
+	    (bit-oru32 (JS-OBJECT-MODE-JSPROCEDURETAG)
+	       (bit-oru32 (JS-OBJECT-MODE-ENUMERABLE)
+		  (JS-OBJECT-MODE-HASNUMERALPROP)))))))
+
 (define-inline (js-procedure-hopscript-mode)
    (bit-oru32 (js-procedure-default-mode)
       (JS-OBJECT-MODE-JSPROCEDUREHOPSCRIPT)))
+
+(define-inline (js-arraybuffer-default-mode)
+   (bit-andu32 (js-object-default-mode)
+      (bit-notu32 (JS-OBJECT-MODE-INLINE))))
+
+(define-inline (js-typedarray-default-mode)
+   (bit-andu32 (js-object-default-mode)
+      (bit-notu32 (JS-OBJECT-MODE-INLINE))))
+
+(define-inline (js-dataview-default-mode)
+   (bit-andu32 (js-object-default-mode)
+      (bit-notu32 (JS-OBJECT-MODE-INLINE))))
 
 ;*---------------------------------------------------------------------*/
 ;*    Object header tag (max size 1<<15==32768)                        */
@@ -843,7 +920,7 @@
 ;;     4: JSOBJECTTAG (must be !)
 ;;     8: INLINE
 ;;    16: ISPROTOOF
-;;    32: HASINSTANCE
+;;    32: HASINSTANCE, JSARRAYINLINE
 ;;    64: ENUMERABLE
 ;;   128: PLAIN
 ;;   256: HSNUMERALPROP
@@ -851,7 +928,7 @@
 ;;  1024: SEALED, PROXYREVOKED
 ;;  2048: FROZEN
 ;;  4096: JSPROXYFUNCTION, JSPROCEDUREHOPSCRIPT, JSVECTORTAG
-;;  8192: PROCEDURETAG
+;;  8192: JSPROCEDURETAG
 ;; 16384: JSARRAYTAG (must be !)
 ;; 32768: JSARRAYHOLEY (must be !)
 (define-inline (JS-OBJECT-MODE-JSSTRINGTAG) #u32:1)
@@ -873,6 +950,7 @@
 ;; used to mark objects used has __proto__ of others
 (define-inline (JS-OBJECT-MODE-ISPROTOOF) #u32:16)
 (define-inline (JS-OBJECT-MODE-HASINSTANCE) #u32:32)
+(define-inline (JS-OBJECT-MODE-JSARRAYINLINE) #u32:32)
 (define-inline (JS-OBJECT-MODE-ENUMERABLE) #u32:64)
 (define-inline (JS-OBJECT-MODE-PLAIN) #u32:128)
 (define-inline (JS-OBJECT-MODE-HASNUMERALPROP) #u32:256)
@@ -883,6 +961,7 @@
 (define-macro (JS-OBJECT-MODE-INLINE) #u32:8)
 (define-macro (JS-OBJECT-MODE-ISPROTOOF) #u32:16)
 (define-macro (JS-OBJECT-MODE-HASINSTANCE) #u32:32)
+(define-macro (JS-OBJECT-MODE-JSARRAYINLINE) #u32:32)
 (define-macro (JS-OBJECT-MODE-ENUMERABLE) #u32:64)
 (define-macro (JS-OBJECT-MODE-PLAIN) #u32:128)
 (define-macro (JS-OBJECT-MODE-HASNUMERALPROP) #u32:256)
@@ -911,6 +990,7 @@
 (define-inline (JS-OBJECT-MODE-JSSTRINGCACHE) #u32:128)
 (define-inline (JS-OBJECT-MODE-JSSTRINGSUBSTRING) #u32:256)
 (define-inline (JS-OBJECT-MODE-JSSTRINGBUFFER) #u32:512)
+(define-inline (JS-OBJECT-MODE-JSSTRINGPRIVATE) #u32:1024)
 
 (define-macro (JS-OBJECT-MODE-JSSTRINGASCII) #u32:8)
 (define-macro (JS-OBJECT-MODE-JSSTRINGUTF8) #u32:16)
@@ -918,7 +998,7 @@
 (define-macro (JS-OBJECT-MODE-JSSTRINGINDEX) #u32:64)
 (define-macro (JS-OBJECT-MODE-JSSTRINGCACHE) #u32:128)
 (define-macro (JS-OBJECT-MODE-JSSTRINGSUBSTRING) #u32:256)
-(define-macro (JS-OBJECT-MODE-JSSTRINGBUFFER) #u32:512)
+(define-macro (JS-OBJECT-MODE-JSSTRINGPRIVATE) #u32:1024)
 
 (define-inline (js-object-mode-extensible? o)
    (=u32 (bit-andu32 (JS-OBJECT-MODE-EXTENSIBLE) (js-object-mode o))
@@ -986,11 +1066,21 @@
 	  (bit-oru32 (js-object-mode o) (JS-OBJECT-MODE-HASINSTANCE))
 	  (bit-andu32 (js-object-mode o) (bit-notu32 (JS-OBJECT-MODE-HASINSTANCE))))))
 
-(define-inline (js-object-mode-holey? o)
+(define-inline (js-object-mode-arrayinline? o)
+   (=u32 (bit-andu32 (JS-OBJECT-MODE-JSARRAYINLINE) (js-object-mode o))
+      (JS-OBJECT-MODE-JSARRAYINLINE)))
+
+(define-inline (js-object-mode-arrayinline-set! o flag)
+   (js-object-mode-set! o
+      (if flag
+	  (bit-oru32 (js-object-mode o) (JS-OBJECT-MODE-JSARRAYINLINE))
+	  (bit-andu32 (js-object-mode o) (bit-notu32 (JS-OBJECT-MODE-JSARRAYINLINE))))))
+
+(define-inline (js-object-mode-arrayholey? o)
    (=u32 (bit-andu32 (JS-OBJECT-MODE-JSARRAYHOLEY) (js-object-mode o))
       (JS-OBJECT-MODE-JSARRAYHOLEY)))
 
-(define-inline (js-object-mode-holey-set! o flag)
+(define-inline (js-object-mode-arrayholey-set! o flag)
    (js-object-mode-set! o
       (if flag
 	  (bit-oru32 (js-object-mode o) (JS-OBJECT-MODE-JSARRAYHOLEY))
@@ -1077,70 +1167,131 @@
    (>u32 (bit-andu32 flags (JS-REGEXP-FLAG-UNICODE)) #u32:0))
 
 ;*---------------------------------------------------------------------*/
-;*    js-object-inline-elements? ...                                   */
-;*    -------------------------------------------------------------    */
-;*    See bgl_make_jsobject in _bglhopscript.c.                        */
+;*    js-object-inline-elements ...                                    */
 ;*---------------------------------------------------------------------*/
-(define-inline (js-object-inline-elements?::bool o::JsObject)
+(define-inline (js-object-inline-elements o::JsObject)
    (cond-expand
-      ((and bigloo-c (not devel) (not debug))
-       ($jsobject-elements-inline? o))
+      ((and bigloo-c (not disable-inline))
+       (if (js-object-mode-inline? o)
+	   ($js-object-inline-elements o)
+	   '#()))
       (else
-       #f)))
+       '#())))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-noinline-elements ...                                  */
+;*---------------------------------------------------------------------*/
+(define-inline (js-object-noinline-elements o::JsObject)
+   (with-access::JsObject o (elements)
+      elements))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-alloc-elements ...                                     */
+;*    -------------------------------------------------------------    */
+;*    Only to be used to instantiateJsObjectXXX                        */
+;*---------------------------------------------------------------------*/
+(define-inline (js-object-alloc-elements o::JsObject)
+   (cond-expand
+      ((and bigloo-c (not disable-inline))
+       ($js-object-inline-elements o))
+      (else
+       (js-object-elements o))))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-inline-length ...                                      */
+;*---------------------------------------------------------------------*/
+(define-inline (js-object-inline-length o::JsObject)
+   (if (js-object-mode-inline? o)
+       (vector-length (js-object-inline-elements o))
+       0))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-noinline-length ...                                    */
+;*---------------------------------------------------------------------*/
+(define-inline (js-object-noinline-length o::JsObject)
+   (vector-length (js-object-noinline-elements o)))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-length ...                                             */
+;*---------------------------------------------------------------------*/
+(define-inline (js-object-length o::JsObject)
+   (+fx (vector-length (js-object-noinline-elements o))
+      (if (js-object? o)
+	  (vector-length (js-object-inline-elements o))
+	  0)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-inline-ref ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-object-inline-ref o::JsObject idx::long)
    (cond-expand
-      ((and bigloo-c (not devel) (not debug))
+      ((and bigloo-c (not disable-inline) debug)
+       (if (<fx idx (vector-length (js-object-inline-elements o)))
+	   (pragma::obj "VECTOR_REF( BVECTOR( (obj_t)(( ((obj_t *)(&(((BgL_jsobjectz00_bglt)(COBJECT($1)))->BgL_elementsz00))) + 1))), $2 )" o idx)
+	   (begin
+	      (tprint "*** ASSERT ERROR:js-object-inline-ref idx=" idx)
+	      (js-debug-object o))))
+      ((and bigloo-c (not disable-inline))
        (pragma::obj "VECTOR_REF( BVECTOR( (obj_t)(( ((obj_t *)(&(((BgL_jsobjectz00_bglt)(COBJECT($1)))->BgL_elementsz00))) + 1))), $2 )" o idx))
-      ((and bigloo-c debug)
-       (let ((o1 (pragma::obj "VECTOR_REF( BVECTOR( (obj_t)(( ((obj_t *)(&(((BgL_jsobjectz00_bglt)(COBJECT($1)))->BgL_elementsz00))) + 1))), $2 )" o idx))
-	     (o2 (with-access::JsObject o (elements)
-		    (vector-ref elements idx))))
-	  (unless (eq? o1 o2)
-	     (tprint "*** ASSERT ERROR:js-object-inline-ref idx=" idx " inl="
-		(js-object-inline-elements? o))
-	     (js-debug-object o)
-	     (with-access::JsObject o (cmap)
-		(js-cmap-check-inline cmap))
-	     (error "js-object-inline-ref" "not an inline object" (typeof o)))
-	  o2))
       (else
-       (with-access::JsObject o (elements)
-	  (vector-ref elements idx)))))
+       (js-object-noinline-ref o idx))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-inline-set! ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-object-inline-set! o::JsObject idx::long val::obj)
    (cond-expand
-      ((and bigloo-c (not devel) (not debug))
+      ((and bigloo-c debug (not disable-inline))
+       (if (<fx idx (vector-length (js-object-inline-elements o)))
+	   (pragma::obj "VECTOR_SET( BVECTOR( (obj_t)(( ((obj_t *)(&(((BgL_jsobjectz00_bglt)(COBJECT($1)))->BgL_elementsz00))) + 1))), $2, $3 )" o idx val)
+	   (begin
+	      (tprint "*** ASSERT ERROR:js-object-inline-set! idx=" idx)
+	      (js-debug-object o))))
+      ((and bigloo-c (not disable-inline))
        (pragma::obj "VECTOR_SET( BVECTOR( (obj_t)(( ((obj_t *)(&(((BgL_jsobjectz00_bglt)(COBJECT($1)))->BgL_elementsz00))) + 1))), $2, $3 )" o idx val))
-      ((and bigloo-c debug)
-       (let ((o1 (pragma::obj "VECTOR_REF( BVECTOR( (obj_t)(( ((obj_t *)(&(((BgL_jsobjectz00_bglt)(COBJECT($1)))->BgL_elementsz00))) + 1))), $2 )" o idx))
-	     (o2 (with-access::JsObject o (elements)
-		    (vector-ref elements idx))))
-	  (unless (eq? o1 o2)
-	     (tprint "*** ASSERT ERROR:js-object-inline-set! idx=" idx " inl="
-		(js-object-inline-elements? o))
-	     (js-debug-object o)
-	     (with-access::JsObject o (cmap)
-		(js-cmap-check-inline cmap))
-	     (error "js-object-inline-set!" "not an inline object" (typeof o))))
-       (with-access::JsObject o (elements)
-	  (vector-set! elements idx val)))
       (else
-       (with-access::JsObject o (elements)
-	  (vector-set! elements idx val)))))
+       (js-object-noinline-set! o idx val))))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-noinline-ref ...                                       */
+;*---------------------------------------------------------------------*/
+(define-inline (js-object-noinline-ref o::JsObject idx::long)
+   (with-access::JsObject o (elements)
+      (vector-ref elements
+	 (-fx idx (vector-length (js-object-inline-elements o))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-noinline-set! ...                                      */
+;*---------------------------------------------------------------------*/
+(define-inline (js-object-noinline-set! o::JsObject idx::long val::obj)
+   (with-access::JsObject o (elements)
+      (vector-set! elements
+	 (-fx idx (vector-length (js-object-inline-elements o))) val)))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-ref ...                                                */
+;*---------------------------------------------------------------------*/
+(define-inline (js-object-ref o::JsObject idx::long)
+   (let ((ilen (vector-length (js-object-inline-elements o))))
+      (if (<fx idx ilen)
+	  (js-object-inline-ref o idx)
+	  (js-object-noinline-ref o idx))))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-set! ...                                               */
+;*---------------------------------------------------------------------*/
+(define-inline (js-object-set! o::JsObject idx::long val)
+   (let ((ilen (vector-length (js-object-inline-elements o))))
+      (if (<fx idx ilen)
+	  (js-object-inline-set! o idx val)
+	  (js-object-noinline-set! o idx val))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-vector-inline-ref ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-vector-inline-ref o::JsArray idx::long)
    (cond-expand
-      ((and bigloo-c (not devel) (not debug))
+      ((and bigloo-c (not disable-inline))
        (pragma::obj "VECTOR_REF( BVECTOR( (obj_t)(( ((obj_t *)(&(((BgL_jsarrayz00_bglt)(COBJECT($1)))->BgL_vecz00))) + 1))), $2 )" o idx))
       (else
        (with-access::JsArray o (vec)
@@ -1151,7 +1302,7 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-vector-inline-set! o::JsArray idx::long val)
    (cond-expand
-      ((and bigloo-c (not devel) (not debug))
+      ((and bigloo-c (not disable-inline))
        (pragma::obj "VECTOR_SET( BVECTOR( (obj_t)(( ((obj_t *)(&(((BgL_jsarrayz00_bglt)(COBJECT($1)))->BgL_vecz00))) + 1))), $2, $3 )" o idx val))
       (else
        (with-access::JsArray o (vec)
@@ -1448,25 +1599,6 @@
 (define-generic (js-typedarray-set!::procedure a::JsTypedArray))
 
 ;*---------------------------------------------------------------------*/
-;*    js-cmap-check-inline ...                                         */
-;*---------------------------------------------------------------------*/
-(define (js-cmap-check-inline cmap)
-   (with-access::JsConstructMap cmap (%id inline props parent)
-      (if (or (=fx (vector-length props) 0) (not inline))
-	  #t
-	  (let loop ((c parent))
-	     (with-access::JsConstructMap c (parent props inline)
-		(cond
-		   ((=fx (vector-length props) 0)
-		    #t)
-		   ((not inline)
-		    (tprint "*** ASSERT CHECK-CMAP-INLINE failed...")
-		    (js-debug-cmap cmap "cmap=")
-		    (js-debug-cmap c "parent="))
-		   (else
-		    (loop parent))))))))
-	 
-;*---------------------------------------------------------------------*/
 ;*    gencmapid ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (gencmapid)
@@ -1479,6 +1611,12 @@
 (define cmapid 0)
 
 ;*---------------------------------------------------------------------*/
+;*    *js-not-a-vtable* ...                                            */
+;*---------------------------------------------------------------------*/
+(define *js-not-a-vtable*
+   (make-vector 10))
+
+;*---------------------------------------------------------------------*/
 ;*    *js-not-a-cmap* ...                                              */
 ;*---------------------------------------------------------------------*/
 (define *js-not-a-cmap*
@@ -1488,6 +1626,12 @@
 ;*    *js-not-a-pmap* ...                                              */
 ;*---------------------------------------------------------------------*/
 (define *js-not-a-pmap*
+   (js-make-jsconstructmap :%id -1))
+
+;*---------------------------------------------------------------------*/
+;*    *js-uncachable-pmap* ...                                         */
+;*---------------------------------------------------------------------*/
+(define *js-uncachable-pmap*
    (js-make-jsconstructmap :%id -1))
 
 ;*---------------------------------------------------------------------*/
@@ -1509,6 +1653,12 @@
    *js-not-a-pmap*)
 
 ;*---------------------------------------------------------------------*/
+;*    js-uncachable-pmap ...                                           */
+;*---------------------------------------------------------------------*/
+(define-inline (js-uncachable-pmap::JsConstructMap)
+   *js-uncachable-pmap*)
+
+;*---------------------------------------------------------------------*/
 ;*    js-not-a-index ...                                               */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-not-a-index::long)
@@ -1521,10 +1671,18 @@
    *js-not-a-string-cache*)
 
 ;*---------------------------------------------------------------------*/
+;*    js-not-a-vtable ...                                              */
+;*---------------------------------------------------------------------*/
+(define-inline (js-not-a-vtable::vector)
+   *js-not-a-vtable*)
+
+;*---------------------------------------------------------------------*/
 ;*    js-object? ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-object? o)
-   (and (%object? o)
+   (and (cond-expand
+	   ((and bigloo-c bigloo-unsafe) ($pointer? o))
+	   (else (%object? o)))
 	(=u32 (JS-OBJECT-MODE-JSOBJECTTAG)
 	   (bit-andu32 (js-object-mode o) (JS-OBJECT-MODE-JSOBJECTTAG)))))
 
@@ -1592,6 +1750,13 @@
 (define-inline (js-jsstring-buffer? o)
    (=u32 (bit-andu32 (JS-OBJECT-MODE-JSSTRINGBUFFER) (js-object-mode o))
       (JS-OBJECT-MODE-JSSTRINGBUFFER)))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-private? ...                                         */
+;*---------------------------------------------------------------------*/
+(define-inline (js-jsstring-private? o)
+   (=u32 (bit-andu32 (JS-OBJECT-MODE-JSSTRINGPRIVATE) (js-object-mode o))
+      (JS-OBJECT-MODE-JSSTRINGPRIVATE)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-utf8? ...                                            */
@@ -1719,6 +1884,30 @@
 	   #u32:0)))
 
 ;*---------------------------------------------------------------------*/
+;*    js-map? ...                                                      */
+;*---------------------------------------------------------------------*/
+(define-inline (js-map? o)
+   (isa? o JsMap))
+
+;*---------------------------------------------------------------------*/
+;*    js-weakmap? ...                                                  */
+;*---------------------------------------------------------------------*/
+(define-inline (js-weakmap? o)
+   (isa? o JsMap))
+
+;*---------------------------------------------------------------------*/
+;*    js-set? ...                                                      */
+;*---------------------------------------------------------------------*/
+(define-inline (js-set? o)
+   (isa? o JsMap))
+
+;*---------------------------------------------------------------------*/
+;*    js-weakset? ...                                                  */
+;*---------------------------------------------------------------------*/
+(define-inline (js-weakset? o)
+   (isa? o JsMap))
+
+;*---------------------------------------------------------------------*/
 ;*    js-object-cmap ...                                               */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-object-cmap o)
@@ -1784,4 +1973,26 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-proxy-target-set! o t)
    (object-widening-set! o t))
+
+;*---------------------------------------------------------------------*/
+;*    js-generator-inline-ref ...                                      */
+;*---------------------------------------------------------------------*/
+(define-inline (js-generator-inline-ref o::JsGenerator idx::long)
+   (cond-expand
+      ((and bigloo-c (not disable-inline))
+       (pragma::obj "VECTOR_REF( BVECTOR( (obj_t)(( ((obj_t *)(&(((BgL_jsgeneratorz00_bglt)(COBJECT($1)))->BgL_z52envz52))) + 1))), $2 )" o idx))
+      (else
+       (with-access::JsGenerator o (%env)
+	  (vector-ref %env idx)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-generator-inline-set! ...                                     */
+;*---------------------------------------------------------------------*/
+(define-inline (js-generator-inline-set! o::JsGenerator idx::long val::obj)
+   (cond-expand
+      ((and bigloo-c (not disable-inline))
+       (pragma::obj "VECTOR_SET( BVECTOR( (obj_t)(( ((obj_t *)(&(((BgL_jsgeneratorz00_bglt)(COBJECT($1)))->BgL_z52envz52))) + 1))), $2, $3 )" o idx val))
+      (else
+       (with-access::JsGenerator o (%env)
+	  (vector-set! %env idx val)))))
 

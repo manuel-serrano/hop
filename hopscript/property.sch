@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.4.x/hopscript/property.sch            */
+;*    serrano/prgm/project/hop/hop/hopscript/property.sch              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Sun May 16 07:29:27 2021 (serrano)                */
+;*    Last change :  Tue Sep 21 08:24:18 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -51,6 +51,10 @@
    js-pcache-nmap-expander)
 (define-expander js-pcache-xmap
    js-pcache-xmap-expander)
+(define-expander js-pcache-nextemap
+   js-pcache-nextemap-expander)
+(define-expander js-pcache-nextnmap
+   js-pcache-nextnmap-expander)
 (define-expander js-pcache-iindex
    js-pcache-iindex-expander)
 (define-expander js-pcache-eindex
@@ -69,6 +73,15 @@
    js-pcache-owner-expander)
 (define-expander js-pcache-method
    js-pcache-method-expander)
+
+(define-expander js-record-cache-check-proto-method
+   js-record-cache-check-proto-method-expander)
+(define-expander js-record-cmap-cache-check-proto-method
+   js-record-cmap-cache-check-proto-method-expander)
+(define-expander js-object-cache-check-proto-method
+   js-object-cache-check-proto-method-expander)
+(define-expander js-object-cmap-cache-check-proto-method
+   js-object-cmap-cache-check-proto-method-expander)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-getprototypeof ...                                            */
@@ -123,7 +136,9 @@
    js-method-jsobject-call-name/cache-expander)
 (define-expander js-method-non-jsobject-call-name
    js-method-non-jsobject-call-name-expander)
-		    
+(define-expander js-method-jsrecord-call-index
+   js-method-jsrecord-call-index-expander)
+
 ;*---------------------------------------------------------------------*/
 ;*    descr ...                                                        */
 ;*---------------------------------------------------------------------*/
@@ -136,6 +151,7 @@
 (define-inline (flags-enumerable) 2)
 (define-inline (flags-configurable) 4)
 (define-inline (flags-accessor) 8)
+(define-inline (flags-inline) 16)
 
 (define (flags-writable? f)
    (=fx (bit-and f (flags-writable)) (flags-writable)))
@@ -149,19 +165,23 @@
 (define (flags-accessor? f)
    (=fx (bit-and f (flags-accessor)) (flags-accessor)))
 
+(define (flags-inline? f)
+   (=fx (bit-and f (flags-inline)) (flags-inline)))
+
 ;*---------------------------------------------------------------------*/
 ;*    property-flags ...                                               */
 ;*---------------------------------------------------------------------*/
-(define-macro (property-flags writable enumerable configurable accessor)
+(define-macro (property-flags writable enumerable configurable accessor inline)
    `(bit-or (if ,writable (flags-writable) 0)
        (bit-or (if ,enumerable (flags-enumerable) 0)
 	  (bit-or (if ,configurable (flags-configurable) 0)
-	     (if ,accessor (flags-accessor) 0)))))
+	     (bit-or (if ,accessor (flags-accessor) 0)
+		(if ,inline (flags-inline) 0))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    property-flags-default ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-macro (property-flags-default)
-   '(property-flags #t #t #t #f))
+   '(property-flags #t #t #t #f #f))
 
 	   

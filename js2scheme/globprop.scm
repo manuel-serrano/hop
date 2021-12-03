@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Tue Aug 24 14:29:31 2021 (serrano)                */
+;*    Last change :  Tue Oct 26 15:04:52 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Global properties optimization (constant propagation).           */
@@ -88,11 +88,11 @@
    (when (isa? this J2SProgram)
       (with-access::J2SProgram this (nodes decls direct-eval)
 	 (unless direct-eval
-	    (let ((gcnsts (collect-globconst* this)))
+	    (let ((gcnsts (collect-globconst* this args)))
 	       (when (pair? gcnsts)
 		  ;; propagate the constants
-		  (collect-globprops this)
-		  (collect-globprops-toplevel! this)
+		  (collect-globprops this args)
+		  (collect-globprops-toplevel! this args)
 		  (rewrite-accesses! this)
 		  (let ((ndecls (append-map globprop-const gcnsts)))
 		     (set! decls (append decls ndecls))
@@ -152,19 +152,19 @@
 ;*    Collect all the global variables that are initialized but        */
 ;*    never assigned.                                                  */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (collect-globconst* this::J2SNode)
+(define-walk-method (collect-globconst* this::J2SNode ctx)
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
 ;*    collect-globconst* ::J2SDecl ...                                 */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (collect-globconst* this::J2SDecl)
+(define-walk-method (collect-globconst* this::J2SDecl ctx)
    '())
 
 ;*---------------------------------------------------------------------*/
 ;*    collect-globconst* ::J2SInit ...                                 */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (collect-globconst* this::J2SInit)
+(define-walk-method (collect-globconst* this::J2SInit ctx)
    (with-access::J2SInit this (lhs rhs)
       ;; no need to scan rhs as we are only looking for variable decls/inits
       (if (isa? lhs J2SRef)
@@ -181,7 +181,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    collect-globconst* ::J2SDeclInit ...                             */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (collect-globconst* this::J2SDeclInit)
+(define-walk-method (collect-globconst* this::J2SDeclInit ctx)
    (with-access::J2SDeclInit this (val %info)
       (if (and (not (decl-usage-has? this '(assig))) (constant-object? val))
 	  (begin
@@ -192,13 +192,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    collect-globconst* ::J2SFun ...                                  */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (collect-globconst* this::J2SFun)
+(define-walk-method (collect-globconst* this::J2SFun ctx)
    '())
 
 ;*---------------------------------------------------------------------*/
 ;*    collect-globprops ...                                            */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (collect-globprops this::J2SNode)
+(define-walk-method (collect-globprops this::J2SNode ctx)
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
@@ -208,7 +208,7 @@
 ;*    attributes. Attributes assigned only once are marked with #t.    */
 ;*    Others are marked with #f.                                       */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (collect-globprops this::J2SAssig)
+(define-walk-method (collect-globprops this::J2SAssig ctx)
    
    (define (collect-property %info field)
       (when (and (propinfo? %info)
@@ -227,22 +227,26 @@
 	  (with-access::J2SAccess lhs (obj field)
 	     (if (isa? obj J2SRef)
 		 (with-access::J2SRef obj (decl)
-		    (collect-globprops rhs)
+		    (collect-globprops rhs ctx)
 		    (with-access::J2SDecl decl (%info)
 		       (or (collect-property %info field)
 			   (call-default-walker))))
 		 (call-default-walker))))
 	 ((and (isa? lhs J2SRef) (isa? rhs J2SObjInit))
-	  (with-access::J2SRef lhs (decl)
-	     (with-access::J2SDecl decl (%info)
-		(if (propinfo? %info)
-		    (with-access::J2SObjInit rhs (inits)
-		       (for-each (lambda (init)
-				    (when (isa? init J2SDataPropertyInit)
-				       (with-access::J2SDataPropertyInit init (name)
-					  (collect-property %info name))))
-			  inits))
-		    (call-default-walker)))))
+	  (with-access::J2SObjInit rhs (inits loc)
+	     (if (<fx (length inits) (config-get ctx :max-objinit-optim-size))
+		 (with-access::J2SRef lhs (decl)
+		    (with-access::J2SDecl decl (%info)
+		       (if (propinfo? %info)
+			   (for-each (lambda (init)
+					(when (isa? init J2SDataPropertyInit)
+					   (with-access::J2SDataPropertyInit init (name)
+					      (collect-property %info name))))
+			      inits)
+			   (call-default-walker))))
+		 (begin
+		    (tprint "LARGE..." loc)
+		    (collect-globprops lhs ctx)))))
 	 (else
 	  (call-default-walker)))))
 
@@ -252,13 +256,13 @@
 ;*    Collect the initialization value of the attributes that are      */
 ;*    marked as assigned once.                                         */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (collect-globprops-toplevel! this::J2SNode)
+(define-walk-method (collect-globprops-toplevel! this::J2SNode ctx)
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
 ;*    collect-globprops-toplevel! ::J2SAssig ...                       */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (collect-globprops-toplevel! this::J2SAssig)
+(define-walk-method (collect-globprops-toplevel! this::J2SAssig ctx)
    
    (define (collect-init! loc lhs rhs obj field %info)
       (with-access::J2SString field (val)
@@ -272,15 +276,11 @@
 		   (set! rhs (J2SRef ndecl))
 		   (set-cdr! c (list ndecl))))
 	       ((propinfo-needcheckp %info)
-		(let ((ndecl (J2SDeclGlobal 'let
-				'(ref init)
-				(gensym val)))
-		      ;; MS CARE UTYPE
-		      ;; (ndeclo (J2SLetOptVUtype 'bool '(ref init assig)
+		(let ((ndecl (J2SDecl/scope 'tls 'let-opt '(ref init) (gensym val)))
 		      (ndeclo (J2SLetOptVtype 'bool '(ref init assig)
 				 (gensym val) (J2SBool #f))))
 		   (with-access::J2SDeclInit ndeclo (scope)
-		      (set! scope 'global))
+		      (set! scope 'tls))
 		   (set-cdr! c (list ndecl ndeclo))
 		   (J2SSequence
 		      (J2SInit (J2SRef ndecl) rhs)
@@ -292,9 +292,17 @@
 			    obj
 			    field
 			    (J2SPragma '%this))))))
+	       ((or (isa? rhs J2SNumber) (isa? rhs J2SBool) (isa? rhs J2SString))
+		(let ((ndecl (J2SLetOptRo '(ref init)
+				(gensym val)
+				rhs)))
+		   (with-access::J2SDecl ndecl (scope id)
+		      (set! scope 'tls))
+		   (set-cdr! c (list ndecl))
+		   (J2SSequence
+		      (J2SAssig lhs (J2SRef ndecl)))))
 	       (else
-		(let ((ndecl (J2SDeclGlobal 'let '(ref init)
-				(gensym val))))
+		(let ((ndecl (J2SDecl/scope 'tls 'let '(ref init) (gensym val))))
 		   (set-cdr! c (list ndecl))
 		   (J2SSequence
 		      (J2SInit (J2SRef ndecl) rhs)
@@ -307,20 +315,20 @@
 	     (if (not (isa? obj J2SRef))
 		 (call-default-walker)
 		 (with-access::J2SRef obj (decl)
-		    (set! rhs (collect-globprops-toplevel! rhs))
+		    (set! rhs (collect-globprops-toplevel! rhs ctx))
 		    (with-access::J2SDecl decl (%info)
 		       (if (and (propinfo? %info)
 				(pair? (propinfo-props %info))
 				(isa? field J2SString))
 			   (collect-init! loc lhs rhs obj field %info)
 			   (begin
-			      (set! field (collect-globprops-toplevel! field))
+			      (set! field (collect-globprops-toplevel! field ctx))
 			      this)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    collect-globprops-toplevel! ::J2SInit ...                        */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (collect-globprops-toplevel! this::J2SInit)
+(define-walk-method (collect-globprops-toplevel! this::J2SInit ctx)
    
    (define (collect-init! init::J2SDataPropertyInit %info)
       (with-access::J2SDataPropertyInit init (loc val name)
@@ -337,8 +345,7 @@
 		      (set! val (J2SRef ndecl))
 		      init))
 		  (else
-		   (let* ((ndecl (J2SDeclGlobal 'let '(ref init)
-				    (gensym str)))
+		   (let* ((ndecl (J2SDeclGlobal 'let '(ref init) (gensym str)))
 			  (init (J2SInit (J2SRef ndecl) val)))
 		      (set-cdr! c (list ndecl))
 		      (set! val (J2SRef ndecl))
@@ -351,7 +358,7 @@
    
    (with-access::J2SInit this (lhs rhs)
       (with-access::J2SRef lhs (decl)
-	 (set! rhs (collect-globprops-toplevel! rhs))
+	 (set! rhs (collect-globprops-toplevel! rhs ctx))
 	 (with-access::J2SDecl decl (%info)
 	    (if (and (propinfo? %info)
 		     (pair? (propinfo-props %info))
@@ -363,13 +370,13 @@
 			  (J2SSequence* (append assigs (list this)))
 			  this)))
 		(begin
-		   (set! lhs (collect-globprops-toplevel! lhs))
+		   (set! lhs (collect-globprops-toplevel! lhs ctx))
 		   this))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    collect-globpprops-toplevel! ::J2SFun ...                        */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (collect-globprops-toplevel! this::J2SFun)
+(define-walk-method (collect-globprops-toplevel! this::J2SFun ctx)
    this)
 
 ;*---------------------------------------------------------------------*/
@@ -428,15 +435,15 @@
 ;*    rewrite-accesses! ::J2SCall ...                                  */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (rewrite-accesses! this::J2SCall)
-   (with-access::J2SCall this (args fun thisarg)
+   (with-access::J2SCall this (args fun thisargs)
       (if (isa? fun J2SAccess)
 	  (with-access::J2SAccess fun (obj field)
 	     (if (isa? obj J2SRef)
 		 (let ((nfun (rewrite-accesses! fun)))
 		    (let ((node (call-default-walker)))
 		       (unless (eq? nfun fun)
-			  (with-access::J2SCall node (thisarg)
-			     (set! thisarg (list obj))))
+			  (with-access::J2SCall node (thisargs)
+			     (set! thisargs (list obj))))
 		       node))
 		 (call-default-walker)))
 	  (call-default-walker))))

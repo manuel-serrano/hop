@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Thu Aug 19 11:34:56 2021 (serrano)                */
+;*    Last change :  Tue Nov 23 08:40:28 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -83,10 +83,10 @@
 ;*---------------------------------------------------------------------*/
 (define-method (js-debug-object obj::JsProxy #!optional (msg ""))
    (with-access::JsProxy obj (handler)
-      (fprint (current-error-port) ">>> JsProxy" msg)
-      (fprint (current-error-port) ">>> target: ")
+      (call-next-method)
+      (fprint (current-error-port) ">>>>> target: ")
       (js-debug-object (js-proxy-target obj))
-      (fprint (current-error-port) ">>> handler: ")
+      (fprint (current-error-port) ">>>>> handler: ")
       (js-debug-object handler)))
 
 ;*---------------------------------------------------------------------*/
@@ -132,7 +132,7 @@
 	       (name (& "%%proxy"))
 	       (%get js-proxy-property-value)
 	       (%set js-proxy-property-value-set!))))
-      ($js-init-jsalloc-proxy proxy-cmap proxy-elements))
+      ($js-init-jsalloc-proxy proxy-cmap proxy-elements (js-proxy-default-mode)))
 
    (with-access::JsGlobalObject %this (js-function-prototype js-proxy js-proxy-pcache)
 
@@ -242,7 +242,7 @@
 	       (instantiate::JsPropertyCache)
 	       (instantiate::JsPropertyCache)
 	       (instantiate::JsPropertyCache)
-	       (js-object-default-mode))))
+	       (js-proxy-default-mode))))
       (when (js-procedure-proxy? target)
 	 (js-proxy-mode-function-set! o #t))
       o))
@@ -254,7 +254,7 @@
    (let ((o ($js-make-jsproxy
 	       target handler
 	       gcache scache acache
-	       (js-object-default-mode))))
+	       (js-proxy-default-mode))))
       (when (js-procedure-proxy? target)
 	 (js-proxy-mode-function-set! o #t))
       o))
@@ -424,24 +424,22 @@
 	     (let ((omap cmap))
 		(cond
 		   ((eq? omap pmap)
-		    (let ((idx (js-pcache-pindex cache)))
-		       (with-access::JsObject (js-pcache-owner cache) (elements)
-			  (cond-expand
-			     (profile
-			      (js-profile-log-cache cache :pmap #t)
-			      (js-profile-log-index idx)))
-			  (vector-ref elements idx))))
+		    (let ((idx (js-pcache-pindex cache))
+			  (own (js-pcache-owner cache)))
+		       (cond-expand
+			  (profile
+			   (js-profile-log-cache cache :pmap #t)
+			   (js-profile-log-index idx)))
+		       (js-object-ref own idx)))
 		   ((eq? omap amap)
 		    (let* ((idx (js-pcache-aindex cache))
-			   (propowner (js-pcache-owner cache)))
-		       (with-access::JsObject propowner (elements)
-			  (let ((desc (vector-ref elements idx)))
-			     (cond-expand
-				(profile
-				 (js-profile-log-cache cache :amap #t)
-				 (js-profile-log-index idx)))
-			     (js-property-value o
-				propowner name desc %this)))))
+			   (own (js-pcache-owner cache)))
+		       (let ((desc (js-object-ref own idx)))
+			  (cond-expand
+			     (profile
+			      (js-profile-log-cache cache :amap #t)
+			      (js-profile-log-index idx)))
+			  (js-property-value o own name desc %this))))
 		   ((eq? omap xmap)
 		    (cond-expand
 		       (profile (js-profile-log-cache cache :xmap #t)))
@@ -686,8 +684,7 @@
 	    (if (js-object-hashed? target)
 		(with-access::JsObject target (elements)
 		   (=fx (hashtable-size elements) 0))
-		(with-access::JsObject target (elements)
-		   (=fx (vector-length elements) 0))))
+		(=fx (js-object-length target) 0)))
        v)
       (else
        (let ((prop (js-get-own-property target prop %this)))
@@ -888,8 +885,7 @@
 	    (if (js-object-hashed? target)
 		(with-access::JsObject target (elements)
 		   (=fx (hashtable-size elements) 0))
-		(with-access::JsObject target (elements)
-		   (=fx (vector-length elements) 0))))
+		(=fx (js-object-length target) 0)))
        (if (js-extensible? target %this)
 	   r
 	   (same-list (js-properties-name target #t %this) r)))

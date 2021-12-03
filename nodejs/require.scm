@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Wed May 19 08:56:05 2021 (serrano)                */
+;*    Last change :  Mon Oct 25 15:41:53 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -247,7 +247,6 @@
       (call-with-input-file filename
 	 (lambda (in)
 	    (debug-compile-trace "nodejs-compile-html" filename)
-	    (tprint "COMPILE HTML...")
 	    (let ((tree (j2s-compile in
 			   :filename filename
 			   :parser 'client-program
@@ -491,9 +490,7 @@
       (with-access::JsGlobalObject %this (js-object)
 	 (let ((expo (js-new0 %this js-object)))
 	    (with-access::JsObject expo (cmap)
-	       (set! cmap (js-make-jsconstructmap
-			     :single #t
-			     :inline #t)))
+	       (set! cmap (js-make-jsconstructmap :single #t)))
 	    ;; id field
 	    (js-put! m (& "id") (js-string->jsstring id) #f %this)
 	    ;; exports
@@ -1050,7 +1047,9 @@
 		      (cmap js-scope-cmap)
 		      (elements ($create-vector (SCOPE-ELEMENTS-LENGTH))))))
 	 (js-object-proto-set! scope global)
-	 (js-object-mode-set! scope (js-object-default-mode))
+	 (js-object-mode-set! scope
+	    (bit-andu32 (js-object-default-mode)
+	       (bit-notu32 (JS-OBJECT-MODE-INLINE))))
 	 (nodejs-scope-init! scope)
 	 scope)))
 
@@ -1805,6 +1804,7 @@
 		     (scope (nodejs-new-scope-object %this))
 		     (mod (nodejs-new-module (if js-main filename ".")
 			     (or srcalias filename) worker %this)))
+		  (js-put! scope (& "module") mod #f %this)
 		  ;; prehooking
 		  (when (procedure? prehook)
 		     (prehook %this this scope mod))
@@ -2403,8 +2403,9 @@
          (if (js-object-mapped? obj)
              (with-access::JsConstructMap cmap (props)
                 (vfor-each in-mapped-property props))
-	     (with-access::JsObject obj (elements)
-		(vector-for-each in-property elements)))))
+	     (begin
+		(vector-for-each in-property (js-object-inline-elements obj))
+		(vector-for-each in-property (js-object-noinline-elements obj))))))
    
    ;; e start being undefined during the first steps of the rts boot
    (when (js-object? e)

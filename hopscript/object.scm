@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Sun Jul  4 18:45:40 2021 (serrano)                */
+;*    Last change :  Tue Nov 23 08:49:06 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -103,13 +103,12 @@
 ;*    object-print ::JsObject ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-method (object-print obj::JsObject op proc)
-   (with-access::JsObject obj (elements)
-      (display "#<JsObject " op)
-      (display (vector-length elements) op)
-      (cond
-	 ((js-object-mapped? obj) (display " mapped>" op))
-	 ((js-object-hashed? obj) (display " hashed>" op))
-	 (else (display ">" op)))))
+   (display "#<JsObject " op)
+   (display (js-object-length obj) op)
+   (cond
+      ((js-object-mapped? obj) (display " mapped>" op))
+      ((js-object-hashed? obj) (display " hashed>" op))
+      (else (display ">" op))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-extensible? ...                                               */
@@ -157,19 +156,18 @@
 (define-method (js-donate obj::JsObject worker::WorkerHopThread %_this)
    (with-access::WorkerHopThread worker (%this)
       (with-access::JsGlobalObject %this (js-object js-initial-cmap)
-	 (with-access::JsObject obj (elements)
-	    (let ((nobj (duplicate::JsObject obj
-			   (cmap js-initial-cmap)
-			   (elements (make-vector (vector-length elements))))))
-	       (js-object-proto-set! nobj (js-get js-object (& "prototype") %this))
-	       (js-object-mode-set! nobj (js-object-mode obj))
-	       (js-for-in obj
-		  (lambda (k %this)
-		     (js-put! nobj (js-donate k worker %_this)
-			(js-donate (js-get/name-cache obj k %_this) worker %_this)
-			#f %this))
-		  %this)
-	       nobj)))))
+	 (let ((nobj (duplicate::JsObject obj
+			(cmap js-initial-cmap)
+			(elements (make-vector (js-object-length obj))))))
+	    (js-object-proto-set! nobj (js-get js-object (& "prototype") %this))
+	    (js-object-mode-set! nobj (bit-andu32 (js-object-mode obj) (bit-notu32 (JS-OBJECT-MODE-INLINE))))
+	    (js-for-in obj
+	       (lambda (k %this)
+		  (js-put! nobj (js-donate k worker %_this)
+		     (js-donate (js-get/name-cache obj k %_this) worker %_this)
+		     #f %this))
+	       %this)
+	    nobj))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-primitive-value ::JsObject ...                               */
@@ -207,8 +205,7 @@
 ;*    js-donate ::JsGlobalObject ...                                   */
 ;*---------------------------------------------------------------------*/
 (define-method (js-donate obj::JsGlobalObject worker %_this)
-   (with-access::JsGlobalObject obj (elements)
-      (js-new-global-object :size (vector-length elements) :name "donate")))
+   (js-new-global-object :size (js-object-length obj) :name "donate"))
 
 ;*---------------------------------------------------------------------*/
 ;*    scheme->response ::JsObject ...                                  */
@@ -286,15 +283,24 @@
 ;*---------------------------------------------------------------------*/
 (define (js-new-global-object #!key (size 64) name)
    (let* ((%proto (instantiateJsObject
-		     (cmap (js-make-jsconstructmap
-			      :inline #t))
+		     (cmap (js-make-jsconstructmap))
 		     (__proto__ (js-null))
 		     (elements (make-vector 128))))
 	  (%this (instantiateJsGlobalObject
 		    (name name)
+		    (mode (js-globalobject-default-mode))
 		    (cmap (js-make-jsconstructmap))
 		    (__proto__ %proto)
 		    (elements (make-vector size)))))
+;*       (tprint "THIS...")                                            */
+;*       (tprint "THIS=" (typeof (car (list %this)))                   */
+;* 	 " " (object-class (car (list %this))))                        */
+;*       (js-object-mode-set! %this (js-globalobject-default-mode))    */
+;*       (tprint "THIS=" (typeof (car (list %this)))                   */
+;* 	 " mode=" (js-object-mode %this) " " (js-globalobject-default-mode) */
+;* 	 " " (object-class %this))                                     */
+;*       (js-object-proto-set! %this %proto)                           */
+;*       (tprint "THIS=" (typeof (car (list %this))) " " (isa? (car (list %this)) JsGlobalObject)) */
       ;; local constant strings
       (js-init-names!)
       (unless (vector? __js_strings) (set! __js_strings (&init!)))
@@ -720,7 +726,7 @@
 	 (if (not (or (eq? o (js-null)) (js-object? o)))
 	     (js-raise-type-error %this "create: bad object ~s" o)
 	     (let ((obj (js-new0 %this js-object)))
-		(with-access::JsObject obj (elements)
+		(begin
 		   (js-object-proto-set! obj o)
 		   (unless (eq? properties (js-undefined))
 		      (object-defineproperties %this this obj properties)))
@@ -1166,6 +1172,15 @@
       (js-tonumber (js-toprimitive obj 'number %this) %this)))
    
 ;*---------------------------------------------------------------------*/
+;*    js-tonumeric ::JsObject ...                                      */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-9.3          */
+;*---------------------------------------------------------------------*/
+(define-method (js-tonumeric obj::JsObject %this)
+   (let ((v (js-toprimitive obj 'number %this)))
+      (js-tonumeric (js-toprimitive obj 'number %this) %this)))
+   
+;*---------------------------------------------------------------------*/
 ;*    js-tointeger ::JsObject ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-method (js-tointeger obj::JsObject %this)
@@ -1192,7 +1207,6 @@
 ;*---------------------------------------------------------------------*/
 (define (object-defineproperties %this::JsGlobalObject this _obj _properties)
    
-   
    (define (vfor-each proc vec)
       (let ((len (vector-length vec)))
 	 (let loop ((i 0))
@@ -1201,11 +1215,10 @@
 	       (loop (+fx i 1))))))
    
    (define (enumerable-mapped-property? obj i)
-      (with-access::JsObject obj (elements)
-	 (let ((el (vector-ref elements i)))
-	    (if (isa? el JsPropertyDescriptor)
-		(with-access::JsPropertyDescriptor el (enumerable) enumerable)
-		#t))))
+      (let ((el (js-object-ref obj i)))
+	 (if (isa? el JsPropertyDescriptor)
+	     (with-access::JsPropertyDescriptor el (enumerable) enumerable)
+	     #t)))
    
    (define (define-own-property obj name prop properties)
       (let* ((descobj (cond
@@ -1219,14 +1232,13 @@
 	 (js-define-own-property obj name desc #t %this)))
    
    (define (defineproperties/cmap cmap obj properties)
-      (with-access::JsObject properties (elements)
-	 (with-access::JsConstructMap cmap (props)
-	    (vfor-each
-	       (lambda (d::struct i)
-		  (when (flags-enumerable? (prop-flags d))
-		     (let ((prop (vector-ref elements i)))
-			(define-own-property obj (prop-name d) prop properties))))
-	       props))))
+      (with-access::JsConstructMap cmap (props)
+	 (vfor-each
+	    (lambda (d::struct i)
+	       (when (flags-enumerable? (prop-flags d))
+		  (let ((prop (js-object-ref properties i)))
+		     (define-own-property obj (prop-name d) prop properties))))
+	    props)))
    
    (define (defineproperties/hash oprops obj properties)
       (hashtable-for-each oprops
@@ -1282,7 +1294,8 @@
 	       (flags-writable? flags)
 	       (flags-enumerable? flags)
 	       #f
-	       (flags-accessor? flags)))))
+	       (flags-accessor? flags)
+	       (flags-inline? flags)))))
 
    (js-object-mode-extensible-set! o #f)
    (js-object-mode-sealed-set! o #t)
@@ -1326,7 +1339,8 @@
 	       #f
 	       (flags-enumerable? flags)
 	       #f
-	       (flags-accessor? flags)))))
+	       (flags-accessor? flags)
+	       (flags-inline? flags)))))
    
    (js-object-mode-extensible-set! o #f)
    (js-object-mode-frozen-set! o #t)

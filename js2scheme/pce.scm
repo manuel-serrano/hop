@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May 15 09:53:30 2018                          */
-;*    Last change :  Fri Jan 31 16:29:41 2020 (serrano)                */
-;*    Copyright   :  2018-20 Manuel Serrano                            */
+;*    Last change :  Fri Oct  1 16:45:33 2021 (serrano)                */
+;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Property Cache Elimination optimization                          */
 ;*    -------------------------------------------------------------    */
@@ -61,7 +61,7 @@
 		(call-with-output-file f
 		   (lambda (p)
 		      (fprint p ";; -*-bee-*-")
-		      (pp (j2s->list nthis) p)))))
+		      (pp/width (j2s->sexp nthis) p)))))
 	  (with-access::J2SProgram nthis (pcache-size)
 	     (let ((counter (make-counter pcache-size)))
 		(let ((res (expand-pce! nthis counter #t)))
@@ -87,7 +87,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SBlockPCE ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SBlockPCE)
+(define-method (j2s->list this::J2SBlockPCE stack)
    (with-access::J2SBlockPCE this (ainfos)
       `(J2SBlockPCE :ainfos ,@(map j2s-info->list ainfos)
 	  ,@(cdr (call-next-method)))))
@@ -669,7 +669,7 @@
 	      (J2SStmtExpr
 		 (J2SPragma
 		    `(with-access::JsPropertyCache (js-pcache-ref %pcache ,(cdr entry)) (imap)
-			(set! imap #t)))))
+			(set! imap (js-no-a-pmap))))))
 	 ncaches)))
 
 ;*---------------------------------------------------------------------*/

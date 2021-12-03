@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Thu Aug 19 15:05:44 2021 (serrano)                */
+;*    Last change :  Sun Nov 21 09:58:48 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -20,6 +20,7 @@
 	   __js2scheme_dump)
    
    (export (pass ::bstring)
+	   (pp/width ::obj ::output-port #!optional (width 256))
 	   (error/loc proc obj msg loc)
 	   (illegal-node ::bstring ::J2SNode)
 	   (config-get ::pair-nil ::keyword #!optional def)
@@ -48,25 +49,30 @@
 	   (type-maybe-subtype?::bool ::obj ::obj)
 	   (type-name type #!optional (conf '()))
 	   
-	   (min-type::symbol ::obj ::obj)
-	   (max-type::symbol ::obj ::obj)
+	   (min-type::obj ::obj ::obj)
+	   (max-type::obj ::obj ::obj)
 	   (js-uint32-tointeger expr conf)
 	   
 	   (j2s-expr-type-test ::J2SExpr)
 	   
 	   (j2s-type ::obj)
 	   (j2s-vtype ::obj)
+	   (j2s-mtype ::obj)
 	   (j2s-etype ::obj ::pair-nil)
 	   
 	   (class-of ::J2SExpr)
 	   
 	   (best-hint::pair ::J2SExpr)
 	   (is-hint?::bool ::J2SExpr ::symbol)
+	   (is-not-hint?::bool ::J2SExpr ::symbol)
 	   
 	   (string-method-type name #!optional (default '(any any)))
 	   (string-static-method-type name #!optional (default '(any any)))
 	   (math-static-method-type name #!optional (default '(any any)))
+	   (object-static-method-type name #!optional (default '(any any)))
 	   (regexp-method-type name #!optional (default '(any any)))
+	   (map-method-type name #!optional (default '(any any)))
+	   (weakmap-method-type name #!optional (default '(any any)))
 	   (number-method-type name #!optional (default '(any any)))
 	   (array-method-type name #!optional (default '(any any)))
 	   (jsvector-method-type name #!optional (default '(any any)))
@@ -85,6 +91,15 @@
    (print name))
 
 ;*---------------------------------------------------------------------*/
+;*    pp/width ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (pp/width obj out #!optional (width 256))
+   (let ((w *pp-width*))
+      (set! *pp-width* width)
+      (pp obj out)
+      (set! *pp-width* w)))
+
+;*---------------------------------------------------------------------*/
 ;*    error/loc ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (error/loc proc obj msg loc)
@@ -101,7 +116,7 @@
    (with-access::J2SNode this (loc)
       (error/loc pass
 	 (format "~a should have been eliminated" (typeof this))
-	 (j2s->list this)
+	 (j2s->sexp this)
 	 loc)))
 
 ;*---------------------------------------------------------------------*/
@@ -270,7 +285,7 @@
 ;*    type-object? ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (type-object? type)
-   (or (memq type '(object regexp date Promise array jsvector arguments global this))
+   (or (memq type '(object regexp date Promise array jsvector function arguments global this map weakmap set weakset))
        (isa? type J2SClass)))
 
 ;*---------------------------------------------------------------------*/
@@ -296,8 +311,12 @@
 ;*---------------------------------------------------------------------*/
 (define (noclass-subtype? type supertype)
    (or (eq? type supertype)
-       (and (eq? supertype 'number) (memq type '(integer real)))
-       (and (eq? supertype 'object) (memq type '(array jsvector)))
+       (and (eq? supertype 'number)
+	    (memq type '(integer real)))
+       (and (eq? supertype 'object)
+	    (memq type '(array jsvector date regexp function argument promise)))
+       (and (eq? supertype 'object)
+	    (type-object? type))
        (and (eq? type 'integer) (eq? supertype 'number))
        (and (eq? type 'function) (eq? supertype 'arrow))
        (and (memq type '(record class)) (eq? supertype 'function))
@@ -319,9 +338,10 @@
 			    (class-subtype? val supertype)))))))))
 
    (or (noclass-subtype? type supertype)
-       (and (isa? supertype J2SClass)
-	    (or (memq type '(any unknown obj object))
-		(and (isa? type J2SClass) (class-subtype? type supertype))))))
+       (and (isa? type J2SClass)
+	    (or (eq? supertype 'object)
+		(and (isa? supertype J2SClass)
+		     (class-subtype? type supertype))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    type-maybe-subtype? ...                                          */
@@ -351,7 +371,9 @@
        (noclass-subtype? type supertype)
        (and (isa? supertype J2SClass)
 	    (or (memq type '(any unknown obj object))
-		(and (isa? type J2SClass) (class-subtype? type supertype))))))
+		(and (isa? type J2SClass) (class-subtype? type supertype))))
+       (and (isa? type J2SClass)
+	    (class-subtype? type supertype))))
 
 ;*---------------------------------------------------------------------*/
 ;*    type-name ...                                                    */
@@ -393,9 +415,12 @@
 	  ((arguments) 'JsArguments)
 	  ((real) 'double)
 	  ((bigint) 'bignum)
+	  ((map weakmap) 'JsMap)
+	  ((set weakset) 'JsMap)
 	  (else type)))
       ((isa? type J2SRecord)
-       'JsRecord)
+       (with-access::J2SRecord type (name)
+	  (string->symbol (string-append "&JsRec" (symbol->string! name)))))
       ((isa? type J2SClass)
        'JsObject)
       (else
@@ -411,6 +436,8 @@
       ((eq? t1 t2) t1)
       ((eq? t1 'unknown) t2)
       ((eq? t2 'unknown) t2)
+      ((type-subtype? t1 t2) t1)
+      ((type-subtype? t2 t1) t2)
       (else
        (case t1
 	  ((index) t1)
@@ -489,7 +516,7 @@
 	 ((!==) '==)
 	 ((instanceof) '!instanceof)
 	 (else (error "j2s-expr-type-test" "Unknown op" op))))
-
+   
    (define (string->typename val)
       (let ((s (string->symbol val)))
 	 (if (eq? s 'boolean)
@@ -582,23 +609,20 @@
       ((is-native-test expr)
        =>
        (lambda (ref)
-	  (let ((typ (case (native-type-test expr)
-			((js-index?) 'index)
-			((fixnum?) 'integer)
-			((number?) 'number)
-			((js-jsstring?) 'string)
-			((js-array?) 'array)
-			((js-object?) 'object)
-			((js-function?) 'function)
-			((js-procedure?) 'arrow)
-			((boolean?) 'bool)
-			((js-undefined?) 'undefined)
-			((js-null?) 'null)
-			(else #f))))
-	     (if typ
-		 (with-access::J2SRef ref (decl)
-		    (values '== decl typ ref))
-		 #f))))
+	  (with-access::J2SRef ref (decl)
+	     (case (native-type-test expr)
+		((js-index?) (values '== decl 'index ref))
+		((fixnum?) (values '== decl 'integer ref))
+		((number?) (values '== decl 'number ref))
+		((js-jsstring?) (values '== decl 'string ref))
+		((js-array?) (values '== decl 'array ref))
+		((js-function?) (values '== decl 'function ref))
+		((js-procedure?) (values '== decl 'arrow ref))
+		((boolean?) (values '== decl 'bool ref))
+		((js-undefined?) (values '== decl 'undefined ref))
+		((js-null?) (values '== decl 'null ref))
+		((js-object?) (values '<= decl 'object ref))
+		(else #f)))))
       (else
        #f)))
 
@@ -642,6 +666,20 @@
        'void)))
 
 ;*---------------------------------------------------------------------*/
+;*    j2s-mtype ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (j2s-mtype node)
+   (cond
+      ((isa? node J2SDecl)
+       (with-access::J2SDecl node (mtype)
+	  mtype))
+      ((isa? node J2SRef)
+       (with-access::J2SRef node (decl)
+	  (j2s-mtype decl)))
+      (else
+       'unknown)))
+
+;*---------------------------------------------------------------------*/
 ;*    j2s-etype ...                                                    */
 ;*    -------------------------------------------------------------    */
 ;*    The type of an expression.                                       */
@@ -667,17 +705,34 @@
 ;*    Used to find the class of an X instanceof Y expression.          */
 ;*---------------------------------------------------------------------*/
 (define (class-of rhs::J2SExpr)
-   (when (isa? rhs J2SUnresolvedRef)
-      (with-access::J2SUnresolvedRef rhs (id)
-	 (case id
-	    ((Array) 'array)
-	    ((Argument) 'argument)
-	    ((Date) 'date)
-	    ((RegExp) 'regexp)
-	    ((Object) 'object)
-	    ((Function) 'function)
-	    ((Promise) 'promise)
-	    (else 'unknown)))))
+   (cond
+      ((isa? rhs J2SUnresolvedRef)
+       (with-access::J2SUnresolvedRef rhs (id)
+	  (case id
+	     ((Array) 'array)
+	     ((Argument) 'argument)
+	     ((Date) 'date)
+	     ((RegExp) 'regexp)
+	     ((Object) 'object)
+	     ((Function) 'function)
+	     ((Promise) 'promise)
+	     (else #f))))
+      ((is-builtin-ref? rhs 'Object)
+       'object)
+      ((is-builtin-ref? rhs 'Array)
+       'array)
+      ((is-builtin-ref? rhs 'Date)
+       'date)
+      ((is-builtin-ref? rhs 'RegExp)
+       'regexp)
+      ((is-builtin-ref? rhs 'Function)
+       'functionn)
+      ((is-builtin-ref? rhs 'Promise)
+       'promise)
+      ((is-builtin-ref? rhs 'Argument)
+       'argument)
+      ((isa? rhs J2SClass)
+       rhs)))
 
 ;*---------------------------------------------------------------------*/
 ;*    best-hint ...                                                    */
@@ -706,6 +761,17 @@
 (define (is-hint? this::J2SExpr type)
    (eq? type (car (best-hint this))))
 
+;*---------------------------------------------------------------------*/
+;*    is-not-hint? ...                                                 */
+;*    -------------------------------------------------------------    */
+;*    Is hint unlikely                                                 */
+;*---------------------------------------------------------------------*/
+(define (is-not-hint? this::J2SExpr type)
+   (with-access::J2SExpr this (hint)
+      (let ((h (assq type hint)))
+	 (when (pair? h)
+	    (=fx (cdr h) (minvalfx))))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    assoc-method-type ...                                            */
 ;*    -------------------------------------------------------------    */
@@ -772,6 +838,13 @@
 	("sin" . (real1 undefined real))
 	("sqrt" . (real undefined real))
 	("tan" . (real undefined real)))))
+
+;*---------------------------------------------------------------------*/
+;*    object-static-method-type ...                                    */
+;*---------------------------------------------------------------------*/
+(define (object-static-method-type name #!optional (default '(any any)))
+   (assoc-method-type name default
+      '(("keys" . (array object)))))
    
 ;*---------------------------------------------------------------------*/
 ;*    regexp-method-type ...                                           */
@@ -779,6 +852,20 @@
 (define (regexp-method-type name #!optional (default '(any any)))
    (assoc-method-type name default
       '(("test" . (bool regexp string)))))
+
+;*---------------------------------------------------------------------*/
+;*    map-method-type ...                                              */
+;*---------------------------------------------------------------------*/
+(define (map-method-type name #!optional (default '(any any)))
+   (assoc-method-type name default
+      '(("has" . (bool any)))))
+
+;*---------------------------------------------------------------------*/
+;*    weakmap-method-type ...                                          */
+;*---------------------------------------------------------------------*/
+(define (weakmap-method-type name #!optional (default '(any any)))
+   (assoc-method-type name default
+      '(("has" . (bool any)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    number-method-type ...                                           */
@@ -846,7 +933,10 @@
 	  (when (isa? obj J2SGlobalRef)
 	     (with-access::J2SGlobalRef obj (id decl)
 		(when (eq? id ident)
-		   (not (decl-usage-has? decl '(assig))))))))
+		   (not (decl-usage-has? decl '(assig))))))
+	  (when (isa? obj J2SUnresolvedRef)
+	     (with-access::J2SUnresolvedRef obj (id)
+		(eq? id ident)))))
    
    (define (String? obj)
       (is-global? obj 'String))
@@ -854,9 +944,14 @@
    (define (Math? obj)
       (is-global? obj 'Math))
 
+   (define (Object? obj)
+      (is-global? obj 'Object))
+
    (case (j2s-type obj)
       ((string) (string-method-type fn))
       ((regexp) (regexp-method-type fn))
+      ((map) (map-method-type fn))
+      ((weakmap) (weakmap-method-type fn))
       ((number integer index) (number-method-type fn))
       ((array) (array-method-type fn))
       ((jsvector) (jsvector-method-type fn))
@@ -865,6 +960,7 @@
        (cond
 	  ((String? obj) (string-static-method-type fn))
 	  ((Math? obj) (math-static-method-type fn))
+	  ((Object? obj) (object-static-method-type fn))
 	  (else '(any any))))))
 
 ;*---------------------------------------------------------------------*/
@@ -979,7 +1075,7 @@
        (with-access::J2SRef expr (decl)
 	  (with-access::J2SDecl decl (id scope)
 	     (and (eq? id clazz)
-		  (or (and (eq? scope '%scope)
+		  (or (and (memq scope '(%scope tls))
 			   (not (decl-usage-has? decl '(ref assig set delete uninit rest eval))))
 		      (and (isa? decl J2SDeclExtern)
 			   (not (decl-usage-has? decl '(assig set eval)))))))))

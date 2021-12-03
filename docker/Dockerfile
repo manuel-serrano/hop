@@ -1,6 +1,6 @@
-FROM debian:jessie
+FROM debian:bulleye
 
-RUN apt-get update && apt-get install -y \
+RUN apt update && apt dist-upgrade && apt install -y \
     bash \
     make \
     wget \
@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y \
     pkg-config \
     libtool \
     libgmp-dev libgmp3-dev libgmp10 \
-    libssl1.0.0 libssl-dev \
+    libssl1.1 libssl-dev \
     libsqlite3-0 libsqlite3-dev \
     libasound2 libasound2-dev \
     libpulse0 libpulse-dev \
@@ -29,7 +29,7 @@ RUN wget ftp://ftp-sop.inria.fr/indes/fp/Bigloo/bigloo-latest.tar.gz \
 
 RUN wget ftp://ftp-sop.inria.fr/indes/fp/Hop/hop-3.5.0-pre1.tar.gz \
     && tar -xzf hop* && cd hop*/ \
-    && ./configure --license=academic && make -j$(nproc) && make install
+    && ./configure && make -j$(nproc) && make install
 
 RUN useradd --no-log-init -d /home/hop -s /bin/bash hop
 

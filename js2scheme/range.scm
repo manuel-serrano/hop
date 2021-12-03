@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Fri May  7 17:22:33 2021 (serrano)                */
+;*    Last change :  Wed Oct 20 15:32:29 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -66,7 +66,7 @@
 	       (__l ,lbl)
 	       (__lbl (if (or (string? __l) (pair? __l))
 			  __l
-			  (j2s->list __l))))
+			  (j2s->sexp __l))))
 	   (if ,pred
 	       (begin
 		  (range-debug 1 __lbl)
@@ -1109,6 +1109,15 @@
    (expr-range-add! this env fix *infinity-intv*))
 
 ;*---------------------------------------------------------------------*/
+;*    node-range ::J2SPropertyInit ...                                 */
+;*---------------------------------------------------------------------*/
+(define-walk-method (node-range this::J2SPropertyInit env::pair-nil conf mode::symbol fix::cell)
+   (with-access::J2SPropertyInit this (name)
+      (multiple-value-bind (intv env)
+	 (node-range name env conf mode fix)
+	 (return #f env))))
+
+;*---------------------------------------------------------------------*/
 ;*    node-range ::J2SDataPropertyInit ...                             */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-range this::J2SDataPropertyInit env::pair-nil conf mode::symbol fix::cell)
@@ -1256,7 +1265,7 @@
 	    ((isa? val J2SFun)
 	     (node-range-fun val (node-range-fun-decl val env conf mode fix) conf mode fix))
 	    (else
-	     (error "js2scheme" "bad declfun value" (j2s->list val))))
+	     (error "js2scheme" "bad declfun value" (j2s->sexp val))))
 	 (return *infinity-intv* (extend-env env this intvf)))))
 
 ;*---------------------------------------------------------------------*/
@@ -1452,10 +1461,10 @@
 (define-walk-method (node-range this::J2SCall env::pair-nil conf mode::symbol fix::cell)
    (with-debug *debug-range-call* this
       "env=" (dump-env env)
-      (with-access::J2SCall this ((callee fun) thisarg args)
+      (with-access::J2SCall this ((callee fun) thisargs args)
 	 (multiple-value-bind (tty env bkt)
-	    (if (pair? thisarg)
-		(node-range (car thisarg) env conf mode fix)
+	    (if (pair? thisargs)
+		(node-range (car thisargs) env conf mode fix)
 		(values #f env))
 	    (multiple-value-bind (rrange env)
 	       (node-range-call callee args env conf mode fix)
@@ -1542,7 +1551,7 @@
 		       ((isa? val J2SFun)
 			(range-known-call callee val iargs env))
 		       (else
-			(error "js2scheme" "bad declfun value" (j2s->list val))))
+			(error "js2scheme" "bad declfun value" (j2s->sexp val))))
 		    (range-unknown-call callee env))))
 	    ((isa? decl J2SDeclInit)
 	     (with-access::J2SDeclInit decl (val)
@@ -1608,7 +1617,7 @@
 	 (node-range callee env conf mode fix)
 	 (return *infinity-intv* (unknown-call-env env))))
 
-   (with-debug *debug-range-call* `(node-range-call ,(j2s->list callee) ...)
+   (with-debug *debug-range-call* `(node-range-call ,(j2s->sexp callee) ...)
       "env=" (dump-env env)
       (multiple-value-bind (iargs env)
 	 (node-range-args args env conf mode fix)
@@ -1688,7 +1697,7 @@
 	  (expr-range-add! this env fix *infinity-intv*)))))
 
 ;*---------------------------------------------------------------------*/
-;*    range-binary ...                                                 */
+;*    node-range-binary ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (node-range-binary this op lhs rhs env::pair-nil conf mode::symbol fix::cell)
    (debug *debug-range-binary* "env=" (dump-env env))
@@ -1719,7 +1728,8 @@
 			  (>= (interval-min intl) 0))
 		     ;; a negative divider may produce -0.0
 		     (expr-range-add! this env fix intr)
-		     (expr-range-add! this env fix *infinity-intv*))))
+		     (expr-range-add! this env fix *infinity-intv*))
+		 (return #unspecified env)))
 	    ((<<)
 	     (expr-range-add! this env fix (interval-shiftl intl intr)))
 	    ((>>)
@@ -1782,7 +1792,7 @@
 	 (multiple-value-bind (intr envr)
 	    (node-range right envl conf mode fix)
 	    (when *debug-range-test*
-	       (tprint "test-env-ref " (j2s->list test)))
+	       (tprint "test-env-ref " (j2s->sexp test)))
 	    (if (or (not (interval? intl)) (not (interval? intr)))
 		(values (empty-env) (empty-env))
 		(case op
@@ -2051,7 +2061,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-range this::J2SIf env::pair-nil conf mode::symbol fix::cell)
    (with-access::J2SIf this (test then else)
-      (with-debug *debug-range-if* `(J2SIf ,(j2s->list test) ...)
+      (with-debug *debug-range-if* `(J2SIf ,(j2s->sexp test) ...)
 	 "env=" (dump-env env)
 	 (multiple-value-bind (_ env)
 	    (node-range test env conf mode fix)
@@ -2098,7 +2108,7 @@
       (let ((denv (dump-env env))
 	    (ffix (cell-ref fix)))
 	 (when *debug-range-while*
-	    (tprint ">>> while [" ffix "] test=" (j2s->list test))
+	    (tprint ">>> while [" ffix "] test=" (j2s->sexp test))
 	    (tprint ">>> env=" denv))
 	 (let loop ((env env))
 	    (let ((ostamp (cell-ref fix)))
@@ -2108,7 +2118,7 @@
 	       (multiple-value-bind (testi teste)
 		  (node-range test env conf mode fix)
 		  (when *debug-range-while*
-		     (tprint "    [" ffix "] test=" (j2s->list test))
+		     (tprint "    [" ffix "] test=" (j2s->sexp test))
 		     (tprint "    [" ffix "] teste=" (dump-env teste)))
 		  (multiple-value-bind (testet testef)
 		     (test-envs test env conf mode fix)
@@ -2164,7 +2174,7 @@
 	 ;; (set! *debug-range-for* (eq? (caddr loc) 1835))
 	 (when (debug-for loc)
 	    (tprint ">>> for " loc
-	       " [" ffix "/" mode "] test=" (j2s->list test))
+	       " [" ffix "/" mode "] test=" (j2s->sexp test))
 	       (tprint ">>> env=" (dump-env env)))
 	 (multiple-value-bind (initi inite)
 	    (node-range init env conf mode fix)
@@ -2177,7 +2187,7 @@
 		  (multiple-value-bind (testi teste)
 		     (node-range test env conf mode fix)
 		     (when (debug-for loc)
-			(tprint "    [" ffix "] test=" (j2s->list test))
+			(tprint "    [" ffix "] test=" (j2s->sexp test))
 			(tprint "    [" ffix "] testenv=" (dump-env teste)))
 		     (multiple-value-bind (testet testef)
 			(test-envs test env conf mode fix)
@@ -2208,11 +2218,13 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-range this::J2SForIn env::pair-nil conf mode::symbol fix::cell)
    (with-access::J2SForIn this (lhs obj body op)
-      (let ((decl (if (isa? lhs J2SRef)
-		      (with-access::J2SRef lhs (decl) decl)
-		      (with-access::J2SGlobalRef lhs (decl) decl))))
-	 (decl-vrange-add! decl *infinity-intv* fix)
-	 (let loop ((env (extend-env env decl *infinity-intv*)))
+      (let ((decl (cond
+		     ((isa? lhs J2SRef)
+		      (with-access::J2SRef lhs (decl) decl))
+		     ((isa? lhs J2SGlobalRef)
+		      (with-access::J2SGlobalRef lhs (decl) decl)))))
+	 (when decl (decl-vrange-add! decl *infinity-intv* fix))
+	 (let loop ((env (if decl (extend-env env decl *infinity-intv*) env)))
 	    (let ((ofix (cell-ref fix)))
 	       (multiple-value-bind (typ envb bk)
 		  (node-range-seq (list obj body) env conf mode fix)
@@ -2332,7 +2344,7 @@
 	       (let ((rty (min-type vtype ity)))
 		  (unless (eq? rty vtype)
 		     (let ((aty (cond
-				   ((memq scope '(%scope global))
+				   ((memq scope '(%scope global tls))
 				    (if (decl-ronly? this)
 					rty
 					(type->boxed-type rty)))
@@ -2557,9 +2569,9 @@
 	 ((>>>)
 	  (set! type 'uint32))
 	 ((++ --)
-	  (if (range-type? type)
-	      (set! type (interval->type range tmap type))
-	      (set! type 'number)))
+	  (cond
+	     ((range-type? type) (set! type (interval->type range tmap type)))
+	     ((not (eq? type 'real)) (set! type 'number))))
 	 (else
 	  (when (range-type? type)
 	     (set! type (interval->type range tmap type))))))

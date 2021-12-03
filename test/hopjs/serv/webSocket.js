@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.2.x/test/hopjs/serv/webSocket.js      */
+/*    serrano/prgm/project/hop/hop/test/hopjs/serv/webSocket.js        */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Vincent Prunet                                    */
 /*    Creation    :  Thu Sep 17 11:43:00 2015                          */
-/*    Last change :  Tue Oct 10 12:48:36 2017 (serrano)                */
-/*    Copyright   :  2015-17 Inria                                     */
+/*    Last change :  Sat Aug 28 10:04:05 2021 (serrano)                */
+/*    Copyright   :  2015-21 Inria                                     */
 /*    -------------------------------------------------------------    */
 /*    Stress test for webSockets                                       */
 /*=====================================================================*/

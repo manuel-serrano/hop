@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Tue Aug 24 11:43:17 2021 (serrano)                */
+;*    Last change :  Wed Oct 27 07:59:19 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Count the number of occurrences for all variables                */
@@ -513,13 +513,16 @@
 ;*    j2s-use ::J2SFun ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-use this::J2SFun ctx deval infun)
-   (with-access::J2SFun this (params body generator)
+   (with-access::J2SFun this (params thisp body generator)
+      (when (isa? thisp J2SDecl)
+	 (with-access::J2SDecl thisp (%info)
+	    (set! %info this)))
       (unless generator
 	 (for-each (lambda (p)
 		      (with-access::J2SDecl p (%info)
 			 (set! %info this)))
 	    params))
-      (j2s-use body 'ref deval (if generator 'dummy-to-escape-all-tmps this))))
+      (j2s-use body 'ref deval this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-use ::J2SForIn ...                                           */

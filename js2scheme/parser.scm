@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Tue Aug 24 14:51:05 2021 (serrano)                */
+;*    Last change :  Fri Oct  1 16:41:35 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -653,11 +653,18 @@
    ;; for (lhs/var x in obj)
    (define (for-in loc lhs)
       ;; TODO: weed out bad lhs
-      (let ((op (token-tag (consume-any!)))
-	    (error-token (peek-token))
-	    (obj (expression #f #f))
-	    (ignore-RPAREN (consume! 'RPAREN))
-	    (body (statement)))
+      (let* ((tok (consume-any!))
+	     (op (cond
+		    ((eq? (token-tag tok) 'in)
+		     'in)
+		    ((and (eq? (token-tag tok) 'ID) (eq? (token-value tok) 'of))
+		     'of)
+		    (else
+		     (parse-error "Token 'in' or 'of' expectede" tok))))
+	     (error-token (peek-token))
+	     (obj (expression #f #f))
+	     (ignore-RPAREN (consume! 'RPAREN))
+	     (body (statement)))
 	 (cond
 	    ((isa? lhs J2SVarDecls)
 	     (with-access::J2SVarDecls lhs (decls)
@@ -995,12 +1002,12 @@
       (function #f (consume-token! 'function)))
    
    (define (service-declaration)
-    (let ((token (consume-any!))
-	  (ntype (peek-token-type)))
-       (token-push-back! token)
-       (if (eq? ntype 'ID)
-	   (service #t)
-	   (statement))))
+      (let ((token (consume-any!))
+	    (ntype (peek-token-type)))
+	 (token-push-back! token)
+	 (if (eq? ntype 'ID)
+	     (service #t)
+	     (statement))))
    
    (define (service-expression)
       (service #f))
@@ -1592,7 +1599,7 @@
 		      (loc loc)
 		      (fun fun)
 		      (protocol (args-protocol args))
-		      (thisarg (list (J2SUndefined)))
+		      (thisargs (list (J2SUndefined)))
 		      (args args))))))))
 
    (define (consume-param! idx maybe-expr?)
@@ -1885,7 +1892,7 @@
       (let* ((loc (token-loc (peek-token)))
 	     (gen (when (eq? (peek-token-type) '*)
 		     (consume-any!) '*))
-	     (name-or-get (property-name #f))
+	     (name-or-get (property-name #f #t))
 	     (ty (opt-type)))
 	 (cond
 	    ((isa? name-or-get J2SNode)
@@ -1902,10 +1909,9 @@
 		       (type ty)
 		       (prop prop))))
 		((SEMICOLON)
-		 (let ((prop (instantiate::J2SDataPropertyInit
+		 (let ((prop (instantiate::J2SPropertyInit
 				(loc loc)
-				(name name-or-get)
-				(val (J2SUndefined)))))
+				(name name-or-get))))
 		    (instantiate::J2SClassElement
 		       (loc loc)
 		       (static static?)
@@ -1963,7 +1969,7 @@
 		      (static static?)
 		      (prop prop)))))
 	    (else
-	     (let ((name (property-name #f)))
+	     (let ((name (property-name #f #t)))
 		(multiple-value-bind (params args)
 		   (function-params #f)
 		   (let* ((body (fun-body params args 'strict))
@@ -2357,7 +2363,7 @@
 		  (fun (instantiate::J2SHopRef
 			  (loc loc)
 			  (id 'js-template-raw)))
-		  (thisarg '())
+		  (thisargs '())
 		  (args (list (instantiate::J2SArray
 				 (loc loc)
 				 (type 'array)
@@ -2373,30 +2379,6 @@
 			      (id '%this)))))
 	    vals)))
 
-;*    (define (optional-chaining loc obj make-expr)                    */
-;*       (let ((endloc loc))                                           */
-;* 	 (let* ((id (gensym 'tmp))                                     */
-;* 		(param (instantiate::J2SDecl                           */
-;* 			  (loc loc)                                    */
-;* 			  (id id)                                      */
-;* 			  (binder 'param)))                            */
-;* 		(test (J2SBinary 'OR                                   */
-;* 			 (J2SBinary '===                               */
-;* 			    (J2SUnresolvedRef id) (J2SUndefined))      */
-;* 			 (J2SBinary '===                               */
-;* 			    (J2SUnresolvedRef id) (J2SNull))))         */
-;* 		(body (J2SCond test                                    */
-;* 			 (J2SUndefined)                                */
-;* 			 (make-expr (J2SUnresolvedRef id))))           */
-;* 		(arrow (J2SArrow '|| (list param)                      */
-;* 			  (J2SBlock body))))                           */
-;* 	    (J2SCall arrow obj))))                                     */
-;*                                                                     */
-;*    (define (optional-chaining? expr)                                */
-;*       (when (isa? expr J2SUnary)                                    */
-;* 	 (with-access::J2SUnary expr (op)                              */
-;* 	    (eq? op '?.))))                                            */
-	      
    (define (access-or-call expr loc call-allowed?)
       (let loop ((expr expr))
 	 (case (peek-token-type)
@@ -2416,7 +2398,8 @@
 		    (field (consume-any!))
 		    (key (car field))
 		    (field-str (format "~a" (cdr field))))
-		(if (or (eq? key 'ID)
+		(cond
+		   ((or (eq? key 'ID)
 			(eq? key 'RESERVED)
 			(j2s-reserved-id? key))
 		    (loop (instantiate::J2SAccess
@@ -2424,8 +2407,17 @@
 			     (obj expr)
 			     (field (instantiate::J2SString
 				       (loc (token-loc field))
-				       (val field-str)))))
-		    (parse-token-error "Wrong property name" field))))
+				       (val field-str))))))
+		   ((eq? key 'SHARPID)
+		    (loop (instantiate::J2SAccess
+			     (loc (token-loc ignore))
+			     (obj expr)
+			     (field (instantiate::J2SString
+				       (private #t)
+				       (loc (token-loc field))
+				       (val field-str))))))
+		   (else
+		    (parse-token-error "Wrong property name" field)))))
 	    ((LPAREN)
 	     (if call-allowed?
 		 (let* ((loc (token-loc (peek-token)))
@@ -2434,7 +2426,7 @@
 			     (loc loc)
 			     (fun expr)
 			     (protocol (args-protocol args))
-			     (thisarg (if (isa? expr J2SHopRef)
+			     (thisargs (if (isa? expr J2SHopRef)
 					  '()
 					  (list (J2SUndefined))))
 			     (args args))))
@@ -2443,7 +2435,7 @@
 	     (instantiate::J2SCall
 		(loc loc)
 		(fun expr)
-		(thisarg (list (J2SUndefined)))
+		(thisargs (list (J2SUndefined)))
 		(args (tag-call-arguments loc))))
 	    ((?.)
 	     (let* ((token (consume-any!))
@@ -2660,7 +2652,7 @@
 			      (loc loc)
 			      (fun fun)
 			      (protocol (args-protocol '()))
-			      (thisarg (list (J2SUndefined)))
+			      (thisargs (list (J2SUndefined)))
 			      (args '())))))
 		 (begin
 		    (token-push-back! lpar)
@@ -2680,13 +2672,13 @@
 					   (loc loc)
 					   (fun fun)
 					   (protocol (args-protocol exprs))
-					   (thisarg (list (J2SUndefined)))
+					   (thisargs (list (J2SUndefined)))
 					   (args exprs)))
 				     (instantiate::J2SCall
 					(loc loc)
 					(fun fun)
 					(protocol (args-protocol (list expr)))
-					(thisarg (list (J2SUndefined)))
+					(thisargs (list (J2SUndefined)))
 					(args (list expr)))))))
 			  (else
 			   (parse-token-error "wrong async expression" token))))))))
@@ -2728,6 +2720,14 @@
 		 (primary-async token))
 		(else
 		 (id-sans-async token)))))
+	 ((SHARPID)
+	  (let ((token (consume-any!)))
+	     (if (eq? (peek-token-type) 'in)
+		 (instantiate::J2SString
+		    (private #t)
+		    (loc (token-loc token))
+		    (val (format "~a" (token-value token))))
+		 (parse-token-error "unexpected token" token))))
 	 ((HOP)
 	  (let ((token (consume-token! 'HOP)))
 	     (instantiate::J2SHopRef
@@ -2854,7 +2854,7 @@
 	     (instantiate::J2SCall
 		(loc loc)
 		(fun (j2s-tag->expr tag #t))
-		(thisarg (list (J2SUndefined)))
+		(thisargs (list (J2SUndefined)))
 		(args '()))))
 	 ((HTMLCOMMENT)
 	  (let* ((tag (consume-any!))
@@ -2862,7 +2862,7 @@
 	     (instantiate::J2SCall
 		(loc (token-loc tag))
 		(fun (j2s-tag->expr (make-token tag '<!--> loc) #t))
-		(thisarg (list (J2SUndefined)))
+		(thisargs (list (J2SUndefined)))
 		(args (list (instantiate::J2SNativeString
 			       (loc loc)
 			       (val (token-value tag))))))))
@@ -2983,10 +2983,18 @@
 
 	 (parse-array '() 0)))
 
-   (define (property-name destructuring?)
+   (define (property-name destructuring? inclass?)
       (case (peek-token-type)
 	 ;; IDs are automatically transformed to strings.
-;* 	 ((ID RESERVED service)                                        */
+	 ((SHARPID)
+	  (if inclass?
+	      (let ((token (consume-any!)))
+		 (instantiate::J2SString
+		    (loc (token-loc token))
+		    (private #t)
+		    (val (symbol->string (token-value token)))))
+	      (parse-token-error "Private field must be declared in an enclosing class"
+		 (consume-any!))))
 	 ((ID RESERVED)
 	  (let ((token (consume-any!)))
 	     (case (token-value token)
@@ -3138,7 +3146,7 @@
       
       (define (property-init props)
 	 (let* ((token (peek-token))
-		(tokname (property-name destructuring?))
+		(tokname (property-name destructuring? #f))
 		(name (when (pair? tokname) (token-value tokname))))
 	    (cond
 	       ((memq name '(get set))
@@ -3441,7 +3449,7 @@
 	     (instantiate::&io-parse-error
 		(proc "hopscript")
 		(msg msg)
-		(obj (j2s->list node))
+		(obj (j2s->sexp node))
 		(fname fname)
 		(location loc))))
 	 (else
@@ -3449,7 +3457,7 @@
 	     (instantiate::&io-parse-error
 		(proc "hopscript")
 		(msg msg)
-		(obj (j2s->list node))))))))
+		(obj (j2s->sexp node))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    destructure-fun-params ...                                       */

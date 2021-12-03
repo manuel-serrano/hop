@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 19 08:59:11 2019                          */
-;*    Last change :  Wed Dec 25 07:03:22 2019 (serrano)                */
-;*    Copyright   :  2019 Manuel Serrano                               */
+;*    Last change :  Thu Nov 25 15:02:57 2021 (serrano)                */
+;*    Copyright   :  2019-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of bind-exit forms.                       */
 ;*    -------------------------------------------------------------    */
@@ -39,7 +39,9 @@
 	   __js2scheme_scheme-class
 	   __js2scheme_scheme-ops
 	   __js2scheme_scheme-arguments
-	   __js2scheme_scheme-spread))
+	   __js2scheme_scheme-spread)
+
+   (export (bindexit-cast ::J2SBindExit cast::J2SCast)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SBindExit ...                                     */
@@ -76,3 +78,31 @@
 	 (unless tail (cell-set! cell #f)))
       (when (cell-ref cell)
 	 (call-default-walker))))
+
+;*---------------------------------------------------------------------*/
+;*    bindexit-cast ...                                                */
+;*    -------------------------------------------------------------    */
+;*    Propagate the cast to all return expressions.                    */
+;*---------------------------------------------------------------------*/
+(define (bindexit-cast this::J2SBindExit cast::J2SCast)
+   (with-access::J2SBindExit this (stmt)
+      (push-cast stmt this cast))
+   this)
+
+;*---------------------------------------------------------------------*/
+;*    push-cast ::J2SNode ...                                          */
+;*---------------------------------------------------------------------*/
+(define-walk-method (push-cast this::J2SNode bexit::J2SBindExit cast::J2SCast)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    push-cast ::J2SReturn ...                                        */
+;*---------------------------------------------------------------------*/
+(define-walk-method (push-cast this::J2SReturn bexit cast)
+   (with-access::J2SReturn this (from expr)
+      (call-default-walker)
+      (when (eq? from bexit)
+	 (set! expr 
+	    (duplicate::J2SCast cast
+	       (expr expr))))))
+   

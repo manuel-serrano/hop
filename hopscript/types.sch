@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 25 15:52:55 2017                          */
-;*    Last change :  Wed Aug 11 16:37:31 2021 (serrano)                */
+;*    Last change :  Thu Oct 21 07:40:03 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Companion macros                                                 */
@@ -102,3 +102,8 @@
 	  (set-car! x '(@ isa? __object))
 	  (e x e)))))
 
+;*---------------------------------------------------------------------*/
+;*    generators                                                       */
+;*---------------------------------------------------------------------*/
+(define-expander js-generator-ref js-generator-ref-expander)
+(define-expander js-generator-set! js-generator-set!-expander)

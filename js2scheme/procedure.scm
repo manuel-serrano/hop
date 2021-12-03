@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 27 07:35:02 2019                          */
-;*    Last change :  Tue Apr 14 16:23:23 2020 (serrano)                */
-;*    Copyright   :  2019-20 Manuel Serrano                            */
+;*    Last change :  Thu Nov 11 16:26:07 2021 (serrano)                */
+;*    Copyright   :  2019-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Procedure optimization.                                          */
 ;*                                                                     */
@@ -83,12 +83,12 @@
 		     (loop (+fx i 1) #\.))))
 	    ;; dump the decorate tree
 	    (when *debug-procedure-ast-pre*
-	       (pp (j2s->list this) (current-output-port)))
+	       (pp/width (j2s->sexp this) (current-output-port)))
 	    ;; disable all non-optimizable functions
 	    (disable-non-optimizable this)
 	    ;; dump the decorate tree
 	    (when *debug-procedure-ast-post*
-	       (pp (j2s->list this) (current-output-port)))
+	       (pp/width (j2s->sexp this) (current-output-port)))
 	    ;; annotate the ast
 	    (annotate-procedure this conf))))
    this)
@@ -166,7 +166,7 @@
 ;*---------------------------------------------------------------------*/
 (define (node-init-info! this::J2SNode vals fix::cell)
    (when (isa? this J2SFun)
-      (error "node-init-info!" "Illegal type" (j2s->list this)))
+      (error "node-init-info!" "Illegal type" (j2s->sexp this)))
    (with-access::J2SNode this (%info loc)
       (unfix! fix "node-init-info!" loc)
       (set! %info (node-procedure-info vals #t))
@@ -416,7 +416,7 @@
 	 (if (isa? lhs J2SRef)
 	     (with-access::J2SRef lhs (decl)
 		(with-access::J2SDecl decl (scope)
-		   (if (memq scope '(global %scope))
+		   (if (memq scope '(global %scope tls))
 		       (begin
 			  (escape! rhsv fix)
 			  (escape! decl fix)
@@ -492,15 +492,15 @@
 	     (fun-procedure-info-retvals %info)
 	     (fun-init-info! fun '() #f fix))))
    
-   (with-access::J2SCall this (fun thisarg args loc %info loc)
+   (with-access::J2SCall this (fun thisargs args loc %info loc)
       ;; initialize the call if needed
       (unless (node-procedure-info? %info)
 	 (node-init-info! this '() fix))
       ;; escape untracked this argument
-      (for-each (lambda (t) (escape! t fix)) thisarg)
+      (for-each (lambda (t) (escape! t fix)) thisargs)
       ;; evaluate all components
       (let ((funvals (eval-procedure fun fix))
-	    (thisvals (map (lambda (t) (eval-procedure t fix)) thisarg))
+	    (thisvals (map (lambda (t) (eval-procedure t fix)) thisargs))
 	    (argsvals (map (lambda (a) (eval-procedure a fix)) args)))
 	 (if (eq? funvals 'top)
 	     (begin
@@ -681,6 +681,22 @@
 		   (and (=fx (length params) arity) (not vararg))))
 	 funs))
    
+   (define (missing-arities? funs::pair arity)
+      ;; all arities are the same but arguments are missing
+      (when (or (null? (cdr funs))
+		(apply =
+		   (map (lambda (f)
+			   (with-access::J2SFun f (params vararg)
+			      (if vararg -1 (length params))))
+		      funs)))
+	 (with-access::J2SFun (car funs) (params vararg)
+	    (and (<fx arity (length params)) (not vararg)))))
+
+   (define (extra-args args fun)
+      (with-access::J2SFun fun (params loc)
+	 (map (lambda (i) (J2SUndefined))
+	    (iota (-fx (length params) (length args))))))
+   
    (with-access::J2SCall this (fun loc protocol args)
       (with-access::J2SExpr fun (%info)
 	 (cond
@@ -688,11 +704,23 @@
 	     (when (pair? (node-procedure-info-vals %info))
 		(cond
 		   ((node-procedure-info-optimizablep %info)
-		    (set! protocol
-		       (if (correct-arities? (node-procedure-info-vals %info)
-			      (length args))
-			   'procedure-this
-			   'procedure-this-arity)))
+		    (let ((nprotocol
+			     (cond
+				((correct-arities? (node-procedure-info-vals %info)
+				    (length args))
+				 'procedure-this)
+				((missing-arities? (node-procedure-info-vals %info)
+				    (length args))
+				 (set! args
+				    (append args
+				       (extra-args args
+					  (car (node-procedure-info-vals %info)))))
+				 'procedure-this)
+				(else
+				 'procedure-this-arity))))
+		       (if (eq? protocol 'spread)
+			   (set! protocol (symbol-append 'spread- nprotocol))
+			   (set! protocol nprotocol))))
 		   ((not (eq? protocol 'spread))
 		    (set! protocol
 		       (if (correct-arities? (node-procedure-info-vals %info)
@@ -702,9 +730,15 @@
 	    ((fun-procedure-info? %info)
 	     (when (fun-procedure-info-optimizablep %info)
 		(set! protocol
-		   (if (correct-arities? (list fun) (length args))
-		       'procedure-this
-		       'procedure-this-arity))))))
+		   (cond
+		      ((correct-arities? (list fun) (length args))
+		       'procedure-this)
+		      ((missing-arities? (list fun) (length args))
+		       ;; add the missing values
+		       (set! args (append args (extra-args args fun)))
+		       'procedure-this)
+		      (else
+		       'procedure-this-arity)))))))
       (when (>=fx (config-get conf :verbose 0) 3)
 	 (case protocol
 	    ((procedure-this)

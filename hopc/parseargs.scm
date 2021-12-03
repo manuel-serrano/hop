@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Wed Apr 28 17:50:51 2021 (serrano)                */
+;*    Last change :  Sun Nov 21 06:53:44 2021 (serrano)                */
 ;*    Copyright   :  2004-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -95,8 +95,10 @@
 	     (hopc-share-directory-set! dir))
 	    (("-v?level" (help "Increase/set verbosity level (-v0 crystal silence)"))
 	     (if (string=? level "")
-		 (hop-verbose-set! (+fx 1 (hop-verbose)))
-		 (hop-verbose-set! (string->integer level))))
+		 (if (=fx (hop-verbose) 0)
+		     (hop-verbose-set! 2)
+		     (hop-verbose-set! (+fx 1 (hop-verbose))))
+		 (hop-verbose-set! (+fx 1 (string->integer level)))))
 	    (("-O?level" (help "Optimization level"))
 	     (cond
 		((string=? level "")
@@ -267,6 +269,12 @@
 	     (set! ecmascriptv 6))
 	    (("--js-es2017" (help "Enable all EcmaScript 2017 support (default)"))
 	     (set! ecmascriptv 2017))
+	    (("--js-record-decorator" (help "Enable record decorator"))
+	     (j2s-compile-options-set!
+		(cons* :record-decorator #t (j2s-compile-options))))
+	    (("--js-no-record-decorator" (help "Disable record decorator"))
+	     (j2s-compile-options-set!
+		(cons* :record-decorator #f (j2s-compile-options))))
 	    (("--js-option" ?opt ?val (help "Add JavaScript compilation option"))
 	     (j2s-compile-options-set!
 		(cons* (string->keyword opt)
@@ -306,6 +314,10 @@
 	     (hopc-j2s-flags-set! (cons* :optim-loopspec #t (hopc-j2s-flags))))
 	    (("-fno-loop-spec" (help "Disable loop specialization"))
 	     (hopc-j2s-flags-set! (cons* :optim-loopspec #f (hopc-j2s-flags))))
+	    (("-floop-cnst" (help "Enable loop constant lifting (-Ox)"))
+	     (hopc-j2s-flags-set! (cons* :optim-loopcnst #t (hopc-j2s-flags))))
+	    (("-fno-loop-cnst" (help "Disable loop constant lifting"))
+	     (hopc-j2s-flags-set! (cons* :optim-loopcnst #f (hopc-j2s-flags))))
 	    (("-fhintfun" (help "Enable function hint typing (-Ox)"))
 	     (hopc-j2s-flags-set! (cons* :optim-hintfun #t (hopc-j2s-flags))))
 	    (("-fno-hintfun" (help "Disable hintfun typing"))
@@ -397,7 +409,15 @@
 	    (("-fletfun" (help "Enable letfun optimization (-O2)"))
 	     (hopc-j2s-flags-set! (cons* :optim-letfun #t (hopc-j2s-flags))))
 	    (("-fno-letfun" (help "Disable letfun optimization"))
-	     (hopc-j2s-flags-set! (cons* :optim-letopt #f (hopc-j2s-flags))))
+	     (hopc-j2s-flags-set! (cons* :optim-letfun #f (hopc-j2s-flags))))
+	    (("-fletclass" (help "Enable letclass optimization (-O2)"))
+	     (hopc-j2s-flags-set! (cons* :optim-letclass #t (hopc-j2s-flags))))
+	    (("-fno-letclass" (help "Disable letclass optimization"))
+	     (hopc-j2s-flags-set! (cons* :optim-letclass #f (hopc-j2s-flags))))
+	    (("-fvar2let" (help "Enable var2let optimization (-O2)"))
+	     (hopc-j2s-flags-set! (cons* :optim-var2let #t (hopc-j2s-flags))))
+	    (("-fno-var2let" (help "Disable var2let optimization"))
+	     (hopc-j2s-flags-set! (cons* :optim-var2let #f (hopc-j2s-flags))))
 	    (("-fglobprop" (help "Enable globprop optimization (-Ox)"))
 	     (hopc-j2s-flags-set! (cons* :optim-globprop #t (hopc-j2s-flags))))
 	    (("-fno-globprop" (help "Disable globprop optimization"))
@@ -426,6 +446,10 @@
 	     (hopc-j2s-flags-set! (cons* :optim-callapply #t (hopc-j2s-flags))))
 	    (("-fno-callapply" (help "Disable CALL/APPLY optimization"))
 	     (hopc-j2s-flags-set! (cons* :optim-callapply #f (hopc-j2s-flags))))
+	    (("-frecstatic" (help "Enable record static methods optimization (-O2)"))
+	     (hopc-j2s-flags-set! (cons* :optim-recstatic #t (hopc-j2s-flags))))
+	    (("-fno-recstatic" (help "Disable record static methods optimization"))
+	     (hopc-j2s-flags-set! (cons* :optim-recstatic #f (hopc-j2s-flags))))
 	    (("-fliterals" (help "Enable literals optimization (-O3)"))
 	     (hopc-j2s-flags-set! (cons* :optim-literals #t (hopc-j2s-flags))))
 	    (("-fno-literals" (help "Disable literals optimization"))
@@ -434,6 +458,10 @@
 	     (hopc-j2s-flags-set! (cons* :optim-cinstanceof #t (hopc-j2s-flags))))
 	    (("-fno-cache-instanceof" (help "Enable instanceof caching"))
 	     (hopc-j2s-flags-set! (cons* :optim-cinstanceof #f (hopc-j2s-flags))))
+	    (("-fcps-closure-alloc" (help "Enable cps closure optimization (-O3)"))
+	     (hopc-j2s-flags-set! (cons* :optim-cps-closure-alloc #t (hopc-j2s-flags))))
+	    (("-fno-cps-closure-alloc" (help "Disable cps closure optimization"))
+	     (hopc-j2s-flags-set! (cons* :optim-cps-closure-alloc #f (hopc-j2s-flags))))
 	    (("-fvector" (help "Enable array-to-vector optimization (-O3)"))
 	     (hopc-j2s-flags-set! (cons* :optim-vector #t (hopc-j2s-flags))))
 	    (("-fno-vector" (help "Disable array-to-vector optimization"))
@@ -446,6 +474,10 @@
 	     (hopc-j2s-flags-set! (cons* :optim-method #t (hopc-j2s-flags))))
 	    (("-fno-method" (help "Disable method optimization"))
 	     (hopc-j2s-flags-set! (cons* :optim-method #f (hopc-j2s-flags))))
+	    (("-ftestreduce" (help "Enable test reduction optimization (-O2)"))
+	     (hopc-j2s-flags-set! (cons* :optim-testreduce #t (hopc-j2s-flags))))
+	    (("-fno-testreduce" (help "Disable test reduction optimization"))
+	     (hopc-j2s-flags-set! (cons* :optim-testreduce #f (hopc-j2s-flags))))
 	    (("-fprofile" ?log (help "Profile log file optimization"))
 	     (hopc-j2s-flags-set! (cons* :profile-log log (hopc-j2s-flags)))
 	     (hopc-j2s-flags-set! (cons* :optim-cspecs #t (hopc-j2s-flags))))
@@ -537,6 +569,9 @@
 	 (hopc-long-size-set! (bigloo-config 'elong-size)))
       (unless (fixnum? (hopc-int-size))
 	 (hopc-int-size-set! (bigloo-config 'int-size)))
+
+      ;; pp-width
+      (set! *pp-width* (hopc-pp-width))
 
       ;; config report
       (when (pair? configs)

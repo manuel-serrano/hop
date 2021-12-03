@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 25 17:49:28 2017                          */
-;*    Last change :  Thu Mar 28 15:57:16 2019 (serrano)                */
+;*    Last change :  Sun Sep 26 16:54:21 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript regexp functions            */
@@ -29,7 +29,9 @@
 	   __js2scheme_scheme-fun)
 
    (export (j2s-new-regexp ::J2SNew mode return::procedure ctx)
-	   (j2s-regexp-test obj args mode return conf)))
+	   (j2s-regexp-test obj args mode return conf)
+	   (j2s-regexp-object-get obj::J2SRef field::J2SExpr
+	      mode return conf)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-new-regexp ...                                               */
@@ -62,3 +64,18 @@
 	      ,@(map (lambda (arg)
 			(j2s-scheme arg mode return ctx))
 		   args)))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-regexp-object-get ...                                        */
+;*    -------------------------------------------------------------    */
+;*    Read-only regexp properties.                                     */
+;*---------------------------------------------------------------------*/
+(define (j2s-regexp-object-get obj field mode return ctx)
+   (when (isa? field J2SString)
+      (with-access::J2SString field (val)
+	 (cond
+	    ((string=? val "rightContext") '(js-regexp-right-context %this))
+	    ((string=? val "leftContext") '(js-regexp-left-context %this))
+	    ((string=? val "lastMatch") '(js-regexp-last-match %this))
+	    (else #f)))))
+

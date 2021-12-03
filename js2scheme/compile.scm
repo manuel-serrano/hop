@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Thu Aug 26 08:49:41 2021 (serrano)                */
+;*    Last change :  Sun Nov 21 06:53:00 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -28,6 +28,7 @@
 	   __js2scheme_bestpractice
 	   __js2scheme_this
 	   __js2scheme_callapply
+	   __js2scheme_recstatic
 	   __js2scheme_loopexit
 	   __js2scheme_ronly
 	   __js2scheme_use
@@ -42,6 +43,7 @@
 	   __js2scheme_tyflow
 	   __js2scheme_range
 	   __js2scheme_loopspec
+	   __js2scheme_loopcnst
 	   __js2scheme_arguments
 	   __js2scheme_cast
 	   __js2scheme_vector
@@ -52,6 +54,7 @@
 	   __js2scheme_letopt
 	   __js2scheme_unletrec
 	   __js2scheme_narrow
+	   __js2scheme_var2let
 	   __js2scheme_scheme
 	   __js2scheme_js
 	   __js2scheme_debug
@@ -64,6 +67,7 @@
 	   __js2scheme_cse
 	   __js2scheme_globvar
 	   __js2scheme_varpreinit
+	   __js2scheme_genyield
 	   __js2scheme_method
 	   __js2scheme_inline
 	   __js2scheme_unthis
@@ -75,7 +79,8 @@
 	   __js2scheme_newtarget
 	   __js2scheme_procedure
 	   __js2scheme_strbuffer
-	   __js2scheme_cnstlift)
+	   __js2scheme_cnstlift
+	   __js2scheme_testreduce)
 
    (export (j2s-compile-options::pair-nil)
 	   (j2s-compile-options-set! ::pair-nil)
@@ -194,8 +199,10 @@
 	  j2s-ronly-stage
 	  j2s-letfun-stage
 	  j2s-letopt-stage
+	  j2s-var->let-stage
 	  j2s-unletrec-stage
 	  j2s-this-stage
+	  j2s-recstatic-stage
 	  j2s-use-stage
 	  j2s-letclass-stage
 	  j2s-callapply-stage
@@ -205,6 +212,7 @@
 	  j2s-globprop-stage
 	  j2s-uninit-globprop-stage
 	  j2s-globvar-stage
+	  j2s-testreduce-stage
 	  j2s-cspecs-stage
 	  j2s-method-stage
 	  j2s-return-stage
@@ -217,6 +225,7 @@
 	  j2s-tyflow-stage
 	  j2s-sweep-stage
 	  j2s-cnstlift-stage
+	  j2s-loopcnst-stage
 	  j2s-hintnum-stage
 	  j2s-cse-stage
 	  j2s-propcache-stage
@@ -227,6 +236,7 @@
 	  j2s-sweep-stage
 	  j2s-ctor-stage
 	  j2s-pce-stage
+	  j2s-genyield-stage
 	  j2s-cast-stage
 	  j2s-arguments-stage
 	  j2s-vector-stage
@@ -288,6 +298,7 @@
       j2s-return-stage
       j2s-cps-stage
       j2s-any-stage
+      j2s-constant-stage
       j2s-cast-stage
       j2s-newtarget-stage
       j2s-scheme-stage))
@@ -473,6 +484,9 @@
       ;; misc
       (unless (memq :commonjs-export o)
 	 (set! o (cons* :commonjs-export #t o)))
+      ;; record decorator
+      (unless (memq :record-decorator o)
+	 (set! o (cons* :record-decorator #t o)))
       ;; debugging
       (when (>= (bigloo-debug) 0)
 	 (set! o (append o `(:debug ,(bigloo-debug))))
@@ -513,6 +527,8 @@
 	    (set! o (cons* :optim-cse #t o)))
 	 (unless (memq :optim-loopspec o)
 	    (set! o (cons* :optim-loopspec #t o)))
+	 (unless (memq :optim-loopcnst o)
+	    (set! o (cons* :optim-loopcnst #t o)))
 	 (unless (memq :optim-arguments o)
 	    (set! o (cons* :optim-arguments #t o)))
 	 (unless (memq :optim-stack-alloc o)
@@ -523,8 +539,12 @@
 	    (set! o (cons* :optim-cnstlift #t o)))
 	 (unless (memq :optim-strbuffer o)
 	    (set! o (cons* :optim-strbuffer #t o)))
+	 (unless (memq :optim-testreduce o)
+	    (set! o (cons* :optim-testreduce #t o)))
 	 )
       (when (>=fx l 3)
+	 (unless (memq :max-objinit-optim-size o)
+	    (set! o (cons* :max-objinit-optim-size 256 o)))
 	 (unless (memq :optim-method o)
 	    (set! o (cons* :optim-method #t o)))
 	 (unless (memq :optim-literals o)
@@ -547,12 +567,18 @@
 	    (set! o (cons* :optim-vector #t o)))
 	 (unless (memq :optim-vector o)
 	    (set! o (cons* :optim-vector #t o)))
+	 (unless (memq :optim-cps-closure-alloc o)
+	    (set! o (cons* :optim-cps-closure-alloc #t o)))
 ;* 	 (unless (memq :optim-pce o)                                   */
 ;* 	    (set! o (cons* :optim-pce #t o)))                          */
 	 )
       (when (>=fx l 2)
+	 (unless (memq :max-objinit-optim-size o)
+	    (set! o (cons* :max-objinit-optim-size 128 o)))
 	 (unless (memq :optim-letopt o)
 	    (set! o (cons* :optim-letopt #t o)))
+	 (unless (memq :optim-var2let o)
+	    (set! o (cons* :optim-var2let #t o)))
 	 (unless (memq :optim-unletrec o)
 	    (set! o (cons* :optim-unletrec #t o)))
 	 (unless (memq :optim-tyflow-resolve o)
@@ -567,6 +593,8 @@
 	    (set! o (cons* :optim-cspecs #t o)))
 	 (unless (memq :optim-callapply o)
 	    (set! o (cons* :optim-callapply #t o)))
+	 (unless (memq :optim-recstatic o)
+	    (set! o (cons* :optim-recstatic #t o)))
 	 (unless (memq :optim-inline o)
 	    (set! o (cons* :optim-inline #t o)))
 	 (unless (memq :optim-uninit o)
@@ -588,7 +616,9 @@
       (when (>=fx l 1)
 	 (unless (memq :optim-tyflow o)
 	    (set! o (cons* :optim-tyflow #t o))))
-
+      ;; max-objinit-optim-size
+      (unless (memq :max-objinit-optim-size o)
+	 (set! o (cons* :max-objinit-optim-size 16 o)))
       (let ((s (config-get args :optim-size 0)))
 	 (when (>=fx s 1)
 	    (set! o (cons* :fun-src #f o)))

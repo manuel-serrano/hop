@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 25 15:52:55 2017                          */
-;*    Last change :  Wed Aug 11 16:38:09 2021 (serrano)                */
+;*    Last change :  Sun Nov 14 07:46:27 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Types Companion macros                                           */
@@ -14,9 +14,14 @@
 ;*---------------------------------------------------------------------*/
 (define-expander define-instantiate-expander
    (lambda (x e)
-
+      
       (define (def-default clazz)
 	 `(define (,(symbol-append 'js-instantiate- clazz '-expander) x e)
+
+	     (define (epairify nx x)
+		(if (epair? x)
+		    (econs (car nx) (cdr nx) (cer x))
+		    nx))
 	     
 	     (define (builtin-name id)
 		(if (eq? id '__proto__) 'proto id))
@@ -24,7 +29,8 @@
 	     (define builtins
 		'((mode ,(if (pair? (cddr x))
 			     (caddr x)
-			     '(js-object-default-mode)))
+			     '(bit-andu32 (js-object-default-mode)
+			       (bit-notu32 (JS-OBJECT-MODE-INLINE)))))
 		  (__proto__ ,(if (pair? (cddr x))
 				  (caddr x)
 				  '(js-null)))))
@@ -52,10 +58,15 @@
 					     (list set nobj (cadr f)))))
 				 builtins))
 			   nobj)))
-		(e nx e))))
+		(e (epairify nx x) e))))
 
       (define (def-jsobject)
 	 `(define (js-instantiate-JsObject-expander x e)
+
+	     (define (epairify nx x)
+		(if (epair? x)
+		    (econs (car nx) (cdr nx) (cer x))
+		    nx))
 	     
 	     (define (builtin-name id)
 		(if (eq? id '__proto__) 'proto id))
@@ -82,16 +93,17 @@
 		 ;; constructor that allocates properties in a separate vector.
 		 (let ((obj (gensym 'o))
 		       (vec (gensym 'v)))
-		    (e `(let* ((,obj ((@ js-make-jsobject __hopscript_types)
-				      ,(length elements)
-				      ,cmap
-				      ,__proto__))
-			       (,vec (with-access::JsObject ,obj (elements)
-					elements)))
-			   ,@(map (lambda (el idx)
-				     `(vector-set! ,vec ,idx ,el))
-				elements (iota (length elements)))
-			   ,obj)
+		    (e (epairify
+			  `(let* ((,obj ((@ js-make-jsobject __hopscript_types)
+					 ,(length elements)
+					 ,cmap
+					 ,__proto__))
+				  (,vec (js-object-alloc-elements ,obj)))
+			      ,@(map (lambda (el idx)
+					`(vector-set! ,vec ,idx ,el))
+				   elements (iota (length elements)))
+			      ,obj)
+			  x)
 		       e)))
 		((instantiateJsObject
 		    (cmap ?cmap)
@@ -103,16 +115,17 @@
 		 ;; constructor that allocates properties in a separate vector.
 		 (let ((obj (gensym 'o))
 		       (vec (gensym 'v)))
-		    (e `(let* ((,obj ((@ js-make-jsobject __hopscript_types)
-				      ,ctorsize
-				      ,cmap
-				      ,__proto__))
-			       (,vec (with-access::JsObject ,obj (elements)
-					elements)))
-			   ,@(map (lambda (el idx)
-				     `(vector-set! ,vec ,idx ,el))
-				elements (iota (length elements)))
-			   ,obj)
+		    (e (epairify
+			  `(let* ((,obj ((@ js-make-jsobject __hopscript_types)
+					 ,ctorsize
+					 ,cmap
+					 ,__proto__))
+				  (,vec (js-object-alloc-elements ,obj)))
+			      ,@(map (lambda (el idx)
+					`(vector-set! ,vec ,idx ,el))
+				   elements (iota (length elements)))
+			      ,obj)
+			  x)
 		       e)))
 		((instantiateJsObject
 		    (cmap ?cmap)
@@ -124,16 +137,19 @@
 		 ;; constructor that allocates properties in a separate vector.
 		 (let ((obj (gensym 'o))
 		       (vec (gensym 'v)))
-		    (e `(let* ((,obj ((@ js-make-jsobject __hopscript_types)
-				      ,n
-				      ,cmap
-				      ,__proto__))
-			       (,vec (with-access::JsObject ,obj (elements)
-					elements)))
-			   ,@(map (lambda (idx)
-				     `(vector-set! ,vec ,idx (js-undefined)))
-				(iota n))
-			   ,obj)
+		    (e (epairify
+			  `(let* ((,obj ((@ js-make-jsobject __hopscript_types)
+					 ,n
+					 ,cmap
+					 ,__proto__))
+				  (,vec (js-object-alloc-elements ,obj)))
+			      ,@(if (>fx n 32)
+				    `((vector-fill! ,vec (js-undefined)))
+				    (map (lambda (idx)
+					    `(vector-set! ,vec ,idx (js-undefined)))
+				       (iota n)))
+			      ,obj)
+			  x)
 		       e)))
 		((instantiateJsObject
 		    (cmap ?cmap)
@@ -149,8 +165,7 @@
 				      ,n
 				      ,cmap
 				      ,__proto__))
-			       (,vec (with-access::JsObject ,obj (elements)
-					elements)))
+			       (,vec (js-object-alloc-elements ,obj)))
 			   (vector-fill! ,vec (js-undefined))
 			   ,obj)
 		       e)))
@@ -165,17 +180,18 @@
 		 (let ((obj (gensym 'o))
 		       (vec (gensym 'v))
 		       (val (gensym 'i)))
-		    (e `(let* ((,obj ((@ js-make-jsobject __hopscript_types)
-				      ,n
-				      ,cmap
-				      ,__proto__))
-			       (,val ,init)
-			       (,vec (with-access::JsObject ,obj (elements)
-					elements)))
-			   ,@(map (lambda (idx)
-				     `(vector-set! ,vec ,idx ,val))
-				(iota n))
-			   ,obj)
+		    (e (epairify
+			  `(let* ((,obj ((@ js-make-jsobject __hopscript_types)
+					 ,n
+					 ,cmap
+					 ,__proto__))
+				  (,val ,init)
+				  (,vec (js-object-alloc-elements ,obj)))
+			      ,@(map (lambda (idx)
+					`(vector-set! ,vec ,idx ,val))
+				   (iota n))
+			      ,obj)
+			  x)
 		       e)))
 		((instantiateJsObject
 		    (cmap ?cmap)
@@ -187,11 +203,13 @@
 		 ;; constructor that allocates properties in a separate vector.
 		 (let ((obj (gensym 'o))
 		       (vec (gensym 'v)))
-		    (e `(let* ((,obj ((@ js-make-jsobject __hopscript_types)
-				      ,n
-				      ,cmap
-				      ,__proto__)))
-			   ,obj)
+		    (e (epairify
+			  `(let* ((,obj ((@ js-make-jsobject __hopscript_types)
+					 ,n
+					 ,cmap
+					 ,__proto__)))
+			      ,obj)
+			  x)
 		       e)))
 		((instantiateJsObject
 		    (__proto__ ?__proto__)
@@ -202,11 +220,13 @@
 		 ;; constructor that allocates properties in a separate vector.
 		 (let ((obj (gensym 'o))
 		       (vec (gensym 'v)))
-		    (e `(let* ((,obj ((@ js-make-jsobject __hopscript_types)
-				      ,n
-				      (js-make-jsconstructmap :inline #t)
-				      ,__proto__)))
-			   ,obj)
+		    (e (epairify
+			  `(let* ((,obj ((@ js-make-jsobject __hopscript_types)
+					 ,n
+					 (js-make-jsconstructmap)
+					 ,__proto__)))
+			      ,obj)
+			  x)
 		       e)))
 		(else
 		 (let* ((nobj (gensym 'nobj))
@@ -215,13 +235,11 @@
 					(cons 'instantiate::JsObject
 					   (append (if (assq 'cmap (cdr x))
 						       '()
-						       ;; MS WARNING: inline shold be #f, left #t just for debugging
-						       '((cmap (js-make-jsconstructmap :inline #t))))
+						       '((cmap (js-make-jsconstructmap))))
 					      (filter (lambda (f)
 							 (not (builtin? f)))
 						 (cdr x))))))
 			       (cons* 'begin
-				  `(js-object-mode-set! ,nobj (js-object-default-mode))
 				  `(%object-widening-set! ,nobj '())
 				  (map (lambda (f)
 					  (let ((c (assq (car f) (cdr x)))
@@ -232,13 +250,53 @@
 						 (list set nobj (cadr c))
 						 (list set nobj (cadr f)))))
 				     builtins))
+			       `(js-object-mode-inline-set! ,nobj #f)
 			       nobj)))
-		    (e nx e))))))
+		    (e (epairify nx x) e))))))
+
+      (define (def-jsgenerator)
+	 `(define (js-instantiate-JsGenerator-expander x e)
+
+	     (define (epairify nx x)
+		(if (epair? x)
+		    (econs (car nx) (cdr nx) (cer x))
+		    nx))
+	     
+	     (match-case x
+		((instantiateJsGenerator
+		    (cmap ?cmap)
+		    (elements '#())
+		    (__proto__ ?proto)
+		    (%next ?next)
+		    (%env (if (>fx ?size 0) (make-vector ?size) '#())))
+		 (let ((nx `($js-make-jsgenerator ,cmap ,proto ,size ,next
+			       (bit-andu32 (js-object-default-mode)
+				  (bit-notu32 (JS-OBJECT-MODE-INLINE))))))
+		    (e (epairify nx x) e)))
+		((instantiateJsGenerator
+		    (cmap ?cmap)
+		    (elements ?elements)
+		    (__proto__ ?proto)
+		    (%next ?next)
+		    (%env ?env))
+		 (warning "instantiateJsGenerator" "unrecognized form" x)
+		 (e `(let ((o (instantiate::JsGenerator
+				 (cmap ,cmap)
+				 (elements ,elements)
+				 (%next ,next)
+				 (%env ,env))))
+			(js-object-proto-set! o ,proto)
+			o)
+		    e))
+		(else
+		 (error "def-jsgenerator" "bad form" x)))))
       
       (define (def clazz)
 	 (cond
 	    ((eq? clazz 'JsObject)
 	     (def-jsobject))
+	    ((eq? clazz 'JsGenerator)
+	     (def-jsgenerator))
 	    (else
 	     (def-default clazz))))
 
@@ -270,7 +328,7 @@
 			    ,(length elements)
 			    ,cmap
 			    ,__proto__))
-		     (,vec (with-access::JsObject ,obj (elements) elements)))
+		     (,vec (js-object-alloc-elements ,obj)))
 		 ,@(map (lambda (el idx)
 			   `(vector-set! ,vec ,idx ,el))
 		      elements (iota (length elements)))
@@ -367,3 +425,20 @@
        (e `(vector-ref ,o 3) e))
       (else
        (error "export-writable" "wrong syntax" x))))
+
+;*---------------------------------------------------------------------*/
+;*    generator                                                        */
+;*---------------------------------------------------------------------*/
+(define (js-generator-ref-expander x e)
+   (match-case x
+      ((?- ?obj ?idx . ?debug-name)
+       (e `(js-generator-inline-ref ,obj ,idx) e))
+      (else
+       (error "js-generator-ref" "bad form" x))))
+
+(define (js-generator-set!-expander x e)
+   (match-case x
+      ((?- ?obj ?idx ?val . ?debug-name)
+       (e `(js-generator-inline-set! ,obj ,idx ,val) e))
+      (else
+       (error "js-generator-set!" "bad form" x))))

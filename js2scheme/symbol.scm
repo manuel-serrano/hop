@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Fri Aug 13 07:30:13 2021 (serrano)                */
+;*    Last change :  Wed Oct 27 19:05:30 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -25,7 +25,8 @@
 	   __js2scheme_utils
 	   __js2scheme_compile
 	   __js2scheme_stage
-	   __js2scheme_lexer)
+	   __js2scheme_lexer
+	   __js2scheme_classutils)
 
    (export j2s-symbol-stage))
 
@@ -56,7 +57,6 @@
    (instantiate::J2SStageProc
       (name "symbol")
       (comment "symbol resolution")
-      (footer "")
       (proc j2s-symbol)))
 
 ;*---------------------------------------------------------------------*/
@@ -115,10 +115,8 @@
 			    (with-access::J2SDecl d (scope)
 			       (when (eq? scope 'unbound)
 				  (set! decls (cons d decls)))))
-		  genv)))))
-   (when (and (>= (config-get conf :verbose 0) 2)
-	      (not (config-get conf :verbmargin #f)))
-      (newline (current-error-port)))
+		  genv)
+	       (resolve-class-private-fields this #f)))))
    this)
 
 ;*---------------------------------------------------------------------*/
@@ -494,9 +492,10 @@
 		(map (lambda (d)
 			(with-access::J2SDecl d (id binder loc)
 			   (let ((od (find-decl id env)))
-			      (unless (or (not od)
-					  (eq? od d)
-					  (j2s-global? od))
+			      (when (and (or (not od)
+					     (eq? od d)
+					     (j2s-global? od))
+					 (config-get conf :error-variable-redefinition #f))
 				 (let ((kind (cond
 					       ((j2s-let? od)
 						"variable")
@@ -854,7 +853,7 @@
 			 ((isa? ref J2SRef)
 			  (with-access::J2SRef ref (decl loc)
 			     (with-access::J2SDecl decl (scope id)
-				(if (memq scope '(global export %scope))
+				(if (memq scope '(global export %scope tls))
 				    (export-decl decl alias program loc)
 				    (export-err id loc
 				       (format "bad scope (~s)" scope))))))
@@ -1027,6 +1026,37 @@
 	 this)))
 
 ;*---------------------------------------------------------------------*/
+;*    resolve! ::J2SRecord ...                                         */
+;*---------------------------------------------------------------------*/
+(define-walk-method (resolve! this::J2SRecord env mode withs wenv genv ctx conf)
+   (call-next-method)
+   ;; verify the lack of cycle in the inheritance tree
+   (let* ((root (j2s-class-root-val this))
+	  (names (map (lambda (prop)
+			 (with-access::J2SPropertyInit prop (name)
+			    (with-access::J2SString name (val) val)))
+		    (j2s-class-instance-properties this))))
+      ;; verify no property duplications
+      (let loop ((names names)
+		 (dups '()))
+	 (cond
+	    ((null? names)
+	     (if (null? dups)
+		 this
+		 (with-access::J2SRecord this (name loc)
+		    (raise
+		       (instantiate::&io-parse-error
+			  (proc name)
+			  (msg "instance properties overriden")
+			  (obj dups)
+			  (fname (cadr loc))
+			  (location (caddr loc)))))))
+	    ((member (car names) (cdr names))
+	     (loop (cdr names) (cons (car names) dups)))
+	    (else
+	     (loop (cdr names) dups))))))
+   
+;*---------------------------------------------------------------------*/
 ;*    resolve! ::J2SClassElement ...                                   */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (resolve! this::J2SClassElement env mode withs wenv genv ctx conf)
@@ -1108,13 +1138,22 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (resolve! this::J2SObjInit env mode withs wenv genv ctx conf)
    
+   (define table (create-hashtable :weak 'open-string))
+   
    (define (find-property id::obj env::pair-nil)
-      (find (lambda (prop)
-	       (with-access::J2SPropertyInit prop (name)
-		  (when (isa? name J2SLiteralValue)
-		     (with-access::J2SLiteralValue name (val)
-			(equal? id val)))))
-	 env))
+      (if (string? id)
+	  (hashtable-get table id)
+	  (find (lambda (prop)
+		   (with-access::J2SPropertyInit prop (name)
+		      (when (isa? name J2SLiteralValue)
+			 (with-access::J2SLiteralValue name (val)
+			    (equal? id val)))))
+	     env)))
+
+   (define (add-property id::obj init env::pair-nil)
+      (when (string? id)
+	 (hashtable-put! table id init))
+      (cons init env))
    
    (define (property-error id msg loc)
       (raise
@@ -1127,7 +1166,7 @@
    
    (define (proc? o)
       (isa? o J2SFun))
-   
+
    (with-access::J2SObjInit this (inits)
       (let loop ((inits inits)
 		 (ninits '()))
@@ -1142,7 +1181,7 @@
 		       (let ((old (find-property val ninits)))
 			  (cond
 			     ((not old)
-			      (loop (cdr inits) (cons (car inits) ninits)))
+			      (loop (cdr inits) (add-property val (car inits) ninits)))
 			     ((not (eq? (object-class old) (object-class (car inits))))
 			      (property-error name
 				 "duplicate data property in object literal not allowed in strict mode"
@@ -1167,8 +1206,8 @@
 				 "duplicate data property in object literal not allowed in strict mode"
 				 loc))
 			     (else
-			      (loop (cdr inits) (cons (car inits) ninits))))))
-		    (loop (cdr inits) (cons (car inits) ninits))))))))
+			      (loop (cdr inits) (add-property val (car inits) ninits))))))
+		    (loop (cdr inits) (add-property #f (car inits) ninits))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    resolve! ::J2SOctalNumber ...                                    */
@@ -1254,7 +1293,7 @@
 	 (let ((d (find-decl id env)))
 	    (unless d
 	       (tprint "PAS BON " id " loc=" loc)
-	       (tprint "this=" (j2s->list this)))
+	       (tprint "this=" (j2s->sexp this)))
 	    (set! decl d)))
       (call-default-walker)))
 
@@ -1487,3 +1526,79 @@
 	     (fname (cadr loc))
 	     (location (caddr loc)))))))
 
+;*---------------------------------------------------------------------*/
+;*    resolve-class-private-fields ...                                 */
+;*---------------------------------------------------------------------*/
+(define-walk-method (resolve-class-private-fields this::J2SNode clazz)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    resolve-class-private-fields ::J2SClass ...                      */
+;*---------------------------------------------------------------------*/
+(define-walk-method (resolve-class-private-fields this::J2SClass clazz)
+   (with-access::J2SClass this (elements)
+      ;; mark all the private fields
+      (for-each (lambda (el)
+		   (with-access::J2SClassElement el (prop)
+		      (with-access::J2SPropertyInit prop (name)
+			 (when (isa? name J2SString)
+			    (with-access::J2SString name (val private)
+			       (when private
+				  (set! private el)
+				  (set! val (class-private-field-name val this))))))))
+	 elements)
+      ;; resolve private field accesses
+      (for-each (lambda (el)
+		   (resolve-class-private-fields el this))
+	 elements)
+      this))
+
+;*---------------------------------------------------------------------*/
+;*    resolve-class-private-fields ::J2SAccess ...                     */
+;*---------------------------------------------------------------------*/
+(define-walk-method (resolve-class-private-fields this::J2SAccess clazz)
+
+   (define (err val loc)
+      (raise
+	 (instantiate::&io-parse-error
+	    (proc "hopc (symbol)")
+	    (msg "private member accessed out of class")
+	    (obj val)
+	    (fname (cadr loc))
+	    (location (caddr loc)))))
+   
+   (call-default-walker)
+   (with-access::J2SAccess this (field loc)
+      (when (isa? field J2SString)
+	 (with-access::J2SString field (val private)
+	    (when (eq? private #t)
+	       (if (not (isa? clazz J2SClass))
+		   (err val loc)
+		   (let* ((pname (class-private-field-name val clazz))
+			  (el (j2s-class-find-super-element clazz pname)))
+		      (if el
+			  (begin
+			     (set! val pname)
+			     (set! private el))
+			 (err val loc)))))))))
+
+;*---------------------------------------------------------------------*/
+;*    resolve-class-private-fields ::J2SBinary ...                     */
+;*---------------------------------------------------------------------*/
+(define-walk-method (resolve-class-private-fields this::J2SBinary clazz)
+   (with-access::J2SBinary this (op lhs rhs)
+      (call-default-walker)
+      (when (and (isa? clazz J2SClass) (isa? lhs J2SString))
+	 (with-access::J2SString lhs (private val)
+	    (when (and private (eq? op 'in))
+	       (set! val (class-private-field-name val clazz)))))))
+
+;*---------------------------------------------------------------------*/
+;*    class-private-field-name ...                                     */
+;*---------------------------------------------------------------------*/
+(define (class-private-field-name field clazz)
+   (with-access::J2SClass clazz (name loc)
+      (if (symbol? name)
+	  (string-append field "@" (symbol->string! name))
+	  (string-append field "@" (format "~a:~a" (cadr loc) (caddr loc))))))
+   

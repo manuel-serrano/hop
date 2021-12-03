@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Dec  7 06:56:07 2019                          */
-;*    Last change :  Sun Feb  9 11:04:52 2020 (serrano)                */
-;*    Copyright   :  2019-20 Manuel Serrano                            */
+;*    Last change :  Sat Oct 16 07:21:23 2021 (serrano)                */
+;*    Copyright   :  2019-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arguments macros for js2scheme                                   */
 ;*=====================================================================*/
@@ -14,7 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (define-macro (js-arguments-vector-ref vec arguments idx %this)
    `(if (and (>=fx ,idx 0) (<fx ,idx (vector-length ,vec)))
-	(vector-ref-ur ,vec ,idx)
+	(vector-ref ,vec ,idx)
 	(begin
 	   (set! ,arguments (js-materialize-arguments ,%this ,vec ,arguments))
 	   (js-arguments-ref ,arguments ,idx ,%this))))
@@ -24,7 +24,7 @@
 ;*---------------------------------------------------------------------*/
 (define-macro (js-arguments-vector-index-ref vec arguments idx %this)
    `(if (<u32 ,idx (fixnum->uint32 (vector-length ,vec)))
-	(vector-ref-ur ,vec (uint32->fixnum ,idx))
+	(vector-ref ,vec (uint32->fixnum ,idx))
 	(begin
 	   (set! ,arguments (js-materialize-arguments ,%this ,vec ,arguments))
 	   (js-arguments-index-ref ,arguments ,idx ,%this))))
@@ -34,7 +34,7 @@
 ;*---------------------------------------------------------------------*/
 (define-macro (js-arguments-vector-set! vec arguments idx val %this)
    `(if (and (>=fx ,idx 0) (<fx ,idx (vector-length ,vec)))
-	(vector-set-ur! ,vec ,idx ,val)
+	(vector-set! ,vec ,idx ,val)
 	(begin
 	   (set! ,arguments (js-materialize-arguments ,%this ,vec ,arguments))
 	   (js-arguments-set! ,arguments ,idx ,val ,%this))))
@@ -44,7 +44,7 @@
 ;*---------------------------------------------------------------------*/
 (define-macro (js-arguments-vector-index-set! vec arguments idx val %this)
    `(if (<u32 ,idx (fixnum->uint32 (vector-length ,vec)))
-	(vector-set-ur! ,vec (uint32->fixnum ,idx) ,val)
+	(vector-set! ,vec (uint32->fixnum ,idx) ,val)
 	(begin
 	   (set! ,arguments (js-materialize-arguments ,%this ,vec ,arguments))
 	   (js-arguments-index-set! ,arguments ,idx ,val ,%this))))
@@ -54,7 +54,7 @@
 ;*---------------------------------------------------------------------*/
 (define-macro (js-rest-vector-ref vec idx)
    `(if (and (>=fx ,idx 0) (<fx ,idx (vector-length ,vec)))
-	(vector-ref-ur ,vec ,idx)
+	(vector-ref ,vec ,idx)
 	(js-undefined)))
 
 ;*---------------------------------------------------------------------*/
@@ -62,7 +62,7 @@
 ;*---------------------------------------------------------------------*/
 (define-macro (js-rest-vector-index-ref vec idx)
    `(if (<u32 ,idx (fixnum->uint32 (vector-length ,vec)))
-	(vector-ref-ur ,vec (uint32->fixnum ,idx))
+	(vector-ref ,vec (uint32->fixnum ,idx))
 	(js-undefined)))
 
 ;*---------------------------------------------------------------------*/

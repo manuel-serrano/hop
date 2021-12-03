@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 11 13:06:45 2016                          */
-;*    Last change :  Sat Jun  5 11:33:40 2021 (serrano)                */
+;*    Last change :  Tue Oct 26 15:06:52 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Minimal set of macros for creating new AST.                      */
@@ -151,43 +151,65 @@
    `(instantiate::J2SCall
        (loc loc)
        (fun ,fun)
-       (thisarg (list (J2SUndefined)))
+       (thisargs (list (J2SUndefined)))
        (args ,(if (pair? args) `(list ,@args) ''()))))
 
 (define-macro (J2SHopCall fun . args)
    `(instantiate::J2SCall
        (loc loc)
        (fun ,fun)
-       (thisarg '())
+       (thisargs '())
        (args ,(if (pair? args) `(list ,@args) ''()))))
+
+(define-macro (J2SHopCall* fun args)
+   `(instantiate::J2SCall
+       (loc loc)
+       (fun ,fun)
+       (thisargs '())
+       (args ,args)))
+
+(define-macro (J2SHopCall*/type type fun args)
+   `(instantiate::J2SCall
+       (loc loc)
+       (fun ,fun)
+       (type ,type)
+       (thisargs '())
+       (args ,args)))
 
 (define-macro (J2SHopCall/type type fun . args)
    `(instantiate::J2SCall
        (loc loc)
        (fun ,fun)
        (type ,type)
-       (thisarg '())
+       (thisargs '())
        (args ,(if (pair? args) `(list ,@args) ''()))))
 
 (define-macro (J2SCall* fun args)
    `(instantiate::J2SCall
        (loc loc)
        (fun ,fun)
-       (thisarg (list (J2SUndefined)))
+       (thisargs (list (J2SUndefined)))
        (args ,args)))
 
-(define-macro (J2SMethodCall* fun thisarg args)
+(define-macro (J2SMethodCall fun thisargs . args)
    `(instantiate::J2SCall
        (loc loc)
        (fun ,fun)
-       (thisarg ,thisarg)
-       (args ,args)))
+       (thisargs ,thisargs)
+       (args ,(if (pair? args) `(list ,@args) ''()))))
 
-(define-macro (J2SMethodCall/cache* fun thisarg args cspecs cache)
+(define-macro (J2SMethodCall* fun thisargs args)
    `(instantiate::J2SCall
        (loc loc)
        (fun ,fun)
-       (thisarg ,thisarg)
+       (thisargs ,thisargs)
+       (args ,args)))
+
+(define-macro (J2SMethodCall/cache* fun thisargs args cspecs cache)
+   `(instantiate::J2SCall
+       (loc loc)
+       (fun ,fun)
+       (thisargs ,thisargs)
        (args ,args)
        (cspecs ,cspecs)
        (cache ,cache)))
@@ -251,6 +273,12 @@
        (loc loc)
        (id ,id)))
 
+(define-macro (J2SSuper decl context)
+   `(instantiate::J2SSuper
+       (loc loc)
+       (decl ,decl)
+       (context ,context)))
+
 (define-macro (J2SFun name params body . opts)
    `(instantiate::J2SFun
        (loc loc)
@@ -272,6 +300,15 @@
    `(instantiate::J2SArrow
        (loc loc)
        (idthis '%_)
+       (mode 'hopscript)
+       (name ,name)
+       (params ,params)
+       (body ,body)))
+
+(define-macro (J2SArrowKont name params body . opts)
+   `(instantiate::J2SArrow
+       (loc loc)
+       (idthis '%gen)
        (mode 'hopscript)
        (name ,name)
        (params ,params)
@@ -418,13 +455,16 @@
        (usage (usage ,_usage))
        (id ,id)))
 
-(define-macro (J2SDeclGlobal binder _usage id)
+(define-macro (J2SDecl/scope scope binder _usage id)
    `(instantiate::J2SDecl
        (loc loc)
        (binder ,binder)
-       (scope 'global)
+       (scope ,scope)
        (usage (usage ,_usage))
        (id ,id)))
+
+(define-macro (J2SDeclGlobal binder _usage id)
+   `(J2SDecl/scope 'global ,binder ,_usage ,id))
 
 (define-macro (J2SParam _usage id . opts)
    `(instantiate::J2SDecl
@@ -538,6 +578,13 @@
        (then ,then)
        (else ,else)))
 
+(define-macro (J2SIfIsRecord test then else)
+   `(instantiate::J2SIfIsRecord
+       (loc loc)
+       (test ,test)
+       (then ,then)
+       (else ,else)))
+   
 (define-macro (J2SCond test then else)
    `(instantiate::J2SCond
        (loc loc)
@@ -636,6 +683,13 @@
        (expr ,expr)
        (type ,totype)))
 
+(define-macro (J2SCast/static static totype expr)
+   `(instantiate::J2SCast
+       (loc loc)
+       (expr ,expr)
+       (static ,static)
+       (type ,totype)))
+
 (define-macro (J2SCheck totype expr)
    `(instantiate::J2SCheck
        (loc loc)
@@ -650,11 +704,12 @@
        (debug ,debug)
        (stmt ,stmt)))
 
-(define-macro (J2SCacheCheck prop cache obj . fields)
+(define-macro (J2SCacheCheck prop cache owner obj . fields)
    `(instantiate::J2SCacheCheck
        (loc loc)
        (prop ,prop)
        (cache ,cache)
+       (owner ,owner)
        (obj ,obj)
        (type 'bool)
        (fields ,(if (pair? fields) `(list ,@fields) ''()))))
@@ -665,3 +720,10 @@
        (prop ,prop)
        (cache ,cache)
        (obj ,obj)))
+
+(define-macro (J2SKontRef gen index id)
+   `(instantiate::J2SKontRef
+       (loc loc)
+       (gen ,gen)
+       (index ,index)
+       (id ,id)))
