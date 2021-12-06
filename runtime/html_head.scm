@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/runtime/html_head.scm               */
+;*    serrano/prgm/project/hop/3.5.x/runtime/html_head.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Fri Apr  9 10:11:16 2021 (serrano)                */
+;*    Last change :  Mon Dec  6 10:36:51 2021 (serrano)                */
 ;*    Copyright   :  2005-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -745,7 +745,14 @@ function hop_realm() {return \"" (hop-realm) "\";}"))))
 	     (with-access::security-manager sm (script-sanitize)
 		(script-sanitize node)))
 	  node))
-   
+
+   (define (attributes+type attributes type)
+      (if (string=? type "application/x-javascript")
+	  ;; do not generate plain "application/x-javascript" to avoid
+	  ;; HTML validators warnings
+	  attributes
+	  `(:type ,type ,@attributes)))
+
    (define (default src)
       (if (string? src)
 	  (let ((src (cond
@@ -756,11 +763,11 @@ function hop_realm() {return \"" (hop-realm) "\";}"))))
 	     (when inline (warning "<SCRIPT>" "Cannot inline file -- " src))
 	     (instantiate::xml-cdata
 		(tag 'script)
-		(attributes `(:src ,src type: ,type ,@attributes))
+		(attributes (attributes+type `(:src ,src ,@attributes) type))
 		(body body)))
 	  (instantiate::xml-cdata
 	     (tag 'script)
-	     (attributes `(:type ,type ,@attributes))
+	     (attributes (attributes+type attributes type))
 	     (body body))))
    
    (define (inl src)
