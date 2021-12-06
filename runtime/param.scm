@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/runtime/param.scm                   */
+;*    serrano/prgm/project/hop/3.5.x/runtime/param.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Mon May 25 08:15:39 2020 (serrano)                */
-;*    Copyright   :  2004-20 Manuel Serrano                            */
+;*    Last change :  Mon Dec  6 10:16:52 2021 (serrano)                */
+;*    Copyright   :  2004-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
 ;*=====================================================================*/

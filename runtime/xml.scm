@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/runtime/xml.scm                     */
+;*    serrano/prgm/project/hop/3.5.x/runtime/xml.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Thu Mar 19 16:37:12 2020 (serrano)                */
+;*    Last change :  Mon Dec  6 10:25:21 2021 (serrano)                */
 ;*    Copyright   :  2004-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -491,7 +491,20 @@
 	 (display "</" p)
 	 (display tag p)
 	 (display ">" p))))
-   
+
+;*---------------------------------------------------------------------*/
+;*    xml-write-script-tag ...                                         */
+;*---------------------------------------------------------------------*/
+(define (xml-write-script-tag p closing::bstring)
+   (let ((mt (hop-mime-type)))
+      (if (string=? mt "application/x-javascript")
+	  (display "<script" p)
+	  (begin
+	     (display "<script type='" p)
+	     (display mt p)
+	     (display "'" p)))
+      (display closing p)))
+
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::xml-tilde ...                                        */
 ;*---------------------------------------------------------------------*/
@@ -500,9 +513,7 @@
       (if (xml-markup-is? parent 'script)
 	  (xml-write (xml-tilde->statement obj) p backend)
 	  (with-access::xml-backend backend (cdata-start cdata-stop)
-	     (display "<script type='" p)
-	     (display (hop-mime-type) p)
-	     (display "'>" p)
+	     (xml-write-script-tag p ">")
 	     (when cdata-start (display cdata-start p))
 	     (display (xml-tilde->statement obj) p)
 	     (when cdata-stop (display cdata-stop p))
@@ -530,10 +541,9 @@
 	     (for-each (lambda (b) (xml-write b p backend)) body)
 	     (when (isa? security security-manager)
 		(for-each (lambda (r)
-			     (display "<script type='" p)
-			     (display (hop-mime-type) p)
-			     (fprintf p "' src='~a'>" r)
-			     (display "</script>" p))
+			     (xml-write-script-tag p " src='")
+			     (display r p)
+			     (display "'</script>" p))
 		   (with-access::security-manager security (runtime) runtime)))
 	     (display "</" p)
 	     (display tag p)
@@ -858,9 +868,7 @@
 		       (newline p)
 		       (loop (cddr attrs) var))
 		    (let ((var (gensym)))
-		       (display "<script type='" p)
-		       (display (hop-mime-type) p)
-		       (display "'>" p)
+		       (xml-write-script-tag p ">")
 		       (when cdata-start (display cdata-start p))
 		       (display "hop_add_event_listener( \"" p)
 		       (display id p)
