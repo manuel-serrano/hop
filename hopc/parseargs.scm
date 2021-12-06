@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Mon Dec  6 09:32:32 2021 (serrano)                */
+;*    Last change :  Mon Dec  6 09:39:06 2021 (serrano)                */
 ;*    Copyright   :  2004-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -500,7 +500,7 @@
 	     (hopc-j2s-flags-set! (cons* :profile-alloc #t (hopc-j2s-flags))))
 	    (("--profile-symbols" (help "Profile with a symbol table"))
 	     (hopc-j2s-flags-set! (cons* :profile-symbols #t (hopc-j2s-flags))))
-	    (("--profile-mem?[23]" (help "Memory profiling mode (see bmem)"))
+	    (("--profile-mem?level" (help "Memory profiling mode [23] (see bmem)"))
 	     (hopc-j2s-flags-set! (cons* :profile-mem level (hopc-j2s-flags)))
 	     (cond
 		((string=? level "")
