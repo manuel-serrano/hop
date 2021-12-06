@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/hopc/parseargs.scm                  */
+;*    serrano/prgm/project/hop/3.5.x/hopc/parseargs.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Sun Nov 21 06:53:44 2021 (serrano)                */
+;*    Last change :  Mon Dec  6 09:32:32 2021 (serrano)                */
 ;*    Copyright   :  2004-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -500,12 +500,18 @@
 	     (hopc-j2s-flags-set! (cons* :profile-alloc #t (hopc-j2s-flags))))
 	    (("--profile-symbols" (help "Profile with a symbol table"))
 	     (hopc-j2s-flags-set! (cons* :profile-symbols #t (hopc-j2s-flags))))
-	    (("--profile-mem?level" (help "Memory profiling mode (see bmem)"))
+	    (("--profile-mem?[23]" (help "Memory profiling mode (see bmem)"))
 	     (hopc-j2s-flags-set! (cons* :profile-mem level (hopc-j2s-flags)))
-	     (if (string=? level "")
-		 (hopc-bigloo-profile-options-set! '("-gtraceall"))
-		 (let ((gtrace (string-append "-gtrace" level)))
-		    (hopc-bigloo-profile-options-set! `(,gtrace)))))
+	     (cond
+		((string=? level "")
+		 (hopc-bigloo-profile-options-set! '("-pmem" "-glines" "-copt" "-g")))
+		((string=? level "2")
+		 (hopc-bigloo-profile-options-set! '("-pmem2" "-glines" "-copt" "-g")))
+		((string=? level "3")
+		 (hopc-bigloo-profile-options-set! '("-pmem3" "-glines" "-copt" "-g")))
+		(else
+		 (error "hopc" "Illegal option"
+		    (string-append "--profile-mem" level)))))
 	    (section "Dummy option for Hop command line similarity")
 	    (("--no-server" (help "Hop compatibility, ignored"))
 	     #unspecified)
