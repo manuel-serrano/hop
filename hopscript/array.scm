@@ -1560,7 +1560,7 @@
 		   (nlen (+u32 vlength (fixnum->uint32 litems)))
 		   (nvec ($create-vector (uint32->fixnum nlen))))
 	       ;; copy the existing inlined elements
-	       (vector-blit! nvec litems vec 0 (vector-length vec))
+	       (vector-blit! nvec litems vec 0 (uint32->fixnum ilen))
 	       ;; insert the new elements
 	       (let ((i 0))
 		  (for-each (lambda (el)
