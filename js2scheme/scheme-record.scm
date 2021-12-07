@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jul 15 07:09:51 2021                          */
-;*    Last change :  Fri Oct 15 14:01:33 2021 (serrano)                */
+;*    Last change :  Tue Dec  7 16:11:35 2021 (serrano)                */
 ;*    Copyright   :  2021 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Record generation                                                */
@@ -122,7 +122,8 @@
 				,(j2s-scheme cmap mode return ctx)
 				,(class-prototype-id record)
 				,(record-scmid record)))
-		       (,res ,(j2s-scheme-call-class-constructor record rec rec
+		       (,res ,(j2s-scheme-call-class-constructor record rec
+				 (j2s-scheme (J2SRef decl) mode return ctx)
 				 obj args this
 				 mode return ctx)))
 		   ,(if (j2s-class-constructor-might-return? record)
@@ -198,37 +199,39 @@
 		,(if (j2s-class-super-val this)
 		     `(set! ,proto ,(j2s-record-prototype this mode return ctx))
 		     #unspecified)
-		(let* ((,clazz (js-make-function %this
-				  (lambda (this . args)
-				     (with-access::JsGlobalObject %this (js-new-target)
-					(if (eq? js-new-target (js-undefined))
-					    (js-raise-type-error/loc %this ',loc
-					       ,(format "Record constructor '~a' cannot be invoked without 'new'"
-						   name)
-					       (js-undefined))
-					    (set! js-new-target (js-undefined)))
-					(apply ,ctorf this args)))
-				  ,arity
-				  (js-function-info
-				     :name ,(symbol->string cname)
-				     :len ,len)
-				  :strict ',mode
-				  :alloc (lambda (%this ctor)
-					    ,(let ((rec (gensym 'this)))
-						`(let ((,rec ,(j2s-alloc-record this mode return ctx)))
-						    (with-access::JsGlobalObject %this (js-new-target)
-						       (set! js-new-target ,rec))
-						    ,rec)))
-				  :constructor ,ctorf
-				  :clazz ,(record-scmid this)
-				  :prototype  ,proto
-				  :__proto__ ,(if (null? super)
-						  '(with-access::JsGlobalObject %this (js-function-prototype)
-						    js-function-prototype)
-						  super)
-				  :constrsize ,ctorsz
-				  :constrmap ,constrmap))
-		       ,@(if name `((,(j2s-class-id this ctx) ,clazz))))
+		(letrec* ((,clazz (js-make-function %this
+				     (lambda (this . args)
+					(with-access::JsGlobalObject %this (js-new-target)
+					   (let ((%new-target (js-new-target-pop! %this)))
+					      (when (eq? %new-target (js-undefined))
+						 (js-raise-type-error/loc %this ',loc
+						    ,(format "Record constructor '~a' cannot be invoked without 'new'"
+							name)
+						    (js-undefined)))
+					      ,(if (class-new-target? this)
+						   `(apply ,ctorf this %new-target args)
+						   `(apply ,ctorf this args)))))
+				     ,arity
+				     (js-function-info
+					:name ,(symbol->string cname)
+					:len ,len)
+				     :strict ',mode
+				     :alloc (lambda (%this ctor)
+					       ,(let ((rec (gensym 'this)))
+						   `(let ((,rec ,(j2s-alloc-record this mode return ctx)))
+						       (with-access::JsGlobalObject %this (js-new-target)
+							  (set! js-new-target ,clazz))
+						       ,rec)))
+				     :constructor ,ctorf
+				     :clazz ,(record-scmid this)
+				     :prototype  ,proto
+				     :__proto__ ,(if (null? super)
+						     '(with-access::JsGlobalObject %this (js-function-prototype)
+						       js-function-prototype)
+						     super)
+				     :constrsize ,ctorsz
+				     :constrmap ,constrmap))
+			  ,@(if name `((,(j2s-class-id this ctx) ,clazz))))
 		   ,@(let ((ms (class-sort-class-methods! this)))
 			(if (pair? ms)
 			    (let ((sz (length ms)))
@@ -265,7 +268,7 @@
 		      (with-access::J2SDataPropertyInit prop (val)
 			 (with-access::J2SFun val (constrsize params thisp)
 			    (make-class this super
-			       (j2s-function-arity val ctx)
+			       '(js-function-arity 0 -1 'scheme)
 			       (length params)
 			       constrsize)))))
 		  (super

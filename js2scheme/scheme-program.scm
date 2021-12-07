@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Tue Nov  2 11:15:58 2021 (serrano)                */
+;*    Last change :  Tue Dec  7 16:39:40 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -42,47 +42,46 @@
 	       (if (pair? records)
 		   `((export ,@(map j2s-record-declaration records)))
 		   '()))
-		;; (&begin!) must not be a constant! (_do not_ use quote)
-		(define __js_strings #f)
-	     (define __js_rxcaches #f)
-	     (%define-cnst-table ,(length cnsts))
-	     (%define-pcache ,pcache-size)
-	     (define %pcache
-		(js-make-pcache-table ,pcache-size
-		   ,(context-get ctx :filename)
-		   ,@(if (or (context-get ctx :profile-cache #f)
-			     (context-get ctx :profile-location #f))
-			 (list `',(j2s-profile-cache this))
-			 '())))
-	     (define %source (or (the-loading-file) "/"))
-	     (define %resource (dirname %source))
-	     ,(when (context-get ctx :profile-call #f)
-		 `(define %call-log (make-vector ,call-size #l0)))
-	     ,(when (context-get ctx :profile-cmap #f)
-		 `(define %cmap-log (make-vector ,call-size '())))
-	     ,(when (context-get ctx :profile-call #f)
-		 `(define %call-locations ',(call-locations this)))
-	     ,@(map j2s-record-predicate records)
-	     ,@(js-declare-tls this ctx)
-	     ,(epairify-deep loc
-		 `(define (hopscript %this this %scope %module)
-		     (define __js_strings ,(j2s-jsstring-init this))
-		     (define __js_rxcaches ,(j2s-regexp-caches-init this))
-		     (define js-string-names (js-get-js-string-names))
-		     (define js-integer-names (js-get-js-integer-names))
-		     (define %worker (js-current-worker))
-		     (define %cnst-table ,cnsttable)
-		     ,@(js-define-tls this ctx)
-		     ,@(j2s-tls-headers scmheaders)
-		     (letrec* ,(j2s-let-headers scmheaders)
-			,@(j2s-expr-headers scmheaders)
-			,@globals
-			,esexports
-			,@esimports
-			,@(exit-body ctx scmrecords
-			     (filter fundef? body) (filter nofundef? body)))))
-	     ;; for dynamic loading
-	     hopscript)))
+	   (define __js_strings #f)
+	   (define __js_rxcaches #f)
+	   (%define-cnst-table ,(length cnsts))
+	   (%define-pcache ,pcache-size)
+	   (define %pcache
+	      (js-make-pcache-table ,pcache-size
+		 ,(context-get ctx :filename)
+		 ,@(if (or (context-get ctx :profile-cache #f)
+			   (context-get ctx :profile-location #f))
+		       (list `',(j2s-profile-cache this))
+		       '())))
+	   (define %source (or (the-loading-file) "/"))
+	   (define %resource (dirname %source))
+	   ,(when (context-get ctx :profile-call #f)
+	       `(define %call-log (make-vector ,call-size #l0)))
+	   ,(when (context-get ctx :profile-cmap #f)
+	       `(define %cmap-log (make-vector ,call-size '())))
+	   ,(when (context-get ctx :profile-call #f)
+	       `(define %call-locations ',(call-locations this)))
+	   ,@(map j2s-record-predicate records)
+	   ,@(js-declare-tls this ctx)
+	   ,(epairify-deep loc
+	       `(define (hopscript %this this %scope %module)
+		   (define __js_strings ,(j2s-jsstring-init this))
+		   (define __js_rxcaches ,(j2s-regexp-caches-init this))
+		   (define js-string-names (js-get-js-string-names))
+		   (define js-integer-names (js-get-js-integer-names))
+		   (define %worker (js-current-worker))
+		   (define %cnst-table ,cnsttable)
+		   ,@(js-define-tls this ctx)
+		   ,@(j2s-tls-headers scmheaders)
+		   (letrec* ,(j2s-let-headers scmheaders)
+		      ,@(j2s-expr-headers scmheaders)
+		      ,@globals
+		      ,esexports
+		      ,@esimports
+		      ,@(exit-body ctx scmrecords
+			   (filter fundef? body) (filter nofundef? body)))))
+	   ;; for dynamic loading
+	   hopscript)))
    
    (define (j2s-slave-module module cnsttable esexports esimports scmheaders scmrecords records body)
       (with-access::J2SProgram this (pcache-size call-size cnsts globals loc)
@@ -384,7 +383,10 @@
 				    cnsts loc name)
       (let ((module (js-module/main this ctx)))
 	 (epairify-deep loc
-	    `(,module 
+	    `(,(append module
+	       (if (pair? records)
+		   `((export ,@(map j2s-record-declaration records)))
+		   '()))
 		,@(filter fundef? globals)
 		,@(filter fundef? body)
 		(define __js_strings ,(j2s-jsstring-init this))

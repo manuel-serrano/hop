@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Tue Nov  2 10:07:26 2021 (serrano)                */
+;*    Last change :  Tue Dec  7 18:13:41 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -2605,7 +2605,8 @@
 ;*    force-type! ::J2SClass ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (force-type! this::J2SClass from to cell final)
-   (with-access::J2SClass this (elements)
+   (with-access::J2SClass this (elements type)
+      (when (eq? type from) (set! type to))
       (for-each (lambda (el)
 		   (with-access::J2SClassElement el (type)
 		      (when (eq? type from) (set! type to))))
