@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Fri Oct  1 16:41:35 2021 (serrano)                */
+;*    Last change :  Tue Dec  7 16:04:42 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1529,7 +1529,7 @@
 		       (parse-token-error "Illegal export" token)))))))
 	 ((function)
 	  (export-decl (statement)))
-	 ((class)
+	 ((record class)
 	  (let ((stmt (statement)))
 	     (with-access::J2SVarDecls stmt (decls)
 		(set! decls (list (export-decl (car decls))))
