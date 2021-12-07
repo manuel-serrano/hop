@@ -1540,7 +1540,10 @@
    
    (with-access::J2SForIn this (loc lhs obj body op
 				  need-bind-exit-break need-bind-exit-continue)
-      (if (and (isa? lhs J2SRef)
+      (cond
+;* 	 ((eq? (j2s-type obj) 'array)                                  */
+;* 	  (tprint "ICI"))                                              */
+	 ((and (isa? lhs J2SRef)
 	       (with-access::J2SRef lhs (decl)
 		  (with-access::J2SDecl decl (binder)
 		     (eq? binder 'let-forin))))
@@ -1553,7 +1556,8 @@
 		(epairify-deep loc
 		   (if (or need-bind-exit-continue need-bind-exit-break)
 		       (for-in/break tmp name props obj body set op)
-		       (for-in/w-break tmp name props obj body set op))))))
+		       (for-in/w-break tmp name props obj body set op)))))))
+	 (else
 	  (let* ((tmp (gensym))
 		 (name (gensym))
 		 (props (gensym))
@@ -1561,7 +1565,7 @@
 	     (epairify-deep loc
 		(if (or need-bind-exit-continue need-bind-exit-break)
 		    (for-in/break tmp name props obj body set op)
-		    (for-in/w-break tmp name props obj body set op)))))))
+		    (for-in/w-break tmp name props obj body set op))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SLabel ...                                        */
