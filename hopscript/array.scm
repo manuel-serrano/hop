@@ -3602,17 +3602,16 @@
 (define-method (js-for-in o::JsArray proc %this)
    (with-access::JsArray o (vec ilen)
       (cond
-	 ((js-array-inlined? o)
-	  (let ((len ilen))
-	     (let loop ((i #u32:0))
-		(cond
-		   ((<u32 i len)
-		    (let ((key (or (js-index-name (uint32->fixnum i))
-				   (js-integer->jsstring (uint32->fixnum i)))))
-		       (proc key %this))
-		    (loop (+u32 i #u32:1)))
-		   (else
-		    (call-next-method))))))
+	 ((js-object-mode-arrayinline? o)
+	  (let loop ((i #u32:0))
+	     (cond
+		((<u32 i ilen)
+		 (let ((key (or (js-index-name (uint32->fixnum i))
+				(js-integer->jsstring (uint32->fixnum i)))))
+		    (proc key %this))
+		 (loop (+u32 i #u32:1)))
+		(else
+		 (call-next-method)))))
 	 ((js-object-mode-arrayholey? o)
 	  (let ((len ilen)
 		(vlen (fixnum->uint32 (vector-length vec))))
@@ -3639,40 +3638,41 @@
    
    (define cmap-fast-forof #f)
    
-   (define (vector-forof o len::uint32 proc i::uint32)
+   (define (vector-forof o proc i::uint32)
       (with-access::JsArray o (vec ilen)
 	 (let loop ((i i))
 	    (cond
 	       ((>=u32 i ilen)
-		(if (js-array-inlined? o)
+		(if (js-object-mode-arrayinline? o)
 		    (js-undefined)
-		    (array-forof o len proc i)))
+		    (array-forof o proc i)))
 	       (else
 		(proc (vector-ref vec (uint32->fixnum i)) %this)
 		(loop (+u32 i 1)))))))
    
-   (define (array-forof o len proc i::uint32)
+   (define (array-forof o proc i::uint32)
       (let loop ((i i))
-	 (when (<u32 i len)
-	    (let ((pv (js-get-property-value o o i %this)))
-	       (proc (if (js-absent? pv) (js-undefined) pv) %this)
-	       (loop (+u32 i 1))))))
+	 (with-access::JsArray o (length)
+	    (when (<u32 i length)
+	       (let ((pv (js-get-property-value o o (uint32->fixnum i) %this)))
+		  (proc (if (js-absent? pv) (js-undefined) pv) %this)
+		  (loop (+u32 i 1)))))))
    
    (with-access::JsGlobalObject %this (js-symbol-iterator js-array-pcache)
       (with-access::JsArray o (cmap length vec ilen)
 	 (if (eq? cmap (js-pcache-pmap (js-pcache-ref js-array-pcache 20)))
-	     (vector-forof o length proc #u32:0)
+	     (vector-forof o proc #u32:0)
 	     (let ((fun (js-get-jsobject-name/cache o js-symbol-iterator #f %this
 			   (js-pcache-ref js-array-pcache 19))))
 		(if (and (js-function? fun)
 			 (with-access::JsFunction fun (info)
 			    (not (string=? (vector-ref info 0) "@@iterator"))))
 		    (js-for-of-iterator (js-call0 %this fun o) o proc close %this)
-		    (if (js-array-inlined? o)
+		    (if (js-object-mode-arrayinline? o)
 			(with-access::JsPropertyCache (js-pcache-ref js-array-pcache 20) (pmap)
 			   (set! pmap cmap)
-			   (vector-forof o length proc #u32:0))
-			(array-forof o length proc #u32:0))))))))
+			   (vector-forof o proc #u32:0))
+			(array-forof o proc #u32:0))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-concat ...                                              */

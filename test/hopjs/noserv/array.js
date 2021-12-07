@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:02 2014                          */
-/*    Last change :  Thu May  6 16:12:13 2021 (serrano)                */
+/*    Last change :  Tue Dec  7 08:07:33 2021 (serrano)                */
 /*    Copyright   :  2014-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing arrays                                                   */
@@ -154,6 +154,73 @@ a3.pop = function( a ) { return true; };
 
 assert.ok( a3.push( "toto" ), "push overriden" );
 assert.ok( a3.pop( "toto" ), "pop overriden" );
+
+/*---------------------------------------------------------------------*/
+/*    for/of/in                                                        */
+/*---------------------------------------------------------------------*/
+console.log( "for/of/in..." );
+
+function fof(a) {
+   let res = [];
+   for (let x of a) {
+      delete a[1];
+      a.length = 3;
+      res.push(x);
+   }
+   return res;
+}
+
+function fof2(a) {
+   let res = [];
+   for (let x of a) {
+      a[6] = 6;
+      res.push(x);
+   }
+   return res;
+}
+
+function fof3(a) {
+   let res = [];
+   for (let x of a) {
+      a.length = 2;
+      res.push(x);
+   }
+   return res;
+}
+
+function fin(a) {
+   let res = [];
+   for (let x in a) {
+      a.length = 2;
+      res.push(x);
+   }
+   return res;
+}
+
+function fin2(a) {
+   let res = [];
+   for (let x in a) {
+      a[6] = 6;
+      res.push(x);
+   }
+   return res;
+}
+
+function fin3(a) {
+   let res = [];
+   for (let x in a) {
+      a.length = 2;
+      res.push(x);
+   }
+   return res;
+}
+
+assert.deepEqual(fof([0,1,2,3,4]), [0,undefined,2], "for/of.1");
+assert.deepEqual(fof2([0,1,2,3,4]), [0, 1, 2, 3, 4, undefined, 6],  "for/of.2");
+assert.deepEqual(fof3([0,1,2,3,4]), [0, 1], "for/of.3");
+assert.deepEqual(fin([0,1,2,3,4]), ['0', '1'], "for/in.1");
+assert.deepEqual(fin2([0,1,2,3,4]), ['0','1','2','3','4'], "for/in.2");
+assert.deepEqual(fin3([0,1,2,3,4]), ['0', '1'], "for/in.3");
 
 /*---------------------------------------------------------------------*/
 /*    iterations                                                       */
@@ -527,3 +594,4 @@ function testSplice() {
 }
 
 assert.ok( testSplice(), "testSplice" );
+
