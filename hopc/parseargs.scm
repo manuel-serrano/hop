@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Mon Dec  6 09:39:06 2021 (serrano)                */
+;*    Last change :  Sun Dec  5 13:11:54 2021 (serrano)                */
 ;*    Copyright   :  2004-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -126,8 +126,15 @@
 	     (if (string=? level "")
 		 (bigloo-debug-set! (+fx 1 (bigloo-debug)))
 		 (bigloo-debug-set! (string->integer level)))
-	     (hopc-bigloo-options-set!
-		(cons (format "-g~a" level) (hopc-bigloo-options))))
+	     (cond-expand
+		((library libbacktrace)
+		 (hopc-bigloo-options-set!
+		    (append '("-library" "libbacktrace" "-glines" "-fno-user-inlining")
+		       (hopc-bigloo-options))))
+		(else
+		 (hopc-bigloo-options-set!
+		    (cons (format "-g~a" level)
+		       (hopc-bigloo-options))))))
 	    (("-w?level" (help "Increase or set warning level (-w0 no warning)"))
 	     (if (string=? level "")
 		 (bigloo-warning-set! (+fx 1 (bigloo-warning)))
