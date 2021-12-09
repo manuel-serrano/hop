@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Tue Nov  2 10:07:26 2021 (serrano)                */
+;*    Last change :  Tue Dec  7 18:34:40 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -735,6 +735,14 @@
    (decl-itype-add! this 'undefined ctx)
    (decl-vtype-add! this 'undefined ctx)
    (return 'void (extend-env env this 'undefined) '()))
+
+;*---------------------------------------------------------------------*/
+;*    node-type ::J2SDeclImport ...                                    */
+;*---------------------------------------------------------------------*/
+(define-walk-method (node-type this::J2SDeclImport env::pair-nil ctx::pair)
+   (decl-itype-add! this 'any ctx)
+   (decl-vtype-add! this 'any ctx)
+   (return 'void (extend-env env this 'any) '()))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SDeclArguments ...                                 */
@@ -2605,7 +2613,8 @@
 ;*    force-type! ::J2SClass ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (force-type! this::J2SClass from to cell final)
-   (with-access::J2SClass this (elements)
+   (with-access::J2SClass this (elements type)
+      (when (eq? type from) (set! type to))
       (for-each (lambda (el)
 		   (with-access::J2SClassElement el (type)
 		      (when (eq? type from) (set! type to))))

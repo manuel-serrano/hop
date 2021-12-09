@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/any.scm                 */
+;*    serrano/prgm/project/hop/hop/js2scheme/any.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 22 19:47:45 2017                          */
-;*    Last change :  Wed Oct 17 08:39:37 2018 (serrano)                */
-;*    Copyright   :  2017-20 Manuel Serrano                            */
+;*    Last change :  Tue Dec  7 16:48:57 2021 (serrano)                */
+;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An optional stage used in debug mode to replace UNKNOWN type     */
 ;*    occurrences with ANY.                                            */
@@ -101,6 +101,15 @@
    (call-default-walker)
    (call-next-method))
 
+;*---------------------------------------------------------------------*/
+;*    any-types ::J2SClass ...                                         */
+;*---------------------------------------------------------------------*/
+(define-walk-method (any-types this::J2SClass)
+   (with-access::J2SClass this (type)
+      (set! type 'any)
+      (call-default-walker)
+      (call-next-method)))
+   
 ;*---------------------------------------------------------------------*/
 ;*    any-types ::J2SHopRef ...                                        */
 ;*---------------------------------------------------------------------*/
