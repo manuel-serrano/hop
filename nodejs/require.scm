@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Mon Oct 25 15:41:53 2021 (serrano)                */
+;*    Last change :  Wed Dec  8 16:34:55 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -360,7 +360,7 @@
 	 :filename filename
 	 :worker worker
 	 :header header
-	 :verbose (if (>=fx (bigloo-debug) 3) (hop-verbose) 0)
+	 :verbose (if (>=fx (hop-verbose) 10) (-fx (hop-verbose) 10) 0)
 	 :parser 'client-program
 	 :es6-module-client (eq? query 'mjs)
 	 :warning-global #f
@@ -1135,7 +1135,7 @@
 			       :module-main #f
 			       :module-name (symbol->string mod)
 			       :worker-slave worker-slave
-			       :verbose (if (>=fx (bigloo-debug) 3) (hop-verbose) 0)
+			       :verbose (if (>=fx (hop-verbose) 10) (-fx (hop-verbose) 10) 0)
 			       :plugins-loader (make-plugins-loader %ctxthis %ctxmodule (js-current-worker))
 			       :commonjs-export commonjs-export
 			       :es6-module-client #t
@@ -1159,7 +1159,7 @@
 		  :module-main #f
 		  :module-name (symbol->string mod)
 		  :worker-slave worker-slave
-		  :verbose (if (>=fx (bigloo-debug) 3) (hop-verbose) 0)
+		  :verbose (if (>=fx (hop-verbose) 10) (-fx (hop-verbose) 10) 0)
 		  :plugins-loader (make-plugins-loader %ctxthis %ctxmodule (js-current-worker))
 		  :commonjs-export commonjs-export
 		  :es6-module-client #t
@@ -1182,7 +1182,7 @@
 		     :mmap-src m
 		     :module-name (symbol->string mod)
 		     :worker-slave worker-slave
-		     :verbose (if (>=fx (bigloo-debug) 3) (hop-verbose) 0)
+		     :verbose (if (>=fx (hop-verbose) 10) (-fx (hop-verbose) 10) 0)
 		     :plugins-loader (make-plugins-loader %ctxthis %ctxmodule (js-current-worker))
 		     :commonjs-export commonjs-export
 		     :es6-module-client #t

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Fri Oct  1 16:42:28 2021 (serrano)                */
+;*    Last change :  Wed Dec  8 19:31:09 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for client side code).                                   */
@@ -350,8 +350,9 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2SDeclClass tildec dollarc mode evalp ctx)
    (with-access::J2SDeclClass this (val binder writable scope id)
-      (append (j2s-js val tildec dollarc mode evalp ctx)
-	 (if (j2s-param? this) '() '(";")))))
+      (cons* this "let " (j2s-js-id this) "="
+	 (append (j2s-js val tildec dollarc mode evalp ctx)
+	    (if (j2s-param? this) '() '(";"))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SDProducer ...                                        */
@@ -1359,13 +1360,6 @@
 	    '(") {")
 	    (j2s-js body tildec dollarc mode evalp ctx)
 	    '("}")))))
-
-;*---------------------------------------------------------------------*/
-;*    j2s-js ::J2SDeclClass ...                                        */
-;*---------------------------------------------------------------------*/
-(define-method (j2s-js this::J2SDeclClass tildec dollarc mode evalp ctx)
-   (with-access::J2SDeclClass this (val id)
-      (j2s-js val tildec dollarc mode evalp ctx)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SClass ...                                            */
