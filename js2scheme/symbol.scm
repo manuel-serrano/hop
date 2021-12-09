@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Wed Oct 27 19:05:30 2021 (serrano)                */
+;*    Last change :  Thu Dec  9 08:09:50 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -816,7 +816,8 @@
 			    (loc loc)
 			    (id id))))
 		(set-cdr! (last-pair genv) (list decl))
-		(unless (memq id this-symbols)
+		(unless (or (memq id this-symbols)
+			    (eq? (config-get conf :site) 'client))
 		   (cond
 		      ((config-get conf :module-import)
 		       ;; this mode is used to parse imported modules

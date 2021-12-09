@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug  9 14:00:32 2013                          */
-;*    Last change :  Tue Nov  2 11:24:50 2021 (serrano)                */
+;*    Last change :  Thu Dec  9 14:28:19 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    THe module used to build the hopscript heap file.                */
@@ -35,6 +35,7 @@
 	   __hopscript_vector
 	   __hopscript_string
 	   __hopscript_stringliteral
+	   __hopscript_symbol
 	   __hopscript_names
 	   __hopscript_number 
 	   __hopscript_math
@@ -58,7 +59,10 @@
            (class JsStringLiteral)
            (class JsStringLiteralASCII)
            (class JsStringLiteralUTF8)
-      
+
+	   (class JsSymbol)
+	   (class JsSymbolLiteral)
+	   
            (class JsObject)
            (class JsRecord)
 	   (class JsGlobalObject)

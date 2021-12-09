@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Mon Oct 25 15:41:53 2021 (serrano)                */
+;*    Last change :  Thu Dec  9 09:10:17 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -704,7 +704,7 @@
 			 (let ((v (eval `(@ ,(car sym) ,mod))))
 			    ($env-pop-trace dyn)
 			    v))))))
-	     ((string? %module)
+	    ((string? %module)
 	     (dynamic-load-symbol-get
 		(dynamic-load-symbol sopath
 		   (if (eq? (cdr sym) 'procedure)
