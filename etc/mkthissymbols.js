@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/hop/etc/mkthisymbols.js                 */
+/*    serrano/prgm/project/hop/hop/etc/mkthissymbols.js                */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Jan  8 10:49:22 2021                          */
-/*    Last change :  Fri Jan  8 10:59:55 2021 (serrano)                */
+/*    Last change :  Thu Dec  9 14:02:42 2021 (serrano)                */
 /*    Copyright   :  2021 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    mkthissymbols                                                    */
@@ -17,7 +17,7 @@
 
 console.log( ";; Generated file (mkthissymbols.js). Don't edit" );
 
-console.log( "(" );
+console.log( "(hop require module" );
 Object.getOwnPropertyNames( this )
    .sort( (x, y) => x <= y )
    .forEach( k => console.log( k, " " ) );

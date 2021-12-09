@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Sun Oct 17 18:18:06 2021 (serrano)                */
+;*    Last change :  Thu Dec  9 19:05:20 2021 (serrano)                */
 ;*    Copyright   :  2014-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
@@ -516,6 +516,7 @@
 					   (module-main . ,jsmain)))))))
 		(ty (assq :type obj))
 		(val (assq :value obj)))
+	    (tprint "ICI: " (hopc-temp) " lang=" lang " file=" file)
 	    (cond
 	       ((or (not (pair? ty)) (not (pair? val)))
 		(error (format "hopc:~a" lang) "wrong status" obj))

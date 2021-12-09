@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug  9 14:00:32 2013                          */
-;*    Last change :  Tue Oct 12 09:50:51 2021 (serrano)                */
+;*    Last change :  Thu Dec  9 19:15:00 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    THe module used to build the js2scheme heap file.                */
@@ -34,6 +34,7 @@
 	   (class J2SNode)
 	   (class J2SStmt)
 	   (class J2SBlock)
+	   (class J2SLetBlock)
            (class J2SProgram)
 	   (class J2SStmtExpr)
 	   (class J2SIf)

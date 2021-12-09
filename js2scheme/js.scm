@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Wed Dec  8 19:31:09 2021 (serrano)                */
+;*    Last change :  Thu Dec  9 08:12:02 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for client side code).                                   */
@@ -1095,7 +1095,7 @@
 	 ((eq? op '?.)
 	  (cons this 
 	     (append (j2s-js expr tildec dollarc mode evalp ctx)
-		'("?."))))
+		'("?"))))
 	 (else
 	  (cons* this (symbol->string op) 
 	     (j2s-js expr tildec dollarc mode evalp ctx))))))
