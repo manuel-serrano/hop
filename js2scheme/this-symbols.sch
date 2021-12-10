@@ -1,5 +1,5 @@
 ;; Generated file (mkthissymbols.js). Don't edit
-(hop require module
+(hop require module globalThis
 unescape  
 undefined  
 setTimeout  

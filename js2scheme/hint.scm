@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Thu Nov 25 15:40:59 2021 (serrano)                */
+;*    Last change :  Fri Dec 10 11:44:57 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -39,7 +39,7 @@
 	   (generic j2s-call-hint!::J2SNode ::J2SNode ::bool conf)
 	   (generic j2s-hint-block!::J2SNode ::J2SNode conf)
 	   (j2s-hint-meta-noopt! ::J2SDecl)
-	   (j2s-known-type ::symbol)
+	   (j2s-known-type ::obj)
 	   (j2s-hint-type ::obj)))
 
 ;*---------------------------------------------------------------------*/
@@ -667,7 +667,7 @@
 			      (loc loc)
 			      (type 'any)
 			      (id idthis))))
-	    (args (map (lambda (p::J2SDecl type::symbol)
+	    (args (map (lambda (p::J2SDecl type)
 			  (with-access::J2SDecl p (hint)
 			     (instantiate::J2SRef
 				(loc loc)
@@ -689,7 +689,7 @@
 			      (id '%this))))
 	    (args (list
 		     (J2SArray* (length params)
-			(map (lambda (p::J2SDecl type::symbol)
+			(map (lambda (p::J2SDecl type)
 				(with-access::J2SDecl p (loc id)
 				   (J2SArray
 				      (J2SString (symbol->string type))
@@ -975,7 +975,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    best-hint-type ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (best-hint-type::symbol decl::J2SDecl normalize)
+(define (best-hint-type decl::J2SDecl normalize)
    
    (define (normalize-hint hint)
       (let loop ((l hint)
@@ -1204,16 +1204,22 @@
 (define (fun-duplicate-typed::J2SDeclFun fun::J2SDeclFun types unhinted conf)
    
    (define (type-initial t)
-      (case t
-	 ((integer) #\I)
-	 ((number) #\N)
-	 ((array) #\A)
-	 ((jsvector) #\J)
-	 ((string) #\S)
-	 ((unknown) #\X)
-	 ((any) #\_)
-	 ((arrow) #\F)
-	 (else (string-ref (symbol->string t) 0))))
+      (cond
+	 ((isa? t J2SRecord)
+	  #\R)
+	 ((isa? t J2SClass)
+	  #\C)
+	 (else
+	  (case t
+	     ((integer) #\I)
+	     ((number) #\N)
+	     ((array) #\A)
+	     ((jsvector) #\J)
+	     ((string) #\S)
+	     ((unknown) #\X)
+	     ((any) #\_)
+	     ((arrow) #\F)
+	     (else (string-ref (symbol->string t) 0))))))
    
    (with-access::J2SDeclFun fun (id hintinfo)
       (let ((val (j2sdeclinit-val-fun fun)))
@@ -1274,7 +1280,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2sdecl-duplicate ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (j2sdecl-duplicate p::J2SDecl type::symbol)
+(define (j2sdecl-duplicate p::J2SDecl type)
    (with-access::J2SDecl p (vtype id)
       (let ((nvtype (if (eq? vtype type) vtype 'unknown)))
 	 (if (isa? p J2SDeclInit)
@@ -1552,7 +1558,7 @@
 	    (then then)
 	    (else otherwise))))
    
-   (define (decl-duplicate p::J2SDecl type::symbol)
+   (define (decl-duplicate p::J2SDecl type)
       (if (isa? p J2SDeclInit)
 	  (with-access::J2SDeclInit p (loc)
 	     (duplicate::J2SDeclInit p

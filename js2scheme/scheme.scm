@@ -1424,8 +1424,11 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SForIn mode return ctx)
 
-   (define (js-for-in op)
-      (if (eq? op 'in) 'js-for-in 'js-for-of))
+   (define (js-for-in op obj)
+      (cond
+	 ((eq? op 'in) 'js-for-in)
+	 ((eq? (j2s-type obj) 'array) 'js-array-for-of)
+	 (else 'js-for-of)))
 
    (define (close op close)
       (cond
@@ -1435,7 +1438,7 @@
    
    (define (for-in/break-comp tmp name props obj body set op)
       (with-access::J2SForIn this (need-bind-exit-break need-bind-exit-continue id)
-	 (let ((for `(,(js-for-in op)
+	 (let ((for `(,(js-for-in op obj)
 		      ,(j2s-scheme obj mode return ctx)
 		      (lambda (,name %this)
 			 ,set
@@ -1452,7 +1455,7 @@
    (define (for-in/break-eval tmp name props obj body set op)
       (with-access::J2SForIn this (need-bind-exit-break need-bind-exit-continue id)
 	 (let ((for `(let ((%acc (js-undefined)))
-			(,(js-for-in op)
+			(,(js-for-in op obj)
 			 ,(j2s-scheme obj mode return ctx)
 			 (lambda (,name %this)
 			    ,set
@@ -1473,7 +1476,7 @@
 	  (for-in/break-comp tmp name props obj body set op)))
 
    (define (for-in/w-break-comp tmp name props obj body set op)
-      `(,(js-for-in op) ,(j2s-scheme obj mode return ctx)
+      `(,(js-for-in op obj) ,(j2s-scheme obj mode return ctx)
 	  (lambda (,name %this)
 	     ,set
 	     ,(j2s-scheme body mode return ctx))
@@ -1482,7 +1485,7 @@
 
    (define (for-in/w-break-eval tmp name props obj body set op)
       `(let ((%acc (js-undefined)))
-	  (,(js-for-in op) ,(j2s-scheme obj mode return ctx)
+	  (,(js-for-in op obj) ,(j2s-scheme obj mode return ctx)
 	     (lambda (,name %this)
 		,set
 		,(j2s-scheme body mode acc-return ctx))
