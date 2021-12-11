@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug  9 14:00:32 2013                          */
-;*    Last change :  Thu Dec  9 19:15:00 2021 (serrano)                */
+;*    Last change :  Sat Dec 11 06:10:57 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    THe module used to build the js2scheme heap file.                */
@@ -62,6 +62,8 @@
 	   (class J2SCatch)
 	   (class J2STry)
 	   (class J2SExpr)
+	   (class J2SCast)
+	   (class J2SCheck)
 	   (class J2SPragma)
 	   (class J2SSequence)
 	   (class J2SUnresolvedRef)

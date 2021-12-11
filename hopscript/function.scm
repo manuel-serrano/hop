@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Wed Nov 10 07:34:04 2021 (serrano)                */
+;*    Last change :  Sat Dec 11 06:52:04 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -41,6 +41,7 @@
 
 	   (js-function-src ::JsProcedureInfo)
 	   (js-function-loc ::JsProcedureInfo)
+	   (inline js-function-length obj)
 	   (inline js-function-new-target? obj)
 	   (inline js-function-path ::JsFunction)
 	   (js-function-debug-name::bstring ::JsProcedure ::JsGlobalObject)
@@ -194,6 +195,13 @@
 (define-inline (js-function-path obj::JsFunction)
    (with-access::JsFunction obj (info)
       (vector-ref info 3)))
+
+;*---------------------------------------------------------------------*/
+;*    js-function-new-length ...                                       */
+;*---------------------------------------------------------------------*/
+(define-inline (js-function-length obj)
+   (with-access::JsProcedureInfo obj (info)
+      (vector-ref info 1)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-function-new-target? ...                                      */

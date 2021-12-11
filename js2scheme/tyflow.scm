@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Wed Dec  8 16:28:39 2021 (serrano)                */
+;*    Last change :  Sat Dec 11 06:06:20 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -2593,7 +2593,9 @@
 		 (not (type-eq? vtype (j2s-type val))))
 	 (cond
 	    ((decl-usage-has? this '(uninit))
-	     (error "force-type!" "Declaration inconsistent with init"
+	     (error "force-type!"
+		(format "Declaration inconsistent with init (~a/~a)"
+		   (type->sexp vtype) (type->sexp (j2s-type val)))
 		(j2s->sexp this)))
 	    ((type->init vtype val)
 	     =>

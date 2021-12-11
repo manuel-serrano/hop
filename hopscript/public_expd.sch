@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 23 07:35:40 2017                          */
-;*    Last change :  Sun Nov 21 10:44:57 2021 (serrano)                */
+;*    Last change :  Sat Dec 11 06:54:34 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript public expanders                                       */
@@ -285,6 +285,23 @@
 	  (e `(let ((,f ,fun)) (js-call-procedure ,f ,this ,@args)) e)))
       (else
        (error "js-call-procedure" "bad form" x))))
+
+;*---------------------------------------------------------------------*/
+;*    js-call-procedure/arity ...                                      */
+;*---------------------------------------------------------------------*/
+(define (js-call-procedure/arity-expander x e)
+   (match-case x
+      ((js-call-procedure/arity (and (? symbol?) ?fun) ?len ?this . ?args)
+       (let ((len (length args)))
+	  (if (<=fx len 10)
+	      (let ((call (string->symbol (format "js-call~a-procedure" len))))
+		 (e `(,call ,fun ,this ,@args) e))
+	      (e `(js-calln-procedure/arity ,fun ,len ,this (list ,@args)) e))))
+      ((js-call-procedure/arity ?fun ?len ?this . ?args)
+       (let ((f (gensym)))
+	  (e `(let ((,f ,fun)) (js-call-procedure/arity ,f ,len ,this ,@args)) e)))
+      (else
+       (error "js-call-procedure/arity" "bad form" x))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-call-jsprocedure ...                                          */

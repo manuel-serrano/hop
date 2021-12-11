@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:01:46 2017                          */
-;*    Last change :  Tue Nov 23 07:42:58 2021 (serrano)                */
+;*    Last change :  Sat Dec 11 06:53:46 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES2015 Scheme class generation                                   */
@@ -121,8 +121,12 @@
 	       (lambda (args)
 		  `(with-access::JsClass ,ecla (constructor)
 		      (if (js-function-new-target? ,ecla)
-			  (js-call-procedure constructor ,eobj new-target ,@args)
-			  (js-call-procedure constructor ,eobj ,@args))))))
+			  (js-call-procedure/arity constructor
+			     (+fx (js-function-length ,ecla) 1)
+			     ,eobj new-target ,@args)
+			  (js-call-procedure/arity constructor
+			     (js-function-length ,ecla)
+			     ,eobj ,@args))))))
 	  ((isa? ,ecla JsFunction)
 	   ,(let ((res (gensym 'res)))
 	       `(begin

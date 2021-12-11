@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Wed Apr 28 13:44:13 2021 (serrano)                */
+;*    Last change :  Sat Dec 11 05:39:00 2021 (serrano)                */
 ;*    Copyright   :  2004-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -26,6 +26,10 @@
 	    hop_scheduler-one-to-one
 	    hop_scheduler-pool
 	    hop_scheduler-accept-many)
+
+   (cond-expand
+      ((library libbacktrace)
+       (library libbacktrace)))
    
    (cond-expand
       (hop-library
