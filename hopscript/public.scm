@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sat Dec 11 06:55:39 2021 (serrano)                */
+;*    Last change :  Sun Dec 12 06:43:27 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -214,6 +214,7 @@
 	   (inline js-toobject-fast::JsObject ::obj ::JsGlobalObject)
 	   (js-toobject::obj ::JsGlobalObject ::obj)
 	   (js-toobject/debug::obj ::JsGlobalObject loc ::obj)
+	   (js-toobject-for-property/debug::obj ::JsGlobalObject loc ::obj ::obj)
 	   
 	   (js-toprimitive-for-string::JsStringLiteral ::obj ::JsGlobalObject)
 	   (generic js-toprimitive ::obj ::symbol ::JsGlobalObject)
@@ -2192,6 +2193,19 @@
 	     (if (or (symbol? o) (string? o) (number? o) (boolean? o))
 		 (format "~s " o)
 		 ""))
+	  o)))
+
+;*---------------------------------------------------------------------*/
+;*    js-toobject-for-property/debug ...                               */
+;*---------------------------------------------------------------------*/
+(define (js-toobject-for-property/debug %this::JsGlobalObject loc o prop)
+   (or (js-toobject-failsafe %this o)
+       (js-raise-type-error/loc %this loc
+	  (format "Cannot access property ~s of ~a" prop
+	     (cond
+		((eq? o #unspecified) "undefined")
+		((null? o) "null")
+		(else o)))
 	  o)))
 
 ;*---------------------------------------------------------------------*/

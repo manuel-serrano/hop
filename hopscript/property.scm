@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Thu Dec  9 12:18:29 2021 (serrano)                */
+;*    Last change :  Sun Dec 12 06:43:07 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -2475,7 +2475,7 @@
        ;; see toobject
        (js-get o prop %this))
       (else
-       (let ((obj (js-toobject/debug %this loc o)))
+       (let ((obj (js-toobject-for-property/debug %this loc o prop)))
 	  (js-get-jsobject obj o prop %this)))))
 
 ;*---------------------------------------------------------------------*/
@@ -3416,7 +3416,7 @@
       ((pair? _o)
        (js-put-pair! _o (js-toname prop %this) v throw %this))
       (else
-       (let ((o (js-toobject/debug %this loc _o)))
+       (let ((o (js-toobject-for-property/debug %this loc _o prop)))
 	  (js-put! _o prop v throw %this)))))
 
 ;*---------------------------------------------------------------------*/

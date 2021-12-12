@@ -580,8 +580,9 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SLetBlock stack)
    (let ((nstack (check-stack this stack)))
-      (with-access::J2SLetBlock this (decls nodes loc endloc rec)
+      (with-access::J2SLetBlock this (decls nodes loc endloc rec mode)
 	 `(,(string->symbol (typeof this)) :rec ,rec
+	     mode: ,mode
 	     ,@(dump-loc loc)
 	     ,@(dump-loc endloc :endloc)
 	     ,@(dump-info this)

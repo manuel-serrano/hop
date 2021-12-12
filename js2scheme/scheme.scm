@@ -1026,7 +1026,7 @@
 					   (not rec)))
 				       ((isa? d J2SDeclFun)
 					(with-access::J2SDeclFun d (binder)
-					   (if (eq? binder 'let)
+					   (if (memq binder '(let let-opt))
 					       (j2s-let-decl-inner d
 						  mode return ctx
 						  (null? (cdr decls))

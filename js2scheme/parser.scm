@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Tue Dec  7 16:04:42 2021 (serrano)                */
+;*    Last change :  Sun Dec 12 08:53:45 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -269,39 +269,73 @@
 	    (let ((ploader (config-get config :plugins-loader #f)))
 	       (when (procedure? ploader)
 		  (ploader lang config))))))
+
+   (define (source-lang-plugins tok el site conf)
+      (let ((ps (source-element-plugins el conf)))
+	 (cond
+	    (ps
+	     (let ((p (assq (string->symbol (javascript-language el)) ps)))
+		(set! plugins ps)
+		;; there is a plugins associated, initialize it
+		((cdr p) tok site conf parser-controller)))
+	    ((and (string=? site "module") (config-get conf :plugin-init #f))
+	     =>
+	     (lambda (p)
+		(p tok site conf parser-controller)))
+	    (else
+	     #f))))
+
+   (define (insert-pluginit nodes pluginit)
+      (if (not pluginit)
+	  nodes
+	  (let loop ((nodes nodes))
+	     (cond
+		((null? nodes)
+		 (list pluginit))
+		((isa? (car nodes) J2SString)
+		 (cons (car nodes) (loop (cdr nodes))))
+		((isa? (car nodes) J2SStmtExpr)
+		 (with-access::J2SStmtExpr (car nodes) (expr)
+		    (if (isa? expr J2SString)
+			(cons (car nodes) (loop (cdr nodes)))
+			(cons pluginit nodes))))
+		(else
+		 (cons pluginit nodes))))))
    
    (define (source-elements::J2SBlock)
       (let loop ((rev-ses '())
-		 (first #t))
+		 (first #t)
+		 (pluginit #f))
 	 (if (eof?)
 	     (if (null? rev-ses)
 		 (instantiate::J2SBlock
 		    (loc `(at ,(input-port-name input-port) 0))
 		    (endloc `(at ,(input-port-name input-port) 0))
-		    (nodes '()))
-		 (let* ((fnode (car rev-ses))
+		    (nodes (if pluginit (list pluginit) '())))
+		 (let* ((lastnode (car rev-ses))
 			(nodes (reverse! rev-ses)))
 		    (with-access::J2SNode (car nodes) (loc)
-		       (with-access::J2SNode fnode ((endloc loc))
+		       (with-access::J2SNode lastnode ((endloc loc))
 			  (instantiate::J2SBlock
 			     (loc loc)
 			     (endloc endloc)
-			     (nodes nodes))))))
-	     (let ((el (source-element)))
+			     (nodes (insert-pluginit nodes pluginit)))))))
+	     (let* ((tok (peek-token))
+		    (el (source-element)))
 		(cond
 		   ((eq? el 'source-map)
-		    (loop rev-ses #f))
+		    (loop rev-ses #f pluginit))
 		   (first
 		    (source-element-mode! el)
-		    (let ((ps (source-element-plugins el conf)))
-		       (when ps (set! plugins ps)))
 		    (loop (cons el rev-ses)
 		       (or (isa? el J2SString)
 			   (and (isa? el J2SStmtExpr)
 				(with-access::J2SStmtExpr el (expr)
-				   (isa? expr J2SString))))))
+				   (isa? expr J2SString))))
+		       (or pluginit
+			   (source-lang-plugins tok el "module" conf))))
 		   (else
-		    (loop (cons el rev-ses) #f)))))))
+		    (loop (cons el rev-ses) #f pluginit)))))))
 
    (define (source-element)
       (case (peek-token-type)
@@ -313,7 +347,7 @@
 		((and plugins (assq (token-value token) plugins))
 		 =>
 		 (lambda (p)
-		    ((cdr p) (consume-any!) #t parser-controller)))
+		    ((cdr p) (consume-any!) #t conf parser-controller)))
 		((eq? (token-value token) 'async)
 		 (let* ((token (consume-any!))
 			(next (peek-token-type)))
@@ -1748,7 +1782,8 @@
 	    (let ((token (push-open-token (consume-token! 'LBRACE))))
 	       (let ((loc (current-loc)))
 		  (let loop ((rev-ses '())
-			     (first #t))
+			     (first #t)
+			     (pluginit #f))
 		     (if (eq? (peek-token-type) 'RBRACE)
 			 (let ((etoken (consume-any!)))
 			    (pop-open-token etoken)
@@ -1757,13 +1792,20 @@
 				  (loc (token-loc token))
 				  (endloc (token-loc etoken))
 				  (nodes (append (fun-body-params-defval params)
-					    (reverse! rev-ses))))))
-			 (let ((el (source-element)))
-			    (when first
-			       (source-element-mode! el)
-			       (let ((ps (source-element-plugins el conf)))
-				  (when ps (set! plugins ps))))
-			    (loop (cons el rev-ses) #f))))))
+					    (insert-pluginit (reverse! rev-ses)
+					       pluginit))))))
+			 (let* ((tok (peek-token))
+				(el (source-element)))
+			    (source-element-mode! el)
+			    (loop (cons el rev-ses)
+			       (or (isa? el J2SString)
+				   (and (isa? el J2SStmtExpr)
+					(with-access::J2SStmtExpr el (expr)
+					   (isa? expr J2SString))))
+			       (or pluginit
+				   (and first
+					(source-lang-plugins tok
+					   el "function" conf)))))))))
 	    (begin
 	       (set! current-mode cmode)
 	       (set! plugins cplugins)))))
@@ -2530,7 +2572,8 @@
 			  =>
 			  (lambda (p)
 			     (let ((stmt ((cdr p)
-					  (consume-any!) #t parser-controller)))
+					  (consume-any!) #t
+					  conf parser-controller)))
 				(loop (cons stmt rev-stats)))))
 			 
 			 (else
@@ -2711,7 +2754,7 @@
 		((and plugins (assq (token-value token) plugins))
 		 =>
 		 (lambda (p)
-		    ((cdr p) token #f parser-controller)))
+		    ((cdr p) token #f conf parser-controller)))
 		((and (eq? (token-value token) 'service)
 		      (memq (peek-token-type) '(LPAREN ID)))
 		 (token-push-back! token)
@@ -2894,7 +2937,7 @@
 	     ((and plugins (assq (peek-token-value) plugins))
 	      =>
 	      (lambda (p)
-		 ((cdr p) (consume-any!) #t parser-controller)))
+		 ((cdr p) (consume-any!) #t conf parser-controller)))
 	     (spread?
 	      (instantiate::J2SSpread
 		 (stype 'array)
@@ -2913,7 +2956,7 @@
 	     ((and plugins (assq (peek-token-value) plugins))
 	      =>
 	      (lambda (p)
-		 ((cdr p) (consume-any!) #t parser-controller)))
+		 ((cdr p) (consume-any!) #t conf parser-controller)))
 	     (else
 	      (parse-token-error "Unexpected token" (peek-token)))))))
    

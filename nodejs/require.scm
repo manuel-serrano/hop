@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Thu Dec  9 09:10:17 2021 (serrano)                */
+;*    Last change :  Sun Dec 12 09:13:28 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -2022,7 +2022,7 @@
 (define (nodejs-load-module path::bstring worker::WorkerHopThread
 	   %this %module
 	   #!key (lang "hopscript") compiler
-	   compiler-options commonjs-export loc)
+	   config commonjs-export loc)
    
    (define (load-json path)
       (let ((mod (nodejs-new-module path path worker %this))
@@ -2038,7 +2038,7 @@
 	  (nodejs-core-module path worker %this))
 	 ((js-procedure? compiler)
 	  (let ((obj (js-call2-jsprocedure %this compiler (js-undefined)
-			path compiler-options)))
+			path (if (pair? config) config '()))))
 	     (when (js-object? obj)
 		(let ((ty (js-tostring (js-get obj (& "type") %this) %this))
 		      (val (js-get obj (& "value") %this))
@@ -2111,7 +2111,7 @@
    (with-trace 'require (format "nodejs-require-module ~a" name)
       (let* ((path (nodejs-resolve name %this %module 'body))
 	     (mod (nodejs-load-module path worker %this %module
-		     :lang lang :compiler compiler :compiler-options copts))
+		     :lang lang :compiler compiler :config copts))
 	     (exports (js-get mod (& "exports") %this)))
 	 (trace-item "exports=" (typeof exports))
 	 exports)))
@@ -2541,6 +2541,7 @@
 (define (make-plugins-loader %ctxthis %ctxmodule worker)
    (when (and (isa? %ctxthis JsGlobalObject) (isa? %ctxmodule JsObject))
       (lambda (lang conf)
+	 (tprint "make-plugins-loader " conf)
 	 (js-worker-exec worker "plugins-loader" #f
 	    (lambda ()
 	       (with-access::JsGlobalObject %ctxthis (js-object js-symbol)
@@ -2556,11 +2557,11 @@
 				(map (lambda (p)
 					(if (procedure? (cdr p))
 					    (cons (car p)
-					       (lambda (tok decl ctrl)
+					       (lambda (tok decl conf ctrl)
 						  (js-worker-exec worker
 						     "plugins" #f
 						     (lambda ()
-							((cdr p) tok decl ctrl)))))
+							((cdr p) tok decl conf ctrl)))))
 					    p))
 				   ps)
 				'()))
@@ -2572,6 +2573,7 @@
 (define (make-language-loader %ctxthis %ctxmodule worker)
    (when (and (isa? %ctxthis JsGlobalObject) (isa? %ctxmodule JsObject))
       (lambda (lang file conf)
+	 (tprint "make-language-loader " conf)
 	 (js-worker-exec worker "language-loader" #f
 	    (lambda ()
 	       (with-access::JsGlobalObject %ctxthis (js-object js-symbol)

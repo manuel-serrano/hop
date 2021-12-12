@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Sat Nov 13 09:09:50 2021 (serrano)                */
+;*    Last change :  Sun Dec 12 09:37:45 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -76,7 +76,8 @@
 	      (escape::bool (default #f) (info '("notraverse")))
 	      ;; see usage-bit.sch
 	      (usage::uint32 (default (usage '())))
-	      ;; variable range
+	      ;; variable range (var, let, let-opt, let-forin, param, class,
+	      ;; record, export)
 	      (binder::symbol (default 'var) (info '("notraverse")))
 	      ;; user declared type (only a mere annotation)
 	      (utype (default 'unknown) (info '("notraverse")))
@@ -165,7 +166,8 @@
 
 	   (final-class J2SLetBlock::J2SBlock
 	      (rec::bool (default #t))
-	      (decls::pair-nil (info '("ast"))))
+	      (decls::pair-nil (info '("ast")))
+	      (mode::symbol read-only (default 'normal)))
 	   
 	   (class J2SIdStmt::J2SStmt
 	      (need-bind-exit-break::bool (default #t))

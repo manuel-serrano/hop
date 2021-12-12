@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Thu Dec  9 08:09:50 2021 (serrano)                */
+;*    Last change :  Sun Dec 12 10:00:54 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -112,7 +112,7 @@
 		  (commonjs-export this (find-decl 'module env)))
 	       (resolve-type this env conf)
 	       (for-each (lambda (d)
-			    (with-access::J2SDecl d (scope)
+			    (with-access::J2SDecl d (scope id)
 			       (when (eq? scope 'unbound)
 				  (set! decls (cons d decls)))))
 		  genv)
@@ -244,7 +244,7 @@
 	  (append (reverse! acc) (reverse! funs))
 	  (let ((decl (car decls)))
 	     (with-access::J2SDecl decl (id (bscope scope))
-		(unless (eq? bscope 'export)
+		(unless (memq bscope '(letblock export))
 		   (set! bscope scope))
 		(let ((old (find-decl id acc)))
 		   (if old
@@ -485,41 +485,42 @@
 ;*    resolve! ::J2SLetBlock ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (resolve! this::J2SLetBlock env mode withs wenv genv ctx conf)
-   (if (eq? mode 'hopscript)
-       (with-access::J2SLetBlock this (nodes endloc loc decls)
-	  (let ((nenv (append decls env)))
-	     (set! decls
-		(map (lambda (d)
-			(with-access::J2SDecl d (id binder loc)
-			   (let ((od (find-decl id env)))
-			      (when (and (or (not od)
-					     (eq? od d)
-					     (j2s-global? od))
-					 (config-get conf :error-variable-redefinition #f))
-				 (let ((kind (cond
-					       ((j2s-let? od)
-						"variable")
-					       ((j2s-param? od)
-						"parameter")
-					       (else
-						"constant"))))
-				    (raise
-				       (instantiate::&io-parse-error
-					  (proc "hopc (symbol)")
-					  (msg (format "Illegal ~a redefinition"
-						  kind))
-					  (obj id)
-					  (fname (cadr loc))
-					  (location (caddr loc)))))))
-			   (set! binder 'let-opt))
-			(resolve! d nenv mode withs wenv genv ctx conf))
-		   decls))
-	     (set! nodes
-		(map (lambda (n)
-			(resolve! n nenv mode withs wenv genv ctx conf))
-		   nodes))
-	     this))
-       (call-next-method)))
+   (with-access::J2SLetBlock this ((block-mode mode))
+      (if (or (eq? mode 'hopscript) (eq? block-mode 'hopscript))
+	  (with-access::J2SLetBlock this (nodes endloc loc decls)
+	     (let ((nenv (append decls env)))
+		(set! decls
+		   (map (lambda (d)
+			   (with-access::J2SDecl d (id binder loc)
+			      (let ((od (find-decl id env)))
+				 (when (and (or (not od)
+						(eq? od d)
+						(j2s-global? od))
+					    (config-get conf :error-variable-redefinition #f))
+				    (let ((kind (cond
+						   ((j2s-let? od)
+						    "variable")
+						   ((j2s-param? od)
+						    "parameter")
+						   (else
+						    "constant"))))
+				       (raise
+					  (instantiate::&io-parse-error
+					     (proc "hopc (symbol)")
+					     (msg (format "Illegal ~a redefinition"
+						     kind))
+					     (obj id)
+					     (fname (cadr loc))
+					     (location (caddr loc)))))))
+			      (set! binder 'let-opt))
+			   (resolve! d nenv 'hopscript withs wenv genv ctx conf))
+		      decls))
+		(set! nodes
+		   (map (lambda (n)
+			   (resolve! n nenv 'hopscript withs wenv genv ctx conf))
+		      nodes))
+		this))
+	  (call-next-method))))
    
 ;*---------------------------------------------------------------------*/
 ;*    resolve! ::J2SWith ...                                           */
@@ -980,7 +981,7 @@
 		  (when (eq? name '||)
 		     (set! name id))))
 	    (cond
-	       ((and (eq? mode 'hopscript) (eq? scope 'letblock))
+	       ((and (eq? scope 'letblock) (eq? mode 'hopscript))
 		(set! val rhs)
 		this)
 	       ((j2s-let-opt? this)
@@ -1293,9 +1294,6 @@
    (with-access::J2SDProducer this (decl loc)
       (with-access::J2SDecl decl (id)
 	 (let ((d (find-decl id env)))
-	    (unless d
-	       (tprint "PAS BON " id " loc=" loc)
-	       (tprint "this=" (j2s->sexp this)))
 	    (set! decl d)))
       (call-default-walker)))
 
@@ -1412,16 +1410,17 @@
 ;*    collect* ::J2SLetBlock ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (collect* this::J2SLetBlock mode)
-   (if (eq? mode 'hopscript)
-       (with-access::J2SBlock this (nodes)
-	  (append-map (lambda (n) (collect* n mode)) nodes))
-       (call-default-walker)))
+   (with-access::J2SLetBlock this ((block-mode mode))
+      (if (or (eq? mode 'hopscript) (eq? block-mode 'hopscript))
+	  (with-access::J2SBlock this (nodes)
+	     (append-map (lambda (n) (collect* n mode)) nodes))
+	  (call-default-walker))))
    
 ;*---------------------------------------------------------------------*/
 ;*    collect* ::J2SDecl ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (collect* this::J2SDecl mode)
-   (if (j2s-var? this) (list this) '()))
+   (if (and (j2s-var? this) (not (j2s-let-opt? this))) (list this) '()))
 
 ;*---------------------------------------------------------------------*/
 ;*    collect* ::J2SDeclFun ...                                        */
