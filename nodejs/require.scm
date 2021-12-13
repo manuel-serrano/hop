@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Sun Dec 12 09:13:28 2021 (serrano)                */
+;*    Last change :  Mon Dec 13 07:11:41 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -651,7 +651,7 @@
    (let* ((respath (nodejs-resolve path %this %module 'import))
 	  (mod (nodejs-load-module respath worker %this %module
 		 :commonjs-export commonjs-export :loc loc)))
-      (with-access::JsModule mod ((mc checksum))
+      (with-access::JsModule mod ((mc checksum) exports)
 	 (if (or (=fx checksum 0) (=fx checksum mc) (=fx mc 0))
 	     mod
 	     (js-raise-type-error/loc %this loc

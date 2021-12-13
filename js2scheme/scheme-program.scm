@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Tue Dec  7 16:39:40 2021 (serrano)                */
+;*    Last change :  Mon Dec 13 07:29:58 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -276,6 +276,7 @@
 		     ((define ?id ?val) #f)
 		     ((define-tls ?id ?val) #f)
 		     ((js-undefined) #f)
+		     (#unspecified #f)
 		     (else expr)))
       headers))
    
@@ -315,6 +316,7 @@
 			   ,@(j2s-tls-headers scmheaders)
 			   (letrec* ,(j2s-let-headers scmheaders)
 			      ,@(j2s-expr-headers scmheaders)
+			      ,@globals
 			      ,esexports
 			      ,@esimports
 			      ,@(exit-body ctx
@@ -467,6 +469,7 @@
 	       (reindex! this iprgm idx)
 	       (set! mvar `(vector-ref %imports ,idx))
 	       (set! ivar impid)
+	       ;; %IMPORT-EVARS-n is the EVARS of the n-th imported module
 	       `(define ,impid
 		   (with-access::JsModule (vector-ref %imports ,idx) (evars)
 		      evars))))))

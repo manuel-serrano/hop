@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Tue Nov 30 08:09:52 2021 (serrano)                */
+;*    Last change :  Mon Dec 13 07:38:02 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -321,9 +321,15 @@
 	   
 	   (class JsModule::JsObject
 	      (%module (default #f))
+	      ;; EVARS is the vector implementing exported variable; 
+	      ;; each entry holds the value of the corresping variable
 	      (evars::vector (default '#()))
 	      (defaultexport::obj (default (js-undefined)))
+	      ;; EXPORTS is the description of the exported variable;
+	      ;; each entry is: #(var-id index redirect-index|-1 ronly)
 	      (exports::vector (default '#()))
+	      ;; IMPORTS is the list of imported JsModule as returned
+	      ;; by NODEJS-IMPORT-MODULE
 	      (imports::vector (default '#()))
 	      (redirects::vector (default '#()))
 	      (default (default #f))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Mon Nov  8 07:14:59 2021 (serrano)                */
+;*    Last change :  Mon Dec 13 08:11:15 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -504,16 +504,18 @@
 ;*    j2s->list ::obj ...                                              */
 ;*---------------------------------------------------------------------*/
 (define-generic (j2s->list this stack)
-   `(alien :typeof ,(string->symbol (typeof this))
-       :expr ,(cond
-		 ((or (string? this) (symbol? this)
-		      (struct? this) (boolean? this)
-		      (number? this) (char? this))
-		  (format "~a" this))
-		 ((list? this)
-		  (format "~a" (j2s->list* this stack)))
-		 (else
-		  (format "~s" (typeof this))))))
+   (if (or (boolean? this) (number? this) (string? this) (symbol? this))
+       this
+       `(alien :typeof ,(string->symbol (typeof this))
+	   :expr ,(cond
+		     ((or (string? this) (symbol? this)
+			  (struct? this) (boolean? this)
+			  (number? this) (char? this))
+		      (format "~a" this))
+		     ((list? this)
+		      (format "~a" (j2s->list* this stack)))
+		     (else
+		      (format "~s" (typeof this)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::object ...                                           */
@@ -542,11 +544,13 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SProgram stack)
    (set! stack (list this))
-   (with-access::J2SProgram this (nodes headers decls mode direct-eval exports)
+   (with-access::J2SProgram this (nodes headers decls mode direct-eval
+				    exports imports)
       `(,(string->symbol (typeof this))
 	mode: ,mode
 	direct-eval: ,direct-eval
 	exports: ,(j2s->list* exports stack)
+	imports: ,(j2s->list* imports stack)
 	headers: ,(j2s->list* headers stack)
 	decls: ,(j2s->list* decls stack)
 	nodes: ,(j2s->list* nodes stack))))
@@ -1243,6 +1247,17 @@
 		(list (j2s->list val (check-stack this stack)))))))
 
 ;*---------------------------------------------------------------------*/
+;*    j2s->list ::J2SDeclImport ...                                    */
+;*---------------------------------------------------------------------*/
+(define-method (j2s->list this::J2SDeclImport stack)
+   (with-access::J2SDeclImport this (loc alias export import)
+      `(,@(call-next-method)
+	  ,@(dump-loc loc)
+	  :alias ,alias
+	  :export ,(j2s->list export (cons this stack))
+	  :import ,(j2s->list import (cons this stack)))))
+
+;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SPragma ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SPragma stack)
@@ -1499,10 +1514,11 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SExport stack)
    (with-access::J2SExport this (id alias index from writable)
-      `(,@(call-next-method) ,id ,@(if (eq? alias id) '() `(:alias ,alias))
+      `(J2SExport ,id
+	  :alias ,alias
 	  index: ,index
 	  writable: writable
-	  from: ,(typeof from))))
+	  from: ,(j2s->list from (cons this stack)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2ssum ...                                                       */
