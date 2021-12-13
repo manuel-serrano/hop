@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 15 15:16:16 2018                          */
-;*    Last change :  Mon Dec 13 07:47:53 2021 (serrano)                */
+;*    Last change :  Mon Dec 13 20:22:27 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES6 Module handling                                              */
@@ -56,8 +56,8 @@
 ;*    esimport ::J2SProgram ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (esimport this::J2SProgram prgm::J2SProgram stack import args)
-   (call-default-walker)
    (with-access::J2SProgram this (imports path)
+      (tprint "path=" path " stack=" stack)
       (if (member path stack)
 	  (with-access::J2SImport import (loc)
 	     (raise
@@ -80,13 +80,14 @@
 ;*    collect-imports* ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (collect-imports* this::J2SProgram prgm stack import args)
-   (with-access::J2SProgram this (imports decls nodes)
+   (with-access::J2SProgram this (imports decls nodes path)
       (unless (pair? imports)
-	 (set! imports
-	    (delete-multiple-imports
-	       (append-map (lambda (n)
-			      (collect-imports* n this (cons this stack) import args))
-		  (append decls nodes)))))
+	 (let ((nstack (cons path stack)))
+	    (set! imports
+	       (delete-multiple-imports
+		  (append-map (lambda (n)
+				 (collect-imports* n this nstack import args))
+		     (append decls nodes))))))
       imports))
 
 ;*---------------------------------------------------------------------*/
@@ -518,20 +519,20 @@
 ;*    resolve-import-path! ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (resolve-import-path! this::J2SImport prgm::J2SProgram args)
-   (with-access::J2SProgram prgm (path)
-      (with-access::J2SImport this (respath loc)
+   (with-access::J2SProgram prgm ((src path))
+      (with-access::J2SImport this (respath path loc)
 	 (unless (string? respath)
 	    (let ((base (cond
-			   ((string=? path "")
+			   ((string=? src "")
 			    (pwd))
-			   ((char=? (string-ref path 0) #\/)
+			   ((char=? (string-ref src 0) #\/)
 			    (dirname path))
 			   (else
 			    (dirname
 			       (file-name-canonicalize
-				  (make-file-name (pwd) path)))))))
+				  (make-file-name (pwd) src)))))))
 	       (set! respath (resolve-module-file path base args loc))
-	       (when (string=? respath path)
+	       (when (string=? respath src)
 		  (raise
 		     (instantiate::&io-parse-error
 			(proc "import")
@@ -570,14 +571,14 @@
 				       :verbose (config-get args :verbose 0)
 				       :verbmargin margin
 				       :module-import #t
-				       :module-stack (cons respath stack))
+				       :module-stack stack)
 				    (j2s-compile in
 				       :driver (j2s-export-driver)
 				       :warning 0
 				       :module-import #t
 				       :verbose (config-get args :verbose 0)
 				       :verbmargin margin
-				       :module-stack (cons respath stack)))))
+				       :module-stack stack))))
 		      (module-cache-put! respath iprgm))))))))
 
 ;*---------------------------------------------------------------------*/
