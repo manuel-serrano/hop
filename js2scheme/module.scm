@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 15 15:16:16 2018                          */
-;*    Last change :  Mon Dec 13 20:22:27 2021 (serrano)                */
+;*    Last change :  Tue Dec 14 05:36:39 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES6 Module handling                                              */
@@ -56,8 +56,7 @@
 ;*    esimport ::J2SProgram ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (esimport this::J2SProgram prgm::J2SProgram stack import args)
-   (with-access::J2SProgram this (imports path)
-      (tprint "path=" path " stack=" stack)
+   (with-access::J2SProgram this (imports decls path)
       (if (member path stack)
 	  (with-access::J2SImport import (loc)
 	     (raise
@@ -67,8 +66,11 @@
 		   (obj path)
 		   (fname (cadr loc))
 		   (location (caddr loc)))))
-	  (set! imports
-	     (collect-imports* this prgm stack import args)))))
+	  (begin
+	     ;; collect all the imported modules (following re-exports)
+	     (set! imports (collect-imports* this prgm stack import args))
+	     ;; declare all the imported variables
+	     (set! decls (append (collect-decls* this prgm stack args)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    collect-imports* ...                                             */
@@ -84,7 +86,7 @@
       (unless (pair? imports)
 	 (let ((nstack (cons path stack)))
 	    (set! imports
-	       (delete-multiple-imports
+	       (delete-duplicates
 		  (append-map (lambda (n)
 				 (collect-imports* n this nstack import args))
 		     (append decls nodes))))))
@@ -95,7 +97,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (collect-imports* this::J2SImport prgm stack import args)
    (let ((respath (resolve-import-path! this prgm args)))
-      (cons this
+      (cons respath
 	 (with-access::J2SImport this (names path loc)
 	    (let ((iprgm (import-module respath path loc stack args)))
 	       (collect-imports* iprgm iprgm stack this args))))))
@@ -436,86 +438,6 @@
 	   (resolve-error name)))))
 
 ;*---------------------------------------------------------------------*/
-;*    core-module-list ...                                             */
-;*---------------------------------------------------------------------*/
-(define core-module-list
-   '("console" "constants" "util" "sys" "path" "_linklist" "events"
-     "assert" "_stream_readable" "_stream_writable" "_stream_duplex"
-     "_stream_transform" "_stream_passthrough" "stream" "fs"
-     "punycode" "dgram" "vm" "timers" "net" "querystring" "string_decoder"
-     "child_process" "cluster" "crypto" "dns" "domain" "freelist" "url"
-     "tls" "tty" "http" "https" "zlib" "os" "hop" "hophz" "node_tick"
-     "node_stdio" "node_proc" "node_timers" "node_cluster"))
-
-;*---------------------------------------------------------------------*/
-;*    module-cache                                                     */
-;*---------------------------------------------------------------------*/
-(define module-cache #f)
-
-;*---------------------------------------------------------------------*/
-;*    module-cache-get ...                                             */
-;*---------------------------------------------------------------------*/
-(define (module-cache-get path)
-   (when module-cache
-      (let ((ce (cache-get module-cache path)))
-	 (when ce
-	    (with-access::cache-entry ce (value)
-	       value)))))
-
-;*---------------------------------------------------------------------*/
-;*    module-cache-put! ...                                            */
-;*---------------------------------------------------------------------*/
-(define (module-cache-put! path export)
-   (unless module-cache (set! module-cache (instantiate::cache-memory)))
-   (cache-put! module-cache path export)
-   export)
-
-;*---------------------------------------------------------------------*/
-;*    core-modules ...                                                 */
-;*---------------------------------------------------------------------*/
-(define core-modules #f)
-
-;*---------------------------------------------------------------------*/
-;*    get-core-modules ...                                             */
-;*---------------------------------------------------------------------*/
-(define (get-core-modules)
-   (unless core-modules
-      (esimport-init-core-modules!))
-   core-modules)
-	   
-;*---------------------------------------------------------------------*/
-;*    esimport-init-core-modules! ...                                  */
-;*---------------------------------------------------------------------*/
-(define (esimport-init-core-modules!)
-   (set! core-modules   
-      (create-hashtable
-	 :weak 'open-string
-	 :size 64
-	 :max-length 4096
-	 :max-bucket-length 10))
-   (for-each (lambda (cm)
-		(let ((loc `(at ,(string-append cm ".js") 0)))
-		   (co-instantiate ((decl (instantiate::J2SDecl
-					     (id 'default)
-					     (loc loc)
-					     (vtype 'any)
-					     (exports (list expo))))
-				    (expo (instantiate::J2SExport
-					     (id 'default)
-					     (alias 'default)
-					     (index 0)
-					     (decl decl))))
-		      (hashtable-put! core-modules cm
-			 (instantiate::J2SProgram
-			    (loc loc)
-			    (endloc loc)
-			    (path cm)
-			    (mode 'core)
-			    (nodes '())
-			    (exports (list expo)))))))
-      core-module-list))
-
-;*---------------------------------------------------------------------*/
 ;*    resolve-import-path! ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (resolve-import-path! this::J2SImport prgm::J2SProgram args)
@@ -526,7 +448,7 @@
 			   ((string=? src "")
 			    (pwd))
 			   ((char=? (string-ref src 0) #\/)
-			    (dirname path))
+			    (dirname src))
 			   (else
 			    (dirname
 			       (file-name-canonicalize
@@ -582,17 +504,82 @@
 		      (module-cache-put! respath iprgm))))))))
 
 ;*---------------------------------------------------------------------*/
-;*    delete-multiple-imports ...                                      */
+;*    module-cache                                                     */
 ;*---------------------------------------------------------------------*/
-(define (delete-multiple-imports imports)
-   (let loop ((lst (reverse imports)))
-      (if (null? lst)
-	  '()
-	  (with-access::J2SImport (car lst) (respath)
-	     (if (find (lambda (i)
-			  (with-access::J2SImport i ((irespath respath))
-			     (string=? irespath respath)))
-		    (cdr lst))
-		 (loop (cdr lst))
-		 (cons (car lst) (loop (cdr lst))))))))
+(define module-cache #f)
+
+;*---------------------------------------------------------------------*/
+;*    module-cache-get ...                                             */
+;*---------------------------------------------------------------------*/
+(define (module-cache-get path)
+   (when module-cache
+      (let ((ce (cache-get module-cache path)))
+	 (when ce
+	    (with-access::cache-entry ce (value)
+	       value)))))
+
+;*---------------------------------------------------------------------*/
+;*    module-cache-put! ...                                            */
+;*---------------------------------------------------------------------*/
+(define (module-cache-put! path export)
+   (unless module-cache (set! module-cache (instantiate::cache-memory)))
+   (cache-put! module-cache path export)
+   export)
+
+;*---------------------------------------------------------------------*/
+;*    core-module-list ...                                             */
+;*---------------------------------------------------------------------*/
+(define core-module-list
+   '("console" "constants" "util" "sys" "path" "_linklist" "events"
+     "assert" "_stream_readable" "_stream_writable" "_stream_duplex"
+     "_stream_transform" "_stream_passthrough" "stream" "fs"
+     "punycode" "dgram" "vm" "timers" "net" "querystring" "string_decoder"
+     "child_process" "cluster" "crypto" "dns" "domain" "freelist" "url"
+     "tls" "tty" "http" "https" "zlib" "os" "hop" "hophz" "node_tick"
+     "node_stdio" "node_proc" "node_timers" "node_cluster"))
+
+;*---------------------------------------------------------------------*/
+;*    core-modules ...                                                 */
+;*---------------------------------------------------------------------*/
+(define core-modules #f)
+
+;*---------------------------------------------------------------------*/
+;*    get-core-modules ...                                             */
+;*---------------------------------------------------------------------*/
+(define (get-core-modules)
+   (unless core-modules
+      (esimport-init-core-modules!))
+   core-modules)
+	   
+;*---------------------------------------------------------------------*/
+;*    esimport-init-core-modules! ...                                  */
+;*---------------------------------------------------------------------*/
+(define (esimport-init-core-modules!)
+   (set! core-modules   
+      (create-hashtable
+	 :weak 'open-string
+	 :size 64
+	 :max-length 4096
+	 :max-bucket-length 10))
+   (for-each (lambda (cm)
+		(let ((loc `(at ,(string-append cm ".js") 0)))
+		   (co-instantiate ((decl (instantiate::J2SDecl
+					     (id 'default)
+					     (loc loc)
+					     (vtype 'any)
+					     (exports (list expo))))
+				    (expo (instantiate::J2SExport
+					     (id 'default)
+					     (alias 'default)
+					     (index 0)
+					     (decl decl))))
+		      (hashtable-put! core-modules cm
+			 (instantiate::J2SProgram
+			    (loc loc)
+			    (endloc loc)
+			    (path cm)
+			    (mode 'core)
+			    (nodes '())
+			    (exports (list expo)))))))
+      core-module-list))
 
