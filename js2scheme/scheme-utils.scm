@@ -125,6 +125,8 @@
 	   (with-tmp lhs rhs mode return ::struct gen::procedure)
 	   (with-tmp-args ::pair-nil mode return ctx gen::procedure)
 
+	   (importpath-var ::J2SImportPath)
+
 	   ))
 
 ;*---------------------------------------------------------------------*/
@@ -1605,3 +1607,9 @@
    (cell-set! cell #t)
    #t)
 
+;*---------------------------------------------------------------------*/
+;*    importpath-var ...                                               */
+;*---------------------------------------------------------------------*/
+(define (importpath-var i::J2SImportPath)
+   (with-access::J2SImportPath i (index)
+      (string->symbol (format "%import-evars-~a" index))))

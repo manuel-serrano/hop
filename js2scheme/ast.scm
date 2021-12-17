@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Tue Dec 14 09:01:52 2021 (serrano)                */
+;*    Last change :  Fri Dec 17 09:27:08 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -93,8 +93,8 @@
 	      (vrange::obj (default #unspecified) (info '("notraverse")))
 	      ;; variable 
 	      (hint::pair-nil (default '()) (info '("notraverse")))
-	      ;; es module export
-	      (exports::pair-nil (default '()) (info '("notraverse"))))
+	      ;; export clause (if any)
+	      (export::obj (default #f) (info '("notraverse"))))
 
 	   (class J2SDeclRest::J2SDecl
 	      (alloc-policy::symbol (default 'heap) (info '("notraverse"))))
@@ -131,7 +131,6 @@
 
 	   (final-class J2SDeclImport::J2SDecl
 	      (alias read-only (default #f) (info '("notraverse")))
-	      (export::obj read-only (info '("notraverse")))
 	      (import::obj read-only (info '("notraverse"))))
 
 	   (abstract-class J2SExpr::J2SNode
@@ -528,17 +527,26 @@
 	      (decl (default #f) (info '("jsonref")))
 	      (from (default #f)))
 
+	   (final-class J2SImportPath
+	      (loc read-only)
+	      (name::bstring read-only)
+	      (path::bstring read-only)
+	      (protocol::symbol read-only)
+	      (index::long (default -1))
+	      (checksum::long (default -1)))
+
 	   (final-class J2SImport::J2SStmt
 	      (path::bstring read-only (info '("notraverse")))
+	      (respath (default #f) (info '("notraverse")))
 	      ;; dollarpath is only used for client-side imports whose
 	      ;; module name is a dollar expression (see js.scm)
 	      dollarpath::J2SExpr
 	      (names::pair-nil (default '()) (info '("notraverse")))
-	      (respath (default #f) (info '("notraverse")))
 	      (mvar (default #f) (info '("notraverse")))
 	      (ivar (default #f) (info '("notraverse")))
 	      (reindex::long (default -1) (info '("notraverse")))
-	      (iprgm (default #f) (info '("notraverse"))))
+	      (iprgm (default #f) (info '("notraverse")))
+	      (lang (default #f)))
 
 	   (final-class J2SImportName
 	      (loc read-only)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Wed Oct 27 07:59:19 2021 (serrano)                */
+;*    Last change :  Fri Dec 17 12:09:04 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Count the number of occurrences for all variables                */
@@ -487,9 +487,8 @@
 ;*    j2s-use ::J2SDecl ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-use this::J2SDecl ctx deval infun)
-   (with-access::J2SDecl this (exports)
-      (when (and (pair? exports) (not (decl-usage-has? this '(ref))))
-	 (decl-usage-add! this 'ref)))
+   (when (and (j2s-export? this) (not (decl-usage-has? this '(ref))))
+      (decl-usage-add! this 'ref))
    this)
 
 ;*---------------------------------------------------------------------*/

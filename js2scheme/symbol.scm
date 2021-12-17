@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Tue Dec 14 09:06:04 2021 (serrano)                */
+;*    Last change :  Fri Dec 17 12:06:35 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -140,7 +140,7 @@
 				(loc loc)
 				(id 'default)
 				(vtype 'any)
-				(exports (list expo))
+				(export expo)
 				(binder 'export)
 				(scope 'export))))
 	 (values expo
@@ -1617,15 +1617,17 @@
 		      (with-access::J2SExport x (id from loc decl index)
 			 (unless from
 			    (let ((d (or decl (find-decl id env))))
-			       (set! decl d)
-			       (set! index idx)
-			       (set! idx (+fx idx 1))
-			       (unless decl
-				  (raise
-				     (instantiate::&io-parse-error
-					(proc "hopc (symbol)")
-					(msg "undefined exported variable")
-					(obj id)
-					(fname (cadr loc))
-					(location (caddr loc)))))))))
+			       (if d
+				   (with-access::J2SDecl d (export)
+				      (set! export x)
+				      (set! decl d)
+				      (set! index idx)
+				      (set! idx (+fx idx 1)))
+				   (raise
+				      (instantiate::&io-parse-error
+					 (proc "hopc (symbol)")
+					 (msg "undefined exported variable")
+					 (obj id)
+					 (fname (cadr loc))
+					 (location (caddr loc)))))))))
 	    exports))))

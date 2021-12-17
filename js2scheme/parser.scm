@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Tue Dec 14 08:43:53 2021 (serrano)                */
+;*    Last change :  Fri Dec 17 12:06:18 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1487,13 +1487,14 @@
 		(parse-token-error "Illegal import" next))))))
 
    (define (export-decl decl::J2SDecl)
-      (with-access::J2SDecl decl (id scope loc)
+      (with-access::J2SDecl decl (id scope loc export)
 	 (set! scope 'export)
 	 (let ((x (instantiate::J2SExport
 		     (loc loc)
 		     (id id)
 		     (alias id)
 		     (decl decl))))
+	    (set! export x)
 	    (set! exports (cons x exports)))
 	 decl))
    
@@ -1575,7 +1576,7 @@
 			      (decl (instantiate::J2SDeclInit
 				       (loc loc)
 				       (id 'default)
-				       (exports (list expo))
+;* 				       (exports (list expo))           */
 				       (binder 'export)
 				       (scope 'export)
 				       (val val)))

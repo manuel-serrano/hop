@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 25 17:47:23 2018                          */
-;*    Last change :  Thu Oct 25 18:13:39 2018 (serrano)                */
-;*    Copyright   :  2018 Manuel Serrano                               */
+;*    Last change :  Fri Dec 17 11:18:06 2021 (serrano)                */
+;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Compute checksum (hash numbers) of anything.                     */
 ;*=====================================================================*/
@@ -144,7 +144,7 @@
       (checksum-any exports
 	 (checksum-any
 	    (map (lambda (i)
-		    (with-access::J2SImport i (path) path))
+		    (with-access::J2SImportPath i (path) path))
 	       imports)
 	    checksum))))
 

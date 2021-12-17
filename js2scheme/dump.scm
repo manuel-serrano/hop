@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Mon Dec 13 08:11:15 2021 (serrano)                */
+;*    Last change :  Fri Dec 17 10:29:05 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -1455,12 +1455,23 @@
 	 `(,@(call-next-method) ,@(j2s->list* exprs nstack)))))
 
 ;*---------------------------------------------------------------------*/
+;*    j2s->list ::J2SImportPath ...                                    */
+;*---------------------------------------------------------------------*/
+(define-method (j2s->list this::J2SImportPath stack)
+   (with-access::J2SImportPath this (path protocol index)
+      `(J2SImportPath ,path
+	  :index ,index
+	  ,@(if (eq? protocol 'file) '() `(:protocol ,protocol)))))
+
+;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SImport ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SImport stack)
    (let ((nstack (check-stack this stack)))
-      (with-access::J2SImport this (path names)
-	 `(,@(call-next-method) :path ,path
+      (with-access::J2SImport this (path respath names)
+	 `(,@(call-next-method)
+	     :path ,path
+	     :respath ,(j2s->list respath (cons this stack))
 	     :names ,@(j2s->list* names nstack)))))
 
 ;*---------------------------------------------------------------------*/

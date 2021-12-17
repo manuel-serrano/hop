@@ -274,8 +274,8 @@
 		(j2s->sexp this)))))
 
    (define (j2s-scheme-export this)
-      (with-access::J2SDeclInit this (exports val)
-	 (with-access::J2SExport (car exports) (index)
+      (with-access::J2SDeclInit this (val export)
+	 (with-access::J2SExport export (index)
 	    `(vector-set! %evars ,index
 		,(j2s-scheme val mode return ctx)))))
 
@@ -303,7 +303,7 @@
 	     `(js-let-set! ,(j2s-decl-scm-id decl ctx) ,tval ',loc %this)))))
 
    (with-access::J2SRef lhs (decl)
-      (with-access::J2SDecl decl (writable writable scope id hint exports)
+      (with-access::J2SDecl decl (writable writable scope id hint export)
 	 (with-access::J2SExpr rhs (type)
 	    (cond
 	       ((or writable init?)
@@ -316,9 +316,9 @@
 			    :optim #f
 			    :cachefun (is-lambda? val type))
 			,result))
-		   ((pair? exports)
+		   (export
 		    `(begin
-			,(with-access::J2SExport (car exports) (index)
+			,(with-access::J2SExport export (index)
 			    `(vector-set! %evars ,index ,val))
 			,result))
 		   (result
@@ -419,16 +419,16 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-ref-sans-cast this::J2SRef mode return ctx)
    (with-access::J2SRef this (decl loc type)
-      (with-access::J2SDecl decl (scope id vtype exports)
+      (with-access::J2SDecl decl (scope id vtype export)
 	 (cond
 	    ((isa? decl J2SDeclImport)
 	     (with-access::J2SDeclImport decl (export import)
 		(with-access::J2SExport export (index)
-		   (with-access::J2SImport import (ivar mvar)
-		      `(vector-ref ,ivar ,index)))))
-	    ((and (pair? exports)
+		   (with-access::J2SImport import (respath)
+		      `(vector-ref ,(importpath-var respath) ,index)))))
+	    ((and export
 		  (or (not (decl-ronly? decl)) (not (isa? decl J2SDeclFun))))
-	     (with-access::J2SExport (car exports) (index decl)
+	     (with-access::J2SExport export (index decl)
 		`(vector-ref %evars ,index)))
 	    ((j2s-let-opt? decl)
 	     (j2s-decl-scm-id decl ctx))
@@ -449,7 +449,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SRef mode return ctx)
    (with-access::J2SRef this (decl loc type)
-      (with-access::J2SDecl decl (scope id vtype exports)
+      (with-access::J2SDecl decl (scope id vtype export)
 	 (let ((sexp (j2s-ref-sans-cast this mode return ctx)))
 	    (j2s-as sexp this vtype type ctx)))))
 

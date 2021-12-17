@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Fri Dec 10 11:44:57 2021 (serrano)                */
+;*    Last change :  Fri Dec 17 12:09:19 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -1291,7 +1291,6 @@
 		(itype type))
 	     (duplicate::J2SDecl p
 		(key (ast-decl-key))
-		(exports '())
 		(hint '())
 		(vtype nvtype)
 		(itype type))))))
@@ -1309,7 +1308,6 @@
 	  (hint '()))
        (duplicate::J2SDecl p
 	  (key (ast-decl-key))
-	  (exports '())
 	  (hint '()))))
 
 (define (j2sdecl-duplicate-as-any-TBR-12jul21 p::J2SDecl)
@@ -1322,7 +1320,6 @@
 	  (itype 'any))
        (duplicate::J2SDecl p
 	  (key (ast-decl-key))
-	  (exports '())
 	  (hint '())
 	  (utype 'unknown)
 	  (vtype 'any)

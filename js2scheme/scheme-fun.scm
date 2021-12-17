@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Mon Oct 25 08:42:41 2021 (serrano)                */
+;*    Last change :  Fri Dec 17 12:11:11 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -126,7 +126,7 @@
 		      `((define ,scmid 
 			   ,(j2s-make-function this mode return ctx)))))))))
    
-   (with-access::J2SDeclFun this (loc id scope val exports vtype)
+   (with-access::J2SDeclFun this (loc id scope val vtype export)
       (let ((val (declfun-fun this)))
 	 (with-access::J2SFun val (params mode vararg body name generator idgen decl)
 	    (let* ((scmid (j2s-decl-scm-id this ctx))
@@ -166,7 +166,7 @@
 		     ((global %scope tls)
 		      (global-declfun this val scmid fastid))
 		     ((export)
-		      (with-access::J2SExport (car exports) (index)
+		      (with-access::J2SExport export (index)
 			 (append
 			    (regular-declfun this val scmid fastid)
 			    `((vector-set! %evars ,index ,scmid)))))

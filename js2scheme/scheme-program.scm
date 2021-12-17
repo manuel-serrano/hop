@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Tue Dec 14 09:27:27 2021 (serrano)                */
+;*    Last change :  Fri Dec 17 11:06:42 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -452,63 +452,53 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-module-imports this::J2SProgram ctx)
 
-   (define (import-iprgm i) (with-access::J2SImport i (iprgm) iprgm))
-   (define (import-mvar i) (with-access::J2SImport i (mvar) mvar))
-
-   (define (evar-ident idx)
-      (string->symbol (format "%import-evars-~a" idx)))
-
-   (define (reindex! this::J2SProgram iprgm::J2SProgram reindex)
-      (with-access::J2SProgram this (%info)
-	 (set! %info (cons (cons iprgm reindex) %info))))
-
    (define (import-module im)
-      (with-access::J2SImport im (path iprgm loc names)
-	 (with-access::J2SProgram iprgm (mode exports)
-	    (case mode
-	       ((hop)
-		`(nodejs-import-module-hop %worker %this %module
-		    ,path
-		    ,(j2s-program-checksum! iprgm)
-		    ,(context-get ctx :commonjs-export)
-		    ',loc
-		    ',(list->vector
-			 (map (lambda (e)
-				 (with-access::J2SExport e (alias decl)
-				    (with-access::J2SDecl decl (vtype)
-				       (cons alias vtype))))
-			    exports))))
-	       ((core)
-		(cond
-		   ((import-module-default? im)
-		    `(nodejs-import-module %worker %this %module
-			,path
-			,(j2s-program-checksum! iprgm)
-			#t ',loc))
-		   ((import-module-namespace? im)
-		    `(nodejs-import-module %worker %this %module
-			,path
-			,(j2s-program-checksum! iprgm)
-			#t ',loc))
-		   (else
-		    `(nodejs-import-module-core %worker %this %module
-			,path
-			,(j2s-program-checksum! iprgm)
-			#t
-			',loc
-			',(list->vector
-			     (map (lambda (name)
-				     (with-access::J2SImportName name (id) id))
-				names))))))
-	       (else
-		`(nodejs-import-module %worker %this %module
-		    ,path
-		    ,(j2s-program-checksum! iprgm)
-		    ,(context-get ctx :commonjs-export)
-		    ',loc))))))
+      (with-access::J2SImportPath im (path protocol checksum loc)
+	 (case protocol
+;* 	       ((hop)                                                  */
+;* 		`(nodejs-import-module-hop %worker %this %module       */
+;* 		    ,path                                              */
+;* 		    ,(j2s-program-checksum! iprgm)                     */
+;* 		    ,(context-get ctx :commonjs-export)                */
+;* 		    ',loc                                              */
+;* 		    ',(list->vector                                    */
+;* 			 (map (lambda (e)                              */
+;* 				 (with-access::J2SExport e (alias decl) */
+;* 				    (with-access::J2SDecl decl (vtype) */
+;* 				       (cons alias vtype))))           */
+;* 			    exports))))                                */
+	    ((core)
+	     'TODO)
+;* 		(cond                                                  */
+;* 		   ((import-module-default? im)                        */
+;* 		    `(nodejs-import-module %worker %this %module       */
+;* 			,path                                          */
+;* 			,(j2s-program-checksum! iprgm)                 */
+;* 			#t ',loc))                                     */
+;* 		   ((import-module-namespace? im)                      */
+;* 		    `(nodejs-import-module %worker %this %module       */
+;* 			,path                                          */
+;* 			,(j2s-program-checksum! iprgm)                 */
+;* 			#t ',loc))                                     */
+;* 		   (else                                               */
+;* 		    `(nodejs-import-module-core %worker %this %module  */
+;* 			,path                                          */
+;* 			,(j2s-program-checksum! iprgm)                 */
+;* 			#t                                             */
+;* 			',loc                                          */
+;* 			',(list->vector                                */
+;* 			     (map (lambda (name)                       */
+;* 				     (with-access::J2SImportName name (id) id)) */
+;* 				names))))))                            */
+	    (else
+	     `(nodejs-import-module %worker %this %module
+		 ,path
+		 ,checksum
+		 ,(context-get ctx :commonjs-export)
+		 ',loc)))))
    
-   (define (module-import-es6 im idx)
-      (let ((impid (evar-ident idx)))
+   (define (module-import-es6 im)
+      (let ((impid (importpath-var im)))
 	 ;; %IMPORT-EVARS-n is the EVARS of the n-th imported module
 	 `(define ,impid
 	     (with-access::JsModule ,(import-module im) (evars)
@@ -516,9 +506,7 @@
    
    (define (module-imports prgm::J2SProgram)
       (with-access::J2SProgram prgm (imports)
-	 (map (lambda (im idx)
-		 (module-import-es6 im idx))
-	    imports (iota (length imports)))))
+	 (map module-import-es6 imports)))
 
    (define (redirect-only?::bool iprgm::J2SProgram)
       ;; true iff iprgm only redirect exports
@@ -539,15 +527,11 @@
       (with-access::J2SImport im (names)
 	 (and (pair? names) (isa? (car names) J2SImportNamespace))))
       
-   
-
    (with-access::J2SProgram this (imports path)     
       ;; WARNING !!! the evaluation order matters module-imports _must_ be
       ;; called before module-redirect (as module-imports assigned the mvar
       ;; properties used by module-redirect).
-      (map (lambda (i n)
-	      (module-import-es6 i n))
-	 imports (iota (length imports)))))
+      (map module-import-es6 imports)))
 ;* 	  (let ((mimports (module-imports this)))                      */
 ;* 	 (if (and (null? imports) (null? mredirects))                  */
 ;* 	     '()                                                       */
@@ -601,12 +585,7 @@
    
    (define (j2s-export e::J2SExport)
       (with-access::J2SExport e (index decl from id alias)
-	 (with-access::J2SDecl decl ((w writable) loc)
-	    (cond
-	       ((isa? from J2SProgram)
-		`(js-export ,(& alias this) ,index ,(redirect-index this id from loc) ,w))
-	       (else
-		`(js-export ,(& alias this) ,index -1 ,w))))))
+	 `(vector ,(& alias this) ,index #f)))
    
    (with-access::J2SProgram this (exports imports path checksum)
       (let ((idx (j2sprogram-get-export-index this))
