@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Sun Dec 12 09:37:45 2021 (serrano)                */
+;*    Last change :  Tue Dec 14 09:01:52 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -520,6 +520,14 @@
 	      (expr::J2SExpr (info '("ast")))
 	      (path read-only))
 
+	   (final-class J2SExport
+	      (loc read-only)
+	      (id::symbol read-only)
+	      (alias::symbol read-only)
+	      (index::long (default -1))
+	      (decl (default #f) (info '("jsonref")))
+	      (from (default #f)))
+
 	   (final-class J2SImport::J2SStmt
 	      (path::bstring read-only (info '("notraverse")))
 	      ;; dollarpath is only used for client-side imports whose
@@ -555,13 +563,6 @@
 
 	   (final-class J2SImportExports::J2SExpr
 	      import)
-
-	   (final-class J2SExport
-	      (id::symbol read-only)
-	      (alias::symbol read-only)
-	      (index::long (default -1))
-	      (decl (default #f) (info '("jsonref")))
-	      (from (default #f)))
 
 	   (final-class J2SExportVars::J2SStmt
 	      (refs::pair-nil read-only)

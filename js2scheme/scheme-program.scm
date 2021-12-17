@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Mon Dec 13 07:29:58 2021 (serrano)                */
+;*    Last change :  Tue Dec 14 09:27:27 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -462,92 +462,8 @@
       (with-access::J2SProgram this (%info)
 	 (set! %info (cons (cons iprgm reindex) %info))))
 
-   (define (module-import-es6 im idx)
-      (with-access::J2SImport im (mvar ivar path iprgm)
-	 (with-access::J2SProgram iprgm (mode)
-	    (let ((impid (evar-ident idx)))
-	       (reindex! this iprgm idx)
-	       (set! mvar `(vector-ref %imports ,idx))
-	       (set! ivar impid)
-	       ;; %IMPORT-EVARS-n is the EVARS of the n-th imported module
-	       `(define ,impid
-		   (with-access::JsModule (vector-ref %imports ,idx) (evars)
-		      evars))))))
-   
-   (define (module-imports prgm::J2SProgram)
-      (with-access::J2SProgram prgm (imports)
-	 (map (lambda (im idx)
-		 (with-access::J2SImport im (mvar ivar path iprgm)
-		    (with-access::J2SProgram iprgm (mode)
-		       (module-import-es6 im idx))))
-	    imports (iota (length imports)))))
-
-   (define (redirect-only?::bool iprgm::J2SProgram)
-      ;; true iff iprgm only redirect exports
-      ;; without exporting bindings itself
-      (with-access::J2SProgram iprgm (exports)
-	 (every (lambda (e)
-		   (with-access::J2SExport e (from) from))
-	    exports)))
-      
-   (define (module-import-redirect iprgm::J2SProgram mvar eidx)
-      (with-access::J2SProgram iprgm (imports (ipath path))
-	 (let ((nres '())
-	       (nqueue '()))
-	    (for-each (lambda (im idx)
-			 (with-access::J2SImport im (names iprgm path)
-			    (when (and (pair? names)
-				       (or (isa? (car names) J2SImportExport)
-					   (isa? (car names) J2SImportRedirect)))
-			       (unless (redirect-only? iprgm)
-				  (let ((evid (evar-ident eidx)))
-				     (reindex! this iprgm eidx)
-				     (set! eidx (+fx eidx 1))
-				     (let ((x `(with-access::JsModule ,mvar (imports)
-						  (with-access::JsModule
-							(vector-ref imports ,idx)
-							(evars)
-						     ,(format "redirect: ~a ~a" ipath path)
-						     evars))))
-					(set! nres (cons x nres)))))
-			       (let ((q (cons iprgm `(vector-ref (with-access::JsModule ,mvar (imports) imports) ,idx))))
-				  (set! nqueue (append! nqueue (list q)))))))
-	       imports (iota (length imports)))
-	    (values nqueue nres))))
-   
-   (define (module-redirect prgm::J2SProgram)
-      (with-access::J2SProgram prgm (imports)
-	 (let loop ((queue (map (lambda (i)
-				   (with-access::J2SImport i (iprgm mvar)
-				      (cons iprgm mvar)))
-			      imports))
-		    (idx (length imports))
-		    (res '())
-		    (stack '()))
-	    (if (null? queue)
-		(reverse! res)
-		(let ((iprgm (caar queue))
-		      (mvar (cdar queue)))
-		   (multiple-value-bind (nqueue nres)
-		      (module-import-redirect iprgm mvar idx)
-		      (loop (append! (cdr queue) nqueue)
-			 (+fx idx (length nres))
-			 (append nres res)
-			 (cons iprgm stack))))))))
-
-   (define (import-module-default? im)
-      (with-access::J2SImport im (names)
-	 (when (pair? names)
-	    (when (and (null? (cdr names)) (isa? (car names) J2SImportName))
-	       (with-access::J2SImportName (car names) (id)
-		  (eq? id 'default))))))
-   
-   (define (import-module-namespace? im)
-      (with-access::J2SImport im (names)
-	 (and (pair? names) (isa? (car names) J2SImportNamespace))))
-      
    (define (import-module im)
-      (with-access::J2SImport im (path iprgm loc names iprgm)
+      (with-access::J2SImport im (path iprgm loc names)
 	 (with-access::J2SProgram iprgm (mode exports)
 	    (case mode
 	       ((hop)
@@ -590,28 +506,64 @@
 		    ,(j2s-program-checksum! iprgm)
 		    ,(context-get ctx :commonjs-export)
 		    ',loc))))))
+   
+   (define (module-import-es6 im idx)
+      (let ((impid (evar-ident idx)))
+	 ;; %IMPORT-EVARS-n is the EVARS of the n-th imported module
+	 `(define ,impid
+	     (with-access::JsModule ,(import-module im) (evars)
+		evars))))
+   
+   (define (module-imports prgm::J2SProgram)
+      (with-access::J2SProgram prgm (imports)
+	 (map (lambda (im idx)
+		 (module-import-es6 im idx))
+	    imports (iota (length imports)))))
+
+   (define (redirect-only?::bool iprgm::J2SProgram)
+      ;; true iff iprgm only redirect exports
+      ;; without exporting bindings itself
+      (with-access::J2SProgram iprgm (exports)
+	 (every (lambda (e)
+		   (with-access::J2SExport e (from) from))
+	    exports)))
+      
+   (define (import-module-default? im)
+      (with-access::J2SImport im (names)
+	 (when (pair? names)
+	    (when (and (null? (cdr names)) (isa? (car names) J2SImportName))
+	       (with-access::J2SImportName (car names) (id)
+		  (eq? id 'default))))))
+   
+   (define (import-module-namespace? im)
+      (with-access::J2SImport im (names)
+	 (and (pair? names) (isa? (car names) J2SImportNamespace))))
+      
+   
 
    (with-access::J2SProgram this (imports path)     
       ;; WARNING !!! the evaluation order matters module-imports _must_ be
       ;; called before module-redirect (as module-imports assigned the mvar
       ;; properties used by module-redirect).
-      (let* ((mimports (module-imports this))
-	     (mredirects (module-redirect this)))
-	 (if (and (null? imports) (null? mredirects))
-	     '()
-	     (cons
-		`(define %imports
-		    (with-access::JsModule %module (imports)
-		       (set! imports (vector ,@(map import-module imports)))
-		       imports))
-		(append
-		   mimports
-		   `((with-access::JsModule %module (redirects)
-			(set! redirects
-			   (vector
-			      ,@(map (lambda (i) (evar-ident i))
-				   (iota (length imports)))
-			      ,@mredirects))))))))))
+      (map (lambda (i n)
+	      (module-import-es6 i n))
+	 imports (iota (length imports)))))
+;* 	  (let ((mimports (module-imports this)))                      */
+;* 	 (if (and (null? imports) (null? mredirects))                  */
+;* 	     '()                                                       */
+;* 	     (cons                                                     */
+;* 		`(define %imports                                      */
+;* 		    (with-access::JsModule %module (imports)           */
+;* 		       (set! imports (vector ,@(map import-module imports))) */
+;* 		       imports))                                       */
+;* 		(append                                                */
+;* 		   mimports                                            */
+;* 		   `((with-access::JsModule %module (redirects)        */
+;* 			(set! redirects                                */
+;* 			   (vector                                     */
+;* 			      ,@(map (lambda (i) (evar-ident i))       */
+;* 				   (iota (length imports)))            */
+;* 			      ,@mredirects))))))))))                   */
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-module-exports ...                                           */

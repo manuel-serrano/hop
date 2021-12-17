@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Sun Dec 12 08:53:45 2021 (serrano)                */
+;*    Last change :  Tue Dec 14 08:43:53 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -83,13 +83,8 @@
 	 (id 'this)
 	 (_scmid 'this)))
 
-   (define export-index -1)
+   (define exports '())
    
-   (define (get-export-index)
-      (set! export-index (+fx 1 export-index))
-      export-index)
-
-
    (define (parse-eof-error token)
       (parse-token-error "Unexpected end of file"
 	 (if (pair? *open-tokens*)
@@ -1492,20 +1487,20 @@
 		(parse-token-error "Illegal import" next))))))
 
    (define (export-decl decl::J2SDecl)
-      (with-access::J2SDecl decl (id exports scope)
+      (with-access::J2SDecl decl (id scope loc)
 	 (set! scope 'export)
-	 (set! exports (cons (instantiate::J2SExport
-				(id id)
-				(alias id)
-				(decl decl)
-				(index (get-export-index)))
-			  exports))
+	 (let ((x (instantiate::J2SExport
+		     (loc loc)
+		     (id id)
+		     (alias id)
+		     (decl decl))))
+	    (set! exports (cons x exports)))
 	 decl))
    
    (define (export token)
       (set! es-module #t)
       (case (peek-token-type)
-	 ((var let const)
+	 ((var let const class record)
 	  (let ((stmt (statement)))
 	     (with-access::J2SVarDecls stmt (decls)
 		(set! decls (map export-decl decls)))
@@ -1534,28 +1529,34 @@
 				  id)))
 		   (case (peek-token-type)
 		      ((RBRACE)
-		       (consume-any!)
-		       (if (peek-token-id? 'from)
-			   (begin
-			      (consume-any!)
-			      (multiple-value-bind (path dollarpath)
-				 (consume-module-path!)
-				 (instantiate::J2SImport
-				    (names (map (lambda (r a)
-						   (with-access::J2SUnresolvedRef r (id loc)
-						      (instantiate::J2SImportRedirect
-							 (loc loc)
-							 (id id)
-							 (alias a))))
-					      (cons ref refs)
-					      (cons alias aliases)))
-				    (loc (token-loc token))
-				    (path path)
-				    (dollarpath dollarpath))))
-			   (instantiate::J2SExportVars
-			      (loc (token-loc token))
-			      (refs (cons ref refs))
-			      (aliases (cons alias aliases)))))
+		       (let ((loc (token-loc (consume-any!))))
+			  (if (peek-token-id? 'from)
+			      (let ((loc (token-loc (consume-any!))))
+				 (multiple-value-bind (path dollarpath)
+				    (consume-module-path!)
+				    (let ((x (map (lambda (r a)
+						     (instantiate::J2SExport
+							(loc loc)
+							(id id)
+							(alias a)
+							(from path)))
+						(cons ref refs)
+						(cons alias aliases))))
+				       (set! exports (append x exports))
+				       (instantiate::J2SImport
+					  (names '())
+					  (loc loc)
+					  (path path)
+					  (dollarpath dollarpath)))))
+			      (let ((x (map (lambda (r a)
+					       (instantiate::J2SExport
+						  (loc loc)
+						  (id id)
+						  (alias a)))
+					  (cons ref refs)
+					  (cons alias aliases))))
+				 (set! exports (append x exports))
+				 (J2SUndefined)))))
 		      ((COMMA)
 		       (consume-any!)
 		       (loop (cons ref refs) (cons alias aliases)))
@@ -1563,19 +1564,14 @@
 		       (parse-token-error "Illegal export" token)))))))
 	 ((function)
 	  (export-decl (statement)))
-	 ((record class)
-	  (let ((stmt (statement)))
-	     (with-access::J2SVarDecls stmt (decls)
-		(set! decls (list (export-decl (car decls))))
-		stmt)))
 	 ((default)
 	  (let ((loc (token-loc (consume-any!)))
 		(val (expression #f #f)))
 	     (co-instantiate ((expo (instantiate::J2SExport
+				       (loc loc)
 				       (id 'default)
 				       (alias 'default)
-				       (decl decl)
-				       (index (get-export-index))))
+				       (decl decl)))
 			      (decl (instantiate::J2SDeclInit
 				       (loc loc)
 				       (id 'default)
@@ -3323,6 +3319,7 @@
 	       (main (config-get conf :module-main #f))
 	       (name (config-get conf :module-name #f))
 	       (mode mode)
+	       (exports exports)
 	       (nodes (map! (lambda (n) (dialect n mode conf)) nodes))))))
    
    (define (eval mode)
@@ -3335,6 +3332,7 @@
 	       (path (config-get conf :filename (abspath)))
 	       (name (config-get conf :module-name #f))
 	       (mode mode)
+	       (exports exports)
 	       (nodes (map! (lambda (n) (dialect n mode conf)) nodes))))))
 
    (define (eval-strict)
@@ -3351,6 +3349,7 @@
 		   (main (config-get conf :module-main #f))
 		   (name (config-get conf :module-name #f))
 		   (path (config-get conf :filename (abspath)))
+		   (exports exports)
 		   (nodes (list (dialect el 'normal conf)))))
 	     el)))
 

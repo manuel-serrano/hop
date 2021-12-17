@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 15 15:16:16 2018                          */
-;*    Last change :  Tue Dec 14 05:36:39 2021 (serrano)                */
+;*    Last change :  Tue Dec 14 08:09:03 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES6 Module handling                                              */
@@ -70,10 +70,15 @@
 	     ;; collect all the imported modules (following re-exports)
 	     (set! imports (collect-imports* this prgm stack import args))
 	     ;; declare all the imported variables
-	     (set! decls (append (collect-decls* this prgm stack args)))))))
+	     (set! decls (append (collect-decls* this prgm args) decls))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    collect-imports* ...                                             */
+;*    -------------------------------------------------------------    */
+;*    Collect recursively all imported modules. Update J2SImport       */
+;*    object so that RESPATH is the absolute imported module           */
+;*    and IPRGM the J2SProgram object associated with the imported     */
+;*    module.                                                          */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (collect-imports* this::J2SNode prgm stack import args)
    (call-default-walker))
@@ -98,10 +103,64 @@
 (define-walk-method (collect-imports* this::J2SImport prgm stack import args)
    (let ((respath (resolve-import-path! this prgm args)))
       (cons respath
-	 (with-access::J2SImport this (names path loc)
-	    (let ((iprgm (import-module respath path loc stack args)))
-	       (collect-imports* iprgm iprgm stack this args))))))
+	 (with-access::J2SImport this (names path loc iprgm)
+	    (let ((prgm (import-module respath path loc stack args)))
+	       (set! iprgm prgm)
+	       (collect-imports* prgm prgm stack this args))))))
+
+;*---------------------------------------------------------------------*/
+;*    collect-decls* ...                                               */
+;*---------------------------------------------------------------------*/
+(define-walk-method (collect-decls* this::J2SNode prgm args)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    collect-decls* ::J2SImport ...                                   */
+;*---------------------------------------------------------------------*/
+(define-method (collect-decls* this::J2SImport prgm args)
+
+   (define (find pred lst)
+      (let loop ((lst lst))
+	 (when (pair? lst)
+	    (let ((x (pred (car lst))))
+	       (or x (loop (cdr lst)))))))
    
+   (define (find-export name::symbol iprgm::J2SProgram loc)
+      (with-access::J2SProgram iprgm (exports path)
+	 (or (find (lambda (export)
+		      (with-access::J2SExport export (alias id from loc)
+			 (when (eq? name alias)
+			    (if from
+				(let* ((respath (resolve-path! from path loc args))
+				       (iprgm (import-module respath from loc '() args)))
+				   (find-export id iprgm loc))
+				export))))
+		exports)
+	     (raise
+		(instantiate::&io-parse-error
+		   (proc "import")
+		   (msg (format "imported binding \"~a\" not exported by module ~s"
+			   name path))
+		   (obj name)
+		   (fname (cadr loc))
+		   (location (caddr loc)))))))
+
+   (with-access::J2SImport this (iprgm names loc)
+      (map (lambda (name)
+	      (with-access::J2SImportName name (id alias)
+		 (let ((x (find-export id iprgm loc)))
+		    (instantiate::J2SDeclImport
+		       (loc loc)
+		       (id alias)
+		       (alias id)
+		       (binder 'let)
+		       (writable #f)
+		       (vtype 'any)
+		       (scope 'local)
+		       (export x)
+		       (import this)))))
+	 names)))
+
 ;* {*---------------------------------------------------------------------*} */
 ;* {*    esimport ::J2SImport ...                                         *} */
 ;* {*---------------------------------------------------------------------*} */
@@ -314,6 +373,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (esexport this::J2SExportVars prgm::J2SProgram)
    (with-access::J2SExportVars this (program aliases)
+      (tprint "J2SExportVars: " (j2s->sexp this))
       (set! program prgm)))
 
 ;*---------------------------------------------------------------------*/
@@ -438,30 +498,37 @@
 	   (resolve-error name)))))
 
 ;*---------------------------------------------------------------------*/
+;*    resolve-path! ...                                                */
+;*---------------------------------------------------------------------*/
+(define (resolve-path! path src loc args)
+   (let* ((base (cond
+		  ((string=? src "")
+		   (pwd))
+		  ((char=? (string-ref src 0) #\/)
+		   (dirname src))
+		  (else
+		   (dirname
+		      (file-name-canonicalize
+			 (make-file-name (pwd) src))))))
+	  (respath (resolve-module-file path base args loc)))
+      (when (string=? respath src)
+	 (raise
+	    (instantiate::&io-parse-error
+	       (proc "import")
+	       (msg "Illegal self-import")
+	       (obj path)
+	       (fname respath)
+	       (location (caddr loc)))))
+      respath))
+
+;*---------------------------------------------------------------------*/
 ;*    resolve-import-path! ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (resolve-import-path! this::J2SImport prgm::J2SProgram args)
    (with-access::J2SProgram prgm ((src path))
       (with-access::J2SImport this (respath path loc)
 	 (unless (string? respath)
-	    (let ((base (cond
-			   ((string=? src "")
-			    (pwd))
-			   ((char=? (string-ref src 0) #\/)
-			    (dirname src))
-			   (else
-			    (dirname
-			       (file-name-canonicalize
-				  (make-file-name (pwd) src)))))))
-	       (set! respath (resolve-module-file path base args loc))
-	       (when (string=? respath src)
-		  (raise
-		     (instantiate::&io-parse-error
-			(proc "import")
-			(msg "Illegal self-import")
-			(obj path)
-			(fname respath)
-			(location (caddr loc)))))))
+	    (set! respath (resolve-path! path src loc args)))
 	 respath)))
 
 ;*---------------------------------------------------------------------*/
@@ -521,10 +588,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    module-cache-put! ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (module-cache-put! path export)
+(define (module-cache-put! path iprgm)
    (unless module-cache (set! module-cache (instantiate::cache-memory)))
-   (cache-put! module-cache path export)
-   export)
+   (cache-put! module-cache path iprgm)
+   iprgm)
 
 ;*---------------------------------------------------------------------*/
 ;*    core-module-list ...                                             */
@@ -569,6 +636,7 @@
 					     (vtype 'any)
 					     (exports (list expo))))
 				    (expo (instantiate::J2SExport
+					     (loc loc)
 					     (id 'default)
 					     (alias 'default)
 					     (index 0)

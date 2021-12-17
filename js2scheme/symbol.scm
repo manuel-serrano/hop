@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Sun Dec 12 10:00:54 2021 (serrano)                */
+;*    Last change :  Tue Dec 14 09:06:04 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -116,7 +116,8 @@
 			       (when (eq? scope 'unbound)
 				  (set! decls (cons d decls)))))
 		  genv)
-	       (resolve-class-private-fields this #f)))))
+	       (resolve-class-private-fields this #f)
+	       (resolve-exports this env conf)))))
    this)
 
 ;*---------------------------------------------------------------------*/
@@ -130,6 +131,7 @@
    
    (define (export-default-stmt moddecl index loc)
       (co-instantiate ((expo (instantiate::J2SExport
+				(loc loc)
 				(id 'default)
 				(alias 'default)
 				(decl decl)
@@ -843,78 +845,80 @@
 		   (loc loc)
 		   (decl decl))))))))
 
-;*---------------------------------------------------------------------*/
-;*    resolve! ::J2SExportVars ...                                     */
-;*---------------------------------------------------------------------*/
-(define-walk-method (resolve! this::J2SExportVars env mode withs wenv genv ctx conf)
-   (call-default-walker)
-   (with-access::J2SExportVars this (refs aliases program)
-      (when (isa? program J2SProgram)
-	 (for-each (lambda (ref alias)
-		      (cond
-			 ((isa? ref J2SRef)
-			  (with-access::J2SRef ref (decl loc)
-			     (with-access::J2SDecl decl (scope id)
-				(if (memq scope '(global export %scope tls))
-				    (export-decl decl alias program loc)
-				    (export-err id loc
-				       (format "bad scope (~s)" scope))))))
-			 ((isa? ref J2SGlobalRef)
-			  (with-access::J2SGlobalRef ref (loc decl)
-			     (with-access::J2SDecl decl (id)
-				(export-err id loc "global ref"))))
-			 ((isa? ref J2SWithRef)
-			  (with-access::J2SWithRef ref (loc id)
-			     (export-err id loc "with ref")))
-			 ((isa? ref J2SHopRef)
-			  (with-access::J2SHopRef ref (loc id)
-			     (export-err id loc "hop ref")))))
-	    refs aliases)))
-   this)
-
-;*---------------------------------------------------------------------*/
-;*    export-decl ...                                                  */
-;*---------------------------------------------------------------------*/
-(define (export-decl decl::J2SDecl alias::symbol program::J2SProgram loc)
-   (with-access::J2SProgram program ((allexports exports) path)
-      (with-access::J2SDecl decl (id exports binder)
-	 (set! binder 'export)
-	 (cond
-	    ((null? exports)
-	     (let ((e (instantiate::J2SExport
-			 (id alias)
-			 (alias alias)
-			 (index (j2sprogram-get-export-index program))
-			 (decl decl))))
-		(set! exports (list e))
-		(set! allexports (cons e allexports))))
-	    ((find (lambda (e)
-		      (with-access::J2SExport e (id)
-			 (eq? id alias)))
-		allexports)
-	     (export-err alias loc (format "duplicate export \"~a\"" id)))
-	    (else
-	     (with-access::J2SExport (car exports) (index)
-		(let ((e (instantiate::J2SExport
-			    (id alias)
-			    (alias alias)
-			    (index index)
-			    (decl decl))))
-		   (set! exports (cons e exports))
-		   (set! allexports (cons e allexports)))))))))
-
-;*---------------------------------------------------------------------*/
-;*    export-error ...                                                 */
-;*---------------------------------------------------------------------*/
-(define (export-err id loc #!optional (msg ""))
-   (raise
-      (instantiate::&io-parse-error
-	 (proc "hopc (symbol)")
-	 (msg (string-append "Illegal variable export"
-		 (if msg (string-append ", " msg) "")))
-	 (obj id)
-	 (fname (cadr loc))
-	 (location (caddr loc)))))
+;* {*---------------------------------------------------------------------*} */
+;* {*    resolve! ::J2SExportVars ...                                     *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define-walk-method (resolve! this::J2SExportVars env mode withs wenv genv ctx conf) */
+;*    (call-default-walker)                                            */
+;*    (with-access::J2SExportVars this (refs aliases program)          */
+;*       (when (isa? program J2SProgram)                               */
+;* 	 (for-each (lambda (ref alias)                                 */
+;* 		      (cond                                            */
+;* 			 ((isa? ref J2SRef)                            */
+;* 			  (with-access::J2SRef ref (decl loc)          */
+;* 			     (with-access::J2SDecl decl (scope id)     */
+;* 				(if (memq scope '(global export %scope tls)) */
+;* 				    (export-decl decl alias program loc) */
+;* 				    (export-err id loc                 */
+;* 				       (format "bad scope (~s)" scope)))))) */
+;* 			 ((isa? ref J2SGlobalRef)                      */
+;* 			  (with-access::J2SGlobalRef ref (loc decl)    */
+;* 			     (with-access::J2SDecl decl (id)           */
+;* 				(export-err id loc "global ref"))))    */
+;* 			 ((isa? ref J2SWithRef)                        */
+;* 			  (with-access::J2SWithRef ref (loc id)        */
+;* 			     (export-err id loc "with ref")))          */
+;* 			 ((isa? ref J2SHopRef)                         */
+;* 			  (with-access::J2SHopRef ref (loc id)         */
+;* 			     (export-err id loc "hop ref")))))         */
+;* 	    refs aliases)))                                            */
+;*    this)                                                            */
+;*                                                                     */
+;* {*---------------------------------------------------------------------*} */
+;* {*    export-decl ...                                                  *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define (export-decl decl::J2SDecl alias::symbol program::J2SProgram loc) */
+;*    (with-access::J2SProgram program ((allexports exports) path)     */
+;*       (with-access::J2SDecl decl (id exports binder loc)            */
+;* 	 (set! binder 'export)                                         */
+;* 	 (cond                                                         */
+;* 	    ((null? exports)                                           */
+;* 	     (let ((e (instantiate::J2SExport                          */
+;* 			 (loc loc)                                     */
+;* 			 (id alias)                                    */
+;* 			 (alias alias)                                 */
+;* 			 (index (j2sprogram-get-export-index program)) */
+;* 			 (decl decl))))                                */
+;* 		(set! exports (list e))                                */
+;* 		(set! allexports (cons e allexports))))                */
+;* 	    ((find (lambda (e)                                         */
+;* 		      (with-access::J2SExport e (id)                   */
+;* 			 (eq? id alias)))                              */
+;* 		allexports)                                            */
+;* 	     (export-err alias loc (format "duplicate export \"~a\"" id))) */
+;* 	    (else                                                      */
+;* 	     (with-access::J2SExport (car exports) (index loc)         */
+;* 		(let ((e (instantiate::J2SExport                       */
+;* 			    (loc loc)                                  */
+;* 			    (id alias)                                 */
+;* 			    (alias alias)                              */
+;* 			    (index index)                              */
+;* 			    (decl decl))))                             */
+;* 		   (set! exports (cons e exports))                     */
+;* 		   (set! allexports (cons e allexports)))))))))        */
+;*                                                                     */
+;* {*---------------------------------------------------------------------*} */
+;* {*    export-error ...                                                 *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define (export-err id loc #!optional (msg ""))                     */
+;*    (raise                                                           */
+;*       (instantiate::&io-parse-error                                 */
+;* 	 (proc "hopc (symbol)")                                        */
+;* 	 (msg (string-append "Illegal variable export"                 */
+;* 		 (if msg (string-append ", " msg) "")))                */
+;* 	 (obj id)                                                      */
+;* 	 (fname (cadr loc))                                            */
+;* 	 (location (caddr loc)))))                                     */
 
 ;*---------------------------------------------------------------------*/
 ;*    resolve! ::J2SVarDecls ...                                       */
@@ -1603,3 +1607,25 @@
 	  (string-append field "@" (symbol->string! name))
 	  (string-append field "@" (format "~a:~a" (cadr loc) (caddr loc))))))
    
+;*---------------------------------------------------------------------*/
+;*    resolve-exports ...                                              */
+;*---------------------------------------------------------------------*/
+(define (resolve-exports this::J2SProgram env conf)
+   (with-access::J2SProgram this (exports)
+      (let ((idx 0))
+	 (for-each (lambda (x)
+		      (with-access::J2SExport x (id from loc decl index)
+			 (unless from
+			    (let ((d (or decl (find-decl id env))))
+			       (set! decl d)
+			       (set! index idx)
+			       (set! idx (+fx idx 1))
+			       (unless decl
+				  (raise
+				     (instantiate::&io-parse-error
+					(proc "hopc (symbol)")
+					(msg "undefined exported variable")
+					(obj id)
+					(fname (cadr loc))
+					(location (caddr loc)))))))))
+	    exports))))
