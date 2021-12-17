@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Fri Dec 17 13:37:22 2021 (serrano)                */
+/*    Last change :  Fri Dec 17 13:57:48 2021 (serrano)                */
 /*    Copyright   :  2016-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -156,7 +156,7 @@ static obj_t bgl_make_jsobject_sans(int constrsize, obj_t constrmap,
 				     obj_t __proto__, uint32_t mode);
 #else
 obj_t bgl_make_jsobject_sans(int constrsize, obj_t constrmap,
-				   obj_t __proto__, uint32_t mode);
+			     obj_t __proto__, uint32_t mode);
 #endif
 
 #if HOP_ALLOC_JSPROXY_POLICY != HOP_ALLOC_CLASSIC
