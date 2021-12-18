@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Fri Dec 17 10:29:05 2021 (serrano)                */
+;*    Last change :  Sat Dec 18 06:00:47 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -1472,7 +1472,7 @@
 	 `(,@(call-next-method)
 	     :path ,path
 	     :respath ,(j2s->list respath (cons this stack))
-	     :names ,@(j2s->list* names nstack)))))
+	     :names ,(j2s->list* names nstack)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SImportExports ...                                 */
@@ -1525,11 +1525,18 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SExport stack)
    (with-access::J2SExport this (id alias index from writable)
-      `(J2SExport ,id
+      `(,@(call-next-method) ,id
 	  :alias ,alias
 	  index: ,index
 	  writable: writable
 	  from: ,(j2s->list from (cons this stack)))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s->list ::J2SRedirect ...                                      */
+;*---------------------------------------------------------------------*/
+(define-method (j2s->list this::J2SRedirect stack)
+   (with-access::J2SRedirect this (rindex)
+      (append (call-next-method) `(:rindex ,rindex))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2ssum ...                                                       */

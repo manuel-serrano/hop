@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 15 15:16:16 2018                          */
-;*    Last change :  Fri Dec 17 09:28:10 2021 (serrano)                */
+;*    Last change :  Fri Dec 17 17:44:49 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES6 Module handling                                              */
@@ -43,7 +43,7 @@
 (define (j2s-esmodule this args)
    (when (isa? this J2SProgram)
       (esimport this this (config-get args :module-stack '()) #unspecified args)
-      (esexport this this))
+      (esexport this this args))
    this)
 
 ;*---------------------------------------------------------------------*/
@@ -83,14 +83,10 @@
 (define-walk-method (collect-imports* this::J2SNode prgm stack import args)
    (call-default-walker))
 
-
 ;*---------------------------------------------------------------------*/
 ;*    collect-imports* ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (collect-imports* this::J2SProgram prgm stack import args)
-   
-   
-	      
    (with-access::J2SProgram this (imports decls nodes path)
       (unless (pair? imports)
 	 (let ((nstack (cons path stack)))
@@ -135,7 +131,7 @@
 ;*    collect-decls* ::J2SImport ...                                   */
 ;*---------------------------------------------------------------------*/
 (define-method (collect-decls* this::J2SImport prgm args)
-
+   
    (define (prgm-respath prgm path loc)
       (with-access::J2SProgram prgm (imports)
 	 (or (find (lambda (i) (equal-respath? i path)) imports)
@@ -147,7 +143,6 @@
 		   (fname (cadr loc))
 		   (location (caddr loc)))))))
    
-
    (define (find-export name::symbol import::J2SImport iprgm::J2SProgram loc)
       (with-access::J2SProgram iprgm (exports path)
 	 (let loop ((exports exports))
@@ -181,22 +176,43 @@
 					 (respath rpath)
 					 (names (list iname)))))
 			  (find-export id import iprgm loc)))))))))
+   
+   (define (import-binding name import::J2SImport)
+      (with-access::J2SImport import (iprgm loc)
+	 (with-access::J2SImportName name (id alias)
+	    (multiple-value-bind (x i)
+	       (find-export id this iprgm loc)
+	       (instantiate::J2SDeclImport
+		  (loc loc)
+		  (id alias)
+		  (alias id)
+		  (binder 'let)
+		  (writable #f)
+		  (vtype 'any)
+		  (scope 'local)
+		  (export x)
+		  (import i))))))
 
+   (define (import-namespace name import::J2SImport)
+      (with-access::J2SImport import (iprgm loc)
+	 (with-access::J2SImportName name (alias)
+	    (instantiate::J2SDeclInit
+	       (loc loc)
+	       (id alias)
+	       (binder 'let-opt)
+	       (scope 'global)
+	       (writable #f)
+	       (val (instantiate::J2SImportExports
+		       (loc loc)
+		       (type 'object)
+		       (import this)))))))
+   
    (with-access::J2SImport this (iprgm names loc)
       (map (lambda (name)
-	      (with-access::J2SImportName name (id alias)
-		 (multiple-value-bind (x i)
-		    (find-export id this iprgm loc)
-		    (instantiate::J2SDeclImport
-		       (loc loc)
-		       (id alias)
-		       (alias id)
-		       (binder 'let)
-		       (writable #f)
-		       (vtype 'any)
-		       (scope 'local)
-		       (export x)
-		       (import i)))))
+	      (with-access::J2SImportName name (id)
+		 (if (eq? id '*)
+		     (import-namespace name this)
+		     (import-binding name this))))
 	 names)))
 
 ;* {*---------------------------------------------------------------------*} */
@@ -385,40 +401,77 @@
 ;*---------------------------------------------------------------------*/
 ;*    esexport ::J2SNode ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (esexport this::J2SNode prgm::J2SProgram)
+(define-walk-method (esexport this::J2SNode prgm::J2SProgram args)
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
 ;*    esexport ::J2SProgram ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (esexport this::J2SProgram prgm::J2SProgram)
-   (with-access::J2SProgram this (nodes decls exports loc path)
-      (for-each (lambda (o) (esexport o this)) nodes)
-      (for-each (lambda (o) (esexport o this)) decls))
+(define-walk-method (esexport this::J2SProgram prgm::J2SProgram args)
+   (with-access::J2SProgram this (nodes decls exports loc path exports)
+      (for-each (lambda (o) (esexport o this args)) nodes)
+      (for-each (lambda (o) (esexport o this args)) decls)
+      (for-each (lambda (o) (esexport o this args)) exports))
    this)
 
 ;*---------------------------------------------------------------------*/
-;*    esexport ::J2SDecl ...                                           */
+;*    esexport ::J2SRedirect ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (esexport this::J2SDecl prgm::J2SProgram)
-;*    (with-access::J2SDecl this (exports program)                     */
-;*       (with-access::J2SProgram prgm ((allexports exports))          */
-;* 	 (set! allexports (append exports allexports))))               */
-   (call-default-walker))
-
-;*---------------------------------------------------------------------*/
-;*    esexport ::J2SExportVars ...                                     */
-;*---------------------------------------------------------------------*/
-(define-walk-method (esexport this::J2SExportVars prgm::J2SProgram)
-   (with-access::J2SExportVars this (program aliases)
-      (tprint "J2SExportVars: " (j2s->sexp this))
-      (set! program prgm)))
-
-;*---------------------------------------------------------------------*/
-;*    resolve-lang ...                                                 */
-;*---------------------------------------------------------------------*/
-(define (resolve-lang respath::J2SImportPath)
+(define-walk-method (esexport this::J2SRedirect prgm::J2SProgram args)
    
+   (define (find-import ip::J2SImportPath prgm::J2SProgram loc)
+      (with-access::J2SProgram prgm (imports)
+	 (let ((im (find (lambda (i) (equal-respath? ip i)) imports)))
+	    (if im
+		(with-access::J2SImportPath im (index)
+		   index)
+		(with-access::J2SImportPath ip (path)
+		   (raise
+		      (instantiate::&io-parse-error
+			 (proc "export")
+			 (msg "Cannot find module")
+			 (obj path)
+			 (fname (cadr loc))
+			 (location (caddr loc)))))))))
+   
+   (define (find-export name::symbol iprgm::J2SProgram loc)
+      (with-access::J2SProgram iprgm (exports path)
+	 (let loop ((exports exports))
+	    (if (null? exports)
+		(raise
+		   (instantiate::&io-parse-error
+		      (proc "export")
+		      (msg (format "imported binding \"~a\" not exported by module ~s"
+			      name path))
+		      (obj name)
+		      (fname (cadr loc))
+		      (location (caddr loc))))
+		(with-access::J2SExport (car exports) (alias id from loc)
+		   (cond
+		      ((not (eq? name alias))
+		       (loop (cdr exports)))
+		      ((not from)
+		       (car exports))
+		      (else
+		       (let* ((respath (resolve-path! from path loc args))
+			      (iprgm (import-module respath #f loc '() args)))
+			  (find-export id iprgm loc)))))))))
+   
+   (with-access::J2SRedirect this (rindex from loc id index)
+      (with-access::J2SProgram prgm ((src path) imports)
+	 (let* ((respath (resolve-path! from src loc args))
+		(p (import-module respath (path-lang from) loc '() args))
+		(x (find-export id p loc)))
+	    (with-access::J2SExport x ((i index))
+	       (set! index i)
+	       (set! rindex (find-import respath prgm loc)))
+	    this))))
+   
+;*---------------------------------------------------------------------*/
+;*    path-lang ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (path-lang path)
+
    (define (string->lang suf)
       (cond
 	 ((member suf '("js" "mjs")) 'js)
@@ -427,11 +480,17 @@
 	 ((member suf '("html" "xml")) 'hopscript)
 	 (else 'js)))
 
-   (with-access::J2SImportPath respath (path)
-      (let ((suf (suffix path)))
+   (let ((suf (suffix path)))
 	 (if (string-null? suf)
 	     'js
-	     (string->lang suf)))))
+	     (string->lang suf))))
+
+;*---------------------------------------------------------------------*/
+;*    resolve-lang ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (resolve-lang respath::J2SImportPath)
+   (with-access::J2SImportPath respath (path)
+      (path-lang path)))
 
 ;*---------------------------------------------------------------------*/
 ;*    resolve-module-file ...                                          */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Fri Dec 17 09:27:08 2021 (serrano)                */
+;*    Last change :  Sat Dec 18 06:03:51 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -519,13 +519,15 @@
 	      (expr::J2SExpr (info '("ast")))
 	      (path read-only))
 
-	   (final-class J2SExport
-	      (loc read-only)
+	   (class J2SExport::J2SStmt
 	      (id::symbol read-only)
 	      (alias::symbol read-only)
 	      (index::long (default -1))
 	      (decl (default #f) (info '("jsonref")))
 	      (from (default #f)))
+
+	   (class J2SRedirect::J2SExport
+	      (rindex (default #f)))
 
 	   (final-class J2SImportPath
 	      (loc read-only)

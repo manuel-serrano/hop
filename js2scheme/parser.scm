@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Fri Dec 17 12:06:18 2021 (serrano)                */
+;*    Last change :  Fri Dec 17 17:27:49 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1394,9 +1394,10 @@
 		       (if (eq? (token-value fro) 'from)
 			   (multiple-value-bind (path dollarpath)
 			      (consume-module-path!)
-			      (let ((impns (instantiate::J2SImportNamespace
+			      (let ((impns (instantiate::J2SImportName
 					      (loc (token-loc id))
-					      (id (token-value id)))))
+					      (id '*)
+					      (alias (token-value id)))))
 				 (instantiate::J2SImport
 				    (names (list impns))
 				    (loc (token-loc token))
@@ -1536,7 +1537,7 @@
 				 (multiple-value-bind (path dollarpath)
 				    (consume-module-path!)
 				    (let ((x (map (lambda (r a)
-						     (instantiate::J2SExport
+						     (instantiate::J2SRedirect
 							(loc loc)
 							(id id)
 							(alias a)
@@ -1572,11 +1573,12 @@
 				       (loc loc)
 				       (id 'default)
 				       (alias 'default)
+				       (index 0)
 				       (decl decl)))
 			      (decl (instantiate::J2SDeclInit
 				       (loc loc)
 				       (id 'default)
-;* 				       (exports (list expo))           */
+				       (export expo)
 				       (binder 'export)
 				       (scope 'export)
 				       (val val)))

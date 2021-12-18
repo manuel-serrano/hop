@@ -126,8 +126,8 @@
 	   (with-tmp-args ::pair-nil mode return ctx gen::procedure)
 
 	   (importpath-var ::J2SImportPath)
+	   (importpath-evar ::J2SImportPath)))
 
-	   ))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-unresolved-workspaces ...                                    */
@@ -1612,4 +1612,11 @@
 ;*---------------------------------------------------------------------*/
 (define (importpath-var i::J2SImportPath)
    (with-access::J2SImportPath i (index)
-      (string->symbol (format "%import-evars-~a" index))))
+      (string->symbol (format "%import~a" index))))
+
+;*---------------------------------------------------------------------*/
+;*    importpath-evar ...                                              */
+;*---------------------------------------------------------------------*/
+(define (importpath-evar i::J2SImportPath)
+   (with-access::J2SImportPath i (index)
+      (string->symbol (format "%import-evars~a" index))))

@@ -425,7 +425,7 @@
 	     (with-access::J2SDeclImport decl (export import)
 		(with-access::J2SExport export (index)
 		   (with-access::J2SImport import (respath)
-		      `(vector-ref ,(importpath-var respath) ,index)))))
+		      `(vector-ref ,(importpath-evar respath) ,index)))))
 	    ((and export
 		  (or (not (decl-ronly? decl)) (not (isa? decl J2SDeclFun))))
 	     (with-access::J2SExport export (index decl)
@@ -3655,9 +3655,10 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SImportExports mode return ctx)
    (with-access::J2SImportExports this (import op loc)
-      (with-access::J2SImport import (mvar)
+      (with-access::J2SImport import (respath)
 	 (epairify loc
-	    `(nodejs-module-exports ,mvar %worker %this)))))
+	    `(nodejs-module-exports ,(importpath-var respath)
+		%worker %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SExportVars ...                                   */
