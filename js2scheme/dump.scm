@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Sun Dec 19 05:37:22 2021 (serrano)                */
+;*    Last change :  Sun Dec 19 15:20:55 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -1524,19 +1524,21 @@
 ;*    j2s->list ::J2SExport ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SExport stack)
-   (with-access::J2SExport this (id alias index from writable)
+   (with-access::J2SExport this (id alias index writable eprgm)
       `(,@(call-next-method) ,id
 	  :alias ,alias
-	  index: ,index
-	  writable: writable
-	  from: ,(j2s->list from (cons this stack)))))
+	  :index ,index
+	  :writable writable
+	  :eprgm ,(typeof eprgm))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SRedirect ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SRedirect stack)
-   (with-access::J2SRedirect this (rindex)
-      (append (call-next-method) `(:rindex ,rindex))))
+   (with-access::J2SRedirect this (export import)
+      (append (call-next-method)
+	 `(:export ,(j2s->list export (cons this stack))
+	     :import ,(j2s->list import (cons this stack))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2ssum ...                                                       */

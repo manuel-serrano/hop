@@ -126,7 +126,8 @@
 	   (with-tmp-args ::pair-nil mode return ctx gen::procedure)
 
 	   (importpath-var ::J2SImportPath)
-	   (importpath-evar ::J2SImportPath)))
+	   (importpath-evar ::J2SImportPath)
+	   (importpath-rvar ::J2SImportPath ::long)))
 
 
 ;*---------------------------------------------------------------------*/
@@ -1620,3 +1621,10 @@
 (define (importpath-evar i::J2SImportPath)
    (with-access::J2SImportPath i (index)
       (string->symbol (format "%import-evars~a" index))))
+
+;*---------------------------------------------------------------------*/
+;*    importpath-rvar ...                                              */
+;*---------------------------------------------------------------------*/
+(define (importpath-rvar i::J2SImportPath rindex)
+   (with-access::J2SImportPath i (index)
+      (string->symbol (format "%import-evars~a:~a" index rindex))))

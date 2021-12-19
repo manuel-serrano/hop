@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Sun Dec 19 09:54:45 2021 (serrano)                */
+;*    Last change :  Sun Dec 19 15:13:59 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -522,20 +522,22 @@
 	   (class J2SExport::J2SStmt
 	      (id::symbol read-only)
 	      (alias::symbol read-only)
-	      (index::long (default -1))
+	      (index::long (default -9998))
 	      (decl (default #f) (info '("jsonref")))
-	      (from (default #f)))
+	      (eprgm (default #f) (info '("notraverse"))))
 
 	   (class J2SRedirect::J2SExport
-	      (rindex (default #f)))
+	      (export (default #f))
+	      (import (default #f) (info '("notraverse"))))
 
 	   (final-class J2SImportPath
 	      (loc read-only)
 	      (name::bstring read-only)
 	      (path::bstring read-only)
 	      (protocol::symbol read-only)
-	      (index::long (default -1))
-	      (checksum::long (default -1)))
+	      (index::long (default -9997))
+	      (checksum::long (default -9996))
+	      (import read-only))
 
 	   (final-class J2SImport::J2SStmt
 	      (path::bstring read-only (info '("notraverse")))
@@ -544,9 +546,6 @@
 	      ;; module name is a dollar expression (see js.scm)
 	      dollarpath::J2SExpr
 	      (names::pair-nil (default '()) (info '("notraverse")))
-	      (mvar (default #f) (info '("notraverse")))
-	      (ivar (default #f) (info '("notraverse")))
-	      (reindex::long (default -1) (info '("notraverse")))
 	      (iprgm (default #f) (info '("notraverse")))
 	      (lang (default #f)))
 
@@ -1392,7 +1391,7 @@
 ;*    j2s->json ::J2SExport ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->json this::J2SExport op::output-port)
-   (with-access::J2SExport this (id alias index decl from)
+   (with-access::J2SExport this (id alias index decl)
       (display "{ \"__node__\": \"J2SExport\", \"id\": " op)
       (j2s->json id op)
       (display ", \"index\": " op)
@@ -1403,8 +1402,26 @@
       (if decl
 	  (j2s-decl->json decl "J2SExport" #f op)
 	  (display "false" op))
-      (display ",\"from\": " op)
-      (j2s->json from op)
+      (display "}" op)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s->json ::J2SRedirect ...                                      */
+;*---------------------------------------------------------------------*/
+(define-method (j2s->json this::J2SRedirect op::output-port)
+   (with-access::J2SRedirect this (id alias index decl import)
+      (display "{ \"__node__\": \"J2SRedirect\", \"id\": " op)
+      (j2s->json id op)
+      (display ", \"index\": " op)
+      (display index op)
+      (display ",\"alias\": " op)
+      (j2s->json alias op)
+      (display ",\"decl\": " op)
+      (if decl
+	  (j2s-decl->json decl "J2SRedirect" #f op)
+	  (display "false" op))
+      (display ",\"import\": " op)
+      (with-access::J2SImport import (path)
+	 (j2s->json path op))
       (display "}" op)))
 
 ;*---------------------------------------------------------------------*/
@@ -1658,20 +1675,21 @@
 ;*    Returns the next available index for export.                     */
 ;*---------------------------------------------------------------------*/
 (define (j2sprogram-get-export-index::long prgm::J2SProgram)
-   (with-access::J2SProgram prgm (exports)
-      (let loop ((exports exports)
-		 (i -1))
-	 (if (null? exports)
-	     (+fx i 1)
-	     (with-access::J2SExport (car exports) (index from id)
-		(cond
-		   ((isa? from J2SProgram)
-		    (loop (cdr exports) i))
-		   ((> index i)
-		    (loop (cdr exports) index))
-		   (else
-		    (loop (cdr exports) i))))))))
-
+   -1)
+;*    (with-access::J2SProgram prgm (exports)                          */
+;*       (let loop ((exports exports)                                  */
+;* 		 (i -1))                                               */
+;* 	 (if (null? exports)                                           */
+;* 	     (+fx i 1)                                                 */
+;* 	     (with-access::J2SExport (car exports) (index id)          */
+;* 		(cond                                                  */
+;* 		   ((isa? from J2SProgram)                             */
+;* 		    (loop (cdr exports) i))                            */
+;* 		   ((> index i)                                        */
+;* 		    (loop (cdr exports) index))                        */
+;* 		   (else                                               */
+;* 		    (loop (cdr exports) i))))))))                      */
+;*                                                                     */
 ;*---------------------------------------------------------------------*/
 ;*    exptllong ...                                                    */
 ;*---------------------------------------------------------------------*/

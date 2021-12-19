@@ -422,10 +422,18 @@
       (with-access::J2SDecl decl (scope id vtype export)
 	 (cond
 	    ((isa? decl J2SDeclImport)
-	     (with-access::J2SDeclImport decl (export import)
-		(with-access::J2SExport export (index)
-		   (with-access::J2SImport import (ipath)
-		      `(vector-ref ,(importpath-evar ipath) ,index)))))
+	     (with-access::J2SDeclImport decl (export import id)
+		(if (isa? export J2SRedirect)
+		    (with-access::J2SImport import (ipath)
+		       (with-access::J2SRedirect export (import export (rindex index))
+			  (with-access::J2SImport import (path)
+			     (with-access::J2SExport export (index)
+				`(js-import-ref ,(importpath-rvar ipath rindex) ,index
+				    (@ ,(symbol->string id) ,path))))))
+		    (with-access::J2SExport export (index)
+		       (with-access::J2SImport import (ipath path)
+			  `(js-import-ref ,(importpath-evar ipath) ,index
+			      (@ ,(symbol->string id) ,path)))))))
 	    ((and export
 		  (or (not (decl-ronly? decl)) (not (isa? decl J2SDeclFun))))
 	     (with-access::J2SExport export (index decl)

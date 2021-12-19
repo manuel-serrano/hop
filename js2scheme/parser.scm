@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Fri Dec 17 17:27:49 2021 (serrano)                */
+;*    Last change :  Sun Dec 19 14:50:42 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1536,20 +1536,21 @@
 			      (let ((loc (token-loc (consume-any!))))
 				 (multiple-value-bind (path dollarpath)
 				    (consume-module-path!)
-				    (let ((x (map (lambda (r a)
-						     (instantiate::J2SRedirect
-							(loc loc)
-							(id id)
-							(alias a)
-							(from path)))
-						(cons ref refs)
-						(cons alias aliases))))
+				    (let* ((i (instantiate::J2SImport
+						 (names '())
+						 (loc loc)
+						 (path path)
+						 (dollarpath dollarpath)))
+					   (x (map (lambda (r a)
+						      (instantiate::J2SRedirect
+							 (loc loc)
+							 (id id)
+							 (alias a)
+							 (import i)))
+						 (cons ref refs)
+						 (cons alias aliases))))
 				       (set! exports (append x exports))
-				       (instantiate::J2SImport
-					  (names '())
-					  (loc loc)
-					  (path path)
-					  (dollarpath dollarpath)))))
+				       i)))
 			      (let ((x (map (lambda (r a)
 					       (instantiate::J2SExport
 						  (loc loc)
@@ -1585,6 +1586,7 @@
 			      (ref (instantiate::J2SRef
 				      (loc loc)
 				      (decl decl))))
+		(set! exports (cons expo exports))
 		(J2SSeq
 		   (instantiate::J2SVarDecls
 		      (loc loc)
@@ -3322,7 +3324,7 @@
 	       (main (config-get conf :module-main #f))
 	       (name (config-get conf :module-name #f))
 	       (mode mode)
-	       (exports exports)
+	       (exports (reverse exports))
 	       (nodes (map! (lambda (n) (dialect n mode conf)) nodes))))))
    
    (define (eval mode)
@@ -3335,7 +3337,7 @@
 	       (path (config-get conf :filename (abspath)))
 	       (name (config-get conf :module-name #f))
 	       (mode mode)
-	       (exports exports)
+	       (exports (reverse exports))
 	       (nodes (map! (lambda (n) (dialect n mode conf)) nodes))))))
 
    (define (eval-strict)
@@ -3352,7 +3354,7 @@
 		   (main (config-get conf :module-main #f))
 		   (name (config-get conf :module-name #f))
 		   (path (config-get conf :filename (abspath)))
-		   (exports exports)
+		   (exports (reverse exports))
 		   (nodes (list (dialect el 'normal conf)))))
 	     el)))
 

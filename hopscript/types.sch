@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 25 15:52:55 2017                          */
-;*    Last change :  Thu Oct 21 07:40:03 2021 (serrano)                */
+;*    Last change :  Sun Dec 19 14:55:47 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Companion macros                                                 */
@@ -81,6 +81,7 @@
 (define-expander js-export-index js-export-index-expander)
 (define-expander js-export-redirect js-export-redirect-expander)
 (define-expander js-export-writable js-export-writable-expander)
+(define-expander js-import-ref js-import-ref-expander)
 
 ;*---------------------------------------------------------------------*/
 ;*    isa?                                                             */

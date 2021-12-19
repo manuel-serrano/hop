@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Fri Dec 17 12:06:35 2021 (serrano)                */
+;*    Last change :  Sun Dec 19 15:07:05 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -135,7 +135,8 @@
 				(id 'default)
 				(alias 'default)
 				(decl decl)
-				(index index)))
+				(index index)
+				(eprgm this)))
 		       (decl (instantiate::J2SDecl
 				(loc loc)
 				(id 'default)
@@ -164,7 +165,7 @@
 	 (multiple-value-bind (expo stmt decl)
 	    (export-default-stmt moddecl (length exports) loc)
 	    (when decl (set! decls (cons decl decls)))
-	    (set! exports (cons expo exports))
+	    (set! exports (append exports (list expo)))
 	    (set! nodes (append nodes (list stmt)))))))
    
 ;*---------------------------------------------------------------------*/
@@ -1612,22 +1613,19 @@
 ;*---------------------------------------------------------------------*/
 (define (resolve-exports this::J2SProgram env conf)
    (with-access::J2SProgram this (exports)
-      (let ((idx 0))
-	 (for-each (lambda (x)
-		      (with-access::J2SExport x (id from loc decl index)
-			 (unless from
-			    (let ((d (or decl (find-decl id env))))
-			       (if d
-				   (with-access::J2SDecl d (export)
-				      (set! export x)
-				      (set! decl d)
-				      (set! index idx)
-				      (set! idx (+fx idx 1)))
-				   (raise
-				      (instantiate::&io-parse-error
-					 (proc "hopc (symbol)")
-					 (msg "undefined exported variable")
-					 (obj id)
-					 (fname (cadr loc))
-					 (location (caddr loc)))))))))
-	    exports))))
+      (for-each (lambda (x)
+		   (with-access::J2SExport x (id from loc decl index)
+		      (unless (isa? x J2SRedirect)
+			 (let ((d (or decl (find-decl id env))))
+			    (if d
+				(with-access::J2SDecl d (export)
+				   (set! export x)
+				   (set! decl d))
+				(raise
+				   (instantiate::&io-parse-error
+				      (proc "hopc (symbol)")
+				      (msg "undefined exported variable")
+				      (obj id)
+				      (fname (cadr loc))
+				      (location (caddr loc)))))))))
+	 exports)))

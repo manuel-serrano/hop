@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 25 15:52:55 2017                          */
-;*    Last change :  Sun Nov 14 07:46:27 2021 (serrano)                */
+;*    Last change :  Sun Dec 19 14:55:34 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Types Companion macros                                           */
@@ -426,19 +426,26 @@
       (else
        (error "export-writable" "wrong syntax" x))))
 
+(define (js-import-ref-expander x e)
+   (match-case x
+      ((?- ?v ?idx . ?debug)
+       `(vector-ref ,v ,idx))
+      (else
+       (error "js-import" "wrong syntax" x))))
+
 ;*---------------------------------------------------------------------*/
 ;*    generator                                                        */
 ;*---------------------------------------------------------------------*/
 (define (js-generator-ref-expander x e)
    (match-case x
-      ((?- ?obj ?idx . ?debug-name)
+      ((?- ?obj ?idx . ?debug)
        (e `(js-generator-inline-ref ,obj ,idx) e))
       (else
        (error "js-generator-ref" "bad form" x))))
 
 (define (js-generator-set!-expander x e)
    (match-case x
-      ((?- ?obj ?idx ?val . ?debug-name)
+      ((?- ?obj ?idx ?val . ?debug)
        (e `(js-generator-inline-set! ,obj ,idx ,val) e))
       (else
        (error "js-generator-set!" "bad form" x))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar  8 11:35:48 2019                          */
-;*    Last change :  Fri Dec 17 12:10:55 2021 (serrano)                */
+;*    Last change :  Sun Dec 19 15:30:14 2021 (serrano)                */
 ;*    Copyright   :  2019-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop (Scheme) module parser used when a JS module imports         */
@@ -86,8 +86,7 @@
 			  (loc (cer export))
 			  (id id)
 			  (alias id)
-			  (decl decl)
-			  (from 'hop)))
+			  (decl decl)))
 		 (decl (instantiate::J2SDeclExtern
 			  (loc (cer export))
 			  (id id)
@@ -95,7 +94,7 @@
 			  (scope '%hop)
 			  (vtype 'procedure)
 			  (hidden-class #f)
-;* 			  (exports (list expo))                        */
+			  (export expo)
 			  (val (instantiate::J2SPragma
 				  (type 'procedure)
 				  (loc (cer export))
