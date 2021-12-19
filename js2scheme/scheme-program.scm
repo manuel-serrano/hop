@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Sun Dec 19 15:57:55 2021 (serrano)                */
+;*    Last change :  Sun Dec 19 19:47:46 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -487,11 +487,16 @@
 		  (with-access::J2SProgram iprgm (exports)
 		     (filter-map (lambda (x)
 				    (when (isa? x J2SRedirect)
-				       (with-access::J2SRedirect x ((rindex index) import)
-					  (with-access::J2SImport import (ipath)
-					     (let ((rvarid (importpath-rvar im rindex)))
-						`(define ,rvarid
-						    (vector-ref ,evarid ,rindex)))))))
+				       (let loop ((x x)
+						  (rindexes '()))
+					  (with-access::J2SRedirect x ((rindex index) export import)
+					     (if (isa? export J2SRedirect)
+						 (loop export (cons rindex rindexes))
+						 (with-access::J2SImport import (ipath)
+						    (let ((rvarid (importpath-rvar im (reverse (cons rindex rindexes)))))
+						       `(define ,rvarid
+							   (tprint "PAS BON, IL FAUT DES (VREF (VREF (VREF ...)))
+							   (vector-ref ,evarid ,rindex)))))))))
 			exports)))))))
    
    (with-access::J2SProgram this (imports)

@@ -425,11 +425,16 @@
 	     (with-access::J2SDeclImport decl (export import id)
 		(if (isa? export J2SRedirect)
 		    (with-access::J2SImport import (ipath)
-		       (with-access::J2SRedirect export (import export (rindex index))
-			  (with-access::J2SImport import (path)
-			     (with-access::J2SExport export (index)
-				`(js-import-ref ,(importpath-rvar ipath rindex) ,index
-				    (@ ,(symbol->string id) ,path))))))
+		       (let loop ((export export)
+				  (rindexes '()))
+			  (if (isa? export J2SRedirect)
+			      (with-access::J2SRedirect export (import export (rindex index))
+				 (loop export (cons rindex rindexes)))
+			      (with-access::J2SExport export (index)
+				 (with-access::J2SImport import (path)
+				    `(js-import-ref
+					,(importpath-rvar ipath (reverse rindexes))
+					,index (@ ,(symbol->string id) ,path)))))))
 		    (with-access::J2SExport export (index)
 		       (with-access::J2SImport import (ipath path)
 			  `(js-import-ref ,(importpath-evar ipath) ,index

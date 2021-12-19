@@ -127,8 +127,7 @@
 
 	   (importpath-var ::J2SImportPath)
 	   (importpath-evar ::J2SImportPath)
-	   (importpath-rvar ::J2SImportPath ::long)))
-
+	   (importpath-rvar ::J2SImportPath ::pair)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-unresolved-workspaces ...                                    */
@@ -1625,6 +1624,6 @@
 ;*---------------------------------------------------------------------*/
 ;*    importpath-rvar ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (importpath-rvar i::J2SImportPath rindex)
+(define (importpath-rvar i::J2SImportPath rindexes)
    (with-access::J2SImportPath i (index)
-      (string->symbol (format "%import-evars~a:~a" index rindex))))
+      (string->symbol (format "%import-evars~a:~(:)" index rindexes))))
