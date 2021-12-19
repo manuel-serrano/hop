@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 15 15:16:16 2018                          */
-;*    Last change :  Fri Dec 17 17:44:49 2021 (serrano)                */
+;*    Last change :  Sun Dec 19 05:46:25 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES6 Module handling                                              */
@@ -42,36 +42,59 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-esmodule this args)
    (when (isa? this J2SProgram)
-      (esimport this this (config-get args :module-stack '()) #unspecified args)
-      (esexport this this args))
+      (let ((env (config-get args :module-env (make-cell '()))))
+	 (esimport this this env args)
+	 (esexport this this env args)))
    this)
 
 ;*---------------------------------------------------------------------*/
-;*    esimport ::J2SNode ...                                           */
+;*    esimport ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (esimport this::J2SNode prgm::J2SProgram stack import args)
-   (call-default-walker))
-
-;*---------------------------------------------------------------------*/
-;*    esimport ::J2SProgram ...                                        */
-;*---------------------------------------------------------------------*/
-(define-walk-method (esimport this::J2SProgram prgm::J2SProgram stack import args)
+(define (esimport this::J2SProgram prgm::J2SProgram env args)
    (with-access::J2SProgram this (imports decls path)
-      (if (member path stack)
-	  (with-access::J2SImport import (loc)
-	     (raise
-		(instantiate::&io-parse-error
-		   (proc "import")
-		   (msg "Illegal cyclic import")
-		   (obj path)
-		   (fname (cadr loc))
-		   (location (caddr loc)))))
-	  (begin
-	     ;; collect all the imported modules (following re-exports)
-	     (set! imports (collect-imports* this prgm stack import args))
-	     ;; declare all the imported variables
-	     (set! decls (append (collect-decls* this prgm args) decls))))))
+      ;; collect all the imported modules
+      (let ((env (config-get args :module-env (make-cell '()))))
+	 (env-add! (prgm-abspath this) this env)
+	 (set! imports (collect-imports* this (prgm-dirname this) env args))
+	 ;; declare all the imported variables
+	 (set! decls (append (collect-decls* this env args) decls)))))
 
+;*---------------------------------------------------------------------*/
+;*    prgm-dirname ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (prgm-dirname prgm::J2SProgram)
+   (with-access::J2SProgram prgm (path)
+      (cond
+	 ((string=? path "") (pwd))
+	 ((char=? (string-ref path 0) #\/) (dirname path))
+	 (else (dirname (file-name-canonicalize (make-file-name (pwd) path)))))))
+
+;*---------------------------------------------------------------------*/
+;*    prgm-abspath ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (prgm-abspath prgm::J2SProgram)
+   (with-access::J2SProgram prgm (path)
+      (cond
+	 ((string=? path "") (pwd))
+	 ((char=? (string-ref path 0) #\/) (dirname path))
+	 (else (file-name-canonicalize (make-file-name (pwd) path))))))
+
+;*---------------------------------------------------------------------*/
+;*    prgm-checksum ...                                                */
+;*---------------------------------------------------------------------*/
+(define (prgm-checksum prgm::J2SProgram)
+   (with-access::J2SProgram prgm (exports)
+      (length exports)))
+
+;*---------------------------------------------------------------------*/
+;*    absolute-path ...                                                */
+;*---------------------------------------------------------------------*/
+(define (absolute-path path base)
+   (cond
+      ((string=? path "") base)
+      ((char=? (string-ref path 0) #\/) path)
+      (else (file-name-canonicalize (make-file-name base path)))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    collect-imports* ...                                             */
 ;*    -------------------------------------------------------------    */
@@ -80,70 +103,83 @@
 ;*    and IPRGM the J2SProgram object associated with the imported     */
 ;*    module.                                                          */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (collect-imports* this::J2SNode prgm stack import args)
+(define-walk-method (collect-imports* this::J2SNode dirname env args)
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
-;*    collect-imports* ...                                             */
+;*    collect-imports* ::J2SProgram ...                                */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (collect-imports* this::J2SProgram prgm stack import args)
+(define-walk-method (collect-imports* this::J2SProgram dirname env args)
    (with-access::J2SProgram this (imports decls nodes path)
-      (unless (pair? imports)
-	 (let ((nstack (cons path stack)))
-	    (set! imports
-	       (delete-duplicates
-		  (append-map (lambda (n)
-				 (collect-imports* n this nstack import args))
-		     (append decls nodes))
-		  equal-respath?))
-	    (for-each (lambda (i n)
-			 (with-access::J2SImportPath i (index)
-			    (set! index n)))
-	       imports (iota (length imports)))))
-      imports))
+      (let ((imports (reverse!
+			(append-map (lambda (n)
+				       (collect-imports* n dirname env args))
+			   (append decls nodes)))))
+	 (for-each (lambda (i n)
+		      (with-access::J2SImportPath i (index)
+			 (set! index n)))
+	    imports (iota (length imports)))
+	 imports)))
 
 ;*---------------------------------------------------------------------*/
 ;*    collect-imports* ::J2SImport ...                                 */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (collect-imports* this::J2SImport prgm stack import args)
-   
-   (define (import-resolve-path! this::J2SImport prgm args)
-      (with-access::J2SImport this (respath path lang loc)
-	 (or respath
-	     (with-access::J2SProgram prgm ((src path))
-		(set! respath (resolve-path! path src loc args))
-		(unless lang (set! lang (resolve-lang respath)))
-		respath))))
-   
-   (let ((respath (import-resolve-path! this prgm args)))
-      (cons respath
-	 (with-access::J2SImport this (iprgm lang loc)
-	    (set! iprgm (import-module respath lang loc stack args))
-	    (collect-imports* iprgm iprgm stack this args)))))
+(define-walk-method (collect-imports* this::J2SImport dirname env args)
+   (with-access::J2SImport this (ipath path lang loc iprgm)
+      (multiple-value-bind (abspath protocol)
+	 (resolve-module-file path dirname loc args)
+	 (if (import-abspath this abspath env)
+	     '()
+	     (let* ((lg (or lang (path-lang abspath)))
+		    (prgm (import-module abspath lang loc env args))
+		    (ip (instantiate::J2SImportPath
+			   (loc loc)
+			   (name path)
+			   (path abspath)
+			   (protocol protocol)
+			   (checksum (prgm-checksum prgm)))))
+		(env-add! abspath prgm env)
+		(set! ipath ip)
+		(set! lang lg)
+		(set! iprgm prgm)
+		(list ip))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    collect-decls* ...                                               */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (collect-decls* this::J2SNode prgm args)
+(define-walk-method (collect-decls* this::J2SNode env args)
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
 ;*    collect-decls* ::J2SImport ...                                   */
 ;*---------------------------------------------------------------------*/
-(define-method (collect-decls* this::J2SImport prgm args)
+(define-method (collect-decls* this::J2SImport env args)
+
+   (define (find-reexport id::symbol export import::J2SImport iprgm::J2SProgram)
+      (with-access::J2SExport export (loc from alias)
+	 (with-access::J2SImport import (ipath lang)
+	    (with-access::J2SImportPath ipath (path)
+	       (multiple-value-bind (abspath protocol)
+		  (resolve-module-file from (dirname path) loc args)
+		  (let* ((iprgm (or (import-abspath import abspath env)
+				    (let ((p (import-module abspath lang loc env args)))
+				       (env-add! abspath p env)
+				       p)))
+			 (iname (instantiate::J2SImportName
+				   (loc loc)
+				   (id id)
+				   (alias alias)))
+			 (import (duplicate::J2SImport import
+				    (path path)
+				    (ipath (instantiate::J2SImportPath
+					      (loc loc)
+					      (name from)
+					      (path abspath)
+					      (protocol protocol)))
+				    (names (list iname)))))
+		     (find-export id import iprgm loc)))))))
    
-   (define (prgm-respath prgm path loc)
-      (with-access::J2SProgram prgm (imports)
-	 (or (find (lambda (i) (equal-respath? i path)) imports)
-	     (raise
-		(instantiate::&io-parse-error
-		   (proc "import")
-		   (msg "internal error, cannot find module")
-		   (obj path)
-		   (fname (cadr loc))
-		   (location (caddr loc)))))))
-   
-   (define (find-export name::symbol import::J2SImport iprgm::J2SProgram loc)
+   (define (find-export id::symbol import::J2SImport iprgm::J2SProgram loc)
       (with-access::J2SProgram iprgm (exports path)
 	 (let loop ((exports exports))
 	    (if (null? exports)
@@ -151,31 +187,19 @@
 		   (instantiate::&io-parse-error
 		      (proc "import")
 		      (msg (format "imported binding \"~a\" not exported by module ~s"
-			      name path))
-		      (obj name)
+			      id path))
+		      (obj id)
 		      (fname (cadr loc))
 		      (location (caddr loc))))
-		(with-access::J2SExport (car exports) (alias id from loc)
+		(with-access::J2SExport (car exports) (alias (name id) from)
 		   (cond
-		      ((not (eq? name alias))
+		      ((not (eq? id alias))
 		       (loop (cdr exports)))
 		      ((not from)
 		       (with-access::J2SImport import (respath)
-			  (set! respath (prgm-respath prgm respath loc))
 			  (values (car exports) import)))
 		      (else
-		       (let* ((respath (resolve-path! from path loc args))
-			      (iprgm (import-module respath #f loc '() args))
-			      (iname (instantiate::J2SImportName
-					(loc loc)
-					(id id)
-					(alias alias)))
-			      (rpath (prgm-respath prgm respath loc))
-			      (import (duplicate::J2SImport import
-					 (path path)
-					 (respath rpath)
-					 (names (list iname)))))
-			  (find-export id import iprgm loc)))))))))
+		       (find-reexport name (car exports) import iprgm))))))))
    
    (define (import-binding name import::J2SImport)
       (with-access::J2SImport import (iprgm loc)
@@ -401,38 +425,37 @@
 ;*---------------------------------------------------------------------*/
 ;*    esexport ::J2SNode ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (esexport this::J2SNode prgm::J2SProgram args)
+(define-walk-method (esexport this::J2SNode prgm env args)
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
 ;*    esexport ::J2SProgram ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (esexport this::J2SProgram prgm::J2SProgram args)
+(define-walk-method (esexport this::J2SProgram prgm env args)
    (with-access::J2SProgram this (nodes decls exports loc path exports)
-      (for-each (lambda (o) (esexport o this args)) nodes)
-      (for-each (lambda (o) (esexport o this args)) decls)
-      (for-each (lambda (o) (esexport o this args)) exports))
+      (for-each (lambda (o) (esexport o this env args)) nodes)
+      (for-each (lambda (o) (esexport o this env args)) decls)
+      (for-each (lambda (o) (esexport o this env args)) exports))
    this)
 
 ;*---------------------------------------------------------------------*/
 ;*    esexport ::J2SRedirect ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (esexport this::J2SRedirect prgm::J2SProgram args)
+(define-walk-method (esexport this::J2SRedirect prgm env args)
    
-   (define (find-import ip::J2SImportPath prgm::J2SProgram loc)
-      (with-access::J2SProgram prgm (imports)
-	 (let ((im (find (lambda (i) (equal-respath? ip i)) imports)))
-	    (if im
-		(with-access::J2SImportPath im (index)
-		   index)
-		(with-access::J2SImportPath ip (path)
-		   (raise
-		      (instantiate::&io-parse-error
-			 (proc "export")
-			 (msg "Cannot find module")
-			 (obj path)
-			 (fname (cadr loc))
-			 (location (caddr loc)))))))))
+   (define (find-import ip::bstring loc)
+      (let ((im (env-get ip env)))
+	 (if im
+	     (with-access::J2SImportPath im (index)
+		index)
+	     (with-access::J2SImportPath ip (path)
+		(raise
+		   (instantiate::&io-parse-error
+		      (proc "export")
+		      (msg "Cannot find module")
+		      (obj path)
+		      (fname (cadr loc))
+		      (location (caddr loc))))))))
    
    (define (find-export name::symbol iprgm::J2SProgram loc)
       (with-access::J2SProgram iprgm (exports path)
@@ -453,18 +476,27 @@
 		      ((not from)
 		       (car exports))
 		      (else
-		       (let* ((respath (resolve-path! from path loc args))
-			      (iprgm (import-module respath #f loc '() args)))
-			  (find-export id iprgm loc)))))))))
+		       (multiple-value-bind (abspath protocol)
+			  (resolve-module-file from (prgm-dirname iprgm) loc args)
+			  (let ((iprgm (or (env-get abspath env)
+					   (let ((p (import-module abspath #f
+						       loc env args)))
+					      (env-add! abspath p env)
+					      p))))
+			     (find-export id iprgm loc))))))))))
    
    (with-access::J2SRedirect this (rindex from loc id index)
-      (with-access::J2SProgram prgm ((src path) imports)
-	 (let* ((respath (resolve-path! from src loc args))
-		(p (import-module respath (path-lang from) loc '() args))
+      (multiple-value-bind (abspath protocol)
+	 (resolve-module-file from (prgm-dirname prgm) loc args)
+	 (let* ((p (or (env-get abspath env)
+		       (let ((p (import-module abspath (path-lang from)
+				   loc env args)))
+			  (env-add! abspath p env)
+			  p)))
 		(x (find-export id p loc)))
 	    (with-access::J2SExport x ((i index))
 	       (set! index i)
-	       (set! rindex (find-import respath prgm loc)))
+	       (set! rindex (find-import abspath loc)))
 	    this))))
    
 ;*---------------------------------------------------------------------*/
@@ -493,32 +525,43 @@
       (path-lang path)))
 
 ;*---------------------------------------------------------------------*/
+;*    make-importpath ...                                              */
+;*---------------------------------------------------------------------*/
+(define (make-importpath name path protocol loc env)
+   (tprint "make.0 " name)
+   (tprint "make.1 " name " " (typeof env))
+   (let ((cell (assoc name (cell-ref env))))
+      (tprint "make.2 " (typeof cell))
+      (if (pair? cell)
+	  (cdr cell)
+	  (let ((ip (instantiate::J2SImportPath
+		       (loc loc)
+		       (name name)
+		       (path (file-name-canonicalize path))
+		       (protocol protocol))))
+	     (tprint "make.3 ")
+	     (cell-set! env (cons (cons name ip) (cell-ref env)))
+	     ip))))
+
+;*---------------------------------------------------------------------*/
 ;*    resolve-module-file ...                                          */
 ;*    -------------------------------------------------------------    */
 ;*    Almost similar to nodejs's resolve method (see                   */
 ;*    nodejs/require.scm).                                             */
 ;*---------------------------------------------------------------------*/
-(define (resolve-module-file::J2SImportPath name dir::bstring args loc)
+(define (resolve-module-file name::bstring dir::bstring loc args)
    
    (define (resolve-file x)
       (cond
 	 ((and (file-exists? x) (not (directory? x)))
-	  (instantiate::J2SImportPath
-	     (loc loc)
-	     (name x)
-	     (path (file-name-canonicalize x))
-	     (protocol 'file)))
+	  (values (file-name-canonicalize x) 'file))
 	 (else
 	  (let loop ((sufs '(".js" ".mjs" ".hop" ".so" ".json" ".hss" ".css")))
 	     (when (pair? sufs)
 		(let* ((suffix (car sufs))
 		       (src (string-append x suffix)))
 		   (if (and (file-exists? src) (not (directory? src)))
-		       (instantiate::J2SImportPath
-			  (loc loc)
-			  (name x)
-			  (path (file-name-canonicalize src))
-			  (protocol 'file))
+		       (values (file-name-canonicalize src) 'file)
 		       (loop (cdr sufs)))))))))
 
    (define (resolve-package pkg dir)
@@ -562,20 +605,12 @@
    (define (resolve-directory x)
       (let ((json (make-file-name x "package.json")))
 	 (or (and (file-exists? json)
-		  (let* ((m (resolve-package json x)))
-		     (cond
-			((pair? m)
-			 (cons name
-			    (map (lambda (m)
-				    (resolve-file-or-directory m x))
-			       m)))
-			((string? m)
-			 (resolve-file-or-directory m x))
-			(else
-			 #f))))
+		  (let ((m (resolve-package json x)))
+		     (when (string? m)
+			(resolve-file-or-directory m x))))
 	     (let ((p (make-file-name x "index.js")))
 		(when (file-exists? p)
-		   (file-name-canonicalize p))))))
+		   (values (file-name-canonicalize p) 'file))))))
    
    (define (resolve-file-or-directory x dir)
       (let ((file (make-file-name dir x)))
@@ -599,24 +634,18 @@
 	 (list (config-get args :node-modules-directory "."))))
    
    (define (resolve-modules name)
-      (any (lambda (dir)
-	      (resolve-file-or-directory name dir))
-	 (filter string? hop-modules-path)))
-   
+      (let ((l (any (lambda (dir)
+		       (resolve-file-or-directory name dir))
+		  (filter string? hop-modules-path))))
+	 (when (pair? l)
+	    (car l))))
+
    (cond
       ((core-module? name)
-       (instantiate::J2SImportPath
-	  (loc loc)
-	  (name name)
-	  (path name)
-	  (protocol 'core)))
+       (values name 'core))
       ((or (string-prefix? "http://" name)
 	   (string-prefix? "https://" name))
-       (instantiate::J2SImportPath
-	  (loc loc)
-	  (name name)
-	  (path name)
-	  (protocol 'http)))
+       (values name 'http))
       ((or (string-prefix? "./" name) (string-prefix? "../" name))
        (or (resolve-file-or-directory name dir)
 	   (resolve-modules name)
@@ -630,95 +659,56 @@
 	   (resolve-error name)))))
 
 ;*---------------------------------------------------------------------*/
-;*    resolve-path! ...                                                */
+;*    import-abspath ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (resolve-path!::J2SImportPath path src loc args)
-   (let* ((base (cond
-		   ((string=? src "")
-		    (pwd))
-		   ((char=? (string-ref src 0) #\/)
-		    (dirname src))
-		   (else
-		    (dirname
-		       (file-name-canonicalize
-			  (make-file-name (pwd) src))))))
-	  (respath (resolve-module-file path base args loc)))
-      (with-access::J2SImportPath respath (path)
-	 (when (string=? path src)
-	    (raise
-	       (instantiate::&io-parse-error
-		  (proc "import")
-		  (msg "Illegal self-import")
-		  (obj src)
-		  (fname src)
-		  (location (caddr loc))))))
-      respath))
+(define (import-abspath this::J2SImport abspath env)
+   (let ((old (env-get abspath env)))
+      (when old
+	 (with-access::J2SImport this (iprgm lang)
+	    (set! iprgm old)
+	    #t))))
 
 ;*---------------------------------------------------------------------*/
 ;*    import-module ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (import-module impath::J2SImportPath lang loc stack args)
-   (with-access::J2SImportPath impath (path)
-      (or (open-string-hashtable-get core-modules path)
-	  (module-cache-get path)
-	  (with-handler
-	     (lambda (e)
-		(with-access::&exception e (fname location)
-		   (unless (and fname location)
-		      (set! fname (cadr loc))
-		      (set! location (caddr loc))))
-		(raise e))
-	     (call-with-input-file path
-		(lambda (in)
-		   (let ((margin (string-append
-				    (config-get args :verbmargin "")
-				    "     ")))
-		      (when (>= (config-get args :verbose 0) 2)
-			 (fprint (current-error-port) "\n" margin
-			    path
-			    (if (>= (config-get args :verbose 0) 3)
-				(string-append " [" path "]")
-				"")))
-		      (let* ((verb (config-get args :verbose 0))
-			     (iprgm (case lang
-				       ((hop)
-					(hop-compile in
-					   :verbose verb
-					   :verbmargin margin
-					   :module-import #t
-					   :module-stack stack))
-				       (else
-					(j2s-compile in
-					   :driver (j2s-export-driver)
-					   :warning 0
-					   :module-import #t
-					   :verbose verb
-					   :verbmargin margin
-					   :module-stack stack)))))
-			 (module-cache-put! path iprgm)))))))))
-
-;*---------------------------------------------------------------------*/
-;*    module-cache                                                     */
-;*---------------------------------------------------------------------*/
-(define module-cache #f)
-
-;*---------------------------------------------------------------------*/
-;*    module-cache-get ...                                             */
-;*---------------------------------------------------------------------*/
-(define (module-cache-get path)
-   (when module-cache
-      (let ((ce (cache-get module-cache path)))
-	 (when ce
-	    (with-access::cache-entry ce (value)
-	       value)))))
-
-;*---------------------------------------------------------------------*/
-;*    module-cache-put! ...                                            */
-;*---------------------------------------------------------------------*/
-(define (module-cache-put! path iprgm)
-   (unless module-cache (set! module-cache (instantiate::cache-memory)))
-   (cache-put! module-cache path iprgm)
-   iprgm)
+(define (import-module path lang loc env args)
+   (or (open-string-hashtable-get core-modules path)
+       (with-handler
+	  (lambda (e)
+	     (with-access::&exception e (fname location)
+		(unless (and fname location)
+		   (set! fname (cadr loc))
+		   (set! location (caddr loc))))
+	     (raise e))
+	  (call-with-input-file path
+	     (lambda (in)
+		(let ((margin (string-append
+				 (config-get args :verbmargin "")
+				 "     ")))
+		   (when (>= (config-get args :verbose 0) 2)
+		      (fprint (current-error-port) "\n" margin
+			 path
+			 (if (>= (config-get args :verbose 0) 3)
+			     (string-append " [" path "]")
+			     "")))
+		   (let ((verb (config-get args :verbose 0)))
+		      (case lang
+			 ((hop)
+			  (hop-compile in
+			     :verbose verb
+			     :verbmargin margin
+			     :module-import #t
+			     :module-env env
+			     :import-loc loc))
+			 (else
+			  (j2s-compile in
+			     :driver (j2s-export-driver)
+			     :warning 0
+			     :module-import #t
+			     :verbose verb
+			     :verbmargin margin
+			     :module-env env
+			     :import-loc loc))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    core-module-list ...                                             */
@@ -780,9 +770,15 @@
       core-module-list))
 
 ;*---------------------------------------------------------------------*/
-;*    equal-respath? ...                                               */
+;*    env-get ...                                                      */
 ;*---------------------------------------------------------------------*/
-(define (equal-respath? x y)
-   (with-access::J2SImportPath x ((xpath path))
-      (with-access::J2SImportPath y ((ypath path))
-	 (string=? xpath ypath))))
+(define (env-get path env)
+   (let ((old (assoc path (cell-ref env))))
+      (when old (cdr old))))
+
+;*---------------------------------------------------------------------*/
+;*    env-add! ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (env-add! path prgm env)
+   (cell-set! env (cons (cons path prgm) (cell-ref env))))
+   

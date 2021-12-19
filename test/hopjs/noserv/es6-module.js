@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Oct 24 11:42:37 2018                          */
-/*    Last change :  Fri Dec 17 18:25:17 2021 (serrano)                */
+/*    Last change :  Sat Dec 18 08:53:26 2021 (serrano)                */
 /*    Copyright   :  2018-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ES6 module                                               */
@@ -25,8 +25,8 @@ var assert = require( "assert" );
 /*    evars                                                            */
 /*---------------------------------------------------------------------*/
 import { checksum, mutator } from "../mod/evars.js";
-/* import { K2 } from "../mod/evars.js";                               */
-/* import * as evars from "../mod/evars.js";                           */
+import { K2 } from "../mod/evars.js";
+import * as evars from "../mod/evars.js";
 /* import defevars from "../mod/evars.js";                             */
 /* import defevars2, * as evars2 from "../mod/evars.js";               */
 /* import { GET as evarsGET } from "../mod/evars.js";                  */

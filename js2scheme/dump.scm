@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Sat Dec 18 06:00:47 2021 (serrano)                */
+;*    Last change :  Sun Dec 19 05:37:22 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -1468,11 +1468,12 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SImport stack)
    (let ((nstack (check-stack this stack)))
-      (with-access::J2SImport this (path respath names)
+      (with-access::J2SImport this (path ipath names iprgm)
 	 `(,@(call-next-method)
 	     :path ,path
-	     :respath ,(j2s->list respath (cons this stack))
-	     :names ,(j2s->list* names nstack)))))
+	     :ipath ,(j2s->list ipath (cons this stack))
+	     :names ,(j2s->list* names nstack)
+	     :iprgm ,(typeof iprgm)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SImportExports ...                                 */
@@ -1481,8 +1482,7 @@
    (let ((nstack (check-stack this stack)))
       (with-access::J2SImportExports this (import)
 	 `(,@(call-next-method)
-	     ,(with-access::J2SImport import (path)
-		 `(J2SImport :path ,path |...|))))))
+	     :import ,(j2s->list import (cons this stack))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SImportName ...                                    */

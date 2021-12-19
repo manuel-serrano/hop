@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Sat Dec 18 06:03:51 2021 (serrano)                */
+;*    Last change :  Sun Dec 19 09:54:45 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -539,7 +539,7 @@
 
 	   (final-class J2SImport::J2SStmt
 	      (path::bstring read-only (info '("notraverse")))
-	      (respath (default #f) (info '("notraverse")))
+	      (ipath (default #f) (info '("notraverse")))
 	      ;; dollarpath is only used for client-side imports whose
 	      ;; module name is a dollar expression (see js.scm)
 	      dollarpath::J2SExpr

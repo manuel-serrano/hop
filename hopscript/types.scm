@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Mon Dec 13 07:38:02 2021 (serrano)                */
+;*    Last change :  Sun Dec 19 08:57:13 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -321,8 +321,8 @@
 	   
 	   (class JsModule::JsObject
 	      (%module (default #f))
-	      ;; EVARS is the vector implementing exported variable; 
-	      ;; each entry holds the value of the corresping variable
+	      ;; EVARS is the vector implementing exported variables; 
+	      ;; each entry holds the value of the corresponing variable
 	      (evars::vector (default '#()))
 	      (defaultexport::obj (default (js-undefined)))
 	      ;; EXPORTS is the description of the exported variable;
