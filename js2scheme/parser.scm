@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Sun Dec 19 14:50:42 2021 (serrano)                */
+;*    Last change :  Mon Dec 20 08:54:07 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -3314,18 +3314,20 @@
       (with-access::J2SBlock (source-elements) (loc endloc nodes name)
 	 (let ((module (javascript-module-nodes nodes))
 	       (mode (nodes-mode nodes)))
-	    (instantiate::J2SProgram
-	       (loc loc)
-	       (endloc endloc)
-	       (path (abspath))
-	       (module module)
-	       (source-map (config-get conf :source-mapping-url source-map))
-	       (path (config-get conf :filename (abspath)))
-	       (main (config-get conf :module-main #f))
-	       (name (config-get conf :module-name #f))
-	       (mode mode)
-	       (exports (reverse exports))
-	       (nodes (map! (lambda (n) (dialect n mode conf)) nodes))))))
+	    (assign-import-program! 
+	       (instantiate::J2SProgram
+		  (loc loc)
+		  (endloc endloc)
+		  (path (abspath))
+		  (module module)
+		  (source-map (config-get conf :source-mapping-url source-map))
+		  (path (config-get conf :filename (abspath)))
+		  (main (config-get conf :module-main #f))
+		  (name (config-get conf :module-name #f))
+		  (mode mode)
+		  (exports (reverse exports))
+		  (nodes (map! (lambda (n) (dialect n mode conf)) nodes)))
+	       conf))))
    
    (define (eval mode)
       (set! tilde-level 0)
@@ -3996,3 +3998,20 @@
       (disable-reserved-ident body mode)
       this))
       
+;*---------------------------------------------------------------------*/
+;*    assign-import-program! ...                                       */
+;*---------------------------------------------------------------------*/
+(define (assign-import-program! prgm::J2SProgram conf)
+   
+   (define (assign! tgt::J2SProgram src::J2SProgram)
+      (vector-for-each (lambda (f)
+			  (if (class-field-mutator f)
+			      (let ((v ((class-field-accessor f) src)))
+				 ((class-field-mutator f) tgt v))))
+	 (class-all-fields (object-class src)))
+      tgt)
+   
+   (let ((tgt (config-get conf :import-program #f)))
+      (if tgt
+	  (assign! tgt prgm)
+	  prgm)))

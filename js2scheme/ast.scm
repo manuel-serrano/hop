@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Sun Dec 19 15:13:59 2021 (serrano)                */
+;*    Last change :  Mon Dec 20 08:51:07 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -42,7 +42,6 @@
 	      (endloc::pair read-only (info '("notraverse"))))
 	   
 	   (class J2SProgram::J2SBlock
-	      (version::int read-only (default 1))
 	      (mode::symbol read-only (default 'normal))
 	      (path::bstring read-only)
 	      (pcache-size::long (default 0))

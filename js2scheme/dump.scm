@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Sun Dec 19 15:20:55 2021 (serrano)                */
+;*    Last change :  Mon Dec 20 09:10:49 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -1458,8 +1458,9 @@
 ;*    j2s->list ::J2SImportPath ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SImportPath stack)
-   (with-access::J2SImportPath this (path protocol index)
+   (with-access::J2SImportPath this (path protocol index loc)
       `(J2SImportPath ,path
+	  ,@(dump-loc loc)
 	  :index ,index
 	  ,@(if (eq? protocol 'file) '() `(:protocol ,protocol)))))
 
@@ -1468,8 +1469,9 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SImport stack)
    (let ((nstack (check-stack this stack)))
-      (with-access::J2SImport this (path ipath names iprgm)
+      (with-access::J2SImport this (path ipath names iprgm loc)
 	 `(,@(call-next-method)
+	     ,@(dump-loc loc)
 	     :path ,path
 	     :ipath ,(j2s->list ipath (cons this stack))
 	     :names ,(j2s->list* names nstack)
@@ -1524,8 +1526,9 @@
 ;*    j2s->list ::J2SExport ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SExport stack)
-   (with-access::J2SExport this (id alias index writable eprgm)
+   (with-access::J2SExport this (id alias index writable eprgm loc)
       `(,@(call-next-method) ,id
+	  ,@(dump-loc loc)
 	  :alias ,alias
 	  :index ,index
 	  :writable writable

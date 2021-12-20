@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 15 15:16:16 2018                          */
-;*    Last change :  Mon Dec 20 06:45:24 2021 (serrano)                */
+;*    Last change :  Mon Dec 20 09:01:47 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES6 Module handling                                              */
@@ -63,7 +63,9 @@
 		   (import #f)
 		   (protocol 'file))))
 	 (env-add! (prgm-abspath this) (cons this ip) env)
-	 (set! imports (collect-imports* this (prgm-dirname this) env args))
+	 (set! imports
+	    (delete-duplicates
+	       (collect-imports* this (prgm-dirname this) env args) eq?))
 	 ;; declare all the imported variables
 	 (set! decls (append (collect-decls* this env args) decls)))))
 
@@ -91,7 +93,7 @@
 ;*    collect-imports* ::J2SProgram ...                                */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (collect-imports* this::J2SProgram dirname env args)
-   (with-access::J2SProgram this (imports decls nodes path)
+   (with-access::J2SProgram this (imports exports decls nodes path)
       (let ((imports (append-map (lambda (n)
 				    (collect-imports* n dirname env args))
 			(append decls nodes))))
@@ -113,21 +115,34 @@
 		(with-access::J2SImport this (iprgm ipath)
 		   (set! iprgm (car old))
 		   (set! ipath (cdr old))
-		   '())
-		(let* ((prgm (import-module abspath lang loc env args))
-		       (lg (or lang (path-lang abspath)))
+		   (list ipath))
+		(let* ((prgm (instantiate::J2SProgram
+				(loc loc)
+				(endloc loc)
+				(path path)
+				(nodes '())))
 		       (ip (instantiate::J2SImportPath
 			      (loc loc)
 			      (name path)
 			      (path abspath)
 			      (protocol protocol)
-			      (checksum (prgm-checksum prgm))
-			      (import this))))
-		   (env-add! abspath (cons prgm ip) env)
-		   (set! ipath ip)
-		   (set! lang lg)
+			      (import this)))
+		       (lg (or lang (path-lang abspath))))
 		   (set! iprgm prgm)
+		   (set! lang lg)
+		   (set! ipath ip)
+		   (env-add! abspath (cons prgm ip) env)
+		   (import-module abspath prgm lang loc env args)
+		   (with-access::J2SImportPath ip (checksum)
+		      (set! checksum (prgm-checksum prgm)))
 		   (list ip)))))))
+
+;*---------------------------------------------------------------------*/
+;*    collect-imports* ::J2SRedirect ...                               */
+;*---------------------------------------------------------------------*/
+(define-walk-method (collect-imports* this::J2SRedirect dirname env args)
+   (with-access::J2SRedirect this (import)
+      (collect-imports* import dirname env args)))
 
 ;*---------------------------------------------------------------------*/
 ;*    collect-decls* ...                                               */
@@ -175,6 +190,8 @@
 		      (else
 		       (with-access::J2SRedirect (car exports) (import export)
 			  (with-access::J2SImport import (iprgm)
+			     (unless iprgm
+				(tprint "PAS BON id=" id " " (j2s->sexp import)))
 			     (let ((x (find-redirect name (car exports) import iprgm)))
 				(set! export x)
 				(car exports)))))))))))
@@ -392,7 +409,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    import-module ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (import-module path lang loc env args)
+(define (import-module path prgm lang loc env args)
    (or (open-string-hashtable-get core-modules path)
        (with-handler
 	  (lambda (e)
@@ -405,14 +422,15 @@
 	     (lambda (in)
 		(let ((margin (string-append
 				 (config-get args :verbmargin "")
-				 "     ")))
-		   (when (>= (config-get args :verbose 0) 2)
+				 "     "))
+		      (verb (config-get args :verbose 0)))
+		   (when (>= verb 2)
 		      (fprint (current-error-port) "\n" margin
 			 path
 			 (if (>= (config-get args :verbose 0) 3)
 			     (string-append " [" path "]")
 			     "")))
-		   (let ((verb (config-get args :verbose 0)))
+		   (let ()
 		      (case lang
 			 ((hop)
 			  (hop-compile in
@@ -420,6 +438,7 @@
 			     :verbmargin margin
 			     :module-import #t
 			     :module-env env
+			     :import-program prgm
 			     :import-loc loc))
 			 (else
 			  (j2s-compile in
@@ -429,6 +448,7 @@
 			     :verbose verb
 			     :verbmargin margin
 			     :module-env env
+			     :import-program prgm
 			     :import-loc loc))))))))))
 
 ;*---------------------------------------------------------------------*/
