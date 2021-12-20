@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Sun Dec 19 20:50:45 2021 (serrano)                */
+;*    Last change :  Mon Dec 20 09:55:50 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -76,9 +76,9 @@
 		   (letrec* ,(j2s-let-headers scmheaders)
 		      ,@(j2s-expr-headers scmheaders)
 		      ,@globals
-		      ,@esimports
-		      ,esredirects
 		      ,esexports
+		      ,@esimports
+		      ,@esredirects
 		      ,@(exit-body ctx scmrecords
 			   (filter fundef? body) (filter nofundef? body)))))
 	   ;; for dynamic loading
@@ -125,8 +125,9 @@
 		    (letrec* ,(j2s-let-headers scmheaders)
 		       ,@(j2s-expr-headers scmheaders)
 		       ,@globals
+		       ,esexports
 		       ,@esimports
-		       ,esredirects
+		       ,@esredirects
 		       ,esexports
 		       ,@(exit-body ctx scmrecords
 			    (filter fundef? body) (filter nofundef? body)))))
@@ -172,9 +173,9 @@
 		,@(j2s-tls-headers scmheaders)
 		,@scmheaders
 		,@globals
-		,@esimports
-		,esredirects
 		,esexports
+		,@esimports
+		,@esredirects
 		,@(exit-body ctx scmrecords
 		     (filter fundef? body) (filter nofundef? body))))))
    
@@ -324,9 +325,9 @@
 			   (letrec* ,(j2s-let-headers scmheaders)
 			      ,@(j2s-expr-headers scmheaders)
 			      ,@globals
-			      ,@esimports
-			      ,esredirects
 			      ,esexports
+			      ,@esimports
+			      ,@esredirects
 			      ,@(exit-body ctx
 				   scmrecords
 				   (filter fundef? body)
@@ -433,9 +434,9 @@
 		   (nodejs-new-module ,(basename path) ,(absolute path)
 		      %worker %this))
 		(define %cnst-table ,cnsttable)
-		,@esimports
-		,esredirects
 		,esexports
+		,@esimports
+		,@esredirects
 		,@(filter nofundef? globals)
 		,@toplevel
 		,@(if (context-get ctx :libs-dir #f)
@@ -478,7 +479,22 @@
 	 (with-access::J2SImportPath im (path protocol checksum loc)
 	    `(define ,evarid
 		(with-access::JsModule ,impid (evars) evars)))))
+   
+   (with-access::J2SProgram this (imports)
+      (let ((imps (map module-import-es6 imports))
+	    (evars (map module-evars-es6 imports)))
+	 (append imps evars
+	    `((with-access::JsModule %module (imports)
+		 (set! imports
+		    (vector
+		       ,@(map (lambda (im) (importpath-var im))
+			    imports)))))))))
 
+;*---------------------------------------------------------------------*/
+;*    j2s-module-redirects ...                                         */
+;*---------------------------------------------------------------------*/
+(define (j2s-module-redirects this::J2SProgram ctx)
+   
    (define (module-redirects-es6 im)
       (let ((evarid (importpath-evar im)))
 	 (with-access::J2SImportPath im (import)
@@ -500,33 +516,18 @@
 							   (vector-ref ,expr ,rindex)))))))))
 			exports)))))))
    
-   (with-access::J2SProgram this (imports)
-      (let ((imps (map module-import-es6 imports))
-	    (evars (map module-evars-es6 imports))
-	    (redirect (append-map module-redirects-es6 imports)))
-	 (append imps evars redirect
-	    `((with-access::JsModule %module (imports)
-		 (set! imports
-		    (vector
-		       ,@(map (lambda (im) (importpath-var im))
-			    imports)))))))))
-
-;*---------------------------------------------------------------------*/
-;*    j2s-module-redirects ...                                         */
-;*---------------------------------------------------------------------*/
-(define (j2s-module-redirects this::J2SProgram ctx)
-   
-   (define (j2s-redirect x)
-      (when (isa? x J2SRedirect)
-	 (with-access::J2SRedirect x (import index)
-	    (with-access::J2SImport import (ipath)
-	       (importpath-var ipath)))))
-   
-   (with-access::J2SProgram this (exports path)
-      `(with-access::JsModule %module (redirects)
-	  (set! redirects
-	     (vector
-		,@(filter-map j2s-redirect exports))))))
+   (with-access::J2SProgram this (imports exports)
+      (append (append-map module-redirects-es6 imports)
+	 (if (pair? exports)
+	     (filter-map (lambda (x)
+			    (when (isa? x J2SRedirect)
+			       (with-access::J2SRedirect x (index import)
+				  (with-access::J2SImport import (ipath)
+				     `(with-access::JsModule %module (evars)
+					 (vector-set! evars ,index
+					     ,(importpath-evar ipath)))))))
+		exports)
+	     '()))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-module-exports ...                                           */
@@ -550,14 +551,7 @@
 		    (set! checksum ,(j2s-program-checksum! this))
 		    (set! exports (vector ,@(map j2s-export exports)))
 		    ,@(if (pair? exports)
-			  `((set! evars (make-vector ,(length exports) (js-undefined)))
-			    ,@(filter-map (lambda (x)
-					     (when (isa? x J2SRedirect)
-						(with-access::J2SRedirect x (index import)
-						   (with-access::J2SImport import (ipath)
-						      `(vector-set! evars ,index
-							  ,(importpath-evar ipath))))))
-				 exports))
+			  `((set! evars (make-vector ,(length exports) (js-undefined))))
 			  '())
 		    evars)))
 	    ((=fx cs 0)
