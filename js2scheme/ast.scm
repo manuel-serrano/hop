@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Mon Dec 20 08:51:07 2021 (serrano)                */
+;*    Last change :  Mon Dec 20 19:09:43 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -535,7 +535,6 @@
 	      (path::bstring read-only)
 	      (protocol::symbol read-only)
 	      (index::long (default -9997))
-	      (checksum::long (default -9996))
 	      (import read-only))
 
 	   (final-class J2SImport::J2SStmt

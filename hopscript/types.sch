@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 25 15:52:55 2017                          */
-;*    Last change :  Mon Dec 20 06:25:49 2021 (serrano)                */
+;*    Last change :  Mon Dec 20 18:16:56 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Companion macros                                                 */
@@ -82,6 +82,7 @@
 (define-expander js-evar-info-redirect js-evar-info-redirect-expander)
 (define-expander js-evar-info-writable js-evar-info-writable-expander)
 (define-expander js-import-ref js-import-ref-expander)
+(define-expander js-redirect-ref js-redirect-ref-expander)
 
 ;*---------------------------------------------------------------------*/
 ;*    isa?                                                             */

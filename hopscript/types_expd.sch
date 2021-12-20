@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 25 15:52:55 2017                          */
-;*    Last change :  Mon Dec 20 06:25:16 2021 (serrano)                */
+;*    Last change :  Mon Dec 20 18:12:03 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Types Companion macros                                           */
@@ -427,14 +427,29 @@
        (error "export-writable" "wrong syntax" x))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-import ...                                                    */
+;*    js-import-ref-expander ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (js-import-ref-expander x e)
    (match-case x
-      ((?- ?v ?idx . ?debug)
-       `(vector-ref ,v ,idx))
+      ((?- ?v ?idx ?loc . ?debug)
+       (e `(vector-ref ,v ,idx) e))
       (else
-       (error "js-import" "wrong syntax" x))))
+       (error "js-import-ref" "wrong syntax" x))))
+
+;*---------------------------------------------------------------------*/
+;*    js-redirect-ref-expander ...                                     */
+;*---------------------------------------------------------------------*/
+(define (js-redirect-ref-expander x e)
+   (match-case x
+      ((?- ?v ?idx ?loc . ?debug)
+       (e `(let ((v ,v))
+	      (if (vector? v)
+		  (vector-ref v ,idx)
+		  (js-raise-type-error/loc %this ,loc
+		     "Cannot access before initialization" ',debug)))
+	  e))
+      (else
+       (error "js-redirect-ref" "wrong syntax" x))))
 
 ;*---------------------------------------------------------------------*/
 ;*    generator                                                        */

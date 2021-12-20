@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Mon Dec 20 08:54:07 2021 (serrano)                */
+;*    Last change :  Mon Dec 20 20:04:27 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1509,13 +1509,10 @@
 	     stmt))
 	 ((LBRACE)
 	  (let ((token (consume-any!)))
-	     (let loop ((refs '())
+	     (let loop ((ids '())
 			(aliases '()))
 		(let* ((tid (consume-oneof! 'ID 'default))
 		       (id (token-value tid))
-		       (ref (instantiate::J2SUnresolvedRef
-			       (loc (token-loc tid))
-			       (id id)))
 		       (alias (if (peek-token-id? 'as)
 				  (begin
 				     (consume-any!)
@@ -1541,28 +1538,28 @@
 						 (loc loc)
 						 (path path)
 						 (dollarpath dollarpath)))
-					   (x (map (lambda (r a)
+					   (x (map (lambda (id a)
 						      (instantiate::J2SRedirect
 							 (loc loc)
 							 (id id)
 							 (alias a)
 							 (import i)))
-						 (cons ref refs)
+						 (cons id ids)
 						 (cons alias aliases))))
 				       (set! exports (append x exports))
 				       i)))
-			      (let ((x (map (lambda (r a)
+			      (let ((x (map (lambda (id a)
 					       (instantiate::J2SExport
 						  (loc loc)
 						  (id id)
 						  (alias a)))
-					  (cons ref refs)
+					  (cons id ids)
 					  (cons alias aliases))))
 				 (set! exports (append x exports))
 				 (J2SUndefined)))))
 		      ((COMMA)
 		       (consume-any!)
-		       (loop (cons ref refs) (cons alias aliases)))
+		       (loop (cons id ids) (cons alias aliases)))
 		      (else
 		       (parse-token-error "Illegal export" token)))))))
 	 ((function)

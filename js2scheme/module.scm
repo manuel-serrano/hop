@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 15 15:16:16 2018                          */
-;*    Last change :  Mon Dec 20 09:01:47 2021 (serrano)                */
+;*    Last change :  Mon Dec 20 19:10:50 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES6 Module handling                                              */
@@ -59,7 +59,6 @@
 		   (loc loc)
 		   (name path)
 		   (path (prgm-abspath this))
-		   (checksum (prgm-checksum this))
 		   (import #f)
 		   (protocol 'file))))
 	 (env-add! (prgm-abspath this) (cons this ip) env)
@@ -133,8 +132,6 @@
 		   (set! ipath ip)
 		   (env-add! abspath (cons prgm ip) env)
 		   (import-module abspath prgm lang loc env args)
-		   (with-access::J2SImportPath ip (checksum)
-		      (set! checksum (prgm-checksum prgm)))
 		   (list ip)))))))
 
 ;*---------------------------------------------------------------------*/
@@ -567,13 +564,6 @@
 	 ((string=? path "") (pwd))
 	 ((char=? (string-ref path 0) #\/) (dirname path))
 	 (else (file-name-canonicalize (make-file-name (pwd) path))))))
-
-;*---------------------------------------------------------------------*/
-;*    prgm-checksum ...                                                */
-;*---------------------------------------------------------------------*/
-(define (prgm-checksum prgm::J2SProgram)
-   (with-access::J2SProgram prgm (exports)
-      (length exports)))
 
 ;*---------------------------------------------------------------------*/
 ;*    absolute-path ...                                                */

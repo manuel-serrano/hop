@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Mon Dec 20 06:28:18 2021 (serrano)                */
+;*    Last change :  Mon Dec 20 18:53:44 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -513,6 +513,7 @@
 	 (let ((m (instantiateJsModule
 		     (cmap js-initial-cmap)
 		     (__proto__ (js-object-proto %this)))))
+	    
 	    (js-bind! %this m js-symbol-tostringtag
 	       :value (& "Module")
 	       :configurable #f :writable #f :enumerable #f)
@@ -651,7 +652,7 @@
    (let* ((respath (nodejs-resolve path %this %module 'import))
 	  (mod (nodejs-load-module respath worker %this %module
 		 :commonjs-export commonjs-export :loc loc)))
-      (with-access::JsModule mod ((mc checksum) exports)
+      (with-access::JsModule mod ((mc checksum))
 	 (if (or (=fx checksum 0) (=fx checksum mc) (=fx mc 0))
 	     mod
 	     (js-raise-type-error/loc %this loc
@@ -2541,7 +2542,6 @@
 (define (make-plugins-loader %ctxthis %ctxmodule worker)
    (when (and (isa? %ctxthis JsGlobalObject) (isa? %ctxmodule JsObject))
       (lambda (lang conf)
-	 (tprint "make-plugins-loader " conf)
 	 (js-worker-exec worker "plugins-loader" #f
 	    (lambda ()
 	       (with-access::JsGlobalObject %ctxthis (js-object js-symbol)
@@ -2573,7 +2573,6 @@
 (define (make-language-loader %ctxthis %ctxmodule worker)
    (when (and (isa? %ctxthis JsGlobalObject) (isa? %ctxmodule JsObject))
       (lambda (lang file conf)
-	 (tprint "make-language-loader " conf)
 	 (js-worker-exec worker "language-loader" #f
 	    (lambda ()
 	       (with-access::JsGlobalObject %ctxthis (js-object js-symbol)

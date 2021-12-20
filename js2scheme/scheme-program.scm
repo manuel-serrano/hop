@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Mon Dec 20 09:55:50 2021 (serrano)                */
+;*    Last change :  Mon Dec 20 18:10:56 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -464,14 +464,15 @@
    
    (define (module-import-es6 im)
       (let ((impid (importpath-var im)))
-	 (with-access::J2SImportPath im (path protocol checksum loc)
-	    `(define ,impid
-		(nodejs-import-module %worker %this %module
-		   ,path
-		   ,checksum
-		   ,(unless (eq? protocol 'core)
-		       (context-get ctx :commonjs-export))
-		   ',loc)))))
+	 (with-access::J2SImportPath im (path protocol import loc)
+	    (with-access::J2SImport import (iprgm)
+	       `(define ,impid
+		   (nodejs-import-module %worker %this %module
+		      ,path
+		      ,(j2s-program-checksum! iprgm)
+		      ,(unless (eq? protocol 'core)
+			  (context-get ctx :commonjs-export))
+		      ',loc))))))
    
    (define (module-evars-es6 im)
       (let ((impid (importpath-var im))
@@ -498,7 +499,7 @@
    (define (module-redirects-es6 im)
       (let ((evarid (importpath-evar im)))
 	 (with-access::J2SImportPath im (import)
-	    (with-access::J2SImport import (iprgm ipath)
+	    (with-access::J2SImport import (iprgm ipath loc)
 	       (with-access::J2SImportPath ipath (index)
 		  (with-access::J2SProgram iprgm (exports)
 		     (filter-map (lambda (x)
@@ -509,11 +510,11 @@
 					  (with-access::J2SRedirect x ((rindex index) export import)
 					     (if (isa? export J2SRedirect)
 						 (loop export (cons rindex rindexes)
-						    `(vector-ref ,expr ,rindex))
+						    `(js-redirect-ref ,expr ,rindex ',loc))
 						 (with-access::J2SImport import (ipath)
 						    (let ((rvarid (importpath-rvar im (reverse (cons rindex rindexes)))))
 						       `(define ,rvarid
-							   (vector-ref ,expr ,rindex)))))))))
+							   (js-redirect-ref ,expr ,rindex ',loc )))))))))
 			exports)))))))
    
    (with-access::J2SProgram this (imports exports)

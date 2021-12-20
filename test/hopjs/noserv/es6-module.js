@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Oct 24 11:42:37 2018                          */
-/*    Last change :  Sat Dec 18 08:53:26 2021 (serrano)                */
+/*    Last change :  Mon Dec 20 18:40:23 2021 (serrano)                */
 /*    Copyright   :  2018-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ES6 module                                               */
@@ -15,11 +15,11 @@ var assert = require( "assert" );
 /*---------------------------------------------------------------------*/
 /*    init                                                             */
 /*---------------------------------------------------------------------*/
-/* import "../mod/init.js";                                            */
-/* import { getLog } from "../mod/init-log.js";                        */
-/*                                                                     */
-/* console.log( "   init.js");                                         */
-/* assert.strictEqual( getLog( "init.js" ), "subinit.js init.js" );    */
+import "../mod/init.js";
+import { getLog } from "../mod/init-log.js";
+
+console.log( "   init.js");
+assert.strictEqual( getLog( "init.js" ), "subinit.js init.js" );
 
 /*---------------------------------------------------------------------*/
 /*    evars                                                            */
@@ -27,36 +27,36 @@ var assert = require( "assert" );
 import { checksum, mutator } from "../mod/evars.js";
 import { K2 } from "../mod/evars.js";
 import * as evars from "../mod/evars.js";
-/* import defevars from "../mod/evars.js";                             */
-/* import defevars2, * as evars2 from "../mod/evars.js";               */
-/* import { GET as evarsGET } from "../mod/evars.js";                  */
-/*                                                                     */
-/* console.log( "   evars.js (let, const)");                           */
-/* assert.strictEqual( checksum, 1088 );                               */
-/*                                                                     */
-/* console.log( "   evars.js (class)");                                */
-/* assert.strictEqual( new evars.KLA().type, "KLA" );                  */
-/*                                                                     */
-/* console.log( "   evars.js (alias)");                                */
-/* assert.strictEqual( K2, 990 );                                      */
-/*                                                                     */
-/* console.log( "   evars.js (mutation)");                             */
-/* mutator( 11 );                                                      */
-/* assert.strictEqual( evars.VAR, 11 );                                */
-/* assert.strictEqual( evars2.VAR, 11 );                               */
-/*                                                                     */
-/* console.log( "   evars.js (inline declaration)");                   */
-/* assert.strictEqual( evars.KONST2 + evars.VAR2, evars.GET() );       */
-/* assert.strictEqual( evars2.KONST2 + evars2.VAR2, evars2.GET() );    */
-/* assert.strictEqual( evars2.KONST2 + evars2.VAR2, evarsGET() );      */
-/*                                                                     */
-/* console.log( "   evars.js (default)");                              */
-/* assert.strictEqual( defevars.a, 10 );                               */
-/* assert.deepEqual( defevars, {a:10, b:2} );                          */
-/*                                                                     */
-/* console.log( "   evars.js (default alias)");                        */
-/* assert.strictEqual( defevars2.a, 10 );                              */
-/* assert.deepEqual( defevars2, {a:10, b:2} );                         */
+import defevars from "../mod/evars.js";
+import defevars2, * as evars2 from "../mod/evars.js";
+import { GET as evarsGET } from "../mod/evars.js";
+
+console.log( "   evars.js (let, const)");
+assert.strictEqual( checksum, 1088 );
+
+console.log( "   evars.js (class)");
+assert.strictEqual( new evars.KLA().type, "KLA" );
+
+console.log( "   evars.js (alias)");
+assert.strictEqual( K2, 990 );
+
+console.log( "   evars.js (mutation)");
+mutator( 11 );
+assert.strictEqual( evars.VAR, 11 );
+assert.strictEqual( evars2.VAR, 11 );
+
+console.log( "   evars.js (inline declaration)");
+assert.strictEqual( evars.KONST2 + evars.VAR2, evars.GET() );
+assert.strictEqual( evars2.KONST2 + evars2.VAR2, evars2.GET() );
+assert.strictEqual( evars2.KONST2 + evars2.VAR2, evarsGET() );
+
+console.log( "   evars.js (default)");
+assert.strictEqual( defevars.a, 10 );
+assert.deepEqual( defevars, {a:10, b:2} );
+
+console.log( "   evars.js (default alias)");
+assert.strictEqual( defevars2.a, 10 );
+assert.deepEqual( defevars2, {a:10, b:2} );
 
 /* {*---------------------------------------------------------------------*} */
 /* {*    dynamic import                                                   *} */
@@ -156,3 +156,9 @@ import * as evars from "../mod/evars.js";
 /* assert.equal( esmod1.foo( 1000 ), "bar" );                          */
 /* assert.equal( esmod2.bar( 1 ), "foo" );                             */
 /* assert.equal( esmod2.bar( 1000 ), "bar" );                          */
+
+/*---------------------------------------------------------------------*/
+/*    reexport                                                         */
+/*---------------------------------------------------------------------*/
+import { res } from "../mod/m1.mjs";
+assert.equal(res, "[ m5 m4 m7 m3 m2 v3@m2=444 v2=444]");
