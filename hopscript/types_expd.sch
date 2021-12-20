@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 25 15:52:55 2017                          */
-;*    Last change :  Sun Dec 19 14:55:34 2021 (serrano)                */
+;*    Last change :  Mon Dec 20 06:25:16 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Types Companion macros                                           */
@@ -387,45 +387,48 @@
 (define-instantiate-expander JsWebSocketEvent)
 
 ;*---------------------------------------------------------------------*/
-;*    js-export                                                        */
+;*    js-evar-info                                                     */
 ;*    -------------------------------------------------------------    */
 ;*    See js2scheme/scheme-program.scm and nodejs/require.scm.         */
 ;*---------------------------------------------------------------------*/
-(define (js-export-expander x e)
+(define (js-evar-info-expander x e)
    (match-case x
       ((?- ?id ?idx ?redirect ?ronly)
        (e `(vector ,@(cdr x)) e))
       (else
-       (error "js-export" "wrong syntax" x))))
+       (error "js-evar-info" "wrong syntax" x))))
 
-(define (js-export-id-expander x e)
+(define (js-evar-info-id-expander x e)
    (match-case x
       ((?- ?o)
        (e `(vector-ref ,o 0) e))
       (else
        (error "export-id" "wrong syntax" x))))
 
-(define (js-export-index-expander x e)
+(define (js-evar-info-index-expander x e)
    (match-case x
       ((?- ?o)
        (e `(vector-ref ,o 1) e))
       (else
        (error "export-index" "wrong syntax" x))))
 
-(define (js-export-redirect-expander x e)
+(define (js-evar-info-redirect-expander x e)
    (match-case x
       ((?- ?o)
        (e `(vector-ref ,o 2) e))
       (else
        (error "export-redirect" "wrong syntax" x))))
 
-(define (js-export-writable-expander x e)
+(define (js-evar-info-writable-expander x e)
    (match-case x
       ((?- ?o)
        (e `(vector-ref ,o 3) e))
       (else
        (error "export-writable" "wrong syntax" x))))
 
+;*---------------------------------------------------------------------*/
+;*    js-import ...                                                    */
+;*---------------------------------------------------------------------*/
 (define (js-import-ref-expander x e)
    (match-case x
       ((?- ?v ?idx . ?debug)

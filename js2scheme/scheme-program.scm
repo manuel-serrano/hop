@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Sun Dec 19 19:47:46 2021 (serrano)                */
+;*    Last change :  Sun Dec 19 20:50:45 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -488,15 +488,16 @@
 		     (filter-map (lambda (x)
 				    (when (isa? x J2SRedirect)
 				       (let loop ((x x)
-						  (rindexes '()))
+						  (rindexes '())
+						  (expr evarid))
 					  (with-access::J2SRedirect x ((rindex index) export import)
 					     (if (isa? export J2SRedirect)
-						 (loop export (cons rindex rindexes))
+						 (loop export (cons rindex rindexes)
+						    `(vector-ref ,expr ,rindex))
 						 (with-access::J2SImport import (ipath)
 						    (let ((rvarid (importpath-rvar im (reverse (cons rindex rindexes)))))
 						       `(define ,rvarid
-							   (tprint "PAS BON, IL FAUT DES (VREF (VREF (VREF ...)))
-							   (vector-ref ,evarid ,rindex)))))))))
+							   (vector-ref ,expr ,rindex)))))))))
 			exports)))))))
    
    (with-access::J2SProgram this (imports)
@@ -537,8 +538,8 @@
 	 (if (isa? e J2SRedirect)
 	     (with-access::J2SRedirect e (export)
 		(with-access::J2SExport export ((eindex index))
-		   `(js-export ,(& alias this) ,index ,eindex #f)))
-	     `(js-export ,(& alias this) ,index -1 #f))))
+		   `(js-evar-info ,(& alias this) ,index ,eindex #f)))
+	     `(js-evar-info ,(& alias this) ,index -1 #f))))
    
    (with-access::J2SProgram this (exports imports path checksum)
       (let ((cs (j2s-program-checksum! this)))

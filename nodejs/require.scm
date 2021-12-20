@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Mon Dec 13 07:11:41 2021 (serrano)                */
+;*    Last change :  Mon Dec 20 06:28:18 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -776,10 +776,10 @@
 	       :configurable #f :writable #f :enumerable #f)
 	    (vector-for-each
 	       (lambda (export)
-		  (let* ((id (js-export-id export))
-			 (idx (js-export-index export))
-			 (redirect (js-export-redirect export))
-			 (writable (js-export-writable export)))
+		  (let* ((id (js-evar-info-id export))
+			 (idx (js-evar-info-index export))
+			 (redirect (js-evar-info-redirect export))
+			 (writable (js-evar-info-writable export)))
 		     (cond
 			((>=fx redirect 0)
 			 (let ((evars (vector-ref redirects redirect)))

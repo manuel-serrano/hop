@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 25 15:52:55 2017                          */
-;*    Last change :  Sun Dec 19 14:55:47 2021 (serrano)                */
+;*    Last change :  Mon Dec 20 06:25:49 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Companion macros                                                 */
@@ -76,11 +76,11 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-export                                                        */
 ;*---------------------------------------------------------------------*/
-(define-expander js-export js-export-expander)
-(define-expander js-export-id js-export-id-expander)
-(define-expander js-export-index js-export-index-expander)
-(define-expander js-export-redirect js-export-redirect-expander)
-(define-expander js-export-writable js-export-writable-expander)
+(define-expander js-evar-info js-evar-info-expander)
+(define-expander js-evar-info-id js-evar-info-id-expander)
+(define-expander js-evar-info-index js-evar-info-index-expander)
+(define-expander js-evar-info-redirect js-evar-info-redirect-expander)
+(define-expander js-evar-info-writable js-evar-info-writable-expander)
 (define-expander js-import-ref js-import-ref-expander)
 
 ;*---------------------------------------------------------------------*/
