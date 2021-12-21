@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Sun Dec 19 08:57:13 2021 (serrano)                */
+;*    Last change :  Tue Dec 21 09:38:12 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -328,6 +328,7 @@
 	      ;; EXPORTS is the description of the exported variable;
 	      ;; each entry is: #(var-id index redirect-index|-1 ronly)
 	      (exports::vector (default '#()))
+	      (namespace::obj (default #f))
 	      ;; IMPORTS is the list of imported JsModule as returned
 	      ;; by NODEJS-IMPORT-MODULE
 	      (imports::vector (default '#()))

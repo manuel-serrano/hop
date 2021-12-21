@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Mon Dec 20 18:10:56 2021 (serrano)                */
+;*    Last change :  Tue Dec 21 09:44:23 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -24,6 +24,7 @@
 	   __js2scheme_stmtassign
 	   __js2scheme_compile
 	   __js2scheme_stage
+	   __js2scheme_usage
 	   __js2scheme_checksum
 	   __js2scheme_scheme
 	   __js2scheme_scheme-fun
@@ -537,11 +538,19 @@
    
    (define (j2s-export e::J2SExport)
       (with-access::J2SExport e (index from id alias loc decl)
-	 (if (isa? e J2SRedirect)
+	 (cond
+	    ((not (isa? e J2SRedirect))
+	     `(js-evar-info ,(& alias this) ,index -1
+		 ,(decl-usage-has? decl '(assig))))
+	    ((isa? e J2SRedirectNamespace)
+	     (with-access::J2SRedirect e (export import)
+		(with-access::J2SImport import (ipath)
+		   (with-access::J2SImportPath ipath (index)
+		      `(js-evar-info ,(& "*" this) -1 ,index #f)))))
+	    (else
 	     (with-access::J2SRedirect e (export)
 		(with-access::J2SExport export ((eindex index))
-		   `(js-evar-info ,(& alias this) ,index ,eindex #f)))
-	     `(js-evar-info ,(& alias this) ,index -1 #f))))
+		   `(js-evar-info ,(& alias this) ,index ,eindex #f)))))))
    
    (with-access::J2SProgram this (exports imports path checksum)
       (let ((cs (j2s-program-checksum! this)))

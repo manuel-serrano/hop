@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Thu Dec  9 08:12:02 2021 (serrano)                */
+;*    Last change :  Tue Dec 21 11:22:28 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for client side code).                                   */
@@ -1430,16 +1430,16 @@
 	     (with-access::J2SImportNamespace (car names) (id)
 		(list this "import * as "
 		   (symbol->string id) " from " path ";")))
-	    ((isa? (car names) J2SImportRedirect)
-	     (cons* this "export {"
-		(append (append-map* ","
-			   (lambda (a)
-			      (with-access::J2SImportRedirect a (id alias)
-				 (if (eq? id alias)
-				     id
-				     (list id " as " alias))))
-			   names)
-		   `("} from " ,path ";"))))
+;* 	    ((isa? (car names) J2SImportRedirect)                      */
+;* 	     (cons* this "export {"                                    */
+;* 		(append (append-map* ","                               */
+;* 			   (lambda (a)                                 */
+;* 			      (with-access::J2SImportRedirect a (id alias) */
+;* 				 (if (eq? id alias)                    */
+;* 				     id                                */
+;* 				     (list id " as " alias))))         */
+;* 			   names)                                      */
+;* 		   `("} from " ,path ";"))))                           */
 	    (else
 	     (cons* this "import {"
 		(append (append-map* "," import-name->js names)

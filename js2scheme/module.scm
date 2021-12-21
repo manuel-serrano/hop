@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 15 15:16:16 2018                          */
-;*    Last change :  Mon Dec 20 19:10:50 2021 (serrano)                */
+;*    Last change :  Tue Dec 21 09:08:41 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES6 Module handling                                              */
@@ -179,6 +179,12 @@
 		      (location (caddr loc))))
 		(with-access::J2SExport (car exports) (alias (name id))
 		   (cond
+		      ((isa? (car exports) J2SRedirectNamespace)
+		       (with-access::J2SRedirect (car exports) (import export)
+			  (with-access::J2SImport import (iprgm)
+			     (let ((x (find-redirect id (car exports) import iprgm)))
+				(set! export x)
+				(car exports)))))
 		      ((not (eq? id alias))
 		       (loop (cdr exports)))
 		      ((not (isa? (car exports) J2SRedirect))
@@ -187,8 +193,6 @@
 		      (else
 		       (with-access::J2SRedirect (car exports) (import export)
 			  (with-access::J2SImport import (iprgm)
-			     (unless iprgm
-				(tprint "PAS BON id=" id " " (j2s->sexp import)))
 			     (let ((x (find-redirect name (car exports) import iprgm)))
 				(set! export x)
 				(car exports)))))))))))
@@ -218,8 +222,9 @@
 	       (binder 'let-opt)
 	       (scope 'global)
 	       (writable #f)
-	       (val (instantiate::J2SImportExports
+	       (val (instantiate::J2SImportNamespace
 		       (loc loc)
+		       (id alias)
 		       (type 'object)
 		       (import this)))))))
    
@@ -242,11 +247,17 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (esexport this::J2SProgram prgm env args)
    (with-access::J2SProgram this (nodes decls exports loc path exports)
-      (for-each (lambda (e n)
-		   (with-access::J2SExport e (index eprgm)
-		      (set! eprgm prgm)
-		      (set! index n)))
-	 exports (iota (length exports)))
+      ;; a single index must be associated per variable, even for
+      ;; variables exported under multiple names
+      (let ((env (map (lambda (e n)
+			 (with-access::J2SExport e (id)
+			    (cons id n)))
+		    exports (iota (length exports)))))
+	 (for-each (lambda (e)
+		      (with-access::J2SExport e (id index eprgm)
+			 (set! eprgm prgm)
+			 (set! index (cdr (assq id env)))))
+	    exports))
       (for-each (lambda (o) (esexport o this env args)) nodes)
       (for-each (lambda (o) (esexport o this env args)) decls)
       (for-each (lambda (o) (esexport o this env args)) exports))
@@ -271,6 +282,12 @@
 		      (location (caddr loc))))
 		(with-access::J2SExport (car exports) (alias id loc)
 		   (cond
+		      ((isa? (car exports) J2SRedirectNamespace)
+		       (with-access::J2SRedirect (car exports) (import export)
+			  (with-access::J2SImport import (iprgm)
+			     (let ((x (find-export name iprgm loc)))
+				(set! export x)
+				(car exports)))))
 		      ((not (eq? name alias))
 		       (loop (cdr exports)))
 		      ((not (isa? (car exports) J2SRedirect))
@@ -287,7 +304,13 @@
 	 (let ((x (find-export id iprgm loc)))
 	    (set! export x))
 	 this)))
-   
+
+;*---------------------------------------------------------------------*/
+;*    esexport ::J2SRedirectNamespace ...                              */
+;*---------------------------------------------------------------------*/
+(define-walk-method (esexport this::J2SRedirectNamespace prgm env args)
+   this)
+
 ;*---------------------------------------------------------------------*/
 ;*    resolve-module-file ...                                          */
 ;*    -------------------------------------------------------------    */
@@ -421,17 +444,17 @@
 				 (config-get args :verbmargin "")
 				 "     "))
 		      (verb (config-get args :verbose 0)))
-		   (when (>= verb 2)
+		   (when (>= verb 3)
 		      (fprint (current-error-port) "\n" margin
 			 path
-			 (if (>= (config-get args :verbose 0) 3)
+			 (if (>= (config-get args :verbose 0) 4)
 			     (string-append " [" path "]")
 			     "")))
 		   (let ()
 		      (case lang
 			 ((hop)
 			  (hop-compile in
-			     :verbose verb
+			     :verbose (if (<=fx verb 2) 0 verb)
 			     :verbmargin margin
 			     :module-import #t
 			     :module-env env
@@ -442,7 +465,7 @@
 			     :driver (j2s-export-driver)
 			     :warning 0
 			     :module-import #t
-			     :verbose verb
+			     :verbose (if (<=fx verb 2) 0 verb)
 			     :verbmargin margin
 			     :module-env env
 			     :import-program prgm

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Mon Dec 20 19:09:43 2021 (serrano)                */
+;*    Last change :  Tue Dec 21 11:05:31 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -529,6 +529,8 @@
 	      (export (default #f))
 	      (import (default #f) (info '("notraverse"))))
 
+	   (class J2SRedirectNamespace::J2SRedirect)
+
 	   (final-class J2SImportPath
 	      (loc read-only)
 	      (name::bstring read-only)
@@ -552,14 +554,9 @@
 	      (id::symbol read-only)
 	      (alias::symbol read-only))
 
-	   (final-class J2SImportNamespace
-	      (loc read-only)
-	      (id::symbol read-only))
-
-	   (final-class J2SImportRedirect
-	      (loc read-only)
+	   (final-class J2SImportNamespace::J2SExpr
 	      (id::symbol read-only)
-	      (alias::symbol read-only))
+	      import)
 
 	   (final-class J2SImportExport
 	      (loc read-only))
@@ -567,9 +564,6 @@
 	   (final-class J2SImportDynamic::J2SExpr
 	      (base::bstring (default (pwd)))
 	      path::J2SExpr)
-
-	   (final-class J2SImportExports::J2SExpr
-	      import)
 
 	   (final-class J2SExportVars::J2SStmt
 	      (refs::pair-nil read-only)
@@ -1442,19 +1436,6 @@
    (with-access::J2SImportNamespace this (loc id)
       (display "{ \"__node__\": \"J2SImportNamespace\", \"id\": " op)
       (j2s->json id op)
-      (display ", \"loc\": " op)
-      (j2s->json loc op)
-      (display " }" op)))
-      
-;*---------------------------------------------------------------------*/
-;*    j2s->json ::J2SImportRedirect ...                                */
-;*---------------------------------------------------------------------*/
-(define-method (j2s->json this::J2SImportRedirect op::output-port)
-   (with-access::J2SImportRedirect this (loc id alias)
-      (display "{ \"__node__\": \"J2SImportRedirect\", \"id\": " op)
-      (j2s->json id op)
-      (display ", \"alias\": " op)
-      (j2s->json alias op)
       (display ", \"loc\": " op)
       (j2s->json loc op)
       (display " }" op)))

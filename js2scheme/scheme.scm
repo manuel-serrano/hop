@@ -3664,10 +3664,10 @@
 	     ',loc))))
 
 ;*---------------------------------------------------------------------*/
-;*    j2s-scheme ::J2SImportExports ...                                */
+;*    j2s-scheme ::J2SImportNamespace ...                              */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s-scheme this::J2SImportExports mode return ctx)
-   (with-access::J2SImportExports this (import op loc)
+(define-method (j2s-scheme this::J2SImportNamespace mode return ctx)
+   (with-access::J2SImportNamespace this (loc import)
       (with-access::J2SImport import (ipath)
 	 (epairify loc
 	    `(nodejs-module-exports ,(importpath-var ipath)

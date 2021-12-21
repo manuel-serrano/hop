@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Mon Dec 20 09:10:49 2021 (serrano)                */
+;*    Last change :  Tue Dec 21 10:04:55 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -1190,12 +1190,13 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SDecl stack)
    (set! stack (check-stack this stack))
-   (with-access::J2SDecl this (id key binder _scmid usage scope loc)
+   (with-access::J2SDecl this (id key binder _scmid usage scope loc export)
       `(,(string->symbol (format "~a/~a" (typeof this) binder))
 	,id
 	,@(dump-loc loc)
 	,@(dump-dump this)
 	,@(dump-key key)
+	,@(if export `(:export ,(j2s->list export (cons this stack))) '())
 	,@(dump-access this)
 	,@(dump-vtype this)
 	,@(dump-hint this)
@@ -1478,12 +1479,13 @@
 	     :iprgm ,(typeof iprgm)))))
 
 ;*---------------------------------------------------------------------*/
-;*    j2s->list ::J2SImportExports ...                                 */
+;*    j2s->list ::J2SImportNamespace ...                               */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SImportExports stack)
+(define-method (j2s->list this::J2SImportNamespace stack)
    (let ((nstack (check-stack this stack)))
-      (with-access::J2SImportExports this (import)
+      (with-access::J2SImportNamespace this (id import)
 	 `(,@(call-next-method)
+	     :id ,id
 	     :import ,(j2s->list import (cons this stack))))))
 
 ;*---------------------------------------------------------------------*/
@@ -1492,20 +1494,6 @@
 (define-method (j2s->list this::J2SImportName stack)
    (with-access::J2SImportName this (loc id alias)
       `(J2SImportName ,id ,alias)))
-
-;*---------------------------------------------------------------------*/
-;*    j2s->list ::J2SImportRedirect ...                                */
-;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SImportRedirect stack)
-   (with-access::J2SImportRedirect this (loc id alias)
-      `(J2SImportRedirect ,id ,alias)))
-
-;*---------------------------------------------------------------------*/
-;*    j2s->list ::J2SImportNamespace ...                               */
-;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SImportNamespace stack)
-   (with-access::J2SImportNamespace this (loc id)
-      `(J2SImportNamespace ,id)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SImportExport ...                                  */

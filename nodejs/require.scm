@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Mon Dec 20 18:53:44 2021 (serrano)                */
+;*    Last change :  Tue Dec 21 09:35:26 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -767,54 +767,71 @@
    
    (define (constant? n)
       (or (number? n) (boolean? n) (string? n) (js-jsstring? n)))
-   
-   (with-access::JsGlobalObject %this (js-symbol-tostringtag)
+
+   (define (bind-exports! modobj mod)
       (with-access::JsModule mod (evars exports default imports redirects)
-	 (let ((modobj (instantiateJsObject
-			  (__proto__ (js-object-proto %this)))))
-	    (js-bind! %this modobj js-symbol-tostringtag
-	       :value (js-string->jsstring "Module")
-	       :configurable #f :writable #f :enumerable #f)
-	    (vector-for-each
-	       (lambda (export)
-		  (let* ((id (js-evar-info-id export))
-			 (idx (js-evar-info-index export))
-			 (redirect (js-evar-info-redirect export))
-			 (writable (js-evar-info-writable export)))
-		     (cond
-			((>=fx redirect 0)
-			 (let ((evars (vector-ref redirects redirect)))
-			    (js-bind! %this modobj id
-			       :get (js-make-function %this
-				       (lambda (this)
-					  (vector-ref evars idx))
-				       (js-function-arity 0 0)
-				       (js-function-info :name "get" :len 0))
-			       :configurable #f :writable #f)))
-			((and (not writable)
-			      (constant? (vector-ref evars idx)))
-			 (js-bind! %this modobj id
-			    :value (vector-ref evars idx)
-			    :configurable #f :writable #f))
-			(else
+	 (vector-for-each
+	    (lambda (export)
+	       (let* ((id (js-evar-info-id export))
+		      (idx (js-evar-info-index export))
+		      (redirect (js-evar-info-redirect export))
+		      (writable (js-evar-info-writable export)))
+		  (cond
+		     ((and (>=fx redirect 0) (=fx idx -1))
+		      ;; namespace export
+		      (let ((mod (vector-ref imports redirect)))
+			 (bind-exports! modobj mod)))
+		     ((>=fx redirect 0)
+		      ;; variable reexport
+		      (let ((evars (vector-ref redirects redirect)))
 			 (js-bind! %this modobj id
 			    :get (js-make-function %this
 				    (lambda (this)
 				       (vector-ref evars idx))
 				    (js-function-arity 0 0)
 				    (js-function-info :name "get" :len 0))
-			    :configurable #f :writable #f)))))
-	       exports)
-	    (let ((commonjs (js-get mod (& "exports") %this)))
-	       (with-access::JsModule mod (%module)
-		  (when (isa? commonjs JsObject)
-		     (js-for-in commonjs
-			(lambda (id %this)
-			   (js-bind! %this modobj id
-			      :value (js-get commonjs id %this)
-			      :configurable #t :writable #t))
-			%this))))
-	    modobj))))
+			    :configurable #f :writable #f)))
+		     ((not writable)
+		      ;; constant export
+		      (js-bind! %this modobj id
+			 :value (vector-ref evars idx)
+			 :configurable #f :writable #f))
+		     (else
+		      ;; variable export
+		      (js-bind! %this modobj id
+			 :get (js-make-function %this
+				 (lambda (this)
+				    (vector-ref evars idx))
+				 (js-function-arity 0 0)
+				 (js-function-info :name "get" :len 0))
+			 :configurable #f :writable #f)))))
+	    exports)))
+   
+   (define (module-namespace mod::JsModule)
+      (with-access::JsGlobalObject %this (js-symbol-tostringtag)
+	 (with-access::JsModule mod (evars exports default imports redirects)
+	    (let ((modobj (instantiateJsObject
+			     (__proto__ (js-object-proto %this)))))
+	       (bind-exports! modobj mod)
+	       (js-bind! %this modobj js-symbol-tostringtag
+		  :value (js-string->jsstring "Module")
+		  :configurable #f :writable #f :enumerable #f)
+	       (let ((commonjs (js-get mod (& "exports") %this)))
+		  (with-access::JsModule mod (%module)
+		     (when (isa? commonjs JsObject)
+			(js-for-in commonjs
+			   (lambda (id %this)
+			      (js-bind! %this modobj id
+				 :value (js-get commonjs id %this)
+				 :configurable #t :writable #t))
+			   %this))))
+	       modobj))))
+      
+   (with-access::JsModule mod (namespace)
+      (or namespace
+	  (let ((nm (module-namespace mod)))
+	     (set! namespace nm)
+	     nm))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-head ...                                                  */

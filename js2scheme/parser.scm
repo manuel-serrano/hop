@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Mon Dec 20 20:04:27 2021 (serrano)                */
+;*    Last change :  Tue Dec 21 11:20:37 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1594,13 +1594,18 @@
 	     (if (eq? (token-value fro) 'from)
 		 (multiple-value-bind (path dollarpath)
 		    (consume-module-path!)
-		    (let ((impexp (instantiate::J2SImportExport
-				     (loc (token-loc *)))))
-		       (instantiate::J2SImport
-			  (loc (token-loc token))
-			  (path path)
-			  (dollarpath dollarpath)
-			  (names (list impexp)))))
+		    (let* ((i (instantiate::J2SImport
+				 (loc (token-loc token))
+				 (path path)
+				 (dollarpath dollarpath)
+				 (names '())))
+			   (x (instantiate::J2SRedirectNamespace
+				 (loc (token-loc token))
+				 (id (gensym '*))
+				 (alias '*)
+				 (import i))))
+		       (set! exports (cons x exports))
+		       i))
 		 (parse-token-error "Illegal export, \"from\" expected" fro))))
 	 (else
 	  (parse-token-error "Illegal export declaration" token))))
