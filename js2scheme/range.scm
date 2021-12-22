@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Wed Oct 20 15:32:29 2021 (serrano)                */
+;*    Last change :  Wed Dec 22 06:32:14 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -2333,26 +2333,34 @@
    (memq ty '(integer number int32 uint32 int53)))
 
 ;*---------------------------------------------------------------------*/
+;*    decl-type ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (decl-type this ty)
+   (with-access::J2SDecl this (vtype id vrange escape export scope)
+      (cond
+	 (export
+	  (type->boxed-type ty))
+	 ((memq scope '(%scope global tls))
+	  (if (decl-ronly? this)
+	      ty
+	      (type->boxed-type ty)))
+	 (escape
+	  (type->boxed-type ty))
+	 (else
+	  ty))))
+
+;*---------------------------------------------------------------------*/
 ;*    type-range! ::J2SDecl ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (type-range! this::J2SDecl tymap)
    (call-default-walker)
-   (with-access::J2SDecl this (vrange vtype id scope escape)
+   (with-access::J2SDecl this (vrange vtype id scope escape export)
       (when (range-type? vtype)
 	 (let ((ity (interval->type vrange tymap vtype)))
 	    (unless (eq? ity 'unknown)
 	       (let ((rty (min-type vtype ity)))
 		  (unless (eq? rty vtype)
-		     (let ((aty (cond
-				   ((memq scope '(%scope global tls))
-				    (if (decl-ronly? this)
-					rty
-					(type->boxed-type rty)))
-				   (escape
-				    (type->boxed-type rty))
-				   (else
-				    rty))))
-			(set! vtype aty)))))))
+		     (set! vtype (decl-type this rty)))))))
       this))
 
 ;*---------------------------------------------------------------------*/
@@ -2544,10 +2552,9 @@
 ;*    map-types ::J2SDecl ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (map-types this::J2SDecl tmap)
-   (with-access::J2SDecl this (vtype id vrange escape)
+   (with-access::J2SDecl this (vtype id vrange escape export scope)
       (when (range-type? vtype)
-	 (let ((ty (interval->type vrange tmap 'number)))
-	    (set! vtype (if escape (type->boxed-type ty) ty)))))
+	 (set! vtype (decl-type this (interval->type vrange tmap 'number)))))
    (call-default-walker))
 	 
 ;*---------------------------------------------------------------------*/

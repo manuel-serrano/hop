@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Tue Dec 21 09:44:23 2021 (serrano)                */
+;*    Last change :  Tue Dec 21 14:28:55 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -535,22 +535,48 @@
 ;*    j2s-module-exports ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (j2s-module-exports this::J2SProgram ctx)
+
+   (define (export-from x)
+      (with-access::J2SExport x (eprgm)
+	 (with-access::J2SProgram eprgm (path)
+	    path)))
    
    (define (j2s-export e::J2SExport)
       (with-access::J2SExport e (index from id alias loc decl)
 	 (cond
 	    ((not (isa? e J2SRedirect))
-	     `(js-evar-info ,(& alias this) ,index -1
+	     `(js-evar-info ,(& alias this) '(,index) '()
 		 ,(decl-usage-has? decl '(assig))))
 	    ((isa? e J2SRedirectNamespace)
 	     (with-access::J2SRedirect e (export import)
 		(with-access::J2SImport import (ipath)
 		   (with-access::J2SImportPath ipath (index)
-		      `(js-evar-info ,(& "*" this) -1 ,index #f)))))
+		      `(js-evar-info ,(& "*" this) '() '(,index) #f)))))
 	    (else
-	     (with-access::J2SRedirect e (export)
-		(with-access::J2SExport export ((eindex index))
-		   `(js-evar-info ,(& alias this) ,index ,eindex #f)))))))
+	     (let loop ((x e)
+			(rindexes '())
+			(iindexes '()))
+		(if (isa? x J2SRedirect)
+		    (with-access::J2SRedirect x ((rindex index) export import ( id2 id))
+		       (with-access::J2SImport import (ipath)
+			  (with-access::J2SImportPath ipath ((iindex index))
+			     (tprint "redirect "
+				id " " id2 " rifx=" rindex
+				" iindex=" iindex
+				 " (" (export-from x) ")")
+			     (loop export
+				(cons rindex rindexes)
+				(cons iindex iindexes)))))
+		    (with-access::J2SExport x ((rindex index) decl)
+		       (with-access::J2SExport x ((id2 id))
+			  (tprint "export " id " " id2 " "
+			     "ridx=" (reverse (cons rindex rindexes))
+			     " idx=" (reverse iindexes)
+			     " (" (export-from x) ")"))
+		       `(js-evar-info ,(& alias this)
+			   ',(reverse (cons rindex rindexes))
+			   ',(reverse iindexes)
+			   ,(decl-usage-has? decl '(assig))))))))))
    
    (with-access::J2SProgram this (exports imports path checksum)
       (let ((cs (j2s-program-checksum! this)))
@@ -561,7 +587,8 @@
 		    (set! checksum ,(j2s-program-checksum! this))
 		    (set! exports (vector ,@(map j2s-export exports)))
 		    ,@(if (pair? exports)
-			  `((set! evars (make-vector ,(length exports) (js-undefined))))
+			  `((set! evars
+			       (make-vector ,(length exports) (js-undefined))))
 			  '())
 		    evars)))
 	    ((=fx cs 0)

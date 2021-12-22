@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Tue Dec 21 09:35:26 2021 (serrano)                */
+;*    Last change :  Tue Dec 21 13:49:34 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -30,7 +30,7 @@
 	   (nodejs-import-module-hop::JsModule ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring ::long ::bool ::obj ::vector)
 	   (nodejs-import-module-dynamic::JsPromise ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::bstring ::bool ::obj)
 	   (nodejs-import-meta::JsObject ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring)
-	   (nodejs-module-exports::JsObject ::JsModule ::WorkerHopThread ::JsGlobalObject)
+	   (nodejs-module-namespace::JsObject ::JsModule ::WorkerHopThread ::JsGlobalObject)
 	   (nodejs-head ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsObject)
 	   (nodejs-script ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsObject)
 	   (nodejs-core-module ::bstring ::WorkerHopThread ::JsGlobalObject)
@@ -742,7 +742,7 @@
 			    (mod (nodejs-import-module worker %this %module
 				    path 0 commonjs-export loc)))
 			(js-call1 %this resolve (js-undefined)
-			   (nodejs-module-exports mod worker %this)))))
+			   (nodejs-module-namespace mod worker %this)))))
 	       (js-function-arity 2 0)
 	       (js-function-info :name "import" :len 2))))))
 
@@ -761,50 +761,76 @@
       obj))
 
 ;*---------------------------------------------------------------------*/
-;*    nodejs-module-exports ...                                        */
+;*    nodejs-module-namespace ...                                      */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-module-exports::JsObject mod::JsModule worker::WorkerHopThread %this)
+(define (nodejs-module-namespace::JsObject mod::JsModule worker::WorkerHopThread %this)
    
    (define (constant? n)
       (or (number? n) (boolean? n) (string? n) (js-jsstring? n)))
 
-   (define (bind-exports! modobj mod)
+   (define (module-filename mod %this)
+      (js-get mod (& "filename") %this))
+
+   (define debug #f)
+   
+   (define (bind-export! modobj mod id export margin)
+      (with-access::JsModule mod (evars default imports redirects)
+	 (let* ((idx (js-evar-info-index export))
+		(redirect (js-evar-info-redirect export))
+		(writable (js-evar-info-writable export)))
+	    (when debug
+	       (tprint margin "export="  export " "
+		  (module-filename mod %this)))
+	    (cond
+	       ((null? idx)
+		;; namespace export
+		(tprint margin "namespace...")
+		(let ((mod (vector-ref imports (car redirect))))
+		   (bind-exports! modobj mod (string-append margin " "))))
+	       ((pair? redirect)
+		(when debug
+		   (tprint margin "redirect..."))
+		;; variable reexport
+		(let loop ((idx idx)
+			   (redirect redirect)
+			   (mod mod))
+		   (with-access::JsModule mod (imports exports)
+		      (when debug
+			 (tprint (string-append margin " ")
+			    "idx=" idx " red=" redirect " "
+			    (module-filename mod %this)))
+		      (if (null? redirect)
+			  (bind-export! modobj mod id
+			     (vector-ref exports (car idx))
+			     (string-append margin " "))
+			  (let ((mod (vector-ref imports (car redirect))))
+			     (with-access::JsModule mod (exports)
+				(loop (cdr idx) (cdr redirect) mod)))))))
+	       ((not writable)
+		;; constant export
+		(when debug
+		   (tprint margin "bind.1 " id " " idx " " evars))
+		(js-bind! %this modobj id
+		   :value (vector-ref evars (car idx))
+		   :configurable #f :writable #f))
+	       (else
+		;; variable export
+		(when debug
+		   (tprint margin "bind.2 " id))
+		(js-bind! %this modobj id
+		   :get (js-make-function %this
+			   (lambda (this)
+			      (vector-ref evars (car idx)))
+			   (js-function-arity 0 0)
+			   (js-function-info :name "get" :len 0))
+		   :configurable #f :writable #f))))))
+
+   (define (bind-exports! modobj mod margin)
       (with-access::JsModule mod (evars exports default imports redirects)
 	 (vector-for-each
 	    (lambda (export)
-	       (let* ((id (js-evar-info-id export))
-		      (idx (js-evar-info-index export))
-		      (redirect (js-evar-info-redirect export))
-		      (writable (js-evar-info-writable export)))
-		  (cond
-		     ((and (>=fx redirect 0) (=fx idx -1))
-		      ;; namespace export
-		      (let ((mod (vector-ref imports redirect)))
-			 (bind-exports! modobj mod)))
-		     ((>=fx redirect 0)
-		      ;; variable reexport
-		      (let ((evars (vector-ref redirects redirect)))
-			 (js-bind! %this modobj id
-			    :get (js-make-function %this
-				    (lambda (this)
-				       (vector-ref evars idx))
-				    (js-function-arity 0 0)
-				    (js-function-info :name "get" :len 0))
-			    :configurable #f :writable #f)))
-		     ((not writable)
-		      ;; constant export
-		      (js-bind! %this modobj id
-			 :value (vector-ref evars idx)
-			 :configurable #f :writable #f))
-		     (else
-		      ;; variable export
-		      (js-bind! %this modobj id
-			 :get (js-make-function %this
-				 (lambda (this)
-				    (vector-ref evars idx))
-				 (js-function-arity 0 0)
-				 (js-function-info :name "get" :len 0))
-			 :configurable #f :writable #f)))))
+	       (let ((id (js-evar-info-id export)))
+		  (bind-export! modobj mod id export margin)))
 	    exports)))
    
    (define (module-namespace mod::JsModule)
@@ -812,7 +838,7 @@
 	 (with-access::JsModule mod (evars exports default imports redirects)
 	    (let ((modobj (instantiateJsObject
 			     (__proto__ (js-object-proto %this)))))
-	       (bind-exports! modobj mod)
+	       (bind-exports! modobj mod "")
 	       (js-bind! %this modobj js-symbol-tostringtag
 		  :value (js-string->jsstring "Module")
 		  :configurable #f :writable #f :enumerable #f)
@@ -826,7 +852,10 @@
 				 :configurable #t :writable #t))
 			   %this))))
 	       modobj))))
-      
+   
+   (when debug
+      (tprint "NS " (module-filename mod %this)))
+   
    (with-access::JsModule mod (namespace)
       (or namespace
 	  (let ((nm (module-namespace mod)))

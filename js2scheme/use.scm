@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Fri Dec 17 12:09:04 2021 (serrano)                */
+;*    Last change :  Wed Dec 22 06:57:48 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Count the number of occurrences for all variables                */
@@ -112,9 +112,10 @@
 ;*    live-decl? ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (live-decl? d::J2SDecl)
-   (with-access::J2SDecl d (usecnt id scope)
+   (with-access::J2SDecl d (usecnt id scope export)
       (or (>fx usecnt 0)
 	  (eq? scope 'export)
+	  export
 	  (and (isa? d J2SDeclInit)
 	       (with-access::J2SDeclInit d (val)
 		  (or (isa? val J2SSvc)

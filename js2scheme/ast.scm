@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Tue Dec 21 11:05:31 2021 (serrano)                */
+;*    Last change :  Wed Dec 22 07:02:54 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -66,8 +66,8 @@
 	      (key (default (ast-decl-key)) (info '("notraverse")))
 	      ;; writable=#f iff decl is const
 	      (writable (default #t) (info '("notraverse")))
-	      ;; either: global, %scope, tls, local, letblock, letvar,
-	      ;;   kont, export
+	      ;; scope: export, global, %scope, tls, local, letblock, letvar,
+	      ;;   kont, loop
 	      (scope::symbol (default 'local) (info '("notraverse")))
 	      (usecnt::int (default 0) (info '("notraverse")))
 	      (useinloop::bool (default #f) (info '("notraverse")))
@@ -75,8 +75,7 @@
 	      (escape::bool (default #f) (info '("notraverse")))
 	      ;; see usage-bit.sch
 	      (usage::uint32 (default (usage '())))
-	      ;; variable range (var, let, let-opt, let-forin, param, class,
-	      ;; record, export)
+	      ;; binder: var, let, let-opt, let-forin, param, class, record
 	      (binder::symbol (default 'var) (info '("notraverse")))
 	      ;; user declared type (only a mere annotation)
 	      (utype (default 'unknown) (info '("notraverse")))
@@ -788,8 +787,8 @@
 ;*    j2s-export? ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (j2s-export? decl::J2SDecl)
-   (with-access::J2SDecl decl (binder scope)
-      (or (eq? binder 'export) (eq? scope 'export))))
+   (with-access::J2SDecl decl (scope export)
+      (or export (eq? scope 'export))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-global? ...                                                  */

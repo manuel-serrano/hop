@@ -3669,9 +3669,10 @@
 (define-method (j2s-scheme this::J2SImportNamespace mode return ctx)
    (with-access::J2SImportNamespace this (loc import)
       (with-access::J2SImport import (ipath)
-	 (epairify loc
-	    `(nodejs-module-exports ,(importpath-var ipath)
-		%worker %this)))))
+	 (with-access::J2SImportPath ipath (path)
+	    (epairify loc
+	       `(nodejs-module-namespace ,(importpath-var ipath)
+		   %worker %this))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SExportVars ...                                   */

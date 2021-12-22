@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Tue Dec 21 11:20:37 2021 (serrano)                */
+;*    Last change :  Wed Dec 22 08:06:20 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1577,7 +1577,7 @@
 				       (loc loc)
 				       (id 'default)
 				       (export expo)
-				       (binder 'export)
+				       (binder 'let)
 				       (scope 'export)
 				       (val val)))
 			      (ref (instantiate::J2SRef

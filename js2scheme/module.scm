@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 15 15:16:16 2018                          */
-;*    Last change :  Tue Dec 21 09:08:41 2021 (serrano)                */
+;*    Last change :  Tue Dec 21 17:31:39 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES6 Module handling                                              */
@@ -62,9 +62,7 @@
 		   (import #f)
 		   (protocol 'file))))
 	 (env-add! (prgm-abspath this) (cons this ip) env)
-	 (set! imports
-	    (delete-duplicates
-	       (collect-imports* this (prgm-dirname this) env args) eq?))
+	 (set! imports (collect-imports* this (prgm-dirname this) env args))
 	 ;; declare all the imported variables
 	 (set! decls (append (collect-decls* this env args) decls)))))
 
@@ -93,9 +91,11 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (collect-imports* this::J2SProgram dirname env args)
    (with-access::J2SProgram this (imports exports decls nodes path)
-      (let ((imports (append-map (lambda (n)
-				    (collect-imports* n dirname env args))
-			(append decls nodes))))
+      (let ((imports (delete-duplicates
+			(append-map (lambda (n)
+				       (collect-imports* n dirname env args))
+			   (append decls nodes))
+			eq?)))
 	 (for-each (lambda (i n)
 		      (with-access::J2SImportPath i (index)
 			 (set! index n)))
@@ -183,8 +183,8 @@
 		       (with-access::J2SRedirect (car exports) (import export)
 			  (with-access::J2SImport import (iprgm)
 			     (let ((x (find-redirect id (car exports) import iprgm)))
-				(set! export x)
-				(car exports)))))
+				(duplicate::J2SRedirectNamespace (car exports)
+				   (export x))))))
 		      ((not (eq? id alias))
 		       (loop (cdr exports)))
 		      ((not (isa? (car exports) J2SRedirect))
@@ -286,8 +286,8 @@
 		       (with-access::J2SRedirect (car exports) (import export)
 			  (with-access::J2SImport import (iprgm)
 			     (let ((x (find-export name iprgm loc)))
-				(set! export x)
-				(car exports)))))
+				(duplicate::J2SRedirectNamespace (car exports)
+				   (export x))))))
 		      ((not (eq? name alias))
 		       (loop (cdr exports)))
 		      ((not (isa? (car exports) J2SRedirect))
@@ -513,7 +513,8 @@
 					     (loc loc)
 					     (vtype 'any)
 					     (export expo)
-					     ))
+					     (binder 'let-opt)
+					     (scope 'export)))
 				    (expo (instantiate::J2SExport
 					     (loc loc)
 					     (id 'default)

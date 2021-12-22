@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Sun Dec 19 15:07:05 2021 (serrano)                */
+;*    Last change :  Wed Dec 22 08:04:49 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -85,16 +85,14 @@
 		(scope (config-get conf :bind-global '%scope)))
 	    (when (pair? lets)
 	       (for-each (lambda (d::J2SDecl)
-			    (with-access::J2SDecl d (scope)
-			       (unless (eq? scope 'export)
-				  (set! scope 'global))))
+			    (with-access::J2SDecl d (scope export)
+			       (set! scope (if export 'export 'global))))
 		  lets)
 	       (set! decls (append decls lets)))
 	    (when (pair? vars)
 	       (for-each (lambda (d::J2SDecl)
-			    (with-access::J2SDecl d (scope)
-			       (unless (eq? scope 'export)
-				  (set! scope 'global))))
+			    (with-access::J2SDecl d (scope export)
+			       (set! scope (if export 'export 'global))))
 		  vars))
 	    (let ((vdecls (bind-decls! vars env mode scope '() '() genv conf)))
 	       (when (pair? vars)
@@ -137,13 +135,15 @@
 				(decl decl)
 				(index index)
 				(eprgm this)))
-		       (decl (instantiate::J2SDecl
+		       (decl (instantiate::J2SDeclInit
 				(loc loc)
 				(id 'default)
 				(vtype 'any)
 				(export expo)
-				(binder 'export)
-				(scope 'export))))
+				(binder 'let-opt)
+				(scope 'export)
+				(val (instantiate::J2SUndefined
+					(loc loc))))))
 	 (values expo
 	    ;; Moddecl (the module declaration) is #f if the module has
 	    ;; been parsed for import and not for compilation. In that
@@ -1618,7 +1618,8 @@
 		      (unless (isa? x J2SRedirect)
 			 (let ((d (or decl (find-decl id env))))
 			    (if d
-				(with-access::J2SDecl d (export)
+				(with-access::J2SDecl d (export scope)
+				   (set! scope 'export)
 				   (set! export x)
 				   (set! decl d))
 				(raise

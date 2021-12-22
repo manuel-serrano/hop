@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Fri Oct 22 07:11:59 2021 (serrano)                */
+;*    Last change :  Wed Dec 22 06:59:05 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dead code removal                                                */
@@ -103,16 +103,16 @@
 ;*    mark ::J2SDecl ...                                               */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (mark this::J2SDecl deval stamp)
-   (with-access::J2SDecl this (val id scope)
-      (when (eq? scope 'export)
+   (with-access::J2SDecl this (val id scope export)
+      (when (or export (eq? scope 'export))
 	 (use-decl! this stamp))))
 
 ;*---------------------------------------------------------------------*/
 ;*    mark ::J2SDeclInit ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (mark this::J2SDeclInit deval stamp)
-   (with-access::J2SDeclInit this (val id scope)
-      (when (eq? scope 'export)
+   (with-access::J2SDeclInit this (val id scope export)
+      (when (or export (eq? scope 'export))
 	 (use-decl! this stamp))
       (mark val deval stamp)))
 

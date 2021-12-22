@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Tue Dec 21 10:04:55 2021 (serrano)                */
+;*    Last change :  Wed Dec 22 09:39:09 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -549,8 +549,8 @@
       `(,(string->symbol (typeof this))
 	mode: ,mode
 	direct-eval: ,direct-eval
-	exports: ,(j2s->list* exports stack)
 	imports: ,(j2s->list* imports stack)
+	exports: ,(j2s->list* exports stack)
 	headers: ,(j2s->list* headers stack)
 	decls: ,(j2s->list* decls stack)
 	nodes: ,(j2s->list* nodes stack))))
