@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Wed Dec 22 09:39:09 2021 (serrano)                */
+;*    Last change :  Wed Dec 22 09:58:58 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -1494,21 +1494,6 @@
 (define-method (j2s->list this::J2SImportName stack)
    (with-access::J2SImportName this (loc id alias)
       `(J2SImportName ,id ,alias)))
-
-;*---------------------------------------------------------------------*/
-;*    j2s->list ::J2SImportExport ...                                  */
-;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SImportExport stack)
-   (with-access::J2SImportExport this (loc)
-      '(J2SImportExport)))
-
-;*---------------------------------------------------------------------*/
-;*    j2s->list ::J2SExportVars ...                                    */
-;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SExportVars stack)
-   (let ((nstack (check-stack this stack)))
-      (with-access::J2SExportVars this (refs)
-	 `(,@(call-next-method) ,@(j2s->list* refs nstack)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SExport ...                                        */

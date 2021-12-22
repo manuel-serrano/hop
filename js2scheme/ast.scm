@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Wed Dec 22 07:02:54 2021 (serrano)                */
+;*    Last change :  Wed Dec 22 09:58:53 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -557,17 +557,9 @@
 	      (id::symbol read-only)
 	      import)
 
-	   (final-class J2SImportExport
-	      (loc read-only))
-
 	   (final-class J2SImportDynamic::J2SExpr
 	      (base::bstring (default (pwd)))
 	      path::J2SExpr)
-
-	   (final-class J2SExportVars::J2SStmt
-	      (refs::pair-nil read-only)
-	      (aliases::pair-nil read-only (info '("notraverse")))
-	      (program (default #f) (info '("notraverse"))))
 
 	   (generic walk0 n::J2SNode p::procedure)
 	   (generic walk1 n::J2SNode p::procedure a0)
@@ -1175,7 +1167,6 @@
 (gen-walks J2SPragma (vals))
 (gen-walks J2SImport dollarpath)
 (gen-walks J2SImportDynamic path)
-(gen-walks J2SExportVars (refs))
 
 (gen-traversals J2STilde)
 
@@ -1436,15 +1427,6 @@
       (display "{ \"__node__\": \"J2SImportNamespace\", \"id\": " op)
       (j2s->json id op)
       (display ", \"loc\": " op)
-      (j2s->json loc op)
-      (display " }" op)))
-      
-;*---------------------------------------------------------------------*/
-;*    j2s->json ::J2SImportExport ...                                  */
-;*---------------------------------------------------------------------*/
-(define-method (j2s->json this::J2SImportExport op::output-port)
-   (with-access::J2SImportExport this (loc id)
-      (display "{ \"__node__\": \"J2SImportExport\", \"loc\": \"" op)
       (j2s->json loc op)
       (display " }" op)))
       

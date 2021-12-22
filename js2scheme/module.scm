@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 15 15:16:16 2018                          */
-;*    Last change :  Tue Dec 21 17:31:39 2021 (serrano)                */
+;*    Last change :  Wed Dec 22 10:07:19 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES6 Module handling                                              */
@@ -110,11 +110,26 @@
       (multiple-value-bind (abspath protocol)
 	 (resolve-module-file path dirname loc args)
 	 (let ((old (env-get abspath env)))
-	    (if old
+	    (cond
+	       (old
 		(with-access::J2SImport this (iprgm ipath)
 		   (set! iprgm (car old))
 		   (set! ipath (cdr old))
-		   (list ipath))
+		   (list ipath)))
+	       ((eq? protocol 'core)
+		(let ((prgm (open-string-hashtable-get core-modules path))
+		      (ip (instantiate::J2SImportPath
+			     (loc loc)
+			     (name path)
+			     (path abspath)
+			     (protocol protocol)
+			     (import this))))
+		   (set! iprgm prgm)
+		   (set! lang 'javascript)
+		   (set! ipath ip)
+		   (env-add! abspath (cons prgm ip) env)
+		   (list ip)))
+	       (else
 		(let* ((prgm (instantiate::J2SProgram
 				(loc loc)
 				(endloc loc)
@@ -132,7 +147,7 @@
 		   (set! ipath ip)
 		   (env-add! abspath (cons prgm ip) env)
 		   (import-module abspath prgm lang loc env args)
-		   (list ip)))))))
+		   (list ip))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    collect-imports* ::J2SRedirect ...                               */
@@ -169,14 +184,18 @@
       (with-access::J2SProgram iprgm (exports path)
 	 (let loop ((exports exports))
 	    (if (null? exports)
-		(raise
-		   (instantiate::&io-parse-error
-		      (proc "import")
-		      (msg (format "imported binding \"~a\" not exported by module ~s"
-			      id path))
-		      (obj id)
-		      (fname (cadr loc))
-		      (location (caddr loc))))
+		(begin
+		   (with-access::J2SProgram iprgm (exports mode)
+		      (tprint "EXP=" (map j2s->sexp exports) " path=" path
+			 " " mode))
+		   (raise
+		      (instantiate::&io-parse-error
+			 (proc "import")
+			 (msg (format "imported binding \"~a\" not exported by module ~s"
+				 id path))
+			 (obj id)
+			 (fname (cadr loc))
+			 (location (caddr loc)))))
 		(with-access::J2SExport (car exports) (alias (name id))
 		   (cond
 		      ((isa? (car exports) J2SRedirectNamespace)
@@ -430,46 +449,45 @@
 ;*    import-module ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (import-module path prgm lang loc env args)
-   (or (open-string-hashtable-get core-modules path)
-       (with-handler
-	  (lambda (e)
-	     (with-access::&exception e (fname location)
-		(unless (and fname location)
-		   (set! fname (cadr loc))
-		   (set! location (caddr loc))))
-	     (raise e))
-	  (call-with-input-file path
-	     (lambda (in)
-		(let ((margin (string-append
-				 (config-get args :verbmargin "")
-				 "     "))
-		      (verb (config-get args :verbose 0)))
-		   (when (>= verb 3)
-		      (fprint (current-error-port) "\n" margin
-			 path
-			 (if (>= (config-get args :verbose 0) 4)
-			     (string-append " [" path "]")
-			     "")))
-		   (let ()
-		      (case lang
-			 ((hop)
-			  (hop-compile in
-			     :verbose (if (<=fx verb 2) 0 verb)
-			     :verbmargin margin
-			     :module-import #t
-			     :module-env env
-			     :import-program prgm
-			     :import-loc loc))
-			 (else
-			  (j2s-compile in
-			     :driver (j2s-export-driver)
-			     :warning 0
-			     :module-import #t
-			     :verbose (if (<=fx verb 2) 0 verb)
-			     :verbmargin margin
-			     :module-env env
-			     :import-program prgm
-			     :import-loc loc))))))))))
+   (with-handler
+      (lambda (e)
+	 (with-access::&exception e (fname location)
+	    (unless (and fname location)
+	       (set! fname (cadr loc))
+	       (set! location (caddr loc))))
+	 (raise e))
+      (call-with-input-file path
+	 (lambda (in)
+	    (let ((margin (string-append
+			     (config-get args :verbmargin "")
+			     "     "))
+		  (verb (config-get args :verbose 0)))
+	       (when (>= verb 3)
+		  (fprint (current-error-port) "\n" margin
+		     path
+		     (if (>= (config-get args :verbose 0) 4)
+			 (string-append " [" path "]")
+			 "")))
+	       (let ()
+		  (case lang
+		     ((hop)
+		      (hop-compile in
+			 :verbose (if (<=fx verb 2) 0 verb)
+			 :verbmargin margin
+			 :module-import #t
+			 :module-env env
+			 :import-program prgm
+			 :import-loc loc))
+		     (else
+		      (j2s-compile in
+			 :driver (j2s-export-driver)
+			 :warning 0
+			 :module-import #t
+			 :verbose (if (<=fx verb 2) 0 verb)
+			 :verbmargin margin
+			 :module-env env
+			 :import-program prgm
+			 :import-loc loc)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    core-module-list ...                                             */

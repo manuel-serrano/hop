@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Tue Dec 21 11:22:28 2021 (serrano)                */
+;*    Last change :  Wed Dec 22 09:59:06 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for client side code).                                   */
@@ -1424,8 +1424,6 @@
 	 (cond
 	    ((null? names)
 	     (list this "import " path ";"))
-	    ((isa? (car names) J2SImportExport)
-	     (list this "export * from " path ";"))
 	    ((isa? (car names) J2SImportNamespace)
 	     (with-access::J2SImportNamespace (car names) (id)
 		(list this "import * as "
@@ -1452,21 +1450,6 @@
 		       (string-append "'" path "'"))))
 	     (import-path this p)))
        '()))
-
-;*---------------------------------------------------------------------*/
-;*    j2s-js ::J2SExportVars ...                                       */
-;*---------------------------------------------------------------------*/
-(define-method (j2s-js this::J2SExportVars tildec dollarc mode evalp ctx)
-
-   (define (export->js ref alias)
-      (with-access::J2SRef ref (decl)
-	 (with-access::J2SDecl decl (id)
-	    (list id " as " alias))))
-   
-   (with-access::J2SExportVars this (refs aliases)
-      (cons* this "export {"
-	 (append (append-map2* "," export->js refs aliases)
-	    '("}")))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SImportDynamic ...                                    */

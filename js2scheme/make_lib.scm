@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug  9 14:00:32 2013                          */
-;*    Last change :  Sat Dec 11 06:10:57 2021 (serrano)                */
+;*    Last change :  Wed Dec 22 10:04:15 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    THe module used to build the js2scheme heap file.                */
@@ -116,6 +116,5 @@
 	   (class J2SImportName)
 	   (class J2SImportDynamic)
 	   (class J2SExport)
-	   (class J2SExportVars)
 
            (export-all)))
