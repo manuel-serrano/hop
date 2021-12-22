@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Wed Dec 22 09:59:06 2021 (serrano)                */
+;*    Last change :  Wed Dec 22 11:00:47 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for client side code).                                   */
@@ -204,13 +204,18 @@
 		    (with-access::J2SStmtExpr node (expr)
 		       (isa? expr J2SLiteral))))))
    
-   (with-access::J2SProgram this (headers decls nodes mode)
-      (let* ((body (append headers decls (filter not-literal nodes)))
+   (with-access::J2SProgram this (headers imports exports decls nodes mode)
+      (let* ((body (append headers exports decls (filter not-literal nodes)))
 	     (prgm (j2s-js* this "" "" "" body tildec dollarc mode evalp ctx)))
 	 (case mode
-	    ((normal) prgm)
-	    ((strict hopscript) (cons "\"use strict\";\n" prgm))
-	    (else prgm)))))
+	    ((normal)
+	     prgm)
+	    ((strict hopscript)
+	     (cons "\"use strict\";\n"
+		(append (j2s-import this tildec dollarc mode evalp ctx)
+		   prgm)))
+	    (else
+	     prgm)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js::pair-nil ::J2SMeta ...                                   */
@@ -1444,12 +1449,22 @@
 		   `("} from " ,path ";")))))))
    
    (if (context-get ctx :es6-module-client #f)
-       (with-access::J2SImport this (names path dollarpath)
-	  (let ((p (if (isa? dollarpath J2SDollar)
-		       (cadr (j2s-js dollarpath tildec dollarc mode evalp ctx))
-		       (string-append "'" path "'"))))
-	     (import-path this p)))
+       (with-access::J2SImport this (names ipath dollarpath)
+	  (with-access::J2SImportPath ipath (name)
+	     (let ((p (if (isa? dollarpath J2SDollar)
+			  (cadr (j2s-js dollarpath tildec dollarc mode evalp ctx))
+			  (string-append "'" name "'"))))
+		(import-path this p))))
        '()))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-js ::J2SExport ...                                           */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-js this::J2SExport tildec dollarc mode evalp ctx)
+   (with-access::J2SExport this (id alias)
+      (if (eq? id alias)
+	  (list this "export {" id "};")
+	  (list this "export {" id " as " alias "};"))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SImportDynamic ...                                    */
@@ -1466,3 +1481,14 @@
 (define-method (j2s-js this::J2SDConsumer tildec dollarc mode evalp ctx)
    (with-access::J2SDConsumer this (expr)
       (j2s-js expr tildec dollarc mode evalp ctx)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-import ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (j2s-import this::J2SProgram tildec dollarc mode evalp ctx)
+   (with-access::J2SProgram this (imports)
+      (append-map (lambda (ip)
+		     (with-access::J2SImportPath ip (import)
+			(j2s-js import tildec dollarc mode evalp ctx)))
+	 imports)))
+   

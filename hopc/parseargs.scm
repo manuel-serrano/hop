@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.5.x/hopc/parseargs.scm                */
+;*    serrano/prgm/project/hop/hop/hopc/parseargs.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Mon Dec  6 09:39:06 2021 (serrano)                */
+;*    Last change :  Wed Dec 22 11:16:33 2021 (serrano)                */
 ;*    Copyright   :  2004-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -27,7 +27,7 @@
 ;*---------------------------------------------------------------------*/
 (define ecmascript-es6
    '(es6-let: es6-const: es6-arrow-function: es6-default-value:
-     es6-rest-argument:))
+     es6-rest-argument: es6-module-client:))
 
 (define ecmascript-es2017
    (append ecmascript-es6 '(es2017-async:)))
