@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../project/hop/3.2.x/test/hopjs/serv/aux/stressClient.js        */
+/*    .../prgm/project/hop/hop/test/hopjs/serv/aux/stressClient.js     */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Vincent Prunet                                    */
 /*    Creation    :  Mon Sep  14 11:43:00 2015                         */
-/*    Last change :  Tue Jun  5 13:13:49 2018 (serrano)                */
-/*    Copyright   :  2015-18 Inria                                     */
+/*    Last change :  Wed Dec 22 13:53:56 2021 (serrano)                */
+/*    Copyright   :  2015-21 Inria                                     */
 /*    -------------------------------------------------------------    */
 /*    Stress test for services: client worker                          */
 /*=====================================================================*/
@@ -27,10 +27,12 @@ onmessage = function( e ) {
 };
 
 function test( id ) {
+   console.log("test=", id + "/" + numCalls);
    if (effectiveCalls == numCalls ) {
       postMessage( id );
    } else {
       try {
+	 console.log("test id=", id);
 	 toTest( { id: id } ).post( function( result ) {
 	    effectiveCalls++;
 	    test( id );
