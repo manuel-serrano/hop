@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Wed Dec 22 09:58:58 2021 (serrano)                */
+;*    Last change :  Thu Dec 23 07:15:17 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -1494,6 +1494,14 @@
 (define-method (j2s->list this::J2SImportName stack)
    (with-access::J2SImportName this (loc id alias)
       `(J2SImportName ,id ,alias)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s->list ::J2SImportDynamic ...                                 */
+;*---------------------------------------------------------------------*/
+(define-method (j2s->list this::J2SImportDynamic stack)
+   (with-access::J2SImportDynamic this (loc base path)
+      `(J2SImportDynamic :base ,base
+	  :path ,(j2s->list path (cons this stack)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SExport ...                                        */

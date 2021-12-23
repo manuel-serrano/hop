@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Wed Dec 22 11:00:47 2021 (serrano)                */
+;*    Last change :  Thu Dec 23 08:21:17 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for client side code).                                   */
@@ -487,51 +487,80 @@
 	     funid funid))
 	 (else
 	  (j2s-error "js" "wrong service import (body should be omitted)" this))))
+
+   (define (async-body this::J2SFun)
+      ;; The shape of async functions is:
+      ;; (J2SBlock (J2SRetrun (J2SCall (J2SHopRef js-span) (J2SFun* ...))))
+      (with-access::J2SFun this (body)
+	 (if (isa? body J2SBlock)
+	     (with-access::J2SBlock body (nodes)
+		(if (and (pair? nodes) (null? (cdr nodes)))
+		    (if (isa? (car nodes) J2SReturn)
+			(with-access::J2SReturn (car nodes) (expr)
+			   (tprint "YES " (j2s->sexp expr))
+			   (if (isa? expr J2SCall)
+			       (with-access::J2SCall expr (fun args)
+				  (tprint "YES2 " (length args) " " (typeof fun))
+				  (if (and (isa? fun J2SHopRef) (pair? args))
+				      (with-access::J2SHopRef fun (id)
+					 (tprint "YES3 " (map j2s->sexp args))
+					 (if (and (eq? id 'js-spawn)
+						  (isa? (car args) J2SFun))
+					     (with-access::J2SFun (car args) (body)
+						(values body #t))
+					     (values body #f)))
+				      (values body #f)))
+			       (values body #f)))
+			(values body #f))
+		    (values body #f)))
+	     (values body #f))))
    
-   (with-access::J2SFun this (params body idthis vararg generator)
-      (let ((ellipsis (if (eq? vararg 'rest) "... " "")))
-	 (cond
-	    ((isa? this J2SSvc)
-	     ;; a service
-	     (list this (svc funid body)))
-	    ((eq? idthis '%)
-	     ;; an arrow function
-	     (cons* this "("
-		(append
-		   (j2s-js-ellipsis this "(" ") => " "," ellipsis
-		      params tildec dollarc mode evalp ctx)
-		   (j2s-js body tildec dollarc mode evalp ctx)
-		   '(")"))))
-	    ((not generator)
-	     ;; a regular function
-	     (cons* this (format "~a~a" funkwd funid)
-		(append
-		   (j2s-js-ellipsis this "(" ")" "," ellipsis
-		      params tildec dollarc mode evalp ctx)
-		   (j2s-js body tildec dollarc mode evalp ctx)
-		   '("\n"))))
-	    ((not (eq? (context-get ctx :target) 'es5))
-	     ;; a generator, for es6
-	     (cons* this (format "~a*~a" funkwd funid)
-		(append
-		   (j2s-js-ellipsis this "(" ")" "," ellipsis
-		      params tildec dollarc mode evalp ctx)
-		   (j2s-js body tildec dollarc mode evalp ctx)
-		   '("\n"))))
-	    (else
-	     ;; a generator, for es5
-	     (let ((predecls (collect-generator-predecls! body)))
-		(cons* this (format "~a~a" funkwd funid)
+   (with-access::J2SFun this (params idthis vararg generator)
+      (multiple-value-bind (body async)
+	 (async-body this)
+	 (let ((ellipsis (if (eq? vararg 'rest) "... " "")))
+	    (cond
+	       ((isa? this J2SSvc)
+		;; a service
+		(list this (svc funid body)))
+	       ((eq? idthis '%)
+		;; an arrow function
+		(cons* this (if async "async (" "(")
+		   (append
+		      (j2s-js-ellipsis this "(" ") => " "," ellipsis
+			 params tildec dollarc mode evalp ctx)
+		      (j2s-js body tildec dollarc mode evalp ctx)
+		      '(")"))))
+	       ((not generator)
+		;; a regular function
+		(cons* this (if async "async " "") (format "~a~a" funkwd funid)
 		   (append
 		      (j2s-js-ellipsis this "(" ")" "," ellipsis
 			 params tildec dollarc mode evalp ctx)
-		      '("{")
-		      (append-map! (lambda (decl)
-				      (j2s-js decl tildec dollarc mode evalp ctx))
-			 predecls)
-		      '("var $GEN=new hop.Generator(function(_$v,_$e)")
 		      (j2s-js body tildec dollarc mode evalp ctx)
-		      '(");return $GEN;}\n")))))))))
+		      '("\n"))))
+	       ((not (eq? (context-get ctx :target) 'es5))
+		;; a generator, for es6
+		(cons* this (format "~a*~a" funkwd funid)
+		   (append
+		      (j2s-js-ellipsis this "(" ")" "," ellipsis
+			 params tildec dollarc mode evalp ctx)
+		      (j2s-js body tildec dollarc mode evalp ctx)
+		      '("\n"))))
+	       (else
+		;; a generator, for es5
+		(let ((predecls (collect-generator-predecls! body)))
+		   (cons* this (format "~a~a" funkwd funid)
+		      (append
+			 (j2s-js-ellipsis this "(" ")" "," ellipsis
+			    params tildec dollarc mode evalp ctx)
+			 '("{")
+			 (append-map! (lambda (decl)
+					 (j2s-js decl tildec dollarc mode evalp ctx))
+			    predecls)
+			 '("var $GEN=new hop.Generator(function(_$v,_$e)")
+			 (j2s-js body tildec dollarc mode evalp ctx)
+			 '(");return $GEN;}\n"))))))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SFun ...                                              */

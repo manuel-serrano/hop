@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Sat Nov 27 10:33:56 2021 (serrano)                */
+;*    Last change :  Thu Dec 23 08:14:08 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript CPS transformation                                    */
@@ -1155,6 +1155,20 @@
 				      (kcall k (dup-assig this klhs krhs)))
 			    this k)
 			 r kbreaks kcontinues fun conf))
+	    this k)
+	 r kbreaks kcontinues fun conf)))
+
+;*---------------------------------------------------------------------*/
+;*    cps ::J2SDProducer ...                                           */
+;*---------------------------------------------------------------------*/
+(define-method (cps this::J2SDProducer k r kbreaks kcontinues fun conf)
+   (assert-kont k KontExpr this)
+   (with-access::J2SDProducer this (expr)
+      (cps expr
+	 (KontExpr (lambda (kexpr::J2SExpr)
+		      (kcall k
+			 (duplicate::J2SDProducer this
+			    (expr kexpr))))
 	    this k)
 	 r kbreaks kcontinues fun conf)))
 
