@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Wed Dec 22 08:06:20 2021 (serrano)                */
+;*    Last change :  Thu Dec 23 08:45:37 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -2373,6 +2373,7 @@
 	     (instantiate::J2SYield
 		(loc loc)
 		(generator gen)
+		(await #f)
 		(expr (instantiate::J2SUndefined
 			 (loc loc)))))
 	    (else
@@ -2380,6 +2381,7 @@
 		(instantiate::J2SYield
 		   (loc loc)
 		   (generator gen)
+		   (await #f)
 		   (expr expr)))))))
 
    (define (await-expr)
@@ -2388,6 +2390,7 @@
 	 (instantiate::J2SYield
 	    (loc loc)
 	    (generator #f)
+	    (await #t)
 	    (expr expr))))
    
    (define (tag-call-arguments loc)
@@ -3955,6 +3958,12 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (disable-reserved-ident this::J2SNode mode)
    (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    disable-reserved-ident ::J2STilde ...                            */
+;*---------------------------------------------------------------------*/
+(define-walk-method (disable-reserved-ident this::J2STilde mode)
+   this)
 
 ;*---------------------------------------------------------------------*/
 ;*    disable-reserved-ident ::J2SDecl ...                             */

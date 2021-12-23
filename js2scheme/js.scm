@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Thu Dec 23 08:21:17 2021 (serrano)                */
+;*    Last change :  Thu Dec 23 08:34:38 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for client side code).                                   */
@@ -497,13 +497,10 @@
 		(if (and (pair? nodes) (null? (cdr nodes)))
 		    (if (isa? (car nodes) J2SReturn)
 			(with-access::J2SReturn (car nodes) (expr)
-			   (tprint "YES " (j2s->sexp expr))
 			   (if (isa? expr J2SCall)
 			       (with-access::J2SCall expr (fun args)
-				  (tprint "YES2 " (length args) " " (typeof fun))
 				  (if (and (isa? fun J2SHopRef) (pair? args))
 				      (with-access::J2SHopRef fun (id)
-					 (tprint "YES3 " (map j2s->sexp args))
 					 (if (and (eq? id 'js-spawn)
 						  (isa? (car args) J2SFun))
 					     (with-access::J2SFun (car args) (body)
@@ -525,7 +522,7 @@
 		(list this (svc funid body)))
 	       ((eq? idthis '%)
 		;; an arrow function
-		(cons* this (if async "async (" "(")
+		(cons* this (if async "(async " "(")
 		   (append
 		      (j2s-js-ellipsis this "(" ") => " "," ellipsis
 			 params tildec dollarc mode evalp ctx)
@@ -1378,8 +1375,8 @@
 ;*    j2s-js ::J2SYield ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2SYield tildec dollarc mode evalp ctx)
-   (with-access::J2SYield this (expr kont generator)
-      (cons* this (if generator "yield* " "yield ")
+   (with-access::J2SYield this (expr kont generator await)
+      (cons* this (if generator "yield* " (if await "await " "yield "))
 	 (j2s-js expr tildec dollarc mode evalp ctx))))
 
 ;*---------------------------------------------------------------------*/

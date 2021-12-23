@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Wed Dec 22 09:58:53 2021 (serrano)                */
+;*    Last change :  Thu Dec 23 09:17:53 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -230,7 +230,8 @@
 	   
 	   (final-class J2SYield::J2SExpr
 	      (expr::J2SExpr (info '("ast")))
-	      (generator::bool read-only (default #f)))
+	      (generator::bool read-only (default #f))
+	      (await::bool read-only (default #t)))
 	   
 	   (final-class J2SWith::J2SStmt
 	      (id::symbol read-only (default (gensym '__with)))
@@ -508,7 +509,7 @@
 	      (cnt::symbol read-only))
 
 	   (final-class J2SDProducer::J2SExpr
-	      (decl::J2SDecl (info '("jsonref")))
+	      (decl::J2SDecl (info '("jsonref" "notraverse")))
 	      (expr::J2SExpr (info '("ast")))
 	      (size::long read-only (info '("notraverse"))))
 

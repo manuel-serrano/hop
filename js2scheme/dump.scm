@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Thu Dec 23 07:15:17 2021 (serrano)                */
+;*    Last change :  Thu Dec 23 09:00:00 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -1291,8 +1291,9 @@
 ;*    j2s->list ::J2SYield ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SYield stack)
-   (with-access::J2SYield this (expr generator)
+   (with-access::J2SYield this (expr generator await)
       `(,@(call-next-method) ,@(if generator '(*) '())
+	  ,@(if await '(await) '())
 	  ,(j2s->list expr (check-stack this stack)))))
 
 ;*---------------------------------------------------------------------*/
@@ -1412,7 +1413,8 @@
 (define-method (j2s->list this::J2SDConsumer stack)
    (let ((nstack (check-stack this stack)))
       (with-access::J2SDConsumer this (expr path)
-	 `(,@(call-next-method) ,@(dump-type this) ,path
+	 `(,@(call-next-method) ,@(dump-type this)
+	     :path ,(map (lambda (p) (j2s->list p nstack)) path)
 	     ,(j2s->list expr nstack)))))
 
 ;*---------------------------------------------------------------------*/
