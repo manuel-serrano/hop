@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Tue Dec 21 14:28:55 2021 (serrano)                */
+;*    Last change :  Fri Dec 24 15:32:42 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -560,7 +560,7 @@
 		    (with-access::J2SRedirect x ((rindex index) export import ( id2 id))
 		       (with-access::J2SImport import (ipath)
 			  (with-access::J2SImportPath ipath ((iindex index))
-			     (tprint "redirect "
+			     '(tprint "redirect "
 				id " " id2 " rifx=" rindex
 				" iindex=" iindex
 				 " (" (export-from x) ")")
@@ -569,7 +569,7 @@
 				(cons iindex iindexes)))))
 		    (with-access::J2SExport x ((rindex index) decl)
 		       (with-access::J2SExport x ((id2 id))
-			  (tprint "export " id " " id2 " "
+			  '(tprint "export " id " " id2 " "
 			     "ridx=" (reverse (cons rindex rindexes))
 			     " idx=" (reverse iindexes)
 			     " (" (export-from x) ")"))

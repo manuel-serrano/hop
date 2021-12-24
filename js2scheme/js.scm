@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Thu Dec 23 08:34:38 2021 (serrano)                */
+;*    Last change :  Fri Dec 24 06:50:30 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for client side code).                                   */
@@ -1476,11 +1476,18 @@
    
    (if (context-get ctx :es6-module-client #f)
        (with-access::J2SImport this (names ipath dollarpath)
-	  (with-access::J2SImportPath ipath (name)
-	     (let ((p (if (isa? dollarpath J2SDollar)
-			  (cadr (j2s-js dollarpath tildec dollarc mode evalp ctx))
-			  (string-append "'" name "'"))))
-		(import-path this p))))
+	  (tprint ">>> import ipath=" ipath " dollarpath=" (j2s->sexp dollarpath))
+	  (let ((p (cond
+		      ((isa? dollarpath J2SNode)
+		       (cadr (j2s-js dollarpath tildec dollarc mode evalp ctx)))
+		      ((isa? ipath J2SImportPath)
+		       (with-access::J2SImportPath ipath (name)
+			  (string-append "'" name "'")))
+		      (#t
+		       '(glop))
+		      (else
+		       (error "import" "Illegal path" (j2s->sexp this))))))
+	     (import-path this p)))
        '()))
 
 ;*---------------------------------------------------------------------*/
@@ -1513,6 +1520,7 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-import this::J2SProgram tildec dollarc mode evalp ctx)
    (with-access::J2SProgram this (imports)
+      (tprint "J2S-IMPORT...")
       (append-map (lambda (ip)
 		     (with-access::J2SImportPath ip (import)
 			(j2s-js import tildec dollarc mode evalp ctx)))

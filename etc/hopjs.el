@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Tue Jul 13 12:47:22 2021 (serrano)                */
+;*    Last change :  Fri Dec 24 08:46:15 2021 (serrano)                */
 ;*    Copyright   :  2014-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -84,7 +84,7 @@
 	(cons "https?://[^ \t]*" 'font-lock-string-face)
 	(cons "\\<\\(?:async\\|yield\\|await\\)\\>" 'font-lock-face-hopjs3)
 	(list "#:\\([^ \t\r\n{}(),;=[]*\\)" 1 'font-lock-face-hopjs3)
-	(cons "\\<export\\>" 'font-lock-face-hopjs4)
+	(cons "\\<export\\|import\\|from\\|as\\>" 'font-lock-face-hopjs4)
 	(cons "exports." 'font-lock-keyword-face)
 	(list "\\(record\\|class\\)[ \t]*\\([^ \t]+\\)"
 	      '(1 font-lock-keyword-face)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 15 15:16:16 2018                          */
-;*    Last change :  Wed Dec 22 10:07:19 2021 (serrano)                */
+;*    Last change :  Fri Dec 24 14:20:57 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES6 Module handling                                              */
@@ -183,54 +183,55 @@
    (define (find-export id::symbol import::J2SImport iprgm::J2SProgram loc)
       (with-access::J2SProgram iprgm (exports path)
 	 (let loop ((exports exports))
-	    (if (null? exports)
-		(begin
-		   (with-access::J2SProgram iprgm (exports mode)
-		      (tprint "EXP=" (map j2s->sexp exports) " path=" path
-			 " " mode))
-		   (raise
-		      (instantiate::&io-parse-error
-			 (proc "import")
-			 (msg (format "imported binding \"~a\" not exported by module ~s"
-				 id path))
-			 (obj id)
-			 (fname (cadr loc))
-			 (location (caddr loc)))))
-		(with-access::J2SExport (car exports) (alias (name id))
-		   (cond
-		      ((isa? (car exports) J2SRedirectNamespace)
-		       (with-access::J2SRedirect (car exports) (import export)
-			  (with-access::J2SImport import (iprgm)
-			     (let ((x (find-redirect id (car exports) import iprgm)))
-				(duplicate::J2SRedirectNamespace (car exports)
-				   (export x))))))
-		      ((not (eq? id alias))
-		       (loop (cdr exports)))
-		      ((not (isa? (car exports) J2SRedirect))
-		       (with-access::J2SImport import (respath)
-			  (values (car exports) import)))
-		      (else
-		       (with-access::J2SRedirect (car exports) (import export)
-			  (with-access::J2SImport import (iprgm)
-			     (let ((x (find-redirect name (car exports) import iprgm)))
-				(set! export x)
-				(car exports)))))))))))
+	    (when (pair? exports)
+	       (with-access::J2SExport (car exports) (alias (name id))
+		  (cond
+		     ((isa? (car exports) J2SRedirectNamespace)
+		      (with-access::J2SRedirect (car exports) (import export)
+			 (with-access::J2SImport import (iprgm)
+			    (multiple-value-bind (x i)
+			       (find-redirect id (car exports) import iprgm)
+			       (if x
+				   (duplicate::J2SRedirectNamespace (car exports)
+				      (export x))
+				   (loop (cdr exports)))))))
+		     ((not (eq? id alias))
+		      (loop (cdr exports)))
+		     ((not (isa? (car exports) J2SRedirect))
+		      (with-access::J2SImport import (respath)
+			 (values (car exports) import)))
+		     (else
+		      (with-access::J2SRedirect (car exports) (import export)
+			 (with-access::J2SImport import (iprgm)
+			    (let ((x (find-redirect name (car exports) import iprgm)))
+			       (set! export x)
+			       (car exports)))))))))))
    
    (define (import-binding name import::J2SImport)
-      (with-access::J2SImport import (iprgm loc)
+      (with-access::J2SImport import (iprgm loc ipath)
 	 (with-access::J2SImportName name (id alias)
 	    (multiple-value-bind (x i)
 	       (find-export id this iprgm loc)
-	       (instantiate::J2SDeclImport
-		  (loc loc)
-		  (id alias)
-		  (alias id)
-		  (binder 'let)
-		  (writable #f)
-		  (vtype 'any)
-		  (scope 'local)
-		  (export x)
-		  (import import))))))
+	       (if (not x)
+		   (with-access::J2SImportPath ipath (path)
+		      (raise
+			 (instantiate::&io-parse-error
+			    (proc "import")
+			    (msg (format "imported binding \"~a\" not exported by module ~s"
+				    id path))
+			    (obj id)
+			    (fname (cadr loc))
+			    (location (caddr loc))))   )
+		   (instantiate::J2SDeclImport
+		      (loc loc)
+		      (id alias)
+		      (alias id)
+		      (binder 'let)
+		      (writable #f)
+		      (vtype 'any)
+		      (scope 'local)
+		      (export x)
+		      (import import)))))))
 
    (define (import-namespace name import::J2SImport)
       (with-access::J2SImport import (iprgm loc)
@@ -290,23 +291,17 @@
    (define (find-export name::symbol iprgm::J2SProgram loc)
       (with-access::J2SProgram iprgm (exports path)
 	 (let loop ((exports exports))
-	    (if (null? exports)
-		(raise
-		   (instantiate::&io-parse-error
-		      (proc "export")
-		      (msg (format "imported binding \"~a\" not exported by module ~s"
-			      name path))
-		      (obj name)
-		      (fname (cadr loc))
-		      (location (caddr loc))))
+	    (when (pair? exports)
 		(with-access::J2SExport (car exports) (alias id loc)
 		   (cond
 		      ((isa? (car exports) J2SRedirectNamespace)
 		       (with-access::J2SRedirect (car exports) (import export)
 			  (with-access::J2SImport import (iprgm)
 			     (let ((x (find-export name iprgm loc)))
-				(duplicate::J2SRedirectNamespace (car exports)
-				   (export x))))))
+				(if x
+				    (duplicate::J2SRedirectNamespace (car exports)
+				       (export x))
+				    (loop (cdr exports)))))))
 		      ((not (eq? name alias))
 		       (loop (cdr exports)))
 		      ((not (isa? (car exports) J2SRedirect))
@@ -321,7 +316,17 @@
    (with-access::J2SRedirect this (rindex ipath import loc id index export)
       (with-access::J2SImport import (iprgm ipath)
 	 (let ((x (find-export id iprgm loc)))
-	    (set! export x))
+	    (if x
+		(set! export x)
+		(with-access::J2SImportPath ipath (path)
+		   (raise
+		      (instantiate::&io-parse-error
+			 (proc "export")
+			 (msg (format "imported binding \"~a\" not exported by module ~s"
+				 id path))
+			 (obj id)
+			 (fname (cadr loc))
+			 (location (caddr loc)))))))
 	 this)))
 
 ;*---------------------------------------------------------------------*/

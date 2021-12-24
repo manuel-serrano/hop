@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Tue Dec 21 13:49:34 2021 (serrano)                */
+;*    Last change :  Fri Dec 24 15:45:35 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -784,7 +784,8 @@
 	    (cond
 	       ((null? idx)
 		;; namespace export
-		(tprint margin "namespace...")
+		(when debug
+		   (tprint margin "namespace..."))
 		(let ((mod (vector-ref imports (car redirect))))
 		   (bind-exports! modobj mod (string-append margin " "))))
 	       ((pair? redirect)

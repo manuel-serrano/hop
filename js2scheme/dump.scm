@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Thu Dec 23 09:00:00 2021 (serrano)                */
+;*    Last change :  Fri Dec 24 06:59:24 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -1472,11 +1472,12 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SImport stack)
    (let ((nstack (check-stack this stack)))
-      (with-access::J2SImport this (path ipath names iprgm loc)
+      (with-access::J2SImport this (path ipath dollarpath names iprgm loc)
 	 `(,@(call-next-method)
 	     ,@(dump-loc loc)
 	     :path ,path
-	     :ipath ,(j2s->list ipath (cons this stack))
+	     ,@(if ipath `(:ipath ,(j2s->list ipath (cons this stack)) ) '())
+	     ,@(if dollarpath `(:dollarpath ,(j2s->list dollarpath (cons this stack))) '())
 	     :names ,(j2s->list* names nstack)
 	     :iprgm ,(typeof iprgm)))))
 

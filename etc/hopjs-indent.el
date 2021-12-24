@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov  2 09:45:39 2018                          */
-;*    Last change :  Mon Jul 19 07:17:14 2021 (serrano)                */
+;*    Last change :  Fri Dec 24 06:30:51 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs indent                                                     */
@@ -212,6 +212,9 @@
 		     (hopjs-indent-column-token tok hopjs-indent-level))))
 		(t
 		 (hopjs-indent-column-token etok hopjs-indent-level)))))
+	    ((export)
+	     (hopjs-indent-column-token
+	      (hopjs-parse-peek-token) hopjs-indent-level))
 	    (t
 	     (hopjs-debug 0 "hopjs-indent-new-lbrace args.7..%s [%s]"
 			  itok (hopjs-parse-token-string itok))

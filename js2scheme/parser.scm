@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Thu Dec 23 08:45:37 2021 (serrano)                */
+;*    Last change :  Fri Dec 24 14:29:50 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1556,7 +1556,7 @@
 					  (cons id ids)
 					  (cons alias aliases))))
 				 (set! exports (append x exports))
-				 (J2SUndefined)))))
+				 (J2SNop)))))
 		      ((COMMA)
 		       (consume-any!)
 		       (loop (cons id ids) (cons alias aliases)))
