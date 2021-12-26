@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Sun Dec 26 11:46:14 2021 (serrano)                */
+;*    Last change :  Sun Dec 26 19:47:54 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for client side code).                                   */
@@ -205,7 +205,11 @@
 		       (isa? expr J2SLiteral))))))
    
    (with-access::J2SProgram this (headers imports exports decls nodes mode)
-      (let* ((body (append headers exports decls (filter not-literal nodes)))
+      (let* ((body (append headers
+		      (filter (lambda (x)
+				 (not (isa? x J2SExportDefault)))
+			 exports)
+		      decls (filter not-literal nodes)))
 	     (prgm (j2s-js* this "" "" "" body tildec dollarc mode evalp ctx)))
 	 (case mode
 	    ((normal)

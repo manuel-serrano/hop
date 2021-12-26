@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Sun Dec 26 12:38:41 2021 (serrano)                */
+;*    Last change :  Sun Dec 26 19:43:20 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -146,7 +146,8 @@
 		 exports)
 	 ;; force a default export if non specified
 	 (let ((expo (export-default-stmt moddecl (length exports) loc)))
-	    (set! exports (append exports (list expo)))))))
+	    (set! exports (append exports (list expo)))
+	    (set! nodes (append nodes (list expo)))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    decl-cleanup-duplicate! ...                                      */

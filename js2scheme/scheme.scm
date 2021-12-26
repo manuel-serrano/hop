@@ -291,7 +291,9 @@
 ;*    j2s-scheme ::J2SExportDefault ...                                */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SExportDefault mode return ctx)
-   #unspecified)
+   (with-access::J2SExportDefault this (index expr)
+      `(vector-set! %evars ,index
+	  ,(j2s-scheme expr mode return ctx))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme-set! ...                                              */
