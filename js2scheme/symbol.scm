@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Wed Dec 22 10:00:17 2021 (serrano)                */
+;*    Last change :  Sun Dec 26 12:38:41 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -128,45 +128,25 @@
 (define (commonjs-export this::J2SProgram moddecl)
    
    (define (export-default-stmt moddecl index loc)
-      (co-instantiate ((expo (instantiate::J2SExport
-				(loc loc)
-				(id 'default)
-				(alias 'default)
-				(decl decl)
-				(index index)
-				(eprgm this)))
-		       (decl (instantiate::J2SDeclInit
-				(loc loc)
-				(id 'default)
-				(vtype 'any)
-				(export expo)
-				(binder 'let-opt)
-				(scope 'export)
-				(val (instantiate::J2SUndefined
-					(loc loc))))))
-	 (values expo
-	    ;; Moddecl (the module declaration) is #f if the module has
-	    ;; been parsed for import and not for compilation. In that
-	    ;; case a fake empty code that will never be executed
-	    ;; is enough to get the default declaration correct
-	    (if moddecl
-		(J2SStmtExpr
-		   (J2SAssig (J2SRef decl)
-		      (J2SAccess (J2SRef moddecl)
-			 (J2SString "exports"))))
-		(J2SNop))
-	    (and moddecl decl))))
+      (instantiate::J2SExportDefault
+	 (loc loc)
+	 (id 'default)
+	 (alias 'default)
+	 (expr (if moddecl
+		   (J2SAccess (J2SRef moddecl)
+		      (J2SString "exports"))
+		   (instantiate::J2SUndefined
+		      (loc loc))))
+	 (index index)
+	 (eprgm this)))
    
    (with-access::J2SProgram this (nodes loc exports decls)
       (unless (find (lambda (e)
 		       (with-access::J2SExport e (id) (eq? id 'default)))
 		 exports)
 	 ;; force a default export if non specified
-	 (multiple-value-bind (expo stmt decl)
-	    (export-default-stmt moddecl (length exports) loc)
-	    (when decl (set! decls (cons decl decls)))
-	    (set! exports (append exports (list expo)))
-	    (set! nodes (append nodes (list stmt)))))))
+	 (let ((expo (export-default-stmt moddecl (length exports) loc)))
+	    (set! exports (append exports (list expo)))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    decl-cleanup-duplicate! ...                                      */
@@ -1540,7 +1520,7 @@
    (with-access::J2SProgram this (exports)
       (for-each (lambda (x)
 		   (with-access::J2SExport x (id from loc decl index)
-		      (unless (isa? x J2SRedirect)
+		      (unless (or (isa? x J2SRedirect) (isa? x J2SExportDefault))
 			 (let ((d (or decl (find-decl id env))))
 			    (if d
 				(with-access::J2SDecl d (export scope)

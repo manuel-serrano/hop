@@ -3,11 +3,26 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 25 15:52:55 2017                          */
-;*    Last change :  Mon Dec 20 18:12:03 2021 (serrano)                */
+;*    Last change :  Sun Dec 26 09:03:43 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Types Companion macros                                           */
 ;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    env-debug ...                                                    */
+;*---------------------------------------------------------------------*/
+(define env-debug
+   (let ((env (getenv "HOP_DEBUG")))
+      (if (string? env)
+	  (string->integer env)
+	  (bigloo-debug))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-debug ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (hop-debug)
+   env-debug)
 
 ;*---------------------------------------------------------------------*/
 ;*    define-instantiate ...                                           */
@@ -432,7 +447,15 @@
 (define (js-import-ref-expander x e)
    (match-case x
       ((?- ?v ?idx ?loc . ?debug)
-       (e `(vector-ref ,v ,idx) e))
+       (if hop-debug
+	   (e `(with-handler
+		  (lambda (e)
+		     (fprintf (current-error-port)
+			"js-import-ref: cannot import \"~a\"" ',x)
+		     (raise e))
+		  (vector-ref ,v ,idx))
+	      e)
+	   (e `(vector-ref ,v ,idx) e)))
       (else
        (error "js-import-ref" "wrong syntax" x))))
 

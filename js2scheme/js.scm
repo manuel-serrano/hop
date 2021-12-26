@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Fri Dec 24 06:50:30 2021 (serrano)                */
+;*    Last change :  Sun Dec 26 11:46:14 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for client side code).                                   */
@@ -331,6 +331,8 @@
 (define-method (j2s-js this::J2SDeclInit tildec dollarc mode evalp ctx)
    (with-access::J2SDeclInit this (val binder writable scope id loc)
       (cond
+	 ((isa? val J2SImportNamespace)
+	  '())
 	 ((and (eq? scope 'global)
 	       (> (context-get ctx :debug-client 0) 0)
 	       (or (j2s-let-opt? this) (not (isa? val J2SUndefined))))
@@ -1450,15 +1452,19 @@
 	     (list (symbol->string! id))
 	     (list (symbol->string! id) " as " (symbol->string! alias)))))
 
+   (define (namespace? this::J2SImportName)
+      (with-access::J2SImportName this (id)
+	 (eq? id '*)))
+
    (define (import-path this path)
       (with-access::J2SImport this (names)
 	 (cond
 	    ((null? names)
 	     (list this "import " path ";"))
-	    ((isa? (car names) J2SImportNamespace)
-	     (with-access::J2SImportNamespace (car names) (id)
+	    ((namespace? (car names))
+	     (with-access::J2SImportName (car names) (id alias)
 		(list this "import * as "
-		   (symbol->string id) " from " path ";")))
+		   (symbol->string alias) " from " path ";")))
 ;* 	    ((isa? (car names) J2SImportRedirect)                      */
 ;* 	     (cons* this "export {"                                    */
 ;* 		(append (append-map* ","                               */
@@ -1473,21 +1479,23 @@
 	     (cons* this "import {"
 		(append (append-map* "," import-name->js names)
 		   `("} from " ,path ";")))))))
-   
+
    (if (context-get ctx :es6-module-client #f)
-       (with-access::J2SImport this (names ipath dollarpath)
-	  (tprint ">>> import ipath=" ipath " dollarpath=" (j2s->sexp dollarpath))
-	  (let ((p (cond
-		      ((isa? dollarpath J2SNode)
-		       (cadr (j2s-js dollarpath tildec dollarc mode evalp ctx)))
-		      ((isa? ipath J2SImportPath)
-		       (with-access::J2SImportPath ipath (name)
-			  (string-append "'" name "'")))
-		      (#t
-		       '(glop))
-		      (else
-		       (error "import" "Illegal path" (j2s->sexp this))))))
-	     (import-path this p)))
+       (with-access::J2SImport this (names ipath dollarpath %info)
+	  (if (eq? %info 'generated)
+	      '()
+	      (let ((p (cond
+			  ((not (isa? dollarpath J2SUndefined))
+			   (cadr (j2s-js dollarpath tildec dollarc mode evalp ctx)))
+			  ((isa? ipath J2SImportPath)
+			   (with-access::J2SImportPath ipath (name)
+			      (string-append "'" name "'")))
+			  (#t
+			   '(glop))
+			  (else
+			   (error "import" "Illegal path" (j2s->sexp this))))))
+		 (set! %info 'generated)
+		 (import-path this p))))
        '()))
 
 ;*---------------------------------------------------------------------*/
@@ -1498,6 +1506,17 @@
       (if (eq? id alias)
 	  (list this "export {" id "};")
 	  (list this "export {" id " as " alias "};"))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-js ::J2SExportDefault ...                                    */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-js this::J2SExportDefault tildec dollarc mode evalp ctx)
+   (with-access::J2SExportDefault this (id alias expr)
+      (cons* this
+	 (if (eq? id alias)
+	     "export default "
+	     (format "export default as ~a " alias))
+	 (append (j2s-js expr tildec dollarc mode evalp ctx) '(";")))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SImportDynamic ...                                    */
@@ -1520,7 +1539,6 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-import this::J2SProgram tildec dollarc mode evalp ctx)
    (with-access::J2SProgram this (imports)
-      (tprint "J2S-IMPORT...")
       (append-map (lambda (ip)
 		     (with-access::J2SImportPath ip (import)
 			(j2s-js import tildec dollarc mode evalp ctx)))

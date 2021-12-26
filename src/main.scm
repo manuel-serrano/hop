@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Sat Dec 11 05:39:00 2021 (serrano)                */
+;*    Last change :  Sun Dec 26 09:50:02 2021 (serrano)                */
 ;*    Copyright   :  2004-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -254,18 +254,18 @@
 	 (lambda (path . test)
 	    (js-worker-exec %worker "hop-loader" #t
 	       (lambda ()
-		  (nodejs-load path path %global %module %worker)))))
+		  (nodejs-load path path %global %module %worker :commonjs-export #f)))))
       (hop-loader-add! "ast.json"
 	 (lambda (path . test)
 	    (js-worker-exec %worker "hop-loader" #t
 	       (lambda ()
-		  (nodejs-load path path %global %module %worker)))))
+		  (nodejs-load path path %global %module %worker :commonjs-export #f)))))
       ;; ts loader
       (hop-loader-add! "ts"
 	 (lambda (path . test)
 	    (js-worker-exec %worker "hop-loader" #t
 	       (lambda ()
-		  (nodejs-load path path %global %module %worker :lang "ts")))))
+		  (nodejs-load path path %global %module %worker :lang "ts" :commonjs-export #f)))))
       ;; profiling
       (when (hop-profile)
 	 (js-profile-init `(:server #t) #f #f))
@@ -501,13 +501,20 @@
 		(js-worker-push-thunk! %worker "nodejs-load"
 		   (lambda ()
 		      (nodejs-load path path %global %module %worker))))))
+	 ((string-suffix? ".mjs" path)
+	  ;; javascript
+	  (when %worker
+	     (with-access::WorkerHopThread %worker (%this prerun)
+		(js-worker-push-thunk! %worker "nodejs-load"
+		   (lambda ()
+		      (nodejs-load path path %global %module %worker :commonjs-export #f))))))
 	 ((string-suffix? ".ts" path)
 	  ;; typescript
 	  (when %worker
 	     (with-access::WorkerHopThread %worker (%this prerun)
 		(js-worker-push-thunk! %worker "nodejs-load"
 		   (lambda ()
-		      (nodejs-load path path %global %module %worker :lang "ts"))))))
+		      (nodejs-load path path %global %module %worker :lang "ts" :commonjs-export #f))))))
 	 ((string=? (basename path) "package.json")
 	  (load-package path))
 	 (else

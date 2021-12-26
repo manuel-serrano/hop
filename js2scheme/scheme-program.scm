@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Fri Dec 24 15:32:42 2021 (serrano)                */
+;*    Last change :  Sun Dec 26 13:42:55 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -544,6 +544,9 @@
    (define (j2s-export e::J2SExport)
       (with-access::J2SExport e (index from id alias loc decl)
 	 (cond
+	    ((isa? e J2SExportDefault)
+	     `(js-evar-info ,(& alias this) '(,index) '()
+		 #f))
 	    ((not (isa? e J2SRedirect))
 	     `(js-evar-info ,(& alias this) '(,index) '()
 		 ,(decl-usage-has? decl '(assig))))

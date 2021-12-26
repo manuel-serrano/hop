@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Fri Dec 24 08:46:15 2021 (serrano)                */
+;*    Last change :  Sun Dec 26 08:37:35 2021 (serrano)                */
 ;*    Copyright   :  2014-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -84,8 +84,8 @@
 	(cons "https?://[^ \t]*" 'font-lock-string-face)
 	(cons "\\<\\(?:async\\|yield\\|await\\)\\>" 'font-lock-face-hopjs3)
 	(list "#:\\([^ \t\r\n{}(),;=[]*\\)" 1 'font-lock-face-hopjs3)
-	(cons "\\<export\\|import\\|from\\|as\\>" 'font-lock-face-hopjs4)
-	(cons "exports." 'font-lock-keyword-face)
+	(cons "\\<\\(export\\|import\\|from\\|as\\)\\>" 'font-lock-face-hopjs4)
+	(cons "exports[.]" 'font-lock-keyword-face)
 	(list "\\(record\\|class\\)[ \t]*\\([^ \t]+\\)"
 	      '(1 font-lock-keyword-face)
 	      '(2 font-lock-face-hopjs2))
@@ -1117,7 +1117,8 @@ usage: (js-return)  -- [RET]"
 ;*    hopjs-dls-load-dir ...                                           */
 ;*---------------------------------------------------------------------*/
 (defun hopjs-dls-load-dir (lang base)
-  (let ((res nil))
+  (let* ((lang (replace-regexp-in-string "@hop/" "" lang))
+	 (res nil))
     ;; check emacs file
     (let ((el (concat base "/" lang "/etc/hopjs-" lang ".el")))
       (when (file-exists-p el) (load-library el) (setq res t))

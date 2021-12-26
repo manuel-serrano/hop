@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 15 15:16:16 2018                          */
-;*    Last change :  Fri Dec 24 14:20:57 2021 (serrano)                */
+;*    Last change :  Sat Dec 25 09:12:32 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES6 Module handling                                              */
@@ -107,8 +107,9 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (collect-imports* this::J2SImport dirname env args)
    (with-access::J2SImport this (ipath path lang loc iprgm)
-      (multiple-value-bind (abspath protocol)
-	 (resolve-module-file path dirname loc args)
+      (let* ((resv (resolve-module-file path dirname loc args))
+	     (abspath (car resv))
+	     (protocol (cdr resv)))
 	 (let ((old (env-get abspath env)))
 	    (cond
 	       (old
@@ -346,14 +347,14 @@
    (define (resolve-file x)
       (cond
 	 ((and (file-exists? x) (not (directory? x)))
-	  (values (file-name-canonicalize x) 'file))
+	  (cons (file-name-canonicalize x) 'file))
 	 (else
 	  (let loop ((sufs '(".js" ".mjs" ".hop" ".so" ".json" ".hss" ".css")))
 	     (when (pair? sufs)
 		(let* ((suffix (car sufs))
 		       (src (string-append x suffix)))
 		   (if (and (file-exists? src) (not (directory? src)))
-		       (values (file-name-canonicalize src) 'file)
+		       (cons (file-name-canonicalize src) 'file)
 		       (loop (cdr sufs)))))))))
 
    (define (resolve-package pkg dir)
@@ -402,12 +403,15 @@
 			(resolve-file-or-directory m x))))
 	     (let ((p (make-file-name x "index.js")))
 		(when (file-exists? p)
-		   (values (file-name-canonicalize p) 'file))))))
+		   (cons (file-name-canonicalize p) 'file))))))
+
+   (define (resolve-path-file-or-directory path)
+      (or (resolve-file path)
+	  (resolve-directory path)))
    
    (define (resolve-file-or-directory x dir)
-      (let ((file (make-file-name dir x)))
-	 (or (resolve-file file)
-	     (resolve-directory file))))
+      (let ((path (make-file-name dir x)))
+	 (resolve-path-file-or-directory path)))
    
    (define (resolve-error x)
       (raise
@@ -422,28 +426,32 @@
       (open-string-hashtable-get (get-core-modules) name))
 
    (define hop-modules-path
-      (cons (config-get args :hop-library-path ".")
-	 (list (config-get args :node-modules-directory "."))))
+      (let* ((name (config-get args :filename #f))
+	     (file (if (string-prefix? "/" name)
+		       name
+		       (file-name-canonicalize (make-file-name (pwd) name))))
+	     (dir (if (string? file) (dirname file) (pwd))))
+	 (cons* (make-file-name dir "node_modules")
+	    (config-get args :hop-library-path ".")
+	    (list (config-get args :node-modules-directory ".")))))
    
    (define (resolve-modules name)
-      (let ((l (any (lambda (dir)
-		       (resolve-file-or-directory name dir))
-		  (filter string? hop-modules-path))))
-	 (when (pair? l)
-	    (car l))))
+      (any (lambda (dir)
+	      (resolve-file-or-directory name dir))
+	 (filter string? hop-modules-path)))
 
    (cond
       ((core-module? name)
-       (values name 'core))
+       (cons name 'core))
       ((or (string-prefix? "http://" name)
 	   (string-prefix? "https://" name))
-       (values name 'http))
+       (cons name 'http))
       ((or (string-prefix? "./" name) (string-prefix? "../" name))
        (or (resolve-file-or-directory name dir)
 	   (resolve-modules name)
 	   (resolve-error name)))
       ((string-prefix? "/" name)
-       (or (resolve-file-or-directory name "/")
+       (or (resolve-path-file-or-directory name)
 	   (resolve-modules name)
 	   (resolve-error name)))
       (else
@@ -451,48 +459,89 @@
 	   (resolve-error name)))))
 
 ;*---------------------------------------------------------------------*/
+;*    module-cache                                                     */
+;*---------------------------------------------------------------------*/
+(define module-cache #f)
+
+;*---------------------------------------------------------------------*/
+;*    module-cache-get ...                                             */
+;*---------------------------------------------------------------------*/
+(define (module-cache-get path)
+   (when module-cache
+      (let ((ce (cache-get module-cache path)))
+	 (when ce
+	    (with-access::cache-entry ce (value)
+	       value)))))
+
+;*---------------------------------------------------------------------*/
+;*    module-cache-put! ...                                            */
+;*---------------------------------------------------------------------*/
+(define (module-cache-put! path iprgm)
+   (unless module-cache
+      (set! module-cache
+	 (instantiate::cache-memory
+	    (max-file-size #e-1))))
+   (cache-put! module-cache path iprgm)
+   iprgm)
+
+;*---------------------------------------------------------------------*/
 ;*    import-module ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (import-module path prgm lang loc env args)
-   (with-handler
-      (lambda (e)
-	 (with-access::&exception e (fname location)
-	    (unless (and fname location)
-	       (set! fname (cadr loc))
-	       (set! location (caddr loc))))
-	 (raise e))
-      (call-with-input-file path
-	 (lambda (in)
-	    (let ((margin (string-append
-			     (config-get args :verbmargin "")
-			     "     "))
-		  (verb (config-get args :verbose 0)))
-	       (when (>= verb 3)
-		  (fprint (current-error-port) "\n" margin
-		     path
-		     (if (>= (config-get args :verbose 0) 4)
-			 (string-append " [" path "]")
-			 "")))
-	       (let ()
-		  (case lang
-		     ((hop)
-		      (hop-compile in
-			 :verbose (if (<=fx verb 2) 0 verb)
-			 :verbmargin margin
-			 :module-import #t
-			 :module-env env
-			 :import-program prgm
-			 :import-loc loc))
-		     (else
-		      (j2s-compile in
-			 :driver (j2s-export-driver)
-			 :warning 0
-			 :module-import #t
-			 :verbose (if (<=fx verb 2) 0 verb)
-			 :verbmargin margin
-			 :module-env env
-			 :import-program prgm
-			 :import-loc loc)))))))))
+   
+   (define (assign! tgt src)
+      (vector-for-each (lambda (f)
+			  (if (class-field-mutator f)
+			      (let ((v ((class-field-accessor f) src)))
+				 ((class-field-mutator f) tgt v))))
+	 (class-all-fields (object-class src)))
+      tgt)
+
+   (assign! prgm
+      (or (module-cache-get path)
+	  (with-handler
+	     (lambda (e)
+		(when (isa? e &exception)
+		   (with-access::&exception e (fname location)
+		      (unless (and fname location)
+			 (set! fname (cadr loc))
+			 (set! location (caddr loc)))))
+		(raise e))
+	     (call-with-input-file path
+		(lambda (in)
+		   (let ((margin (string-append
+				    (config-get args :verbmargin "")
+				    "     "))
+			 (verb (config-get args :verbose 0)))
+		      (when (>= verb 3)
+			 (fprint (current-error-port) "\n" margin
+			    path
+			    (if (>= (config-get args :verbose 0) 4)
+				(string-append " [" path "]")
+				"")))
+		      (let ()
+			 (let ((iprgm (case lang
+					 ((hop)
+					  (hop-compile in
+					     :verbose (if (<=fx verb 2) 0 verb)
+					     :verbmargin margin
+					     :module-import #t
+					     :module-env env
+					     :import-program prgm
+					     :import-loc loc))
+					 (else
+					  (j2s-compile in
+					     :driver (j2s-export-driver)
+					     :warning 0
+					     :module-import #t
+					     :verbose (if (<=fx verb 2) 0 verb)
+					     :verbmargin margin
+					     :module-env env
+					     :import-program prgm
+					     :import-loc loc
+					     :commonjs-export #t
+					     :plugins-loader (config-get args :plugins-loader #f))))))
+			    (module-cache-put! path iprgm))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    core-module-list ...                                             */

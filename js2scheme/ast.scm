@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Thu Dec 23 09:17:53 2021 (serrano)                */
+;*    Last change :  Sun Dec 26 13:16:03 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -525,6 +525,9 @@
 	      (decl (default #f) (info '("jsonref")))
 	      (eprgm (default #f) (info '("notraverse"))))
 
+	   (class J2SExportDefault::J2SExport
+	      expr::J2SExpr)
+	   
 	   (class J2SRedirect::J2SExport
 	      (export (default #f))
 	      (import (default #f) (info '("notraverse"))))
@@ -1168,6 +1171,7 @@
 (gen-walks J2SPragma (vals))
 (gen-walks J2SImport dollarpath)
 (gen-walks J2SImportDynamic path)
+(gen-walks J2SExportDefault expr)
 
 (gen-traversals J2STilde)
 
@@ -1385,6 +1389,22 @@
       (if decl
 	  (j2s-decl->json decl "J2SExport" #f op)
 	  (display "false" op))
+      (display "}" op)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s->json ::J2SExportDefault ...                                 */
+;*---------------------------------------------------------------------*/
+(define-method (j2s->json this::J2SExportDefault op::output-port)
+   (with-access::J2SExportDefault this (id alias index expr)
+      (display "{ \"__node__\": \"J2SExportDefault\", \"id\": " op)
+      (j2s->json id op)
+      (display ", \"index\": " op)
+      (display index op)
+      (display ",\"alias\": " op)
+      (j2s->json alias op)
+      (display ",\"expr\": " op)
+      (j2s->json expr op)
+      (display "\"" op)
       (display "}" op)))
 
 ;*---------------------------------------------------------------------*/

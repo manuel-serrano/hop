@@ -288,6 +288,12 @@
       (else (j2s-scheme-var this))))
 
 ;*---------------------------------------------------------------------*/
+;*    j2s-scheme ::J2SExportDefault ...                                */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-scheme this::J2SExportDefault mode return ctx)
+   #unspecified)
+
+;*---------------------------------------------------------------------*/
 ;*    j2s-scheme-set! ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (j2s-scheme-set! lhs::J2SRef rhs::J2SExpr val result mode return ctx init? loc)

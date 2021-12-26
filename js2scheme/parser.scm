@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Fri Dec 24 14:29:50 2021 (serrano)                */
+;*    Last change :  Sat Dec 25 10:08:11 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -263,13 +263,21 @@
 	 (when lang
 	    (let ((ploader (config-get config :plugins-loader #f)))
 	       (when (procedure? ploader)
-		  (ploader lang config))))))
+		  (ploader lang (abspath) config))))))
 
    (define (source-lang-plugins tok el site conf)
       (let ((ps (source-element-plugins el conf)))
 	 (cond
 	    (ps
 	     (let ((p (assq (string->symbol (javascript-language el)) ps)))
+		(unless p
+		   (raise
+		      (instantiate::&io-parse-error
+			 (proc "hopc")
+			 (msg "wrong language plugin")
+			 (obj (javascript-language el))
+			 (fname (abspath))
+			 (location (token-loc tok)))))
 		(set! plugins ps)
 		;; there is a plugins associated, initialize it
 		((cdr p) tok site conf parser-controller)))
@@ -1367,8 +1375,8 @@
 			   (multiple-value-bind (path dollarpath)
 			      (consume-module-path!)
 			      (instantiate::J2SImport
-				 (names lst)
 				 (loc (token-loc token))
+				 (names lst)
 				 (path path)
 				 (dollarpath dollarpath)))
 			   (parse-token-error
@@ -1399,8 +1407,8 @@
 					      (id '*)
 					      (alias (token-value id)))))
 				 (instantiate::J2SImport
-				    (names (list impns))
 				    (loc (token-loc token))
+				    (names (list impns))
 				    (path path)
 				    (dollarpath dollarpath))))
 			   (parse-token-error "Illegal import, \"from\" expected"
@@ -1431,25 +1439,25 @@
 			(let* ((path (consume-token! 'STRING))
 			       (loc (token-loc token))
 			       (impnm (instantiate::J2SImportName
+					 (loc loc)
 					 (id 'default)
-					 (alias id)
-					 (loc loc))))
+					 (alias id))))
 			   (instantiate::J2SImport
-			      (names (list impnm))
 			      (loc loc)
+			      (names (list impnm))
 			      (path (token-value path))
 			      (dollarpath (instantiate::J2SUndefined (loc loc))))))
 		       ((eq? (token-tag sep) 'COMMA)
 			(let ((imp (loop #f))
 			      (impnm (instantiate::J2SImportName
+					(loc (token-loc sep))
 				       (id 'default)
-				       (alias id)
-				       (loc (token-loc sep)))))
+				       (alias id))))
 			   (with-access::J2SImport imp (path dollarpath)
 			      (let* ((loc (token-loc token))
 				     (defi (instantiate::J2SImport
-					      (names (list impnm))
 					      (loc loc)
+					      (names (list impnm))
 					      (dollarpath dollarpath)
 					      (path path))))
 				 (instantiate::J2SSeq
@@ -1475,9 +1483,9 @@
 			      (token-value (consume-token! 'ID)))
 			   id))
 		(impnm (instantiate::J2SImportName
-			   (id id)
-			   (alias alias)
-			   (loc loc)))
+			  (loc loc)
+			  (id id)
+			  (alias alias)))
 		(next (consume-any!)))
 	    (case (token-tag next)
 	       ((RBRACE)
