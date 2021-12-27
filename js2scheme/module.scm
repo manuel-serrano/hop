@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 15 15:16:16 2018                          */
-;*    Last change :  Sat Dec 25 09:12:32 2021 (serrano)                */
+;*    Last change :  Mon Dec 27 10:30:40 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES6 Module handling                                              */
@@ -115,7 +115,8 @@
 	       (old
 		(with-access::J2SImport this (iprgm ipath)
 		   (set! iprgm (car old))
-		   (set! ipath (cdr old))
+		   (set! ipath (duplicate::J2SImportPath (cdr old)
+				  (import this)))
 		   (list ipath)))
 	       ((eq? protocol 'core)
 		(let ((prgm (open-string-hashtable-get core-modules path))

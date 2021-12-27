@@ -3461,7 +3461,8 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2STilde mode return ctx)
    (with-access::J2STilde this (loc stmt)
-      (let* ((js-stmt (concat-tilde (j2s-js stmt #t #f mode return ctx)))
+      (let* ((nctx (new-compiler-context ctx :site 'tilde))
+	     (js-stmt (concat-tilde (j2s-js stmt #t #f mode return nctx)))
 	     (js (cond
 		    ((null? js-stmt)
 		     "")

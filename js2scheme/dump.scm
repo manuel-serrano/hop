@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Sun Dec 26 12:00:52 2021 (serrano)                */
+;*    Last change :  Mon Dec 27 10:17:37 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -1463,11 +1463,12 @@
 ;*    j2s->list ::J2SImportPath ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SImportPath stack)
-   (with-access::J2SImportPath this (path protocol index loc)
+   (with-access::J2SImportPath this (path protocol index loc import)
       `(J2SImportPath ,path
 	  ,@(dump-loc loc)
 	  :index ,index
-	  ,@(if (eq? protocol 'file) '() `(:protocol ,protocol)))))
+	  ,@(if (eq? protocol 'file) '() `(:protocol ,protocol))
+	  :import ,(typeof import))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SImport ...                                        */

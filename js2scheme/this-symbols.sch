@@ -1,5 +1,5 @@
 ;; Generated file (mkthissymbols.js). Don't edit
-(hop require module globalThis
+(hop require module exports globalThis
 unescape  
 undefined  
 setTimeout  
@@ -10,7 +10,6 @@ parseInt
 parseFloat  
 isNaN  
 isFinite  
-global  
 eval  
 escape  
 encodeURIComponent  
@@ -26,6 +25,7 @@ WebSocketServer
 WebSocket  
 WeakSet  
 WeakMap  
+Vector  
 VIDEO  
 VAR  
 Uint8ClampedArray  
@@ -236,6 +236,9 @@ CENTER
 CAPTION  
 CANVAS  
 Boolean  
+BigUint64Array  
+BigInt64Array  
+BigInt  
 BUTTON  
 BR  
 BODY  

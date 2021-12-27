@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Jan  8 10:49:22 2021                          */
-/*    Last change :  Fri Dec 10 08:13:45 2021 (serrano)                */
+/*    Last change :  Mon Dec 27 09:58:31 2021 (serrano)                */
 /*    Copyright   :  2021 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    mkthissymbols                                                    */
@@ -17,7 +17,7 @@
 
 console.log( ";; Generated file (mkthissymbols.js). Don't edit" );
 
-console.log( "(hop require module globalThis" );
+console.log( "(hop require module exports globalThis" );
 Object.getOwnPropertyNames( this )
    .sort( (x, y) => x <= y )
    .forEach( k => console.log( k, " " ) );
