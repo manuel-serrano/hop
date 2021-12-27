@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 15 15:16:16 2018                          */
-;*    Last change :  Mon Dec 27 10:30:40 2021 (serrano)                */
+;*    Last change :  Mon Dec 27 11:44:23 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES6 Module handling                                              */
@@ -106,50 +106,60 @@
 ;*    collect-imports* ::J2SImport ...                                 */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (collect-imports* this::J2SImport dirname env args)
-   (with-access::J2SImport this (ipath path lang loc iprgm)
-      (let* ((resv (resolve-module-file path dirname loc args))
-	     (abspath (car resv))
-	     (protocol (cdr resv)))
-	 (let ((old (env-get abspath env)))
-	    (cond
-	       (old
-		(with-access::J2SImport this (iprgm ipath)
-		   (set! iprgm (car old))
-		   (set! ipath (duplicate::J2SImportPath (cdr old)
-				  (import this)))
-		   (list ipath)))
-	       ((eq? protocol 'core)
-		(let ((prgm (open-string-hashtable-get core-modules path))
-		      (ip (instantiate::J2SImportPath
-			     (loc loc)
-			     (name path)
-			     (path abspath)
-			     (protocol protocol)
-			     (import this))))
-		   (set! iprgm prgm)
-		   (set! lang 'javascript)
-		   (set! ipath ip)
-		   (env-add! abspath (cons prgm ip) env)
-		   (list ip)))
-	       (else
-		(let* ((prgm (instantiate::J2SProgram
+   
+   (define (server-side-import this dirname env args)
+      (with-access::J2SImport this (ipath path lang loc iprgm)
+	 (let* ((resv (resolve-module-file path dirname loc args))
+		(abspath (car resv))
+		(protocol (cdr resv)))
+	    (let ((old (env-get abspath env)))
+	       (cond
+		  (old
+		   (with-access::J2SImport this (iprgm ipath)
+		      (set! iprgm (car old))
+		      (set! ipath (duplicate::J2SImportPath (cdr old)
+				     (import this)))
+		      (list ipath)))
+		  ((eq? protocol 'core)
+		   (let ((prgm (open-string-hashtable-get core-modules path))
+			 (ip (instantiate::J2SImportPath
 				(loc loc)
-				(endloc loc)
-				(path path)
-				(nodes '())))
-		       (ip (instantiate::J2SImportPath
-			      (loc loc)
-			      (name path)
-			      (path abspath)
-			      (protocol protocol)
-			      (import this)))
-		       (lg (or lang (path-lang abspath))))
-		   (set! iprgm prgm)
-		   (set! lang lg)
-		   (set! ipath ip)
-		   (env-add! abspath (cons prgm ip) env)
-		   (import-module abspath prgm lang loc env args)
-		   (list ip))))))))
+				(name path)
+				(path abspath)
+				(protocol protocol)
+				(import this))))
+		      (set! iprgm prgm)
+		      (set! lang 'javascript)
+		      (set! ipath ip)
+		      (env-add! abspath (cons prgm ip) env)
+		      (list ip)))
+		  (else
+		   (let* ((prgm (instantiate::J2SProgram
+				   (loc loc)
+				   (endloc loc)
+				   (path path)
+				   (nodes '())))
+			  (ip (instantiate::J2SImportPath
+				 (loc loc)
+				 (name path)
+				 (path abspath)
+				 (protocol protocol)
+				 (import this)))
+			  (lg (or lang (path-lang abspath))))
+		      (set! iprgm prgm)
+		      (set! lang lg)
+		      (set! ipath ip)
+		      (env-add! abspath (cons prgm ip) env)
+		      (import-module abspath prgm lang loc env args)
+		      (list ip))))))))
+
+   (define (client-side-import this dirname env args)
+      '())
+      
+   (with-access::J2SImport this (ipath path dollarpath lang loc iprgm)
+      (if (isa? dollarpath J2SUndefined)
+	  (server-side-import this dirname env args)
+	  (client-side-import this dirname env args))))
 
 ;*---------------------------------------------------------------------*/
 ;*    collect-imports* ::J2SRedirect ...                               */
@@ -168,7 +178,7 @@
 ;*    collect-decls* ::J2SImport ...                                   */
 ;*---------------------------------------------------------------------*/
 (define-method (collect-decls* this::J2SImport env args)
-
+   
    (define (find-redirect id::symbol export import::J2SImport iprgm::J2SProgram)
       (with-access::J2SRedirect export (loc import alias)
 	 (with-access::J2SImport import (iprgm path ipath)
@@ -234,7 +244,7 @@
 		      (scope 'local)
 		      (export x)
 		      (import import)))))))
-
+   
    (define (import-namespace name import::J2SImport)
       (with-access::J2SImport import (iprgm loc)
 	 (with-access::J2SImportName name (alias)
@@ -250,13 +260,15 @@
 		       (type 'object)
 		       (import this)))))))
    
-   (with-access::J2SImport this (iprgm names loc ipath)
-      (map (lambda (name)
-	      (with-access::J2SImportName name (id)
-		 (if (eq? id '*)
-		     (import-namespace name this)
-		     (import-binding name this))))
-	 names)))
+   (with-access::J2SImport this (iprgm names loc ipath dollarpath)
+      (if (isa? dollarpath J2SUndefined)
+	  (map (lambda (name)
+		  (with-access::J2SImportName name (id)
+		     (if (eq? id '*)
+			 (import-namespace name this)
+			 (import-binding name this))))
+	     names)
+	  '())))
 
 ;*---------------------------------------------------------------------*/
 ;*    esexport ::J2SNode ...                                           */

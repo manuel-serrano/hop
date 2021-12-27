@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Mon Dec 27 09:28:06 2021 (serrano)                */
+;*    Last change :  Mon Dec 27 13:59:08 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for client side code).                                   */
@@ -21,7 +21,8 @@
 	   __js2scheme_utils
 	   __js2scheme_scheme
 	   __js2scheme_stmtassign
-	   __js2scheme_stage)
+	   __js2scheme_stage
+	   __js2scheme_scheme-constant)
    
    (export j2s-javascript-stage
 	   (generic j2s-js-literal ::obj ctx)
@@ -56,28 +57,38 @@
 					       mode evalp ctx)
 				       '("})")))))
 			   (lambda (this::J2SDollar tildec dollarc mode evalp ctx)
-			      (with-access::J2SDollar this (node)
-				 (let ((expr (j2s-scheme node mode evalp ctx)))
-				    (tprint "EXPR=" expr)
-				    (list (j2s-js-literal (eval! expr)
-					     (context-get ctx :%this))))))
+			      (let ((prog (context-program ctx)))
+				 (with-strings prog
+				    (lambda ()
+				       (with-access::J2SDollar this (node)
+					  (let ((expr (j2s-scheme node mode evalp ctx)))
+					     (list (j2s-js-literal
+						      (eval! `(let ((__js_strings ,(j2s-jsstring-init prog)))
+								 ,expr))
+						      (context-get ctx :%this)))))))))
 			   'normal (lambda (x) x) ctx))))))))
+
+;*---------------------------------------------------------------------*/
+;*    with-strings ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (with-strings prog thunk)
+   (with-access::J2SProgram prog (strings)
+      (let ((strs strings))
+	 (set! strings '())
+	 (unwind-protect
+	    (thunk)
+	    (set! strings strs)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js-literal ::obj ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-generic (j2s-js-literal obj::obj ctx)
    (cond
-      ((number? obj)
-       obj)
-      ((boolean? obj)
-       (if obj "true" "false"))
-      ((string? obj)
-       (format "~s" obj))
-      ((eq? obj #unspecified)
-       "(js-undefined)")
-      (else
-       (error "js" "Illegal $value" obj))))
+      ((number? obj) obj)
+      ((boolean? obj) (if obj "true" "false"))
+      ((string? obj) (format "~s" obj))
+      ((eq? obj #unspecified) "(js-undefined)")
+      (else (error "js" "Illegal $value" obj))))
    
 ;*---------------------------------------------------------------------*/
 ;*    add-header! ...                                                  */
@@ -205,18 +216,20 @@
 		       (isa? expr J2SLiteral))))))
    
    (with-access::J2SProgram this (headers imports exports decls nodes mode)
-      (let* ((body (append headers
+      (let* ((nctx (compiler-context-set! (new-compiler-context ctx)
+		      :program this))
+	     (body (append headers
 		      (filter (lambda (x)
 				 (not (isa? x J2SExportDefault)))
 			 exports)
 		      decls (filter not-literal nodes)))
-	     (prgm (j2s-js* this "" "" "" body tildec dollarc mode evalp ctx)))
+	     (prgm (j2s-js* this "" "" "" body tildec dollarc mode evalp nctx)))
 	 (case mode
 	    ((normal)
 	     prgm)
 	    ((strict hopscript)
 	     (cons "\"use strict\";\n"
-		(append (j2s-import this tildec dollarc mode evalp ctx)
+		(append (j2s-import this tildec dollarc mode evalp nctx)
 		   prgm)))
 	    (else
 	     prgm)))))
@@ -1224,7 +1237,7 @@
 ;*    j2s-js ::J2SDollar ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2SDollar tildec dollarc mode evalp ctx)
-   (let ((nctx (new-compiler-context ctx :tile 'tilde)))
+   (let ((nctx (new-compiler-context ctx :site 'dollar)))
       (if (procedure? dollarc)
 	  (cons this (dollarc this tildec dollarc mode evalp nctx))
 	  (j2s-js-default-dollar this tildec dollarc mode evalp nctx))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Sun Dec 26 13:42:55 2021 (serrano)                */
+;*    Last change :  Mon Dec 27 14:57:05 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -289,16 +289,6 @@
 		     (else expr)))
       headers))
    
-;*---------------------------------------------------------------------*/
-;*    j2s-jsstring-init ...                                            */
-;*---------------------------------------------------------------------*/
-(define (j2s-jsstring-init prog)
-   (with-access::J2SProgram prog (strings)
-      `(&jsstring-init
-	  ,(obj->string
-	      (apply vector
-		 (map &string (reverse! strings)))))))
-
 ;*---------------------------------------------------------------------*/
 ;*    j2s-main-worker-module ...                                       */
 ;*---------------------------------------------------------------------*/

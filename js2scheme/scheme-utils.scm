@@ -649,6 +649,8 @@
 	   ,(if (pair? throw) `',throw throw)
 	   %this
 	   ,(js-pcache cache) ,(loc->point loc)))
+      ((memq (context-get ctx :site) '(client tilde))
+       name)
       (else
        `(js-global-object-get-name ,j2s-unresolved-get-workspace
 	   ,(& name (context-program ctx))
