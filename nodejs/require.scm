@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Sat Dec 25 10:36:39 2021 (serrano)                */
+;*    Last change :  Mon Dec 27 19:10:41 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -63,13 +63,13 @@
    (let ((env (getenv "HOP_DEBUG")))
       (if (string? env)
 	  (string->integer env)
-	  (bigloo-debug))))
+	  #f)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-debug ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (hop-debug)
-   env-debug)
+   (or env-debug (bigloo-debug)))
 
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
@@ -1151,7 +1151,7 @@
 ;*---------------------------------------------------------------------*/
 (define (nodejs-compile src filename::bstring
 	   %ctxthis %ctxmodule
-	   #!key lang worker-slave commonjs-export warning-global)
+	   #!key lang worker-slave (commonjs-export #t) warning-global)
    
    (define (cache-path filename)
       (make-cache-name 
@@ -2087,7 +2087,7 @@
 	 (let ((cj (memq :commonjs-export (j2s-compile-options))))
 	    (if (and (pair? cj) (pair? (cdr cj)))
 		(set! commonjs-export (cadr cj))
-		(set! commonjs-export #f))))
+		(set! commonjs-export #t))))
       (with-loading-file filename load-module)))
 
 ;*---------------------------------------------------------------------*/
@@ -2099,7 +2099,7 @@
 (define (nodejs-load-module path::bstring worker::WorkerHopThread
 	   %this %module
 	   #!key (lang "hopscript") compiler
-	   config commonjs-export loc)
+	   config (commonjs-export #t) loc)
    
    (define (load-json path)
       (let ((mod (nodejs-new-module path path worker %this))
