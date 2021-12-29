@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Sun Dec 26 19:43:20 2021 (serrano)                */
+;*    Last change :  Wed Dec 29 18:55:20 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -944,31 +944,52 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (resolve! this::J2SRecord env mode withs wenv genv ctx conf)
    (call-next-method)
+   ;; verify that super is either null or a record and
    ;; verify the lack of cycle in the inheritance tree
-   (let* ((root (j2s-class-root-val this))
-	  (names (map (lambda (prop)
-			 (with-access::J2SPropertyInit prop (name)
-			    (with-access::J2SString name (val) val)))
-		    (j2s-class-instance-properties this))))
-      ;; verify no property duplications
-      (let loop ((names names)
-		 (dups '()))
-	 (cond
-	    ((null? names)
-	     (if (null? dups)
-		 this
-		 (with-access::J2SRecord this (name loc)
-		    (raise
-		       (instantiate::&io-parse-error
-			  (proc name)
-			  (msg "instance properties overriden")
-			  (obj dups)
-			  (fname (cadr loc))
-			  (location (caddr loc)))))))
-	    ((member (car names) (cdr names))
-	     (loop (cdr names) (cons (car names) dups)))
-	    (else
-	     (loop (cdr names) dups))))))
+   (with-access::J2SRecord this (name super loc)
+      (let ((names (map (lambda (prop)
+			   (with-access::J2SPropertyInit prop (name)
+			      (with-access::J2SString name (val) val)))
+		      (j2s-class-instance-properties this))))
+	 (unless (or (isa? super J2SUndefined)
+		     (is-record? super))
+	    (with-access::J2SExpr super (loc)
+	       (raise
+		  (instantiate::&io-parse-error
+		     (proc "record")
+		     (msg "Super is not a record")
+		     (obj name)
+		     (fname (cadr loc))
+		     (location (caddr loc))))))
+	 ;; verify no property duplications
+	 (let loop ((names names)
+		    (dups '()))
+	    (cond
+	       ((null? names)
+		(if (null? dups)
+		    this
+		    (with-access::J2SRecord this (name loc)
+		       (raise
+			  (instantiate::&io-parse-error
+			     (proc name)
+			     (msg "instance properties overriden")
+			     (obj dups)
+			     (fname (cadr loc))
+			     (location (caddr loc)))))))
+	       ((member (car names) (cdr names))
+		(loop (cdr names) (cons (car names) dups)))
+	       (else
+		(loop (cdr names) dups)))))))
+
+;*---------------------------------------------------------------------*/
+;*    is-record? ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (is-record? this::J2SExpr)
+   (when (isa? this J2SRef)
+      (with-access::J2SRef this (decl)
+	 (when (isa? decl J2SDeclClass)
+	    (with-access::J2SDeclClass decl (val)
+	       (isa? val J2SRecord))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    resolve! ::J2SClassElement ...                                   */
