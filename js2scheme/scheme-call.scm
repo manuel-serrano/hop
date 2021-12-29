@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Thu Nov 11 16:22:25 2021 (serrano)                */
+;*    Last change :  Wed Dec 29 15:13:38 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -1303,7 +1303,6 @@
 
    (define (j2s-self thisargs)
       (map (lambda (t) (j2s-scheme t mode return ctx)) thisargs))
-
 
    (define (call-arguments-function fun::J2SFun thisargs::pair-nil f %gen args)
       (with-access::J2SFun fun (params vararg idthis loc argumentsp)

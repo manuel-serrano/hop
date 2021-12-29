@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jul 15 07:09:51 2021                          */
-;*    Last change :  Tue Dec  7 16:11:35 2021 (serrano)                */
+;*    Last change :  Wed Dec 29 15:10:52 2021 (serrano)                */
 ;*    Copyright   :  2021 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Record generation                                                */
@@ -72,23 +72,45 @@
 		   (with-access::J2SFun val (params vararg loc name mode)
 		      (let ((lp (length params)))
 			 (cond
-			    ((=fx lp la)
-			     (gen-new args))
 			    ((eq? vararg 'rest)
-			     (cond
-				((>=fx la (-fx (j2s-minlen val)  1))
-				 (gen-new args))
-				((eq? mode 'hopscript)
-				 (j2s-error name
-				    (format "wrong number of arguments, ~a minimum expected"
-				       (j2s-minlen val))
-				    node (format "~a provided" la)))
-				(else
-				 (gen-new args (make-list (-fx lp la) '(js-undefined))))))
+			     (with-access::J2SDeclRest (car (last-pair params)) (alloc-policy)
+				(cond
+				   ((<fx la (j2s-minlen val))
+				    (j2s-error name
+				       (format "wrong number of arguments, ~a minimum expected"
+					  (j2s-minlen val))
+				       node (format "~a provided" la)))
+				   ((<=fx la (-fx lp 1))
+				    (let ((opt (make-list (-fx (-fx lp 1) la) '(js-undefined))))
+				       (if (and (eq? alloc-policy 'lazy)
+						(context-get ctx :optim-arguments)
+						(context-get ctx :optim-stack-alloc))
+					   (gen-new args
+					      (append opt '(#())))
+					   (gen-new args
+					      (append opt '((js-empty-vector->jsarray %this)))))))
+				   (else
+				    (let* ((a (take args (-fx lp 1)))
+					   (r (list-tail args (-fx lp 1)))
+					   (genv `(vector
+						     ,@(map (lambda (n)
+							       (j2s-scheme n mode return ctx))
+							  r))))
+				       (if (and (eq? alloc-policy 'lazy)
+						(context-get ctx :optim-arguments)
+						(context-get ctx :optim-stack-alloc))
+					   (let ((v (gensym 'vec)))
+					      `(js-call-with-stack-vector ,genv
+						  (lambda (,v)
+						     ,(gen-new a (list v)))))
+					   (gen-new a
+					      (list `(js-vector->jsarray ,genv %this)))))))))
 			    ((eq? vararg 'arguments)
 			     (j2s-error name
 				"arguments not supported in record constructor"
 				node name))
+			    ((=fx lp la)
+			     (gen-new args))
 			    ((and (>=fx la (j2s-minlen val)) (<=fx la lp))
 			     (gen-new args (make-list (-fx lp la) '(js-undefined))))
 			    ((eq? mode 'hopscript)
