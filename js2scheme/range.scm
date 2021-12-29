@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Wed Dec 22 10:02:24 2021 (serrano)                */
+;*    Last change :  Wed Dec 29 08:15:10 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -2282,6 +2282,13 @@
 ;*    node-range ::J2SImport ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-range this::J2SImport env::pair-nil conf mode::symbol fix::cell)
+   (return #f env))
+
+;*---------------------------------------------------------------------*/
+;*    node-range ::J2SExportDefault ...                                */
+;*---------------------------------------------------------------------*/
+(define-walk-method (node-range this::J2SExportDefault env::pair-nil conf mode::symbol fix::cell)
+   (call-default-walker)
    (return #f env))
 
 ;*---------------------------------------------------------------------*/

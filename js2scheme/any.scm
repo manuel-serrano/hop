@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 22 19:47:45 2017                          */
-;*    Last change :  Fri Dec 24 18:05:14 2021 (serrano)                */
+;*    Last change :  Wed Dec 29 08:41:54 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An optional stage used in debug mode to replace UNKNOWN type     */
@@ -127,7 +127,8 @@
 			(itype clazz)
 			(val (J2SCast clazz (J2SRef thisp)))
 			(binder 'let-opt)
-			(hint '()))))
+			(hint '())))
+	       (endloc (node-endloc body)))
 	    (set! body
 	       (J2SLetRecBlock #f (list self)
 		  (j2s-alpha body (list thisp) (list self)))))))

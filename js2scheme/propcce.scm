@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Apr  2 19:46:13 2017                          */
-;*    Last change :  Fri Oct  1 16:45:13 2021 (serrano)                */
+;*    Last change :  Wed Dec 29 09:21:57 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Property common caching elimination optimization                 */
@@ -360,9 +360,10 @@
 	     (tprint "precaching..." (length accesses))
 	     (let ((pc (J2SPrecache accesses
 			  (j2s-cachelevel1! (j2s-alpha this '() '()))
-			  (J2SMeta 'propcce 0 0 (j2s-uncache! this)))))
+			  (J2SMeta 'propcce 0 0 (j2s-uncache! this))))
+		   (endloc (node-endloc this)))
 		(if (isa? this J2SBlock)
-		    (J2SBlock/w-endloc pc)
+		    (J2SBlock pc)
 		    pc)))
 	  (call-default-walker))))
 

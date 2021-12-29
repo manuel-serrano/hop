@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Sun Dec 26 08:37:35 2021 (serrano)                */
+;*    Last change :  Wed Dec 29 08:05:01 2021 (serrano)                */
 ;*    Copyright   :  2014-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -94,6 +94,7 @@
 	      '(2 font-lock-face-hopjs2)
 	      '(3 font-lock-keyword-face)
 	      '(4 font-lock-face-hopjs2))
+	(list "\\(constructor\\)(" 1 'font-lock-keyword-face)
 	(list "\\(require\\)([ \t]*\\(\"[^\"]+\"\\)"
 	      '(1 font-lock-keyword-face)
 	      '(2 font-lock-face-underline))

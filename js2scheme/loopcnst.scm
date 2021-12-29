@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 20 07:58:36 2021                          */
-;*    Last change :  Thu Nov 11 13:17:20 2021 (serrano)                */
+;*    Last change :  Wed Dec 29 09:08:39 2021 (serrano)                */
 ;*    Copyright   :  2021 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Loop constant lifting                                            */
@@ -76,7 +76,8 @@
 	     (let ((decls (map (lambda (c)
 				  (J2SLetOpt/vtype (j2s-type c)
 				     '(ref init) (gensym '%lcnst) c))
-			     cnsts)))
+			     cnsts))
+		   (endloc (node-endloc this)))
 		(set! test (replace-cnsts! test cnsts decls))
 		(set! body (replace-cnsts! body cnsts decls))
 		(J2SLetRecBlock #f decls this))))))
@@ -87,7 +88,8 @@
 (define-walk-method (loopcnst! this::J2SWhile env conf)
    (with-access::J2SWhile this (test body loc)
       (let ((cnsts (append (collect-constants* test env)
-		      (collect-constants* body env))))
+		      (collect-constants* body env)))
+	    (endloc (node-endloc this)))
 	 (if (null? cnsts)
 	     (call-default-walker)
 	     (let ((decls (map (lambda (c)

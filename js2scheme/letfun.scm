@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Sun Oct 17 10:58:40 2021 (serrano)                */
+;*    Last change :  Wed Dec 29 08:42:18 2021 (serrano)                */
 ;*    Copyright   :  2015-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Let function optimization. This optimization implements          */
@@ -417,11 +417,12 @@
 				      env)))))
 		odecls)
 	     (with-access::J2SBlock this (loc nodes)
-		(J2SLetBlock* ndecls
-		   (map! (lambda (n)
-			    (j2s-alpha (letfun-sa-transform! n env)
-			       odecls ndecls))
-		      nodes))))
+		(let ((endloc (node-endloc this)))
+		   (J2SLetBlock* ndecls
+		      (map! (lambda (n)
+			       (j2s-alpha (letfun-sa-transform! n env)
+				  odecls ndecls))
+			 nodes)))))
 	  ;; rewrite
 	  (call-default-walker))))
 
@@ -433,7 +434,7 @@
 	       (with-access::J2SDecl d (%info)
 		  (eq? (sainfo-block %info) this)))
 	  env)
-       (with-access::J2SLetBlock this ((idecls decls) nodes loc rec)
+       (with-access::J2SLetBlock this ((idecls decls) nodes loc endloc rec)
 	  (let* ((ndecls '())
 		 (odecls '())
 		 (decls (map (lambda (d)

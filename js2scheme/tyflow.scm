@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Fri Dec 24 18:17:54 2021 (serrano)                */
+;*    Last change :  Wed Dec 29 08:41:40 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -2159,7 +2159,8 @@
 			(itype clazz)
 			(val (J2SCast clazz (J2SRef thisp)))
 			(binder 'let-opt)
-			(hint '()))))
+			(hint '())))
+	       (endloc (node-endloc body)))
 	    (set! body
 	       (J2SLetRecBlock #f (list self)
 		  (j2s-alpha body (list thisp) (list self)))))))
@@ -2674,7 +2675,8 @@
 			(itype clazz)
 			(val (J2SCast clazz (J2SRef thisp)))
 			(binder 'let-opt)
-			(hint '()))))
+			(hint '())))
+	       (endloc (node-endloc body)))
 	    (set! body
 	       (J2SLetRecBlock #f (list self)
 		  (j2s-alpha body (list thisp) (list self)))))))

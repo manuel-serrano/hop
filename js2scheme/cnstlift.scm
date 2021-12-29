@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  manuel serrano                                    */
 ;*    Creation    :  Tue Jul  7 19:27:03 2020                          */
-;*    Last change :  Fri Oct  1 16:46:13 2021 (serrano)                */
+;*    Last change :  Wed Dec 29 09:08:02 2021 (serrano)                */
 ;*    Copyright   :  2020-21 manuel serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Constant lifting optimization.                                   */
@@ -110,7 +110,8 @@
 	     (set! body (j2s-cnstlift-expression! body vars mode ndepth verb))
 	     (if (pair? (cell-ref vars))
 		 (let* ((lbl (gensym '%flift))
-			(be (J2SBindExit/type 'function lbl (J2SNop))))
+			(be (J2SBindExit/type 'function lbl (J2SNop)))
+			(endloc (node-endloc body)))
 		    (with-access::J2SBindExit be (stmt)
 		       (set! stmt
 			  (J2SLetBlock (cell-ref vars)
@@ -200,7 +201,8 @@
 	     (ntest (j2s-cnstlift-expression! test vtest mode ndepth verb))
 	     (nincr (j2s-cnstlift-expression! incr vincr mode ndepth verb))
 	     (nbody (j2s-cnstlift-expression! body vbody mode ndepth verb))
-	     (tmps (append (cell-ref vtest) (cell-ref vincr) (cell-ref vbody))))
+	     (tmps (append (cell-ref vtest) (cell-ref vincr) (cell-ref vbody)))
+	     (endloc (node-endloc this)))
 	 (set! test ntest)
 	 (set! incr nincr)
 	 (set! body nbody)
@@ -218,7 +220,8 @@
 	     (vbody (make-cell '()))
 	     (ntest (j2s-cnstlift-expression! test vtest mode ndepth verb))
 	     (nbody (j2s-cnstlift-expression! body vbody mode ndepth verb))
-	     (tmps (append (cell-ref vtest) (cell-ref vbody))))
+	     (tmps (append (cell-ref vtest) (cell-ref vbody)))
+	     (endloc (node-endloc this)))
 	 (set! test ntest)
 	 (set! body nbody)
 	 (if (pair? tmps)
@@ -233,7 +236,8 @@
       (let* ((ndepth (if (eq? mode 'loop) (+fx depth 1) depth))
 	     (vbody (make-cell '()))
 	     (nbody (j2s-cnstlift-expression! body vbody mode ndepth verb))
-	     (tmps (cell-ref vbody)))
+	     (tmps (cell-ref vbody))
+	     (endloc (node-endloc this)))
 	 (set! lhs (j2s-cnstlift-expression! lhs vars mode depth verb))
 	 (set! obj (j2s-cnstlift-expression! obj vars mode depth verb))
 	 (set! body nbody)

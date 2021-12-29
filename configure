@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Sun Oct 17 09:03:24 2021 (serrano)                */
+#*    Last change :  Tue Dec 28 19:12:48 2021 (serrano)                */
 #*    Copyright   :  2004-21 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -972,6 +972,18 @@ if [ "$tls " != "no " ]; then
   tls=`bigloo -q -eval "(exit (display (bigloo-config 'thread-local-storage))))"`
   if [ "$tls " = "#t " ]; then
     hopsrfis="enable-tls $hopsrfis";
+  fi
+fi
+
+#*---------------------------------------------------------------------*/
+#*    libbacktrace                                                     */
+#*---------------------------------------------------------------------*/
+if [ "$devmode " = "debug " -o "$devmode " = "debug-inline " ]; then
+  if [ -f $bigloolibdir/libbacktrace.heap ]; then
+    bcflagsrts="$bcflagsrts -gtrace0"
+    bcflagsmodules="$bcflagsmodules -gtrace0"
+    bhopcflags="$bhopcflags -gtrace0"
+    hflags="$hflags -gtrace0"
   fi
 fi
 

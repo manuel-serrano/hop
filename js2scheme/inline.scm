@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Tue Nov 30 13:47:40 2021 (serrano)                */
+;*    Last change :  Wed Dec 29 09:01:05 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function/Method inlining optimization                            */
@@ -704,7 +704,8 @@
 ;*---------------------------------------------------------------------*/
 (define (LetBlock loc t body)
    (if (pair? t)
-       (J2SLetRecBlock #f t body)
+       (let ((endloc (node-endloc body)))
+	  (J2SLetRecBlock #f t body))
        body))
 
 ;*---------------------------------------------------------------------*/
@@ -908,7 +909,8 @@
 		     (map (lambda (x) '-) mets) sz limit 0 conf)
 		  (when (pair? stack) 
 		     (invalidate-function-size! (car stack)))
-		  (let ((e (inline-method-call fun mets args loc
+		  (let ((e (inline-method-call fun mets args
+			      loc (node-endloc this)
 			      '() limit stack pmethods ingen prgm conf)))
 		     (inline-stmt->expr loc e
 			(function-rutype
@@ -939,7 +941,8 @@
 	  #f)))
 
    (define (inline-expr-call this fun thisargs args loc)
-      (let ((decl (J2SDeclInit '(ref) (gensym '%fun) fun)))
+      (let ((decl (J2SDeclInit '(ref) (gensym '%fun) fun))
+	    (endloc (node-endloc this)))
 	 (inline-stmt->expr loc
 	    (J2SLetBlock (list decl)
 	       (inline-ref-call this (J2SRef decl) thisargs args loc))
@@ -1108,7 +1111,8 @@
 	 args))
    
    (define (inline-closure-call fun::J2SExpr args::pair-nil loc)
-      (let ((fun (J2SLetOpt '(ref) (gensym 'fun) fun)))
+      (let ((fun (J2SLetOpt '(ref) (gensym 'fun) fun))
+	    (endloc (node-endloc fun)))
 	 (J2SLetBlock (list fun)
 	    (LetBlock loc args
 	       (let loop ((targets targets))
@@ -1206,7 +1210,8 @@
 			     (obj (J2SRef obj))))
 		       (r (J2SLetOpt '(call) (gensym 'r)
 			     (J2SMethodCall/cache* f (list (J2SRef obj)) args
-				'(vtable-inline pmap-inline) c))))
+				'(vtable-inline pmap-inline) c)))
+		       (endloc (node-endloc node)))
 		   (J2SMetaInl '() 0
 		      (J2SLetRecBlock #f (list r)
 			 (let loop ((cs funcaches))
@@ -1252,7 +1257,8 @@
 	  
    (define (inline-object-method-call-function fun obj::J2SDecl args loc)
       (with-access::J2SAccess fun (field cspecs loc)
-	 (let ((met (J2SLetOpt '(ref) (gensym 'met)
+	 (let ((endloc (node-endloc fun))
+	       (met (J2SLetOpt '(ref) (gensym 'met)
 		       (duplicate::J2SAccess fun
 			  (cspecs (inline-cspecs cspecs))
 			  (obj (J2SRef obj))))))
@@ -1340,7 +1346,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    inline-method-call ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (inline-method-call fun::J2SAccess callees::pair args::pair-nil loc
+(define (inline-method-call fun::J2SAccess callees::pair args::pair-nil loc endloc
 	   targets limit::long stack::pair-nil pmethods ingen prgm conf)
    
    (define (get-cache prgm::J2SProgram)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Sun Dec 26 13:16:03 2021 (serrano)                */
+;*    Last change :  Wed Dec 29 08:44:17 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -599,7 +599,7 @@
 
 	   (node-%info ::J2SNode)
 	   (node-loc ::J2SNode)
-	   (node-endloc ::J2SNode)
+	   (generic node-endloc ::J2SNode)
 	   
 	   (j2sfun-expression? ::J2SFun)
 	   (j2s-chaining? ::J2SExpr)
@@ -647,13 +647,104 @@
    (with-access::J2SNode n (loc) loc))
 
 ;*---------------------------------------------------------------------*/
+;*    max-loc ...                                                      */
+;*---------------------------------------------------------------------*/
+(define (max-loc loc1 loc2)
+   (cond
+      ((not loc1)
+       loc2)
+      ((not loc2)
+       loc1)
+      (else
+       (match-case loc1
+	  ((?- ?- (and (? integer?) ?p1))
+	   (match-case loc2
+	      ((?- ?- (and (? integer?) ?p2)) (if (>fx p1 p2) loc1 loc2))
+	      (else loc1)))
+	  (else
+	   loc2)))))
+
+;*---------------------------------------------------------------------*/
 ;*    node-endloc ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (node-endloc n)
-   (if (isa? n J2SBlock)
-       (with-access::J2SBlock n (endloc) endloc)
-       (with-access::J2SNode n (loc) loc)))
+(define-generic (node-endloc n::J2SNode)
+   (with-access::J2SNode n (loc)
+      loc))
 
+;*---------------------------------------------------------------------*/
+;*    node-endloc ::J2SBlock ...                                       */
+;*---------------------------------------------------------------------*/
+(define-method (node-endloc n::J2SBlock)
+   (with-access::J2SBlock n (endloc)
+      endloc))
+
+;*---------------------------------------------------------------------*/
+;*    node-endloc ::J2SIf ...                                          */
+;*---------------------------------------------------------------------*/
+(define-method (node-endloc n::J2SIf)
+   (with-access::J2SIf n (then else)
+      (max-loc (node-endloc then) (node-endloc else))))
+
+;*---------------------------------------------------------------------*/
+;*    node-endloc ::J2SLoop ...                                        */
+;*---------------------------------------------------------------------*/
+(define-method (node-endloc n::J2SLoop)
+   (with-access::J2SLoop n (body)
+      (node-endloc body)))
+
+;*---------------------------------------------------------------------*/
+;*    node-endloc ::J2STry ...                                         */
+;*---------------------------------------------------------------------*/
+(define-method (node-endloc n::J2STry)
+   (with-access::J2STry n (finally catch body)
+      (max-loc (node-endloc finally)
+	 (max-loc (node-endloc catch) (node-endloc body)))))
+
+;*---------------------------------------------------------------------*/
+;*    node-endloc ::J2SSwitch ...                                      */
+;*---------------------------------------------------------------------*/
+(define-method (node-endloc n::J2SSwitch)
+   (with-access::J2SSwitch n (cases loc)
+      (let loop ((cases cases)
+		 (endloc loc))
+	 (if (null? cases)
+	     endloc
+	     (with-access::J2SCase (car cases) (body)
+		(loop (cdr cases) (max-loc (node-endloc body) endloc)))))))
+
+;*---------------------------------------------------------------------*/
+;*    node-endloc ::J2SFun ...                                         */
+;*---------------------------------------------------------------------*/
+(define-method (node-endloc n::J2SFun)
+   (with-access::J2SFun n (body)
+      (node-endloc body)))
+
+;*---------------------------------------------------------------------*/
+;*    node-endloc ::J2SCall ...                                        */
+;*---------------------------------------------------------------------*/
+(define-method (node-endloc n::J2SCall)
+   (with-access::J2SCall n (args loc)
+      (let loop ((args args)
+		 (endloc loc))
+	 (if (null? args)
+	     loc
+	     (loop (cdr args)
+		(max-loc (node-endloc (car args)) endloc))))))
+
+;*---------------------------------------------------------------------*/
+;*    node-endloc ::J2SAccess ...                                      */
+;*---------------------------------------------------------------------*/
+(define-method (node-endloc n::J2SAccess)
+   (with-access::J2SAccess n (field loc)
+      (max-loc loc (node-endloc field))))
+      
+;*---------------------------------------------------------------------*/
+;*    node-endloc ::J2SBinary ...                                      */
+;*---------------------------------------------------------------------*/
+(define-method (node-endloc n::J2SBinary)
+   (with-access::J2SBinary n (rhs loc)
+      (max-loc loc (node-endloc rhs))))
+      
 ;*---------------------------------------------------------------------*/
 ;*    %nodefval ...                                                    */
 ;*---------------------------------------------------------------------*/

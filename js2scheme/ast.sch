@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 11 13:06:45 2016                          */
-;*    Last change :  Tue Oct 26 15:06:52 2021 (serrano)                */
+;*    Last change :  Wed Dec 29 08:40:21 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Minimal set of macros for creating new AST.                      */
@@ -330,22 +330,10 @@
        (endloc endloc)
        (nodes ,(if (pair? nodes) `(list ,@nodes) ''()))))
 
-(define-macro (J2SBlock/w-endloc . nodes)
-   `(instantiate::J2SBlock
-       (loc loc)
-       (endloc loc)
-       (nodes ,(if (pair? nodes) `(list ,@nodes) ''()))))
-
 (define-macro (J2SBlock* nodes)
    `(instantiate::J2SBlock
        (loc loc)
        (endloc endloc)
-       (nodes ,nodes)))
-
-(define-macro (J2SBlock*/w-endloc nodes)
-   `(instantiate::J2SBlock
-       (loc loc)
-       (endloc loc)
        (nodes ,nodes)))
 
 (define-macro (J2SSeq . nodes)
@@ -383,14 +371,14 @@
 (define-macro (J2SLetBlock decls . nodes)
    `(instantiate::J2SLetBlock
        (loc loc)
-       (endloc loc)
+       (endloc endloc)
        (decls ,decls)
        (nodes ,(if (pair? nodes) `(list ,@nodes) ''()))))
 
 (define-macro (J2SLetBlock* decls nodes)
    `(instantiate::J2SLetBlock
        (loc loc)
-       (endloc loc)
+       (endloc endloc)
        (decls ,decls)
        (nodes ,nodes)))
 
@@ -398,7 +386,7 @@
    `(instantiate::J2SLetBlock
        (loc loc)
        (rec ,rec)
-       (endloc loc)
+       (endloc endloc)
        (decls ,decls)
        (nodes ,(if (pair? nodes) `(list ,@nodes) ''()))))
 
@@ -406,7 +394,7 @@
    `(instantiate::J2SLetBlock
        (loc loc)
        (rec ,rec)
-       (endloc loc)
+       (endloc endloc)
        (decls ,decls)
        (nodes ,nodes)))
 
