@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:01:46 2017                          */
-;*    Last change :  Sat Dec 11 06:53:46 2021 (serrano)                */
+;*    Last change :  Wed Dec 29 10:02:22 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES2015 Scheme class generation                                   */
@@ -318,6 +318,7 @@
 			   `(with-access::JsFunction ,super (alloc)
 			       (lambda (%this ctor)
 				  (let ((o (alloc %this ctor)))
+				     (js-object-proto-set! o ,proto)
 				     (js-object-mode-extensible-set! o #t)
 				     (js-object-mode-frozen-set! o #f)
 				     (js-object-mode-sealed-set! o #f)
@@ -331,6 +332,7 @@
 				      (loop (js-proxy-target super))
 				      (with-access::JsFunction super (alloc)
 					 (let ((o (alloc %this ctor)))
+					    (js-object-proto-set! o ,proto)
 					    (js-object-mode-extensible-set! o #t)
 					    (js-object-mode-frozen-set! o #f)
 					    (js-object-mode-sealed-set! o #f)
