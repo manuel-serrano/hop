@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Mon Dec 27 14:57:05 2021 (serrano)                */
+;*    Last change :  Fri Dec 31 08:54:51 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -37,9 +37,16 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SProgram mode return ctx)
    
-   (define (j2s-master-module module cnsttable esexports esredirects esimports scmheaders scmrecords records body)
+   (define (j2s-master-module module cnsttable
+	      esexports esredirects esimports
+	      scmheaders scmrecords
+	      records irecords
+	      body)
       (with-access::J2SProgram this (pcache-size call-size cnsts globals loc)
 	 `(,(append module
+	       (if (pair? irecords)
+		   `((static ,@(map j2s-record-declaration irecords)))
+		   '())
 	       (if (pair? records)
 		   `((export ,@(map j2s-record-declaration records)))
 		   '()))
@@ -85,9 +92,15 @@
 	   ;; for dynamic loading
 	   hopscript)))
    
-   (define (j2s-slave-module module cnsttable esexports esredirects esimports scmheaders scmrecords records body)
+   (define (j2s-slave-module module cnsttable
+	      esexports esredirects esimports
+	      scmheaders scmrecords
+	      records irecords
+	      body)
       (with-access::J2SProgram this (pcache-size call-size cnsts globals loc)
 	 `(,(append module
+	       (if (pair? irecords)
+		   `((static ,@(map j2s-record-declaration irecords))))
 	       (if (pair? records)
 		   `((export ,@(map j2s-record-declaration records)))
 		   '())
@@ -135,12 +148,20 @@
 	    ;; for dynamic loading
 	    hopscript)))
    
-   (define (j2s-module module cnsttable esexports esredirects esimports scmheaders scmrecords records body)
+   (define (j2s-module module cnsttable esexports esredirects esimports scmheaders scmrecords records irecords body)
       (if (context-get ctx :worker-slave)
-	  (j2s-slave-module module cnsttable esexports esredirects esimports scmheaders scmrecords records body)
-	  (j2s-master-module module cnsttable esexports esredirects esimports scmheaders scmrecords records body)))
+	  (j2s-slave-module module cnsttable
+	     esexports esredirects esimports
+	     scmheaders scmrecords
+	     records irecords
+	     body)
+	  (j2s-master-module module cnsttable
+	     esexports esredirects esimports
+	     scmheaders scmrecords
+	     records irecords
+	     body)))
 
-   (define (j2s-expr module cnsttable esexports esredirects esimports scmheaders scmrecords records body)
+   (define (j2s-expr module cnsttable esexports esredirects esimports scmheaders scmrecords records irecords body)
       (with-access::J2SProgram this (globals loc cnsts pcache-size call-size)
 	 (epairify-deep loc
 	    `(lambda (%this this %scope %module)
@@ -216,6 +237,7 @@
 	     (scmnodes (j2s-scheme nodes mode return nctx))
 	     (cnsttable (%cnst-table cnsts mode return nctx))
 	     (records (j2s-collect-records* this))
+	     (irecords (j2s-collect-irecords* this))
 	     (scmrecords (append-map (lambda (rec)
 					(j2s-record-prototype-constructor rec
 					   mode return ctx))
@@ -237,23 +259,26 @@
 		    ;; a module whose declaration is in the source
 		    (j2s-module module cnsttable
 		       esexports esredirects esimports
-		       scmheaders scmrecords records body))
+		       scmheaders scmrecords records irecords
+		       body))
 		   ((not name)
 		    ;; a mere expression
 		    (j2s-expr module cnsttable
 		       esexports esredirects esimports
-		       scmheaders scmrecords records body))
+		       scmheaders scmrecords records irecords body))
 		   (main
 		    ;; generate a main hopscript module 
 		    (j2s-main-worker-module this cnsttable
 		       esexports esredirects esimports
-		       scmheaders scmrecords records body nctx))
+		       scmheaders scmrecords records irecords
+		       body nctx))
 		   (else
 		    ;; generate the module clause
 		    (let ((mod (js-module this ctx)))
 		       (j2s-module mod cnsttable
 			  esexports esredirects esimports
-			  scmheaders scmrecords records body))))))))))
+			  scmheaders scmrecords records irecords
+			  body))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-tls-headers ...                                              */
@@ -293,7 +318,9 @@
 ;*    j2s-main-worker-module ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (j2s-main-worker-module this::J2SProgram cnsttable
-	   esexports esredirects esimports scmheaders scmrecords records body ctx)
+	   esexports esredirects esimports
+	   scmheaders scmrecords records irecords
+	   body ctx)
    (with-access::J2SProgram this (pcache-size call-size path
 				    globals cnsts loc name)
       (let* ((jsmod (js-module/main this ctx))
@@ -324,6 +351,9 @@
 				   (filter fundef? body)
 				   (filter nofundef? body)))))))
 	 `(,(append jsmod
+	       (if (pair? irecords)
+		   `((static ,@(map j2s-record-declaration irecords)))
+		   '())
 	       (if (pair? records)
 		   `((export ,@(map j2s-record-declaration records)))
 		   '()))

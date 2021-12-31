@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Mon Dec 27 10:17:37 2021 (serrano)                */
+;*    Last change :  Thu Dec 30 06:25:43 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -1243,7 +1243,6 @@
 (define-method (j2s->list this::J2SDeclInit stack)
    (with-access::J2SDeclInit this (val loc id)
       `(,@(call-next-method)
-	  ,@(dump-loc loc)
 	  ,@(if (nodefval? val)
 		'()
 		(list (j2s->list val (check-stack this stack)))))))
@@ -1257,7 +1256,6 @@
 	 `(,@(call-next-method)
 	     ,@(dump-loc loc)
 	     :alias ,alias
-	     :export ,(j2s->list export nstack)
 	     :import ,(j2s->list import nstack)))))
 
 ;*---------------------------------------------------------------------*/
@@ -1516,13 +1514,17 @@
 ;*    j2s->list ::J2SExport ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SExport stack)
-   (with-access::J2SExport this (id alias index writable eprgm loc)
-      `(,@(call-next-method) ,id
-	  ,@(dump-loc loc)
-	  :alias ,alias
-	  :index ,index
-	  :writable writable
-	  :eprgm ,(typeof eprgm))))
+   (with-access::J2SExport this (id alias index writable eprgm decl loc)
+	 `(,@(call-next-method) ,id
+	     ,@(dump-loc loc)
+	     :alias ,alias
+	     :index ,index
+	     :writable writable
+	     :eprgm ,(typeof eprgm)
+	     ,@(if decl
+		   (with-access::J2SDecl decl (id)
+		      `(:decl ,(cons id (typeof decl))))
+		   '()))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SExportDefault ...                                 */

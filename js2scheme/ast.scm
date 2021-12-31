@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Wed Dec 29 08:44:17 2021 (serrano)                */
+;*    Last change :  Fri Dec 31 08:25:17 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -621,9 +621,10 @@
 	   (j2s-let-opt?::bool ::J2SDecl)
 	   (j2s-let-class?::bool ::J2SDecl)
 	   (j2s-new-target?::bool ::J2SNode)
+	   
 	   (j2s-decl-class?::bool ::J2SDecl)
 	   (j2s-decl-record?::bool ::J2SDecl)
-
+	   
 	   (j2s-field-name::obj ::J2SNode)
 	   (inline j2s-field-length?::bool ::J2SNode)
 

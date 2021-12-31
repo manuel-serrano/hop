@@ -268,9 +268,10 @@
    
    (define (j2s-scheme-let-opt this)
       (with-access::J2SDeclInit this (scope id)
-	 (if (memq scope '(global %scope tls record))
+	 (if (memq scope '(global %scope tls record export))
 	     (j2s-let-decl-toplevel this mode return ctx)
-	     (error "j2s-scheme" "Should not be here (not global)"
+	     (error "j2s-scheme"
+		(format "Should not be top-level, wrong scope \"~a\"" scope)
 		(j2s->sexp this)))))
 
    (define (j2s-scheme-export this)
@@ -280,7 +281,7 @@
 		,(j2s-scheme val mode return ctx)))))
 
    (cond
-      ((j2s-export? this) (j2s-scheme-export this))
+;;      ((j2s-export? this) (j2s-scheme-export this))
       ((j2s-param? this) (call-next-method))
       ((j2s-let-opt? this) (j2s-scheme-let-opt this))
       ((j2s-let-class? this) (j2s-scheme-let-opt this))
@@ -447,8 +448,7 @@
 		       (with-access::J2SImport import (ipath path)
 			  `(js-import-ref ,(importpath-evar ipath) ,index
 			      (@ ,(symbol->string id) ,path)))))))
-	    ((and export
-		  (or (not (decl-ronly? decl)) (not (isa? decl J2SDeclFun))))
+	    ((and export (not (decl-ronly? decl)))
 	     (with-access::J2SExport export (index decl)
 		`(vector-ref %evars ,index)))
 	    ((j2s-let-opt? decl)
@@ -854,21 +854,33 @@
 	     (if (decl-usage-has? d '(eval))
 		 `(begin
 		     (define ,(j2s-decl-scm-id d ctx)
-			,(j2s-scheme val mode return ctx))
+			,(j2s-export-decl-val d (j2s-scheme val mode return ctx)))
 		     (js-define %this ,scope ,(j2s-decl-name d ctx)
 			(lambda (%) ,ident)
 			(lambda (% %v) (set! ,ident %v))
 			%source
 			,(caddr loc)))
 		 `(define ,(j2s-decl-scm-id d ctx)
-		     ,(j2s-scheme val mode return ctx))))
+		     ,(j2s-export-decl-val d (j2s-scheme val mode return ctx)))))
 	  (j2s-let-decl-toplevel-fun d mode return ctx))))
 
+;*---------------------------------------------------------------------*/
+;*    j2s-export-decl-val ...                                          */
+;*---------------------------------------------------------------------*/
+(define (j2s-export-decl-val decl val)
+   (with-access::J2SDecl decl (export)
+      (if export
+	  (with-access::J2SExport export (index)
+	     `(let ((val ,val))
+		(vector-set! %evars ,index val)
+		val))
+	  val)))
+      
 ;*---------------------------------------------------------------------*/
 ;*    j2s-let-decl-toplevel-fun ...                                    */
 ;*---------------------------------------------------------------------*/
 (define (j2s-let-decl-toplevel-fun::pair-nil d::J2SDeclInit mode return ctx)
-   (with-access::J2SDeclInit d (val hint scope loc)
+   (with-access::J2SDeclInit d (val hint scope loc export)
       (cond
 	 ((decl-usage-has? d '(ref get new set eval))
 	  (let* ((id (j2s-decl-fast-id d ctx))
@@ -893,18 +905,35 @@
 			       (lambda (% %v) (set! ,^id %v))
 			       %source
 			       ,(caddr loc)))
+			  '())
+		    ,@(if export
+			  (with-access::J2SExport export (index)
+			     `((vector-set! %evars ,index ,id)))
 			  '())))))
 	 ((decl-usage-has? d '(call))
 	  (with-access::J2SFun val (generator)
 	     (let ((id (j2s-decl-fast-id d ctx)))
-		(if generator
+		(cond
+		   (generator
 		    `(begin
 			(define ,(j2s-generator-prototype-id val)
 			   ,(j2s-generator-prototype->scheme val))
 			(define ,id
-			   ,(jsfun->lambda val mode return ctx #f)))
+			   ,(jsfun->lambda val mode return ctx #f))
+			,@(if export
+			      (with-access::J2SExport export (index)
+				 `((vector-set! %evars ,index
+				      ,(j2s-generator-prototype-id val))))
+			      '())))
+		   (export
+		    `(begin
+			`(define ,id
+			    ,(jsfun->lambda val mode return ctx #f))
+			,(with-access::J2SExport export (index)
+			    `(vector-set! %evars ,index ,id))))
+		   (else
 		    `(define ,id
-			,(jsfun->lambda val mode return ctx #f))))))
+			,(jsfun->lambda val mode return ctx #f)))))))
 	 (else
 	  '()))))
 

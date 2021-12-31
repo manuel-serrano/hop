@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Wed Dec 29 18:55:20 2021 (serrano)                */
+;*    Last change :  Thu Dec 30 06:40:40 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -987,9 +987,17 @@
 (define (is-record? this::J2SExpr)
    (when (isa? this J2SRef)
       (with-access::J2SRef this (decl)
-	 (when (isa? decl J2SDeclClass)
-	    (with-access::J2SDeclClass decl (val)
-	       (isa? val J2SRecord))))))
+	 (let loop ((decl decl))
+	    (cond
+	       ((isa? decl J2SDeclClass)
+		(with-access::J2SDeclClass decl (val)
+		   (isa? val J2SRecord)))
+	       ((isa? decl J2SDeclImport)
+		(with-access::J2SDeclImport decl (export)
+		   (with-access::J2SExport export (decl)
+		      (loop decl))))
+	       (else
+		#f))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    resolve! ::J2SClassElement ...                                   */
