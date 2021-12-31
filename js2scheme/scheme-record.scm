@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jul 15 07:09:51 2021                          */
-;*    Last change :  Thu Dec 30 06:54:37 2021 (serrano)                */
+;*    Last change :  Fri Dec 31 10:15:22 2021 (serrano)                */
 ;*    Copyright   :  2021 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Record generation                                                */
@@ -437,41 +437,41 @@
       (with-access::J2SRecord this (super)
 	 (with-access::J2SFun fun (idthis body params thisp new-target)
 	    (with-access::J2SBlock body (loc endloc nodes)
-	       (tprint "CECI EST FAUX CAR SUPER NE PEUT ETRE UN JSRECORD mais c'est UN REF")
-	       (cond
-		  ((and (isa? super J2SRecord)
-			(j2s-scheme-need-super-check? fun))
-		   (with-access::J2SRecord this (need-super-check)
-		      (set! need-super-check #t)
-		      (let ((decl (this-for-super-decl thisp)))
-			 ;; for dead-zone check
-			 (decl-usage-add! thisp 'uninit)
-			 (set! body
-			    (instantiate::J2SLetBlock
-			       (loc loc)
-			       (rec #f)
-			       (endloc endloc)
-			       (decls (list decl))
-			       (nodes (list (unthis idthis loc)
-					 (J2STry body
-					    (J2SNop)
-					    (returnthis thisp loc)))))))))
-		  ((isa? super J2SRecord)
-		   ;; dont add instance properties has they will be
-		   ;; introduced when invoking super
-		   body)
-		  (else
-		   ;; no super class, initialize the
-		   ;; instance properties first
-		   (set! body
-		      (J2SBlock
-			 (J2SStmtExpr
-			    (J2SPragma
-			       `(begin
-				   ,@(j2s-scheme-init-instance-properties
-					this mode return ctx))))
-			 body
-			 (J2SPragma 'this)))))
+	       (let ((superval (j2s-class-super-val this)))
+		  (cond
+		     ((and (isa? superval J2SClass)
+			   (j2s-scheme-need-super-check? fun))
+		      (with-access::J2SRecord this (need-super-check)
+			 (set! need-super-check #t)
+			 (let ((decl (this-for-super-decl thisp)))
+			    ;; for dead-zone check
+			    (decl-usage-add! thisp 'uninit)
+			    (set! body
+			       (instantiate::J2SLetBlock
+				  (loc loc)
+				  (rec #f)
+				  (endloc endloc)
+				  (decls (list decl))
+				  (nodes (list (unthis idthis loc)
+					    (J2STry body
+					       (J2SNop)
+					       (returnthis thisp loc)))))))))
+		     ((isa? superval J2SRecord)
+		      ;; dont add instance properties has they will be
+		      ;; introduced when invoking super
+		      body)
+		     (else
+		      ;; no super class, initialize the
+		      ;; instance properties first
+		      (set! body
+			 (J2SBlock
+			    (J2SStmtExpr
+			       (J2SPragma
+				  `(begin
+				      ,@(j2s-scheme-init-instance-properties
+					   this mode return ctx))))
+			    body
+			    (J2SPragma 'this))))))
 	       (when (class-new-target? this)
 		  (set! new-target 'argument)
 		  (set! params (cons (new-target-param loc) params))))

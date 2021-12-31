@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Fri Dec 31 08:54:51 2021 (serrano)                */
+;*    Last change :  Fri Dec 31 15:51:52 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -100,7 +100,8 @@
       (with-access::J2SProgram this (pcache-size call-size cnsts globals loc)
 	 `(,(append module
 	       (if (pair? irecords)
-		   `((static ,@(map j2s-record-declaration irecords))))
+		   `((static ,@(map j2s-record-declaration irecords)))
+		   '())
 	       (if (pair? records)
 		   `((export ,@(map j2s-record-declaration records)))
 		   '())

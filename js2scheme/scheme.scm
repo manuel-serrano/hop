@@ -229,6 +229,10 @@
 	    (case scope
 	       ((global)
 		`(define ,(j2s-decl-scm-id this ctx) ,(decl-init-val this)))
+	       ((export)
+		(with-access::J2SDeclInit this (val export)
+		   (with-access::J2SExport export (index)
+		      `(vector-set! %evars ,index ,(decl-init-val this)))))
 	       ((tls)
 		`(define-tls ,(j2s-decl-scm-id this ctx) ,(decl-init-val this)))
 	       (else
@@ -281,10 +285,10 @@
 		,(j2s-scheme val mode return ctx)))))
 
    (cond
-;;      ((j2s-export? this) (j2s-scheme-export this))
       ((j2s-param? this) (call-next-method))
       ((j2s-let-opt? this) (j2s-scheme-let-opt this))
       ((j2s-let-class? this) (j2s-scheme-let-opt this))
+      ((j2s-export? this) (j2s-scheme-export this))
       ((j2s-let? this) (call-next-method))
       (else (j2s-scheme-var this))))
 
@@ -448,7 +452,7 @@
 		       (with-access::J2SImport import (ipath path)
 			  `(js-import-ref ,(importpath-evar ipath) ,index
 			      (@ ,(symbol->string id) ,path)))))))
-	    ((and export (not (decl-ronly? decl)))
+	    ((and export (or (not (decl-ronly? decl)) (not (j2s-let-opt? decl))))
 	     (with-access::J2SExport export (index decl)
 		`(vector-ref %evars ,index)))
 	    ((j2s-let-opt? decl)
