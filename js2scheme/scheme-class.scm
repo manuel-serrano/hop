@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:01:46 2017                          */
-;*    Last change :  Thu Dec 30 06:54:10 2021 (serrano)                */
+;*    Last change :  Fri Dec 31 18:17:31 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES2015 Scheme class generation                                   */
@@ -75,10 +75,10 @@
 			       `(let* ,(map (lambda (t a) (list t a))
 					  ts vals)
 				   (constructor ,eobj ,@nt ,@(take ts lparams))))))))))
-	    ((not ctor)
+	    ((and (not ctor) (not imp))
 	     `(with-access::JsClass ,ecla (constructor)
 		 ,@(map (lambda (a) (j2s-scheme a mode return ctx)) args)
-		 (constructor ,eobj)))
+		 (constructor4 ,eobj)))
 	    (else
 	     `(with-access::JsClass ,ecla (constructor)
 		 ;; default constructor
@@ -658,7 +658,7 @@
 						,@(j2s-scheme-init-instance-properties context mode return ctx))
 					    (scheme-class-super-declclass this context #f decl)))
 				       (else
-					(scheme-class-super-declclass this context (eq? d decl) decl)))))
+					(scheme-class-super-declclass this context (not (eq? d decl)) decl)))))
 				(else
 				 (scheme-class-super-declclass this context (not (eq? d decl)) decl)))))
 			 ((isa? decl J2SDeclFun)

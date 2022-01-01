@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Fri Dec 17 12:11:11 2021 (serrano)                */
-;*    Copyright   :  2017-21 Manuel Serrano                            */
+;*    Last change :  Sat Jan  1 06:33:19 2022 (serrano)                */
+;*    Copyright   :  2017-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
 ;*=====================================================================*/
@@ -1079,11 +1079,10 @@
 			      `(when (<fx ,i ,%len)
 				  ,(init-alias-argument param #f i)))
 			 params (iota (length params)))
-		    (let loop ((,rest ,rest)
-			       (%i ,(length params)))
+		    (let loop ((%i ,(length params)))
 		       (when (<fx %i (vector-length ,rest))
 			  ,(init-argument `(vector-ref ,rest %i) '%i)
-			  (loop (cdr ,rest) (+fx %i 1))))
+			  (loop (+fx %i 1))))
 		    (js-bind! %this arguments ,(& "callee" (context-program ctx))
 		       :value (js-make-function %this ,id
 				 (js-function-arity 0 0)

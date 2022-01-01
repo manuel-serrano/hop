@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Fri Dec 31 16:01:37 2021 (serrano)                */
-;*    Copyright   :  2018-21 Manuel Serrano                            */
+;*    Last change :  Sat Jan  1 06:55:56 2022 (serrano)                */
+;*    Copyright   :  2018-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
 ;*=====================================================================*/
@@ -495,7 +495,7 @@
 	  ,(j2s-scheme obj mode return conf)
 	  ,(j2s-scheme (car args) mode return conf)
 	  ,(j2s-scheme (cadr args) mode return conf)
-	  ,(caddr args)))
+	  ,(cadddr args)))
 
    (define (is-object-prototype-has-own-property? obj args)
       (when (=fx (length args) 4)
@@ -581,7 +581,7 @@
 	  ,(j2s-scheme (car args) mode return conf)
 	  ,(j2s-scheme (cadr args) mode return conf)
 	  ,(j2s-scheme (caddr args) mode return conf)
-	  ,(cadddr args)))
+	  ,(car (cddddr args))))
 
    (define (is-array-prototype-slice? obj args)
       (when (=fx (length args) 5)
@@ -649,7 +649,7 @@
 	  ,(j2s-scheme (cadr args) mode return conf)
 	  ,(j2s-scheme (caddr args) mode return conf)
 	  ,(j2s-scheme (cadddr args) mode return conf)
-	  ,(car (cddddr args))))
+	  ,(cadr (cddddr args))))
 
    (cond
       ((isa? obj J2SRef)
