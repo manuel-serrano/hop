@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Sat Jan  1 10:59:48 2022 (serrano)                */
+;*    Last change :  Sun Jan  2 17:37:11 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -971,10 +971,10 @@
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.3.4.2
    (define (tostring this)
       (cond
-	 ((js-function? this)
+	 ((isa? this JsProcedureInfo)
 	  (js-function-src this))
 	 ((js-procedure? this)
-	  (js-function-src this))
+	  (& "[Function]"))
 	 ((js-proxy-function? this)
 	  (tostring (js-proxy-target this)))
 	 (else
