@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Fri Dec 31 15:51:52 2021 (serrano)                */
-;*    Copyright   :  2018-21 Manuel Serrano                            */
+;*    Last change :  Sun Jan  2 09:13:50 2022 (serrano)                */
+;*    Copyright   :  2018-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
 ;*=====================================================================*/
@@ -228,12 +228,6 @@
 	     (esexports (j2s-module-exports this nctx))
 	     (scmheaders (j2s-scheme headers mode return nctx))
 	     (scmdecls (j2s-scheme decls mode return nctx))
-	     ;; MS CARE: 21sep2021.
-	     ;;    See global-declfun@scheme-fun.scm
-	     ;;        j2s-scheme-closure@scheme-fun.scm
-;* 	     (scmclos (filter-map (lambda (d)                          */
-;* 				     (j2s-scheme-closure d mode return nctx)) */
-;* 			 decls))                                       */
 	     (scmclos '())
 	     (scmnodes (j2s-scheme nodes mode return nctx))
 	     (cnsttable (%cnst-table cnsts mode return nctx))

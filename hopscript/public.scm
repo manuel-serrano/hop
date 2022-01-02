@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sun Dec 12 06:43:27 2021 (serrano)                */
-;*    Copyright   :  2013-21 Manuel Serrano                            */
+;*    Last change :  Sun Jan  2 09:44:30 2022 (serrano)                */
+;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
 ;*=====================================================================*/
@@ -1041,7 +1041,7 @@
 	  (apply proc this (take args (-fx arity 1)))))))
 
 (define (js-calln-procedure/arity proc arity this args)
-   ;; invokes when the exact JS arity is known (see class ctor)
+   ;; invoked when the exact JS arity is known (see class ctor)
    (let ((n (length args)))
       (cond
 	 ((=fx arity n)

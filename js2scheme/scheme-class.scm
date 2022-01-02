@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:01:46 2017                          */
-;*    Last change :  Sat Jan  1 11:21:20 2022 (serrano)                */
+;*    Last change :  Sun Jan  2 09:43:05 2022 (serrano)                */
 ;*    Copyright   :  2017-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES2015 Scheme class generation                                   */
@@ -78,7 +78,7 @@
 	    ((and (not ctor) (not imp))
 	     `(with-access::JsClass ,ecla (constructor)
 		 ,@(map (lambda (a) (j2s-scheme a mode return ctx)) args)
-		 (constructor4 ,eobj)))
+		 (constructor ,eobj)))
 	    (else
 	     `(with-access::JsClass ,ecla (constructor)
 		 ;; default constructor
@@ -300,7 +300,7 @@
 			   "Class constructor '~a' cannot be invoked without 'new'"
 			   name))
 		    (js-undefined))
-		 (,(class-constructor-id clazz)
+		 (apply ,(class-constructor-id clazz)
 		  this
 		  ,@(if (class-new-target? clazz) '(new-target) '())
 		  args)))))
@@ -413,13 +413,18 @@
 	  0)))
 
    (define (init->lambda this::J2SClass init arity)
-      (let ((names (map (lambda (i)
-			   (string->symbol (format "%a~a" i)))
-		      (iota arity))))
-	 `(lambda (this ,@names)
+      (if (<fx arity 0)
+	  `(lambda (this . args)
 	     ,@(j2s-scheme-init-instance-properties
 		  this mode return ctx)
-	     this)))
+	     this)
+	  (let ((names (map (lambda (i)
+			       (string->symbol (format "%a~a" i)))
+			  (iota arity))))
+	     `(lambda (this ,@names)
+		 ,@(j2s-scheme-init-instance-properties
+		      this mode return ctx)
+		 this))))
       
    (with-access::J2SClass this (super elements src loc decl name)
       (let ((ctor (j2s-class-get-constructor this)))
@@ -441,7 +446,7 @@
 			  (arity (ctor-arity init)))
 		      (gen-class this %super
 			 (class->lambda this arity loc)
-			 (init->lambda this init arity)
+			 (init->lambda this init -1)
 			 `(js-function-arity ,arity 0) arity
 			 src loc)))
 		  (%super
@@ -958,13 +963,17 @@
 (define (super-ctor->lambda clazz::J2SClass superctor mode return ctx)
    (cond
       ((not superctor)
-       `(lambda (this new-target args)
+       `(lambda (this new-target . args)
 	   (cond
 	      ((isa? %super JsClass)
 	       (with-access::JsClass %super (constructor)
 		  (if (js-function-new-target? %super)
-		      (js-calln-procedure constructor this (cons new-target args))
-		      (js-calln-procedure constructor this args))))
+		      (if (<fx (procedure-arity constructor) 0)
+			  (apply constructor this new-target args)
+			  (js-calln-procedure constructor this (cons new-target args)))
+		      (if (<fx (procedure-arity constructor) 0)
+			  (apply constructor this args)
+			  (js-calln-procedure constructor this args)))))
 	      ((isa? %super JsFunction)
 	       (if (js-function-new-target? %super)
 		   (js-calln-jsprocedure %this %super this (cons new-target args))
@@ -1033,7 +1042,7 @@
 	      this)))
       (else
        (with-access::J2SFun superctor (params loc)
-	  `(lambda (this new-target args)
+	  `(lambda (this new-target . args)
 	      (js-new-target-push! %this new-target)
 	      (js-calln-jsprocedure %this %super this args)
 	      (js-new-target-pop! %this)
