@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Sat Jan  1 06:54:16 2022 (serrano)                */
+;*    Last change :  Sat Jan  1 10:59:48 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -160,6 +160,10 @@
       (match-case info
 	 (#(?- ?- (and (? js-jsstring?) ?src) ?- ?- ?- ?- ?-)
 	  src)
+	 (#(?- ?- (and (? string?) ?src) ?- ?- ?- ?- ?-)
+	  (let ((jstr (js-string->jsstring src)))
+	     (vector-set! info 2 jstr)
+	     jstr))
 	 (#(?- ?- #f (and (? string?) ?path) ?start ?end ?- ?-)
 	  (let* ((str (read-function-source info path start end))
 		 (jstr (js-string->jsstring str)))
@@ -970,7 +974,7 @@
 	 ((js-function? this)
 	  (js-function-src this))
 	 ((js-procedure? this)
-	  (& "[Function]"))
+	  (js-function-src this))
 	 ((js-proxy-function? this)
 	  (tostring (js-proxy-target this)))
 	 (else

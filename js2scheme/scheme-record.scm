@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jul 15 07:09:51 2021                          */
-;*    Last change :  Fri Dec 31 10:15:22 2021 (serrano)                */
-;*    Copyright   :  2021 Manuel Serrano                               */
+;*    Last change :  Sat Jan  1 11:42:04 2022 (serrano)                */
+;*    Copyright   :  2021-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Record generation                                                */
 ;*=====================================================================*/
@@ -344,31 +344,52 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-collect-records* this::J2SProgram)
    (with-access::J2SProgram this (decls)
-      (filter-map (lambda (d)
-		     (when (isa? d J2SDeclClass)
-			(with-access::J2SDeclClass d (val)
-			   (when (isa? val J2SRecord)
-			      val))))
-	 decls)))
+      (delete-duplicates!
+	 (filter-map (lambda (d)
+			(when (isa? d J2SDeclClass)
+			   (with-access::J2SDeclClass d (val)
+			      (when (isa? val J2SRecord)
+				 val))))
+	    decls)
+	 eq?)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-collect-irecords* ::J2SProgram ...                           */
 ;*---------------------------------------------------------------------*/
 (define (j2s-collect-irecords* this::J2SProgram)
+
+   (define (import-record rec::J2SRecord)
+      (with-access::J2SRecord rec (super name)
+	 (if (isa? super J2SRef)
+	     (with-access::J2SRef super (decl)
+		(with-access::J2SDeclClass decl (val export id)
+		   (if export
+		       (cons rec (import-record val))
+		       (j2s-error name
+			  "Super record not exported"
+			  rec id))))
+	     (list rec))))
+      
    (with-access::J2SProgram this (decls)
-      (filter-map (lambda (d)
-		     (when (isa? d J2SDeclClass)
-			(with-access::J2SDeclClass d (val)
-			   (when (isa? val J2SRecord)
-			      (with-access::J2SRecord val (super)
-				 (when (isa? super J2SRef)
-				    (with-access::J2SRef super (decl)
-				       (when (isa? decl J2SDeclImport)
-					  (with-access::J2SDeclImport decl (export)
-					     (with-access::J2SExport export (decl)
-						(with-access::J2SDeclClass decl (val)
-						   val)))))))))))
-	 decls)))
+      (delete-duplicates!
+	 (append-map (lambda (d)
+			(if (isa? d J2SDeclClass)
+			    (with-access::J2SDeclClass d (val)
+			       (if (isa? val J2SRecord)
+				   (with-access::J2SRecord val (super)
+				      (if (isa? super J2SRef)
+					  (with-access::J2SRef super (decl)
+					     (if (isa? decl J2SDeclImport)
+						 (with-access::J2SDeclImport decl (export)
+						    (with-access::J2SExport export (decl)
+						       (with-access::J2SDeclClass decl (val)
+							  (import-record val))))
+						 '()))
+					  '()))
+				   '()))
+			    '()))
+	    decls)
+	 eq?)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-record-new ...                                               */
@@ -456,7 +477,7 @@
 					    (J2STry body
 					       (J2SNop)
 					       (returnthis thisp loc)))))))))
-		     ((isa? superval J2SRecord)
+		     ((and #f (isa? superval J2SRecord))
 		      ;; dont add instance properties has they will be
 		      ;; introduced when invoking super
 		      body)
@@ -476,6 +497,12 @@
 		  (set! new-target 'argument)
 		  (set! params (cons (new-target-param loc) params))))
 	    (jsfun->lambda fun mode return ctx #t))))
+
+   (define (j2s-record-root-constructor this)
+      `(lambda (this)
+	  ,@(j2s-scheme-init-instance-properties
+	       this mode return ctx)
+	  this))
    
    (define (j2s-record-constructor/ctor this ctor::J2SClassElement)
       (with-access::J2SClassElement ctor (prop)
@@ -483,14 +510,13 @@
 	    (let ((dup (duplicate::J2SFun val)))
 	       (j2s-record-constructor-fun this dup)))))
    
-   (define (j2s-record-constructor/w-ctor this superctor)
-      (with-access::J2SRecord this (loc decl)
+   (define (j2s-record-constructor/superctor this superctor)
+      (with-access::J2SRecord this (loc decl endloc)
 	 (let ((self (instantiate::J2SDecl
 			(loc loc)
 			(id 'this)
 			(_scmid 'this)
 			(binder 'param)))
-	       (endloc loc)
 	       (params (if (isa? superctor J2SClassElement)
 			   (with-access::J2SClassElement superctor (prop)
 			      (with-access::J2SMethodPropertyInit prop (val)
@@ -503,19 +529,33 @@
 		  (J2SBlock
 		     (J2SCall* (J2SSuper self this)
 			(map (lambda (d) (J2SRef d)) params))))))))
-   
+
+   (define (j2s-record-constructor/w-ctor this)
+      (with-access::J2SRecord this (loc decl endloc)
+	 (let ((self (instantiate::J2SDecl
+			(loc loc)
+			(id 'this)
+			(_scmid 'this)
+			(binder 'param))))
+	    (j2s-record-constructor-fun this
+	       (J2SFun 'constructor '()
+		  (J2SBlock
+		     (J2SCall (J2SSuper self this))))))))
    
    (define (gen-scm-ctor this)
-      (let ((ctor (j2s-class-get-constructor this)))
-	 (if ctor
-	     (j2s-record-constructor/ctor this ctor)
-	     (let ((superctor (j2s-class-find-constructor this)))
-		(if superctor
-		    (j2s-record-constructor/w-ctor this superctor)
-		    `(lambda (this) 
-			,@(j2s-scheme-init-instance-properties
-			     this mode return ctx)
-			this))))))
+      (cond
+	 ((j2s-class-get-constructor this)
+	  =>
+	  (lambda (ctor)
+	     (j2s-record-constructor/ctor this ctor)))
+	 ((not (j2s-class-super-val this))
+	  (j2s-record-root-constructor this))
+	 ((j2s-class-find-constructor this)
+	  =>
+	  (lambda (superctor)
+	     (j2s-record-constructor/superctor this superctor)))
+	 (else
+	  (j2s-record-constructor/w-ctor this))))
    
    (let ((ctor (gen-scm-ctor this)))
       (j2s-scheme-class-put-info! this :scm-cache-constructor ctor)

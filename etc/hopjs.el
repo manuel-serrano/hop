@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Wed Dec 29 08:05:01 2021 (serrano)                */
-;*    Copyright   :  2014-21 Manuel Serrano                            */
+;*    Last change :  Sat Jan  1 10:11:07 2022 (serrano)                */
+;*    Copyright   :  2014-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
 ;*=====================================================================*/
@@ -86,16 +86,16 @@
 	(list "#:\\([^ \t\r\n{}(),;=[]*\\)" 1 'font-lock-face-hopjs3)
 	(cons "\\<\\(export\\|import\\|from\\|as\\)\\>" 'font-lock-face-hopjs4)
 	(cons "exports[.]" 'font-lock-keyword-face)
-	(list "\\(record\\|class\\)[ \t]*\\([^ \t]+\\)"
+	(list "\\(record\\|class\\)[ \t]+\\([^ \t]+\\)"
 	      '(1 font-lock-keyword-face)
 	      '(2 font-lock-face-hopjs2))
-	(list "\\(record\\|class\\)[ \t]*\\([^ \t]+\\)[ \t]*\\(extends\\)[ \t]*\\([^ \t]+\\)"
+	(list "\\(record\\|class\\)[ \t]+\\([^ \t]+\\)[ \t]*\\(extends\\)[ \t]*\\([^ \t]+\\)"
 	      '(1 font-lock-keyword-face)
 	      '(2 font-lock-face-hopjs2)
 	      '(3 font-lock-keyword-face)
 	      '(4 font-lock-face-hopjs2))
 	(list "\\(constructor\\)(" 1 'font-lock-keyword-face)
-	(list "\\(require\\)([ \t]*\\(\"[^\"]+\"\\)"
+	(list "\\(require\\)([ \t]+\\(\"[^\"]+\"\\)"
 	      '(1 font-lock-keyword-face)
 	      '(2 font-lock-face-underline))
 	(list (concat "^\\s-*\\(?:service\\)\\s-+\\(" js--name-re "\\)") 1 'font-lock-function-name-face)))
