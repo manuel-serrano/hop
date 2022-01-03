@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jul 11 10:52:32 2014                          */
-;*    Last change :  Fri Jun  7 16:26:20 2019 (serrano)                */
-;*    Copyright   :  2014-19 Manuel Serrano                            */
+;*    Last change :  Thu Dec 23 08:51:18 2021 (serrano)                */
+;*    Copyright   :  2014-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript source map generation                                 */
 ;*=====================================================================*/
@@ -45,7 +45,7 @@
    (define (assq-get k lst)
       (let ((v (assq k lst)))
 	 (when (pair? v) (cdr v))))
-   
+
    (when (isa? this J2SProgram)
       (with-access::J2SProgram this (source-map nodes path)
 	 (when source-map

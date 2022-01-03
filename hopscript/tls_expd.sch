@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Nov 22 06:35:05 2014                          */
-;*    Last change :  Mon Oct 18 08:15:49 2021 (serrano)                */
+;*    Last change :  Mon Dec 20 19:47:10 2021 (serrano)                */
 ;*    Copyright   :  2014-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    thread local variables macros.                                   */
@@ -42,8 +42,10 @@
 	      (e nx e))))
       ((define-tls ?var ?val)
        (let ((nx `(cond-expand
-		     ((and enable-tls (not bigloo-eval)) (set! ,var ,val))
-		     (else (define ,var ,val)))))
+		     ((and enable-tls (not bigloo-eval))
+		      (set! ,var (js-tls-gc-mark! ,val)))
+		     (else
+		      (define ,var ,val)))))
 	  (if (epair? x)
 	      (e (econs (car nx) (cdr nx) (cer x)) e)
 	      (e nx e))))

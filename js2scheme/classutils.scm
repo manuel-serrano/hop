@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 19 16:28:44 2021                          */
-;*    Last change :  Wed Oct 27 19:04:32 2021 (serrano)                */
+;*    Last change :  Fri Dec 31 08:37:18 2021 (serrano)                */
 ;*    Copyright   :  2021 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Class related utility functions                                  */
@@ -136,9 +136,26 @@
    (with-access::J2SClass clazz (super)
       (when (isa? super J2SRef)
 	 (with-access::J2SRef super (decl)
-	    (when (isa? decl J2SDeclInit)
-	       (with-access::J2SDeclInit decl (val)
-		  val))))))
+	    (let loop ((d decl))
+	       (cond
+		  ((isa? d J2SDeclInit)
+		   (with-access::J2SDeclInit d (val)
+		      val))
+		  ((isa? d J2SDeclImport)
+		   (with-access::J2SDeclImport d (export)
+		      (with-access::J2SExport export (decl)
+			 (let ((val (loop decl)))
+			    (cond
+			       ((isa? val J2SRecord)
+				(duplicate::J2SRecord val
+				   (decl d)))
+			       ((isa? val J2SClass)
+				(duplicate::J2SClass val
+				   (decl d)))
+			       (else
+				#f))))))
+		  (else
+		   #f)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-class-root-val ...                                           */

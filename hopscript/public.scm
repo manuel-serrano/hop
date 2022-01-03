@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Mon Nov 29 07:20:30 2021 (serrano)                */
-;*    Copyright   :  2013-21 Manuel Serrano                            */
+;*    Last change :  Sun Jan  2 09:44:30 2022 (serrano)                */
+;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
 ;*=====================================================================*/
@@ -113,6 +113,7 @@
 	   (inline js-call9-procedure fun::procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8)
 	   (inline js-call10-procedure fun::procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
 	   (js-calln-procedure fun::procedure this args)
+	   (js-calln-procedure/arity fun::procedure arity::long this args)
 	   
 	   (js-call0%-procedure fun::procedure this)
 	   (js-call1%-procedure fun::procedure this a0)
@@ -213,6 +214,7 @@
 	   (inline js-toobject-fast::JsObject ::obj ::JsGlobalObject)
 	   (js-toobject::obj ::JsGlobalObject ::obj)
 	   (js-toobject/debug::obj ::JsGlobalObject loc ::obj)
+	   (js-toobject-for-property/debug::obj ::JsGlobalObject loc ::obj ::obj)
 	   
 	   (js-toprimitive-for-string::JsStringLiteral ::obj ::JsGlobalObject)
 	   (generic js-toprimitive ::obj ::symbol ::JsGlobalObject)
@@ -1037,6 +1039,20 @@
 		   (js-undefined)))))
 	 (else
 	  (apply proc this (take args (-fx arity 1)))))))
+
+(define (js-calln-procedure/arity proc arity this args)
+   ;; invoked when the exact JS arity is known (see class ctor)
+   (let ((n (length args)))
+      (cond
+	 ((=fx arity n)
+	  (apply proc this args))
+	 ((>fx arity n)
+	  (apply proc this
+	     (append args
+		(make-list (-fx arity n)
+		   (js-undefined)))))
+	 (else
+	  (apply proc this (take args arity))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    gen-call-obj ...                                                 */
@@ -2177,6 +2193,19 @@
 	     (if (or (symbol? o) (string? o) (number? o) (boolean? o))
 		 (format "~s " o)
 		 ""))
+	  o)))
+
+;*---------------------------------------------------------------------*/
+;*    js-toobject-for-property/debug ...                               */
+;*---------------------------------------------------------------------*/
+(define (js-toobject-for-property/debug %this::JsGlobalObject loc o prop)
+   (or (js-toobject-failsafe %this o)
+       (js-raise-type-error/loc %this loc
+	  (format "Cannot access property ~s of ~a" prop
+	     (cond
+		((eq? o #unspecified) "undefined")
+		((null? o) "null")
+		(else o)))
 	  o)))
 
 ;*---------------------------------------------------------------------*/

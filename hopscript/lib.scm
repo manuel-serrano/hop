@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Tue Sep 28 15:52:43 2021 (serrano)                */
+;*    Last change :  Mon Dec 20 19:51:11 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -51,7 +51,8 @@
 	   (js-object->keyword-arguments*::pair-nil ::JsObject ::JsGlobalObject)
 	   (js-iterable->list::pair-nil ::obj ::JsGlobalObject)
 	   (generic js-jsobject->jsarray ::obj ::JsGlobalObject)
-	   (inline fixnums?::bool ::obj ::obj)))
+	   (inline fixnums?::bool ::obj ::obj)
+	   (js-tls-gc-mark! ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
@@ -567,6 +568,21 @@
        (pragma::bool "INTEGERP( TAG_INT == 0 ? ((long)$1 | (long)$2) : ((long)$1 & (long)$2) )" a b))
       (else
        (and (fixnum? a) (fixnum? b)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-tls-gc-mark! ...                                              */
+;*    -------------------------------------------------------------    */
+;*    Accord to the Boehm collector documentation [1], there is a      */
+;*    bug that makes values pointed to only by tls variables           */
+;*    collected. They have to be marked explicitly.                    */
+;*    -------------------------------------------------------------    */
+;*    [1]: https://hboehm.info/gc/gcinterface.html                     */
+;*---------------------------------------------------------------------*/
+(define (js-tls-gc-mark! val)
+   (set! *tls-roots* (cons val *tls-roots*))
+   val)
+
+(define *tls-roots* '())
 
 ;*---------------------------------------------------------------------*/
 ;*    &end!                                                            */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Apr 12 08:03:03 2020                          */
-;*    Last change :  Fri Sep 10 19:51:58 2021 (serrano)                */
+;*    Last change :  Mon Dec 27 14:57:03 2021 (serrano)                */
 ;*    Copyright   :  2020-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme compilation of JS constants.                              */
@@ -29,6 +29,7 @@
 	   __js2scheme_scheme-fun)
 
    (export (& obj ::J2SProgram)
+	   (j2s-jsstring-init ::J2SProgram)
 	   (&string ::pair)
 	   (utf8-codeunit-length::long ::bstring)))
 
@@ -54,6 +55,16 @@
 		(set! strings (cons (list s n obj) strings))
 		`(& ,(car s) ,n))))))
       
+;*---------------------------------------------------------------------*/
+;*    j2s-jsstring-init ...                                            */
+;*---------------------------------------------------------------------*/
+(define (j2s-jsstring-init prog)
+   (with-access::J2SProgram prog (strings)
+      `(&jsstring-init
+	  ,(obj->string
+	      (apply vector
+		 (map &string (reverse! strings)))))))
+
 ;*---------------------------------------------------------------------*/
 ;*    &string ...                                                      */
 ;*    -------------------------------------------------------------    */

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.5.x/runtime/param.scm                 */
+;*    serrano/prgm/project/hop/hop/runtime/param.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Mon Dec  6 10:16:52 2021 (serrano)                */
+;*    Last change :  Thu Dec 23 06:20:32 2021 (serrano)                */
 ;*    Copyright   :  2004-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -979,6 +979,7 @@
 (define-parameter hop-mime-types
    '(;; web
      ("text/javascript" "scm")
+     ("text/javascript" "mjs")
      ("text/html" "html" "htm" "shtml")
      ("text/css" "css" "hss")
      ("application/xhtml+xml" "xhtml")

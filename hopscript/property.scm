@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sat Nov 27 08:55:06 2021 (serrano)                */
+;*    Last change :  Sun Dec 12 06:43:07 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -650,8 +650,7 @@
 		       (unless (eq? cmap (js-not-a-cmap))
 			  (with-access::JsConstructMap cmap (ctor)
 			     (js-ctor-constrsize-extend! ctor (+fx idx 1))))
-		       (js-object-extend! obj idx value (+fx idx 1))
-		       (vector-set! elements ridx value))))))))
+		       (js-object-extend! obj idx value (+fx idx 1)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-bind-push! ...                                         */
@@ -668,9 +667,7 @@
 	     (with-access::JsObject obj (elements)
 		(if (<fx ridx (vector-length elements))
 		    (vector-set! elements ridx value)
-		    (begin
-		       (js-object-extend! obj idx value (+fx idx 1))
-		       (vector-set! elements ridx value))))))))
+		    (js-object-extend! obj idx value (+fx idx 1))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-cmap-push! ...                                         */
@@ -684,7 +681,6 @@
       (with-access::JsConstructMap cmap (ctor)
 	 (js-ctor-constrsize-extend! ctor (+fx idx 1)))
       (js-object-extend! obj idx value (+fx idx 1))
-      (js-object-noinline-set! obj idx value)
       (set! cmap ncmap)
       obj))
 
@@ -1034,7 +1030,8 @@
 	    (%id (gencmapid))
 	    (lock (make-spinlock "JsConstructMap"))
 	    (props newprops)
-	    (methods newmethods)))))
+	    (methods newmethods)
+	    (transitions '())))))
 
 ;*---------------------------------------------------------------------*/
 ;*    merge-cmap! ...                                                  */
@@ -2478,7 +2475,7 @@
        ;; see toobject
        (js-get o prop %this))
       (else
-       (let ((obj (js-toobject/debug %this loc o)))
+       (let ((obj (js-toobject-for-property/debug %this loc o prop)))
 	  (js-get-jsobject obj o prop %this)))))
 
 ;*---------------------------------------------------------------------*/
@@ -2650,17 +2647,12 @@
    (with-access::JsPropertyCache cache (cntmiss (cname name) (cpoint point))
       (set! cntmiss (+u32 #u32:1 cntmiss)))
 
-   (when (eq? name (& "Value"))
-      (tprint "miss.1=" name))
    (let loop ((obj o))
       (jsobject-find obj o name
 	 ;; map search
 	 (lambda (obj i)
 	    (with-access::JsPropertyCache cache (index owner cntmiss)
 	       (let ((el-or-desc (js-object-ref obj i)))
-		  (when (eq? name (& "Value"))
-		     (tprint "miss.2=" name " " (typeof el-or-desc)
-			" " (eq? o obj)))
 		  (js-assert-object obj "js-get-jsobject-name/cache-miss")
 		  (cond
 		     ((isa? el-or-desc JsPropertyDescriptor)
@@ -3424,7 +3416,7 @@
       ((pair? _o)
        (js-put-pair! _o (js-toname prop %this) v throw %this))
       (else
-       (let ((o (js-toobject/debug %this loc _o)))
+       (let ((o (js-toobject-for-property/debug %this loc _o prop)))
 	  (js-put! _o prop v throw %this)))))
 
 ;*---------------------------------------------------------------------*/

@@ -125,7 +125,9 @@
 	   (with-tmp lhs rhs mode return ::struct gen::procedure)
 	   (with-tmp-args ::pair-nil mode return ctx gen::procedure)
 
-	   ))
+	   (importpath-var ::J2SImportPath)
+	   (importpath-evar ::J2SImportPath)
+	   (importpath-rvar ::J2SImportPath ::pair)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-unresolved-workspaces ...                                    */
@@ -647,6 +649,8 @@
 	   ,(if (pair? throw) `',throw throw)
 	   %this
 	   ,(js-pcache cache) ,(loc->point loc)))
+      ((memq (context-get ctx :site) '(client tilde))
+       name)
       (else
        `(js-global-object-get-name ,j2s-unresolved-get-workspace
 	   ,(& name (context-program ctx))
@@ -1605,3 +1609,23 @@
    (cell-set! cell #t)
    #t)
 
+;*---------------------------------------------------------------------*/
+;*    importpath-var ...                                               */
+;*---------------------------------------------------------------------*/
+(define (importpath-var i::J2SImportPath)
+   (with-access::J2SImportPath i (index)
+      (string->symbol (format "%import~a" index))))
+
+;*---------------------------------------------------------------------*/
+;*    importpath-evar ...                                              */
+;*---------------------------------------------------------------------*/
+(define (importpath-evar i::J2SImportPath)
+   (with-access::J2SImportPath i (index)
+      (string->symbol (format "%import-evars~a" index))))
+
+;*---------------------------------------------------------------------*/
+;*    importpath-rvar ...                                              */
+;*---------------------------------------------------------------------*/
+(define (importpath-rvar i::J2SImportPath rindexes)
+   (with-access::J2SImportPath i (index)
+      (string->symbol (format "%import-evars~a:~(:)" index rindexes))))

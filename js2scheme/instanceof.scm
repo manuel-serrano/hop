@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 24 16:22:25 2018                          */
-;*    Last change :  Wed Oct 20 08:08:33 2021 (serrano)                */
+;*    Last change :  Wed Dec 29 09:01:35 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Cache instanceof tests.                                          */
@@ -69,12 +69,13 @@
 			(memq mode '(strict hopscript))))))))
    
    (define (object-instanceof/cache obj rhs be loc)
-      (let ((cache (get-cache prgm)))
+      (let ((cache (get-cache prgm))
+	    (endloc (node-endloc rhs)))
 	 (J2SIf (J2SCacheCheck 'instanceof cache #f obj)
 	    (J2SReturn #t (J2SBool #t) be)
 	    (J2SIf (duplicate::J2SBinary this
 		      (lhs (duplicate::J2SRef obj)))
-	       (J2SBlock/w-endloc
+	       (J2SBlock
 		  (J2SStmtExpr (J2SCacheUpdate 'instanceof cache obj))
 		  (J2SReturn #t (J2SBool #t) be))
 	       (J2SReturn #t (J2SBool #f) be)))))
@@ -88,7 +89,8 @@
    
    (define (instanceof-stmt lhs rhs be loc)
       (if (not (isa? lhs J2SRef))
-	  (let* ((id (gensym 'obj))
+	  (let* ((endloc (node-endloc this))
+		 (id (gensym 'obj))
 		 (t (j2s-type lhs))
 		 (d (J2SLetOpt/vtype t '(get) id lhs)))
 	     (J2SLetRecBlock #f (list d)
@@ -104,8 +106,9 @@
 	     (call-default-walker))
 	    (else
 	     (let* ((lbl '%instanceof)
+		    (endloc (node-endloc this))
 		    (be (J2SBindExit/type 'bool (gensym '%instanceof)
-			   (J2SBlock/w-endloc))))
+			   (J2SBlock))))
 		(with-access::J2SBindExit be (stmt)
 		   (set! stmt (instanceof-stmt lhs rhs be loc))
 		   be)))))))

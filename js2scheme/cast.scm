@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Wed Oct 13 07:53:49 2021 (serrano)                */
+;*    Last change :  Wed Dec 29 08:59:52 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -426,6 +426,7 @@
 	 (else
 	  (let* ((id (gensym 'assig))
 		 (tr (j2s-type rhs))
+		 (endloc (node-endloc this))
 		 (d (J2SLetOpt/vtype tr '(get) id (type-cast! rhs tr))))
 	     ;; ms 13oct2021
 	     ;;(set! rhs (type-cast! (J2SRef d :type tr) '*))

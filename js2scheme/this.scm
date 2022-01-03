@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Fri Apr  9 10:28:04 2021 (serrano)                */
-;*    Copyright   :  2013-21 Manuel Serrano                            */
+;*    Last change :  Sat Jan  1 07:06:36 2022 (serrano)                */
+;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Init the this variable of all non-strict mode functions.         */
 ;*=====================================================================*/
@@ -79,7 +79,6 @@
 	 (let ((nbody (this! body)))
 	    (when (this? nbody)
 	       (with-access::J2SDecl thisp (vtype)
-		  ;; MS CARE UTYPE
 		  (set! vtype 'any))
 	       (set! body
 		  (with-access::J2SBlock body (endloc)

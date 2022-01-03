@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.5.x/js2scheme/ast.scm                 */
+;*    serrano/prgm/project/hop/hop/js2scheme/ast.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Sat Nov 13 09:09:50 2021 (serrano)                */
-;*    Copyright   :  2013-21 Manuel Serrano                            */
+;*    Last change :  Fri Dec 31 08:25:17 2021 (serrano)                */
+;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
 ;*=====================================================================*/
@@ -42,7 +42,6 @@
 	      (endloc::pair read-only (info '("notraverse"))))
 	   
 	   (class J2SProgram::J2SBlock
-	      (version::int read-only (default 1))
 	      (mode::symbol read-only (default 'normal))
 	      (path::bstring read-only)
 	      (pcache-size::long (default 0))
@@ -67,8 +66,8 @@
 	      (key (default (ast-decl-key)) (info '("notraverse")))
 	      ;; writable=#f iff decl is const
 	      (writable (default #t) (info '("notraverse")))
-	      ;; either: global, %scope, tls, local, letblock, letvar,
-	      ;;   kont, export
+	      ;; scope: export, global, %scope, tls, local, letblock, letvar,
+	      ;;   kont, loop
 	      (scope::symbol (default 'local) (info '("notraverse")))
 	      (usecnt::int (default 0) (info '("notraverse")))
 	      (useinloop::bool (default #f) (info '("notraverse")))
@@ -76,7 +75,7 @@
 	      (escape::bool (default #f) (info '("notraverse")))
 	      ;; see usage-bit.sch
 	      (usage::uint32 (default (usage '())))
-	      ;; variable range
+	      ;; binder: var, let, let-opt, let-forin, param, class, record
 	      (binder::symbol (default 'var) (info '("notraverse")))
 	      ;; user declared type (only a mere annotation)
 	      (utype (default 'unknown) (info '("notraverse")))
@@ -92,8 +91,8 @@
 	      (vrange::obj (default #unspecified) (info '("notraverse")))
 	      ;; variable 
 	      (hint::pair-nil (default '()) (info '("notraverse")))
-	      ;; es module export
-	      (exports::pair-nil (default '()) (info '("notraverse"))))
+	      ;; export clause (if any)
+	      (export::obj (default #f) (info '("notraverse"))))
 
 	   (class J2SDeclRest::J2SDecl
 	      (alloc-policy::symbol (default 'heap) (info '("notraverse"))))
@@ -130,7 +129,6 @@
 
 	   (final-class J2SDeclImport::J2SDecl
 	      (alias read-only (default #f) (info '("notraverse")))
-	      (export::obj read-only (info '("notraverse")))
 	      (import::obj read-only (info '("notraverse"))))
 
 	   (abstract-class J2SExpr::J2SNode
@@ -165,7 +163,8 @@
 
 	   (final-class J2SLetBlock::J2SBlock
 	      (rec::bool (default #t))
-	      (decls::pair-nil (info '("ast"))))
+	      (decls::pair-nil (info '("ast")))
+	      (mode::symbol read-only (default 'normal)))
 	   
 	   (class J2SIdStmt::J2SStmt
 	      (need-bind-exit-break::bool (default #t))
@@ -231,7 +230,8 @@
 	   
 	   (final-class J2SYield::J2SExpr
 	      (expr::J2SExpr (info '("ast")))
-	      (generator::bool read-only (default #f)))
+	      (generator::bool read-only (default #f))
+	      (await::bool read-only (default #t)))
 	   
 	   (final-class J2SWith::J2SStmt
 	      (id::symbol read-only (default (gensym '__with)))
@@ -509,7 +509,7 @@
 	      (cnt::symbol read-only))
 
 	   (final-class J2SDProducer::J2SExpr
-	      (decl::J2SDecl (info '("jsonref")))
+	      (decl::J2SDecl (info '("jsonref" "notraverse")))
 	      (expr::J2SExpr (info '("ast")))
 	      (size::long read-only (info '("notraverse"))))
 
@@ -518,53 +518,52 @@
 	      (expr::J2SExpr (info '("ast")))
 	      (path read-only))
 
+	   (class J2SExport::J2SStmt
+	      (id::symbol read-only)
+	      (alias::symbol read-only)
+	      (index::long (default -9998))
+	      (decl (default #f) (info '("jsonref")))
+	      (eprgm (default #f) (info '("notraverse"))))
+
+	   (class J2SExportDefault::J2SExport
+	      expr::J2SExpr)
+	   
+	   (class J2SRedirect::J2SExport
+	      (export (default #f))
+	      (import (default #f) (info '("notraverse"))))
+
+	   (class J2SRedirectNamespace::J2SRedirect)
+
+	   (final-class J2SImportPath
+	      (loc read-only)
+	      (name::bstring read-only)
+	      (path::bstring read-only)
+	      (protocol::symbol read-only)
+	      (index::long (default -9997))
+	      (import read-only))
+
 	   (final-class J2SImport::J2SStmt
 	      (path::bstring read-only (info '("notraverse")))
+	      (ipath (default #f) (info '("notraverse")))
 	      ;; dollarpath is only used for client-side imports whose
 	      ;; module name is a dollar expression (see js.scm)
 	      dollarpath::J2SExpr
 	      (names::pair-nil (default '()) (info '("notraverse")))
-	      (respath (default #f) (info '("notraverse")))
-	      (mvar (default #f) (info '("notraverse")))
-	      (ivar (default #f) (info '("notraverse")))
-	      (reindex::long (default -1) (info '("notraverse")))
-	      (iprgm (default #f) (info '("notraverse"))))
+	      (iprgm (default #f) (info '("notraverse")))
+	      (lang (default #f)))
 
 	   (final-class J2SImportName
 	      (loc read-only)
 	      (id::symbol read-only)
 	      (alias::symbol read-only))
 
-	   (final-class J2SImportNamespace
-	      (loc read-only)
-	      (id::symbol read-only))
-
-	   (final-class J2SImportRedirect
-	      (loc read-only)
+	   (final-class J2SImportNamespace::J2SExpr
 	      (id::symbol read-only)
-	      (alias::symbol read-only))
-
-	   (final-class J2SImportExport
-	      (loc read-only))
+	      import)
 
 	   (final-class J2SImportDynamic::J2SExpr
 	      (base::bstring (default (pwd)))
 	      path::J2SExpr)
-
-	   (final-class J2SImportExports::J2SExpr
-	      import)
-
-	   (final-class J2SExport
-	      (id::symbol read-only)
-	      (alias::symbol read-only)
-	      (index::long (default -1))
-	      (decl (default #f) (info '("jsonref")))
-	      (from (default #f)))
-
-	   (final-class J2SExportVars::J2SStmt
-	      (refs::pair-nil read-only)
-	      (aliases::pair-nil read-only (info '("notraverse")))
-	      (program (default #f) (info '("notraverse"))))
 
 	   (generic walk0 n::J2SNode p::procedure)
 	   (generic walk1 n::J2SNode p::procedure a0)
@@ -600,7 +599,7 @@
 
 	   (node-%info ::J2SNode)
 	   (node-loc ::J2SNode)
-	   (node-endloc ::J2SNode)
+	   (generic node-endloc ::J2SNode)
 	   
 	   (j2sfun-expression? ::J2SFun)
 	   (j2s-chaining? ::J2SExpr)
@@ -622,9 +621,10 @@
 	   (j2s-let-opt?::bool ::J2SDecl)
 	   (j2s-let-class?::bool ::J2SDecl)
 	   (j2s-new-target?::bool ::J2SNode)
+	   
 	   (j2s-decl-class?::bool ::J2SDecl)
 	   (j2s-decl-record?::bool ::J2SDecl)
-
+	   
 	   (j2s-field-name::obj ::J2SNode)
 	   (inline j2s-field-length?::bool ::J2SNode)
 
@@ -648,13 +648,104 @@
    (with-access::J2SNode n (loc) loc))
 
 ;*---------------------------------------------------------------------*/
+;*    max-loc ...                                                      */
+;*---------------------------------------------------------------------*/
+(define (max-loc loc1 loc2)
+   (cond
+      ((not loc1)
+       loc2)
+      ((not loc2)
+       loc1)
+      (else
+       (match-case loc1
+	  ((?- ?- (and (? integer?) ?p1))
+	   (match-case loc2
+	      ((?- ?- (and (? integer?) ?p2)) (if (>fx p1 p2) loc1 loc2))
+	      (else loc1)))
+	  (else
+	   loc2)))))
+
+;*---------------------------------------------------------------------*/
 ;*    node-endloc ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (node-endloc n)
-   (if (isa? n J2SBlock)
-       (with-access::J2SBlock n (endloc) endloc)
-       (with-access::J2SNode n (loc) loc)))
+(define-generic (node-endloc n::J2SNode)
+   (with-access::J2SNode n (loc)
+      loc))
 
+;*---------------------------------------------------------------------*/
+;*    node-endloc ::J2SBlock ...                                       */
+;*---------------------------------------------------------------------*/
+(define-method (node-endloc n::J2SBlock)
+   (with-access::J2SBlock n (endloc)
+      endloc))
+
+;*---------------------------------------------------------------------*/
+;*    node-endloc ::J2SIf ...                                          */
+;*---------------------------------------------------------------------*/
+(define-method (node-endloc n::J2SIf)
+   (with-access::J2SIf n (then else)
+      (max-loc (node-endloc then) (node-endloc else))))
+
+;*---------------------------------------------------------------------*/
+;*    node-endloc ::J2SLoop ...                                        */
+;*---------------------------------------------------------------------*/
+(define-method (node-endloc n::J2SLoop)
+   (with-access::J2SLoop n (body)
+      (node-endloc body)))
+
+;*---------------------------------------------------------------------*/
+;*    node-endloc ::J2STry ...                                         */
+;*---------------------------------------------------------------------*/
+(define-method (node-endloc n::J2STry)
+   (with-access::J2STry n (finally catch body)
+      (max-loc (node-endloc finally)
+	 (max-loc (node-endloc catch) (node-endloc body)))))
+
+;*---------------------------------------------------------------------*/
+;*    node-endloc ::J2SSwitch ...                                      */
+;*---------------------------------------------------------------------*/
+(define-method (node-endloc n::J2SSwitch)
+   (with-access::J2SSwitch n (cases loc)
+      (let loop ((cases cases)
+		 (endloc loc))
+	 (if (null? cases)
+	     endloc
+	     (with-access::J2SCase (car cases) (body)
+		(loop (cdr cases) (max-loc (node-endloc body) endloc)))))))
+
+;*---------------------------------------------------------------------*/
+;*    node-endloc ::J2SFun ...                                         */
+;*---------------------------------------------------------------------*/
+(define-method (node-endloc n::J2SFun)
+   (with-access::J2SFun n (body)
+      (node-endloc body)))
+
+;*---------------------------------------------------------------------*/
+;*    node-endloc ::J2SCall ...                                        */
+;*---------------------------------------------------------------------*/
+(define-method (node-endloc n::J2SCall)
+   (with-access::J2SCall n (args loc)
+      (let loop ((args args)
+		 (endloc loc))
+	 (if (null? args)
+	     loc
+	     (loop (cdr args)
+		(max-loc (node-endloc (car args)) endloc))))))
+
+;*---------------------------------------------------------------------*/
+;*    node-endloc ::J2SAccess ...                                      */
+;*---------------------------------------------------------------------*/
+(define-method (node-endloc n::J2SAccess)
+   (with-access::J2SAccess n (field loc)
+      (max-loc loc (node-endloc field))))
+      
+;*---------------------------------------------------------------------*/
+;*    node-endloc ::J2SBinary ...                                      */
+;*---------------------------------------------------------------------*/
+(define-method (node-endloc n::J2SBinary)
+   (with-access::J2SBinary n (rhs loc)
+      (max-loc loc (node-endloc rhs))))
+      
 ;*---------------------------------------------------------------------*/
 ;*    %nodefval ...                                                    */
 ;*---------------------------------------------------------------------*/
@@ -784,8 +875,8 @@
 ;*    j2s-export? ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (j2s-export? decl::J2SDecl)
-   (with-access::J2SDecl decl (binder scope)
-      (or (eq? binder 'export) (eq? scope 'export))))
+   (with-access::J2SDecl decl (scope export)
+      (or export (eq? scope 'export))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-global? ...                                                  */
@@ -1172,7 +1263,7 @@
 (gen-walks J2SPragma (vals))
 (gen-walks J2SImport dollarpath)
 (gen-walks J2SImportDynamic path)
-(gen-walks J2SExportVars (refs))
+(gen-walks J2SExportDefault expr)
 
 (gen-traversals J2STilde)
 
@@ -1379,7 +1470,7 @@
 ;*    j2s->json ::J2SExport ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->json this::J2SExport op::output-port)
-   (with-access::J2SExport this (id alias index decl from)
+   (with-access::J2SExport this (id alias index decl)
       (display "{ \"__node__\": \"J2SExport\", \"id\": " op)
       (j2s->json id op)
       (display ", \"index\": " op)
@@ -1390,8 +1481,42 @@
       (if decl
 	  (j2s-decl->json decl "J2SExport" #f op)
 	  (display "false" op))
-      (display ",\"from\": " op)
-      (j2s->json from op)
+      (display "}" op)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s->json ::J2SExportDefault ...                                 */
+;*---------------------------------------------------------------------*/
+(define-method (j2s->json this::J2SExportDefault op::output-port)
+   (with-access::J2SExportDefault this (id alias index expr)
+      (display "{ \"__node__\": \"J2SExportDefault\", \"id\": " op)
+      (j2s->json id op)
+      (display ", \"index\": " op)
+      (display index op)
+      (display ",\"alias\": " op)
+      (j2s->json alias op)
+      (display ",\"expr\": " op)
+      (j2s->json expr op)
+      (display "\"" op)
+      (display "}" op)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s->json ::J2SRedirect ...                                      */
+;*---------------------------------------------------------------------*/
+(define-method (j2s->json this::J2SRedirect op::output-port)
+   (with-access::J2SRedirect this (id alias index decl import)
+      (display "{ \"__node__\": \"J2SRedirect\", \"id\": " op)
+      (j2s->json id op)
+      (display ", \"index\": " op)
+      (display index op)
+      (display ",\"alias\": " op)
+      (j2s->json alias op)
+      (display ",\"decl\": " op)
+      (if decl
+	  (j2s-decl->json decl "J2SRedirect" #f op)
+	  (display "false" op))
+      (display ",\"import\": " op)
+      (with-access::J2SImport import (path)
+	 (j2s->json path op))
       (display "}" op)))
 
 ;*---------------------------------------------------------------------*/
@@ -1415,28 +1540,6 @@
       (display "{ \"__node__\": \"J2SImportNamespace\", \"id\": " op)
       (j2s->json id op)
       (display ", \"loc\": " op)
-      (j2s->json loc op)
-      (display " }" op)))
-      
-;*---------------------------------------------------------------------*/
-;*    j2s->json ::J2SImportRedirect ...                                */
-;*---------------------------------------------------------------------*/
-(define-method (j2s->json this::J2SImportRedirect op::output-port)
-   (with-access::J2SImportRedirect this (loc id alias)
-      (display "{ \"__node__\": \"J2SImportRedirect\", \"id\": " op)
-      (j2s->json id op)
-      (display ", \"alias\": " op)
-      (j2s->json alias op)
-      (display ", \"loc\": " op)
-      (j2s->json loc op)
-      (display " }" op)))
-      
-;*---------------------------------------------------------------------*/
-;*    j2s->json ::J2SImportExport ...                                  */
-;*---------------------------------------------------------------------*/
-(define-method (j2s->json this::J2SImportExport op::output-port)
-   (with-access::J2SImportExport this (loc id)
-      (display "{ \"__node__\": \"J2SImportExport\", \"loc\": \"" op)
       (j2s->json loc op)
       (display " }" op)))
       
@@ -1645,20 +1748,21 @@
 ;*    Returns the next available index for export.                     */
 ;*---------------------------------------------------------------------*/
 (define (j2sprogram-get-export-index::long prgm::J2SProgram)
-   (with-access::J2SProgram prgm (exports)
-      (let loop ((exports exports)
-		 (i -1))
-	 (if (null? exports)
-	     (+fx i 1)
-	     (with-access::J2SExport (car exports) (index from id)
-		(cond
-		   ((isa? from J2SProgram)
-		    (loop (cdr exports) i))
-		   ((> index i)
-		    (loop (cdr exports) index))
-		   (else
-		    (loop (cdr exports) i))))))))
-
+   -1)
+;*    (with-access::J2SProgram prgm (exports)                          */
+;*       (let loop ((exports exports)                                  */
+;* 		 (i -1))                                               */
+;* 	 (if (null? exports)                                           */
+;* 	     (+fx i 1)                                                 */
+;* 	     (with-access::J2SExport (car exports) (index id)          */
+;* 		(cond                                                  */
+;* 		   ((isa? from J2SProgram)                             */
+;* 		    (loop (cdr exports) i))                            */
+;* 		   ((> index i)                                        */
+;* 		    (loop (cdr exports) index))                        */
+;* 		   (else                                               */
+;* 		    (loop (cdr exports) i))))))))                      */
+;*                                                                     */
 ;*---------------------------------------------------------------------*/
 ;*    exptllong ...                                                    */
 ;*---------------------------------------------------------------------*/

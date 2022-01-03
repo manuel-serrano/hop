@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.3.x/js2scheme/loopspec.scm            */
+;*    serrano/prgm/project/hop/hop/js2scheme/loopspec.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Nov  3 07:00:40 2019                          */
-;*    Last change :  Tue Jun  2 07:37:58 2020 (serrano)                */
-;*    Copyright   :  2019-20 Manuel Serrano                            */
+;*    Last change :  Wed Dec 29 08:52:51 2021 (serrano)                */
+;*    Copyright   :  2019-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Loop specialization                                              */
 ;*    -------------------------------------------------------------    */
@@ -279,7 +279,8 @@
 		(with-access::J2SDecl decl (escape)
 		   (if escape
 		       (call-default-walker)
-		       (let ((testrhs (test-rhs test ref)))
+		       (let ((testrhs (test-rhs test ref))
+			     (endloc (node-endloc this)))
 			  (if (memq (j2s-type testrhs) '(int32 uint32))
 			      (call-default-walker)
 			      (let ((fordecl (for-decl decl refloc 'int32))

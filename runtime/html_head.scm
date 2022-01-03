@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.5.x/runtime/html_head.scm             */
+;*    serrano/prgm/project/hop/hop/runtime/html_head.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Mon Dec  6 10:36:51 2021 (serrano)                */
+;*    Last change :  Wed Dec 29 17:47:08 2021 (serrano)                */
 ;*    Copyright   :  2005-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -753,7 +753,7 @@ function hop_realm() {return \"" (hop-realm) "\";}"))))
 	  attributes
 	  `(:type ,type ,@attributes)))
 
-   (define (default src)
+   (define (default src type)
       (if (string? src)
 	  (let ((src (cond
 			((member (suffix src) (hop-client-script-suffixes))
@@ -770,7 +770,7 @@ function hop_realm() {return \"" (hop-realm) "\";}"))))
 	     (attributes (attributes+type attributes type))
 	     (body body))))
    
-   (define (inl src)
+   (define (inl src mtype)
       (let ((body (cond
 		     ((member (suffix src) (hop-client-script-suffixes))
 		      (get-clientc-compiled-file src src (suffix src)))
@@ -781,7 +781,7 @@ function hop_realm() {return \"" (hop-realm) "\";}"))))
 		(tag 'script)
 		(attributes `(:type ,type ,@attributes))
 		(body (list "\n" body)))
-	     (default src))))
+	     (default src mtype))))
 
    (define (require p m inl lang mtype)
       (<REQUIRE> :type mtype
@@ -793,14 +793,14 @@ function hop_realm() {return \"" (hop-realm) "\";}"))))
       (purify
 	 (cond
 	    ((not (string? src))
-	     (default src))
+	     (default src mtype))
 	    (lang
 	     (let ((file (clientc-resolve-filename src %context module)))
 		(require file src inline lang mtype)))
 	    ((and inline (file-exists? src))
-	     (inl src))
+	     (inl src mtype))
 	    (else
-	     (default src))))))
+	     (default src mtype))))))
  
 ;*---------------------------------------------------------------------*/
 ;*    REQUIRE ...                                                      */

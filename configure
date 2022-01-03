@@ -976,6 +976,18 @@ if [ "$tls " != "no " ]; then
 fi
 
 #*---------------------------------------------------------------------*/
+#*    libbacktrace                                                     */
+#*---------------------------------------------------------------------*/
+if [ "$devmode " = "debug " -o "$devmode " = "debug-inline " ]; then
+  if [ -f $bigloolibdir/libbacktrace.heap ]; then
+    bcflagsrts="$bcflagsrts -gtrace0"
+    bcflagsmodules="$bcflagsmodules -gtrace0"
+    bhopcflags="$bhopcflags -gtrace0"
+    hflags="$hflags -gtrace0"
+  fi
+fi
+
+#*---------------------------------------------------------------------*/
 #*    bgl test completion                                              */
 #*---------------------------------------------------------------------*/
 if [ "$bglfail " = "true " ]; then

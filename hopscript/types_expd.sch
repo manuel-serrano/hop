@@ -3,11 +3,26 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 25 15:52:55 2017                          */
-;*    Last change :  Sun Nov 14 07:46:27 2021 (serrano)                */
+;*    Last change :  Sun Dec 26 09:03:43 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Types Companion macros                                           */
 ;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    env-debug ...                                                    */
+;*---------------------------------------------------------------------*/
+(define env-debug
+   (let ((env (getenv "HOP_DEBUG")))
+      (if (string? env)
+	  (string->integer env)
+	  (bigloo-debug))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-debug ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (hop-debug)
+   env-debug)
 
 ;*---------------------------------------------------------------------*/
 ;*    define-instantiate ...                                           */
@@ -387,39 +402,39 @@
 (define-instantiate-expander JsWebSocketEvent)
 
 ;*---------------------------------------------------------------------*/
-;*    js-export                                                        */
+;*    js-evar-info                                                     */
 ;*    -------------------------------------------------------------    */
 ;*    See js2scheme/scheme-program.scm and nodejs/require.scm.         */
 ;*---------------------------------------------------------------------*/
-(define (js-export-expander x e)
+(define (js-evar-info-expander x e)
    (match-case x
       ((?- ?id ?idx ?redirect ?ronly)
        (e `(vector ,@(cdr x)) e))
       (else
-       (error "js-export" "wrong syntax" x))))
+       (error "js-evar-info" "wrong syntax" x))))
 
-(define (js-export-id-expander x e)
+(define (js-evar-info-id-expander x e)
    (match-case x
       ((?- ?o)
        (e `(vector-ref ,o 0) e))
       (else
        (error "export-id" "wrong syntax" x))))
 
-(define (js-export-index-expander x e)
+(define (js-evar-info-index-expander x e)
    (match-case x
       ((?- ?o)
        (e `(vector-ref ,o 1) e))
       (else
        (error "export-index" "wrong syntax" x))))
 
-(define (js-export-redirect-expander x e)
+(define (js-evar-info-redirect-expander x e)
    (match-case x
       ((?- ?o)
        (e `(vector-ref ,o 2) e))
       (else
        (error "export-redirect" "wrong syntax" x))))
 
-(define (js-export-writable-expander x e)
+(define (js-evar-info-writable-expander x e)
    (match-case x
       ((?- ?o)
        (e `(vector-ref ,o 3) e))
@@ -427,18 +442,51 @@
        (error "export-writable" "wrong syntax" x))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-import-ref-expander ...                                       */
+;*---------------------------------------------------------------------*/
+(define (js-import-ref-expander x e)
+   (match-case x
+      ((?- ?v ?idx ?loc . ?debug)
+       (if hop-debug
+	   (e `(with-handler
+		  (lambda (e)
+		     (fprintf (current-error-port)
+			"js-import-ref: cannot import \"~a\"" ',x)
+		     (raise e))
+		  (vector-ref ,v ,idx))
+	      e)
+	   (e `(vector-ref ,v ,idx) e)))
+      (else
+       (error "js-import-ref" "wrong syntax" x))))
+
+;*---------------------------------------------------------------------*/
+;*    js-redirect-ref-expander ...                                     */
+;*---------------------------------------------------------------------*/
+(define (js-redirect-ref-expander x e)
+   (match-case x
+      ((?- ?v ?idx ?loc . ?debug)
+       (e `(let ((v ,v))
+	      (if (vector? v)
+		  (vector-ref v ,idx)
+		  (js-raise-type-error/loc %this ,loc
+		     "Cannot access before initialization" ',debug)))
+	  e))
+      (else
+       (error "js-redirect-ref" "wrong syntax" x))))
+
+;*---------------------------------------------------------------------*/
 ;*    generator                                                        */
 ;*---------------------------------------------------------------------*/
 (define (js-generator-ref-expander x e)
    (match-case x
-      ((?- ?obj ?idx . ?debug-name)
+      ((?- ?obj ?idx . ?debug)
        (e `(js-generator-inline-ref ,obj ,idx) e))
       (else
        (error "js-generator-ref" "bad form" x))))
 
 (define (js-generator-set!-expander x e)
    (match-case x
-      ((?- ?obj ?idx ?val . ?debug-name)
+      ((?- ?obj ?idx ?val . ?debug)
        (e `(js-generator-inline-set! ,obj ,idx ,val) e))
       (else
        (error "js-generator-set!" "bad form" x))))

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Tue Dec  7 16:39:40 2021 (serrano)                */
-;*    Copyright   :  2018-21 Manuel Serrano                            */
+;*    Last change :  Sun Jan  2 09:13:50 2022 (serrano)                */
+;*    Copyright   :  2018-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
 ;*=====================================================================*/
@@ -24,6 +24,7 @@
 	   __js2scheme_stmtassign
 	   __js2scheme_compile
 	   __js2scheme_stage
+	   __js2scheme_usage
 	   __js2scheme_checksum
 	   __js2scheme_scheme
 	   __js2scheme_scheme-fun
@@ -36,9 +37,16 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SProgram mode return ctx)
    
-   (define (j2s-master-module module cnsttable esexports esimports scmheaders scmrecords records body)
+   (define (j2s-master-module module cnsttable
+	      esexports esredirects esimports
+	      scmheaders scmrecords
+	      records irecords
+	      body)
       (with-access::J2SProgram this (pcache-size call-size cnsts globals loc)
 	 `(,(append module
+	       (if (pair? irecords)
+		   `((static ,@(map j2s-record-declaration irecords)))
+		   '())
 	       (if (pair? records)
 		   `((export ,@(map j2s-record-declaration records)))
 		   '()))
@@ -78,14 +86,22 @@
 		      ,@globals
 		      ,esexports
 		      ,@esimports
+		      ,@esredirects
 		      ,@(exit-body ctx scmrecords
 			   (filter fundef? body) (filter nofundef? body)))))
 	   ;; for dynamic loading
 	   hopscript)))
    
-   (define (j2s-slave-module module cnsttable esexports esimports scmheaders scmrecords records body)
+   (define (j2s-slave-module module cnsttable
+	      esexports esredirects esimports
+	      scmheaders scmrecords
+	      records irecords
+	      body)
       (with-access::J2SProgram this (pcache-size call-size cnsts globals loc)
 	 `(,(append module
+	       (if (pair? irecords)
+		   `((static ,@(map j2s-record-declaration irecords)))
+		   '())
 	       (if (pair? records)
 		   `((export ,@(map j2s-record-declaration records)))
 		   '())
@@ -126,17 +142,27 @@
 		       ,@globals
 		       ,esexports
 		       ,@esimports
+		       ,@esredirects
+		       ,esexports
 		       ,@(exit-body ctx scmrecords
 			    (filter fundef? body) (filter nofundef? body)))))
 	    ;; for dynamic loading
 	    hopscript)))
    
-   (define (j2s-module module cnsttable esexports esimports scmheaders scmrecords records body)
+   (define (j2s-module module cnsttable esexports esredirects esimports scmheaders scmrecords records irecords body)
       (if (context-get ctx :worker-slave)
-	  (j2s-slave-module module cnsttable esexports esimports scmheaders scmrecords records body)
-	  (j2s-master-module module cnsttable esexports esimports scmheaders scmrecords records body)))
+	  (j2s-slave-module module cnsttable
+	     esexports esredirects esimports
+	     scmheaders scmrecords
+	     records irecords
+	     body)
+	  (j2s-master-module module cnsttable
+	     esexports esredirects esimports
+	     scmheaders scmrecords
+	     records irecords
+	     body)))
 
-   (define (j2s-expr module cnsttable esexports esimports scmheaders scmrecords records body)
+   (define (j2s-expr module cnsttable esexports esredirects esimports scmheaders scmrecords records irecords body)
       (with-access::J2SProgram this (globals loc cnsts pcache-size call-size)
 	 (epairify-deep loc
 	    `(lambda (%this this %scope %module)
@@ -172,6 +198,7 @@
 		,@globals
 		,esexports
 		,@esimports
+		,@esredirects
 		,@(exit-body ctx scmrecords
 		     (filter fundef? body) (filter nofundef? body))))))
    
@@ -197,19 +224,15 @@
 		      :bigint (j2s-find-extern-decl headers 'BigInt)
 		      :program this))
 	     (esimports (j2s-module-imports this nctx))
+	     (esredirects (j2s-module-redirects this nctx))
 	     (esexports (j2s-module-exports this nctx))
 	     (scmheaders (j2s-scheme headers mode return nctx))
 	     (scmdecls (j2s-scheme decls mode return nctx))
-	     ;; MS CARE: 21sep2021.
-	     ;;    See global-declfun@scheme-fun.scm
-	     ;;        j2s-scheme-closure@scheme-fun.scm
-;* 	     (scmclos (filter-map (lambda (d)                          */
-;* 				     (j2s-scheme-closure d mode return nctx)) */
-;* 			 decls))                                       */
 	     (scmclos '())
 	     (scmnodes (j2s-scheme nodes mode return nctx))
 	     (cnsttable (%cnst-table cnsts mode return nctx))
 	     (records (j2s-collect-records* this))
+	     (irecords (j2s-collect-irecords* this))
 	     (scmrecords (append-map (lambda (rec)
 					(j2s-record-prototype-constructor rec
 					   mode return ctx))
@@ -221,7 +244,7 @@
 	    ((and main (not (context-get nctx :worker #t)))
 	     (j2s-main-sans-worker-module this cnsttable
 		(flatten-nodes (append scmheaders scmdecls scmclos))
- 		esexports esimports scmrecords records
+ 		esexports esredirects esimports scmrecords records
 		(flatten-nodes scmnodes)
 		nctx))
 	    (else
@@ -229,22 +252,28 @@
 		(cond
 		   (module
 		    ;; a module whose declaration is in the source
-		    (j2s-module module cnsttable esexports esimports scmheaders
-		       scmrecords records body))
+		    (j2s-module module cnsttable
+		       esexports esredirects esimports
+		       scmheaders scmrecords records irecords
+		       body))
 		   ((not name)
 		    ;; a mere expression
-		    (j2s-expr module cnsttable esexports esimports scmheaders
-		       scmrecords records body))
+		    (j2s-expr module cnsttable
+		       esexports esredirects esimports
+		       scmheaders scmrecords records irecords body))
 		   (main
 		    ;; generate a main hopscript module 
 		    (j2s-main-worker-module this cnsttable
-		       esexports esimports
-		       scmheaders scmrecords records body nctx))
+		       esexports esredirects esimports
+		       scmheaders scmrecords records irecords
+		       body nctx))
 		   (else
 		    ;; generate the module clause
 		    (let ((mod (js-module this ctx)))
-		       (j2s-module mod cnsttable esexports esimports scmheaders
-			  scmrecords records body))))))))))
+		       (j2s-module mod cnsttable
+			  esexports esredirects esimports
+			  scmheaders scmrecords records irecords
+			  body))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-tls-headers ...                                              */
@@ -276,24 +305,17 @@
 		     ((define ?id ?val) #f)
 		     ((define-tls ?id ?val) #f)
 		     ((js-undefined) #f)
+		     (#unspecified #f)
 		     (else expr)))
       headers))
    
 ;*---------------------------------------------------------------------*/
-;*    j2s-jsstring-init ...                                            */
-;*---------------------------------------------------------------------*/
-(define (j2s-jsstring-init prog)
-   (with-access::J2SProgram prog (strings)
-      `(&jsstring-init
-	  ,(obj->string
-	      (apply vector
-		 (map &string (reverse! strings)))))))
-
-;*---------------------------------------------------------------------*/
 ;*    j2s-main-worker-module ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (j2s-main-worker-module this::J2SProgram cnsttable
-	   esexports esimports scmheaders scmrecords records body ctx)
+	   esexports esredirects esimports
+	   scmheaders scmrecords records irecords
+	   body ctx)
    (with-access::J2SProgram this (pcache-size call-size path
 				    globals cnsts loc name)
       (let* ((jsmod (js-module/main this ctx))
@@ -315,13 +337,18 @@
 			   ,@(j2s-tls-headers scmheaders)
 			   (letrec* ,(j2s-let-headers scmheaders)
 			      ,@(j2s-expr-headers scmheaders)
+			      ,@globals
 			      ,esexports
 			      ,@esimports
+			      ,@esredirects
 			      ,@(exit-body ctx
 				   scmrecords
 				   (filter fundef? body)
 				   (filter nofundef? body)))))))
 	 `(,(append jsmod
+	       (if (pair? irecords)
+		   `((static ,@(map j2s-record-declaration irecords)))
+		   '())
 	       (if (pair? records)
 		   `((export ,@(map j2s-record-declaration records)))
 		   '()))
@@ -376,7 +403,7 @@
 ;*    j2s-main-sans-worker-module ...                                  */
 ;*---------------------------------------------------------------------*/
 (define (j2s-main-sans-worker-module this::J2SProgram cnsttable toplevel
-	   esexports esimports scmrecords records body ctx)
+	   esexports esredirects esimports scmrecords records body ctx)
    (with-access::J2SProgram this (mode
 				    pcache-size call-size
 				    %this path globals
@@ -425,6 +452,7 @@
 		(define %cnst-table ,cnsttable)
 		,esexports
 		,@esimports
+		,@esredirects
 		,@(filter nofundef? globals)
 		,@toplevel
 		,@(if (context-get ctx :libs-dir #f)
@@ -449,221 +477,136 @@
 ;*    j2s-module-imports ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (j2s-module-imports this::J2SProgram ctx)
-
-   (define (import-iprgm i) (with-access::J2SImport i (iprgm) iprgm))
-   (define (import-mvar i) (with-access::J2SImport i (mvar) mvar))
-
-   (define (evar-ident idx)
-      (string->symbol (format "%import-evars-~a" idx)))
-
-   (define (reindex! this::J2SProgram iprgm::J2SProgram reindex)
-      (with-access::J2SProgram this (%info)
-	 (set! %info (cons (cons iprgm reindex) %info))))
-
-   (define (module-import-es6 im idx)
-      (with-access::J2SImport im (mvar ivar path iprgm)
-	 (with-access::J2SProgram iprgm (mode)
-	    (let ((impid (evar-ident idx)))
-	       (reindex! this iprgm idx)
-	       (set! mvar `(vector-ref %imports ,idx))
-	       (set! ivar impid)
+   
+   (define (module-import-es6 im)
+      (let ((impid (importpath-var im)))
+	 (with-access::J2SImportPath im (path protocol import loc)
+	    (with-access::J2SImport import (iprgm)
 	       `(define ,impid
-		   (with-access::JsModule (vector-ref %imports ,idx) (evars)
-		      evars))))))
+		   (nodejs-import-module %worker %this %module
+		      ,path
+		      ,(j2s-program-checksum! iprgm)
+		      ,(unless (eq? protocol 'core)
+			  (context-get ctx :commonjs-export))
+		      ',loc))))))
    
-   (define (module-imports prgm::J2SProgram)
-      (with-access::J2SProgram prgm (imports)
-	 (map (lambda (im idx)
-		 (with-access::J2SImport im (mvar ivar path iprgm)
-		    (with-access::J2SProgram iprgm (mode)
-		       (module-import-es6 im idx))))
-	    imports (iota (length imports)))))
-
-   (define (redirect-only?::bool iprgm::J2SProgram)
-      ;; true iff iprgm only redirect exports
-      ;; without exporting bindings itself
-      (with-access::J2SProgram iprgm (exports)
-	 (every (lambda (e)
-		   (with-access::J2SExport e (from) from))
-	    exports)))
-      
-   (define (module-import-redirect iprgm::J2SProgram mvar eidx)
-      (with-access::J2SProgram iprgm (imports (ipath path))
-	 (let ((nres '())
-	       (nqueue '()))
-	    (for-each (lambda (im idx)
-			 (with-access::J2SImport im (names iprgm path)
-			    (when (and (pair? names)
-				       (or (isa? (car names) J2SImportExport)
-					   (isa? (car names) J2SImportRedirect)))
-			       (unless (redirect-only? iprgm)
-				  (let ((evid (evar-ident eidx)))
-				     (reindex! this iprgm eidx)
-				     (set! eidx (+fx eidx 1))
-				     (let ((x `(with-access::JsModule ,mvar (imports)
-						  (with-access::JsModule
-							(vector-ref imports ,idx)
-							(evars)
-						     ,(format "redirect: ~a ~a" ipath path)
-						     evars))))
-					(set! nres (cons x nres)))))
-			       (let ((q (cons iprgm `(vector-ref (with-access::JsModule ,mvar (imports) imports) ,idx))))
-				  (set! nqueue (append! nqueue (list q)))))))
-	       imports (iota (length imports)))
-	    (values nqueue nres))))
+   (define (module-evars-es6 im)
+      (let ((impid (importpath-var im))
+	    (evarid (importpath-evar im)))
+	 (with-access::J2SImportPath im (path protocol checksum loc)
+	    `(define ,evarid
+		(with-access::JsModule ,impid (evars) evars)))))
    
-   (define (module-redirect prgm::J2SProgram)
-      (with-access::J2SProgram prgm (imports)
-	 (let loop ((queue (map (lambda (i)
-				   (with-access::J2SImport i (iprgm mvar)
-				      (cons iprgm mvar)))
-			      imports))
-		    (idx (length imports))
-		    (res '())
-		    (stack '()))
-	    (if (null? queue)
-		(reverse! res)
-		(let ((iprgm (caar queue))
-		      (mvar (cdar queue)))
-		   (multiple-value-bind (nqueue nres)
-		      (module-import-redirect iprgm mvar idx)
-		      (loop (append! (cdr queue) nqueue)
-			 (+fx idx (length nres))
-			 (append nres res)
-			 (cons iprgm stack))))))))
+   (with-access::J2SProgram this (imports)
+      (let ((imps (map module-import-es6 imports))
+	    (evars (map module-evars-es6 imports)))
+	 (append imps evars
+	    `((with-access::JsModule %module (imports)
+		 (set! imports
+		    (vector
+		       ,@(map (lambda (im) (importpath-var im))
+			    imports)))))))))
 
-   (define (import-module-default? im)
-      (with-access::J2SImport im (names)
-	 (when (pair? names)
-	    (when (and (null? (cdr names)) (isa? (car names) J2SImportName))
-	       (with-access::J2SImportName (car names) (id)
-		  (eq? id 'default))))))
+;*---------------------------------------------------------------------*/
+;*    j2s-module-redirects ...                                         */
+;*---------------------------------------------------------------------*/
+(define (j2s-module-redirects this::J2SProgram ctx)
    
-   (define (import-module-namespace? im)
-      (with-access::J2SImport im (names)
-	 (and (pair? names) (isa? (car names) J2SImportNamespace))))
-      
-   (define (import-module im)
-      (with-access::J2SImport im (path iprgm loc names iprgm)
-	 (with-access::J2SProgram iprgm (mode exports)
-	    (case mode
-	       ((hop)
-		`(nodejs-import-module-hop %worker %this %module
-		    ,path
-		    ,(j2s-program-checksum! iprgm)
-		    ,(context-get ctx :commonjs-export)
-		    ',loc
-		    ',(list->vector
-			 (map (lambda (e)
-				 (with-access::J2SExport e (alias decl)
-				    (with-access::J2SDecl decl (vtype)
-				       (cons alias vtype))))
-			    exports))))
-	       ((core)
-		(cond
-		   ((import-module-default? im)
-		    `(nodejs-import-module %worker %this %module
-			,path
-			,(j2s-program-checksum! iprgm)
-			#t ',loc))
-		   ((import-module-namespace? im)
-		    `(nodejs-import-module %worker %this %module
-			,path
-			,(j2s-program-checksum! iprgm)
-			#t ',loc))
-		   (else
-		    `(nodejs-import-module-core %worker %this %module
-			,path
-			,(j2s-program-checksum! iprgm)
-			#t
-			',loc
-			',(list->vector
-			     (map (lambda (name)
-				     (with-access::J2SImportName name (id) id))
-				names))))))
-	       (else
-		`(nodejs-import-module %worker %this %module
-		    ,path
-		    ,(j2s-program-checksum! iprgm)
-		    ,(context-get ctx :commonjs-export)
-		    ',loc))))))
-
-   (with-access::J2SProgram this (imports path)     
-      ;; WARNING !!! the evaluation order matters module-imports _must_ be
-      ;; called before module-redirect (as module-imports assigned the mvar
-      ;; properties used by module-redirect).
-      (let* ((mimports (module-imports this))
-	     (mredirects (module-redirect this)))
-	 (if (and (null? imports) (null? mredirects))
-	     '()
-	     (cons
-		`(define %imports
-		    (with-access::JsModule %module (imports)
-		       (set! imports (vector ,@(map import-module imports)))
-		       imports))
-		(append
-		   mimports
-		   `((with-access::JsModule %module (redirects)
-			(set! redirects
-			   (vector
-			      ,@(map (lambda (i) (evar-ident i))
-				   (iota (length imports)))
-			      ,@mredirects))))))))))
+   (define (module-redirects-es6 im)
+      (let ((evarid (importpath-evar im)))
+	 (with-access::J2SImportPath im (import)
+	    (with-access::J2SImport import (iprgm ipath loc)
+	       (with-access::J2SImportPath ipath (index)
+		  (with-access::J2SProgram iprgm (exports)
+		     (filter-map (lambda (x)
+				    (when (isa? x J2SRedirect)
+				       (let loop ((x x)
+						  (rindexes '())
+						  (expr evarid))
+					  (with-access::J2SRedirect x ((rindex index) export import)
+					     (if (isa? export J2SRedirect)
+						 (loop export (cons rindex rindexes)
+						    `(js-redirect-ref ,expr ,rindex ',loc))
+						 (with-access::J2SImport import (ipath)
+						    (let ((rvarid (importpath-rvar im (reverse (cons rindex rindexes)))))
+						       `(define ,rvarid
+							   (js-redirect-ref ,expr ,rindex ',loc )))))))))
+			exports)))))))
+   
+   (with-access::J2SProgram this (imports exports)
+      (append (append-map module-redirects-es6 imports)
+	 (if (pair? exports)
+	     (filter-map (lambda (x)
+			    (when (isa? x J2SRedirect)
+			       (with-access::J2SRedirect x (index import)
+				  (with-access::J2SImport import (ipath)
+				     `(with-access::JsModule %module (evars)
+					 (vector-set! evars ,index
+					     ,(importpath-evar ipath)))))))
+		exports)
+	     '()))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-module-exports ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (j2s-module-exports this::J2SProgram ctx)
-   
-   (define (redirect-index this::J2SProgram id iprgm::J2SProgram loc)
-      ;; Find the root program (module) that exports id, and return
-      ;; the current index relative to this imports of its evars vector.
-      ;; This function works hand in hand with J2S-MODULE-IMPORTS
-      (with-access::J2SProgram iprgm (path exports)
-	 (let ((x (find (lambda (e)
-			   (with-access::J2SExport e ((eid id))
-			      (eq? eid id)))
-		     exports)))
-	    (if (not x)
-		(raise
-		   (instantiate::&error
-		      (proc path)
-		      (msg (format "Cannot find redirection for `~a'" id))
-		      (obj path)
-		      (fname (cadr loc))
-		      (location (caddr loc))))
-		(with-access::J2SExport x (from)
-		   (cond
-		      ((isa? from J2SProgram)
-		       (redirect-index this id from loc))
-		      ((eq? from 'hop)
-		       (with-access::J2SProgram this (%info)
-			  (let ((c (assq iprgm %info)))
-			     (cdr c))))
-		      (else
-		       (with-access::J2SProgram this (%info)
-			  (cdr (assq iprgm %info))))))))))
+
+   (define (export-from x)
+      (with-access::J2SExport x (eprgm)
+	 (with-access::J2SProgram eprgm (path)
+	    path)))
    
    (define (j2s-export e::J2SExport)
-      (with-access::J2SExport e (index decl from id alias)
-	 (with-access::J2SDecl decl ((w writable) loc)
-	    (cond
-	       ((isa? from J2SProgram)
-		`(js-export ,(& alias this) ,index ,(redirect-index this id from loc) ,w))
-	       (else
-		`(js-export ,(& alias this) ,index -1 ,w))))))
+      (with-access::J2SExport e (index from id alias loc decl)
+	 (cond
+	    ((isa? e J2SExportDefault)
+	     `(js-evar-info ,(& alias this) '(,index) '()
+		 #f))
+	    ((not (isa? e J2SRedirect))
+	     `(js-evar-info ,(& alias this) '(,index) '()
+		 ,(decl-usage-has? decl '(assig))))
+	    ((isa? e J2SRedirectNamespace)
+	     (with-access::J2SRedirect e (export import)
+		(with-access::J2SImport import (ipath)
+		   (with-access::J2SImportPath ipath (index)
+		      `(js-evar-info ,(& "*" this) '() '(,index) #f)))))
+	    (else
+	     (let loop ((x e)
+			(rindexes '())
+			(iindexes '()))
+		(if (isa? x J2SRedirect)
+		    (with-access::J2SRedirect x ((rindex index) export import ( id2 id))
+		       (with-access::J2SImport import (ipath)
+			  (with-access::J2SImportPath ipath ((iindex index))
+			     '(tprint "redirect "
+				id " " id2 " rifx=" rindex
+				" iindex=" iindex
+				 " (" (export-from x) ")")
+			     (loop export
+				(cons rindex rindexes)
+				(cons iindex iindexes)))))
+		    (with-access::J2SExport x ((rindex index) decl)
+		       (with-access::J2SExport x ((id2 id))
+			  '(tprint "export " id " " id2 " "
+			     "ridx=" (reverse (cons rindex rindexes))
+			     " idx=" (reverse iindexes)
+			     " (" (export-from x) ")"))
+		       `(js-evar-info ,(& alias this)
+			   ',(reverse (cons rindex rindexes))
+			   ',(reverse iindexes)
+			   ,(decl-usage-has? decl '(assig))))))))))
    
    (with-access::J2SProgram this (exports imports path checksum)
-      (let ((idx (j2sprogram-get-export-index this))
-	    (cs (j2s-program-checksum! this)))
+      (let ((cs (j2s-program-checksum! this)))
 	 (cond
 	    ((pair? exports)
 	     `(define %evars
 		 (with-access::JsModule %module (evars exports checksum)
 		    (set! checksum ,(j2s-program-checksum! this))
 		    (set! exports (vector ,@(map j2s-export exports)))
-		    ,@(if (>fx idx 0)
-			  `((set! evars (make-vector ,idx (js-undefined))))
+		    ,@(if (pair? exports)
+			  `((set! evars
+			       (make-vector ,(length exports) (js-undefined))))
 			  '())
 		    evars)))
 	    ((=fx cs 0)

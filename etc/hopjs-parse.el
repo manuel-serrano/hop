@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  1 07:14:59 2018                          */
-;*    Last change :  Sun Oct 31 15:31:05 2021 (serrano)                */
+;*    Last change :  Sun Dec 26 08:47:10 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs JavaScript/HTML parser                                     */
@@ -628,7 +628,7 @@
       (when (hopjs-parse-backward-sexp)
 	(hopjs-parse-consume-token-any)))
      ((ctag)
-      (hopjs-find-opening-tag (- (hopjs-parse-token-end tok) 1) 0))
+      (hopjs-find-opening-tag (- (hopjs-parse-token-end utok) 1) 0))
      ((catch)
       (let ((tok (hopjs-parse-consume-token-any)))
 	(if (eq (hopjs-parse-peek-token-type) 'dot)

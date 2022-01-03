@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Tue Mar 23 16:42:51 2021 (serrano)                */
+#*    Last change :  Mon Dec 27 13:45:27 2021 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the NODEJS library.                        */
 #*=====================================================================*/
@@ -88,7 +88,7 @@ uv.sch: uv.scm make_fakeuv.scm
 #*    The implicit rules                                               */
 #*---------------------------------------------------------------------*/
 o/js/%.scm: %.js $(HEAP_FILE)
-	@ $(call compile3,$(HOPC),$(HFLAGS),$(BCFLAGS),$(BLFLAGS) $(EFLAGS) $(BHOPCFLAGS),-s --js-module-name __nodejs_$* --js-module-path $*,$< -o $@)
+	@ $(call compile3,$(HOPC),$(HFLAGS),$(BCFLAGS),$(BLFLAGS) $(EFLAGS) $(BHOPCFLAGS),-s --js-commonjs-export --js-module-name __nodejs_$* --js-module-path $*,$< -o $@)
 
 $(_JS_OBJECTS:%=o/%.o): $(HEAP_FILE)
 

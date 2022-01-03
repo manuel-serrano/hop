@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Fri Oct  1 16:42:28 2021 (serrano)                */
+;*    Last change :  Mon Dec 27 13:59:08 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for client side code).                                   */
@@ -21,7 +21,8 @@
 	   __js2scheme_utils
 	   __js2scheme_scheme
 	   __js2scheme_stmtassign
-	   __js2scheme_stage)
+	   __js2scheme_stage
+	   __js2scheme_scheme-constant)
    
    (export j2s-javascript-stage
 	   (generic j2s-js-literal ::obj ctx)
@@ -56,28 +57,38 @@
 					       mode evalp ctx)
 				       '("})")))))
 			   (lambda (this::J2SDollar tildec dollarc mode evalp ctx)
-			      (with-access::J2SDollar this (node)
-				 (let ((expr (j2s-scheme node mode evalp ctx)))
-				    (tprint "EXPR=" expr)
-				    (list (j2s-js-literal (eval! expr)
-					     (context-get ctx :%this))))))
+			      (let ((prog (context-program ctx)))
+				 (with-strings prog
+				    (lambda ()
+				       (with-access::J2SDollar this (node)
+					  (let ((expr (j2s-scheme node mode evalp ctx)))
+					     (list (j2s-js-literal
+						      (eval! `(let ((__js_strings ,(j2s-jsstring-init prog)))
+								 ,expr))
+						      (context-get ctx :%this)))))))))
 			   'normal (lambda (x) x) ctx))))))))
+
+;*---------------------------------------------------------------------*/
+;*    with-strings ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (with-strings prog thunk)
+   (with-access::J2SProgram prog (strings)
+      (let ((strs strings))
+	 (set! strings '())
+	 (unwind-protect
+	    (thunk)
+	    (set! strings strs)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js-literal ::obj ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-generic (j2s-js-literal obj::obj ctx)
    (cond
-      ((number? obj)
-       obj)
-      ((boolean? obj)
-       (if obj "true" "false"))
-      ((string? obj)
-       (format "~s" obj))
-      ((eq? obj #unspecified)
-       "(js-undefined)")
-      (else
-       (error "js" "Illegal $value" obj))))
+      ((number? obj) obj)
+      ((boolean? obj) (if obj "true" "false"))
+      ((string? obj) (format "~s" obj))
+      ((eq? obj #unspecified) "(js-undefined)")
+      (else (error "js" "Illegal $value" obj))))
    
 ;*---------------------------------------------------------------------*/
 ;*    add-header! ...                                                  */
@@ -204,13 +215,24 @@
 		    (with-access::J2SStmtExpr node (expr)
 		       (isa? expr J2SLiteral))))))
    
-   (with-access::J2SProgram this (headers decls nodes mode)
-      (let* ((body (append headers decls (filter not-literal nodes)))
-	     (prgm (j2s-js* this "" "" "" body tildec dollarc mode evalp ctx)))
+   (with-access::J2SProgram this (headers imports exports decls nodes mode)
+      (let* ((nctx (compiler-context-set! (new-compiler-context ctx)
+		      :program this))
+	     (body (append headers
+		      (filter (lambda (x)
+				 (not (isa? x J2SExportDefault)))
+			 exports)
+		      decls (filter not-literal nodes)))
+	     (prgm (j2s-js* this "" "" "" body tildec dollarc mode evalp nctx)))
 	 (case mode
-	    ((normal) prgm)
-	    ((strict hopscript) (cons "\"use strict\";\n" prgm))
-	    (else prgm)))))
+	    ((normal)
+	     prgm)
+	    ((strict hopscript)
+	     (cons "\"use strict\";\n"
+		(append (j2s-import this tildec dollarc mode evalp nctx)
+		   prgm)))
+	    (else
+	     prgm)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js::pair-nil ::J2SMeta ...                                   */
@@ -312,7 +334,7 @@
 	 ((eq? scope 'unbound)
 	  '())
 	 (else
-	  (list this (j2s-binder binder #t) (j2s-js-id this) ";")))))
+	  (list this (j2s-binder binder #t) (j2s-js-id this) ";\n")))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SDeclImport ...                                       */
@@ -326,32 +348,35 @@
 (define-method (j2s-js this::J2SDeclInit tildec dollarc mode evalp ctx)
    (with-access::J2SDeclInit this (val binder writable scope id loc)
       (cond
+	 ((isa? val J2SImportNamespace)
+	  '())
 	 ((and (eq? scope 'global)
 	       (> (context-get ctx :debug-client 0) 0)
 	       (or (j2s-let-opt? this) (not (isa? val J2SUndefined))))
 	  (if writable
 	      (cons* this "var " (j2s-js-id this) "="
 		 (append (j2s-js val tildec dollarc mode evalp ctx)
-		    (if (j2s-param? this) '() '(";"))))
+		    (if (j2s-param? this) '() '(";\n"))))
 	      (cons* this "Object.defineProperty( window, \""
 		 (j2s-js-id this) "\", { value: "
 		 (append (j2s-js val tildec dollarc mode evalp ctx)
-		    '(", writable: false} );")))))
+		    '(", writable: false} );\n")))))
 	 ((or (j2s-let-opt? this) (not (isa? val J2SUndefined)))
-	  (cons* this (if (eq? scope 'export) "export " "")
+	  (cons* this
 	     (j2s-binder binder writable) (j2s-js-id this) "="
 	     (append (j2s-js val tildec dollarc mode evalp ctx)
-		(if (j2s-param? this) '() '(";")))))
+		(if (j2s-param? this) '() '(";\n")))))
 	 (else
-	  (list this (j2s-binder binder #t) (j2s-js-id this) ";")))))
+	  (list this (j2s-binder binder #t) (j2s-js-id this) ";\n")))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SDeclClass ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2SDeclClass tildec dollarc mode evalp ctx)
    (with-access::J2SDeclClass this (val binder writable scope id)
-      (append (j2s-js val tildec dollarc mode evalp ctx)
-	 (if (j2s-param? this) '() '(";")))))
+      (cons* this "let " (j2s-js-id this) "="
+	 (append (j2s-js val tildec dollarc mode evalp ctx)
+	    (if (j2s-param? this) '() '(";\n"))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SDProducer ...                                        */
@@ -366,7 +391,7 @@
 (define-method (j2s-js this::J2SReturn tildec dollarc mode evalp ctx)
    (with-access::J2SReturn this (expr)
       (cons* this "return "
-	 (append (j2s-js expr tildec dollarc mode evalp ctx) '(";")))))
+	 (append (j2s-js expr tildec dollarc mode evalp ctx) '(";\n")))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SBindExit ...                                         */
@@ -407,17 +432,17 @@
 	      (cons* this
 		 "return $GEN.YieldS(" 
 		 (append (j2s-js expr tildec dollarc mode evalp ctx)
-		    '(",$GEN.kid);"))))
+		    '(",$GEN.kid);\n"))))
 	     ((isa? kont J2SUndefined)
 	      (cons* this
 		 "return $GEN.Return("
 		 (append (j2s-js expr tildec dollarc mode evalp ctx)
-		    '(");"))))
+		    '(");\n"))))
 	     (else
 	      (cons* this
 		 "return $GEN.Yield("
 		 (append (j2s-js expr tildec dollarc mode evalp ctx)
-		    '(",$GEN.kid);"))))))
+		    '(",$GEN.kid);\n"))))))
 	 (generator
 	  (cons* this
 	     "return $GEN.YieldS("
@@ -428,18 +453,18 @@
 		(if (isa? kont J2SUndefined)
 		    '("$GEN.done")
 		    (j2s-js kont tildec dollarc mode evalp ctx))
-		'(");"))))
+		'(");\n"))))
 	 ((isa? kont J2SUndefined)
 	  (cons* this "return $GEN.Return("
 	     (append (j2s-js expr tildec dollarc mode evalp ctx)
-		'(");"))))
+		'(");\n"))))
 	 (else
 	  (cons* this
 	     "return $GEN.Yield("
 	     (append (j2s-js expr tildec dollarc mode evalp ctx)
 		'(",")
 		(j2s-js kont tildec dollarc mode evalp ctx)
-		'(");")))))))
+		'(");\n")))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-error ...                                                    */
@@ -481,51 +506,77 @@
 	     funid funid))
 	 (else
 	  (j2s-error "js" "wrong service import (body should be omitted)" this))))
+
+   (define (async-body this::J2SFun)
+      ;; The shape of async functions is:
+      ;; (J2SBlock (J2SRetrun (J2SCall (J2SHopRef js-span) (J2SFun* ...))))
+      (with-access::J2SFun this (body)
+	 (if (isa? body J2SBlock)
+	     (with-access::J2SBlock body (nodes)
+		(if (and (pair? nodes) (null? (cdr nodes)))
+		    (if (isa? (car nodes) J2SReturn)
+			(with-access::J2SReturn (car nodes) (expr)
+			   (if (isa? expr J2SCall)
+			       (with-access::J2SCall expr (fun args)
+				  (if (and (isa? fun J2SHopRef) (pair? args))
+				      (with-access::J2SHopRef fun (id)
+					 (if (and (eq? id 'js-spawn)
+						  (isa? (car args) J2SFun))
+					     (with-access::J2SFun (car args) (body)
+						(values body #t))
+					     (values body #f)))
+				      (values body #f)))
+			       (values body #f)))
+			(values body #f))
+		    (values body #f)))
+	     (values body #f))))
    
-   (with-access::J2SFun this (params body idthis vararg generator)
-      (let ((ellipsis (if (eq? vararg 'rest) "... " "")))
-	 (cond
-	    ((isa? this J2SSvc)
-	     ;; a service
-	     (list this (svc funid body)))
-	    ((eq? idthis '%)
-	     ;; an arrow function
-	     (cons* this "("
-		(append
-		   (j2s-js-ellipsis this "(" ") => " "," ellipsis
-		      params tildec dollarc mode evalp ctx)
-		   (j2s-js body tildec dollarc mode evalp ctx)
-		   '(")"))))
-	    ((not generator)
-	     ;; a regular function
-	     (cons* this (format "~a~a" funkwd funid)
-		(append
-		   (j2s-js-ellipsis this "(" ")" "," ellipsis
-		      params tildec dollarc mode evalp ctx)
-		   (j2s-js body tildec dollarc mode evalp ctx)
-		   '("\n"))))
-	    ((not (eq? (context-get ctx :target) 'es5))
-	     ;; a generator, for es6
-	     (cons* this (format "~a*~a" funkwd funid)
-		(append
-		   (j2s-js-ellipsis this "(" ")" "," ellipsis
-		      params tildec dollarc mode evalp ctx)
-		   (j2s-js body tildec dollarc mode evalp ctx)
-		   '("\n"))))
-	    (else
-	     ;; a generator, for es5
-	     (let ((predecls (collect-generator-predecls! body)))
-		(cons* this (format "~a~a" funkwd funid)
+   (with-access::J2SFun this (params idthis vararg generator)
+      (multiple-value-bind (body async)
+	 (async-body this)
+	 (let ((ellipsis (if (eq? vararg 'rest) "... " "")))
+	    (cond
+	       ((isa? this J2SSvc)
+		;; a service
+		(list this (svc funid body)))
+	       ((eq? idthis '%)
+		;; an arrow function
+		(cons* this (if async "(async " "(")
+		   (append
+		      (j2s-js-ellipsis this "(" ") => " "," ellipsis
+			 params tildec dollarc mode evalp ctx)
+		      (j2s-js body tildec dollarc mode evalp ctx)
+		      '(")"))))
+	       ((not generator)
+		;; a regular function
+		(cons* this (if async "async " "") (format "~a~a" funkwd funid)
 		   (append
 		      (j2s-js-ellipsis this "(" ")" "," ellipsis
 			 params tildec dollarc mode evalp ctx)
-		      '("{")
-		      (append-map! (lambda (decl)
-				      (j2s-js decl tildec dollarc mode evalp ctx))
-			 predecls)
-		      '("var $GEN=new hop.Generator(function(_$v,_$e)")
 		      (j2s-js body tildec dollarc mode evalp ctx)
-		      '(");return $GEN;}\n")))))))))
+		      '("\n"))))
+	       ((not (eq? (context-get ctx :target) 'es5))
+		;; a generator, for es6
+		(cons* this (format "~a*~a" funkwd funid)
+		   (append
+		      (j2s-js-ellipsis this "(" ")" "," ellipsis
+			 params tildec dollarc mode evalp ctx)
+		      (j2s-js body tildec dollarc mode evalp ctx)
+		      '("\n"))))
+	       (else
+		;; a generator, for es5
+		(let ((predecls (collect-generator-predecls! body)))
+		   (cons* this (format "~a~a" funkwd funid)
+		      (append
+			 (j2s-js-ellipsis this "(" ")" "," ellipsis
+			    params tildec dollarc mode evalp ctx)
+			 '("{")
+			 (append-map! (lambda (decl)
+					 (j2s-js decl tildec dollarc mode evalp ctx))
+			    predecls)
+			 '("var $GEN=new hop.Generator(function(_$v,_$e)")
+			 (j2s-js body tildec dollarc mode evalp ctx)
+			 '(");return $GEN;}\n"))))))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SFun ...                                              */
@@ -680,7 +731,7 @@
 	 (append (j2s-js test tildec dollarc mode evalp ctx)
 	    '(") ")
 	    (if (isa? body J2SNop)
-		'(";")
+		'(";\n")
 		(j2s-js body tildec dollarc mode evalp ctx))))))
 
 ;*---------------------------------------------------------------------*/
@@ -737,13 +788,13 @@
 		       (j2s-js init tildec dollarc mode evalp ctx))))
 	       (else
 		(j2s-js init tildec dollarc mode evalp ctx)))
-	    '(";")
+	    '(";\n")
 	    (j2s-js test tildec dollarc mode evalp ctx)
-	    '(";")
+	    '(";\n")
 	    (j2s-js incr tildec dollarc mode evalp ctx)
 	    '(") ")
 	    (if (isa? body J2SNop)
-		'(";")
+		'(";\n")
 		(j2s-js body tildec dollarc mode evalp ctx))))))
 
 ;*---------------------------------------------------------------------*/
@@ -760,7 +811,7 @@
 	    (j2s-js obj tildec dollarc mode evalp ctx)
 	    '(") ")
 	    (if (isa? body J2SNop)
-		'(";")
+		'(";\n")
 		(j2s-js body tildec dollarc mode evalp ctx))))))
 
 ;*---------------------------------------------------------------------*/
@@ -774,10 +825,7 @@
 	     (append
 		(cons* "var " id " = "
 		   (cdr (j2s-js-fun val tildec dollarc mode evalp ctx id)))
-		'(";"))))
-	 ((eq? scope 'export)
-	  (cons* this "export "
-	     (j2s-js-fun val tildec dollarc mode evalp ctx id)))
+		'(";\n"))))
 	 (else
 	  (j2s-js-fun val tildec dollarc mode evalp ctx id)))))
                                              
@@ -787,7 +835,7 @@
 (define-method (j2s-js this::J2SStmtExpr tildec dollarc mode evalp ctx)
    (with-access::J2SStmtExpr this (expr)
       (cons this
-	 (append (j2s-js expr tildec dollarc mode evalp ctx) '(";")))))
+	 (append (j2s-js expr tildec dollarc mode evalp ctx) '(";\n")))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SIf ...                                               */
@@ -799,9 +847,9 @@
 	    (cons ") "
 	       (append
 		  (if (isa? then J2SNop)
-		      '("{}") (j2s-js then tildec dollarc mode evalp ctx))
+		      '("{}\n") (j2s-js then tildec dollarc mode evalp ctx))
 		  (if (isa? else J2SNop)
-		      '("else {}")
+		      '("else {}\n")
 		      (cons " else "
 			 (j2s-js else tildec dollarc mode evalp ctx)))))))))
 	 
@@ -916,8 +964,8 @@
 (define-method (j2s-js this::J2SBreak tildec dollarc mode evalp ctx)
    (with-access::J2SBreak this (target id)
       (if id
-	  (list this "break " id ";")
-	  (list this "break;"))))
+	  (list this "break " id ";\n")
+	  (list this "break;\n"))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SContinue ...                                         */
@@ -925,8 +973,8 @@
 (define-method (j2s-js this::J2SContinue tildec dollarc mode evalp ctx)
    (with-access::J2SContinue this (target id)
       (if id
-	  (list this "continue " id ";")
-	  (list this "continue;"))))
+	  (list this "continue " id ";\n")
+	  (list this "continue;\n"))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SLiteralValue ...                                     */
@@ -1094,7 +1142,7 @@
 	 ((eq? op '?.)
 	  (cons this 
 	     (append (j2s-js expr tildec dollarc mode evalp ctx)
-		'("?."))))
+		'("?"))))
 	 (else
 	  (cons* this (symbol->string op) 
 	     (j2s-js expr tildec dollarc mode evalp ctx))))))
@@ -1189,9 +1237,10 @@
 ;*    j2s-js ::J2SDollar ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2SDollar tildec dollarc mode evalp ctx)
-   (if (procedure? dollarc)
-       (cons this (dollarc this tildec dollarc mode evalp ctx))
-       (j2s-js-default-dollar this tildec dollarc mode evalp ctx)))
+   (let ((nctx (new-compiler-context ctx :site 'dollar)))
+      (if (procedure? dollarc)
+	  (cons this (dollarc this tildec dollarc mode evalp nctx))
+	  (j2s-js-default-dollar this tildec dollarc mode evalp nctx))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js-default-dollar ...                                        */
@@ -1297,7 +1346,7 @@
 (define-method (j2s-js this::J2SThrow tildec dollarc mode evalp ctx)
    (with-access::J2SThrow this (expr)
       (cons* this "throw "
-	 (append (j2s-js expr tildec dollarc mode evalp ctx) '(";")))))
+	 (append (j2s-js expr tildec dollarc mode evalp ctx) '(";\n")))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SNop ...                                              */
@@ -1343,8 +1392,8 @@
 ;*    j2s-js ::J2SYield ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2SYield tildec dollarc mode evalp ctx)
-   (with-access::J2SYield this (expr kont generator)
-      (cons* this (if generator "yield* " "yield ")
+   (with-access::J2SYield this (expr kont generator await)
+      (cons* this (if generator "yield* " (if await "await " "yield "))
 	 (j2s-js expr tildec dollarc mode evalp ctx))))
 
 ;*---------------------------------------------------------------------*/
@@ -1359,13 +1408,6 @@
 	    '(") {")
 	    (j2s-js body tildec dollarc mode evalp ctx)
 	    '("}")))))
-
-;*---------------------------------------------------------------------*/
-;*    j2s-js ::J2SDeclClass ...                                        */
-;*---------------------------------------------------------------------*/
-(define-method (j2s-js this::J2SDeclClass tildec dollarc mode evalp ctx)
-   (with-access::J2SDeclClass this (val id)
-      (j2s-js val tildec dollarc mode evalp ctx)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SClass ...                                            */
@@ -1387,6 +1429,14 @@
    
    (define (j2s-js-name name tildec dollarc mode evalp ctx)
       (cond
+	 ((isa? name J2SString)
+	  (with-access::J2SString name (val private)
+	     (if private
+		 (let ((i (string-index val #\@)))
+		    (if i
+			(list (substring val 0 i))
+			(list val)))
+		 (list val))))
 	 ((isa? name J2SLiteralCnst)
 	  (with-access::J2SLiteralCnst name (val)
 	     (j2s-js-name val tildec dollarc mode evalp ctx)))
@@ -1397,10 +1447,12 @@
 	  (j2s-js name tildec dollarc mode evalp ctx))))
    
    (with-access::J2SClassElement this (static prop)
-      (let ((m (if (isa? prop J2SDataPropertyInit)
+      (let ((m (cond
+		  ((isa? prop J2SDataPropertyInit)
 		   (with-access::J2SDataPropertyInit prop (name val)
 		      (append (j2s-js-name name tildec dollarc mode evalp ctx)
-			 (j2s-js-fun val tildec dollarc mode evalp ctx "" "")))
+			 (j2s-js-fun val tildec dollarc mode evalp ctx "" ""))))
+		  ((isa? prop J2SAccessorPropertyInit)
 		   (with-access::J2SAccessorPropertyInit prop (name get set)
 		      (let ((nm (j2s-js-name name tildec dollarc mode evalp ctx)))
 			 (if (isa? set J2SUndefined)
@@ -1409,10 +1461,14 @@
 				   (j2s-js-fun get tildec dollarc mode evalp ctx "" "")))
 			     (cons "set "
 				(append nm
-				   (j2s-js-fun set tildec dollarc mode evalp ctx "" "")))))))))
+				   (j2s-js-fun set tildec dollarc mode evalp ctx "" "")))))))
+		  (else
+		   (with-access::J2SPropertyInit prop (name)
+		      (let ((nm (j2s-js-name name tildec dollarc mode evalp ctx)))
+			 (append nm '(";"))))))))
 	 (if static
 	     (cons* this "static " m)
-	     m))))
+	     (cons* this m)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SImport ...                                           */
@@ -1425,54 +1481,115 @@
 	     (list (symbol->string! id))
 	     (list (symbol->string! id) " as " (symbol->string! alias)))))
 
-   (define (import-path this path)
+   (define (namespace? this::J2SImportName)
+      (with-access::J2SImportName this (id)
+	 (eq? id '*)))
+
+   (define (import-path path)
+      (cond
+	 ((not (memq (context-get ctx :site) '(client tilde)))
+	  path)
+	 ((string? path)
+	  (if (string-contains path "mjs=")
+	      path
+	      (let* ((p (substring path 1 (-fx (string-length path) 1)))
+		     (i (string-index p #\?)))
+		 (if i
+		     (string-append "\"" p "&mjs=" (substring p 0 i) "\"")
+		     (string-append "\"" p "?mjs=" p "\"")))))
+	 (else
+	  (let ((p (gensym 'path)))
+	     `(let ((,p ,path))
+		 (if (string-contains ,p "mjs=")
+		     ,p
+		     (let* ((,p (substring ,p 1 (-fx (string-length ,p) 1)))
+			    (i (string-index ,p #\?)))
+			(if i
+			    (string-append "\"" ,p "&mjs=" (substring ,p 0 i) "\"")
+			    (string-append "\"" ,p "?mjs=" ,p "\"")))))))))
+   
+   (define (import-module this path)
       (with-access::J2SImport this (names)
 	 (cond
 	    ((null? names)
-	     (list this "import " path ";"))
-	    ((isa? (car names) J2SImportExport)
-	     (list this "export * from " path ";"))
-	    ((isa? (car names) J2SImportNamespace)
-	     (with-access::J2SImportNamespace (car names) (id)
+	     (list this "import " (import-path path) ";\n"))
+	    ((namespace? (car names))
+	     (with-access::J2SImportName (car names) (id alias)
 		(list this "import * as "
-		   (symbol->string id) " from " path ";")))
-	    ((isa? (car names) J2SImportRedirect)
-	     (cons* this "export {"
-		(append (append-map* ","
-			   (lambda (a)
-			      (with-access::J2SImportRedirect a (id alias)
-				 (if (eq? id alias)
-				     id
-				     (list id " as " alias))))
-			   names)
-		   `("} from " ,path ";"))))
+		   (symbol->string alias) " from " (import-path path) ";\n")))
+;* 	    ((isa? (car names) J2SImportRedirect)                      */
+;* 	     (cons* this "export {"                                    */
+;* 		(append (append-map* ","                               */
+;* 			   (lambda (a)                                 */
+;* 			      (with-access::J2SImportRedirect a (id alias) */
+;* 				 (if (eq? id alias)                    */
+;* 				     id                                */
+;* 				     (list id " as " alias))))         */
+;* 			   names)                                      */
+;* 		   `("} from " ,path ";\n"))))                           */
 	    (else
 	     (cons* this "import {"
 		(append (append-map* "," import-name->js names)
-		   `("} from " ,path ";")))))))
-   
+		   `("} from " ,(import-path path) ";\n")))))))
+
    (if (context-get ctx :es6-module-client #f)
-       (with-access::J2SImport this (names path dollarpath)
-	  (let ((p (if (isa? dollarpath J2SDollar)
-		       (cadr (j2s-js dollarpath tildec dollarc mode evalp ctx))
-		       (string-append "'" path "'"))))
-	     (import-path this p)))
+       (with-access::J2SImport this (names ipath dollarpath %info)
+	  (if (eq? %info 'generated)
+	      '()
+	      (let ((p (cond
+			  ((not (isa? dollarpath J2SUndefined))
+			   (cadr (j2s-js dollarpath tildec dollarc mode evalp ctx)))
+			  ((isa? ipath J2SImportPath)
+			   (with-access::J2SImportPath ipath (name)
+			      (string-append "'" name "'")))
+			  (#t
+			   '(glop))
+			  (else
+			   (error "import" "Illegal path" (j2s->sexp this))))))
+		 (set! %info 'generated)
+		 (import-module this p))))
        '()))
 
 ;*---------------------------------------------------------------------*/
-;*    j2s-js ::J2SExportVars ...                                       */
+;*    j2s-js ::J2SExport ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s-js this::J2SExportVars tildec dollarc mode evalp ctx)
+(define-method (j2s-js this::J2SExport tildec dollarc mode evalp ctx)
+   (with-access::J2SExport this (id alias)
+      (if (eq? id alias)
+	  (list this "export {" id "};\n")
+	  (list this "export {" id " as " alias "};\n"))))
 
-   (define (export->js ref alias)
-      (with-access::J2SRef ref (decl)
-	 (with-access::J2SDecl decl (id)
-	    (list id " as " alias))))
-   
-   (with-access::J2SExportVars this (refs aliases)
-      (cons* this "export {"
-	 (append (append-map2* "," export->js refs aliases)
-	    '("}")))))
+;*---------------------------------------------------------------------*/
+;*    j2s-js ::J2SRedirect ...                                         */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-js this::J2SRedirect tildec dollarc mode evalp ctx)
+   (with-access::J2SRedirect this (id alias import)
+      (with-access::J2SImport import (path)
+	 (if (eq? id alias)
+	     (list this "export {" id "} from \"" path "\";\n")
+	     (list this "export {" id " as " alias "} from \"" path "\";\n")))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-js ::J2SRedirectNamespace ...                                */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-js this::J2SRedirectNamespace tildec dollarc mode evalp ctx)
+   (with-access::J2SRedirect this (id alias import)
+      (with-access::J2SImport import (path %info)
+	 (set! %info 'generated)
+	 (if (eq? '* alias)
+	     (list this "export * from \"" path "\";\n")
+	     (list this "export * as " alias " from \"" path "\";\n")))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-js ::J2SExportDefault ...                                    */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-js this::J2SExportDefault tildec dollarc mode evalp ctx)
+   (with-access::J2SExportDefault this (id alias expr)
+      (cons* this
+	 (if (eq? id alias)
+	     "export default "
+	     (format "export default as ~a " alias))
+	 (append (j2s-js expr tildec dollarc mode evalp ctx) '(";\n")))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SImportDynamic ...                                    */
@@ -1489,3 +1606,14 @@
 (define-method (j2s-js this::J2SDConsumer tildec dollarc mode evalp ctx)
    (with-access::J2SDConsumer this (expr)
       (j2s-js expr tildec dollarc mode evalp ctx)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-import ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (j2s-import this::J2SProgram tildec dollarc mode evalp ctx)
+   (with-access::J2SProgram this (imports)
+      (append-map (lambda (ip)
+		     (with-access::J2SImportPath ip (import)
+			(j2s-js import tildec dollarc mode evalp ctx)))
+	 imports)))
+   

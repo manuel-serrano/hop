@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Tue Sep 28 11:30:13 2021 (serrano)                */
+;*    Last change :  Mon Dec 20 19:48:06 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Private (i.e., not exported by the lib) utilitary functions      */
@@ -55,9 +55,7 @@
 	   
 	   (js-number->string ::obj)
 	   (js-serializer ::JsObject)
-	   (js-unserializer ::obj)
-
-	   ))
+	   (js-unserializer ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    json-parser ...                                                  */

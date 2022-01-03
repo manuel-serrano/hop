@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Sun May  9 18:29:14 2021 (serrano)                */
+;*    Last change :  Wed Dec 29 08:59:23 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Array loop optimization                                          */
@@ -124,7 +124,8 @@
 		    (init (array-ref! init aenv mdecl))
 		    (incr (array-ref! incr aenv mdecl))
 		    (test (array-ref! test aenv mdecl))
-		    (body (array-ref! body aenv mdecl)))
+		    (body (array-ref! body aenv mdecl))
+		    (endloc (node-endloc this)))
 		(if *j2s-array-cache*
 		    (let* ((decls (append adecls ldecls))
 			   (decls (if closed? decls (cons mdecl decls))))
@@ -154,7 +155,8 @@
 		    (closed? (array-closed? body aenv))
 		    (mdecl (unless closed? (mark-decl loc)))
 		    (test (array-ref! test aenv mdecl))
-		    (body (array-ref! body aenv mdecl)))
+		    (body (array-ref! body aenv mdecl))
+		    (endloc (node-endloc this)))
 		(if *j2s-array-cache*
 		    (let* ((decls (append adecls ldecls))
 			   (decls (if closed? decls (cons mdecl decls))))
@@ -180,7 +182,8 @@
 		    (closed? (array-closed? body aenv))
 		    (mdecl (unless closed? (mark-decl loc)))
 		    (test (array-ref! test aenv mdecl))
-		    (body (array-ref! body aenv mdecl)))
+		    (body (array-ref! body aenv mdecl))
+		    (endloc (node-endloc this)))
 		(if *j2s-array-cache*
 		    (let* ((decls (append adecls ldecls))
 			   (decls (if closed? decls (cons mdecl decls))))

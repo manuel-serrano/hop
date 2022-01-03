@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Tue Dec  7 18:34:40 2021 (serrano)                */
+;*    Last change :  Wed Dec 29 08:41:40 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -136,7 +136,9 @@
 				     (loop (+fx i 1))))))
 			     ((force-type this 'unknown 'any #f)
 			      (loop (+fx i 1))))))))))
-	  (force-type this 'unknown 'any #t))
+	  (begin
+	     (force-record-method-type this)
+	     (force-type this 'unknown 'any #t)))
       (when (config-get conf :optim-hintblock)
 	 (when (>=fx (config-get conf :verbose 0) 4)
 	    (display " hint-block" (current-error-port)))
@@ -2157,7 +2159,8 @@
 			(itype clazz)
 			(val (J2SCast clazz (J2SRef thisp)))
 			(binder 'let-opt)
-			(hint '()))))
+			(hint '())))
+	       (endloc (node-endloc body)))
 	    (set! body
 	       (J2SLetRecBlock #f (list self)
 		  (j2s-alpha body (list thisp) (list self)))))))
@@ -2588,10 +2591,14 @@
 	       " " (j2s->sexp this)))
 	 (cell-set! cell #t)
 	 (set! vtype to))
-      (when (and final (not (eq? vtype 'any)) (not (type-eq? vtype (j2s-type val))))
+      (when (and final
+		 (not (eq? vtype 'any))
+		 (not (type-eq? vtype (j2s-type val))))
 	 (cond
 	    ((decl-usage-has? this '(uninit))
-	     (error "force-type!" "Declaration inconsistent with init"
+	     (error "force-type!"
+		(format "Declaration inconsistent with init (~a/~a)"
+		   (type->sexp vtype) (type->sexp (j2s-type val)))
 		(j2s->sexp this)))
 	    ((type->init vtype val)
 	     =>
@@ -2640,6 +2647,60 @@
 	 (set! type 'number)
 	 (cell-set! cell #t)))
    (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    force-record-method-type ::J2SNode ...                           */
+;*    -------------------------------------------------------------    */
+;*    Even when no type analysis is performed, the type of the         */
+;*    record method receiver has to be properly set. Otherwise,        */
+;*    the compilation of super.method in the scheme code               */
+;*    generation stage will produce code for classes instead of        */
+;*    code for records.                                                */
+;*---------------------------------------------------------------------*/
+(define-walk-method (force-record-method-type this::J2SNode)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    force-record-method-type ::J2SClassElement ...                   */
+;*---------------------------------------------------------------------*/
+(define-walk-method (force-record-method-type this::J2SClassElement)
+   
+   (define (force-type-record-method val::J2SFun clazz)
+      (with-access::J2SFun val (thisp body loc)
+	 (let ((self (duplicate::J2SDeclInit thisp
+			(key (ast-decl-key))
+			(id '!this)
+			(_scmid '!this)
+			(vtype clazz)
+			(itype clazz)
+			(val (J2SCast clazz (J2SRef thisp)))
+			(binder 'let-opt)
+			(hint '())))
+	       (endloc (node-endloc body)))
+	    (set! body
+	       (J2SLetRecBlock #f (list self)
+		  (j2s-alpha body (list thisp) (list self)))))))
+   
+   (with-access::J2SClassElement this (prop type clazz static usage)
+      (cond
+	 ((j2s-class-property-constructor? prop)
+	  (force-record-method-type prop))
+	 (else
+	  (when (and (not static)
+		     (isa? prop J2SMethodPropertyInit)
+		     (isa? clazz J2SRecord))
+	     (with-access::J2SMethodPropertyInit prop (val)
+		(with-access::J2SFun val (thisp)
+		   (with-access::J2SDecl thisp (vtype)
+		      (when (eq? vtype 'unknown)
+			 (force-type-record-method val clazz))))))
+	  (force-record-method-type prop)))))
+
+;*---------------------------------------------------------------------*/
+;*    force-record-method-type ::J2SFun ...                            */
+;*---------------------------------------------------------------------*/
+(define-walk-method (force-record-method-type this::J2SFun)
+   #unspecified)
 
 ;*---------------------------------------------------------------------*/
 ;*    reset-type! ::J2SNode ...                                        */
