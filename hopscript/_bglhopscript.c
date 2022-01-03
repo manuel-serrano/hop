@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.5.x/hopscript/_bglhopscript.c         */
+/*    serrano/trashcan/_bglhopscript.c                                 */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Fri Dec 17 13:37:22 2021 (serrano)                */
-/*    Copyright   :  2016-21 Manuel Serrano                            */
+/*    Last change :  Mon Jan  3 12:00:47 2022 (serrano)                */
+/*    Copyright   :  2016-22 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
 /*    JsObject and cache implementations.                              */
@@ -154,9 +154,6 @@ extern obj_t bgl_make_jsobject(int constrsize, obj_t constrmap, obj_t __proto__,
 #if HOP_ALLOC_JSOBJECT_POLICY != HOP_ALLOC_CLASSIC
 static obj_t bgl_make_jsobject_sans(int constrsize, obj_t constrmap,
 				     obj_t __proto__, uint32_t mode);
-#else
-obj_t bgl_make_jsobject_sans(int constrsize, obj_t constrmap,
-				   obj_t __proto__, uint32_t mode);
 #endif
 
 #if HOP_ALLOC_JSPROXY_POLICY != HOP_ALLOC_CLASSIC
@@ -181,8 +178,6 @@ static obj_t bgl_make_jsmethod_sans(obj_t procedure, obj_t method,
 
 #if HOP_ALLOC_JSPROCEDURE_POLICY != HOP_ALLOC_CLASSIC
 static obj_t bgl_make_jsprocedure_sans(obj_t procedure, long arity, obj_t __proto__);
-#else
-obj_t bgl_make_jsprocedure_sans(obj_t procedure, long arity, obj_t __proto__);
 #endif
 
 #if HOP_ALLOC_JSSTRINGLITERALASCII_POLICY != HOP_ALLOC_CLASSIC
@@ -906,7 +901,11 @@ bgl_make_jsobject(int constrsize, obj_t constrmap, obj_t __proto__, uint32_t mod
 /*---------------------------------------------------------------------*/
 obj_t
 bgl_make_jsobject_bmem(int constrsize, obj_t constrmap, obj_t __proto__, uint32_t mode) {
+#if HOP_ALLOC_JSOBJECT_POLICY != HOP_ALLOC_CLASSIC
    return bgl_make_jsobject_sans((int)constrsize, constrmap, __proto__, mode);
+#else   
+   return bgl_make_jsobject((int)constrsize, constrmap, __proto__, mode);
+#endif   
 }
 
 /*---------------------------------------------------------------------*/
@@ -1403,7 +1402,11 @@ bgl_make_jsprocedure(obj_t procedure, long arity, obj_t __proto__) {
 /*---------------------------------------------------------------------*/
 obj_t
 bgl_make_jsprocedure_bmem(obj_t procedure, long arity, obj_t __proto__) {
+#if HOP_ALLOC_JSOBJECT_POLICY != HOP_ALLOC_CLASSIC
    return bgl_make_jsprocedure_sans(procedure, arity, __proto__);
+#else   
+   return bgl_make_jsprocedure(procedure, arity, __proto__);
+#endif   
 }
 
 /*---------------------------------------------------------------------*/
