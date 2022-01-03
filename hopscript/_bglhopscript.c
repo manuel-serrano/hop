@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/hop/hopscript/_bglhopscript.c           */
+/*    serrano/prgm/project/hop/3.5.x/hopscript/_bglhopscript.c         */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Sun Nov 14 17:40:21 2021 (serrano)                */
+/*    Last change :  Fri Dec 17 13:37:22 2021 (serrano)                */
 /*    Copyright   :  2016-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -154,6 +154,9 @@ extern obj_t bgl_make_jsobject(int constrsize, obj_t constrmap, obj_t __proto__,
 #if HOP_ALLOC_JSOBJECT_POLICY != HOP_ALLOC_CLASSIC
 static obj_t bgl_make_jsobject_sans(int constrsize, obj_t constrmap,
 				     obj_t __proto__, uint32_t mode);
+#else
+obj_t bgl_make_jsobject_sans(int constrsize, obj_t constrmap,
+				   obj_t __proto__, uint32_t mode);
 #endif
 
 #if HOP_ALLOC_JSPROXY_POLICY != HOP_ALLOC_CLASSIC
@@ -178,6 +181,8 @@ static obj_t bgl_make_jsmethod_sans(obj_t procedure, obj_t method,
 
 #if HOP_ALLOC_JSPROCEDURE_POLICY != HOP_ALLOC_CLASSIC
 static obj_t bgl_make_jsprocedure_sans(obj_t procedure, long arity, obj_t __proto__);
+#else
+obj_t bgl_make_jsprocedure_sans(obj_t procedure, long arity, obj_t __proto__);
 #endif
 
 #if HOP_ALLOC_JSSTRINGLITERALASCII_POLICY != HOP_ALLOC_CLASSIC
