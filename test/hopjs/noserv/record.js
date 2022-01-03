@@ -3,12 +3,12 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep  2 01:49:55 2017                          */
-/*    Last change :  Sun Jan  2 08:33:50 2022 (serrano)                */
+/*    Last change :  Sun Jan  2 18:30:24 2022 (serrano)                */
 /*    Copyright   :  2017-22 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing HopScript records                                        */
 /*=====================================================================*/
-"use hopstrict";
+"use hopscript";
 
 import assert from "assert";
 import { ARS1, ARC1, ARSS2, ARSC2 } from "./aux/record1.js";

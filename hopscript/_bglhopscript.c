@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/hop/hopscript/_bglhopscript.c           */
+/*    serrano/trashcan/_bglhopscript.c                                 */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Sun Nov 14 17:40:21 2021 (serrano)                */
-/*    Copyright   :  2016-21 Manuel Serrano                            */
+/*    Last change :  Mon Jan  3 12:00:47 2022 (serrano)                */
+/*    Copyright   :  2016-22 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
 /*    JsObject and cache implementations.                              */
@@ -901,7 +901,11 @@ bgl_make_jsobject(int constrsize, obj_t constrmap, obj_t __proto__, uint32_t mod
 /*---------------------------------------------------------------------*/
 obj_t
 bgl_make_jsobject_bmem(int constrsize, obj_t constrmap, obj_t __proto__, uint32_t mode) {
+#if HOP_ALLOC_JSOBJECT_POLICY != HOP_ALLOC_CLASSIC
    return bgl_make_jsobject_sans((int)constrsize, constrmap, __proto__, mode);
+#else   
+   return bgl_make_jsobject((int)constrsize, constrmap, __proto__, mode);
+#endif   
 }
 
 /*---------------------------------------------------------------------*/
@@ -1398,7 +1402,11 @@ bgl_make_jsprocedure(obj_t procedure, long arity, obj_t __proto__) {
 /*---------------------------------------------------------------------*/
 obj_t
 bgl_make_jsprocedure_bmem(obj_t procedure, long arity, obj_t __proto__) {
+#if HOP_ALLOC_JSOBJECT_POLICY != HOP_ALLOC_CLASSIC
    return bgl_make_jsprocedure_sans(procedure, arity, __proto__);
+#else   
+   return bgl_make_jsprocedure(procedure, arity, __proto__);
+#endif   
 }
 
 /*---------------------------------------------------------------------*/

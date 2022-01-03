@@ -3,7 +3,6 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Mon Dec 27 13:43:32 2021 (serrano)                */
 ;*    Copyright   :  2004-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */

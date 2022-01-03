@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jul 15 07:09:51 2021                          */
-;*    Last change :  Sat Jan  1 11:42:04 2022 (serrano)                */
+;*    Last change :  Sun Jan  2 18:29:32 2022 (serrano)                */
 ;*    Copyright   :  2021-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Record generation                                                */
@@ -364,7 +364,7 @@
 	     (with-access::J2SRef super (decl)
 		(with-access::J2SDeclClass decl (val export id)
 		   (if export
-		       (cons rec (import-record val))
+		       (append (import-record val) (list rec))
 		       (j2s-error name
 			  "Super record not exported"
 			  rec id))))
