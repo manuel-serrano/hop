@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Sat Dec 25 10:08:11 2021 (serrano)                */
-;*    Copyright   :  2013-21 Manuel Serrano                            */
+;*    Last change :  Tue Jan  4 16:30:52 2022 (serrano)                */
+;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
 ;*=====================================================================*/
@@ -361,6 +361,12 @@
 			   (statement)))))
 		((eq? (token-value token) 'service)
 		 (service-declaration))
+		((and (eq? (token-value token) 'generic)
+		      (eq? current-mode 'hopscript))
+		 (generic-declaration))
+		((and (eq? (token-value token) 'method)
+		      (eq? current-mode 'hopscript))
+		 (method-declaration))
 		(else
 		 (statement)))))
 	 ((class)
@@ -385,6 +391,8 @@
 			  (token-value tok)))
 		    'source-map)
 		 (parse-token-error "Unexpected source-map" tok))))
+	 ((SOURCEELEMENT)
+	  (token-value (consume-any!)))
 	 (else
 	  (statement))))
    
@@ -1019,7 +1027,57 @@
 	       (expr expr)))))
    
    (define (function-declaration)
-      (function #t (consume-token! 'function) #f))
+      (function #t (consume-any!) #f))
+
+   (define (generic-declaration)
+      (let ((f (function-declaration)))
+	 (with-access::J2SDeclFun f (val id)
+	    (with-access::J2SFun val (params name body loc)
+	       (if (null? params)
+		   (raise
+		      (instantiate::&io-parse-error
+			 (proc "hopc")
+			 (msg "generic functions require at least one argument")
+			 (obj id)
+			 (fname (cadr loc))
+			 (location (caddr loc))))
+		   (let* ((endloc (node-endloc body))
+			  (nparams (map (lambda (p)
+					   (duplicate::J2SDecl p))
+				      params))
+			  (nbody (J2SBlock
+				    (J2SReturn #t
+				       (J2SCall*
+					  (J2SCall
+					     (J2SAccess (J2SRef f)
+						(J2SString "dispatchValue"))
+					     (J2SRef (car nparams)))
+					  (map (lambda (p)
+						  (J2SRef p))
+					     nparams)))))
+			  (nval (instantiate::J2SFun
+				   (name name)
+				   (params nparams)
+				   (body nbody)
+				   (loc loc)))
+			  (gen (J2SStmtExpr
+				  (J2SAssig
+				     (J2SAccess (J2SRef f)
+					(J2SString "__proto__"))
+				     (J2SNew
+					(J2SAccess (J2SUnresolvedRef 'hop)
+					   (J2SString "Generic"))
+					(with-access::J2SDecl (car params) (utype)
+					   (if (eq? utype 'unknown)
+					       (J2SUndefined))
+					       (J2SUnresolvedRef utype))
+					val)))))
+		      (set! val nval)
+		      (token-push-back! (make-token 'SOURCEELEMENT gen loc))
+		      f))))))
+
+   (define (method-declaration)
+      (function-declaration))
 
    (define (async-declaration tok)
       (let ((fun (function-declaration)))

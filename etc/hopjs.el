@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Sat Jan  1 10:11:07 2022 (serrano)                */
+;*    Last change :  Tue Jan  4 16:31:37 2022 (serrano)                */
 ;*    Copyright   :  2014-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -98,7 +98,7 @@
 	(list "\\(require\\)([ \t]+\\(\"[^\"]+\"\\)"
 	      '(1 font-lock-keyword-face)
 	      '(2 font-lock-face-underline))
-	(list (concat "^\\s-*\\(?:service\\)\\s-+\\(" js--name-re "\\)") 1 'font-lock-function-name-face)))
+	(list (concat "^\\s-*\\(?:service\\|generic\\|method\\)\\s-+\\(" js--name-re "\\)") 1 'font-lock-function-name-face)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-make-face ...                                              */

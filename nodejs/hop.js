@@ -3,14 +3,14 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Mar 22 15:03:30 2014                          */
-/*    Last change :  Thu May  6 18:07:41 2021 (serrano)                */
-/*    Copyright   :  2014-21 Manuel Serrano                            */
+/*    Last change :  Tue Jan  4 16:12:56 2022 (serrano)                */
+/*    Copyright   :  2014-22 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hopscript/Hop binding.                                           */
 /*=====================================================================*/
 "use hopscript";
 
-const hop = process.binding( "hop" );
+const hop = process.binding("hop");
 
 /*---------------------------------------------------------------------*/
 /*    info                                                             */
@@ -20,17 +20,17 @@ exports.isServer = hop.isServer;
 exports.isWorker = hop.isWorker;
 exports.hostname = hop.hostname;
 exports.version = hop.version;
-exports.__defineGetter__( 'port', hop.port );
-exports.__defineGetter__( 'ports', hop.ports );
+exports.__defineGetter__('port', hop.port);
+exports.__defineGetter__('ports', hop.ports);
 exports.standalone = hop.standalone;
 exports.loginCookieCryptKey = hop.loginCookieCryptKey;
 
 /*---------------------------------------------------------------------*/
 /*    Server configuration                                             */
 /*---------------------------------------------------------------------*/
-exports.__defineGetter__( 'httpAuthenticationMethod',
+exports.__defineGetter__('httpAuthenticationMethod',
 			  hop.httpAuthenticationMethodGet,
-			  hop.httpAuthenticationMethodSet );
+			  hop.httpAuthenticationMethodSet);
 
 /*---------------------------------------------------------------------*/
 /*    Services                                                         */
@@ -38,6 +38,12 @@ exports.__defineGetter__( 'httpAuthenticationMethod',
 exports.Service = hop.Service;
 exports.HopFrame = hop.HopFrame;
 exports.webService = hop.webService;
+
+/*---------------------------------------------------------------------*/
+/*    records                                                          */
+/*---------------------------------------------------------------------*/
+exports.isRecord = hop.isRecord;
+exports.recordOf = hop.recordOf;
 
 /*---------------------------------------------------------------------*/
 /*    Responses                                                        */
@@ -52,15 +58,15 @@ exports.HTTPResponseProxy = hop.HTTPResponseProxy;
 
 const jsonContentType = { "contentType": "application/json" };
 
-exports.HTTPResponseJson = function( obj ) {
-   return hop.HTTPResponseString( JSON.stringify( obj ), jsonContentType );
+exports.HTTPResponseJson = function(obj) {
+   return hop.HTTPResponseString(JSON.stringify(obj), jsonContentType);
 }
 
-exports.HTTPResponseError = function( obj ) {
-   return hop.HTTPResponseHop( obj, {
+exports.HTTPResponseError = function(obj) {
+   return hop.HTTPResponseHop(obj, {
       startLine: "HTTP/1.1 500 Internal Server Error",
       header: { "Hop-Error": "true" }
-   } );
+   });
 };
 
 /*---------------------------------------------------------------------*/
@@ -115,107 +121,144 @@ exports.Cons = hop.Cons;
 /*---------------------------------------------------------------------*/
 /*    applyListeners ...                                               */
 /*---------------------------------------------------------------------*/
-function applyListeners( listeners, e ) {
+function applyListeners(listeners, e) {
    let ltns = listeners;
    let len = ltns.length;
 
-   for( let i = 0; i < len && true; i++ ) {
-      ltns[ i ]( e );
+   for (let i = 0; i < len && true; i++) {
+      ltns[ i ](e);
    }
 }
 
 /*---------------------------------------------------------------------*/
 /*    eventListenerMonitor                                             */
 /*---------------------------------------------------------------------*/
-function eventListenerMonitor( ... events ) {
-   if( !(this instanceof Object) ) {
+function eventListenerMonitor(... events) {
+   if (!(this instanceof Object)) {
       throw "this not an object";
    }
 
-   Object.defineProperty( this, "conlisteners", {
+   Object.defineProperty(this, "conlisteners", {
       configurable: false, enumerable: false, writable: true,
       value: []
-   } );
-   Object.defineProperty( this, "dislisteners", {
+   });
+   Object.defineProperty(this, "dislisteners", {
       configurable: false, enumerable: false, writable: true,
       value: []
-   } );
-   Object.defineProperty( this, "events", {
+   });
+   Object.defineProperty(this, "events", {
       configurable: false, enumerable: false, writable: true,
       value: []
-   } );
+   });
 
    // Although the two following methods have no free variables, they
    // must be created for each monitor. If they would be shared by
    // all monitors the removeEventListener would not work properly.
-   Object.defineProperty( this, "connectListener", {
+   Object.defineProperty(this, "connectListener", {
       configurable: false, enumerable: false, writable: false,
       value: e => {
-	 if( this.events.indexOf( e.data ) >= 0 ) {
-	    applyListeners( this.conlisteners, e );
+	 if (this.events.indexOf(e.data) >= 0) {
+	    applyListeners(this.conlisteners, e);
 	 }
       }
-   } );
-   Object.defineProperty( this, "disconnectListener", {
+   });
+   Object.defineProperty(this, "disconnectListener", {
       configurable: false, enumerable: false, writable: false,
       value: e => {
-	 if( this.events.indexOf( e.data ) >= 0 ) {
-	    applyListeners( this.dislisteners, e );
+	 if (this.events.indexOf(e.data) >= 0) {
+	    applyListeners(this.dislisteners, e);
 	 }
       }
-   } );
+   });
 
-   events.forEach( this.monitor, this );
+   events.forEach(this.monitor, this);
 
    return this;
 }
 
-eventListenerMonitor.prototype.monitor = function( evname ) {
-   if( this.events.indexOf( evname ) < 0 ) {
-      this.events.push( evname );
-      if( this.events.length === 1 ) {
-	 hop.addEventListener( "connect", this.connectListener );
-	 hop.addEventListener( "disconnect", this.disconnectListener );
+eventListenerMonitor.prototype.monitor = function(evname) {
+   if (this.events.indexOf(evname) < 0) {
+      this.events.push(evname);
+      if (this.events.length === 1) {
+	 hop.addEventListener("connect", this.connectListener);
+	 hop.addEventListener("disconnect", this.disconnectListener);
       }
    }
 }
 
-eventListenerMonitor.prototype.ignore = function( evname ) {
-   let i = this.events.indexOf( evname );
-   if( i >= 0 ) {
-      this.events.splice( i, 1 );
+eventListenerMonitor.prototype.ignore = function(evname) {
+   let i = this.events.indexOf(evname);
+   if (i >= 0) {
+      this.events.splice(i, 1);
    }
-   if( this.events.length === 0 ) {
-      hop.removeEventListener( "connect", this.connectListener );
-      hop.removeEventListener( "disconnect", this.disconnectListener );
-   }
-}
-
-eventListenerMonitor.prototype.addEventListener = function( evname, ltn ) {
-   switch( evname ) {
-      case "newListener":
-	 this.conlisteners.push( ltn );
-	 break;
-
-      case "removeListener":
-	 this.dislisteners.push( ltn );
-	 break;
+   if (this.events.length === 0) {
+      hop.removeEventListener("connect", this.connectListener);
+      hop.removeEventListener("disconnect", this.disconnectListener);
    }
 }
 
-eventListenerMonitor.prototype.removeEventListener = function( evname, ltn ) {
-   switch( evname ) {
+eventListenerMonitor.prototype.addEventListener = function(evname, ltn) {
+   switch(evname) {
       case "newListener":
-	 this.conlisteners.filter( l => l != ltn );
+	 this.conlisteners.push(ltn);
 	 break;
 
       case "removeListener":
-	 this.dislisteners.filter( l => l != ltn );
+	 this.dislisteners.push(ltn);
+	 break;
+   }
+}
+
+eventListenerMonitor.prototype.removeEventListener = function(evname, ltn) {
+   switch(evname) {
+      case "newListener":
+	 this.conlisteners.filter(l => l != ltn);
+	 break;
+
+      case "removeListener":
+	 this.dislisteners.filter(l => l != ltn);
 	 break;
    }
 }
 
 exports.eventListenerMonitor = eventListenerMonitor;
+
+/*---------------------------------------------------------------------*/
+/*    Generic ...                                                      */
+/*---------------------------------------------------------------------*/
+function Generic(root, body) {
+   if (root !== undefined && !hop.isRecord(root)) {
+      throw `generic: "${root}" is not a record`;
+   }
+   if (!(typeof body === "function")) {
+      throw `generic: "${body}" is not a function`;
+   }
+   this.root = root;
+   this.body = body;
+   this.methods = {};
+}
+
+Generic.prototype.__proto__ = Generic.__proto__;
+
+Generic.prototype.addMethod = function(rec, body) {
+   if (!hop.isRecord(rec)) {
+      throw `generic: "${rec}" is not a record`;
+   }
+   if (!(typeof body === "function")) {
+      throw `method: "${body}" is not a function`;
+   }
+   this.methods[rec] = body;
+}
+   
+Generic.prototype.dispatch = function(rec) {
+   return this.methods[rec] || this.body;
+}
+				   
+Generic.prototype.dispatchValue = function(obj) {
+   return this.methods[hop.recordOf(obj)] || this.body;
+}
+
+exports.Generic = Generic;
 
 /*---------------------------------------------------------------------*/
 /*    compilerDriver                                                   */
@@ -249,5 +292,5 @@ exports.openpgp = hop.modulesDir + "/openpgp";
 exports.wiki = hop.modulesDir + "/wiki";
 exports.xml = hop.modulesDir + "/xml";
 
-Object.seal( exports );
-Object.freeze( exports );
+Object.seal(exports);
+Object.freeze(exports);

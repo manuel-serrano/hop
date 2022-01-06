@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Mon Apr 13 11:14:10 2020 (serrano)                */
-;*    Copyright   :  2014-21 Manuel Serrano                            */
+;*    Last change :  Tue Jan  4 16:13:57 2022 (serrano)                */
+;*    Copyright   :  2014-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
 ;*=====================================================================*/
@@ -339,6 +339,16 @@
 			      (js-new %this js-webservice base args))
 			   (js-function-arity 1 0)
 			   (js-function-info :name name :len 1)))))
+
+	       ;; isRecord
+	       (define-js isRecord 1
+		  (lambda (this obj)
+		     (isa? obj JsClass)))
+	       (define-js recordOf 1
+		  (lambda (this obj)
+		     (if (isa? obj JsRecord)
+			 (object-class obj)
+			 (js-raise-type-error %this "not a record" obj))))
 	       
 	       ;; charset
 	       (define-js charsetConvert 3
