@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Thu Dec 30 06:40:40 2021 (serrano)                */
-;*    Copyright   :  2013-21 Manuel Serrano                            */
+;*    Last change :  Sun Jan  9 14:13:36 2022 (serrano)                */
+;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
 ;*    -------------------------------------------------------------    */
@@ -326,7 +326,7 @@
 
    (define (resolve-fun! this)
       (with-access::J2SFun this (body params thisp loc (fmode mode) decl name
-				   ismethodof mode)
+				   mode)
 	 (let ((nm (or name
 		       (when (isa? decl J2SDecl)
 			  (with-access::J2SDecl decl (id)
@@ -396,7 +396,7 @@
 
    (define (resolve-fun-hopscript! this)
       (with-access::J2SFun this (body params thisp loc (fmode mode) decl name
-				   ismethodof mode)
+				   mode ismethodof)
 	 (let ((nm (or name
 		       (when (isa? decl J2SDecl)
 			  (with-access::J2SDecl decl (id)
@@ -409,12 +409,13 @@
 	    (let* ((env0 (if (j2sfun-expression? this) (cons decl env) env))
 		   (nenv (append params env0))
 		   (bdenv (if (isa? thisp J2SDecl) (cons thisp nenv) nenv))
-		   (nwenv (append params wenv)))
+		   (nwenv (append params wenv))
+		   (ctx (or ismethodof ctx)))
 	       (set! body (resolve! body bdenv fmode withs nwenv genv ctx conf))
 	       this))))
    
    (with-access::J2SFun this (body params thisp loc (fmode mode) decl name
-				ismethodof mode)
+				mode)
       (if (eq? fmode 'hopscript)
 	  (resolve-fun-hopscript! this)
 	  (resolve-fun! this))))
@@ -1198,17 +1199,64 @@
 	       (location (caddr loc))))))
    
    (call-default-walker)
-   (with-access::J2SCall this (fun)
-      (when (isa? fun J2SSuper)
+   (with-access::J2SCall this (fun args loc)
+      (cond
+	 ((not (isa? fun J2SSuper))
+	  this)
 	 ;; direct calls to super are only permitted from within constructors
-	 (cond
-	    ((eq? ctx 'plain)
-	     (err fun))
-	    ((isa? ctx J2SClass)
-	     (with-access::J2SClass ctx (super)
-		(when (isa? super J2SUndefined)
-		   (err fun))))))
-      this))
+	 ((eq? ctx 'plain)
+	  (err fun))
+	 ((isa? ctx J2SClass)
+	  (with-access::J2SClass ctx (super)
+	     (when (isa? super J2SUndefined)
+		(err fun))
+	     this))
+	 ((and (pair? ctx) (eq? (car ctx) 'method) (pair? args))
+	  ;; see method-declaration@parser.scm
+	  (let* ((gen (cadr ctx))
+		 (rec (caddr ctx))
+		 (decl (find-decl rec env)))
+	     (cond
+		((not decl)
+		 (raise
+		    (instantiate::&io-parse-error
+		       (proc "hopc (symbol)")
+		       (msg "cannot find record")
+		       (obj rec)
+		       (fname (cadr loc))
+		       (location (caddr loc)))))
+		((or (not (isa? decl J2SDeclClass))
+		     (with-access::J2SDeclClass decl (val)
+			(not (isa? val J2SRecord))))
+		 (raise
+		    (instantiate::&io-parse-error
+		       (proc "hopc (symbol)")
+		       (msg "not a record")
+		       (obj rec)
+		       (fname (cadr loc))
+		       (location (caddr loc)))))
+		((with-access::J2SDeclClass decl (val)
+		    (with-access::J2SRecord val (super) super))
+		 =>
+		 (lambda (super)
+		    (resolve!
+		       (J2SCall*
+			  (J2SCall
+			     (J2SAccess (J2SUnresolvedRef gen)
+				(J2SString "dispatch"))
+			     (duplicate::J2SRef super))
+			  args)
+		       env mode withs wenvs genv ctx conf)))
+		(else
+		 (raise
+		    (instantiate::&io-parse-error
+		       (proc "hopc (symbol)")
+		       (msg "no super record")
+		       (obj rec)
+		       (fname (cadr loc))
+		       (location (caddr loc))))))))
+	 (else
+	  (err fun)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    resolve! ::J2SSuper ...                                          */

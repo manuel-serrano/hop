@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Tue Jan  4 16:31:37 2022 (serrano)                */
+;*    Last change :  Sun Jan  9 16:38:44 2022 (serrano)                */
 ;*    Copyright   :  2014-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -71,7 +71,7 @@
 ;*    font-lock ...                                                    */
 ;*---------------------------------------------------------------------*/
 (defconst hopjs-font-lock-keywords
-  (list (list "\\s-*\\(service\\)\\(?:\\s-+\\|(\\)" 1 'font-lock-keyword-face)
+  (list (list "\\s-*\\(service\\|generic\\|method\\)\\(?:\\s-+\\|(\\)" 1 'font-lock-keyword-face)
 	(list ".\\(\\(?:post\\|then\\|catch\\)\\(?:Sync\\|Message\\)?\\)\\(?:\\s-+\\|(\\)" 1 'font-lock-face-hopjs2)
 	(cons "</?[a-zA-Z0-9_.-]+[ ]*>\\|[ ]*/>\\|<[^ /]*/>" 'font-lock-face-hopjs9)
 	(list "\\(</?[a-zA-Z0-9_.:-]+\\)[ ]+[a-zA-Z0-9_]" 1 'font-lock-face-hopjs9)
@@ -80,24 +80,25 @@
 	(cons "$\{[^ \t\r\n{}]*\}" 'font-lock-face-hopjs2)
 	(list "\\([$]\\){" 1 'font-lock-face-hopjs2)
 	(list "\\([~]\\){" 1 'font-lock-face-hopjs3)
-	(cons "[0-9a-zA-Z_-]+:" 'font-lock-face-hopjs10)
 	(cons "https?://[^ \t]*" 'font-lock-string-face)
 	(cons "\\<\\(?:async\\|yield\\|await\\)\\>" 'font-lock-face-hopjs3)
 	(list "#:\\([^ \t\r\n{}(),;=[]*\\)" 1 'font-lock-face-hopjs3)
 	(cons "\\<\\(export\\|import\\|from\\|as\\)\\>" 'font-lock-face-hopjs4)
 	(cons "exports[.]" 'font-lock-keyword-face)
 	(list "\\(record\\|class\\)[ \t]+\\([^ \t]+\\)"
-	      '(1 font-lock-keyword-face)
-	      '(2 font-lock-face-hopjs2))
+	      '(1 font-lock-face-hopjs6)
+	      '(2 font-lock-face-hopjs4))
 	(list "\\(record\\|class\\)[ \t]+\\([^ \t]+\\)[ \t]*\\(extends\\)[ \t]*\\([^ \t]+\\)"
 	      '(1 font-lock-keyword-face)
-	      '(2 font-lock-face-hopjs2)
+	      '(2 font-lock-face-hopjs4)
 	      '(3 font-lock-keyword-face)
-	      '(4 font-lock-face-hopjs2))
+	      '(4 font-lock-face-hopjs4))
 	(list "\\(constructor\\)(" 1 'font-lock-keyword-face)
 	(list "\\(require\\)([ \t]+\\(\"[^\"]+\"\\)"
 	      '(1 font-lock-keyword-face)
 	      '(2 font-lock-face-underline))
+	(cons "\\(?:[0-9a-zA-Z$_]+\\):\\([0-9a-zA-Z$_]+\\)"
+	      '(1 font-lock-face-hopjs4))
 	(list (concat "^\\s-*\\(?:service\\|generic\\|method\\)\\s-+\\(" js--name-re "\\)") 1 'font-lock-function-name-face)))
 
 ;*---------------------------------------------------------------------*/

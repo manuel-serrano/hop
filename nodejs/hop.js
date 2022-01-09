@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Mar 22 15:03:30 2014                          */
-/*    Last change :  Tue Jan  4 16:12:56 2022 (serrano)                */
+/*    Last change :  Sun Jan  9 15:44:55 2022 (serrano)                */
 /*    Copyright   :  2014-22 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hopscript/Hop binding.                                           */
@@ -235,27 +235,29 @@ function Generic(root, body) {
    }
    this.root = root;
    this.body = body;
-   this.methods = {};
+   this.methods = [];
 }
 
 Generic.prototype.__proto__ = Generic.__proto__;
 
-Generic.prototype.addMethod = function(rec, body) {
+Generic.prototype.addMethod = function(rec, met) {
    if (!hop.isRecord(rec)) {
-      throw `generic: "${rec}" is not a record`;
+      throw `method: "${rec}" is not a record`;
    }
-   if (!(typeof body === "function")) {
-      throw `method: "${body}" is not a function`;
+   if (!(typeof met === "function")) {
+      throw `method: "${met}" is not a function`;
    }
-   this.methods[rec] = body;
+   this.methods.push(hop.recordFrom(rec), met);
 }
    
 Generic.prototype.dispatch = function(rec) {
-   return this.methods[rec] || this.body;
+   const i = this.methods.indexOf(hop.recordFrom(rec));
+   return i >= 0 ? this.methods[i+1] : this.body;
 }
 				   
 Generic.prototype.dispatchValue = function(obj) {
-   return this.methods[hop.recordOf(obj)] || this.body;
+   const i = this.methods.indexOf(hop.recordOf(obj));
+   return i >= 0 ? this.methods[i+1] : this.body;
 }
 
 exports.Generic = Generic;

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Tue Jan  4 16:30:52 2022 (serrano)                */
+;*    Last change :  Sun Jan  9 09:17:05 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1077,7 +1077,36 @@
 		      f))))))
 
    (define (method-declaration)
-      (function-declaration))
+      (let ((f (function-declaration)))
+	 (with-access::J2SDeclFun f (val id)
+	    (with-access::J2SFun val (params name body loc ismethodof)
+	       (cond
+		  ((null? params)
+		   (raise
+		      (instantiate::&io-parse-error
+			 (proc "hopc")
+			 (msg "methods require at least one argument")
+			 (obj id)
+			 (fname (cadr loc))
+			 (location (caddr loc)))))
+		  ((with-access::J2SDecl (car params) (utype)
+		      (eq? utype 'unknown))
+		   (raise
+		      (instantiate::&io-parse-error
+			 (proc "hopc")
+			 (msg "methods require a typed first argument")
+			 (obj id)
+			 (fname (cadr loc))
+			 (location (caddr loc)))))
+		  (else
+		   (with-access::J2SDecl (car params) (utype)
+		      (let ((gen (J2SUnresolvedRef id))
+			    (rec (J2SUnresolvedRef utype)))
+			 ;; see resolve!@symbol.scm
+			 (set! ismethodof (list 'method id utype))
+			 (J2SCall
+			    (J2SAccess gen (J2SString "addMethod"))
+			    rec val)))))))))
 
    (define (async-declaration tok)
       (let ((fun (function-declaration)))
