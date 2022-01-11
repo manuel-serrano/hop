@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.2.x/doc/node.js                       */
+/*    serrano/prgm/project/hop/3.5.x/doc/node.js                       */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  4 17:59:11 2016                          */
-/*    Last change :  Mon Sep 17 11:42:02 2018 (serrano)                */
-/*    Copyright   :  2016-18 Manuel Serrano                            */
+/*    Last change :  Thu Jan  6 16:55:51 2022 (serrano)                */
+/*    Copyright   :  2016-22 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Generate the NODE index                                          */
 /*=====================================================================*/
@@ -80,7 +80,7 @@ function getChapterBindings( chapter, _i, _arr ) {
 /*---------------------------------------------------------------------*/
 /*    Index generator                                                  */
 /*---------------------------------------------------------------------*/
-var arrs = stdlib.map( getChapterBindings );
+const arrs = stdlib.map( getChapterBindings );
 
 console.log( JSON.stringify( [].concat.apply( [], arrs ) ) );
 			  

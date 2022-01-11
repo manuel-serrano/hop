@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/nodejs/_crypto.scm                  */
+;*    serrano/prgm/project/hop/3.5.x/nodejs/_crypto.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 23 08:47:08 2014                          */
-;*    Last change :  Fri Oct 15 08:54:34 2021 (serrano)                */
-;*    Copyright   :  2014-21 Manuel Serrano                            */
+;*    Last change :  Tue Jan 11 07:19:32 2022 (serrano)                */
+;*    Copyright   :  2014-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Crypto native bindings                                           */
 ;*=====================================================================*/
@@ -76,11 +76,17 @@
 (define __js_strings (&begin!))
 
 ;*---------------------------------------------------------------------*/
+;*    js-toprimitive ...                                               */
+;*---------------------------------------------------------------------*/
+(define-method (js-toprimitive obj::JsSSLConnection preferredtype %this::JsGlobalObject)
+   (& "[object SSLConnection]"))
+
+;*---------------------------------------------------------------------*/
 ;*    ignored-verify-errors ...                                        */
 ;*    -------------------------------------------------------------    */
 ;*    As of 30 septembre 2021, Let's encrypt DST ROOT CA X3            */
-;*    certificate has expired, which has caused many web side to       */
-;*    collapse. Apparently, the "old" Nodejs version, Hop still        */
+;*    certificate has expired, which has caused many web sites to      */
+;*    collapse. Apparently, the "old" Nodejs version Hop still         */
 ;*    relies on is not able to correctly handle the work around        */
 ;*    the crypto crowd has invented. Checking the newer Nodejs         */
 ;*    version I have the vague impression that removing the            */
