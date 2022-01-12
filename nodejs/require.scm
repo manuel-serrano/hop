@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/nodejs/require.scm                  */
+;*    serrano/prgm/project/hop/3.5.x/nodejs/require.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Mon Dec 27 19:10:41 2021 (serrano)                */
-;*    Copyright   :  2013-21 Manuel Serrano                            */
+;*    Last change :  Wed Jan 12 07:48:59 2022 (serrano)                */
+;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
 ;*=====================================================================*/
@@ -14,7 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __nodejs_require
 
-   (include "../hopscript/stringthread.sch")
+   (include "../hopscript/stringthread.sch"
+	    "nodejs.sch")
    
    (library hop hopscript js2scheme web)
 
@@ -268,7 +269,8 @@
 			   :site 'client
 			   :driver (j2s-javascript-driver)
 			   :warning-global #f
-			   :driver-name "j2s-javascript-driver")))
+			   :driver-name "j2s-javascript-driver"
+			   :node-modules-directory (nodejs-node-modules-directory))))
 	       (filter (lambda (exp)
 			  (not (isa? exp J2SNode)))
 		  tree)))))
@@ -373,6 +375,7 @@
 	 :source filename
 	 :resource (dirname filename)
 	 :filename filename
+	 :node-modules-directory (nodejs-node-modules-directory)
 	 :worker worker
 	 :header header
 	 :verbose (if (>=fx (hop-verbose) 10) (-fx (hop-verbose) 10) 0)
@@ -1201,6 +1204,7 @@
 			       :driver-name "nodejs-driver"
 			       :filename filename
 			       :language (or lang "hopscript")
+			       :node-modules-directory (nodejs-node-modules-directory)
 			       :mmap-src m
 			       :module-main #f
 			       :module-name (symbol->string mod)
@@ -1226,6 +1230,7 @@
 		  :driver-name "nodejs-driver"
 		  :language (or lang "hopscript")
 		  :filename filename
+		  :node-modules-directory (nodejs-node-modules-directory)
 		  :module-main #f
 		  :module-name (symbol->string mod)
 		  :worker-slave worker-slave
@@ -1248,6 +1253,7 @@
 		     :driver-name "nodejs-driver"
 		     :filename filename
 		     :language (or lang "hopscript")
+		     :node-modules-directory (nodejs-node-modules-directory)
 		     :module-main #f
 		     :mmap-src m
 		     :module-name (symbol->string mod)
@@ -2080,8 +2086,6 @@
 	 (else
 	  (not-found filename))))
 
-   '(tprint "nodejs-load src=" src " filename=" filename " " commonjs-export
-      (j2s-compile-options))
    (with-trace 'require (format "nodejs-load ~a" filename)
       (when (eq? commonjs-export #unspecified)
 	 (let ((cj (memq :commonjs-export (j2s-compile-options))))
