@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/hopc/hopc_param.scm                 */
+;*    serrano/prgm/project/hop/3.5.x/hopc/hopc_param.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Fri Oct  1 07:38:12 2021 (serrano)                */
-;*    Copyright   :  2004-21 Manuel Serrano                            */
+;*    Last change :  Wed Jan 12 07:50:38 2022 (serrano)                */
+;*    Copyright   :  2004-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC global parameters                                           */
 ;*=====================================================================*/
@@ -15,6 +15,8 @@
 (module hopc_param
    
    (library hop)
+
+   (include "../nodejs/nodejs.sch")
    
    (export  (hopc-rc-file::bstring)
 	    (hopc-rc-file-set! ::bstring)
@@ -328,7 +330,7 @@
 ;*    hopc-node-modules-directory ...                                  */
 ;*---------------------------------------------------------------------*/
 (define-parameter hopc-node-modules-directory
-   #f)
+   (nodejs-node-modules-directory))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopc-js-worker ...                                               */

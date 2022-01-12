@@ -16,4 +16,5 @@
 (define (hop-branch) "@BRANCH@")
 (define (hop-backend) "@BACKEND@")
 (define (hop-url) "@URL@")
+(define (nodejs-node-modules-directory) "@NMODULESDIR@")
 
