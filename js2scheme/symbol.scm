@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Sun Jan  9 14:13:36 2022 (serrano)                */
+;*    Last change :  Wed Jan 12 07:56:11 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -410,7 +410,7 @@
 		   (nenv (append params env0))
 		   (bdenv (if (isa? thisp J2SDecl) (cons thisp nenv) nenv))
 		   (nwenv (append params wenv))
-		   (ctx (or ismethodof ctx)))
+		   (ctx (if (pair? ismethodof) ismethodof ctx)))
 	       (set! body (resolve! body bdenv fmode withs nwenv genv ctx conf))
 	       this))))
    
