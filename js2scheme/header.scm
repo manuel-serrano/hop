@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/header.scm                */
+;*    serrano/prgm/project/hop/3.5.x/js2scheme/header.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 29 06:46:36 2013                          */
-;*    Last change :  Mon Oct 25 15:07:18 2021 (serrano)                */
-;*    Copyright   :  2013-21 Manuel Serrano                            */
+;*    Last change :  Fri Jan 14 19:27:15 2022 (serrano)                */
+;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme compilation header stage                               */
 ;*=====================================================================*/
@@ -102,7 +102,7 @@
       (list
 	 %require
 	 %import-meta
-	 (js-def-extern 'global #t #t '%this :type 'object)
+	 (js-def-extern 'global #t #t '%this :type 'object :sweepable 'never)
 	 (js-def-extern 'globalThis #t #t '%this :type 'object)
 	 (js-def-extern 'GLOBAL #t #f '%this :type 'object)
 	 (js-def-extern 'module #t #t '%module :type 'object :hidden-class #f)
