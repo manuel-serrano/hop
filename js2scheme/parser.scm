@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Tue Dec  7 16:04:42 2021 (serrano)                */
+;*    Last change :  Sat Dec 25 10:08:11 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -83,13 +83,8 @@
 	 (id 'this)
 	 (_scmid 'this)))
 
-   (define export-index -1)
+   (define exports '())
    
-   (define (get-export-index)
-      (set! export-index (+fx 1 export-index))
-      export-index)
-
-
    (define (parse-eof-error token)
       (parse-token-error "Unexpected end of file"
 	 (if (pair? *open-tokens*)
@@ -268,40 +263,82 @@
 	 (when lang
 	    (let ((ploader (config-get config :plugins-loader #f)))
 	       (when (procedure? ploader)
-		  (ploader lang config))))))
+		  (ploader lang (abspath) config))))))
+
+   (define (source-lang-plugins tok el site conf)
+      (let ((ps (source-element-plugins el conf)))
+	 (cond
+	    (ps
+	     (let ((p (assq (string->symbol (javascript-language el)) ps)))
+		(unless p
+		   (raise
+		      (instantiate::&io-parse-error
+			 (proc "hopc")
+			 (msg "wrong language plugin")
+			 (obj (javascript-language el))
+			 (fname (abspath))
+			 (location (token-loc tok)))))
+		(set! plugins ps)
+		;; there is a plugins associated, initialize it
+		((cdr p) tok site conf parser-controller)))
+	    ((and (string=? site "module") (config-get conf :plugin-init #f))
+	     =>
+	     (lambda (p)
+		(p tok site conf parser-controller)))
+	    (else
+	     #f))))
+
+   (define (insert-pluginit nodes pluginit)
+      (if (not pluginit)
+	  nodes
+	  (let loop ((nodes nodes))
+	     (cond
+		((null? nodes)
+		 (list pluginit))
+		((isa? (car nodes) J2SString)
+		 (cons (car nodes) (loop (cdr nodes))))
+		((isa? (car nodes) J2SStmtExpr)
+		 (with-access::J2SStmtExpr (car nodes) (expr)
+		    (if (isa? expr J2SString)
+			(cons (car nodes) (loop (cdr nodes)))
+			(cons pluginit nodes))))
+		(else
+		 (cons pluginit nodes))))))
    
    (define (source-elements::J2SBlock)
       (let loop ((rev-ses '())
-		 (first #t))
+		 (first #t)
+		 (pluginit #f))
 	 (if (eof?)
 	     (if (null? rev-ses)
 		 (instantiate::J2SBlock
 		    (loc `(at ,(input-port-name input-port) 0))
 		    (endloc `(at ,(input-port-name input-port) 0))
-		    (nodes '()))
-		 (let* ((fnode (car rev-ses))
+		    (nodes (if pluginit (list pluginit) '())))
+		 (let* ((lastnode (car rev-ses))
 			(nodes (reverse! rev-ses)))
 		    (with-access::J2SNode (car nodes) (loc)
-		       (with-access::J2SNode fnode ((endloc loc))
+		       (with-access::J2SNode lastnode ((endloc loc))
 			  (instantiate::J2SBlock
 			     (loc loc)
 			     (endloc endloc)
-			     (nodes nodes))))))
-	     (let ((el (source-element)))
+			     (nodes (insert-pluginit nodes pluginit)))))))
+	     (let* ((tok (peek-token))
+		    (el (source-element)))
 		(cond
 		   ((eq? el 'source-map)
-		    (loop rev-ses #f))
+		    (loop rev-ses #f pluginit))
 		   (first
 		    (source-element-mode! el)
-		    (let ((ps (source-element-plugins el conf)))
-		       (when ps (set! plugins ps)))
 		    (loop (cons el rev-ses)
 		       (or (isa? el J2SString)
 			   (and (isa? el J2SStmtExpr)
 				(with-access::J2SStmtExpr el (expr)
-				   (isa? expr J2SString))))))
+				   (isa? expr J2SString))))
+		       (or pluginit
+			   (source-lang-plugins tok el "module" conf))))
 		   (else
-		    (loop (cons el rev-ses) #f)))))))
+		    (loop (cons el rev-ses) #f pluginit)))))))
 
    (define (source-element)
       (case (peek-token-type)
@@ -313,7 +350,7 @@
 		((and plugins (assq (token-value token) plugins))
 		 =>
 		 (lambda (p)
-		    ((cdr p) (consume-any!) #t parser-controller)))
+		    ((cdr p) (consume-any!) #t conf parser-controller)))
 		((eq? (token-value token) 'async)
 		 (let* ((token (consume-any!))
 			(next (peek-token-type)))
@@ -1338,8 +1375,8 @@
 			   (multiple-value-bind (path dollarpath)
 			      (consume-module-path!)
 			      (instantiate::J2SImport
-				 (names lst)
 				 (loc (token-loc token))
+				 (names lst)
 				 (path path)
 				 (dollarpath dollarpath)))
 			   (parse-token-error
@@ -1365,12 +1402,13 @@
 		       (if (eq? (token-value fro) 'from)
 			   (multiple-value-bind (path dollarpath)
 			      (consume-module-path!)
-			      (let ((impns (instantiate::J2SImportNamespace
+			      (let ((impns (instantiate::J2SImportName
 					      (loc (token-loc id))
-					      (id (token-value id)))))
+					      (id '*)
+					      (alias (token-value id)))))
 				 (instantiate::J2SImport
-				    (names (list impns))
 				    (loc (token-loc token))
+				    (names (list impns))
 				    (path path)
 				    (dollarpath dollarpath))))
 			   (parse-token-error "Illegal import, \"from\" expected"
@@ -1401,25 +1439,25 @@
 			(let* ((path (consume-token! 'STRING))
 			       (loc (token-loc token))
 			       (impnm (instantiate::J2SImportName
+					 (loc loc)
 					 (id 'default)
-					 (alias id)
-					 (loc loc))))
+					 (alias id))))
 			   (instantiate::J2SImport
-			      (names (list impnm))
 			      (loc loc)
+			      (names (list impnm))
 			      (path (token-value path))
 			      (dollarpath (instantiate::J2SUndefined (loc loc))))))
 		       ((eq? (token-tag sep) 'COMMA)
 			(let ((imp (loop #f))
 			      (impnm (instantiate::J2SImportName
+					(loc (token-loc sep))
 				       (id 'default)
-				       (alias id)
-				       (loc (token-loc sep)))))
+				       (alias id))))
 			   (with-access::J2SImport imp (path dollarpath)
 			      (let* ((loc (token-loc token))
 				     (defi (instantiate::J2SImport
-					      (names (list impnm))
 					      (loc loc)
+					      (names (list impnm))
 					      (dollarpath dollarpath)
 					      (path path))))
 				 (instantiate::J2SSeq
@@ -1445,9 +1483,9 @@
 			      (token-value (consume-token! 'ID)))
 			   id))
 		(impnm (instantiate::J2SImportName
-			   (id id)
-			   (alias alias)
-			   (loc loc)))
+			  (loc loc)
+			  (id id)
+			  (alias alias)))
 		(next (consume-any!)))
 	    (case (token-tag next)
 	       ((RBRACE)
@@ -1458,33 +1496,31 @@
 		(parse-token-error "Illegal import" next))))))
 
    (define (export-decl decl::J2SDecl)
-      (with-access::J2SDecl decl (id exports scope)
+      (with-access::J2SDecl decl (id scope loc export)
 	 (set! scope 'export)
-	 (set! exports (cons (instantiate::J2SExport
-				(id id)
-				(alias id)
-				(decl decl)
-				(index (get-export-index)))
-			  exports))
+	 (let ((x (instantiate::J2SExport
+		     (loc loc)
+		     (id id)
+		     (alias id)
+		     (decl decl))))
+	    (set! export x)
+	    (set! exports (cons x exports)))
 	 decl))
    
    (define (export token)
       (set! es-module #t)
       (case (peek-token-type)
-	 ((var let const)
+	 ((var let const class record)
 	  (let ((stmt (statement)))
 	     (with-access::J2SVarDecls stmt (decls)
 		(set! decls (map export-decl decls)))
 	     stmt))
 	 ((LBRACE)
 	  (let ((token (consume-any!)))
-	     (let loop ((refs '())
+	     (let loop ((ids '())
 			(aliases '()))
 		(let* ((tid (consume-oneof! 'ID 'default))
 		       (id (token-value tid))
-		       (ref (instantiate::J2SUnresolvedRef
-			       (loc (token-loc tid))
-			       (id id)))
 		       (alias (if (peek-token-id? 'as)
 				  (begin
 				     (consume-any!)
@@ -1500,58 +1536,62 @@
 				  id)))
 		   (case (peek-token-type)
 		      ((RBRACE)
-		       (consume-any!)
-		       (if (peek-token-id? 'from)
-			   (begin
-			      (consume-any!)
-			      (multiple-value-bind (path dollarpath)
-				 (consume-module-path!)
-				 (instantiate::J2SImport
-				    (names (map (lambda (r a)
-						   (with-access::J2SUnresolvedRef r (id loc)
-						      (instantiate::J2SImportRedirect
+		       (let ((loc (token-loc (consume-any!))))
+			  (if (peek-token-id? 'from)
+			      (let ((loc (token-loc (consume-any!))))
+				 (multiple-value-bind (path dollarpath)
+				    (consume-module-path!)
+				    (let* ((i (instantiate::J2SImport
+						 (names '())
+						 (loc loc)
+						 (path path)
+						 (dollarpath dollarpath)))
+					   (x (map (lambda (id a)
+						      (instantiate::J2SRedirect
 							 (loc loc)
 							 (id id)
-							 (alias a))))
-					      (cons ref refs)
-					      (cons alias aliases)))
-				    (loc (token-loc token))
-				    (path path)
-				    (dollarpath dollarpath))))
-			   (instantiate::J2SExportVars
-			      (loc (token-loc token))
-			      (refs (cons ref refs))
-			      (aliases (cons alias aliases)))))
+							 (alias a)
+							 (import i)))
+						 (cons id ids)
+						 (cons alias aliases))))
+				       (set! exports (append x exports))
+				       i)))
+			      (let ((x (map (lambda (id a)
+					       (instantiate::J2SExport
+						  (loc loc)
+						  (id id)
+						  (alias a)))
+					  (cons id ids)
+					  (cons alias aliases))))
+				 (set! exports (append x exports))
+				 (J2SNop)))))
 		      ((COMMA)
 		       (consume-any!)
-		       (loop (cons ref refs) (cons alias aliases)))
+		       (loop (cons id ids) (cons alias aliases)))
 		      (else
 		       (parse-token-error "Illegal export" token)))))))
 	 ((function)
 	  (export-decl (statement)))
-	 ((record class)
-	  (let ((stmt (statement)))
-	     (with-access::J2SVarDecls stmt (decls)
-		(set! decls (list (export-decl (car decls))))
-		stmt)))
 	 ((default)
 	  (let ((loc (token-loc (consume-any!)))
 		(val (expression #f #f)))
 	     (co-instantiate ((expo (instantiate::J2SExport
+				       (loc loc)
 				       (id 'default)
 				       (alias 'default)
-				       (decl decl)
-				       (index (get-export-index))))
+				       (index 0)
+				       (decl decl)))
 			      (decl (instantiate::J2SDeclInit
 				       (loc loc)
 				       (id 'default)
-				       (exports (list expo))
-				       (binder 'export)
+				       (export expo)
+				       (binder 'let)
 				       (scope 'export)
 				       (val val)))
 			      (ref (instantiate::J2SRef
 				      (loc loc)
 				      (decl decl))))
+		(set! exports (cons expo exports))
 		(J2SSeq
 		   (instantiate::J2SVarDecls
 		      (loc loc)
@@ -1562,13 +1602,18 @@
 	     (if (eq? (token-value fro) 'from)
 		 (multiple-value-bind (path dollarpath)
 		    (consume-module-path!)
-		    (let ((impexp (instantiate::J2SImportExport
-				     (loc (token-loc *)))))
-		       (instantiate::J2SImport
-			  (loc (token-loc token))
-			  (path path)
-			  (dollarpath dollarpath)
-			  (names (list impexp)))))
+		    (let* ((i (instantiate::J2SImport
+				 (loc (token-loc token))
+				 (path path)
+				 (dollarpath dollarpath)
+				 (names '())))
+			   (x (instantiate::J2SRedirectNamespace
+				 (loc (token-loc token))
+				 (id (gensym '*))
+				 (alias '*)
+				 (import i))))
+		       (set! exports (cons x exports))
+		       i))
 		 (parse-token-error "Illegal export, \"from\" expected" fro))))
 	 (else
 	  (parse-token-error "Illegal export declaration" token))))
@@ -1748,7 +1793,8 @@
 	    (let ((token (push-open-token (consume-token! 'LBRACE))))
 	       (let ((loc (current-loc)))
 		  (let loop ((rev-ses '())
-			     (first #t))
+			     (first #t)
+			     (pluginit #f))
 		     (if (eq? (peek-token-type) 'RBRACE)
 			 (let ((etoken (consume-any!)))
 			    (pop-open-token etoken)
@@ -1757,13 +1803,20 @@
 				  (loc (token-loc token))
 				  (endloc (token-loc etoken))
 				  (nodes (append (fun-body-params-defval params)
-					    (reverse! rev-ses))))))
-			 (let ((el (source-element)))
-			    (when first
-			       (source-element-mode! el)
-			       (let ((ps (source-element-plugins el conf)))
-				  (when ps (set! plugins ps))))
-			    (loop (cons el rev-ses) #f))))))
+					    (insert-pluginit (reverse! rev-ses)
+					       pluginit))))))
+			 (let* ((tok (peek-token))
+				(el (source-element)))
+			    (source-element-mode! el)
+			    (loop (cons el rev-ses)
+			       (or (isa? el J2SString)
+				   (and (isa? el J2SStmtExpr)
+					(with-access::J2SStmtExpr el (expr)
+					   (isa? expr J2SString))))
+			       (or pluginit
+				   (and first
+					(source-lang-plugins tok
+					   el "function" conf)))))))))
 	    (begin
 	       (set! current-mode cmode)
 	       (set! plugins cplugins)))))
@@ -2328,6 +2381,7 @@
 	     (instantiate::J2SYield
 		(loc loc)
 		(generator gen)
+		(await #f)
 		(expr (instantiate::J2SUndefined
 			 (loc loc)))))
 	    (else
@@ -2335,6 +2389,7 @@
 		(instantiate::J2SYield
 		   (loc loc)
 		   (generator gen)
+		   (await #f)
 		   (expr expr)))))))
 
    (define (await-expr)
@@ -2343,6 +2398,7 @@
 	 (instantiate::J2SYield
 	    (loc loc)
 	    (generator #f)
+	    (await #t)
 	    (expr expr))))
    
    (define (tag-call-arguments loc)
@@ -2530,7 +2586,8 @@
 			  =>
 			  (lambda (p)
 			     (let ((stmt ((cdr p)
-					  (consume-any!) #t parser-controller)))
+					  (consume-any!) #t
+					  conf parser-controller)))
 				(loop (cons stmt rev-stats)))))
 			 
 			 (else
@@ -2711,7 +2768,7 @@
 		((and plugins (assq (token-value token) plugins))
 		 =>
 		 (lambda (p)
-		    ((cdr p) token #f parser-controller)))
+		    ((cdr p) token #f conf parser-controller)))
 		((and (eq? (token-value token) 'service)
 		      (memq (peek-token-type) '(LPAREN ID)))
 		 (token-push-back! token)
@@ -2894,7 +2951,7 @@
 	     ((and plugins (assq (peek-token-value) plugins))
 	      =>
 	      (lambda (p)
-		 ((cdr p) (consume-any!) #t parser-controller)))
+		 ((cdr p) (consume-any!) #t conf parser-controller)))
 	     (spread?
 	      (instantiate::J2SSpread
 		 (stype 'array)
@@ -2913,7 +2970,7 @@
 	     ((and plugins (assq (peek-token-value) plugins))
 	      =>
 	      (lambda (p)
-		 ((cdr p) (consume-any!) #t parser-controller)))
+		 ((cdr p) (consume-any!) #t conf parser-controller)))
 	     (else
 	      (parse-token-error "Unexpected token" (peek-token)))))))
    
@@ -3270,17 +3327,20 @@
       (with-access::J2SBlock (source-elements) (loc endloc nodes name)
 	 (let ((module (javascript-module-nodes nodes))
 	       (mode (nodes-mode nodes)))
-	    (instantiate::J2SProgram
-	       (loc loc)
-	       (endloc endloc)
-	       (path (abspath))
-	       (module module)
-	       (source-map (config-get conf :source-mapping-url source-map))
-	       (path (config-get conf :filename (abspath)))
-	       (main (config-get conf :module-main #f))
-	       (name (config-get conf :module-name #f))
-	       (mode mode)
-	       (nodes (map! (lambda (n) (dialect n mode conf)) nodes))))))
+	    (assign-import-program! 
+	       (instantiate::J2SProgram
+		  (loc loc)
+		  (endloc endloc)
+		  (path (abspath))
+		  (module module)
+		  (source-map (config-get conf :source-mapping-url source-map))
+		  (path (config-get conf :filename (abspath)))
+		  (main (config-get conf :module-main #f))
+		  (name (config-get conf :module-name #f))
+		  (mode mode)
+		  (exports (reverse exports))
+		  (nodes (map! (lambda (n) (dialect n mode conf)) nodes)))
+	       conf))))
    
    (define (eval mode)
       (set! tilde-level 0)
@@ -3292,6 +3352,7 @@
 	       (path (config-get conf :filename (abspath)))
 	       (name (config-get conf :module-name #f))
 	       (mode mode)
+	       (exports (reverse exports))
 	       (nodes (map! (lambda (n) (dialect n mode conf)) nodes))))))
 
    (define (eval-strict)
@@ -3308,6 +3369,7 @@
 		   (main (config-get conf :module-main #f))
 		   (name (config-get conf :module-name #f))
 		   (path (config-get conf :filename (abspath)))
+		   (exports (reverse exports))
 		   (nodes (list (dialect el 'normal conf)))))
 	     el)))
 
@@ -3906,6 +3968,12 @@
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
+;*    disable-reserved-ident ::J2STilde ...                            */
+;*---------------------------------------------------------------------*/
+(define-walk-method (disable-reserved-ident this::J2STilde mode)
+   this)
+
+;*---------------------------------------------------------------------*/
 ;*    disable-reserved-ident ::J2SDecl ...                             */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (disable-reserved-ident this::J2SDecl mode)
@@ -3949,3 +4017,20 @@
       (disable-reserved-ident body mode)
       this))
       
+;*---------------------------------------------------------------------*/
+;*    assign-import-program! ...                                       */
+;*---------------------------------------------------------------------*/
+(define (assign-import-program! prgm::J2SProgram conf)
+   
+   (define (assign! tgt::J2SProgram src::J2SProgram)
+      (vector-for-each (lambda (f)
+			  (if (class-field-mutator f)
+			      (let ((v ((class-field-accessor f) src)))
+				 ((class-field-mutator f) tgt v))))
+	 (class-all-fields (object-class src)))
+      tgt)
+   
+   (let ((tgt (config-get conf :import-program #f)))
+      (if tgt
+	  (assign! tgt prgm)
+	  prgm)))

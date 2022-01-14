@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/hop-module.scm          */
+;*    serrano/prgm/project/hop/hop/js2scheme/hop-module.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar  8 11:35:48 2019                          */
-;*    Last change :  Tue Mar 12 09:26:24 2019 (serrano)                */
-;*    Copyright   :  2019 Manuel Serrano                               */
+;*    Last change :  Sun Dec 19 15:30:14 2021 (serrano)                */
+;*    Copyright   :  2019-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop (Scheme) module parser used when a JS module imports         */
 ;*    a Hop module.                                                    */
@@ -83,10 +83,10 @@
        (let ((id (id-of-id fun)))
 	  (co-instantiate
 		((expo (instantiate::J2SExport
+			  (loc (cer export))
 			  (id id)
 			  (alias id)
-			  (decl decl)
-			  (from 'hop)))
+			  (decl decl)))
 		 (decl (instantiate::J2SDeclExtern
 			  (loc (cer export))
 			  (id id)
@@ -94,7 +94,7 @@
 			  (scope '%hop)
 			  (vtype 'procedure)
 			  (hidden-class #f)
-			  (exports (list expo))
+			  (export expo)
 			  (val (instantiate::J2SPragma
 				  (type 'procedure)
 				  (loc (cer export))

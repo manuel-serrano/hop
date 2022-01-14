@@ -5,7 +5,7 @@ let VAR = 0;
 
 VAR++; VAR = 9;
 
-const mutator = function( v ) { VAR = v };
+const mutator = function( v ) { console.log("mut=", v);VAR = v };
    
 export const KONST2 = 45;
 export let VAR2 = 44;

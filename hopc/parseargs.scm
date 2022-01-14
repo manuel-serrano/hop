@@ -1,9 +1,8 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.5.x/hopc/parseargs.scm                */
+;*    serrano/prgm/project/hop/hop/hopc/parseargs.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Sun Dec  5 13:11:54 2021 (serrano)                */
 ;*    Copyright   :  2004-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -27,7 +26,7 @@
 ;*---------------------------------------------------------------------*/
 (define ecmascript-es6
    '(es6-let: es6-const: es6-arrow-function: es6-default-value:
-     es6-rest-argument:))
+     es6-rest-argument: es6-module-client:))
 
 (define ecmascript-es2017
    (append ecmascript-es6 '(es2017-async:)))
@@ -69,7 +68,8 @@
 	 (ecmascriptv 2017)
 	 (source-map #t)
 	 (lib-dir (make-file-path (hop-lib-directory) "hop" (hop-version)))
-	 (configs '()))
+	 (configs '())
+	 (commonjs-export #t))
       (bind-exit (stop)
 	 (args-parse (cdr args)
 	    ((("-h" "--help") (help "This message"))
@@ -276,6 +276,10 @@
 	     (set! ecmascriptv 6))
 	    (("--js-es2017" (help "Enable all EcmaScript 2017 support (default)"))
 	     (set! ecmascriptv 2017))
+	    (("--js-commonjs-export" (help "Automatic commonjs modules export"))
+	     (set! commonjs-export #t))
+	    (("--no-js-commonjs-export" (help "Automatic commonjs modules export"))
+	     (set! commonjs-export #f))
 	    (("--js-record-decorator" (help "Enable record decorator"))
 	     (j2s-compile-options-set!
 		(cons* :record-decorator #t (j2s-compile-options))))
@@ -577,6 +581,9 @@
 		   (if (file-exists? path)
 		       path
 		       (make-file-name (hop-etc-directory) (hopc-rc-file)))))))
+      ;; commonjs modules
+      (hopc-j2s-flags-set!
+	 (cons* :commonjs-export commonjs-export (hopc-j2s-flags)))
       ;; long-size
       (unless (fixnum? (hopc-long-size))
 	 (hopc-long-size-set! (bigloo-config 'elong-size)))

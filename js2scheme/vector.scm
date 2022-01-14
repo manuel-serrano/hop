@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Nov 22 09:52:17 2017                          */
-;*    Last change :  Sat Dec 14 18:43:53 2019 (serrano)                */
-;*    Copyright   :  2017-19 Manuel Serrano                            */
+;*    Last change :  Wed Dec 29 09:21:40 2021 (serrano)                */
+;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Mapping JS Arrays to Scheme vectors                              */
 ;*    -------------------------------------------------------------    */
@@ -410,7 +410,7 @@
 ;*---------------------------------------------------------------------*/
 (define-generic (hook-alloc! this::J2SBlock size loc)
    (let ((decl (make-decl-vector size loc)))
-      (with-access::J2SBlock this (nodes)
+      (with-access::J2SBlock this (nodes endloc)
 	 (set! nodes (list (J2SLetBlock* (list decl) nodes))))
       decl))
 

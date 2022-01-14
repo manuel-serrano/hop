@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jul 15 07:09:51 2021                          */
-;*    Last change :  Tue Dec  7 16:11:35 2021 (serrano)                */
-;*    Copyright   :  2021 Manuel Serrano                               */
+;*    Last change :  Sun Jan  2 18:29:32 2022 (serrano)                */
+;*    Copyright   :  2021-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Record generation                                                */
 ;*=====================================================================*/
@@ -36,6 +36,7 @@
    (export (j2s-scheme-record-new ::J2SNew ::J2SRecord args mode return ctx))
 	   
    (export (j2s-collect-records*::pair-nil ::J2SProgram)
+	   (j2s-collect-irecords*::pair-nil ::J2SProgram)
 	   (record-scmid::symbol ::J2SRecord)
 	   (j2s-record-declaration ::J2SRecord)
 	   (j2s-record-predicate ::J2SRecord)
@@ -46,7 +47,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme-call-record-constructor ...                           */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s-scheme-call-class-constructor record::J2SRecord ecla enewtarget eobj args node mode return ctx)
+(define-method (j2s-scheme-call-class-constructor record::J2SRecord imp ecla enewtarget eobj args node mode return ctx)
    
    (define (gen-new args #!optional (extras '()))
       `(,(class-constructor-id record)
@@ -54,6 +55,14 @@
 	,@(if (class-new-target? record) (list enewtarget) '())
 	,@(map (lambda (a) (j2s-scheme a mode return ctx)) args)
 	,@extras))
+
+   (define (gen-new-import args #!optional (extras '()))
+      `(with-access::JsClass ,ecla (constructor)
+	  (constructor
+	     ,eobj
+	     ,@(if (class-new-target? record) (list enewtarget) '())
+	     ,@(map (lambda (a) (j2s-scheme a mode return ctx)) args)
+	     ,@extras)))
    
    (with-access::J2SNode node (loc)
       (let ((ctor (j2s-class-find-constructor record))
@@ -64,6 +73,8 @@
 		(j2s-error name
 		   "wrong number of arguments, 0 expected"
 		   node (format "~a provided" la))))
+	    (imp
+	     (gen-new-import args))
 	    ((not ctor)
 	     (gen-new args))
 	    (else
@@ -72,23 +83,45 @@
 		   (with-access::J2SFun val (params vararg loc name mode)
 		      (let ((lp (length params)))
 			 (cond
-			    ((=fx lp la)
-			     (gen-new args))
 			    ((eq? vararg 'rest)
-			     (cond
-				((>=fx la (-fx (j2s-minlen val)  1))
-				 (gen-new args))
-				((eq? mode 'hopscript)
-				 (j2s-error name
-				    (format "wrong number of arguments, ~a minimum expected"
-				       (j2s-minlen val))
-				    node (format "~a provided" la)))
-				(else
-				 (gen-new args (make-list (-fx lp la) '(js-undefined))))))
+			     (with-access::J2SDeclRest (car (last-pair params)) (alloc-policy)
+				(cond
+				   ((<fx la (j2s-minlen val))
+				    (j2s-error name
+				       (format "wrong number of arguments, ~a minimum expected"
+					  (j2s-minlen val))
+				       node (format "~a provided" la)))
+				   ((<=fx la (-fx lp 1))
+				    (let ((opt (make-list (-fx (-fx lp 1) la) '(js-undefined))))
+				       (if (and (eq? alloc-policy 'lazy)
+						(context-get ctx :optim-arguments)
+						(context-get ctx :optim-stack-alloc))
+					   (gen-new args
+					      (append opt '(#())))
+					   (gen-new args
+					      (append opt '((js-empty-vector->jsarray %this)))))))
+				   (else
+				    (let* ((a (take args (-fx lp 1)))
+					   (r (list-tail args (-fx lp 1)))
+					   (genv `(vector
+						     ,@(map (lambda (n)
+							       (j2s-scheme n mode return ctx))
+							  r))))
+				       (if (and (eq? alloc-policy 'lazy)
+						(context-get ctx :optim-arguments)
+						(context-get ctx :optim-stack-alloc))
+					   (let ((v (gensym 'vec)))
+					      `(js-call-with-stack-vector ,genv
+						  (lambda (,v)
+						     ,(gen-new a (list v)))))
+					   (gen-new a
+					      (list `(js-vector->jsarray ,genv %this)))))))))
 			    ((eq? vararg 'arguments)
 			     (j2s-error name
 				"arguments not supported in record constructor"
 				node name))
+			    ((=fx lp la)
+			     (gen-new args))
 			    ((and (>=fx la (j2s-minlen val)) (<=fx la lp))
 			     (gen-new args (make-list (-fx lp la) '(js-undefined))))
 			    ((eq? mode 'hopscript)
@@ -122,7 +155,7 @@
 				,(j2s-scheme cmap mode return ctx)
 				,(class-prototype-id record)
 				,(record-scmid record)))
-		       (,res ,(j2s-scheme-call-class-constructor record rec
+		       (,res ,(j2s-scheme-call-class-constructor record #f rec
 				 (j2s-scheme (J2SRef decl) mode return ctx)
 				 obj args this
 				 mode return ctx)))
@@ -188,7 +221,7 @@
 		      methods))
 	     #unspecified)))
    
-   (define (make-class this::J2SRecord super arity len ctorsz)
+   (define (gen-class this::J2SRecord super arity len ctorsz)
       (with-access::J2SRecord this (elements cmap name src loc)
 	 (let* ((cname (or name (gensym 'record)))
 		(clazz (class-class-id this))
@@ -267,16 +300,16 @@
 		   (with-access::J2SClassElement ctor (prop)
 		      (with-access::J2SDataPropertyInit prop (val)
 			 (with-access::J2SFun val (constrsize params thisp)
-			    (make-class this super
+			    (gen-class this super
 			       '(js-function-arity 0 -1 'scheme)
 			       (length params)
 			       constrsize)))))
 		  (super
-		   (make-class this super
+		   (gen-class this super
 		      '(js-function-arity 0 -1 'scheme)
 		      0 (length props)))
 		  (else
-		   (make-class this super
+		   (gen-class this super
 		      '(js-function-arity 0 -1 'scheme)
 		      0 (length props)))))))))
 
@@ -311,12 +344,52 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-collect-records* this::J2SProgram)
    (with-access::J2SProgram this (decls)
-      (filter-map (lambda (d)
-		     (when (isa? d J2SDeclClass)
-			(with-access::J2SDeclClass d (val)
-			   (when (isa? val J2SRecord)
-			      val))))
-	 decls)))
+      (delete-duplicates!
+	 (filter-map (lambda (d)
+			(when (isa? d J2SDeclClass)
+			   (with-access::J2SDeclClass d (val)
+			      (when (isa? val J2SRecord)
+				 val))))
+	    decls)
+	 eq?)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-collect-irecords* ::J2SProgram ...                           */
+;*---------------------------------------------------------------------*/
+(define (j2s-collect-irecords* this::J2SProgram)
+
+   (define (import-record rec::J2SRecord)
+      (with-access::J2SRecord rec (super name)
+	 (if (isa? super J2SRef)
+	     (with-access::J2SRef super (decl)
+		(with-access::J2SDeclClass decl (val export id)
+		   (if export
+		       (append (import-record val) (list rec))
+		       (j2s-error name
+			  "Super record not exported"
+			  rec id))))
+	     (list rec))))
+      
+   (with-access::J2SProgram this (decls)
+      (delete-duplicates!
+	 (append-map (lambda (d)
+			(if (isa? d J2SDeclClass)
+			    (with-access::J2SDeclClass d (val)
+			       (if (isa? val J2SRecord)
+				   (with-access::J2SRecord val (super)
+				      (if (isa? super J2SRef)
+					  (with-access::J2SRef super (decl)
+					     (if (isa? decl J2SDeclImport)
+						 (with-access::J2SDeclImport decl (export)
+						    (with-access::J2SExport export (decl)
+						       (with-access::J2SDeclClass decl (val)
+							  (import-record val))))
+						 '()))
+					  '()))
+				   '()))
+			    '()))
+	    decls)
+	 eq?)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-record-new ...                                               */
@@ -380,49 +453,56 @@
 	    (with-access::J2SDecl decl (_scmid)
 	       (set! _scmid '!this))
 	    decl)))
-   
+
    (define (j2s-record-constructor-fun this::J2SRecord fun::J2SFun)
       (with-access::J2SRecord this (super)
 	 (with-access::J2SFun fun (idthis body params thisp new-target)
 	    (with-access::J2SBlock body (loc endloc nodes)
-	       (cond
-		  ((and (isa? super J2SRecord)
-			(j2s-scheme-need-super-check? fun))
-		   (with-access::J2SRecord this (need-super-check)
-		      (set! need-super-check #t)
-		      (let ((decl (this-for-super-decl thisp)))
-			 ;; for dead-zone check
-			 (decl-usage-add! thisp 'uninit)
-			 (set! body
-			    (instantiate::J2SLetBlock
-			       (loc loc)
-			       (rec #f)
-			       (endloc endloc)
-			       (decls (list decl))
-			       (nodes (list (unthis idthis loc)
-					 (J2STry body
-					    (J2SNop)
-					    (returnthis thisp loc)))))))))
-		  ((isa? super J2SRecord)
-		   ;; dont add instance properties has they will be
-		   ;; introduced when invoking super
-		   body)
-		  (else
-		   ;; no super class,  initialize the
-		   ;; instance properties first
-		   (set! body
-		      (J2SBlock
-			 (J2SStmtExpr
-			    (J2SPragma
-			       `(begin
-				   ,@(j2s-scheme-init-instance-properties
-					this mode return ctx))))
-			 body
-			 (J2SPragma 'this)))))
+	       (let ((superval (j2s-class-super-val this)))
+		  (cond
+		     ((and (isa? superval J2SClass)
+			   (j2s-scheme-need-super-check? fun))
+		      (with-access::J2SRecord this (need-super-check)
+			 (set! need-super-check #t)
+			 (let ((decl (this-for-super-decl thisp)))
+			    ;; for dead-zone check
+			    (decl-usage-add! thisp 'uninit)
+			    (set! body
+			       (instantiate::J2SLetBlock
+				  (loc loc)
+				  (rec #f)
+				  (endloc endloc)
+				  (decls (list decl))
+				  (nodes (list (unthis idthis loc)
+					    (J2STry body
+					       (J2SNop)
+					       (returnthis thisp loc)))))))))
+		     ((and #f (isa? superval J2SRecord))
+		      ;; dont add instance properties has they will be
+		      ;; introduced when invoking super
+		      body)
+		     (else
+		      ;; no super class, initialize the
+		      ;; instance properties first
+		      (set! body
+			 (J2SBlock
+			    (J2SStmtExpr
+			       (J2SPragma
+				  `(begin
+				      ,@(j2s-scheme-init-instance-properties
+					   this mode return ctx))))
+			    body
+			    (J2SPragma 'this))))))
 	       (when (class-new-target? this)
 		  (set! new-target 'argument)
 		  (set! params (cons (new-target-param loc) params))))
 	    (jsfun->lambda fun mode return ctx #t))))
+
+   (define (j2s-record-root-constructor this)
+      `(lambda (this)
+	  ,@(j2s-scheme-init-instance-properties
+	       this mode return ctx)
+	  this))
    
    (define (j2s-record-constructor/ctor this ctor::J2SClassElement)
       (with-access::J2SClassElement ctor (prop)
@@ -430,14 +510,13 @@
 	    (let ((dup (duplicate::J2SFun val)))
 	       (j2s-record-constructor-fun this dup)))))
    
-   (define (j2s-record-constructor/w-ctor this superctor)
-      (with-access::J2SRecord this (loc decl)
+   (define (j2s-record-constructor/superctor this superctor)
+      (with-access::J2SRecord this (loc decl endloc)
 	 (let ((self (instantiate::J2SDecl
 			(loc loc)
 			(id 'this)
 			(_scmid 'this)
 			(binder 'param)))
-	       (endloc loc)
 	       (params (if (isa? superctor J2SClassElement)
 			   (with-access::J2SClassElement superctor (prop)
 			      (with-access::J2SMethodPropertyInit prop (val)
@@ -450,19 +529,33 @@
 		  (J2SBlock
 		     (J2SCall* (J2SSuper self this)
 			(map (lambda (d) (J2SRef d)) params))))))))
-   
+
+   (define (j2s-record-constructor/w-ctor this)
+      (with-access::J2SRecord this (loc decl endloc)
+	 (let ((self (instantiate::J2SDecl
+			(loc loc)
+			(id 'this)
+			(_scmid 'this)
+			(binder 'param))))
+	    (j2s-record-constructor-fun this
+	       (J2SFun 'constructor '()
+		  (J2SBlock
+		     (J2SCall (J2SSuper self this))))))))
    
    (define (gen-scm-ctor this)
-      (let ((ctor (j2s-class-get-constructor this)))
-	 (if ctor
-	     (j2s-record-constructor/ctor this ctor)
-	     (let ((superctor (j2s-class-find-constructor this)))
-		(if superctor
-		    (j2s-record-constructor/w-ctor this superctor)
-		    `(lambda (this) 
-			,@(j2s-scheme-init-instance-properties
-			     this mode return ctx)
-			this))))))
+      (cond
+	 ((j2s-class-get-constructor this)
+	  =>
+	  (lambda (ctor)
+	     (j2s-record-constructor/ctor this ctor)))
+	 ((not (j2s-class-super-val this))
+	  (j2s-record-root-constructor this))
+	 ((j2s-class-find-constructor this)
+	  =>
+	  (lambda (superctor)
+	     (j2s-record-constructor/superctor this superctor)))
+	 (else
+	  (j2s-record-constructor/w-ctor this))))
    
    (let ((ctor (gen-scm-ctor this)))
       (j2s-scheme-class-put-info! this :scm-cache-constructor ctor)

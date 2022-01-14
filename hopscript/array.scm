@@ -128,6 +128,7 @@
 	   (js-array-construct/length::JsArray ::JsGlobalObject ::JsArray ::obj)
 	   (jsarray->list::pair-nil ::JsArray ::JsGlobalObject)
 	   (jsarray->vector::vector ::JsArray ::JsGlobalObject)
+	   (js-array-for-of o::JsArray proc close ::JsGlobalObject)
 	   (js-array-concat ::obj args::pair-nil ::JsGlobalObject)
 	   (js-array-concat-apply vec::JsArray ::JsGlobalObject)
 	   (js-array-maybe-concat ::obj args::pair-nil ::JsGlobalObject ::obj)
@@ -3630,11 +3631,11 @@
 		    (call-next-method))))))
 	 (else
 	  (call-next-method)))))
-  
+
 ;*---------------------------------------------------------------------*/
-;*    js-for-of ::JsArray ...                                          */
+;*    js-array-for-of ...                                              */
 ;*---------------------------------------------------------------------*/
-(define-method (js-for-of o::JsArray proc close %this)
+(define (js-array-for-of o::JsArray proc close %this)
    
    (define cmap-fast-forof #f)
    
@@ -3673,6 +3674,12 @@
 			   (set! pmap cmap)
 			   (vector-forof o proc #u32:0))
 			(array-forof o proc #u32:0))))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-for-of ::JsArray ...                                          */
+;*---------------------------------------------------------------------*/
+(define-method (js-for-of o::JsArray proc close %this)
+   (js-array-for-of o proc close %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-concat ...                                              */

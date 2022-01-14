@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/nodejs/repl.scm                     */
+;*    serrano/prgm/project/hop/3.5.x/nodejs/repl.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct  6 08:22:43 2013                          */
-;*    Last change :  Tue Apr 21 14:17:39 2020 (serrano)                */
-;*    Copyright   :  2013-20 Manuel Serrano                            */
+;*    Last change :  Wed Jan 12 07:47:36 2022 (serrano)                */
+;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS like REPL                                                 */
 ;*=====================================================================*/
@@ -14,7 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __nodejs_repl
 
-   (include "../hopscript/stringthread.sch")
+   (include "../hopscript/stringthread.sch"
+	    "nodejs.sch")
    
    (library hopscript js2scheme)
 
@@ -50,7 +51,8 @@
 		       (j2s-compile in :driver (j2s-plain-driver)
 			  :driver-name "j2s-plain-driver"
 			  :parser 'repl
-			  :filename "repl.js")))))
+			  :filename "repl.js"
+			  :node-modules-directory (nodejs-node-modules-directory))))))
 	 ((eval exp) %this %this %this module))
       ;; enter the read-eval-print loop
       (unwind-protect

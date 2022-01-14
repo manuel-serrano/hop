@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Wed Oct 27 19:05:30 2021 (serrano)                */
+;*    Last change :  Thu Dec 30 06:40:40 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -85,16 +85,14 @@
 		(scope (config-get conf :bind-global '%scope)))
 	    (when (pair? lets)
 	       (for-each (lambda (d::J2SDecl)
-			    (with-access::J2SDecl d (scope)
-			       (unless (eq? scope 'export)
-				  (set! scope 'global))))
+			    (with-access::J2SDecl d (scope export)
+			       (set! scope (if export 'export 'global))))
 		  lets)
 	       (set! decls (append decls lets)))
 	    (when (pair? vars)
 	       (for-each (lambda (d::J2SDecl)
-			    (with-access::J2SDecl d (scope)
-			       (unless (eq? scope 'export)
-				  (set! scope 'global))))
+			    (with-access::J2SDecl d (scope export)
+			       (set! scope (if export 'export 'global))))
 		  vars))
 	    (let ((vdecls (bind-decls! vars env mode scope '() '() genv conf)))
 	       (when (pair? vars)
@@ -112,11 +110,12 @@
 		  (commonjs-export this (find-decl 'module env)))
 	       (resolve-type this env conf)
 	       (for-each (lambda (d)
-			    (with-access::J2SDecl d (scope)
+			    (with-access::J2SDecl d (scope id)
 			       (when (eq? scope 'unbound)
 				  (set! decls (cons d decls)))))
 		  genv)
-	       (resolve-class-private-fields this #f)))))
+	       (resolve-class-private-fields this #f)
+	       (resolve-exports this env conf)))))
    this)
 
 ;*---------------------------------------------------------------------*/
@@ -129,41 +128,26 @@
 (define (commonjs-export this::J2SProgram moddecl)
    
    (define (export-default-stmt moddecl index loc)
-      (co-instantiate ((expo (instantiate::J2SExport
-				(id 'default)
-				(alias 'default)
-				(decl decl)
-				(index index)))
-		       (decl (instantiate::J2SDecl
-				(loc loc)
-				(id 'default)
-				(vtype 'any)
-				(exports (list expo))
-				(binder 'export)
-				(scope 'export))))
-	 (values expo
-	    ;; Moddecl (the module declaration) is #f if the module has
-	    ;; been parsed for import and not for compilation. In that
-	    ;; case a fake empty code that will never be executed
-	    ;; is enough to get the default declaration correct
-	    (if moddecl
-		(J2SStmtExpr
-		   (J2SAssig (J2SRef decl)
-		      (J2SAccess (J2SRef moddecl)
-			 (J2SString "exports"))))
-		(J2SNop))
-	    (and moddecl decl))))
+      (instantiate::J2SExportDefault
+	 (loc loc)
+	 (id 'default)
+	 (alias 'default)
+	 (expr (if moddecl
+		   (J2SAccess (J2SRef moddecl)
+		      (J2SString "exports"))
+		   (instantiate::J2SUndefined
+		      (loc loc))))
+	 (index index)
+	 (eprgm this)))
    
    (with-access::J2SProgram this (nodes loc exports decls)
       (unless (find (lambda (e)
 		       (with-access::J2SExport e (id) (eq? id 'default)))
 		 exports)
 	 ;; force a default export if non specified
-	 (multiple-value-bind (expo stmt decl)
-	    (export-default-stmt moddecl (length exports) loc)
-	    (when decl (set! decls (cons decl decls)))
-	    (set! exports (cons expo exports))
-	    (set! nodes (append nodes (list stmt)))))))
+	 (let ((expo (export-default-stmt moddecl (length exports) loc)))
+	    (set! exports (append exports (list expo)))
+	    (set! nodes (append nodes (list expo)))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    decl-cleanup-duplicate! ...                                      */
@@ -244,7 +228,7 @@
 	  (append (reverse! acc) (reverse! funs))
 	  (let ((decl (car decls)))
 	     (with-access::J2SDecl decl (id (bscope scope))
-		(unless (eq? bscope 'export)
+		(unless (memq bscope '(letblock export))
 		   (set! bscope scope))
 		(let ((old (find-decl id acc)))
 		   (if old
@@ -485,41 +469,42 @@
 ;*    resolve! ::J2SLetBlock ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (resolve! this::J2SLetBlock env mode withs wenv genv ctx conf)
-   (if (eq? mode 'hopscript)
-       (with-access::J2SLetBlock this (nodes endloc loc decls)
-	  (let ((nenv (append decls env)))
-	     (set! decls
-		(map (lambda (d)
-			(with-access::J2SDecl d (id binder loc)
-			   (let ((od (find-decl id env)))
-			      (when (and (or (not od)
-					     (eq? od d)
-					     (j2s-global? od))
-					 (config-get conf :error-variable-redefinition #f))
-				 (let ((kind (cond
-					       ((j2s-let? od)
-						"variable")
-					       ((j2s-param? od)
-						"parameter")
-					       (else
-						"constant"))))
-				    (raise
-				       (instantiate::&io-parse-error
-					  (proc "hopc (symbol)")
-					  (msg (format "Illegal ~a redefinition"
-						  kind))
-					  (obj id)
-					  (fname (cadr loc))
-					  (location (caddr loc)))))))
-			   (set! binder 'let-opt))
-			(resolve! d nenv mode withs wenv genv ctx conf))
-		   decls))
-	     (set! nodes
-		(map (lambda (n)
-			(resolve! n nenv mode withs wenv genv ctx conf))
-		   nodes))
-	     this))
-       (call-next-method)))
+   (with-access::J2SLetBlock this ((block-mode mode))
+      (if (or (eq? mode 'hopscript) (eq? block-mode 'hopscript))
+	  (with-access::J2SLetBlock this (nodes endloc loc decls)
+	     (let ((nenv (append decls env)))
+		(set! decls
+		   (map (lambda (d)
+			   (with-access::J2SDecl d (id binder loc)
+			      (let ((od (find-decl id env)))
+				 (when (and (or (not od)
+						(eq? od d)
+						(j2s-global? od))
+					    (config-get conf :error-variable-redefinition #f))
+				    (let ((kind (cond
+						   ((j2s-let? od)
+						    "variable")
+						   ((j2s-param? od)
+						    "parameter")
+						   (else
+						    "constant"))))
+				       (raise
+					  (instantiate::&io-parse-error
+					     (proc "hopc (symbol)")
+					     (msg (format "Illegal ~a redefinition"
+						     kind))
+					     (obj id)
+					     (fname (cadr loc))
+					     (location (caddr loc)))))))
+			      (set! binder 'let-opt))
+			   (resolve! d nenv 'hopscript withs wenv genv ctx conf))
+		      decls))
+		(set! nodes
+		   (map (lambda (n)
+			   (resolve! n nenv 'hopscript withs wenv genv ctx conf))
+		      nodes))
+		this))
+	  (call-next-method))))
    
 ;*---------------------------------------------------------------------*/
 ;*    resolve! ::J2SWith ...                                           */
@@ -816,7 +801,8 @@
 			    (loc loc)
 			    (id id))))
 		(set-cdr! (last-pair genv) (list decl))
-		(unless (memq id this-symbols)
+		(unless (or (memq id this-symbols)
+			    (eq? (config-get conf :site) 'client))
 		   (cond
 		      ((config-get conf :module-import)
 		       ;; this mode is used to parse imported modules
@@ -840,79 +826,6 @@
 		   (id id)
 		   (loc loc)
 		   (decl decl))))))))
-
-;*---------------------------------------------------------------------*/
-;*    resolve! ::J2SExportVars ...                                     */
-;*---------------------------------------------------------------------*/
-(define-walk-method (resolve! this::J2SExportVars env mode withs wenv genv ctx conf)
-   (call-default-walker)
-   (with-access::J2SExportVars this (refs aliases program)
-      (when (isa? program J2SProgram)
-	 (for-each (lambda (ref alias)
-		      (cond
-			 ((isa? ref J2SRef)
-			  (with-access::J2SRef ref (decl loc)
-			     (with-access::J2SDecl decl (scope id)
-				(if (memq scope '(global export %scope tls))
-				    (export-decl decl alias program loc)
-				    (export-err id loc
-				       (format "bad scope (~s)" scope))))))
-			 ((isa? ref J2SGlobalRef)
-			  (with-access::J2SGlobalRef ref (loc decl)
-			     (with-access::J2SDecl decl (id)
-				(export-err id loc "global ref"))))
-			 ((isa? ref J2SWithRef)
-			  (with-access::J2SWithRef ref (loc id)
-			     (export-err id loc "with ref")))
-			 ((isa? ref J2SHopRef)
-			  (with-access::J2SHopRef ref (loc id)
-			     (export-err id loc "hop ref")))))
-	    refs aliases)))
-   this)
-
-;*---------------------------------------------------------------------*/
-;*    export-decl ...                                                  */
-;*---------------------------------------------------------------------*/
-(define (export-decl decl::J2SDecl alias::symbol program::J2SProgram loc)
-   (with-access::J2SProgram program ((allexports exports) path)
-      (with-access::J2SDecl decl (id exports binder)
-	 (set! binder 'export)
-	 (cond
-	    ((null? exports)
-	     (let ((e (instantiate::J2SExport
-			 (id alias)
-			 (alias alias)
-			 (index (j2sprogram-get-export-index program))
-			 (decl decl))))
-		(set! exports (list e))
-		(set! allexports (cons e allexports))))
-	    ((find (lambda (e)
-		      (with-access::J2SExport e (id)
-			 (eq? id alias)))
-		allexports)
-	     (export-err alias loc (format "duplicate export \"~a\"" id)))
-	    (else
-	     (with-access::J2SExport (car exports) (index)
-		(let ((e (instantiate::J2SExport
-			    (id alias)
-			    (alias alias)
-			    (index index)
-			    (decl decl))))
-		   (set! exports (cons e exports))
-		   (set! allexports (cons e allexports)))))))))
-
-;*---------------------------------------------------------------------*/
-;*    export-error ...                                                 */
-;*---------------------------------------------------------------------*/
-(define (export-err id loc #!optional (msg ""))
-   (raise
-      (instantiate::&io-parse-error
-	 (proc "hopc (symbol)")
-	 (msg (string-append "Illegal variable export"
-		 (if msg (string-append ", " msg) "")))
-	 (obj id)
-	 (fname (cadr loc))
-	 (location (caddr loc)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    resolve! ::J2SVarDecls ...                                       */
@@ -963,7 +876,8 @@
 	 (when (eq? mode 'strict)
 	    (check-strict-mode-eval id "Declaration name" loc))
 	 (when (and (j2s-let? this)
-		    (or (not (eq? mode 'hopscript)) (not (j2s-global? odecl))))
+		    (or (not (eq? mode 'hopscript))
+			(not (j2s-global? odecl))))
 	    (unless (eq? ndecl this)
 	       (raise
 		  (instantiate::&io-parse-error
@@ -978,7 +892,7 @@
 		  (when (eq? name '||)
 		     (set! name id))))
 	    (cond
-	       ((and (eq? mode 'hopscript) (eq? scope 'letblock))
+	       ((and (eq? scope 'letblock) (eq? mode 'hopscript))
 		(set! val rhs)
 		this)
 	       ((j2s-let-opt? this)
@@ -1030,31 +944,60 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (resolve! this::J2SRecord env mode withs wenv genv ctx conf)
    (call-next-method)
+   ;; verify that super is either null or a record and
    ;; verify the lack of cycle in the inheritance tree
-   (let* ((root (j2s-class-root-val this))
-	  (names (map (lambda (prop)
-			 (with-access::J2SPropertyInit prop (name)
-			    (with-access::J2SString name (val) val)))
-		    (j2s-class-instance-properties this))))
-      ;; verify no property duplications
-      (let loop ((names names)
-		 (dups '()))
-	 (cond
-	    ((null? names)
-	     (if (null? dups)
-		 this
-		 (with-access::J2SRecord this (name loc)
-		    (raise
-		       (instantiate::&io-parse-error
-			  (proc name)
-			  (msg "instance properties overriden")
-			  (obj dups)
-			  (fname (cadr loc))
-			  (location (caddr loc)))))))
-	    ((member (car names) (cdr names))
-	     (loop (cdr names) (cons (car names) dups)))
-	    (else
-	     (loop (cdr names) dups))))))
+   (with-access::J2SRecord this (name super loc)
+      (let ((names (map (lambda (prop)
+			   (with-access::J2SPropertyInit prop (name)
+			      (with-access::J2SString name (val) val)))
+		      (j2s-class-instance-properties this))))
+	 (unless (or (isa? super J2SUndefined)
+		     (is-record? super))
+	    (with-access::J2SExpr super (loc)
+	       (raise
+		  (instantiate::&io-parse-error
+		     (proc "record")
+		     (msg "Super is not a record")
+		     (obj name)
+		     (fname (cadr loc))
+		     (location (caddr loc))))))
+	 ;; verify no property duplications
+	 (let loop ((names names)
+		    (dups '()))
+	    (cond
+	       ((null? names)
+		(if (null? dups)
+		    this
+		    (with-access::J2SRecord this (name loc)
+		       (raise
+			  (instantiate::&io-parse-error
+			     (proc name)
+			     (msg "instance properties overriden")
+			     (obj dups)
+			     (fname (cadr loc))
+			     (location (caddr loc)))))))
+	       ((member (car names) (cdr names))
+		(loop (cdr names) (cons (car names) dups)))
+	       (else
+		(loop (cdr names) dups)))))))
+
+;*---------------------------------------------------------------------*/
+;*    is-record? ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (is-record? this::J2SExpr)
+   (when (isa? this J2SRef)
+      (with-access::J2SRef this (decl)
+	 (let loop ((decl decl))
+	    (cond
+	       ((isa? decl J2SDeclClass)
+		(with-access::J2SDeclClass decl (val)
+		   (isa? val J2SRecord)))
+	       ((isa? decl J2SDeclImport)
+		(with-access::J2SDeclImport decl (export)
+		   (with-access::J2SExport export (decl)
+		      (loop decl))))
+	       (else
+		#f))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    resolve! ::J2SClassElement ...                                   */
@@ -1291,9 +1234,6 @@
    (with-access::J2SDProducer this (decl loc)
       (with-access::J2SDecl decl (id)
 	 (let ((d (find-decl id env)))
-	    (unless d
-	       (tprint "PAS BON " id " loc=" loc)
-	       (tprint "this=" (j2s->sexp this)))
 	    (set! decl d)))
       (call-default-walker)))
 
@@ -1410,16 +1350,17 @@
 ;*    collect* ::J2SLetBlock ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (collect* this::J2SLetBlock mode)
-   (if (eq? mode 'hopscript)
-       (with-access::J2SBlock this (nodes)
-	  (append-map (lambda (n) (collect* n mode)) nodes))
-       (call-default-walker)))
+   (with-access::J2SLetBlock this ((block-mode mode))
+      (if (or (eq? mode 'hopscript) (eq? block-mode 'hopscript))
+	  (with-access::J2SBlock this (nodes)
+	     (append-map (lambda (n) (collect* n mode)) nodes))
+	  (call-default-walker))))
    
 ;*---------------------------------------------------------------------*/
 ;*    collect* ::J2SDecl ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (collect* this::J2SDecl mode)
-   (if (j2s-var? this) (list this) '()))
+   (if (and (j2s-var? this) (not (j2s-let-opt? this))) (list this) '()))
 
 ;*---------------------------------------------------------------------*/
 ;*    collect* ::J2SDeclFun ...                                        */
@@ -1602,3 +1543,25 @@
 	  (string-append field "@" (symbol->string! name))
 	  (string-append field "@" (format "~a:~a" (cadr loc) (caddr loc))))))
    
+;*---------------------------------------------------------------------*/
+;*    resolve-exports ...                                              */
+;*---------------------------------------------------------------------*/
+(define (resolve-exports this::J2SProgram env conf)
+   (with-access::J2SProgram this (exports)
+      (for-each (lambda (x)
+		   (with-access::J2SExport x (id from loc decl index)
+		      (unless (or (isa? x J2SRedirect) (isa? x J2SExportDefault))
+			 (let ((d (or decl (find-decl id env))))
+			    (if d
+				(with-access::J2SDecl d (export scope)
+				   (set! scope 'export)
+				   (set! export x)
+				   (set! decl d))
+				(raise
+				   (instantiate::&io-parse-error
+				      (proc "hopc (symbol)")
+				      (msg "undefined exported variable")
+				      (obj id)
+				      (fname (cadr loc))
+				      (location (caddr loc)))))))))
+	 exports)))

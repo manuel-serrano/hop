@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  manuel serrano                                    */
 ;*    Creation    :  Tue Jul  7 19:27:03 2020                          */
-;*    Last change :  Fri Oct  1 16:46:13 2021 (serrano)                */
-;*    Copyright   :  2020-21 manuel serrano                            */
+;*    Last change :  Sat Jan  1 06:22:45 2022 (serrano)                */
+;*    Copyright   :  2020-22 manuel serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Constant lifting optimization.                                   */
 ;*                                                                     */
@@ -93,6 +93,30 @@
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
+;*    j2s-cnstlift-expression! ::J2SExpr ...                           */
+;*---------------------------------------------------------------------*/
+(define-walk-method (j2s-cnstlift-expression! this::J2SExpr vars mode depth verb)
+   (if (and (cell? vars) (pair? (cnst-expression-freevars this depth)))
+       (with-access::J2SExpr this (loc type)
+	  (let ((decl (J2SLetOptVtype type '(ref) (gensym '%clift) this)))
+	     (cell-set! verb (cons loc (cell-ref verb)))
+	     (cell-set! vars (cons decl (cell-ref vars)))
+	     (J2SRef decl :type type)))
+       (call-default-walker)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-cnstlift-expression! ::J2SLiteral ...                        */
+;*---------------------------------------------------------------------*/
+(define-walk-method (j2s-cnstlift-expression! this::J2SLiteral vars mode depth verb)
+   this)
+   
+;*---------------------------------------------------------------------*/
+;*    j2s-cnstlift-expression! ::J2SRef ...                            */
+;*---------------------------------------------------------------------*/
+(define-walk-method (j2s-cnstlift-expression! this::J2SRef vars mode depth verb)
+   this)
+
+;*---------------------------------------------------------------------*/
 ;*    j2s-cnstlift-expression! ::J2SFun ...                            */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-cnstlift-expression! this::J2SFun
@@ -110,14 +134,26 @@
 	     (set! body (j2s-cnstlift-expression! body vars mode ndepth verb))
 	     (if (pair? (cell-ref vars))
 		 (let* ((lbl (gensym '%flift))
-			(be (J2SBindExit/type 'function lbl (J2SNop))))
+			(be (J2SBindExit/type 'function lbl (J2SNop)))
+			(endloc (node-endloc body)))
 		    (with-access::J2SBindExit be (stmt)
 		       (set! stmt
 			  (J2SLetBlock (cell-ref vars)
 			     (J2SReturn #t this be)))
 		       be))
 		 this)))))
-   
+
+;*---------------------------------------------------------------------*/
+;*    j2s-cnstlift-expression! ::J2SMethod ...                         */
+;*---------------------------------------------------------------------*/
+(define-walk-method (j2s-cnstlift-expression! this::J2SMethod vars mode depth verb)
+   (with-access::J2SMethod this (function method)
+      (with-access::J2SFun function (body loc)
+	 (set! body (j2s-cnstlift-expression! body #f mode depth verb)))
+      (with-access::J2SFun method (body loc)
+	 (set! body (j2s-cnstlift-expression! body #f mode depth verb)))
+      this))
+
 ;*---------------------------------------------------------------------*/
 ;*    j2s-cnstlift-expression! ::J2SKont ...                           */
 ;*---------------------------------------------------------------------*/
@@ -174,7 +210,8 @@
 				    (decompose-bindexit nval)
 				    (set! decls (append decls ndecls))
 				    (set! val fun)))
-				((not (isa? nval J2SFun))
+				((and (not (isa? nval J2SFun))
+				      (not (isa? nval J2SMethod)))
 				 (error "cnstlift"
 				    "unexpected function transformation"
 				    (j2s->sexp nval)))))))
@@ -200,7 +237,8 @@
 	     (ntest (j2s-cnstlift-expression! test vtest mode ndepth verb))
 	     (nincr (j2s-cnstlift-expression! incr vincr mode ndepth verb))
 	     (nbody (j2s-cnstlift-expression! body vbody mode ndepth verb))
-	     (tmps (append (cell-ref vtest) (cell-ref vincr) (cell-ref vbody))))
+	     (tmps (append (cell-ref vtest) (cell-ref vincr) (cell-ref vbody)))
+	     (endloc (node-endloc this)))
 	 (set! test ntest)
 	 (set! incr nincr)
 	 (set! body nbody)
@@ -218,7 +256,8 @@
 	     (vbody (make-cell '()))
 	     (ntest (j2s-cnstlift-expression! test vtest mode ndepth verb))
 	     (nbody (j2s-cnstlift-expression! body vbody mode ndepth verb))
-	     (tmps (append (cell-ref vtest) (cell-ref vbody))))
+	     (tmps (append (cell-ref vtest) (cell-ref vbody)))
+	     (endloc (node-endloc this)))
 	 (set! test ntest)
 	 (set! body nbody)
 	 (if (pair? tmps)
@@ -233,7 +272,8 @@
       (let* ((ndepth (if (eq? mode 'loop) (+fx depth 1) depth))
 	     (vbody (make-cell '()))
 	     (nbody (j2s-cnstlift-expression! body vbody mode ndepth verb))
-	     (tmps (cell-ref vbody)))
+	     (tmps (cell-ref vbody))
+	     (endloc (node-endloc this)))
 	 (set! lhs (j2s-cnstlift-expression! lhs vars mode depth verb))
 	 (set! obj (j2s-cnstlift-expression! obj vars mode depth verb))
 	 (set! body nbody)
@@ -250,41 +290,6 @@
       (set! catch (j2s-cnstlift-expression! catch #f mode depth verb))
       (set! finally (j2s-cnstlift-expression! finally #f mode depth verb))
       this))
-
-;*---------------------------------------------------------------------*/
-;*    j2s-cnstlift-expression! ::J2SMethod ...                         */
-;*---------------------------------------------------------------------*/
-(define-walk-method (j2s-cnstlift-expression! this::J2SMethod vars mode depth verb)
-   (with-access::J2SMethod this (function method)
-      (with-access::J2SFun function (body loc)
-	 (set! body (j2s-cnstlift-expression! body #f mode depth verb)))
-      (with-access::J2SFun method (body loc)
-	 (set! body (j2s-cnstlift-expression! body #f mode depth verb)))
-      this))
-
-;*---------------------------------------------------------------------*/
-;*    j2s-cnstlift-expression! ::J2SExpr ...                           */
-;*---------------------------------------------------------------------*/
-(define-walk-method (j2s-cnstlift-expression! this::J2SExpr vars mode depth verb)
-   (if (and (cell? vars) (pair? (cnst-expression-freevars this depth)))
-       (with-access::J2SExpr this (loc type)
-	  (let ((decl (J2SLetOptVtype type '(ref) (gensym '%clift) this)))
-	     (cell-set! verb (cons loc (cell-ref verb)))
-	     (cell-set! vars (cons decl (cell-ref vars)))
-	     (J2SRef decl :type type)))
-       (call-default-walker)))
-
-;*---------------------------------------------------------------------*/
-;*    j2s-cnstlift-expression! ::J2SLiteral ...                        */
-;*---------------------------------------------------------------------*/
-(define-walk-method (j2s-cnstlift-expression! this::J2SLiteral vars mode depth verb)
-   this)
-   
-;*---------------------------------------------------------------------*/
-;*    j2s-cnstlift-expression! ::J2SRef ...                            */
-;*---------------------------------------------------------------------*/
-(define-walk-method (j2s-cnstlift-expression! this::J2SRef vars mode depth verb)
-   this)
 
 ;*---------------------------------------------------------------------*/
 ;*    cnst-expression-freevars ...                                     */

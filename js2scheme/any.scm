@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 22 19:47:45 2017                          */
-;*    Last change :  Tue Dec  7 16:48:57 2021 (serrano)                */
+;*    Last change :  Wed Dec 29 08:41:54 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An optional stage used in debug mode to replace UNKNOWN type     */
@@ -21,7 +21,9 @@
 	   __js2scheme_dump
 	   __js2scheme_utils
 	   __js2scheme_compile
-	   __js2scheme_stage)
+	   __js2scheme_classutils
+	   __js2scheme_stage
+	   __js2scheme_alpha)
 
    (export j2s-any-stage))
 
@@ -109,6 +111,42 @@
       (set! type 'any)
       (call-default-walker)
       (call-next-method)))
+
+;*---------------------------------------------------------------------*/
+;*    any-types ::J2SClassElement ...                                  */
+;*---------------------------------------------------------------------*/
+(define-walk-method (any-types this::J2SClassElement)
+   
+   (define (any-type-record-method val::J2SFun clazz)
+      (with-access::J2SFun val (thisp body loc)
+	 (let ((self (duplicate::J2SDeclInit thisp
+			(key (ast-decl-key))
+			(id '!this)
+			(_scmid '!this)
+			(vtype clazz)
+			(itype clazz)
+			(val (J2SCast clazz (J2SRef thisp)))
+			(binder 'let-opt)
+			(hint '())))
+	       (endloc (node-endloc body)))
+	    (set! body
+	       (J2SLetRecBlock #f (list self)
+		  (j2s-alpha body (list thisp) (list self)))))))
+   
+   (with-access::J2SClassElement this (prop type clazz static usage)
+      (cond
+	 ((j2s-class-property-constructor? prop)
+	  (any-types prop))
+	 (else
+	  (when (and (not static)
+		     (isa? prop J2SMethodPropertyInit)
+		     (isa? clazz J2SRecord))
+	     (with-access::J2SMethodPropertyInit prop (val)
+		(with-access::J2SFun val (thisp)
+		   (with-access::J2SDecl thisp (vtype)
+		      (when (eq? vtype 'unknown)
+			 (any-type-record-method val clazz))))))
+	  (any-types prop)))))
    
 ;*---------------------------------------------------------------------*/
 ;*    any-types ::J2SHopRef ...                                        */

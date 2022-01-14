@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu May  6 07:37:36 2021                          */
-;*    Last change :  Mon Aug  2 18:25:56 2021 (serrano)                */
+;*    Last change :  Thu Dec 23 09:06:43 2021 (serrano)                */
 ;*    Copyright   :  2021 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    A list of functions that traverse the AST after the parsing to   */
@@ -209,6 +209,12 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (let! this::J2SNode head::bool mode::symbol)
    (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    let! ::J2STilde ...                                              */
+;*---------------------------------------------------------------------*/
+(define-method (let! this::J2STilde head mode)
+   this)
 
 ;*---------------------------------------------------------------------*/
 ;*    let! ::J2SFun ...                                                */

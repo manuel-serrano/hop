@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 20 14:34:39 2016                          */
-;*    Last change :  Thu Nov 11 14:48:47 2021 (serrano)                */
+;*    Last change :  Sun Dec 19 18:33:54 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    AST Alpha conversion                                             */
@@ -539,14 +539,6 @@
       (duplicate::J2SDProducer this
 	 (decl (j2sdecl-duplicate decl))
 	 (expr (alpha expr)))))
-
-;*---------------------------------------------------------------------*/
-;*    alpha ::J2SImport ...                                            */
-;*---------------------------------------------------------------------*/
-(define-method (alpha this::J2SImport)
-   (with-access::J2SImport this (mvar)
-      (set! mvar (alpha mvar))
-      this))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2sdecl-duplicate ...                                            */

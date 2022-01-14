@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Mon Nov  8 07:14:59 2021 (serrano)                */
+;*    Last change :  Thu Dec 30 06:25:43 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -504,16 +504,18 @@
 ;*    j2s->list ::obj ...                                              */
 ;*---------------------------------------------------------------------*/
 (define-generic (j2s->list this stack)
-   `(alien :typeof ,(string->symbol (typeof this))
-       :expr ,(cond
-		 ((or (string? this) (symbol? this)
-		      (struct? this) (boolean? this)
-		      (number? this) (char? this))
-		  (format "~a" this))
-		 ((list? this)
-		  (format "~a" (j2s->list* this stack)))
-		 (else
-		  (format "~s" (typeof this))))))
+   (if (or (boolean? this) (number? this) (string? this) (symbol? this))
+       this
+       `(alien :typeof ,(string->symbol (typeof this))
+	   :expr ,(cond
+		     ((or (string? this) (symbol? this)
+			  (struct? this) (boolean? this)
+			  (number? this) (char? this))
+		      (format "~a" this))
+		     ((list? this)
+		      (format "~a" (j2s->list* this stack)))
+		     (else
+		      (format "~s" (typeof this)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::object ...                                           */
@@ -542,10 +544,12 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SProgram stack)
    (set! stack (list this))
-   (with-access::J2SProgram this (nodes headers decls mode direct-eval exports)
+   (with-access::J2SProgram this (nodes headers decls mode direct-eval
+				    exports imports)
       `(,(string->symbol (typeof this))
 	mode: ,mode
 	direct-eval: ,direct-eval
+	imports: ,(j2s->list* imports stack)
 	exports: ,(j2s->list* exports stack)
 	headers: ,(j2s->list* headers stack)
 	decls: ,(j2s->list* decls stack)
@@ -580,8 +584,9 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SLetBlock stack)
    (let ((nstack (check-stack this stack)))
-      (with-access::J2SLetBlock this (decls nodes loc endloc rec)
+      (with-access::J2SLetBlock this (decls nodes loc endloc rec mode)
 	 `(,(string->symbol (typeof this)) :rec ,rec
+	     mode: ,mode
 	     ,@(dump-loc loc)
 	     ,@(dump-loc endloc :endloc)
 	     ,@(dump-info this)
@@ -1184,20 +1189,21 @@
 ;*    j2s->list ::J2SDecl ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SDecl stack)
-   (set! stack (check-stack this stack))
-   (with-access::J2SDecl this (id key binder _scmid usage scope loc)
-      `(,(string->symbol (format "~a/~a" (typeof this) binder))
-	,id
-	,@(dump-loc loc)
-	,@(dump-dump this)
-	,@(dump-key key)
-	,@(dump-access this)
-	,@(dump-vtype this)
-	,@(dump-hint this)
-	,@(dump-range this)
-	,@(if _scmid `(:_scmid ,_scmid) '())
-	,@(dump-info this)
-	,@(dump-scope scope))))
+   (let ((nstack (check-stack this stack)))
+      (with-access::J2SDecl this (id key binder _scmid usage scope loc export)
+	 `(,(string->symbol (format "~a/~a" (typeof this) binder))
+	   ,id
+	   ,@(dump-loc loc)
+	   ,@(dump-dump this)
+	   ,@(dump-key key)
+	   ,@(if export `(:export ,(j2s->list export nstack)) '())
+	   ,@(dump-access this)
+	   ,@(dump-vtype this)
+	   ,@(dump-hint this)
+	   ,@(dump-range this)
+	   ,@(if _scmid `(:_scmid ,_scmid) '())
+	   ,@(dump-info this)
+	   ,@(dump-scope scope)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SDeclRest ...                                      */
@@ -1235,11 +1241,22 @@
 ;*    j2s->list ::J2SDeclInit ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SDeclInit stack)
-   (with-access::J2SDeclInit this (val loc)
+   (with-access::J2SDeclInit this (val loc id)
       `(,@(call-next-method)
-	  ,@(dump-loc loc)
-	  ,@(if (nodefval? val) '()
+	  ,@(if (nodefval? val)
+		'()
 		(list (j2s->list val (check-stack this stack)))))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s->list ::J2SDeclImport ...                                    */
+;*---------------------------------------------------------------------*/
+(define-method (j2s->list this::J2SDeclImport stack)
+   (let ((nstack (check-stack this stack)))
+      (with-access::J2SDeclImport this (loc alias export import)
+	 `(,@(call-next-method)
+	     ,@(dump-loc loc)
+	     :alias ,alias
+	     :import ,(j2s->list import nstack)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SPragma ...                                        */
@@ -1274,8 +1291,9 @@
 ;*    j2s->list ::J2SYield ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SYield stack)
-   (with-access::J2SYield this (expr generator)
+   (with-access::J2SYield this (expr generator await)
       `(,@(call-next-method) ,@(if generator '(*) '())
+	  ,@(if await '(await) '())
 	  ,(j2s->list expr (check-stack this stack)))))
 
 ;*---------------------------------------------------------------------*/
@@ -1395,7 +1413,8 @@
 (define-method (j2s->list this::J2SDConsumer stack)
    (let ((nstack (check-stack this stack)))
       (with-access::J2SDConsumer this (expr path)
-	 `(,@(call-next-method) ,@(dump-type this) ,path
+	 `(,@(call-next-method) ,@(dump-type this)
+	     :path ,(map (lambda (p) (j2s->list p nstack)) path)
 	     ,(j2s->list expr nstack)))))
 
 ;*---------------------------------------------------------------------*/
@@ -1439,23 +1458,41 @@
 	 `(,@(call-next-method) ,@(j2s->list* exprs nstack)))))
 
 ;*---------------------------------------------------------------------*/
+;*    j2s->list ::J2SImportPath ...                                    */
+;*---------------------------------------------------------------------*/
+(define-method (j2s->list this::J2SImportPath stack)
+   (with-access::J2SImportPath this (path protocol index loc import)
+      `(J2SImportPath ,path
+	  ,@(dump-loc loc)
+	  :index ,index
+	  ,@(if (eq? protocol 'file) '() `(:protocol ,protocol))
+	  :import ,(typeof import))))
+
+;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SImport ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SImport stack)
    (let ((nstack (check-stack this stack)))
-      (with-access::J2SImport this (path names)
-	 `(,@(call-next-method) :path ,path
-	     :names ,@(j2s->list* names nstack)))))
+      (with-access::J2SImport this (path ipath dollarpath names iprgm loc)
+	 `(,@(call-next-method)
+	     ,@(dump-loc loc)
+	     :path ,path
+	     ,@(if ipath `(:ipath ,(j2s->list ipath nstack) ) '())
+	     ,@(if (isa? dollarpath J2SUndefined)
+		   '()
+		   `(:dollarpath ,(j2s->list dollarpath nstack)))
+	     :names ,(j2s->list* names nstack)
+	     :iprgm ,(typeof iprgm)))))
 
 ;*---------------------------------------------------------------------*/
-;*    j2s->list ::J2SImportExports ...                                 */
+;*    j2s->list ::J2SImportNamespace ...                               */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SImportExports stack)
+(define-method (j2s->list this::J2SImportNamespace stack)
    (let ((nstack (check-stack this stack)))
-      (with-access::J2SImportExports this (import)
+      (with-access::J2SImportNamespace this (id import)
 	 `(,@(call-next-method)
-	     ,(with-access::J2SImport import (path)
-		 `(J2SImport :path ,path |...|))))))
+	     :id ,id
+	     :import ,(j2s->list import nstack)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SImportName ...                                    */
@@ -1465,43 +1502,48 @@
       `(J2SImportName ,id ,alias)))
 
 ;*---------------------------------------------------------------------*/
-;*    j2s->list ::J2SImportRedirect ...                                */
+;*    j2s->list ::J2SImportDynamic ...                                 */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SImportRedirect stack)
-   (with-access::J2SImportRedirect this (loc id alias)
-      `(J2SImportRedirect ,id ,alias)))
-
-;*---------------------------------------------------------------------*/
-;*    j2s->list ::J2SImportNamespace ...                               */
-;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SImportNamespace stack)
-   (with-access::J2SImportNamespace this (loc id)
-      `(J2SImportNamespace ,id)))
-
-;*---------------------------------------------------------------------*/
-;*    j2s->list ::J2SImportExport ...                                  */
-;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SImportExport stack)
-   (with-access::J2SImportExport this (loc)
-      '(J2SImportExport)))
-
-;*---------------------------------------------------------------------*/
-;*    j2s->list ::J2SExportVars ...                                    */
-;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SExportVars stack)
+(define-method (j2s->list this::J2SImportDynamic stack)
    (let ((nstack (check-stack this stack)))
-      (with-access::J2SExportVars this (refs)
-	 `(,@(call-next-method) ,@(j2s->list* refs nstack)))))
+      (with-access::J2SImportDynamic this (loc base path)
+	 `(J2SImportDynamic :base ,base
+	     :path ,(j2s->list path nstack)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SExport ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SExport stack)
-   (with-access::J2SExport this (id alias index from writable)
-      `(,@(call-next-method) ,id ,@(if (eq? alias id) '() `(:alias ,alias))
-	  index: ,index
-	  writable: writable
-	  from: ,(typeof from))))
+   (with-access::J2SExport this (id alias index writable eprgm decl loc)
+	 `(,@(call-next-method) ,id
+	     ,@(dump-loc loc)
+	     :alias ,alias
+	     :index ,index
+	     :writable writable
+	     :eprgm ,(typeof eprgm)
+	     ,@(if decl
+		   (with-access::J2SDecl decl (id)
+		      `(:decl ,(cons id (typeof decl))))
+		   '()))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s->list ::J2SExportDefault ...                                 */
+;*---------------------------------------------------------------------*/
+(define-method (j2s->list this::J2SExportDefault stack)
+   (let ((nstack (check-stack this stack)))
+      (with-access::J2SExportDefault this (expr)
+	 `(,@(call-next-method) 
+	     :expr ,(j2s->list expr nstack)))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s->list ::J2SRedirect ...                                      */
+;*---------------------------------------------------------------------*/
+(define-method (j2s->list this::J2SRedirect stack)
+   (let ((nstack (check-stack this stack)))
+      (with-access::J2SRedirect this (export import)
+	 (append (call-next-method)
+	    `(:export ,(j2s->list export nstack)
+		:import ,(j2s->list import nstack))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2ssum ...                                                       */

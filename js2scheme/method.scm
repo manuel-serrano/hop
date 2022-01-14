@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Fri Apr  9 10:20:29 2021 (serrano)                */
-;*    Copyright   :  2017-21 Manuel Serrano                            */
+;*    Last change :  Sat Jan  1 07:21:31 2022 (serrano)                */
+;*    Copyright   :  2017-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function->method transformation                                  */
 ;*    -------------------------------------------------------------    */
@@ -103,14 +103,6 @@
       (with-access::J2SFun val (thisp loc body generator)
 	 (with-access::J2SDecl thisp (usecnt)
 	    (cond
-	       ((and (not (decl-usage-has? this
-			     '(assig ref assig get set call delete instanceof uninit rest eval)))
-		     (not (isa? this J2SDeclSvc)))
-		(with-access::J2SDecl thisp (vtype)
-		   ;; MS CARE UTYPE
-		   ;; (set! utype 'object)
-		   (set! vtype 'object)
-		   ))
 	       ((and (decl-usage-has? this '(ref get))
 		     (not (decl-usage-has? this '(new)))
 		     (>=fx usecnt this-occurrence-threshold)

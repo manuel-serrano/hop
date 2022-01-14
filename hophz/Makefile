@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/3.0.x/hophz/Makefile                    */
+#*    serrano/prgm/project/hop/3.5.x/hophz/Makefile                    */
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Tue Oct 13 14:14:28 2015 (serrano)                */
+#*    Last change :  Mon Jan  3 14:35:31 2022 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds Hophz                                   */
 #*=====================================================================*/
@@ -64,10 +64,10 @@ o:
 $(CLASS_DIR):
 	mkdir -p $@
 
-$(BUILDBINDIR)/$(EXEC): .afile .etags $(OBJECTS)
+$(BUILDBINDIR)/$(EXEC): .afile $(OBJECTS)
 	@ $(call link,$(BIGLOO),$(BCFLAGS),$(BLDFLAGS),$(OBJECTS),-o,$@)
 
-$(BUILDBINDIR)/$(EXEC).jar: .afile .etags .jfile $(BGL_CLASSES) META-INF/MANIFEST.MF jvm-stdlibs jvm-share jvm-lib
+$(BUILDBINDIR)/$(EXEC).jar: .afile .jfile $(BGL_CLASSES) META-INF/MANIFEST.MF jvm-stdlibs jvm-share jvm-lib
 	@ $(JAR) $@ META-INF/MANIFEST.MF -C o/class_s .
 	@ $(call done,$@)
 
@@ -151,7 +151,7 @@ $(CLASS_EDIR)/%.class: ../weblets/hz/%.hop .afile
 #*---------------------------------------------------------------------*/
 .PHONY: ude
 ude:
-	@ $(MAKE) -f Makefile .afile .etags dep
+	@ $(MAKE) -f Makefile .afile dep
 
 .afile: $(SOURCES)
 	@ $(AFILE) -o .afile $(SOURCES) 

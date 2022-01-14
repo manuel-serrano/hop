@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Sun Sep 19 08:38:11 2021 (serrano)                */
+;*    Last change :  Sun Dec 26 09:40:17 2021 (serrano)                */
 ;*    Copyright   :  2004-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -67,7 +67,8 @@
 	 (clientc-inlining #t)
 	 (clientc-use-strict #t)
 	 (sofile-dir #f)
-	 (cache-dir #f))
+	 (cache-dir #f)
+	 (commonjs-export #t))
       
       (bigloo-debug-set! 0)
 
@@ -362,9 +363,9 @@
 			 (nodejs-modules-directory))))
 	     (nodejs-modules-directory-set! dir))
 	    (("--js-commonjs-export" (help "Automatic commonjs modules export"))
-	     (nodejs-compiler-options-add! :commonjs-export #t))
+	     (set! commonjs-export #t))
 	    (("--no-js-commonjs-export" (help "Automatic commonjs modules export"))
-	     (nodejs-compiler-options-add! :commonjs-export #f))
+	     (set! commonjs-export #f))
 	    (("--profile" (help "Profiling mode (see HOPTRACE)"))
 	     (hop-profile-set! #t))
 	    
@@ -498,6 +499,9 @@
       ;; weblets path
       (hop-autoload-directory-add!
 	 (make-file-name (hop-rc-directory) "weblets"))
+
+      ;; commonjs modules
+      (nodejs-compiler-options-add! :commonjs-export commonjs-export)
       
       ;; init hss, scm compilers, and services
       (init-hss-compiler! (hop-default-port))

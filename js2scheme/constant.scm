@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Thu Sep 30 20:46:51 2021 (serrano)                */
+;*    Last change :  Thu Dec  9 08:07:34 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preallocate constant objects (regexps, literal cmaps,            */
@@ -254,12 +254,10 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (constant! this::J2SDeclInit env nesting conf)
    (with-access::J2SDeclInit this (val vtype vtype itype loc scope)
-      (if (and (not (decl-usage-has? this '(assig set ref method)))
+      (if (and (not (decl-usage-has? this '(assig set ref method uninit)))
 	       (constant-array? val)
 	       (not (eq? scope 'global)))
 	  (begin
-	     ;; MS CARE UTYPE
-	     ;; (set! utype 'array)
 	     (set! vtype 'array)
 	     (set! itype 'array)
 	     (set! val (add-expr! val env #t)))

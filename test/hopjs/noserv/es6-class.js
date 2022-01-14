@@ -3,14 +3,15 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep  2 01:49:55 2017                          */
-/*    Last change :  Wed Nov 10 09:39:14 2021 (serrano)                */
-/*    Copyright   :  2017-21 Manuel Serrano                            */
+/*    Last change :  Sun Jan  2 08:44:07 2022 (serrano)                */
+/*    Copyright   :  2017-22 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 1.6 classes                                   */
 /*=====================================================================*/
 "use strict";
 
-const assert = require( "assert" );
+import assert from "assert";
+import { AKS1, AKC1, AKSS2, AKSC2 } from "./aux/class1.js";
 
 /*---------------------------------------------------------------------*/
 /*    basic                                                            */
@@ -112,7 +113,7 @@ function basicg() {
    }
 
    p.__proto__ = proto;
-   
+
    try {
       p.foo();
       return true;
@@ -127,7 +128,7 @@ function basich() {
 	 return false;
       }
    }
-   
+
    try {
       return kla();
    } catch( e ) {
@@ -138,7 +139,7 @@ function basich() {
 function basici() {
    class kla {
    }
-   
+
    try {
       return kla();
    } catch( e ) {
@@ -160,9 +161,9 @@ function basicj() {
     	 this.name = "john";
       }
    }
-   
+
    let animal = new Animal("Jean");
-   
+
    if( animal.name === "Jean" && animal.get() === "Jean" ) {
       animal.set();
       return animal.name === "john";
@@ -176,7 +177,7 @@ function basick() {
       constructor() {
       	 this._x = 0; this._y = 0;
       }
-      
+
       getX() {
       	 return this._x;
       }
@@ -191,7 +192,7 @@ function basick() {
       	 super();
       	 this._z = 0;
       }
-      
+
       getX() {
       	 return super.getX() + 666;
       }
@@ -214,10 +215,10 @@ function basicl() {
    class Point3d extends Point {
       z = 55;
    }
-   
+
    const o = new Point3d();
-   return o.hasOwnProperty("x") 
-      && o.hasOwnProperty("y") 
+   return o.hasOwnProperty("x")
+      && o.hasOwnProperty("y")
       && o.hasOwnProperty("z");
 }
 
@@ -228,11 +229,11 @@ function basicm() {
       constructor(n) {
       }
    }
-   
+
    const o = new C(20);
    o.f = 66;
    const o2= new C(11);
-   
+
    return o.f === 66
       && Object.getOwnPropertyDescriptor(o, "f")
       && !o.__proto__.f
@@ -250,11 +251,11 @@ function basicn() {
       constructor(n) {
       }
    }
-   
+
    const o = new C(20);
    o.f = 66;
    const o2= new C(11);
-   
+
    return o.f === 66
       && Object.getOwnPropertyDescriptor(o, "f")
       && o.__proto__.f
@@ -357,7 +358,7 @@ function basicu() {
       	 this.y = y;
       }
    }
-   
+
    class Point3d extends Point {
       z = 66;
    }
@@ -380,7 +381,7 @@ function basicv() {
 
 function basicw() {
    class A {
-      constructor(a) { 
+      constructor(a) {
 	 this.a = a;
       }
    }
@@ -394,7 +395,7 @@ function basicw() {
 
 function basicx() {
    class AAAA {
-      constructor(a) { 
+      constructor(a) {
       	 this.a = a;
       }
    }
@@ -439,49 +440,49 @@ console.log( "   basicx()" ); assert.ok( basicx(), "basicx" );
 /*---------------------------------------------------------------------*/
 function misca() {
    let passed = false;
-   
+
    function FArray( a ) {
       passed = (a === 20);
    }
 
    class C extends FArray {}
-   
+
    var c = new C( 20 );
-   
+
    return passed;
 }
 
 function misca2() {
    let passed = false;
-   
+
    function FArray( a ) {
       passed = (a === 20) && new.target !== undefined;
    }
 
    class C extends FArray {}
-   
+
    var c = new C( 20 );
-   
+
    return passed;
 }
 
 function misca3() {
    let passed = false;
-   
+
    function FArray( a ) {
       passed = (a === 20) && new.target !== undefined;
    }
 
    class C extends { f: FArray }.f {}
-   
+
    var c = new C( 20 );
-   
+
    return passed;
 }
 
 function misca4() {
    let passed = false;
-   
+
    class Carray {
       constructor(a) {
       	 passed = (a === 20) && new.target !== undefined;
@@ -489,57 +490,57 @@ function misca4() {
    }
 
    class C extends { c: Carray }.c {}
-   
+
    var c = new C( 20 );
-   
+
    return passed;
 }
 
 function miscb() {
    let passed = false;
-   
+
    function FArray( a, b ) {
       passed = ((a === 20) && (b === undefined));
    }
 
    class C extends FArray {}
-   
+
    var c = new C( 20 );
-   
+
    return passed;
 }
 
 function miscb2() {
    let passed = false;
-   
+
    function FArray( a, b ) {
       passed = ((a === 20) && (b === undefined) && new.target !== undefined);
    }
 
    class C extends FArray {}
-   
+
    var c = new C( 20 );
-   
+
    return passed;
 }
 
 function miscb3() {
    let passed = false;
-   
+
    function FArray( a, b ) {
       passed = ((a === 20) && (b === undefined) && new.target !== undefined);
    }
 
    class C extends { f: FArray }.f {}
-   
+
    var c = new C( 20 );
-   
+
    return passed;
 }
 
 function miscb4() {
    let passed = false;
-   
+
    class CArray {
       constructur( a, b ) {
       	 passed = ((a === 20) && (b === undefined) && new.target !== undefined);
@@ -547,57 +548,57 @@ function miscb4() {
    }
 
    class C extends { c: CArray }.c {}
-   
+
    var c = new C( 20 );
-   
+
    return passed;
 }
 
 function miscc() {
    let passed = false;
-   
+
    function FArray( a, b, c ) {
       passed = ((a === 20) && (b === 30) && (c == 40));
    }
 
    class C extends FArray {}
-   
+
    var c = new C( 20, 30, 40, 50 );
-   
+
    return passed;
 }
 
 function miscc2() {
    let passed = false;
-   
+
    function FArray( a, b, c ) {
       passed = ((a === 20) && (b === 30) && (c == 40) && new.target !== undefined);
    }
 
    class C extends FArray {}
-   
+
    var c = new C( 20, 30, 40, 50 );
-   
+
    return passed;
 }
 
 function miscc3() {
    let passed = false;
-   
+
    function FArray( a, b, c ) {
       passed = ((a === 20) && (b === 30) && (c == 40) && new.target !== undefined);
    }
 
    class C extends { f: FArray }.f {}
-   
+
    var c = new C( 20, 30, 40, 50 );
-   
+
    return passed;
 }
 
 function miscc4() {
    let passed = false;
-   
+
    class CArray {
       constructor( a, b, c ) {
       	 passed = ((a === 20) && (b === 30) && (c == 40) && new.target !== undefined);
@@ -605,9 +606,9 @@ function miscc4() {
    }
 
    class C extends { c: CArray }.c {}
-   
+
    var c = new C( 20, 30, 40, 50 );
-   
+
    return passed;
 }
 
@@ -642,7 +643,7 @@ function kangaxc() {
       method() { return 2; }
    }
    return typeof C.prototype.method ==="function"
-      && new C().method() === 2;   
+      && new C().method() === 2;
 }
 
 function kangaxd() {
@@ -1017,7 +1018,7 @@ function priv(useproxy) {
    }
 
    const ClassWithPrivateField = registerClass(class a {
-     name;					       
+     name;
      #privateField;
      constructor() {
      	this.name = "a";
@@ -1047,10 +1048,10 @@ function priv(useproxy) {
      	 }
      	 return `#subPrivateField=${this.#subPrivateField} ${super.toString()}`;
       }});
-   
+
    const insta = new ClassWithPrivateField();
    const instb = new SubClass();
-   
+
    return (insta.toString() === "#privateField=42")
       && (instb.toString() === "#subPrivateField=23 #privateField=42")
       && (insta.name === "a")
@@ -1060,5 +1061,120 @@ function priv(useproxy) {
 console.log("   private fields");
 assert.ok(priv(false), "priv(false)");
 assert.ok(priv(true), "priv(true)");
+
+/*---------------------------------------------------------------------*/
+/*    local constructors                                               */
+/*---------------------------------------------------------------------*/
+class KS1 {
+   x = 10;
+}
+
+class KC1 {
+   x = 11;
+   xx;
+   constructor(xx) {
+      this.xx = xx;
+   }
+}
+
+class KSS2 extends KS1 {
+   y = 20;
+}
+
+class KSS2b extends { k: KS1 }.k {
+   y = 20;
+}
+
+class KSC2 extends KC1 {
+   y = 21;
+   
+}
+
+class KSC2b extends { k: KC1 }.k {
+   y = 21;
+   
+}
+
+class KCS2 extends KS1 {
+   y = 20;
+   yy;
+   constructor(yy) {
+      super();
+      this.yy = yy;
+   }
+}
+
+class KCS2b extends { k: KS1 }.k {
+   y = 20;
+   yy;
+   constructor(yy) {
+      super();
+      this.yy = yy;
+   }
+}
+
+class KSSS3 extends KSS2 {
+   z = 30;
+}
+
+class KSSS3b extends { k: KSS2b }.k {
+   z = 30;
+}
+
+const rs1 = new KS1();
+const rss2 = new KSS2();
+const rss2b = new KSS2b();
+const rsc2 = new KSC2(12);
+const rsc2b = new KSC2b(12);
+const rcs2 = new KCS2(21);
+const rcs2b = new KCS2b(21);
+const rsss3 = new KSSS3();
+const rsss3b = new KSSS3b();
+
+console.log("local constructors...");
+assert.deepEqual(rs1, {x: 10}, "new KS1");
+assert.deepEqual(rss2, {x: 10, y: 20}, "new KSS2");
+assert.deepEqual(rss2b, {x: 10, y: 20}, "new KSS2");
+assert.deepEqual(rsc2, {x: 11, xx: 12, y: 21}, "new KSC2");
+assert.deepEqual(rsc2b, {x: 11, xx: 12, y: 21}, "new KSC2");
+assert.deepEqual(rcs2, {x: 10, y: 20, yy: 21}, "new KCS2");
+assert.deepEqual(rcs2b, {x: 10, y: 20, yy: 21}, "new KCS2");
+assert.deepEqual(rsss3, {x: 10, y: 20, z: 30}, "new KSSS3");
+assert.deepEqual(rsss3b, {x: 10, y: 20, z: 30}, "new KSSS3");
+
+/*---------------------------------------------------------------------*/
+/*    imported constructors                                            */
+/*---------------------------------------------------------------------*/
+class IKSS2 extends AKS1 {
+   y = 200;
+}
+
+class IKCS2 extends AKS1 {
+   y = 200;
+   yy;
+   constructor(_yy) {
+      super();
+      this.yy = _yy;
+   }
+}
+
+class IKSSS3 extends AKSS2 {
+   z = 300;
+}
+
+class IKSSC3 extends AKSC2 {
+   z = 303;
+}
+
+const irss2 = new IKSS2();
+const ircs2 = new IKCS2(201);
+const irsss3 = new IKSSS3();
+const irssc3 = new IKSSC3(103);
+
+console.log("imported constructors...");
+assert.deepEqual(irss2, {x: 100, y: 200}, "new IKSS2");
+assert.deepEqual(ircs2, {x: 100, y: 200, yy: 201}, "new IKCS2");
+assert.deepEqual(irsss3, {x: 100, y: 200, z: 300}, "new IKSSS3");
+assert.deepEqual(irssc3, {x: 103, xx:103, y: 203, z: 303}, "new IKSSC3");
 
 

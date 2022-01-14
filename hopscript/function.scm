@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Wed Nov 10 07:34:04 2021 (serrano)                */
-;*    Copyright   :  2013-21 Manuel Serrano                            */
+;*    Last change :  Sun Jan  2 17:37:11 2022 (serrano)                */
+;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
 ;*    -------------------------------------------------------------    */
@@ -41,6 +41,7 @@
 
 	   (js-function-src ::JsProcedureInfo)
 	   (js-function-loc ::JsProcedureInfo)
+	   (inline js-function-length obj)
 	   (inline js-function-new-target? obj)
 	   (inline js-function-path ::JsFunction)
 	   (js-function-debug-name::bstring ::JsProcedure ::JsGlobalObject)
@@ -159,6 +160,10 @@
       (match-case info
 	 (#(?- ?- (and (? js-jsstring?) ?src) ?- ?- ?- ?- ?-)
 	  src)
+	 (#(?- ?- (and (? string?) ?src) ?- ?- ?- ?- ?-)
+	  (let ((jstr (js-string->jsstring src)))
+	     (vector-set! info 2 jstr)
+	     jstr))
 	 (#(?- ?- #f (and (? string?) ?path) ?start ?end ?- ?-)
 	  (let* ((str (read-function-source info path start end))
 		 (jstr (js-string->jsstring str)))
@@ -194,6 +199,13 @@
 (define-inline (js-function-path obj::JsFunction)
    (with-access::JsFunction obj (info)
       (vector-ref info 3)))
+
+;*---------------------------------------------------------------------*/
+;*    js-function-new-length ...                                       */
+;*---------------------------------------------------------------------*/
+(define-inline (js-function-length obj)
+   (with-access::JsProcedureInfo obj (info)
+      (vector-ref info 1)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-function-new-target? ...                                      */
@@ -959,7 +971,7 @@
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.3.4.2
    (define (tostring this)
       (cond
-	 ((js-function? this)
+	 ((isa? this JsProcedureInfo)
 	  (js-function-src this))
 	 ((js-procedure? this)
 	  (& "[Function]"))

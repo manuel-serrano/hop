@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 21 09:27:29 2017                          */
-;*    Last change :  Sun Oct 17 11:03:39 2021 (serrano)                */
+;*    Last change :  Wed Dec 22 14:09:06 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    This optimization consists in "pre-initializating" variables     */
@@ -52,6 +52,7 @@
       (with-access::J2SProgram this (nodes headers decls loc pcache-size cnsts)
 	 (preinit* decls '())
 	 (preinit* nodes '())
+	 (set! decls (map! (lambda (n) (patchinit-decl! n args)) decls))
 	 (set! decls (map! (lambda (n) (patchinit! n args)) decls))
 	 (set! nodes (map! (lambda (n) (patchinit! n args)) nodes))))
    this)
@@ -324,6 +325,17 @@
       (preinit* body (preinit* finally env))))
 
 ;*---------------------------------------------------------------------*/
+;*    patchinit-decl! ...                                              */
+;*---------------------------------------------------------------------*/
+(define (patchinit-decl! this::J2SDecl args)
+   (with-access::J2SDecl this (scope %info)
+      (if (and (memq scope '(%scope global tls)) (preinit? %info))
+	  (let ((ndecl (decl->declinit this)))
+	     (set! %info (alphainit ndecl))
+	     ndecl)
+	  this)))
+   
+;*---------------------------------------------------------------------*/
 ;*    patchinit! ::J2SNode ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (patchinit! this::J2SNode args)
@@ -354,10 +366,8 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (patchinit! this::J2SDecl args)
    (with-access::J2SDecl this (scope %info)
-      (if (and (memq scope '(%scope global tls)) (preinit? %info))
-	  (let ((ndecl (decl->declinit this)))
-	     (set! %info (alphainit ndecl))
-	     ndecl)
+      (if (and (memq scope '(%scope global tls)) (alphainit? %info))
+	  (alphainit-decl %info)
 	  (call-default-walker))))
 
 ;*---------------------------------------------------------------------*/
@@ -365,7 +375,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (patchinit! this::J2SRef args)
    (with-access::J2SRef this (decl)
-      (with-access::J2SDecl decl (%info)
+      (with-access::J2SDecl decl (%info id)
 	 (when (alphainit? %info)
 	    (set! decl (alphainit-decl %info)))))
    (call-default-walker))

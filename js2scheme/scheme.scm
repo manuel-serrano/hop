@@ -229,6 +229,10 @@
 	    (case scope
 	       ((global)
 		`(define ,(j2s-decl-scm-id this ctx) ,(decl-init-val this)))
+	       ((export)
+		(with-access::J2SDeclInit this (val export)
+		   (with-access::J2SExport export (index)
+		      `(vector-set! %evars ,index ,(decl-init-val this)))))
 	       ((tls)
 		`(define-tls ,(j2s-decl-scm-id this ctx) ,(decl-init-val this)))
 	       (else
@@ -268,24 +272,33 @@
    
    (define (j2s-scheme-let-opt this)
       (with-access::J2SDeclInit this (scope id)
-	 (if (memq scope '(global %scope tls record))
+	 (if (memq scope '(global %scope tls record export))
 	     (j2s-let-decl-toplevel this mode return ctx)
-	     (error "j2s-scheme" "Should not be here (not global)"
+	     (error "j2s-scheme"
+		(format "Should not be top-level, wrong scope \"~a\"" scope)
 		(j2s->sexp this)))))
 
    (define (j2s-scheme-export this)
-      (with-access::J2SDeclInit this (exports val)
-	 (with-access::J2SExport (car exports) (index)
+      (with-access::J2SDeclInit this (val export)
+	 (with-access::J2SExport export (index)
 	    `(vector-set! %evars ,index
 		,(j2s-scheme val mode return ctx)))))
 
    (cond
-      ((j2s-export? this) (j2s-scheme-export this))
       ((j2s-param? this) (call-next-method))
       ((j2s-let-opt? this) (j2s-scheme-let-opt this))
       ((j2s-let-class? this) (j2s-scheme-let-opt this))
+      ((j2s-export? this) (j2s-scheme-export this))
       ((j2s-let? this) (call-next-method))
       (else (j2s-scheme-var this))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-scheme ::J2SExportDefault ...                                */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-scheme this::J2SExportDefault mode return ctx)
+   (with-access::J2SExportDefault this (index expr)
+      `(vector-set! %evars ,index
+	  ,(j2s-scheme expr mode return ctx))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme-set! ...                                              */
@@ -303,7 +316,7 @@
 	     `(js-let-set! ,(j2s-decl-scm-id decl ctx) ,tval ',loc %this)))))
 
    (with-access::J2SRef lhs (decl)
-      (with-access::J2SDecl decl (writable writable scope id hint exports)
+      (with-access::J2SDecl decl (writable writable scope id hint export)
 	 (with-access::J2SExpr rhs (type)
 	    (cond
 	       ((or writable init?)
@@ -316,9 +329,9 @@
 			    :optim #f
 			    :cachefun (is-lambda? val type))
 			,result))
-		   ((pair? exports)
+		   (export
 		    `(begin
-			,(with-access::J2SExport (car exports) (index)
+			,(with-access::J2SExport export (index)
 			    `(vector-set! %evars ,index ,val))
 			,result))
 		   (result
@@ -419,16 +432,28 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-ref-sans-cast this::J2SRef mode return ctx)
    (with-access::J2SRef this (decl loc type)
-      (with-access::J2SDecl decl (scope id vtype exports)
+      (with-access::J2SDecl decl (scope id vtype export)
 	 (cond
 	    ((isa? decl J2SDeclImport)
-	     (with-access::J2SDeclImport decl (export import)
-		(with-access::J2SExport export (index)
-		   (with-access::J2SImport import (ivar mvar)
-		      `(vector-ref ,ivar ,index)))))
-	    ((and (pair? exports)
-		  (or (not (decl-ronly? decl)) (not (isa? decl J2SDeclFun))))
-	     (with-access::J2SExport (car exports) (index decl)
+	     (with-access::J2SDeclImport decl (export import id)
+		(if (isa? export J2SRedirect)
+		    (with-access::J2SImport import (ipath)
+		       (let loop ((export export)
+				  (rindexes '()))
+			  (if (isa? export J2SRedirect)
+			      (with-access::J2SRedirect export (import export (rindex index))
+				 (loop export (cons rindex rindexes)))
+			      (with-access::J2SExport export (index)
+				 (with-access::J2SImport import (path)
+				    `(js-import-ref
+					,(importpath-rvar ipath (reverse rindexes))
+					,index (@ ,(symbol->string id) ,path)))))))
+		    (with-access::J2SExport export (index)
+		       (with-access::J2SImport import (ipath path)
+			  `(js-import-ref ,(importpath-evar ipath) ,index
+			      (@ ,(symbol->string id) ,path)))))))
+	    ((and export (or (not (decl-ronly? decl)) (not (j2s-let-opt? decl))))
+	     (with-access::J2SExport export (index decl)
 		`(vector-ref %evars ,index)))
 	    ((j2s-let-opt? decl)
 	     (j2s-decl-scm-id decl ctx))
@@ -449,7 +474,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SRef mode return ctx)
    (with-access::J2SRef this (decl loc type)
-      (with-access::J2SDecl decl (scope id vtype exports)
+      (with-access::J2SDecl decl (scope id vtype export)
 	 (let ((sexp (j2s-ref-sans-cast this mode return ctx)))
 	    (j2s-as sexp this vtype type ctx)))))
 
@@ -833,21 +858,33 @@
 	     (if (decl-usage-has? d '(eval))
 		 `(begin
 		     (define ,(j2s-decl-scm-id d ctx)
-			,(j2s-scheme val mode return ctx))
+			,(j2s-export-decl-val d (j2s-scheme val mode return ctx)))
 		     (js-define %this ,scope ,(j2s-decl-name d ctx)
 			(lambda (%) ,ident)
 			(lambda (% %v) (set! ,ident %v))
 			%source
 			,(caddr loc)))
 		 `(define ,(j2s-decl-scm-id d ctx)
-		     ,(j2s-scheme val mode return ctx))))
+		     ,(j2s-export-decl-val d (j2s-scheme val mode return ctx)))))
 	  (j2s-let-decl-toplevel-fun d mode return ctx))))
 
+;*---------------------------------------------------------------------*/
+;*    j2s-export-decl-val ...                                          */
+;*---------------------------------------------------------------------*/
+(define (j2s-export-decl-val decl val)
+   (with-access::J2SDecl decl (export)
+      (if export
+	  (with-access::J2SExport export (index)
+	     `(let ((val ,val))
+		(vector-set! %evars ,index val)
+		val))
+	  val)))
+      
 ;*---------------------------------------------------------------------*/
 ;*    j2s-let-decl-toplevel-fun ...                                    */
 ;*---------------------------------------------------------------------*/
 (define (j2s-let-decl-toplevel-fun::pair-nil d::J2SDeclInit mode return ctx)
-   (with-access::J2SDeclInit d (val hint scope loc)
+   (with-access::J2SDeclInit d (val hint scope loc export)
       (cond
 	 ((decl-usage-has? d '(ref get new set eval))
 	  (let* ((id (j2s-decl-fast-id d ctx))
@@ -872,18 +909,35 @@
 			       (lambda (% %v) (set! ,^id %v))
 			       %source
 			       ,(caddr loc)))
+			  '())
+		    ,@(if export
+			  (with-access::J2SExport export (index)
+			     `((vector-set! %evars ,index ,id)))
 			  '())))))
 	 ((decl-usage-has? d '(call))
 	  (with-access::J2SFun val (generator)
 	     (let ((id (j2s-decl-fast-id d ctx)))
-		(if generator
+		(cond
+		   (generator
 		    `(begin
 			(define ,(j2s-generator-prototype-id val)
 			   ,(j2s-generator-prototype->scheme val))
 			(define ,id
-			   ,(jsfun->lambda val mode return ctx #f)))
+			   ,(jsfun->lambda val mode return ctx #f))
+			,@(if export
+			      (with-access::J2SExport export (index)
+				 `((vector-set! %evars ,index
+				      ,(j2s-generator-prototype-id val))))
+			      '())))
+		   (export
+		    `(begin
+			`(define ,id
+			    ,(jsfun->lambda val mode return ctx #f))
+			,(with-access::J2SExport export (index)
+			    `(vector-set! %evars ,index ,id))))
+		   (else
 		    `(define ,id
-			,(jsfun->lambda val mode return ctx #f))))))
+			,(jsfun->lambda val mode return ctx #f)))))))
 	 (else
 	  '()))))
 
@@ -1026,7 +1080,7 @@
 					   (not rec)))
 				       ((isa? d J2SDeclFun)
 					(with-access::J2SDeclFun d (binder)
-					   (if (eq? binder 'let)
+					   (if (memq binder '(let let-opt))
 					       (j2s-let-decl-inner d
 						  mode return ctx
 						  (null? (cdr decls))
@@ -1424,8 +1478,11 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SForIn mode return ctx)
 
-   (define (js-for-in op)
-      (if (eq? op 'in) 'js-for-in 'js-for-of))
+   (define (js-for-in op obj)
+      (cond
+	 ((eq? op 'in) 'js-for-in)
+	 ((eq? (j2s-type obj) 'array) 'js-array-for-of)
+	 (else 'js-for-of)))
 
    (define (close op close)
       (cond
@@ -1435,7 +1492,7 @@
    
    (define (for-in/break-comp tmp name props obj body set op)
       (with-access::J2SForIn this (need-bind-exit-break need-bind-exit-continue id)
-	 (let ((for `(,(js-for-in op)
+	 (let ((for `(,(js-for-in op obj)
 		      ,(j2s-scheme obj mode return ctx)
 		      (lambda (,name %this)
 			 ,set
@@ -1452,7 +1509,7 @@
    (define (for-in/break-eval tmp name props obj body set op)
       (with-access::J2SForIn this (need-bind-exit-break need-bind-exit-continue id)
 	 (let ((for `(let ((%acc (js-undefined)))
-			(,(js-for-in op)
+			(,(js-for-in op obj)
 			 ,(j2s-scheme obj mode return ctx)
 			 (lambda (,name %this)
 			    ,set
@@ -1473,7 +1530,7 @@
 	  (for-in/break-comp tmp name props obj body set op)))
 
    (define (for-in/w-break-comp tmp name props obj body set op)
-      `(,(js-for-in op) ,(j2s-scheme obj mode return ctx)
+      `(,(js-for-in op obj) ,(j2s-scheme obj mode return ctx)
 	  (lambda (,name %this)
 	     ,set
 	     ,(j2s-scheme body mode return ctx))
@@ -1482,7 +1539,7 @@
 
    (define (for-in/w-break-eval tmp name props obj body set op)
       `(let ((%acc (js-undefined)))
-	  (,(js-for-in op) ,(j2s-scheme obj mode return ctx)
+	  (,(js-for-in op obj) ,(j2s-scheme obj mode return ctx)
 	     (lambda (,name %this)
 		,set
 		,(j2s-scheme body mode acc-return ctx))
@@ -3437,7 +3494,8 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2STilde mode return ctx)
    (with-access::J2STilde this (loc stmt)
-      (let* ((js-stmt (concat-tilde (j2s-js stmt #t #f mode return ctx)))
+      (let* ((nctx (new-compiler-context ctx :site 'tilde))
+	     (js-stmt (concat-tilde (j2s-js stmt #t #f mode return nctx)))
 	     (js (cond
 		    ((null? js-stmt)
 		     "")
@@ -3648,19 +3706,15 @@
 	     ',loc))))
 
 ;*---------------------------------------------------------------------*/
-;*    j2s-scheme ::J2SImportExports ...                                */
+;*    j2s-scheme ::J2SImportNamespace ...                              */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s-scheme this::J2SImportExports mode return ctx)
-   (with-access::J2SImportExports this (import op loc)
-      (with-access::J2SImport import (mvar)
-	 (epairify loc
-	    `(nodejs-module-exports ,mvar %worker %this)))))
-
-;*---------------------------------------------------------------------*/
-;*    j2s-scheme ::J2SExportVars ...                                   */
-;*---------------------------------------------------------------------*/
-(define-method (j2s-scheme this::J2SExportVars mode return ctx)
-   #unspecified)
+(define-method (j2s-scheme this::J2SImportNamespace mode return ctx)
+   (with-access::J2SImportNamespace this (loc import)
+      (with-access::J2SImport import (ipath)
+	 (with-access::J2SImportPath ipath (path)
+	    (epairify loc
+	       `(nodejs-module-namespace ,(importpath-var ipath)
+		   %worker %this))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    throw? ...                                                       */

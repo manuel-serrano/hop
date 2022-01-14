@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 25 07:41:22 2015                          */
-;*    Last change :  Sat Nov 13 09:22:20 2021 (serrano)                */
+;*    Last change :  Wed Dec 29 09:21:09 2021 (serrano)                */
 ;*    Copyright   :  2015-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Narrow local variable scopes                                     */
@@ -140,7 +140,8 @@
 	    (prev
 	     (if (inits? (car nodes))
 		 (with-access::J2SNode (car nodes) (loc)
-		    (let ((nseq (j2s-blockify! (J2SBlock*/w-endloc nodes))))
+		    (let* ((endloc (node-endloc this))
+			   (nseq (j2s-blockify! (J2SBlock* nodes))))
 		       (set-cdr! prev (list nseq))
 		       this))
 		 (begin

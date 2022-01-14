@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Tue Jul 13 12:47:22 2021 (serrano)                */
-;*    Copyright   :  2014-21 Manuel Serrano                            */
+;*    Last change :  Sat Jan  1 10:11:07 2022 (serrano)                */
+;*    Copyright   :  2014-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
 ;*=====================================================================*/
@@ -84,17 +84,18 @@
 	(cons "https?://[^ \t]*" 'font-lock-string-face)
 	(cons "\\<\\(?:async\\|yield\\|await\\)\\>" 'font-lock-face-hopjs3)
 	(list "#:\\([^ \t\r\n{}(),;=[]*\\)" 1 'font-lock-face-hopjs3)
-	(cons "\\<export\\>" 'font-lock-face-hopjs4)
-	(cons "exports." 'font-lock-keyword-face)
-	(list "\\(record\\|class\\)[ \t]*\\([^ \t]+\\)"
+	(cons "\\<\\(export\\|import\\|from\\|as\\)\\>" 'font-lock-face-hopjs4)
+	(cons "exports[.]" 'font-lock-keyword-face)
+	(list "\\(record\\|class\\)[ \t]+\\([^ \t]+\\)"
 	      '(1 font-lock-keyword-face)
 	      '(2 font-lock-face-hopjs2))
-	(list "\\(record\\|class\\)[ \t]*\\([^ \t]+\\)[ \t]*\\(extends\\)[ \t]*\\([^ \t]+\\)"
+	(list "\\(record\\|class\\)[ \t]+\\([^ \t]+\\)[ \t]*\\(extends\\)[ \t]*\\([^ \t]+\\)"
 	      '(1 font-lock-keyword-face)
 	      '(2 font-lock-face-hopjs2)
 	      '(3 font-lock-keyword-face)
 	      '(4 font-lock-face-hopjs2))
-	(list "\\(require\\)([ \t]*\\(\"[^\"]+\"\\)"
+	(list "\\(constructor\\)(" 1 'font-lock-keyword-face)
+	(list "\\(require\\)([ \t]+\\(\"[^\"]+\"\\)"
 	      '(1 font-lock-keyword-face)
 	      '(2 font-lock-face-underline))
 	(list (concat "^\\s-*\\(?:service\\)\\s-+\\(" js--name-re "\\)") 1 'font-lock-function-name-face)))
@@ -1117,7 +1118,8 @@ usage: (js-return)  -- [RET]"
 ;*    hopjs-dls-load-dir ...                                           */
 ;*---------------------------------------------------------------------*/
 (defun hopjs-dls-load-dir (lang base)
-  (let ((res nil))
+  (let* ((lang (replace-regexp-in-string "@hop/" "" lang))
+	 (res nil))
     ;; check emacs file
     (let ((el (concat base "/" lang "/etc/hopjs-" lang ".el")))
       (when (file-exists-p el) (load-library el) (setq res t))

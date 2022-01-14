@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Vincent Prunet                                    */
 /*    Creation    :  Mon Sep  14 11:43:00 2015                         */
-/*    Last change :  Sat May 22 07:08:53 2021 (serrano)                */
+/*    Last change :  Wed Dec 22 13:52:59 2021 (serrano)                */
 /*    Copyright   :  2015-21 Inria                                     */
 /*    -------------------------------------------------------------    */
 /*    Stress test for services                                         */
@@ -14,7 +14,7 @@
  * service requests */
 
 service toTest( o ) {
-//   console.log( id );
+   console.log("toTest o.id=", o.id);
    return true;
 }
 

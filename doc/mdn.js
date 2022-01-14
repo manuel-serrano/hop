@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.2.x/doc/mdn.js                        */
+/*    serrano/prgm/project/hop/3.5.x/doc/mdn.js                        */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  4 17:59:11 2016                          */
-/*    Last change :  Mon Sep 17 10:06:28 2018 (serrano)                */
-/*    Copyright   :  2016-18 Manuel Serrano                            */
+/*    Last change :  Thu Jan  6 16:56:06 2022 (serrano)                */
+/*    Copyright   :  2016-22 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Generate the MDN index                                           */
 /*=====================================================================*/
@@ -49,7 +49,7 @@ function getChapterBindings( chapter, _i, _arr ) {
       const c = a.childNodes.find( (n, _i, __arr) => n.tagName == "code" );
       if( !c ) return false;
 
-      var proto = c.innerHTML;
+      let proto = c.innerHTML;
 
       const i = proto.lastIndexOf( "." );
       const k = i >= 0 ? proto.substring( i + 1 ) : proto;
@@ -102,7 +102,7 @@ function getChapterBindings( chapter, _i, _arr ) {
 /*---------------------------------------------------------------------*/
 /*    Index generator                                                  */
 /*---------------------------------------------------------------------*/
-var arrs = stdlib.map( getChapterBindings );
+const arrs = stdlib.map( getChapterBindings );
 
 console.log( JSON.stringify( [].concat.apply( [], arrs ) ) );
 			  
