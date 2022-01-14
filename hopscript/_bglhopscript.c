@@ -3,13 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-<<<<<<< HEAD
-/*    Last change :  Fri Dec 17 13:57:48 2021 (serrano)                */
-/*    Copyright   :  2016-21 Manuel Serrano                            */
-=======
 /*    Last change :  Mon Jan  3 12:00:47 2022 (serrano)                */
 /*    Copyright   :  2016-22 Manuel Serrano                            */
->>>>>>> f076bfdbc31a802025b7ab8826c4ea64b44e661f
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
 /*    JsObject and cache implementations.                              */
@@ -159,12 +154,6 @@ extern obj_t bgl_make_jsobject(int constrsize, obj_t constrmap, obj_t __proto__,
 #if HOP_ALLOC_JSOBJECT_POLICY != HOP_ALLOC_CLASSIC
 static obj_t bgl_make_jsobject_sans(int constrsize, obj_t constrmap,
 				     obj_t __proto__, uint32_t mode);
-<<<<<<< HEAD
-#else
-obj_t bgl_make_jsobject_sans(int constrsize, obj_t constrmap,
-			     obj_t __proto__, uint32_t mode);
-=======
->>>>>>> f076bfdbc31a802025b7ab8826c4ea64b44e661f
 #endif
 
 #if HOP_ALLOC_JSPROXY_POLICY != HOP_ALLOC_CLASSIC
