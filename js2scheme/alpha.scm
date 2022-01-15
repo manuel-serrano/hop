@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/alpha.scm                 */
+;*    serrano/prgm/project/hop/3.5.x/js2scheme/alpha.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 20 14:34:39 2016                          */
-;*    Last change :  Sun Dec 19 18:33:54 2021 (serrano)                */
-;*    Copyright   :  2016-21 Manuel Serrano                            */
+;*    Last change :  Sat Jan 15 06:12:59 2022 (serrano)                */
+;*    Copyright   :  2016-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    AST Alpha conversion                                             */
 ;*=====================================================================*/
@@ -242,12 +242,14 @@
 ;*---------------------------------------------------------------------*/
 (define-method (alpha this::J2SBreak)
    (with-access::J2SBreak this (target)
-      (with-access::J2SStmt target (%info)
-	 (duplicate::J2SBreak this
-	    (target (if (isa? %info TargetInfo)
-			(with-access::TargetInfo %info (new)
-			   new)
-			target))))))
+      (if target
+	  (with-access::J2SStmt target (%info)
+	     (duplicate::J2SBreak this
+		(target (if (isa? %info TargetInfo)
+			    (with-access::TargetInfo %info (new)
+			       new)
+			    target))))
+	  (duplicate::J2SBreak this))))
       
 ;*---------------------------------------------------------------------*/
 ;*    alpha ::J2SContinue ...                                          */
