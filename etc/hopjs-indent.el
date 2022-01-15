@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/etc/hopjs-indent.el                 */
+;*    serrano/prgm/project/hop/3.5.x/etc/hopjs-indent.el               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov  2 09:45:39 2018                          */
-;*    Last change :  Wed Dec 29 18:50:13 2021 (serrano)                */
-;*    Copyright   :  2018-21 Manuel Serrano                            */
+;*    Last change :  Sat Jan 15 07:15:01 2022 (serrano)                */
+;*    Copyright   :  2018-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs indent                                                     */
 ;*=====================================================================*/
@@ -271,7 +271,7 @@
 		    (hopjs-indent-column-token npeek hopjs-indent-level)
 		  (hopjs-indent-column-token ntok hopjs-indent-level)))
 	    (hopjs-indent-column-token tok hopjs-indent-level))))
-       ((while switch for do)
+       ((while switch for do async)
 	;; if (args) {
 	(hopjs-debug 0 "hopjs-indent-new-lbrace WHILE/SWITCH/FOR.1..%s"
 		     (hopjs-parse-peek-token))
