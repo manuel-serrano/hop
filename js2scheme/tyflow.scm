@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/tyflow.scm                */
+;*    serrano/prgm/project/hop/3.5.x/js2scheme/tyflow.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Wed Dec 29 08:41:40 2021 (serrano)                */
-;*    Copyright   :  2016-21 Manuel Serrano                            */
+;*    Last change :  Sat Jan 15 06:36:56 2022 (serrano)                */
+;*    Copyright   :  2016-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
 ;*    -------------------------------------------------------------    */
@@ -777,6 +777,7 @@
 	     (decl-vtype-set! this utype ctx)
 	     (let ((tyv (j2s-type val)))
 		(unless (utype-compatible? utype tyv)
+		   (tprint "uteyp=" utype " tuv=" tyv)
 		   (if (memq tyv '(unknown any object))
 		       (set! val (J2SCheck utype val))
 		       (utype-error val utype tyv))))
@@ -2819,7 +2820,7 @@
       (raise
 	 (instantiate::&type-error
 	    (proc "hopc")
-	    (msg (format "illegal type, \"~a\" expected"
+	    (msg (format "Illegal type, \"~a\" expected"
 		    (type-name utype '())))
 	    (obj (type-name tyv '()))
 	    (type (type-name utype '()))

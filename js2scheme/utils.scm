@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/utils.scm                 */
+;*    serrano/prgm/project/hop/3.5.x/js2scheme/utils.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Sun Nov 21 09:58:48 2021 (serrano)                */
-;*    Copyright   :  2013-21 Manuel Serrano                            */
+;*    Last change :  Sat Jan 15 06:41:32 2022 (serrano)                */
+;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
 ;*=====================================================================*/
@@ -310,7 +310,8 @@
 ;*    noclass-subtype? ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (noclass-subtype? type supertype)
-   (or (eq? type supertype)
+   (or (eq? supertype 'any)
+       (eq? type supertype)
        (and (eq? supertype 'number)
 	    (memq type '(integer real)))
        (and (eq? supertype 'object)
