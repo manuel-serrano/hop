@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Sat Jan 15 06:41:32 2022 (serrano)                */
+;*    Last change :  Mon Jan 17 17:02:02 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -310,7 +310,7 @@
 ;*    noclass-subtype? ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (noclass-subtype? type supertype)
-   (or (eq? supertype 'any)
+   (or (and (eq? supertype 'any) (not (memq type '(int32 uint32))))
        (eq? type supertype)
        (and (eq? supertype 'number)
 	    (memq type '(integer real)))

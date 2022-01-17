@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Wed Jan 12 07:48:59 2022 (serrano)                */
+;*    Last change :  Sun Jan 16 08:40:17 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -1303,7 +1303,7 @@
 	 (if (string-contains (or (getenv "HOPTRACE") "") "nodejs:compile")
 	     'yes
 	     'no)))
-   
+
    (synchronize compile-mutex
       (with-trace 'require "nodejs-compile"
 	 (trace-item "filename=" filename)

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/hopc/driver.scm                     */
+;*    serrano/prgm/project/hop/3.5.x/hopc/driver.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Thu Dec  9 19:05:20 2021 (serrano)                */
-;*    Copyright   :  2014-21 Manuel Serrano                            */
+;*    Last change :  Sun Jan 16 08:35:49 2022 (serrano)                */
+;*    Copyright   :  2014-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
 ;*=====================================================================*/
@@ -144,6 +144,7 @@
 	     (format "%%~a_~a" dir mod))))
    
    (define (compile-javascript p)
+      (tprint "COMP-JS p=" p )
       (if (or (string-suffix? ".js" p) (string-suffix? ".mjs" p))
 	  (call-with-input-file p
 	     (lambda (in) (compile p in (language p))))
@@ -516,7 +517,6 @@
 					   (module-main . ,jsmain)))))))
 		(ty (assq :type obj))
 		(val (assq :value obj)))
-	    (tprint "ICI: " (hopc-temp) " lang=" lang " file=" file)
 	    (cond
 	       ((or (not (pair? ty)) (not (pair? val)))
 		(error (format "hopc:~a" lang) "wrong status" obj))
@@ -627,12 +627,14 @@
    (define (language src)
       (if (eq? (hopc-source-language) 'auto)
 	  (let ((lang (string->symbol (suffix src))))
-	     (case lang
-		((hop) 'hop)
-		((scm) 'scheme)
-		((js mjs) 'hopscript)
-		((json) (if (string-suffix? ".ast.json" src) 'ast.json 'json))
-		(else lang)))
+	     (if (eq? lang '||)
+		 (error "hopc" "bad language" src)
+		 (case lang
+		    ((hop) 'hop)
+		    ((scm) 'scheme)
+		    ((js mjs) 'hopscript)
+		    ((json) (if (string-suffix? ".ast.json" src) 'ast.json 'json))
+		    (else lang))))
 	  (hopc-source-language)))
 
    (cond

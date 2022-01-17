@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/parser.scm                */
+;*    serrano/prgm/project/hop/3.5.x/js2scheme/parser.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Sat Dec 25 10:08:11 2021 (serrano)                */
-;*    Copyright   :  2013-21 Manuel Serrano                            */
+;*    Last change :  Mon Jan 17 07:19:50 2022 (serrano)                */
+;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
 ;*=====================================================================*/
@@ -81,7 +81,8 @@
       (instantiate::J2SDecl
 	 (loc loc)
 	 (id 'this)
-	 (_scmid 'this)))
+	 (_scmid 'this)
+	 (binder 'let-opt)))
 
    (define exports '())
    
@@ -3405,7 +3406,13 @@
 		  (set! plugins old)
 		  v)))
 	 (with-plugins
-	    (lambda () (with-tilde (lambda () (cond-expr #f #f #f)))))))
+	    (lambda () (with-tilde (lambda () (cond-expr #f #f #f)))))
+	 (lambda (i d s ps)
+	    (let ((old plugins))
+	       (set! plugins ps)
+	       (let ((v (assig-expr i d s)))
+		  (set! plugins old)
+		  v)))))
 
    (define (main-parser input-port conf)
       (case (config-get conf :parser #f)
