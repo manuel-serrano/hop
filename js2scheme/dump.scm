@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/dump.scm                  */
+;*    serrano/prgm/project/hop/3.5.x/js2scheme/dump.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Thu Dec 30 06:25:43 2021 (serrano)                */
-;*    Copyright   :  2013-21 Manuel Serrano                            */
+;*    Last change :  Tue Jan 18 14:35:57 2022 (serrano)                */
+;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
 ;*=====================================================================*/
@@ -1461,8 +1461,8 @@
 ;*    j2s->list ::J2SImportPath ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SImportPath stack)
-   (with-access::J2SImportPath this (path protocol index loc import)
-      `(J2SImportPath ,path
+   (with-access::J2SImportPath this (abspath protocol index loc import)
+      `(J2SImportPath ,abspath
 	  ,@(dump-loc loc)
 	  :index ,index
 	  ,@(if (eq? protocol 'file) '() `(:protocol ,protocol))

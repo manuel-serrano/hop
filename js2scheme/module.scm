@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/module.scm                */
+;*    serrano/prgm/project/hop/3.5.x/js2scheme/module.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 15 15:16:16 2018                          */
-;*    Last change :  Mon Dec 27 11:44:23 2021 (serrano)                */
-;*    Copyright   :  2018-21 Manuel Serrano                            */
+;*    Last change :  Tue Jan 18 13:33:00 2022 (serrano)                */
+;*    Copyright   :  2018-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES6 Module handling                                              */
 ;*=====================================================================*/
@@ -58,7 +58,8 @@
 	    (ip (instantiate::J2SImportPath
 		   (loc loc)
 		   (name path)
-		   (path (prgm-abspath this))
+		   (path path)
+		   (abspath (prgm-abspath this))
 		   (import #f)
 		   (protocol 'file))))
 	 (env-add! (prgm-abspath this) (cons this ip) env)
@@ -125,7 +126,8 @@
 			 (ip (instantiate::J2SImportPath
 				(loc loc)
 				(name path)
-				(path abspath)
+				(path path)
+				(abspath abspath)
 				(protocol protocol)
 				(import this))))
 		      (set! iprgm prgm)
@@ -142,7 +144,8 @@
 			  (ip (instantiate::J2SImportPath
 				 (loc loc)
 				 (name path)
-				 (path abspath)
+				 (path path)
+				 (abspath abspath)
 				 (protocol protocol)
 				 (import this)))
 			  (lg (or lang (path-lang abspath))))
@@ -225,12 +228,12 @@
 	    (multiple-value-bind (x i)
 	       (find-export id this iprgm loc)
 	       (if (not x)
-		   (with-access::J2SImportPath ipath (path)
+		   (with-access::J2SImportPath ipath (abspath)
 		      (raise
 			 (instantiate::&io-parse-error
 			    (proc "import")
 			    (msg (format "imported binding \"~a\" not exported by module ~s"
-				    id path))
+				    id abspath))
 			    (obj id)
 			    (fname (cadr loc))
 			    (location (caddr loc))))   )
@@ -332,12 +335,12 @@
 	 (let ((x (find-export id iprgm loc)))
 	    (if x
 		(set! export x)
-		(with-access::J2SImportPath ipath (path)
+		(with-access::J2SImportPath ipath (abspath)
 		   (raise
 		      (instantiate::&io-parse-error
 			 (proc "export")
 			 (msg (format "imported binding \"~a\" not exported by module ~s"
-				 id path))
+				 id abspath))
 			 (obj id)
 			 (fname (cadr loc))
 			 (location (caddr loc)))))))
@@ -638,8 +641,8 @@
 ;*    resolve-lang ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (resolve-lang respath::J2SImportPath)
-   (with-access::J2SImportPath respath (path)
-      (path-lang path)))
+   (with-access::J2SImportPath respath (abspath)
+      (path-lang abspath)))
 
 ;*---------------------------------------------------------------------*/
 ;*    env-get ...                                                      */
@@ -661,7 +664,7 @@
    (with-access::J2SProgram prgm (path)
       (cond
 	 ((string=? path "") (pwd))
-	 ((char=? (string-ref path 0) #\/) (dirname path))
+	 ((char=? (string-ref path 0) (file-separator)) (dirname path))
 	 (else (dirname (file-name-canonicalize (make-file-name (pwd) path)))))))
 
 ;*---------------------------------------------------------------------*/
@@ -671,7 +674,7 @@
    (with-access::J2SProgram prgm (path)
       (cond
 	 ((string=? path "") (pwd))
-	 ((char=? (string-ref path 0) #\/) (dirname path))
+	 ((char=? (string-ref path 0) (file-separator)) (dirname path))
 	 (else (file-name-canonicalize (make-file-name (pwd) path))))))
 
 ;*---------------------------------------------------------------------*/
@@ -680,6 +683,6 @@
 (define (absolute-path path base)
    (cond
       ((string=? path "") base)
-      ((char=? (string-ref path 0) #\/) path)
+      ((char=? (string-ref path 0) (file-separator)) path)
       (else (file-name-canonicalize (make-file-name base path)))))
    

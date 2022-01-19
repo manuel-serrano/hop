@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/checksum.scm              */
+;*    serrano/prgm/project/hop/3.5.x/js2scheme/checksum.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 25 17:47:23 2018                          */
-;*    Last change :  Fri Dec 17 11:18:06 2021 (serrano)                */
-;*    Copyright   :  2018-21 Manuel Serrano                            */
+;*    Last change :  Tue Jan 18 14:38:07 2022 (serrano)                */
+;*    Copyright   :  2018-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Compute checksum (hash numbers) of anything.                     */
 ;*=====================================================================*/
@@ -144,7 +144,7 @@
       (checksum-any exports
 	 (checksum-any
 	    (map (lambda (i)
-		    (with-access::J2SImportPath i (path) path))
+		    (with-access::J2SImportPath i (abspath) abspath))
 	       imports)
 	    checksum))))
 

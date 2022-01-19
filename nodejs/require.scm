@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Wed Jan 12 07:48:59 2022 (serrano)                */
+;*    Last change :  Tue Jan 18 07:52:48 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -30,7 +30,7 @@
 	   (nodejs-import-module-core::JsModule ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring ::long ::bool ::obj ::vector)
 	   (nodejs-import-module-hop::JsModule ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring ::long ::bool ::obj ::vector)
 	   (nodejs-import-module-dynamic::JsPromise ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::bstring ::bool ::obj)
-	   (nodejs-import-meta::JsObject ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring)
+	   (nodejs-import-meta::JsObject ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsStringLiteral)
 	   (nodejs-module-namespace::JsObject ::JsModule ::WorkerHopThread ::JsGlobalObject)
 	   (nodejs-head ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsObject)
 	   (nodejs-script ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsObject)
@@ -95,7 +95,9 @@
 (define (builtin-language? str)
    (member str
       '("hopscript" "html" "json" "hop" "ecmascript5"
-	"ecmascript6" "ecmascript2017")))
+	"ecmascript6" "ecmascript2017" "ecmascript2018"
+	"ecmascript2019" "ecmascript2020" "ecmascript2021"
+	"ecmascript2022")))
 
 ;*---------------------------------------------------------------------*/
 ;*    default scope length                                             */
@@ -585,6 +587,35 @@
 	  #f))))
 
 ;*---------------------------------------------------------------------*/
+;*    language-script ...                                              */
+;*    -------------------------------------------------------------    */
+;*    This is used by the SCRIPT HTML tag to insert per-langage        */
+;*    header.                                                          */
+;*---------------------------------------------------------------------*/
+(define (language-script lang %this %module worker)
+   (let loop ((lang lang))
+      (cond
+	 ((js-object? lang)
+	  (with-access::JsGlobalObject %this (js-symbol)
+	     (let* ((key (js-get js-symbol (& "script") %this))
+		    (comp (js-get lang key %this)))
+		(if (js-procedure? comp)
+		    comp
+		    (js-raise-error %this "Wrong language object" lang)))))
+	 ((js-jsstring? lang)
+	  (let ((str (js-jsstring->string lang)))
+	     (let ((langmod (nodejs-require-module str
+			       worker %this %module)))
+		(loop langmod))))
+	 ((string? lang)
+	  (let ((str lang))
+	     (let ((langmod (nodejs-require-module str
+			       worker %this %module)))
+		(loop langmod))))
+	 (else
+	  #f))))
+
+;*---------------------------------------------------------------------*/
 ;*    nodejs-require ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-require worker::WorkerHopThread this::JsGlobalObject %module::JsObject language::bstring)
@@ -673,7 +704,6 @@
 (define (nodejs-import-module::JsModule worker::WorkerHopThread
 	   %this::JsGlobalObject %module::JsObject
 	   path::bstring checksum::long commonjs-export::bool loc)
-   '(tprint "nodejs-import-module path=" path " commonjs-exports=" commonjs-export)
    (let* ((respath (nodejs-resolve path %this %module 'import))
 	  (mod (nodejs-load-module respath worker %this %module
 		 :commonjs-export commonjs-export :loc loc)))
@@ -775,12 +805,12 @@
 ;*    nodejs-import-meta ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-import-meta::JsObject worker::WorkerHopThread
-	   %this::JsGlobalObject %module::JsObject url::bstring)
+	   %this::JsGlobalObject %module::JsObject url::JsStringLiteral)
    (let ((obj (instantiateJsObject
 		 (__proto__ (js-null))
 		 (elements ($create-vector 2)))))
       (js-bind! %this obj (& "url")
-	 :value (js-string->jsstring url))
+	 :value url)
       (js-bind! %this obj (& "vendor")
 	 :value (js-string->jsstring "hop"))
       obj))
@@ -928,16 +958,68 @@
 ;*    (see hopscript/public.scm).                                      */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-script worker::WorkerHopThread %this::JsGlobalObject %scope::JsObject %module)
+
+;*    (define (ast->string ast lang %this)                             */
+;*       (j2s-compile ast                                              */
+;* 	 :%this %this                                                  */
+;* 	 :filename "ast"                                               */
+;* 	 :node-modules-directory (nodejs-node-modules-directory)       */
+;* 	 :worker worker                                                */
+;* 	 :header '()                                                   */
+;* 	 :verbose 0                                                    */
+;* 	 :parser 'client-program                                       */
+;* 	 :es6-module-client #t                                         */
+;* 	 :warning-global #f                                            */
+;* 	 :driver (j2s-javascript-driver)                               */
+;* 	 :driver-name "j2s-javascript-driver"                          */
+;* 	 :language lang                                                */
+;* 	 :site 'client                                                 */
+;* 	 :plugins-loader (make-plugins-loader %this %module worker)    */
+;* 	 :debug 0)                                                     */
+;*       )                                                             */
    
-   ;; script
+;*    (define (json->file val lang %this)                              */
+;*       (nodejs-compile-json                                          */
+;* 	 (string-append "string:" (js-jsstring->string val))           */
+;* 	 name ofile query))                                            */
+   
+;*    (define (value->string val lang %this)                           */
+;*       (with-access::JsGlobalObject %this (js-json)                  */
+;* 	 (let* ((stringify (js-get js-json (& "stringify") %this))     */
+;* 		(str (js-call1 %this stringify (js-undefined) val)))   */
+;* 	    (json->string str lang %this))))                           */
+   
+   (define (script-language-header attrs nodes)
+      (let ((lang (when (js-object? attrs)
+		     (js-get attrs (& "lang") %this))))
+	 (when (js-jsstring? lang)
+	    (let ((comp (language-script lang %this %module worker)))
+	       (when (js-procedure? comp)
+		  (let ((obj (js-call1-jsprocedure %this comp
+				(js-undefined)
+				attrs)))
+		     (when (js-object? obj)
+			(let* ((ty (js-tostring (js-get obj (& "type") %this) %this))
+			       (val (js-get obj (& "value") %this)))
+			   (cond
+;* 			      ((string=? ty "ast")                     */
+;* 			       (ast->string val lang %this))           */
+			      ((string=? ty "string")
+			       (js-tostring val %this))
+			      (else
+			       (js-raise-error %this
+				  "Wrong language compiler output format ~s"
+				  lang)))))))))))
+   
    (define script
       (js-make-function %this
 	 (lambda (this attrs . nodes)
-	    (let ((tmp (apply <SCRIPT> :idiom "javascript"
+	    (let* ((hd (script-language-header attrs nodes))
+		   (tmp (apply <SCRIPT> :idiom "javascript"
 			  :%context %scope :module %module
 			  (when (js-object? attrs)
 			     (js-object->keyword-arguments* attrs %this))
-			  nodes)))
+			  (if hd (cons hd nodes) nodes))))
 	       (if (pair? tmp)
 		   (js-vector->jsarray (list->vector tmp) %this)
 		   tmp)))
@@ -1303,7 +1385,7 @@
 	 (if (string-contains (or (getenv "HOPTRACE") "") "nodejs:compile")
 	     'yes
 	     'no)))
-   
+
    (synchronize compile-mutex
       (with-trace 'require "nodejs-compile"
 	 (trace-item "filename=" filename)

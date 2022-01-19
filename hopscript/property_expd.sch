@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/hopscript/property_expd.sch         */
+;*    serrano/prgm/project/hop/3.5.x/hopscript/property_expd.sch       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Sat Nov 27 08:58:11 2021 (serrano)                */
-;*    Copyright   :  2016-21 Manuel Serrano                            */
+;*    Last change :  Tue Jan 18 15:56:50 2022 (serrano)                */
+;*    Copyright   :  2016-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
 ;*    -------------------------------------------------------------    */
@@ -1292,7 +1292,7 @@
 		       (let ,bindings
 			  ,(expand-call %this iso obj name ccache ocache loc cs os nargs))
 		       (js-raise-type-error/loc %this ,loc
-			  ,(format "toObject: cannot convert ~~s (~a)" name)
+			  ,(format "toObject: cannot convert ~~s (~a)" (cadr name))
 			  ,obj))
 		  (expand-call %this iso obj name ccache ocache loc cs os args)))))
 

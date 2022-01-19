@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Copyright   :  2013-21 Manuel Serrano                            */
+;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
 ;*=====================================================================*/
@@ -3007,7 +3007,7 @@
 		      inits))
 	    (vals (map (lambda (i)
 			  (with-access::J2SDataPropertyInit i (val)
-			     (j2s-scheme val mode return ctx)))
+			     (j2s-scheme-box val mode return ctx)))
 		     inits)))
 	 (cond
 	    ((null? props)
@@ -3089,7 +3089,7 @@
    (define (cmap->jsobj inits cmap)
       (let ((vals (map (lambda (i)
 			  (with-access::J2SDataPropertyInit i (val)
-			     (j2s-scheme val mode return ctx)))
+			     (j2s-scheme-box val mode return ctx)))
 		     inits)))
 	 (cond
 	    ((any (lambda (i)
