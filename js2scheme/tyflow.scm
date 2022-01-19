@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Sat Jan 15 06:36:56 2022 (serrano)                */
+;*    Last change :  Tue Jan 18 16:25:39 2022 (serrano)                */
 ;*    Copyright   :  2016-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -2171,7 +2171,12 @@
 	 ((j2s-class-property-constructor? prop)
 	  (if (isa? clazz J2SRecord)
 	      (with-access::J2SDataPropertyInit prop (val)
-		 (with-access::J2SFun val (thisp)
+		 (with-access::J2SFun val (thisp params)
+		    ;; record constructors escape (even if not syntactically)
+		    (for-each (lambda (p::J2SDecl)
+				 (with-access::J2SDecl p (itype utype)
+				    (decl-itype-add! p 'any ctx)))
+		       params)
 		    (with-access::J2SDecl thisp (itype vtype eloc mtype)
 		       (set! mtype clazz)
 		       (set! itype clazz)
@@ -2179,7 +2184,7 @@
 		    ;; J2SRecord constructor does not escape
 		    (node-type-fun val env ctx)))
 	      (with-access::J2SDataPropertyInit prop (val)
-		 (with-access::J2SFun val (thisp)
+		 (with-access::J2SFun val (thisp params)
 		    (with-access::J2SDecl thisp (itype vtype eloc mtype)
 		       (unless (eq? itype 'object)
 			  (set! mtype clazz)

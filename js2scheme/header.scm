@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 29 06:46:36 2013                          */
-;*    Last change :  Fri Jan 14 19:27:15 2022 (serrano)                */
+;*    Last change :  Tue Jan 18 15:14:32 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme compilation header stage                               */
@@ -91,16 +91,22 @@
 		      `(nodejs-require %worker %this %module
 			  ,(config-get conf :language "hopscript"))
 		      :type 'function :scope '%hop))
-	 (%import-meta (js-def-extern '%import-meta #t #f 
-			  `(nodejs-import-meta %worker %this %module ,path)
+	 (%filename (js-def-extern '%filename #t #f
+		       `(js-get %module ,(& "filename" prog) %this)
+		       :sweepable 'never
+		       :type 'object :scope 'tls))
+	 (%import-meta (js-def-extern '%import-meta #t #f
+			  `(nodejs-import-meta %worker %this %module
+			     %filename)
 			  :sweepable 'never
-			  :type 'object :scope '%hop))
+			  :type 'object :scope 'tls))
 	 (writable (with-access::J2SProgram prog (mode)
 		      (not (eq? mode 'hopscript))))
 	 (progmod (with-access::J2SProgram prog (mode)
 		     mode)))
       (list
 	 %require
+	 %filename
 	 %import-meta
 	 (js-def-extern 'global #t #t '%this :type 'object :sweepable 'never)
 	 (js-def-extern 'globalThis #t #t '%this :type 'object)

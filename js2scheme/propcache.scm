@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/propcache.scm             */
+;*    serrano/prgm/project/hop/3.5.x/js2scheme/propcache.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Fri Oct  1 17:56:41 2021 (serrano)                */
-;*    Copyright   :  2013-21 Manuel Serrano                            */
+;*    Last change :  Tue Jan 18 14:23:14 2022 (serrano)                */
+;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Add caches to object property lookups                            */
 ;*    -------------------------------------------------------------    */
@@ -241,7 +241,7 @@
 	     #f)
 	    ((isa? decl J2SDeclFun)
 	     (not (decl-usage-has? decl '(assig))))
-	    ((j2s-let-opt? decl)
+	    ((and (isa? decl J2SDeclInit) (j2s-let-opt? decl))
 	     (with-access::J2SDeclInit decl (val)
 		(when (isa? val J2SFun)
 		   (unless (decl-usage-has? decl '(assig init)) decl))))

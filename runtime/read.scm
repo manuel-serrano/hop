@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/runtime/read.scm                    */
+;*    serrano/prgm/project/hop/3.5.x/runtime/read.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Sat May  2 16:36:38 2020 (serrano)                */
-;*    Copyright   :  2005-20 Manuel Serrano                            */
+;*    Last change :  Tue Jan 18 14:05:18 2022 (serrano)                */
+;*    Copyright   :  2005-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
 ;*    js-expressions. Js-expressions starts with { and ends with }.    */
@@ -1037,6 +1037,9 @@
       (or (soprecompiled 
 	     (make-file-path dir "so" (hop-so-dirname)
 		(hop-soname path "")))
+	  (soprecompiled 
+	     (make-file-path dir "so" (hop-so-dirname)
+		(string-append base "." (so-suffix))))
 	  (soprecompiled 
 	     (make-file-path (hop-sofile-directory)
 		(hop-soname path "")))))

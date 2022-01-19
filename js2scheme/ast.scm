@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/ast.scm                   */
+;*    serrano/prgm/project/hop/3.5.x/js2scheme/ast.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Fri Dec 31 08:25:17 2021 (serrano)                */
+;*    Last change :  Tue Jan 18 14:35:05 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -537,6 +537,7 @@
 	   (final-class J2SImportPath
 	      (loc read-only)
 	      (name::bstring read-only)
+	      (abspath::bstring read-only)
 	      (path::bstring read-only)
 	      (protocol::symbol read-only)
 	      (index::long (default -9997))

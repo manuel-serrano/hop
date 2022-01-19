@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/scheme-program.scm        */
+;*    serrano/prgm/project/hop/3.5.x/js2scheme/scheme-program.scm      */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Sun Jan  2 09:13:50 2022 (serrano)                */
+;*    Last change :  Tue Jan 18 14:36:45 2022 (serrano)                */
 ;*    Copyright   :  2018-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -480,11 +480,15 @@
    
    (define (module-import-es6 im)
       (let ((impid (importpath-var im)))
-	 (with-access::J2SImportPath im (path protocol import loc)
+	 (with-access::J2SImportPath im (abspath path protocol import loc)
 	    (with-access::J2SImport import (iprgm)
 	       `(define ,impid
 		   (nodejs-import-module %worker %this %module
-		      ,path
+		      ,(if (char=? (string-ref path 0) #\.)
+			   `(make-file-name
+			       (dirname (js-jsstring->string %filename))
+			       ,path)
+			   path)
 		      ,(j2s-program-checksum! iprgm)
 		      ,(unless (eq? protocol 'core)
 			  (context-get ctx :commonjs-export))
@@ -493,7 +497,7 @@
    (define (module-evars-es6 im)
       (let ((impid (importpath-var im))
 	    (evarid (importpath-evar im)))
-	 (with-access::J2SImportPath im (path protocol checksum loc)
+	 (with-access::J2SImportPath im (abspath protocol checksum loc)
 	    `(define ,evarid
 		(with-access::JsModule ,impid (evars) evars)))))
    
