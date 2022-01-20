@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Copyright   :  2017-21 Manuel Serrano                            */
+;*    Copyright   :  2017-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
 ;*=====================================================================*/
@@ -568,7 +568,8 @@
 ;*    is-number? ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (is-number? expr::J2SExpr)
-   (type-number? (j2s-type expr)))
+   (or (isa? expr J2SNumber)
+       (type-number? (j2s-type expr))))
 
 ;*---------------------------------------------------------------------*/
 ;*    is-integer? ...                                                  */
@@ -705,7 +706,7 @@
 	  (type-number? typrop)
 	  (not (memq typrop '(string object)))))
 
-   (define (js-array-get obj prop typrop)
+   (define (js-array-get obj prop propstr typrop)
       (case typrop
 	 ((uint32)
 	  `(js-array-index-ref ,obj ,prop %this))
@@ -715,7 +716,7 @@
 	  `(js-array-fixnum-ref ,obj ,prop %this))
 	 (else
 	  (cond
-	     ((and (string? prop) (string=? prop "length"))
+	     ((and (string? propstr) (string=? propstr "length"))
 	      (if (eq? tyval 'uint32)
 		  `(js-array-length ,obj)
 		  (box `(js-array-length ,obj) 'uint32 ctx)))
@@ -752,7 +753,7 @@
 	  `(js-getprototypeof ,obj %this
 	      ,(format "~a:~a" (cadr loc) (caddr loc))))
 	 ((eq? tyobj 'array)
-	  (js-array-get obj prop typrop))
+	  (js-array-get obj prop propstr typrop))
 	 ((eq? tyobj 'string)
 	  (cond
 	     ((type-uint32? typrop)
@@ -840,7 +841,7 @@
 	     `(let ((,o ,obj)
 		    (,p ,prop))
 		 (if (js-array? ,o)
-		     ,(js-array-get o p typrop)
+		     ,(js-array-get o p propstr typrop)
 		     ,(js-get o p '%this)))))
 	 ((maybe-number? prop typrop)
 	  (let ((o (gensym '%obj))

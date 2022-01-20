@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/runtime/xml_types.scm               */
+;*    serrano/prgm/project/hop/3.5.x/runtime/xml_types.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 20 09:22:36 2010                          */
-;*    Last change :  Thu May 21 09:59:24 2020 (serrano)                */
-;*    Copyright   :  2010-20 Manuel Serrano                            */
+;*    Last change :  Thu Jan 20 09:19:10 2022 (serrano)                */
+;*    Copyright   :  2010-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The definition of XML classes                                    */
 ;*=====================================================================*/
@@ -92,6 +92,7 @@
 	       (parent (default #f) (info '(serialize: #f)))
 	       (src read-only (default #f))
 	       (loc::obj read-only (default #f))
+	       (debug::bool read-only (default (>fx (bigloo-debug) 0)))
 	       (%js-expression (default #f))
 	       (%js-statement (default #f))
 	       (%js-return (default #f))

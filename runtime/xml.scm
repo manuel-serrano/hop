@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Mon Dec  6 10:25:21 2021 (serrano)                */
-;*    Copyright   :  2004-21 Manuel Serrano                            */
+;*    Last change :  Thu Jan 20 09:19:18 2022 (serrano)                */
+;*    Copyright   :  2004-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
 ;*=====================================================================*/
@@ -991,10 +991,10 @@
 ;*    xml-tilde->expression ...                                        */
 ;*---------------------------------------------------------------------*/
 (define (xml-tilde->expression::bstring obj)
-   (with-access::xml-tilde obj (%js-expression body)
+   (with-access::xml-tilde obj (%js-expression body debug)
       (unless (string? %js-expression)
 	 (with-access::clientc (hop-clientc) (precompiled->JS-expression)
-	    (set! %js-expression (precompiled->JS-expression body))))
+	    (set! %js-expression (precompiled->JS-expression body debug))))
       %js-expression))
 
 ;*---------------------------------------------------------------------*/
@@ -1056,11 +1056,11 @@ try { ~a } catch( e ) { hop_callback_handler(e, ~a); }"
 	    stmt
 	    ctx)))
    
-   (with-access::xml-tilde obj (%js-statement body loc parent)
+   (with-access::xml-tilde obj (%js-statement body loc parent debug)
       (unless (string? %js-statement)
 	 (with-access::clientc (hop-clientc) (precompiled->JS-statement)
-	    (let ((stmt (precompiled->JS-statement body)))
-	       (if (>fx (bigloo-debug) 0)
+	    (let ((stmt (precompiled->JS-statement body debug)))
+	       (if debug
 		   (match-case loc
 		      ((at (and (? string?) ?file) (and (? integer?) ?point))
 		       (set! %js-statement
@@ -1075,10 +1075,10 @@ try { ~a } catch( e ) { hop_callback_handler(e, ~a); }"
 ;*    xml-tilde->return ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (xml-tilde->return::bstring obj)
-   (with-access::xml-tilde obj (%js-return body)
+   (with-access::xml-tilde obj (%js-return body debug)
       (when (not (string? %js-return))
 	 (with-access::clientc (hop-clientc) (precompiled->JS-return)
-	    (set! %js-return (precompiled->JS-return body))))
+	    (set! %js-return (precompiled->JS-return body debug))))
       %js-return))
 
 ;*---------------------------------------------------------------------*/

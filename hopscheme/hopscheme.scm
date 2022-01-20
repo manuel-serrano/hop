@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/hopscheme/hopscheme.scm             */
+;*    serrano/prgm/project/hop/3.5.x/hopscheme/hopscheme.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Wed Feb 17 18:39:39 2010                          */
-;*    Last change :  Fri Mar 20 08:44:25 2020 (serrano)                */
-;*    Copyright   :  2010-20 Florian Loitsch and Manuel Serrano        */
+;*    Last change :  Thu Jan 20 09:42:40 2022 (serrano)                */
+;*    Copyright   :  2010-22 Florian Loitsch and Manuel Serrano        */
 ;*    -------------------------------------------------------------    */
 ;*    Hopscheme                                                        */
 ;*=====================================================================*/
@@ -28,9 +28,9 @@
 	   (hopscheme-compile-expression e ::obj ::obj ::procedure)
 	   (hopscheme-compile-value ::obj ::output-port ::procedure ::obj ::procedure ::obj)
 	   (hopscheme-compile-hop-client e #!optional (env '()) (menv #f))
-	   (hopscheme->JS-expression::bstring ::vector) 
-	   (hopscheme->JS-statement::bstring ::vector)
-	   (hopscheme->JS-return::bstring ::vector)
+	   (hopscheme->JS-expression::bstring ::vector ::bool) 
+	   (hopscheme->JS-statement::bstring ::vector ::bool)
+	   (hopscheme->JS-return::bstring ::vector ::bool)
 	   (hopscheme-declared::pair-nil ::vector)
 	   (hopscheme-free::pair-nil ::vector)
 	   (sexp->hopscheme::vector ::obj ::obj ::obj ::obj)
@@ -143,7 +143,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    hopscheme->JS-expression ...                                     */
 ;*---------------------------------------------------------------------*/
-(define (hopscheme->JS-expression hs)
+(define (hopscheme->JS-expression hs debug)
    (let* ((jstr (hopscheme-jstr hs))
 	  (assig-var (hopscheme-var hs))
 	  (assig-var-str (if (symbol? assig-var)
@@ -157,16 +157,16 @@
 ;*---------------------------------------------------------------------*/
 ;*    hopscheme->JS-statement ...                                      */
 ;*---------------------------------------------------------------------*/
-(define (hopscheme->JS-statement hs)
+(define (hopscheme->JS-statement hs debug)
    (let ((jstr (hopscheme-jstr hs)))
-      (if (>fx (bigloo-debug) 0)
+      (if debug
 	  (string-append "{ " jstr "\n undefined; }" )
 	  jstr)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopscheme->JS-return ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (hopscheme->JS-return hs)
+(define (hopscheme->JS-return hs debug)
    (let* ((jstr (hopscheme-jstr hs))
 	  (assig-var (hopscheme-var hs))
 	  (assig-var-str (if (symbol? assig-var)
