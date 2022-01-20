@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 15 15:16:16 2018                          */
-;*    Last change :  Tue Jan 18 13:33:00 2022 (serrano)                */
+;*    Last change :  Thu Jan 20 10:15:30 2022 (serrano)                */
 ;*    Copyright   :  2018-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES6 Module handling                                              */
@@ -116,10 +116,11 @@
 	    (let ((old (env-get abspath env)))
 	       (cond
 		  (old
-		   (with-access::J2SImport this (iprgm ipath)
+		   (with-access::J2SImport this (iprgm ipath (rpath path))
 		      (set! iprgm (car old))
 		      (set! ipath (duplicate::J2SImportPath (cdr old)
-				     (import this)))
+				     (import this)
+				     (path rpath)))
 		      (list ipath)))
 		  ((eq? protocol 'core)
 		   (let ((prgm (open-string-hashtable-get core-modules path))
