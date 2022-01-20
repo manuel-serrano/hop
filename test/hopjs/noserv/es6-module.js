@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/hop/test/hopjs/noserv/es6-module.js     */
+/*    .../prgm/project/hop/3.5.x/test/hopjs/noserv/es6-module.js       */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Oct 24 11:42:37 2018                          */
-/*    Last change :  Tue Dec 21 13:43:21 2021 (serrano)                */
-/*    Copyright   :  2018-21 Manuel Serrano                            */
+/*    Last change :  Thu Jan 20 10:08:19 2022 (serrano)                */
+/*    Copyright   :  2018-22 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ES6 module                                               */
 /*=====================================================================*/
