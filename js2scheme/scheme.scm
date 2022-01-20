@@ -3509,6 +3509,7 @@
 	 (epairify loc
 	    `(instantiate::xml-tilde
 		(lang 'javascript)
+		(debug #f)
 		(%js-expression ,expr)
 		(body (vector
 			 ',(if (>fx (bigloo-debug) 1) (j2s->sexp stmt) '())
