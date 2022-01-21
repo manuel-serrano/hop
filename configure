@@ -82,7 +82,7 @@ hostbigloo=bigloo
 #*    Private variables                                                */
 #*---------------------------------------------------------------------*/
 version="3.6.0"
-devel=pre
+devel=
 license=academic
 licenseforced=false
 if [ "$HOPLICENSE " != " " ]; then

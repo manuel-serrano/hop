@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/trashcan/_bglhopscript.c                                 */
+/*    serrano/prgm/project/hop/3.5.x/hopscript/_bglhopscript.c         */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Mon Jan  3 12:00:47 2022 (serrano)                */
+/*    Last change :  Fri Jan 21 16:33:16 2022 (serrano)                */
 /*    Copyright   :  2016-22 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -771,6 +771,7 @@ BGL_MAKE_JSOBJECT_SANS(int constrsize, obj_t constrmap, obj_t __proto__, uint32_
    long bsize = JSOBJECT_SIZE + VECTOR_SIZE + ((constrsize-1) * OBJ_SIZE);
    BgL_jsobjectz00_bglt o = (BgL_jsobjectz00_bglt)HOP_MALLOC(bsize);
    obj_t vector;
+   int i;
 
    // class initialization
    BGL_OBJECT_CLASS_NUM_SET(BNANOBJECT(o), JSOBJECT_CLASS_NUM);
@@ -791,7 +792,7 @@ BGL_MAKE_JSOBJECT_SANS(int constrsize, obj_t constrmap, obj_t __proto__, uint32_
    vector->vector.length = constrsize;
    vector = BVECTOR(vector);
    
-   for (int i = 0; i < constrsize; i++) {
+   for (i = 0; i < constrsize; i++) {
       VECTOR_SET(vector, i, BUNSPEC);
    }
 
@@ -1651,8 +1652,9 @@ bgl_make_jsarray(long size, uint32_t len, obj_t constrmap, obj_t __proto__, obj_
 
    if (size > 0) {
       obj_t ivector = o->BgL_vecz00;
+      int i;
       
-      for (int i = 0; i < size; i++) {
+      for (i = 0; i < size; i++) {
 	 VECTOR_SET(ivector, i, absent);
       }
    }
@@ -1821,6 +1823,7 @@ obj_t
 bgl_init_jsyield_object(obj_t p) {
    BgL_jsobjectz00_bglt o = (BgL_jsobjectz00_bglt)p;
    obj_t vector;
+   int i;
 
    // class initialization
    BGL_OBJECT_CLASS_NUM_SET(BNANOBJECT(o), JSYIELD_CLASS_NUM);
@@ -1840,7 +1843,7 @@ bgl_init_jsyield_object(obj_t p) {
 #if (defined(DEBUG))
    vector = BVECTOR(vector);
 
-   for (int i = 0; i < 2; i++) {
+   for (i = 0; i < 2; i++) {
       VECTOR_SET(vector, i, BUNSPEC);
    }
 #endif
