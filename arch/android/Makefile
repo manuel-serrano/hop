@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Sun Jan 23 13:49:15 2022 (serrano)                */
+#*    Last change :  Sun Jan 23 13:50:55 2022 (serrano)                */
 #*    Copyright   :  2010-22 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -725,11 +725,11 @@ apk.hop.configure:
 
 $(ANDROIDBUILDDIR)/$(HOPFULLNAME):
 	if [ -d $(HOPSOURCE) ]; then \
-	  (cd $(ANDROIDBUILDDIR); rm -rf $(ANDROIDBUILDDIR)/hop $(ANDROIDBUILDDIR)/$(HOPFULLNAME)) && \
+	  (cd $(ANDROIDBUILDDIR); rm -rf $(ANDROIDBUILDDIR)/$(HOPBRANCH) $(ANDROIDBUILDDIR)/$(HOPFULLNAME)) && \
           (cd $(ANDROIDBUILDDIR); git clone $(HOPSOURCE)) && \
           (cd $(ANDROIDBUILDDIR); cp $(HOPSOURCE)/share/hop-builtin-serializers.js $(ANDROIDBUILDDIR)/$(HOPBRANCH)/share) && \
           (cd $(ANDROIDBUILDDIR); cp $(HOPSOURCE)/etc/hoprc.hop $(ANDROIDBUILDDIR)/$(HOPBRANCH)/etc) && \
-          (mv $(ANDROIDBUILDDIR)/hop $(ANDROIDBUILDDIR)/$(HOPFULLNAME)) || exit 1; \
+          (mv $(ANDROIDBUILDDIR)/$(HOPBRANCH) $(ANDROIDBUILDDIR)/$(HOPFULLNAME)) || exit 1; \
         else \
 	  (cd $(ANDROIDBUILDDIR); rm -rf $(ANDROIDBUILDDIR)/$(HOPFULLNAME)) && \
 	  (cd $(ANDROIDBUILDDIR); tar xf $(HOPSOURCE)) || exit 1; \
