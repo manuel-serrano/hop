@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Fri Jan 21 14:59:30 2022 (serrano)                */
+#*    Last change :  Sun Jan 23 08:34:39 2022 (serrano)                */
 #*    Copyright   :  2004-22 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -82,12 +82,8 @@ hostbigloo=bigloo
 #*    Private variables                                                */
 #*---------------------------------------------------------------------*/
 version="3.6.0"
-devel=
+devel=pre
 license=academic
-licenseforced=false
-if [ "$HOPLICENSE " != " " ]; then
-  license=$HOPLICENSE
-fi
 
 hopc=$PWD/bin/hopc
 hop=$PWD/bin/hop
@@ -456,18 +452,6 @@ while : ; do
       alloc="`echo $1 | sed 's/^[^=]*=//'`"
       ;;
     
-    --license=free)
-      license=free;;
-      
-    --license=commercial)
-      license=commercial;;
-      
-    --license=academic)
-      license=academic;;
-
-    --force-license)
-      licenseforced=true;;
-      
     -*)
       if [ "$1" != "--help" ]; then
         echo "*** Configure error, unknown option $1" >&2;
@@ -544,8 +528,6 @@ while : ; do
       echo "" >&2;
       echo "Experimental features:" >&2;
       echo "   --alloc=classic|worker...... allocator method [worker]" >&2
-      echo "License:" >&2;
-      echo "   --license=[license]......... select Hop license (see LICENSE)" >&2;
       exit 255;
   esac
   shift
@@ -611,13 +593,6 @@ fi
 #*    license                                                          */
 #*---------------------------------------------------------------------*/
 hopsrfis="$hopsrfis license-$license"
-
-if [ "$license " = "commercial " ]; then
-  echo "*** LICENSE ERROR:configure. Aborging!" >&2
-  echo "You have choseen the commercial license." >&2
-  echo "This license requires Inria approval first." >&2
-  echo "Please contact Inria first." &2
-fi  
   
 #*---------------------------------------------------------------------*/
 #*    First check that bigloo exists and is recent enough              */
@@ -1828,7 +1803,7 @@ echo "configuration completed" >> config.status
 echo "** Configuration summary **"
 echo 
 echo "Release:"
-echo "  hop release number.................... $version$minorversion ($license)"
+echo "  hop release number.................... $version$minorversion"
 echo "  hop build id.......................... $buildid"
 echo "  hop build tag......................... $buildtag"
 echo "  bigloo................................ $bigloo ($bglversion)"
