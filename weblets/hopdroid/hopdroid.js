@@ -1,17 +1,17 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/work/hopdroid/hopdroid.js               */
+/*    serrano/prgm/project/hop/hop/weblets/hopdroid/hopdroid.js        */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Nov 25 07:08:20 2020                          */
-/*    Last change :  Thu Nov 26 16:42:55 2020 (serrano)                */
-/*    Copyright   :  2020 Manuel Serrano                               */
+/*    Last change :  Sun Jan 23 07:39:14 2022 (serrano)                */
+/*    Copyright   :  2020-22 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hopdroid application                                             */
 /*=====================================================================*/
 "use hopscript"
 
-const fs = require( 'fs' );
-const path = require( 'path' );
+import fs from 'fs';
+import path from 'path';
 
 import * as sp from hop.spage;
 

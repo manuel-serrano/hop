@@ -1,17 +1,18 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/work/hopdroid/apps.js                   */
+/*    serrano/prgm/project/hop/hop/weblets/hopdroid/apps.js            */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Nov 25 08:32:40 2020                          */
-/*    Last change :  Thu Nov 26 15:25:55 2020 (serrano)                */
-/*    Copyright   :  2020 Manuel Serrano                               */
+/*    Last change :  Sun Jan 23 07:41:35 2022 (serrano)                */
+/*    Copyright   :  2020-22 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    hopdroid apps                                                    */
 /*=====================================================================*/
 "use hopscript"
 
-const fs = require( 'fs' );
-const path = require( 'path' );
+import fs from 'fs';
+import path from 'path';
+
 const weblets = require( "./_weblets.hop" );
 
 import * as sp from hop.spage;
@@ -20,7 +21,7 @@ import { NAVTITLE } from './xml.js';
 /*---------------------------------------------------------------------*/
 /*    APPS ...                                                         */
 /*---------------------------------------------------------------------*/
-export function APPS() {
+export function APPS(attrs, ...nodes) {
    return <sp.sptab svc=${apps}>
      <sp.sptabhead>
        <nav class="sptabhead unselected">

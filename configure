@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Fri Jan 21 15:04:48 2022 (serrano)                */
+#*    Last change :  Sun Jan 23 08:37:05 2022 (serrano)                */
 #*    Copyright   :  2004-22 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -81,7 +81,7 @@ hostbigloo=bigloo
 #*---------------------------------------------------------------------*/
 #*    Private variables                                                */
 #*---------------------------------------------------------------------*/
-version="3.5.0"
+version="3.5.1"
 devel=
 license=academic
 licenseforced=false

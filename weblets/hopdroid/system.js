@@ -1,17 +1,17 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/work/hopdroid/system.js                 */
+/*    serrano/prgm/project/hop/hop/weblets/hopdroid/system.js          */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Nov 26 15:20:46 2020                          */
-/*    Last change :  Thu Nov 26 16:47:52 2020 (serrano)                */
-/*    Copyright   :  2020 Manuel Serrano                               */
+/*    Last change :  Sun Jan 23 07:42:47 2022 (serrano)                */
+/*    Copyright   :  2020-22 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hopdroid system                                                  */
 /*=====================================================================*/
 "use hopscript"
 
-const fs = require( 'fs' );
-const path = require( 'path' );
+import fs from 'fs';
+import path from 'path';
 
 import { phone } from './phone.js';
 import * as sp from hop.spage;
@@ -20,7 +20,7 @@ import { NAVTITLE } from './xml.js';
 /*---------------------------------------------------------------------*/
 /*    SYSTEM ...                                                       */
 /*---------------------------------------------------------------------*/
-export function SYSTEM() {
+export function SYSTEM(attrs, ...nodes) {
    return <sp.sptab svc=${system}>
      <sp.sptabhead>
        <nav class="sptabhead unselected">

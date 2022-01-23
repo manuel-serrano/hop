@@ -3,8 +3,8 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Fri Apr 30 19:17:45 2021 (serrano)                */
-#*    Copyright   :  2010-21 Manuel Serrano                            */
+#*    Last change :  Sat Jan 22 07:05:28 2022 (serrano)                */
+#*    Copyright   :  2010-22 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
 #*    -------------------------------------------------------------    */
@@ -461,8 +461,6 @@ $(ANDROIDBUILDDIR)/assets/etc: splash/splash.html splash/hopnotfound.html splash
 	mkdir -p $(ANDROIDBUILDDIR)/assets
 	rm -rf $@
 	cp -r $(ANDROIDBUILDDIR)$(ANDROIDHOPPREFIX)/etc $(ANDROIDBUILDDIR)/assets
-	# mkdir -p $(ANDROIDBUILDDIR)/assets/etc/hop/$(HOPRELEASE)
-
 
 $(ANDROIDBUILDDIR)/assets/splash:
 	mkdir -p $(ANDROIDBUILDDIR)/assets
@@ -642,7 +640,7 @@ $(ANDROIDBUILDDIR)/src: $(ANDROIDDIR)/src $(ANDROIDBUILDDIR) \
         fi
 
 apk.src.client: apk.src
-	if [ -d $(ANDROIDSRCCLIENT) ]; then \
+	if [ "$(ANDROIDSRCCLIENT) " != " " -a -d $(ANDROIDSRCCLIENT) ]; then \
 	   cp -r $(ANDROIDSRCCLIENT) $(ANDROIDBUILDDIR); \
 	fi
 
@@ -678,7 +676,7 @@ apk.bigloo.configure:
             --cflags="-fPIC -DBGL_GC_ROOTS" \
             --lflags="-fPIC" \
             --customlibuv=yes \
-            --customlibuvversion=v1.20.3 \
+            --customlibuvversion=v1.43.0 \
             --libuvconfigureopt="--host=arm-linux-androideabi" \
             --custompcre=yes \
             --stack-check=no \
