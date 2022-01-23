@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 15 15:16:16 2018                          */
-;*    Last change :  Thu Jan 20 10:15:30 2022 (serrano)                */
+;*    Last change :  Sun Jan 23 19:12:23 2022 (serrano)                */
 ;*    Copyright   :  2018-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES6 Module handling                                              */
@@ -36,6 +36,24 @@
       (comment "Handle es module export and import clauses")
       (proc j2s-esmodule)
       (optional #f)))
+
+;*---------------------------------------------------------------------*/
+;*    hop-node-modules-dir ...                                         */
+;*---------------------------------------------------------------------*/
+(define-macro (hop-node-modules-dir)
+   (call-with-input-file "./hopc_config.sch"
+      (lambda (p)
+	 (let loop ((e (read p)))
+	    (if (eof-object? e)
+		(error "hop-node-modules-dir" "Cannot find node_modules dir" 
+		   "./hopc_config.sch")
+		(let ((v (eval e)))
+		   (if (pair? v)
+		       (let ((dir (assq '--node_modules v)))
+			  (if (pair? dir)
+			      (cdr dir)
+			      (loop (read p))))
+		       (loop (read p)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-esmodule ...                                                 */
@@ -457,23 +475,28 @@
 	      (resolve-file-or-directory name dir))
 	 (filter string? hop-modules-path)))
 
-   (cond
-      ((core-module? name)
-       (cons name 'core))
-      ((or (string-prefix? "http://" name)
-	   (string-prefix? "https://" name))
-       (cons name 'http))
-      ((or (string-prefix? "./" name) (string-prefix? "../" name))
-       (or (resolve-file-or-directory name dir)
-	   (resolve-modules name)
-	   (resolve-error name)))
-      ((string-prefix? "/" name)
-       (or (resolve-path-file-or-directory name)
-	   (resolve-modules name)
-	   (resolve-error name)))
-      (else
-       (or (resolve-modules name)
-	   (resolve-error name)))))
+   (let loop ((name name))
+      (cond
+	 ((core-module? name)
+	  (cons name 'core))
+	 ((or (string-prefix? "http://" name)
+	      (string-prefix? "https://" name))
+	  (cons name 'http))
+	 ((string-prefix? "hop:" name)
+	  (let ((dir (or (config-get args :node-modules-directory)
+			 (hop-node-modules-dir))))
+	     (loop (make-file-path dir (substring name 4)))))
+	 ((or (string-prefix? "./" name) (string-prefix? "../" name))
+	  (or (resolve-file-or-directory name dir)
+	      (resolve-modules name)
+	      (resolve-error name)))
+	 ((string-prefix? "/" name)
+	  (or (resolve-path-file-or-directory name)
+	      (resolve-modules name)
+	      (resolve-error name)))
+	 (else
+	  (or (resolve-modules name)
+	      (resolve-error name))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    module-cache                                                     */

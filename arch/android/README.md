@@ -1,7 +1,7 @@
 Android Packaging
 =================
 
-_22 May 2020_
+_23 Jan 2022_
 
 
 This document explains how to compile Hop for Android devices and how
@@ -78,6 +78,9 @@ To build a full hop+bigloo stack and to produce an `apk` file:
     $ export REPODIR=repodir
     $ make apk 
 	
+The directory `repodir` must contain the tarball of the Bigloo version used
+to build and apk.
+
 To build for debugging:
 
     $ make apk HOPCONFIGUREOPT=--debug
@@ -122,7 +125,7 @@ Installing
 
 The standard `adb` Android tool tool is used to installed:
 
-    $ adb install -r hop-3.3.0.apk
+    $ adb install -r hop-3.5.1.apk
     $ adb shell monkey -p fr.inria.hop 1
 
 To uninstall it:

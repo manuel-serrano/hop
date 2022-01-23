@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Sun Jan 23 13:50:55 2022 (serrano)                */
+#*    Last change :  Sun Jan 23 17:34:18 2022 (serrano)                */
 #*    Copyright   :  2010-22 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -343,10 +343,14 @@ $(ANDROIDBUILDDIR)/res/values/strings.xml \
   $(ANDROIDBUILDDIR)/res/xml/preferences.xml \
   $(ANDROIDBUILDDIR)/src/fr/inria/hop/Hop.java:
 	rm -f $@.in
-	hz=`basename $(HOPHZ)` && cat $< \
+	(hophz=hop; \
+         if [ "$(HOPHZ) " != " "]; then \
+           hophz=`basename $(HOPHZ)`; \
+         fi; \
+	 cat $< \
           | sed -e "s|@HOPVERSION@|$(HOPRELEASE)|" \
 		-e "s|@HOPAPK@|$(HOPAPK)|" \
-		-e "s|@HOPHZ@|$$hz|" \
+		-e "s|@HOPHZ@|$$hophz|" \
 		-e "s|@BIGLOOVERSION@|$(RELEASE)|" \
                 -e "s|@HOPPORT@|$(ANDROIDHOPPORT)|" \
                 -e "s|@HOPTHREADS@|$(ANDROIDHOPTHREADS)|" \
@@ -379,7 +383,7 @@ $(ANDROIDBUILDDIR)/res/values/strings.xml \
                 -e "s|@PLUGINTTS@|$(PLUGINTTS)|" \
                 -e "s|@PLUGINPREFS@|$(PLUGINPREFS)|" \
                 -e "s|@PLUGININTENT@|$(PLUGININTENT)|" \
-                -e "s|@PLUGINCALL@|$(PLUGINCALL)|" > $@
+                -e "s|@PLUGINCALL@|$(PLUGINCALL)|" > $@)
 
 $(ANDROIDBUILDDIR)/res/values/strings.xml: \
    $(ANDROIDDIR)/res/values/strings.xml.in \
@@ -458,11 +462,13 @@ assets.post-install.client:
 
 .PHONY: $(ANDROIDBUILDDIR)/assets/etc
 $(ANDROIDBUILDDIR)/assets/etc: splash/splash.html splash/hopnotfound.html splash/hoperror.html
+	@echo "=== $(ANDROIDBUILDDIR)/assets/etc ============="
 	mkdir -p $(ANDROIDBUILDDIR)/assets
 	rm -rf $@
 	cp -r $(ANDROIDBUILDDIR)$(ANDROIDHOPPREFIX)/etc $(ANDROIDBUILDDIR)/assets
 
 $(ANDROIDBUILDDIR)/assets/splash:
+	@echo "=== $(ANDROIDBUILDDIR)/assets/splash =========="
 	mkdir -p $(ANDROIDBUILDDIR)/assets
 	rm -rf $@
 	mkdir -p $@
@@ -472,6 +478,7 @@ $(ANDROIDBUILDDIR)/assets/splash:
 
 .PHONY: $(ANDROIDBUILDDIR)/assets/share
 $(ANDROIDBUILDDIR)/assets/share:
+	@echo "=== $(ANDROIDBUILDDIR)/assets/share ============"
 	mkdir -p $(ANDROIDBUILDDIR)/assets
 	rm -rf $@
 	cp -r $(ANDROIDBUILDDIR)$(ANDROIDHOPPREFIX)/share $(ANDROIDBUILDDIR)/assets
@@ -481,14 +488,17 @@ $(ANDROIDBUILDDIR)/assets/cache:
 	mkdir -p $(ANDROIDBUILDDIR)/assets/cache
 
 $(ANDROIDBUILDDIR)/assets/rcdir: rcdir
+	@echo "=== $(ANDROIDBUILDDIR)/assets/rcdir ============"
 	mkdir -p $(ANDROIDBUILDDIR)/assets
 	rm -rf $@
 	cp -r $(ANDROIDDIR)/rcdir $(ANDROIDBUILDDIR)/assets
 
-$(ANDROIDBUILDDIR)/assets/hz: $(HOPHZ)
+$(ANDROIDBUILDDIR)/assets/hz:
+	@echo "=== $(ANDROIDBUILDDIR)/assets/hz ==============="
+	pwd
 	if [ "$(HOPHZ) " != " " ]; then \
 	  mkdir -p $(ANDROIDBUILDDIR)/assets/hz; \
-	  cp $(HOPHZ) $(ANDROIDBUILDDIR)/assets/hz; \
+	  cp $(ANDROIDWEBLET)$(HOPHZ) $(ANDROIDBUILDDIR)/assets/hz; \
         fi
 
 rename-jsgz:
@@ -666,6 +676,10 @@ apk.bigloo.post-install: apk.bigloo
 	rm $(ANDROIDBUILDDIR)/$(ANDROIDHOPPREFIX)/lib/bigloo/$(RELEASE)/libpcre2-8.so.0
 	cp $(ANDROIDBUILDDIR)/$(ANDROIDHOPPREFIX)/lib/bigloo/$(RELEASE)/libpcre2-8.so \
            $(ANDROIDBUILDDIR)/$(ANDROIDHOPPREFIX)/lib/bigloo/$(RELEASE)/libpcre2-8.so.0
+	mv $(ANDROIDBUILDDIR)/$(ANDROIDHOPPREFIX)/lib/bigloo/$(RELEASE)/liblibbacktrace.so \
+           $(ANDROIDBUILDDIR)/$(ANDROIDHOPPREFIX)/lib/bigloo/$(RELEASE)/liblibbacktrace.so
+	mv $(ANDROIDBUILDDIR)/$(ANDROIDHOPPREFIX)/lib/bigloo/$(RELEASE)/liblibbacktrace.so.0.0.0 \
+           $(ANDROIDBUILDDIR)/$(ANDROIDHOPPREFIX)/lib/bigloo/$(RELEASE)/liblibbacktrace.so.0
 
 apk.bigloo.configure:
 	(cd $(ANDROIDBUILDDIR)/bigloo-$(RELEASE); \
