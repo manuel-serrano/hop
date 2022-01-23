@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Sun Jan 23 17:34:18 2022 (serrano)                */
+#*    Last change :  Sun Jan 23 19:52:34 2022 (serrano)                */
 #*    Copyright   :  2010-22 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -676,7 +676,7 @@ apk.bigloo.post-install: apk.bigloo
 	rm $(ANDROIDBUILDDIR)/$(ANDROIDHOPPREFIX)/lib/bigloo/$(RELEASE)/libpcre2-8.so.0
 	cp $(ANDROIDBUILDDIR)/$(ANDROIDHOPPREFIX)/lib/bigloo/$(RELEASE)/libpcre2-8.so \
            $(ANDROIDBUILDDIR)/$(ANDROIDHOPPREFIX)/lib/bigloo/$(RELEASE)/libpcre2-8.so.0
-	mv $(ANDROIDBUILDDIR)/$(ANDROIDHOPPREFIX)/lib/bigloo/$(RELEASE)/liblibbacktrace.so \
+	cp $(ANDROIDBUILDDIR)/$(ANDROIDHOPPREFIX)/lib/bigloo/$(RELEASE)/liblibbacktrace.so.0.0.0 \
            $(ANDROIDBUILDDIR)/$(ANDROIDHOPPREFIX)/lib/bigloo/$(RELEASE)/liblibbacktrace.so
 	mv $(ANDROIDBUILDDIR)/$(ANDROIDHOPPREFIX)/lib/bigloo/$(RELEASE)/liblibbacktrace.so.0.0.0 \
            $(ANDROIDBUILDDIR)/$(ANDROIDHOPPREFIX)/lib/bigloo/$(RELEASE)/liblibbacktrace.so.0
