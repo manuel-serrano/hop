@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Tue Jan 25 18:33:21 2022 (serrano)                */
+;*    Last change :  Tue Jan 25 18:38:03 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -1486,7 +1486,6 @@
 	     (multiple-value-bind (proc mod)
 		(dynamic-load sopath)
 		(hop-verb 2 "loading \"" (hop-color 5 "" sopath) "\"\n")
-		(tprint "proc=" proc)
 		(let ((v (cond
 			    ((procedure? proc)
 			     proc)

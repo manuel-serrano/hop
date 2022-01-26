@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/lexer.scm                 */
+;*    serrano/prgm/project/hop/3.5.x/js2scheme/lexer.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:33:09 2013                          */
-;*    Last change :  Fri Oct  1 11:39:48 2021 (serrano)                */
-;*    Copyright   :  2013-21 Manuel Serrano                            */
+;*    Last change :  Wed Jan 26 08:54:25 2022 (serrano)                */
+;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript lexer                                                 */
 ;*=====================================================================*/
@@ -230,9 +230,14 @@
        (token 'NEWLINE #\newline 1))
 
       ;; builtin decorator
-      ((: (? (: "//" (or #\space #\tab))) "@record" (+ blank) "class")
-       (if (config-get conf :record-decorator #f)
+      ((: (? (: "//" (or #\space #\tab))) "@sealed" (+ blank) "class")
+       (if (config-get conf :sealed-decorator #f)
+	   ;; sealed classes aka records
 	   (token 'record 'record (the-length))
+	   (token 'class 'class (the-length))))
+      ((: (? (: "//" (or #\space #\tab))) (* (out " \n\t")) (+ blank) "class")
+       (if (config-get conf :seal-decorator #f)
+	   (token 'ERROR (the-string) (the-length))
 	   (token 'class 'class (the-length))))
 
       ;; numbers

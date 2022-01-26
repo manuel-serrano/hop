@@ -280,12 +280,12 @@
 	     (set! commonjs-export #t))
 	    (("--no-js-commonjs-export" (help "Automatic commonjs modules export"))
 	     (set! commonjs-export #f))
-	    (("--js-record-decorator" (help "Enable record decorator"))
+	    (("--js-sealed-decorator" (help "Enable record decorator"))
 	     (j2s-compile-options-set!
-		(cons* :record-decorator #t (j2s-compile-options))))
-	    (("--js-no-record-decorator" (help "Disable record decorator"))
+		(cons* :sealed-decorator #t (j2s-compile-options))))
+	    (("--js-no-sealed-decorator" (help "Disable record decorator"))
 	     (j2s-compile-options-set!
-		(cons* :record-decorator #f (j2s-compile-options))))
+		(cons* :sealed-decorator #f (j2s-compile-options))))
 	    (("--js-option" ?opt ?val (help "Add JavaScript compilation option"))
 	     (j2s-compile-options-set!
 		(cons* (string->keyword opt)
