@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 23 08:47:08 2014                          */
-;*    Last change :  Tue Jan 11 07:19:32 2022 (serrano)                */
+;*    Last change :  Sun Jan 23 08:36:45 2022 (serrano)                */
 ;*    Copyright   :  2014-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Crypto native bindings                                           */
@@ -78,8 +78,11 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-toprimitive ...                                               */
 ;*---------------------------------------------------------------------*/
+(cond-expand
+   (enable-ssl
 (define-method (js-toprimitive obj::JsSSLConnection preferredtype %this::JsGlobalObject)
    (& "[object SSLConnection]"))
+))
 
 ;*---------------------------------------------------------------------*/
 ;*    ignored-verify-errors ...                                        */

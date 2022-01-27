@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Dec  2 16:36:06 2020                          */
-/*    Last change :  Wed Dec  2 16:36:06 2020 (serrano)                */
-/*    Copyright   :  2020 Manuel Serrano                               */
+/*    Last change :  Sun Jan 23 07:40:46 2022 (serrano)                */
+/*    Copyright   :  2020-22 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    webdav configuration                                             */
 /*=====================================================================*/
@@ -21,7 +21,7 @@ import { config, update as updateConfig } from './config.js';
 /*---------------------------------------------------------------------*/
 /*    WEBDAV ...                                                       */
 /*---------------------------------------------------------------------*/
-export function WEBDAV() {
+export function WEBDAV(attrs, ... nodes) {
    return <sp.sptab svc=${webdav}>
      <sp.sptabhead>
        <nav class="sptabhead unselected">
