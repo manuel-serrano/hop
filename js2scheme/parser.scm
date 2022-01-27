@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Mon Jan 17 07:19:50 2022 (serrano)                */
+;*    Last change :  Sun Jan 23 19:13:20 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -27,24 +27,6 @@
 
    (export (j2s-parser ::input-port ::pair-nil #!optional plugins)
 	   (j2s-tag->expr ::pair ::bool)))
-
-;*---------------------------------------------------------------------*/
-;*    hop-node-modules-dir ...                                         */
-;*---------------------------------------------------------------------*/
-(define-macro (hop-node-modules-dir)
-   (call-with-input-file "./hopc_config.sch"
-      (lambda (p)
-	 (let loop ((e (read p)))
-	    (if (eof-object? e)
-		(error "hop-node-modules-dir" "Cannot find node_modules dir" 
-		   "./hopc_config.sch")
-		(let ((v (eval e)))
-		   (if (pair? v)
-		       (let ((dir (assq '--node_modules v)))
-			  (if (pair? dir)
-			      (cdr dir)
-			      (loop (read p))))
-		       (loop (read p)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-parser ...                                                   */
@@ -1407,31 +1389,24 @@
 	 (service-create token id params args body mode
 	    #t declaration? #f)))
 
-
-   (define (hopjs-module-resolve-path name)
-      (let ((dir (or (config-get conf :node-modules-directory)
-		     (hop-node-modules-dir))))
-	 (make-file-path dir name)))
-	      
    (define (consume-module-path!)
       (case (peek-token-type)
 	 ((STRING)
 	  (let* ((mod (consume-any!))
 		 (url (token-value mod)))
 	     (values
-		(if (string-prefix? "hop:" url)
-		    (hopjs-module-resolve-path (substring url 4))
-		    url)
+		url
 		(instantiate::J2SUndefined (loc (token-loc mod))))))
 	 ((ID)
 	  (let ((id (consume-any!)))
 	     (if (eq? (token-value id) 'hop)
 		 (begin
+		    ;; old syntax maintained for backward compatibility
 		    (consume-token! 'DOT)
 		    (values 
 		       (let ((mod (consume-token! 'ID)))
-			  (hopjs-module-resolve-path
-			     (symbol->string (token-value mod))))
+			  (string-append "hop:"
+			     (symbol->string (token-value mod)) ))
 		       (instantiate::J2SUndefined (loc (token-loc id)))))
 		 (parse-token-error "Illegal import path (should be hop.xxx)" id))))
 	 ((DOLLAR)

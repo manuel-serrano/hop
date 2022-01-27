@@ -1,7 +1,7 @@
 Android Packaging
 =================
 
-_22 May 2020_
+_24 Jan 2022_
 
 
 This document explains how to compile Hop for Android devices and how
@@ -78,6 +78,9 @@ To build a full hop+bigloo stack and to produce an `apk` file:
     $ export REPODIR=repodir
     $ make apk 
 	
+The directory `repodir` must contain the tarball of the Bigloo version used
+to build and apk.
+
 To build for debugging:
 
     $ make apk HOPCONFIGUREOPT=--debug
@@ -122,7 +125,7 @@ Installing
 
 The standard `adb` Android tool tool is used to installed:
 
-    $ adb install -r hop-3.3.0.apk
+    $ adb install -r hop-3.5.1.apk
     $ adb shell monkey -p fr.inria.hop 1
 
 To uninstall it:
@@ -154,14 +157,14 @@ Building an Bundled Custom Application
 ---------------------------------------
 
 In some situations, it is desirable to build a Hop application bundled
-with a specific Hop instance. The section explains who to construct
+with a specific Hop instance. The section explains how to construct
 such an `apk` containing a bare `hop` installation plus a client 
 application. The makefile located in the `arch/android` is
 designed so that it can be used to build custom application. To add a
 weblet to your `apk` build, you just have to specify an
 `ANDROIDWEBLET` argument to the `make` command line that must point to
 the directory containing your weblet. Let us show how to build such a
-complete application. The 4 steps will be:
+complete application. The 3 steps will be:
 
   1. create the `arch/android` directory;
   2. create the `Makefile` needed to build the `apk`;
@@ -449,6 +452,6 @@ application
 
   ANDROIDX=<the-location-of-the-androidx-jar-file>
   
-For instance  
+For instance
 
   ANDROIDX=/home/myproject/hopapp/androidx/core-1.3.2-sources.jar

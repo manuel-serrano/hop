@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/compile.scm               */
+;*    serrano/prgm/project/hop/3.5.x/js2scheme/compile.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Sun Nov 21 06:53:00 2021 (serrano)                */
-;*    Copyright   :  2013-21 Manuel Serrano                            */
+;*    Last change :  Wed Jan 26 08:59:26 2022 (serrano)                */
+;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
 ;*=====================================================================*/
@@ -485,8 +485,8 @@
       (unless (memq :commonjs-export o)
 	 (set! o (cons* :commonjs-export #t o)))
       ;; record decorator
-      (unless (memq :record-decorator o)
-	 (set! o (cons* :record-decorator #t o)))
+      (unless (memq :sealed-decorator o)
+	 (set! o (cons* :sealed-decorator #t o)))
       ;; debugging
       (when (>= (bigloo-debug) 0)
 	 (set! o (append o `(:debug ,(bigloo-debug))))
