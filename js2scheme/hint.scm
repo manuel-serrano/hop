@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/hint.scm                  */
+;*    serrano/prgm/project/hop/3.5.x/js2scheme/hint.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Fri Dec 17 12:09:19 2021 (serrano)                */
-;*    Copyright   :  2016-21 Manuel Serrano                            */
+;*    Last change :  Thu Jan 27 15:18:51 2022 (serrano)                */
+;*    Copyright   :  2016-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
 ;*=====================================================================*/
@@ -343,8 +343,8 @@
 	   (j2s-hint lhs `((,(j2s-type lhs) . 5)))
 	   (j2s-hint rhs '()))
 	  (else
-	   (j2s-hint lhs hints)
-	   (j2s-hint rhs hints))))
+	   (j2s-hint lhs '())
+	   (j2s-hint rhs '()))))
       ((instanceof)
        (j2s-hint rhs '((function . 5)))
        (j2s-hint lhs '((object . 2) (function . 1) (array . 1))))

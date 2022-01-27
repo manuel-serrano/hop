@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Sun Jan 23 19:13:20 2022 (serrano)                */
+;*    Last change :  Thu Jan 27 07:26:49 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -323,35 +323,46 @@
 		   (else
 		    (loop (cons el rev-ses) #f pluginit)))))))
 
-   (define (source-element)
-      (case (peek-token-type)
-	 ((function)
-	  (function-declaration))
-	 ((ID)
-	  (let ((token (peek-token)))
-	     (cond
-		((and plugins (assq (token-value token) plugins))
-		 =>
-		 (lambda (p)
-		    ((cdr p) (consume-any!) #t conf parser-controller)))
-		((eq? (token-value token) 'async)
-		 (let* ((token (consume-any!))
-			(next (peek-token-type)))
-		    (if (eq? next 'function)
-			(async-declaration token)
-			(begin
-			   (token-push-back! token)
-			   (statement)))))
-		((eq? (token-value token) 'service)
-		 (service-declaration))
+   (define (source-id)
+      (let ((token (peek-token)))
+	 (cond
+	    ((and plugins (assq (token-value token) plugins))
+	     =>
+	     (lambda (p)
+		((cdr p) (consume-any!) #t conf parser-controller)))
+	    ((eq? (token-value token) 'async)
+	     (let* ((token (consume-any!))
+		    (next (peek-token-type)))
+		(if (eq? next 'function)
+		    (async-declaration token)
+		    (begin
+		       (token-push-back! token)
+		       (statement)))))
+	    ((eq? (token-value token) 'sealed)
+	     (let* ((token (consume-any!))
+		    (next (peek-token-type)))
+		(if (eq? next 'class)
+		    (record-declaration)
+		    (begin
+		       (token-push-back! token)
+		       (statement)))))
+	    ((eq? (token-value token) 'service)
+	     (service-declaration))
 		((and (eq? (token-value token) 'generic)
 		      (eq? current-mode 'hopscript))
 		 (generic-declaration))
 		((and (eq? (token-value token) 'method)
 		      (eq? current-mode 'hopscript))
 		 (method-declaration))
-		(else
-		 (statement)))))
+	    (else
+	     (statement)))))
+   
+   (define (source-element)
+      (case (peek-token-type)
+	 ((function)
+	  (function-declaration))
+	 ((ID)
+	  (source-id))
 	 ((class)
 	  (class-declaration))
 	 ((record)
@@ -386,9 +397,7 @@
    (define (repl-element)
       (case (peek-token-type)
 	 ((function) (function-declaration))
-	 ((ID) (if (eq? (token-value (peek-token)) 'service)
-		   (service-declaration)
-		   (statement)))
+	 ((ID) (source-id))
 	 ((class) (class-declaration))
 	 ((record) (record-declaration))
 	 ((EOF) (cdr (consume-any!)))
@@ -992,6 +1001,12 @@
 		(body (statement))))
 	    ((eq? (token-value id-token) 'async)
 	     (async-declaration id-token))
+	    ((eq? (token-value id-token) 'sealed)
+	     (if (eq? next-token-type 'class)
+		 (record-declaration)
+		 (begin
+		    (token-push-back! id-token)
+		    (expression-statement))))
 	    (else
 	     (token-push-back! id-token)
 	     (expression-statement)))))
@@ -1937,8 +1952,10 @@
 		      rev-ses)))))))
 
    (define (record)
+      ;; when this function is called, the next token to be consume
+      ;; is the one that preceeds the record identifier
       (let* ((loc (current-loc))
-	     (token (consume-token! 'record))
+	     (token (consume-any!))
 	     (id (consume-token! 'ID))
 	     (cname (token-value id))
 	     (extends (if (eq? (peek-token-type) 'extends)

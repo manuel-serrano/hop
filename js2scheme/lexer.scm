@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:33:09 2013                          */
-;*    Last change :  Wed Jan 26 08:54:25 2022 (serrano)                */
+;*    Last change :  Thu Jan 27 07:20:35 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript lexer                                                 */
@@ -88,7 +88,7 @@
      "import"))
 
 (define *hopscript-reserved-list*
-   '("record"))
+   '())
 
 (define *future-strict-reserved-list*
    '("implements"
@@ -234,10 +234,6 @@
        (if (config-get conf :sealed-decorator #f)
 	   ;; sealed classes aka records
 	   (token 'record 'record (the-length))
-	   (token 'class 'class (the-length))))
-      ((: (? (: "//" (or #\space #\tab))) (* (out " \n\t")) (+ blank) "class")
-       (if (config-get conf :seal-decorator #f)
-	   (token 'ERROR (the-string) (the-length))
 	   (token 'class 'class (the-length))))
 
       ;; numbers

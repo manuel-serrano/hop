@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/vector.scm                */
+;*    serrano/prgm/project/hop/3.5.x/js2scheme/vector.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Nov 22 09:52:17 2017                          */
-;*    Last change :  Wed Dec 29 09:21:40 2021 (serrano)                */
-;*    Copyright   :  2017-21 Manuel Serrano                            */
+;*    Last change :  Thu Jan 27 15:03:53 2022 (serrano)                */
+;*    Copyright   :  2017-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Mapping JS Arrays to Scheme vectors                              */
 ;*    -------------------------------------------------------------    */
@@ -219,8 +219,7 @@
 	    (with-access::J2SCast val (expr)
 	       (set-expr-type-vector! expr)))))
 
-   (with-access::J2SDeclInit this (vtype id %info val hint loc)
-      
+   (with-access::J2SDeclInit this (vtype id %info val vrange loc)
       (when (and (eq? vtype 'array)
 		 (not (decl-usage-has? this
 			 '(assig new ref assig call delete
@@ -234,7 +233,7 @@
 			  (range-intervals %info)))
 	       ;; optimize this array by turning it into a vector
 	       (set! vtype 'vector)
-	       (set! hint (list size))
+	       (set! vrange size)
 	       (set-expr-type-vector! val)
 	       (cell-set! verb (cons loc (cell-ref verb)))
 	       (when (and inloop hook scope (not (capture? scope this)))
