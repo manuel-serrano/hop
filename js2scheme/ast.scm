@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Tue Jan 18 14:35:05 2022 (serrano)                */
+;*    Last change :  Thu Jan 27 15:05:07 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -87,7 +87,7 @@
 	      (mtype (default 'unknown) (info '("notraverse")))
 	      ;; initial parameter range
 	      (irange::obj (default #unspecified) (info '("notraverse")))
-	      ;; computed variable range
+	      ;; computed variable range, or array size (see vector.scm)
 	      (vrange::obj (default #unspecified) (info '("notraverse")))
 	      ;; variable 
 	      (hint::pair-nil (default '()) (info '("notraverse")))

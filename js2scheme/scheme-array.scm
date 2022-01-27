@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/scheme-array.scm          */
+;*    serrano/prgm/project/hop/3.5.x/js2scheme/scheme-array.scm        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Mon Nov  8 07:43:16 2021 (serrano)                */
-;*    Copyright   :  2017-21 Manuel Serrano                            */
+;*    Last change :  Thu Jan 27 15:03:59 2022 (serrano)                */
+;*    Copyright   :  2017-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Array functions.            */
 ;*=====================================================================*/
@@ -543,42 +543,41 @@
 (define (j2s-vector-ref this::J2SAccess mode return ctx)
    (with-access::J2SAccess this (obj field)
       (with-access::J2SRef obj (decl)
-	 (with-access::J2SDecl decl ((h hint))
+	 (with-access::J2SDecl decl (vrange)
 	    (with-access::J2SExpr field (range)
-	       (let ((h (car h)))
-		  (cond
-		     ((eq? (j2s-type field) 'uint32)
-		      (let ((i (gensym 'idx)))
-			 `(let ((,i ,(j2s-scheme field mode return ctx)))
-			     (if (<u32 ,i ,(fixnum->uint32 h))
-				 (vector-ref
-				    ,(j2s-scheme obj mode return ctx)
-				    (uint32->fixnum ,i))
-				 (js-undefined)))))
-		     ((and (interval? range)
-			   (>= (interval-min range) h)
-			   (< (interval-max range) h))
-		      `(vector-ref ,(j2s-scheme obj mode return ctx)
-			  (uint32->fixum
-			     ,(j2s-scheme-as-uint32 field mode return ctx))))
-		     ((and (interval? range) (>=llong (interval-min range) 0))
-		      (let ((i (gensym 'idx)))
-			 `(let ((,i ,(j2s-scheme-as-uint32 field mode
-					return ctx)))
-			     (if (<u32 ,i ,(fixnum->uint32 h))
-				 (vector-ref
-				    ,(j2s-scheme obj
-					mode return ctx)
-				    (uint32->fixnum ,i))
-				 (js-undefined)))))
-		     (else
-		      (let ((i (gensym 'idx)))
-			 `(let ((,i ,(j2s-scheme-as-integer field
-					mode return ctx)))
-			     (if (and (<fx ,i ,h) (>=fx ,i 0))
-				 (vector-ref
-				    ,(j2s-scheme obj mode return ctx) ,i)
-				 (js-undefined))))))))))))
+	       (cond
+		  ((eq? (j2s-type field) 'uint32)
+		   (let ((i (gensym 'idx)))
+		      `(let ((,i ,(j2s-scheme field mode return ctx)))
+			  (if (<u32 ,i ,(fixnum->uint32 vrange))
+			      (vector-ref
+				 ,(j2s-scheme obj mode return ctx)
+				 (uint32->fixnum ,i))
+			      (js-undefined)))))
+		  ((and (interval? range)
+			(>= (interval-min range) vrange)
+			(< (interval-max range) vrange))
+		   `(vector-ref ,(j2s-scheme obj mode return ctx)
+		       (uint32->fixum
+			  ,(j2s-scheme-as-uint32 field mode return ctx))))
+		  ((and (interval? range) (>=llong (interval-min range) 0))
+		   (let ((i (gensym 'idx)))
+		      `(let ((,i ,(j2s-scheme-as-uint32 field mode
+				     return ctx)))
+			  (if (<u32 ,i ,(fixnum->uint32 vrange))
+			      (vector-ref
+				 ,(j2s-scheme obj
+				     mode return ctx)
+				 (uint32->fixnum ,i))
+			      (js-undefined)))))
+		  (else
+		   (let ((i (gensym 'idx)))
+		      `(let ((,i ,(j2s-scheme-as-integer field
+				     mode return ctx)))
+			  (if (and (<fx ,i ,vrange) (>=fx ,i 0))
+			      (vector-ref
+				 ,(j2s-scheme obj mode return ctx) ,i)
+			      (js-undefined)))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-vector-set! ...                                              */

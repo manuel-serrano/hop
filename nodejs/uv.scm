@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/nodejs/uv.scm                       */
+;*    serrano/prgm/project/hop/3.5.x/nodejs/uv.scm                     */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Mon Apr 13 11:18:11 2020 (serrano)                */
-;*    Copyright   :  2014-21 Manuel Serrano                            */
+;*    Last change :  Thu Jan 27 12:45:47 2022 (serrano)                */
+;*    Copyright   :  2014-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
 ;*=====================================================================*/
@@ -1196,12 +1196,16 @@
 ;*    nodejs-stat ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-stat %worker %this process path callback proto)
-   (if (js-procedure? callback)
+   (cond
+      ((not (js-jsstring? path))
+       (js-raise-type-error %this "Path not an string" path))
+      ((js-procedure? callback)
        (let ((lbl (string-append "stat:" (js-jsstring->string path))))
 	  (uv-fs-stat (js-jsstring->string path)
 	     :loop (worker-loop %worker)
 	     :callback (stat-cb %worker %this process callback "stat"
-			  (js-jsstring->string path) proto lbl path)))
+			  (js-jsstring->string path) proto lbl path))))
+      (else
        (let ((res (uv-fs-stat (js-jsstring->string path))))
 	  (if (integer? res)
 	      (js-raise
@@ -1209,25 +1213,29 @@
 		    (format "stat: cannot stat ~a -- ~~s"
 		       (js-jsstring->string path))
 		    res %this path))
-	      (stat->jsobj %this proto res)))))
+	      (stat->jsobj %this proto res))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-lstat ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-lstat %worker %this process path callback proto)
-   (if (js-procedure? callback)
+   (cond
+      ((not (js-jsstring? path))
+       (js-raise-type-error %this "Path not an string" path))
+      ((js-procedure? callback)
        (let ((lbl (string-append "lstat:" (js-jsstring->string path))))
 	  (uv-fs-lstat (js-jsstring->string path)
 	     :loop (worker-loop %worker)
 	     :callback (stat-cb %worker %this process callback "lstat"
-			  path proto lbl path)))
+			  path proto lbl path))))
+      (else
        (let ((res (uv-fs-lstat (js-jsstring->string path))))
 	  (if (integer? res)
 	      (js-raise
 		 (fs-errno-exn (format "lstat: cannot stat ~a -- ~~s"
 				  (js-jsstring->string path))
 		    res %this))
-	      (stat->jsobj %this proto res)))))
+	      (stat->jsobj %this proto res))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-link ...                                                  */

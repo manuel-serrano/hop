@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Tue Jan 18 14:36:45 2022 (serrano)                */
+;*    Last change :  Thu Jan 27 11:24:08 2022 (serrano)                */
 ;*    Copyright   :  2018-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -392,7 +392,7 @@
 		    nodejs-new-global-object nodejs-new-module)
 		 (js-worker-push-thunk! %worker "nodejs-toplevel"
 		    ,(if (context-get ctx :function-nice-name #f)
-			 (let ((id (string->symbol "#")))
+			 (let ((id (string->symbol "#main")))
 			    `(let ((,id ,thunk))
 				,id))
 			 thunk))

@@ -278,7 +278,7 @@
 	     (set! ecmascriptv 2017))
 	    (("--js-commonjs-export" (help "Automatic commonjs modules export"))
 	     (set! commonjs-export #t))
-	    (("--no-js-commonjs-export" (help "Automatic commonjs modules export"))
+	    (("--js-no-commonjs-export" (help "Automatic commonjs modules export"))
 	     (set! commonjs-export #f))
 	    (("--js-sealed-decorator" (help "Enable record decorator"))
 	     (j2s-compile-options-set!
