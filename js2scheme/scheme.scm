@@ -2902,10 +2902,17 @@
    (with-access::J2SCacheUpdate this (cache obj prop)
       (case prop
 	 ((proto-method)
-	  `(with-access::JsPropertyCache (js-pcache-ref %pcache ,cache) (pmap)
-	      (set! pmap
-		 (js-object-cmap
-		    ,(j2s-scheme obj mode return ctx)))))
+	  `(with-access::JsPropertyCache (js-pcache-ref %pcache ,cache) (imap emap cmap pmap nmap amap xmap)
+	      (when (eq? xmap (js-not-a-pmap))
+		 (let ((%cmap (js-object-cmap ,(j2s-scheme obj mode return ctx))))
+		    (cond
+		       ((eq? imap (js-not-a-pmap)) (set! imap %cmap))
+		       ((eq? emap (js-not-a-pmap)) (set! emap %cmap))
+		       ((eq? cmap (js-not-a-pmap)) (set! cmap %cmap))
+		       ((eq? pmap (js-not-a-pmap)) (set! pmap %cmap))
+		       ((eq? nmap (js-not-a-pmap)) (set! nmap %cmap))
+		       ((eq? amap (js-not-a-pmap)) (set! amap %cmap))
+		       (else (set! xmap %cmap)))))))
 	 ((proto-reset)
 	  `(with-access::JsPropertyCache (js-pcache-ref %pcache ,cache) (pmap)
 	      (set! pmap (js-not-a-pmap))))

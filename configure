@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Sun Jan 23 08:37:05 2022 (serrano)                */
+#*    Last change :  Fri Jan 28 14:18:17 2022 (serrano)                */
 #*    Copyright   :  2004-22 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -41,7 +41,7 @@ devmode=product
 debug=no
 
 bcflags="-O3 -fstackable -fsharing -L \$(BUILDLIBDIR) -srfi bigloo-compile"
-bhflags=
+bhflags=-unsafe
 btflags="-gtrace"
 hflags="-Os"
 
@@ -984,6 +984,7 @@ if [ "$devmode " = "debug " -o "$devmode " = "debug-inline " ]; then
     bcflagsmodules="$bcflagsmodules -gtrace0"
     bhopcflags="$bhopcflags -gtrace0"
     hflags="$hflags -gtrace0"
+    bhflags=""
   fi
 fi
 
