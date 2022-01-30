@@ -2889,6 +2889,9 @@
 	 ((instanceof)
 	  `(eq? (js-pcache-cmap (js-pcache-ref %pcache ,cache))
 	      (js-object-cmap ,(j2s-scheme obj mode return ctx))))
+	 ((!instanceof)
+	  `(eq? (js-pcache-xmap (js-pcache-ref %pcache ,cache))
+	      (js-object-cmap ,(j2s-scheme obj mode return ctx))))
 	 ((method)
 	  `(eq? (js-pcache-function (js-pcache-ref %pcache ,cache))
 	      ,(j2s-scheme obj mode return ctx)))
@@ -2920,6 +2923,12 @@
 	  `(with-access::JsPropertyCache (js-pcache-ref %pcache ,cache) (cmap)
 	      (when (js-object-mapped? ,(j2s-scheme obj mode return ctx))
 		 (set! cmap
+		    (js-object-cmap
+		       ,(j2s-scheme obj mode return ctx))))))
+	 ((!instanceof)
+	  `(with-access::JsPropertyCache (js-pcache-ref %pcache ,cache) (xmap)
+	      (when (js-object-mapped? ,(j2s-scheme obj mode return ctx))
+		 (set! xmap
 		    (js-object-cmap
 		       ,(j2s-scheme obj mode return ctx))))))
 	 (else
