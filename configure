@@ -41,7 +41,7 @@ devmode=product
 debug=no
 
 bcflags="-O3 -fstackable -fsharing -L \$(BUILDLIBDIR) -srfi bigloo-compile"
-bhflags=
+bhflags=-unsafe
 btflags="-gtrace"
 hflags="-Os"
 
@@ -959,6 +959,7 @@ if [ "$devmode " = "debug " -o "$devmode " = "debug-inline " ]; then
     bcflagsmodules="$bcflagsmodules -gtrace0"
     bhopcflags="$bhopcflags -gtrace0"
     hflags="$hflags -gtrace0"
+    bhflags=""
   fi
 fi
 
