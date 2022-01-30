@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/instanceof.scm            */
+;*    serrano/prgm/project/hop/3.5.x/js2scheme/instanceof.scm          */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 24 16:22:25 2018                          */
-;*    Last change :  Wed Dec 29 09:01:35 2021 (serrano)                */
-;*    Copyright   :  2018-21 Manuel Serrano                            */
+;*    Last change :  Sun Jan 30 09:04:10 2022 (serrano)                */
+;*    Copyright   :  2018-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Cache instanceof tests.                                          */
 ;*=====================================================================*/
@@ -73,12 +73,16 @@
 	    (endloc (node-endloc rhs)))
 	 (J2SIf (J2SCacheCheck 'instanceof cache #f obj)
 	    (J2SReturn #t (J2SBool #t) be)
-	    (J2SIf (duplicate::J2SBinary this
-		      (lhs (duplicate::J2SRef obj)))
-	       (J2SBlock
-		  (J2SStmtExpr (J2SCacheUpdate 'instanceof cache obj))
-		  (J2SReturn #t (J2SBool #t) be))
-	       (J2SReturn #t (J2SBool #f) be)))))
+	    (J2SIf (J2SCacheCheck '!instanceof cache #f obj)
+	       (J2SReturn #t (J2SBool #f) be)
+	       (J2SIf (duplicate::J2SBinary this
+			 (lhs (duplicate::J2SRef obj)))
+		  (J2SBlock
+		     (J2SStmtExpr (J2SCacheUpdate 'instanceof cache obj))
+		     (J2SReturn #t (J2SBool #t) be))
+		  (J2SBlock
+		     (J2SStmtExpr (J2SCacheUpdate '!instanceof cache obj))
+		     (J2SReturn #t (J2SBool #f) be)))))))
    
    (define (instanceof/cache expr lhs rhs be loc)
       (if (eq? (j2s-type lhs) 'object)
