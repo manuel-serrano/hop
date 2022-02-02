@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sun Jan  2 09:44:30 2022 (serrano)                */
+;*    Last change :  Sun Jan 30 09:12:43 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -1732,13 +1732,7 @@
 
 (define (js-function-instanceof? %this v f::JsFunction)
    (when (js-object? v)
-      (if (js-object-mode-hasinstance? f)
-	  (with-access::JsGlobalObject %this (js-symbol-hasinstance)
-	     (let ((h (js-get-jsobject f f js-symbol-hasinstance %this)))
-		(if (js-function? h)
-		    (js-call1 %this h f v)
-		    (js-ordinary-instanceof? %this v f))))
-	  (js-ordinary-instanceof? %this v f))))
+      (js-object-function-instanceof? %this v f)))
 
 (define (js-instanceof? %this v f)
    (if (not (js-function? f))

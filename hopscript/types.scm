@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/hopscript/types.scm                 */
+;*    serrano/prgm/project/hop/3.5.x/hopscript/types.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Tue Dec 21 09:38:12 2021 (serrano)                */
-;*    Copyright   :  2013-21 Manuel Serrano                            */
+;*    Last change :  Tue Feb  1 07:38:53 2022 (serrano)                */
+;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
 ;*    -------------------------------------------------------------    */
@@ -695,8 +695,8 @@
 	   (inline js-set?::bool ::obj)
 	   (inline js-weakset?::bool ::obj)
 	   
-
 	   (inline js-object-cmap ::JsObject)
+	   (inline js-object-cmap-set! ::JsObject ::JsConstructMap)
 
 	   (inline js-object-proto ::JsObject)
 	   (inline js-object-proto-set! ::JsObject ::obj)
@@ -1919,6 +1919,12 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-object-cmap o)
    (with-access::JsObject o (cmap) cmap))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-cmap ...                                               */
+;*---------------------------------------------------------------------*/
+(define-inline (js-object-cmap-set! o cm)
+   (with-access::JsObject o (cmap) (set! cmap cm)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-proto ...                                              */
