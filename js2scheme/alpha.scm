@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.5.x/js2scheme/alpha.scm               */
+;*    serrano/prgm/project/hop/hop/js2scheme/alpha.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 20 14:34:39 2016                          */
-;*    Last change :  Sat Jan 15 06:12:59 2022 (serrano)                */
+;*    Last change :  Wed Feb  2 10:00:56 2022 (serrano)                */
 ;*    Copyright   :  2016-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    AST Alpha conversion                                             */
@@ -356,9 +356,10 @@
 (define-method (alpha this::J2SFun)
    
    (define (alpha-fun/decl this)
-      (with-access::J2SFun this (params body method decl name)
+      (with-access::J2SFun this (thisp params body method decl name)
 	 (let* ((ndecl (duplicate::J2SDeclFun decl
 			  (key (ast-decl-key))))
+		(nthisp (when thisp (j2sdecl-duplicate thisp)))
 		(nparams (map j2sdecl-duplicate params))
 		(nfun (duplicate::J2SFun this
 			 (decl ndecl)
@@ -370,20 +371,33 @@
 	       (with-access::J2SDeclFun ndecl (val)
 		  (set! val nfun))
 	       (set! body
-		  (j2s-alpha body
-		     (cons* decl this params) (cons* ndecl nfun nparams))))
+		  (if thisp
+		      (j2s-alpha body
+			 (cons* decl this thisp params)
+			 (cons* ndecl nfun nthisp nparams))
+		      (j2s-alpha body
+			 (cons* decl this params)
+			 (cons* ndecl nfun nparams)))))
 	    nfun)))
    
    (define (alpha-fun/w-decl this)
-      (with-access::J2SFun this (params body method name)
+      (with-access::J2SFun this (params body method name thisp)
 	 (let* ((nparams (map j2sdecl-duplicate params))
+		(nthisp (when thisp (j2sdecl-duplicate thisp)))
 		(nfun (duplicate::J2SFun this
 			 (params nparams)
+			 (thisp (when thisp nthisp))
 			 (method (alpha method))
 			 (body body))))
 	    (with-access::J2SFun nfun (body)
 	       (set! body
-		  (j2s-alpha body (cons this params) (cons nfun nparams))))
+		  (if thisp
+		      (j2s-alpha body
+			 (cons* this thisp params)
+			 (cons* nfun nthisp nparams))
+		      (j2s-alpha body
+			 (cons this params)
+			 (cons nfun nparams)))))
 	    nfun)))
    
    (with-access::J2SFun this (decl)
@@ -561,6 +575,9 @@
 	  (key (ast-decl-key))))
        ((isa? p J2SDeclRest)
 	(duplicate::J2SDeclRest p
+	   (key (ast-decl-key))))
+       ((isa? p J2SDeclArguments)
+	(duplicate::J2SDeclArguments p
 	   (key (ast-decl-key))))
       (else
        (duplicate::J2SDecl p

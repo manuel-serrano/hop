@@ -1,19 +1,21 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/recstatic.scm             */
+;*    serrano/prgm/project/hop/hop/js2scheme/record.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug  6 14:30:50 2018                          */
-;*    Last change :  Wed Oct 27 19:04:03 2021 (serrano)                */
-;*    Copyright   :  2018-21 Manuel Serrano                            */
+;*    Last change :  Wed Feb  2 11:54:43 2022 (serrano)                */
+;*    Copyright   :  2018-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
-;*    Bind record static methods at top-level and replace static       */
-;*    invocations with direct calls or occurrences with references.    */
+;*    Record (aka, sealed class) specific optimizations:               */
+;*      - Create type specialized method versions                      */
+;*      - Bind record static methods at top-level                      */
+;*      - replace static invocations with direct calls                 */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
-(module __js2scheme_recstatic
+(module __js2scheme_record
 
    (include "ast.sch"
 	    "usage.sch")
@@ -26,37 +28,55 @@
 	   __js2scheme_alpha
 	   __js2scheme_classutils)
 
-   (export j2s-recstatic-stage))
+   (export j2s-record-stage))
 
 ;*---------------------------------------------------------------------*/
-;*    j2s-recstatic-stage ...                                          */
+;*    j2s-record-stage ...                                             */
 ;*---------------------------------------------------------------------*/
-(define j2s-recstatic-stage
+(define j2s-record-stage
    (instantiate::J2SStageProc
-      (name "recstatic")
-      (comment "Lift record static method definitions")
-      (proc j2s-recstatic)
-      (optional :optim-recstatic)))
+      (name "record")
+      (comment "Records (aka sealed classes) optimizations")
+      (proc j2s-record)
+      (optional :optim-record)))
 
 ;*---------------------------------------------------------------------*/
-;*    j2s-recstatic ...                                                */
+;*    j2s-record ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define (j2s-recstatic this args)
+(define (j2s-record this args)
    (when (isa? this J2SProgram)
-      (recstatic! this this args)
+      (record! this this args)
       (refstatic! this args))
    this)
 
 ;*---------------------------------------------------------------------*/
-;*    recstatic! ::J2SNode ...                                         */
+;*    record! ::J2SNode ...                                            */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (recstatic! this::J2SNode prgm::J2SProgram args)
+(define-walk-method (record! this::J2SNode prgm::J2SProgram args)
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
-;*    recstatic! ::J2SRecord ...                                       */
+;*    record! ::J2SRecord ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-method (recstatic! this::J2SRecord prgm::J2SProgram args)
+(define-method (record! this::J2SRecord prgm::J2SProgram args)
+
+   (define (record-method el)
+      (with-access::J2SClassElement el (prop %info)
+	 (with-access::J2SMethodPropertyInit prop (val loc name)
+	    (let* ((nval (j2s-alpha val '() '()))
+		   (nprop (duplicate::J2SMethodPropertyInit prop
+			     (name (duplicate::J2SString name
+				      (val (with-access::J2SString name (val)
+					      (string-append val "%%R")))))
+			     (val nval)))
+		   (nel (duplicate::J2SClassElement el
+			   (prop nprop))))
+	       ;; patch the function name and "this" type
+	       (with-access::J2SFun nval (thisp name)
+		  (set! name (symbol-append name '%%R))
+		  (with-access::J2SDecl thisp (ctype)
+		     (set! ctype this)))
+	       nel))))
    
    (define (static-method el)
       (with-access::J2SClassElement el (prop %info)
@@ -89,19 +109,25 @@
 	       (set! %info d)
 	       (set! prop np)
 	       d))))
-   
+
    (with-access::J2SRecord this (elements)
-      (let ((sds (filter-map (lambda (el)
-				(with-access::J2SClassElement el (prop static)
-				   (when static
-				      (cond
-					 ((isa? prop J2SMethodPropertyInit)
-					  (static-method el))
-					 ((isa? prop J2SDataPropertyInit)
-					  (static-data el))))))
-		    elements)))
+      (let ((ndecls '())
+	    (nels '()))
+	 (for-each (lambda (el)
+		      (with-access::J2SClassElement el (prop static)
+			 (cond
+			    ((isa? prop J2SMethodPropertyInit)
+			     (cond
+				(static
+				 (set! ndecls (cons (static-method el) ndecls)))
+				((not (j2s-class-property-constructor? prop))
+				 (set! nels (cons (record-method el) nels)))))
+			    ((and static (isa? prop J2SDataPropertyInit))
+			     (set! ndecls (cons (static-data el) ndecls))))))
+	    elements)
+	 (set! elements (append elements nels))
 	 (with-access::J2SProgram prgm (decls)
-	    (set! decls (append decls sds))
+	    (set! decls (append decls ndecls))
 	    this))))
    
 ;*---------------------------------------------------------------------*/

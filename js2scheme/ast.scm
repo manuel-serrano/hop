@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.5.x/js2scheme/ast.scm                 */
+;*    serrano/prgm/project/hop/hop/js2scheme/ast.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Thu Jan 27 15:05:07 2022 (serrano)                */
+;*    Last change :  Wed Feb  2 10:34:33 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -77,6 +77,8 @@
 	      (usage::uint32 (default (usage '())))
 	      ;; binder: var, let, let-opt, let-forin, param, class, record
 	      (binder::symbol (default 'var) (info '("notraverse")))
+	      ;; compiler type, used when the compiler knows the exact type
+	      (ctype (default 'any) (info '("notraverse")))
 	      ;; user declared type (only a mere annotation)
 	      (utype (default 'unknown) (info '("notraverse")))
 	      ;; initial parameter type

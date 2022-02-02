@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.5.x/js2scheme/utils.scm               */
+;*    serrano/prgm/project/hop/hop/js2scheme/utils.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Mon Jan 17 17:02:02 2022 (serrano)                */
+;*    Last change :  Wed Feb  2 12:14:03 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -596,9 +596,16 @@
 		     (car args)))))))
    
    (define (native-type-test test)
-      (with-access::J2SCall test (fun)
+      (with-access::J2SCall test (fun %info)
 	 (with-access::J2SHopRef fun (id)
 	    id)))
+
+   (define (record-type-test decl test ref)
+      (with-access::J2SCall test (fun %info)
+	 (when (and (pair? %info)
+		    (eq? (car %info) 'instanceof)
+		    (isa? (cdr %info) J2SClass))
+	    (values '<= decl (cdr %info) ref))))
    
    (cond
       ((isa? expr J2SBinary)
@@ -623,7 +630,7 @@
 		((js-undefined?) (values '== decl 'undefined ref))
 		((js-null?) (values '== decl 'null ref))
 		((js-object?) (values '<= decl 'object ref))
-		(else #f)))))
+		(else (record-type-test decl expr ref))))))
       (else
        #f)))
 
