@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 11 13:06:45 2016                          */
-;*    Last change :  Wed Dec 29 08:40:21 2021 (serrano)                */
-;*    Copyright   :  2016-21 Manuel Serrano                            */
+;*    Last change :  Wed Feb  2 12:05:32 2022 (serrano)                */
+;*    Copyright   :  2016-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Minimal set of macros for creating new AST.                      */
 ;*=====================================================================*/
@@ -125,7 +125,7 @@
 (define-macro (J2SBinary op lhs rhs)
    (let ((typ (match-case op
 		 (((kwote quote) ?op)
-		  (if (memq op '(eq? === == != !== < <= > >=))
+		  (if (memq op '(eq? === == != !== < <= > >= instanceof))
 		      'bool
 		      'unknown))
 		 (else

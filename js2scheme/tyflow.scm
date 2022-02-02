@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.5.x/js2scheme/tyflow.scm              */
+;*    serrano/prgm/project/hop/hop/js2scheme/tyflow.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Tue Jan 18 16:25:39 2022 (serrano)                */
+;*    Last change :  Wed Feb  2 10:12:13 2022 (serrano)                */
 ;*    Copyright   :  2016-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -193,8 +193,10 @@
 ;*    Assign a unique type to a variable declaration.                  */
 ;*---------------------------------------------------------------------*/
 (define (decl-vtype-set! decl::J2SDecl ty::obj ctx::pair)
-   (with-access::J2SDecl decl (vtype id loc)
+   (with-access::J2SDecl decl (ctype vtype id loc)
       [assert (ty) (or (eq? vtype 'unknown) (eq? vtype ty))]
+      (unless (eq? ctype 'any)
+	 (set! ty ctype))
       (when (or (eq? vtype 'unknown) (not (eq? vtype ty)))
 	 (unfix! ctx (format "J2SDecl.vset(~a, ~a) vtype=~a/~a" id loc
 			(type->sexp vtype) (type->sexp ty)))
@@ -206,7 +208,9 @@
 ;*    Add a new type to a variable declaration.                        */
 ;*---------------------------------------------------------------------*/
 (define (decl-vtype-add! decl::J2SDecl ty ctx::pair)
-   (with-access::J2SDecl decl (vtype id loc)
+   (with-access::J2SDecl decl (ctype vtype id loc)
+      (unless (eq? ctype 'any)
+	 (set! ty ctype))
       (unless (or (eq? ty 'unknown) (type-subtype? ty vtype) (eq? vtype 'any))
 	 (unfix! ctx (format "J2SDecl.vadd(~a, ~a) vtype=~a/~a" id loc
 			(type->sexp vtype) (type->sexp ty)))
@@ -218,7 +222,9 @@
 ;*    Add a new initial type to a variable declaration.                */
 ;*---------------------------------------------------------------------*/
 (define (decl-itype-add! decl::J2SDecl ty ctx::pair)
-   (with-access::J2SDecl decl (itype id)
+   (with-access::J2SDecl decl (ctype itype id)
+      (unless (eq? ctype 'any)
+	 (set! ty ctype))
       (unless (or (eq? ty 'unknown) (type-subtype? ty itype) (eq? itype 'any))
 	 (unfix! ctx (format "J2SDecl.iadd(~a) itype=~a/~a" id
 			(type->sexp itype) (type->sexp ty)))
@@ -1940,7 +1946,7 @@
    (define (node-type-one-test test envt enve)
       (multiple-value-bind (op decl typ ref)
 	 (j2s-expr-type-test test)
-	 (if (and (symbol? typ) (j2s-known-type typ))
+	 (if (or (and (symbol? typ) (j2s-known-type typ)) (isa? typ J2SClass))
 	     (case op
 		((== === eq?) (values (extend-env envt decl typ) enve))
 		((!= !==) (values envt (extend-env enve decl typ)))
@@ -2149,22 +2155,50 @@
 ;*    node-type ::J2SClassElement ...                                  */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-type this::J2SClassElement env::pair-nil ctx::pair)
+
+   (define (J2SIsa decl clazz)
+      (with-access::J2SClass clazz ((rec decl))
+	 (with-access::J2SDecl decl (loc)
+	    (instantiate::J2SCall
+	       (%info (cons 'instanceof clazz))
+	       (loc loc)
+	       (type 'bool)
+	       (fun (instantiate::J2SHopRef
+		       (loc loc)
+		       (type 'function)
+		       (rtype 'bool)
+		       (id (class-predicate-id clazz))))
+	       (thisargs '())
+	       (args (list (instantiate::J2SRef
+			      (loc loc)
+			      (decl decl))))))))
    
-   (define (type-record-method val::J2SFun clazz)
-      (with-access::J2SFun val (thisp body loc)
+   (define (type-record-method val::J2SFun clazz method::J2SString)
+      (with-access::J2SFun val (thisp params body loc)
 	 (let ((self (duplicate::J2SDeclInit thisp
 			(key (ast-decl-key))
 			(id '!this)
 			(_scmid '!this)
 			(vtype clazz)
 			(itype clazz)
+			(ctype clazz)
 			(val (J2SCast clazz (J2SRef thisp)))
 			(binder 'let-opt)
 			(hint '())))
 	       (endloc (node-endloc body)))
 	    (set! body
-	       (J2SLetRecBlock #f (list self)
-		  (j2s-alpha body (list thisp) (list self)))))))
+	       (J2SBlock
+		  (J2SIf (J2SIsa thisp clazz)
+		     (J2SReturn #t
+			(J2SMethodCall*
+			   (J2SAccess (J2SRef thisp)
+			      (with-access::J2SString method (val)
+				 (duplicate::J2SString method
+				    (val (string-append val "%%R")))))
+			   (list (J2SRef thisp :type clazz))
+			   (map (lambda (p) (J2SRef p)) params)))
+		     (J2SLetRecBlock #f (list self)
+			(j2s-alpha body (list thisp) (list self)))))))))
    
    (with-access::J2SClassElement this (prop type clazz static usage)
       (cond
@@ -2196,11 +2230,11 @@
 	  (when (and (not static)
 		     (isa? prop J2SMethodPropertyInit)
 		     (isa? clazz J2SRecord))
-	     (with-access::J2SMethodPropertyInit prop (val)
+	     (with-access::J2SMethodPropertyInit prop (val name)
 		(with-access::J2SFun val (thisp)
-		   (with-access::J2SDecl thisp (vtype)
-		      (when (eq? vtype 'unknown)
-			 (type-record-method val clazz))))))
+		   (with-access::J2SDecl thisp (ctype vtype)
+		      (when (and (eq? vtype 'unknown) (eq? ctype 'any))
+			 (type-record-method val clazz name))))))
 	  (let ((vty (node-type prop env ctx)))
 	     (when (eq? type 'unknown)
 		(cond

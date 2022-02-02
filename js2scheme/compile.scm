@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.5.x/js2scheme/compile.scm             */
+;*    serrano/prgm/project/hop/hop/js2scheme/compile.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Wed Jan 26 08:59:26 2022 (serrano)                */
+;*    Last change :  Wed Feb  2 09:21:01 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -28,7 +28,7 @@
 	   __js2scheme_bestpractice
 	   __js2scheme_this
 	   __js2scheme_callapply
-	   __js2scheme_recstatic
+	   __js2scheme_record
 	   __js2scheme_loopexit
 	   __js2scheme_ronly
 	   __js2scheme_use
@@ -202,7 +202,7 @@
 	  j2s-var->let-stage
 	  j2s-unletrec-stage
 	  j2s-this-stage
-	  j2s-recstatic-stage
+	  j2s-record-stage
 	  j2s-use-stage
 	  j2s-letclass-stage
 	  j2s-callapply-stage
@@ -593,8 +593,8 @@
 	    (set! o (cons* :optim-cspecs #t o)))
 	 (unless (memq :optim-callapply o)
 	    (set! o (cons* :optim-callapply #t o)))
-	 (unless (memq :optim-recstatic o)
-	    (set! o (cons* :optim-recstatic #t o)))
+	 (unless (memq :optim-record o)
+	    (set! o (cons* :optim-record #t o)))
 	 (unless (memq :optim-inline o)
 	    (set! o (cons* :optim-inline #t o)))
 	 (unless (memq :optim-uninit o)
