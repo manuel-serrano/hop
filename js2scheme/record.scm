@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug  6 14:30:50 2018                          */
-;*    Last change :  Wed Feb  2 11:54:43 2022 (serrano)                */
+;*    Last change :  Wed Feb  2 16:54:46 2022 (serrano)                */
 ;*    Copyright   :  2018-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Record (aka, sealed class) specific optimizations:               */
@@ -60,23 +60,19 @@
 ;*---------------------------------------------------------------------*/
 (define-method (record! this::J2SRecord prgm::J2SProgram args)
 
+   (define (patch-method-element! el intwinp)
+      (with-access::J2SClassElement el (prop %info rtwin clazz)
+	 (with-access::J2SMethodPropertyInit prop (val)
+	    (with-access::J2SFun val (body)
+	       (patch-super-call! body (j2s-class-super-val clazz) intwinp)))))
+      
    (define (record-method el)
-      (with-access::J2SClassElement el (prop %info)
-	 (with-access::J2SMethodPropertyInit prop (val loc name)
-	    (let* ((nval (j2s-alpha val '() '()))
-		   (nprop (duplicate::J2SMethodPropertyInit prop
-			     (name (duplicate::J2SString name
-				      (val (with-access::J2SString name (val)
-					      (string-append val "%%R")))))
-			     (val nval)))
-		   (nel (duplicate::J2SClassElement el
-			   (prop nprop))))
-	       ;; patch the function name and "this" type
-	       (with-access::J2SFun nval (thisp name)
-		  (set! name (symbol-append name '%%R))
-		  (with-access::J2SDecl thisp (ctype)
-		     (set! ctype this)))
-	       nel))))
+      (with-access::J2SClassElement el (prop %info rtwin clazz)
+	 (patch-method-element! el #f)
+	 (let ((nel (record-rtwin-element el)))
+	    (patch-method-element! nel #t)
+	    (record-property-dispatch! el nel)
+	    nel)))
    
    (define (static-method el)
       (with-access::J2SClassElement el (prop %info)
@@ -129,7 +125,111 @@
 	 (with-access::J2SProgram prgm (decls)
 	    (set! decls (append decls ndecls))
 	    this))))
+
+;*---------------------------------------------------------------------*/
+;*    property-rtwin-name ...                                          */
+;*---------------------------------------------------------------------*/
+(define (property-rtwin-name::J2SString prop::J2SMethodPropertyInit)
+   (with-access::J2SMethodPropertyInit prop (name)
+      (with-access::J2SString name (val)
+	 (duplicate::J2SString name
+	    (val (string-append val "%%R"))))))
+
+;*---------------------------------------------------------------------*/
+;*    record-rtwin-element ...                                         */
+;*---------------------------------------------------------------------*/
+(define (record-rtwin-element el::J2SClassElement)
+   (with-access::J2SClassElement el (prop %info rtwin clazz)
+      (with-access::J2SMethodPropertyInit prop (val loc name)
+	 (let* ((nval (j2s-alpha val '() '()))
+		(nname (property-rtwin-name prop))
+		(nprop (duplicate::J2SMethodPropertyInit prop
+			  (name nname)
+			  (val nval)))
+		(nel (duplicate::J2SClassElement el
+			(prop nprop))))
+	    ;; self reference
+	    (with-access::J2SClassElement nel (rtwin)
+	       (set! rtwin nel))
+	    ;; patch the function name and "this" type
+	    (with-access::J2SFun nval (thisp name)
+	       (with-access::J2SString nname (val)
+		  (set! name (string->symbol val)))
+	       (with-access::J2SDecl thisp (ctype)
+		  (set! ctype clazz)))
+	    nel))))
+
+;*---------------------------------------------------------------------*/
+;*    record-proprty-dispatch! ...                                     */
+;*---------------------------------------------------------------------*/
+(define (record-property-dispatch! el::J2SClassElement nel)
    
+   (define (J2SIsaClass decl clazz)
+      (with-access::J2SClass clazz ((rec decl))
+	 (with-access::J2SDecl decl (loc)
+	    (instantiate::J2SCall
+	       (loc loc)
+	       (type 'bool)
+	       (fun (instantiate::J2SHopRef
+		       (loc loc)
+		       (type 'function)
+		       (rtype 'bool)
+		       (id (class-predicate-id clazz))))
+	       (thisargs '())
+	       (args (list (instantiate::J2SRef
+			      (loc loc)
+			      (decl decl))))))))
+   
+   (define (J2SIsaProxy decl)
+      (with-access::J2SDecl decl (loc)
+	 (instantiate::J2SCall
+	    (loc loc)
+	    (type 'bool)
+	    (fun (instantiate::J2SHopRef
+		    (loc loc)
+		    (type 'function)
+		    (rtype 'bool)
+		    (id 'js-proxy?)))
+	    (thisargs '())
+	    (args (list (instantiate::J2SRef
+			   (loc loc)
+			   (decl decl)))))))
+   
+   (with-access::J2SClassElement el (prop clazz rtwin)
+      (with-access::J2SMethodPropertyInit prop (val name)
+	 (with-access::J2SFun val (thisp params body loc)
+	    (set! rtwin nel)
+	    (let ((endloc (node-endloc body))
+		  (self (duplicate::J2SDeclInit thisp
+			   (key (ast-decl-key))
+			   (id '!this)
+			   (_scmid '!this)
+			   (ctype 'proxy)
+			   (val (J2SRef thisp))
+			   (binder 'let-opt)
+			   (hint '()))))
+	       (set! body
+		  (J2SBlock
+		     (J2SIf (J2SIsaClass thisp clazz)
+			(J2SReturn #t
+			   (J2SMethodCall*
+			      (J2SAccess (J2SSuper/super thisp clazz clazz)
+				 (property-rtwin-name prop))
+			      (list (J2SRef thisp :type clazz))
+			      (map (lambda (p) (J2SRef p)) params)))
+			(J2SIf (J2SIsaProxy thisp)
+			   (J2SLetRecBlock #f (list self)
+			      (patch-this-access!
+				 (j2s-alpha body (list thisp) (list self))))
+			   (J2SReturn #t
+			      (J2SPragma/bindings 'any
+				 '(^this) (list (J2SThis thisp))
+				 `(js-raise-type-error %this
+				     ,(format "Not ~a instance:~~a"
+					 (with-access::J2SRecord clazz (name)
+					    name))
+				     ^this))))))))))))
+
 ;*---------------------------------------------------------------------*/
 ;*    refstatic! ::J2SNode ...                                         */
 ;*---------------------------------------------------------------------*/
@@ -197,3 +297,43 @@
 ;*---------------------------------------------------------------------*/
 (define (record-static-property this::J2SAccess)
    (record-static-element this J2SDeclInit))
+
+;*---------------------------------------------------------------------*/
+;*    patch-super-call! ...                                            */
+;*---------------------------------------------------------------------*/
+(define-walk-method (patch-super-call! this::J2SNode superclazz inrtwinp::bool)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    patch-super-call! ::J2SCall ...                                  */
+;*---------------------------------------------------------------------*/
+(define-walk-method (patch-super-call! this::J2SCall superclazz inrtwinp)
+   (with-access::J2SCall this (fun)
+      (call-default-walker)
+      (when (isa? fun J2SAccess)
+	 (with-access::J2SAccess fun (obj)
+	    (when (isa? obj J2SSuper)
+	       (with-access::J2SSuper obj (super rtwinp)
+		  (set! rtwinp inrtwinp)
+		  (set! super superclazz)))))
+      this))
+
+;*---------------------------------------------------------------------*/
+;*    patch-this-access! ...                                           */
+;*---------------------------------------------------------------------*/
+(define-walk-method (patch-this-access! this::J2SNode)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    patch-this-access! ...                                           */
+;*---------------------------------------------------------------------*/
+(define-walk-method (patch-this-access! this::J2SAccess)
+   (with-access::J2SAccess this (obj cspecs)
+      (when (isa? obj J2SThis)
+	 (with-access::J2SThis obj (decl)
+	    (with-access::J2SDecl decl (ctype)
+	       (when (eq? ctype 'proxy)
+		  (set! cspecs #f))))))
+   (call-default-walker))
+
+

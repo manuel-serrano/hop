@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.5.x/js2scheme/hint.scm                */
+;*    serrano/prgm/project/hop/hop/js2scheme/hint.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Thu Jan 27 15:18:51 2022 (serrano)                */
+;*    Last change :  Wed Feb  2 18:19:06 2022 (serrano)                */
 ;*    Copyright   :  2016-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -94,7 +94,7 @@
 	    null undefined void
 	    cmap scmstring tilde pair
 	    int8array uint8array bigint
-	    map weakmap set weakset))
+	    map weakmap set weakset proxy))
        ty)
       ((memq ty '(index indexof length)) 'integer)
       ((memq ty '(ureal1 real1 real4)) 'real)

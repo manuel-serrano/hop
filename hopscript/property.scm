@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sun Dec 12 06:43:07 2021 (serrano)                */
-;*    Copyright   :  2013-21 Manuel Serrano                            */
+;*    Last change :  Thu Feb  3 09:44:15 2022 (serrano)                */
+;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
 ;*    deleting).                                                       */
@@ -570,13 +570,15 @@
 ;*    js-debug-cmap ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (js-debug-cmap cmap #!optional (msg ""))
-   (with-access::JsConstructMap cmap (%id props methods transitions vtable)
+   (with-access::JsConstructMap cmap (%id props methods transitions vtable mrtable mptable)
       (fprint (current-error-port) "~~ " msg (typeof cmap)
 	 " %id=" %id
 	 " prop.vlen=" (vector-length props)
 	 " met.vlen=" (vector-length methods)
 	 " vtable.len=" (vector-length vtable)
 	 "\n  props=" (vector-map js-debug-prop props)
+	 "\n  mrtable=" (when (vector? mrtable) (vector-length mrtable))
+	 " mptable=" (when (vector? mptable) (vector-length mptable))
 	 "\n  transitions="
 	 (map (lambda (tr)
 		 (format "~a:~a[~a]->~a"
@@ -2750,8 +2752,6 @@
 					 ;; varargs functions, currently not cached...
 					 (invalidate-pcache! cache)
 					 (with-access::JsPropertyCache cache (cntmiss)
-					    ;; correct arity, put in cache
-					    (js-validate-pmap-pcache! cache)
 					    ;; vtable
 					    (cond
 					       ((<u32 cntmiss (vtable-threshold))
@@ -4820,8 +4820,43 @@
 	 (when (=fx vindex (js-not-a-index))
 	    (set! vindex (js-get-vindex %this)))
 	 (js-cmap-vtable-add! pmap vindex method ccache))
-      (js-method-jsobject-call/cache-fill %this o name args
-	 ccache ocache point ccspecs ocspecs)))
+      (if (isa? o JsRecord)
+	  (js-method-jsrecord-call/cache-fill %this o name args
+	     ccache ocache point ccspecs ocspecs)
+	  (js-method-jsobject-call/cache-fill %this o name args
+	     ccache ocache point ccspecs ocspecs))))
+
+;*---------------------------------------------------------------------*/
+;*    js-method-jsrecord-call/cache-fill ...                           */
+;*    -------------------------------------------------------------    */
+;*    JsRecords are treated specially because the inline cache is      */
+;*    better filled with the unsafe version instead of the generic     */
+;*    one that first check the instance type.                          */
+;*---------------------------------------------------------------------*/
+(define (js-method-jsrecord-call/cache-fill %this::JsGlobalObject
+	   o::JsObject name::obj args::pair-nil
+	   ccache::JsPropertyCache ocache::JsPropertyCache
+	   point::long ccspecs::pair-nil ospecs::pair-nil)
+   (let ((cmap (js-object-cmap o)))
+      (with-access::JsConstructMap cmap (mntable mrtable)
+	 (let loop ((i (-fx (vector-length mntable) 1)))
+	    (cond
+	       ((=fx i -1)
+		(js-method-jsobject-call/cache-fill %this o name args
+		   ccache ocache point ccspecs ospecs))
+	       ((eq? (vector-ref mntable i) name)
+		(let ((procedure (vector-ref mrtable i)))
+		   (if (=fx (procedure-arity procedure) (+fx 1 (length args)))
+		       (with-access::JsPropertyCache ccache (pmap method)
+			  ;; correct arity, put in cache
+			  (js-validate-pmap-pcache! ccache)
+			  (set! pmap cmap)
+			  (set! method procedure)
+			  (apply procedure o args))
+		       (js-method-jsobject-call/cache-fill %this o name args
+			  ccache ocache point ccspecs ospecs))))
+	       (else
+		(loop (-fx i 1))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-method-jsobject-call/cache-fill ...                           */

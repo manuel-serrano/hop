@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Wed Feb  2 12:14:03 2022 (serrano)                */
+;*    Last change :  Wed Feb  2 16:49:39 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -418,6 +418,7 @@
 	  ((bigint) 'bignum)
 	  ((map weakmap) 'JsMap)
 	  ((set weakset) 'JsMap)
+	  ((proxy) 'JsProxy)
 	  (else type)))
       ((isa? type J2SRecord)
        (with-access::J2SRecord type (name)
@@ -600,13 +601,6 @@
 	 (with-access::J2SHopRef fun (id)
 	    id)))
 
-   (define (record-type-test decl test ref)
-      (with-access::J2SCall test (fun %info)
-	 (when (and (pair? %info)
-		    (eq? (car %info) 'instanceof)
-		    (isa? (cdr %info) J2SClass))
-	    (values '<= decl (cdr %info) ref))))
-   
    (cond
       ((isa? expr J2SBinary)
        (binary-type-test expr))
@@ -630,7 +624,7 @@
 		((js-undefined?) (values '== decl 'undefined ref))
 		((js-null?) (values '== decl 'null ref))
 		((js-object?) (values '<= decl 'object ref))
-		(else (record-type-test decl expr ref))))))
+		(else #f)))))
       (else
        #f)))
 

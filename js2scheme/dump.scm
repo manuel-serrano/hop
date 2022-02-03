@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.5.x/js2scheme/dump.scm                */
+;*    serrano/prgm/project/hop/hop/js2scheme/dump.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Tue Jan 18 14:35:57 2022 (serrano)                */
+;*    Last change :  Wed Feb  2 16:23:10 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -225,24 +225,24 @@
 ;*    dump-vtype ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (dump-vtype this::J2SDecl)
-   (with-access::J2SDecl this (vtype utype itype mtype)
+   (with-access::J2SDecl this (ctype vtype utype itype mtype)
       (cond
-	 ((or (>= (bigloo-debug) 2)
-	      (string-contains (or (getenv "HOPTRACE") "") "j2s:type+")
+	 ((or (string-contains (or (getenv "HOPTRACE") "") "j2s:type+")
 	      (string-contains (or (getenv "HOPTRACE") "") "j2s:vtype"))
 	  (if (isa? this J2SDeclFun)
 	      (with-access::J2SDeclFun this (val)
 		 (with-access::J2SFun val (rtype)
-		    `(:vtype ,(type->sexp vtype)
+		    `(:ctype ,(type->sexp ctype)
+			:vtype ,(type->sexp vtype)
 			:utype ,(type->sexp utype)
 			:itype ,(type->sexp itype)
 			:rtype ,(type->sexp rtype))))
-	      `(:vtype ,(type->sexp vtype)
+	      `(:ctype ,(type->sexp ctype)
+		  :vtype ,(type->sexp vtype)
 		  :utype ,(type->sexp utype)
 		  :itype ,(type->sexp itype)
 		  :mtype ,(type->sexp mtype))))
-	 ((or (>= (bigloo-debug) 2)
-	      (string-contains (or (getenv "HOPTRACE") "") "j2s:type"))
+	 ((or (string-contains (or (getenv "HOPTRACE") "") "j2s:type"))
 	  `(:vtype ,(type->sexp vtype) :mtype ,(type->sexp mtype)))
 	 (else
 	  '()))))
@@ -709,8 +709,11 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SSuper stack)
    (let ((nstack (check-stack this stack)))
-      (with-access::J2SSuper this (context)
+      (with-access::J2SSuper this (context super)
 	 `(,@(call-next-method)
+	     :super ,(if (isa? super J2SClass)
+			   (with-access::J2SClass super (name) name)
+			   super)
 	     :context ,(if (isa? context J2SClass)
 			   (with-access::J2SClass context (name) name)
 			   context)))))
@@ -1380,13 +1383,14 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SClassElement stack)
    (set! stack (check-stack this stack))
-   (with-access::J2SClassElement this (prop static type usage index clazz)
+   (with-access::J2SClassElement this (prop static type usage index clazz rtwin)
       (with-access::J2SPropertyInit prop (name)
 	 `(J2SClassElement :name ,(j2s->list name stack)
 	     :clazz 
 	     ,(with-access::J2SClass clazz (name) name)
 	     :static ,static
 	     :index ,index
+	     :rtwin ,(if (eq? rtwin this) 'self (if rtwin 'yes 'no))
 	     ,@(if (or (>= (bigloo-debug) 2)
 		       (string-contains (or (getenv "HOPTRACE") "") "j2s:type"))
 		   `(:type ,(type->sexp type))

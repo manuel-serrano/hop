@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.5.x/hopscript/types.scm               */
+;*    serrano/prgm/project/hop/hop/hopscript/types.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Tue Feb  1 07:38:53 2022 (serrano)                */
+;*    Last change :  Thu Feb  3 09:22:23 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -172,9 +172,11 @@
 	      (ctor::obj (default #f))
 	      (single::bool read-only (default #f))
 	      (vtable::vector (default '#()))
+	      (parent::JsConstructMap (default (class-nil JsConstructMap)))
+	      ;; sealed class methods procedures and names
 	      (mptable::vector (default '#()))
-	      (mntable::vector (default '#()))
-	      (parent::JsConstructMap (default (class-nil JsConstructMap))))
+	      (mrtable::vector (default '#()))
+	      (mntable::vector (default '#())))
 
 	   ;; Literal strings that are not plain Scheme strings.
 	   ;; For performance sake they are trees.

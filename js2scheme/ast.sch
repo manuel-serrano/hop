@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 11 13:06:45 2016                          */
-;*    Last change :  Wed Feb  2 12:05:32 2022 (serrano)                */
+;*    Last change :  Wed Feb  2 16:11:25 2022 (serrano)                */
 ;*    Copyright   :  2016-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Minimal set of macros for creating new AST.                      */
@@ -277,6 +277,13 @@
    `(instantiate::J2SSuper
        (loc loc)
        (decl ,decl)
+       (context ,context)))
+
+(define-macro (J2SSuper/super decl context super)
+   `(instantiate::J2SSuper
+       (loc loc)
+       (decl ,decl)
+       (super ,super)
        (context ,context)))
 
 (define-macro (J2SFun name params body . opts)

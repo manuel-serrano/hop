@@ -706,6 +706,11 @@
 	  (type-number? typrop)
 	  (not (memq typrop '(string object)))))
 
+   (define (js-get-proxy obj prop typrop propstr)
+      (if (string? propstr)
+	  `(js-get-proxy ,obj ,prop %this)
+	  `(js-get-proxy ,obj ,(box prop typrop ctx) %this)))
+
    (define (js-array-get obj prop propstr typrop)
       (case typrop
 	 ((uint32)
@@ -772,6 +777,8 @@
 	      `(js-jsstring-length ,obj))
 	     (else
 	      `(js-get-string ,obj ,prop %this))))
+	 ((eq? tyobj 'proxy)
+	  (js-get-proxy obj prop typrop propstr))
 	 ((and cache cspecs)
 	  (cond
 	     ((string? propstr)

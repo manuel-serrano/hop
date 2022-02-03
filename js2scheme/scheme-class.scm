@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:01:46 2017                          */
-;*    Last change :  Sun Jan  2 09:43:05 2022 (serrano)                */
+;*    Last change :  Wed Feb  2 14:03:22 2022 (serrano)                */
 ;*    Copyright   :  2017-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES2015 Scheme class generation                                   */
@@ -627,58 +627,59 @@
 		      ,res))))))
    
    (with-access::J2SCall this (fun args)
-      (with-access::J2SSuper fun (context)
-	 (with-access::J2SClass context (super need-super-check)
-	    (cond
-	       ((isa? super J2SRef)
-		(with-access::J2SRef super (decl)
-		   (let loop ((d decl))
-		      (cond
-			 ((isa? d J2SDeclClass)
-			  (with-access::J2SDeclClass d (val)
-			     ;; val is a J2SClass only when optimizations
-			     ;; are enabled
-			     (cond
-				((not (isa? val J2SClass))
-				 (scheme-class-super-expr this context super))
-				((and (eq? d decl) (j2s-scheme-class-get-info val :scm-cache-constructor))
-				 ;; try to inline super constructors
-				 =>
-				 (lambda (ctor)
-				    (match-case ctor
-				       ((lambda ?params . ?body)
-					(if (eq? (+fx 1 (length args)) (length params))
-					    `(begin
-						(,ctor ,(if need-super-check '!this 'this)
-						   ,@(j2s-scheme args mode return ctx))
-						,(when need-super-check '(set! this !this))
-						,@(j2s-scheme-init-instance-properties context mode return ctx))
-					    (scheme-class-super-declclass this context #f decl)))
-				       ((labels ((?id ?params . ?body)) ?id)
-					(if (eq? (+fx 1 (length args)) (length params))
-					    `(labels ((,id ,params ,@body))
-						(,id ,(if need-super-check '!this 'this)
-						   ,@(j2s-scheme args mode return ctx))
-						,(when need-super-check '(set! this !this))
-						,@(j2s-scheme-init-instance-properties context mode return ctx))
-					    (scheme-class-super-declclass this context #f decl)))
-				       (else
-					(scheme-class-super-declclass this context (not (eq? d decl)) decl)))))
-				(else
-				 (scheme-class-super-declclass this context (not (eq? d decl)) decl)))))
-			 ((isa? decl J2SDeclFun)
-			  (scheme-class-super-declfun this context decl))
-			 ((isa? decl J2SDeclImport)
-			  ;; an import binding
-			  (with-access::J2SDeclImport decl (export)
-			     (with-access::J2SExport export (decl)
-				(loop decl))))
-			 (else
-			  (scheme-class-super-expr this context super))))))
-	       ((isa? super J2SFun)
-		(scheme-class-super-fun this context super))
-	       (else
-		(scheme-class-super-expr this context super)))))))
+      (with-access::J2SSuper fun (context super)
+	 (with-access::J2SClass context ((ctxsuper super) need-super-check)
+	    (let ((super (or super ctxsuper)))
+	       (cond
+		  ((isa? super J2SRef)
+		   (with-access::J2SRef super (decl)
+		      (let loop ((d decl))
+			 (cond
+			    ((isa? d J2SDeclClass)
+			     (with-access::J2SDeclClass d (val)
+				;; val is a J2SClass only when optimizations
+				;; are enabled
+				(cond
+				   ((not (isa? val J2SClass))
+				    (scheme-class-super-expr this context super))
+				   ((and (eq? d decl) (j2s-scheme-class-get-info val :scm-cache-constructor))
+				    ;; try to inline super constructors
+				    =>
+				    (lambda (ctor)
+				       (match-case ctor
+					  ((lambda ?params . ?body)
+					   (if (eq? (+fx 1 (length args)) (length params))
+					       `(begin
+						   (,ctor ,(if need-super-check '!this 'this)
+						      ,@(j2s-scheme args mode return ctx))
+						   ,(when need-super-check '(set! this !this))
+						   ,@(j2s-scheme-init-instance-properties context mode return ctx))
+					       (scheme-class-super-declclass this context #f decl)))
+					  ((labels ((?id ?params . ?body)) ?id)
+					   (if (eq? (+fx 1 (length args)) (length params))
+					       `(labels ((,id ,params ,@body))
+						   (,id ,(if need-super-check '!this 'this)
+						      ,@(j2s-scheme args mode return ctx))
+						   ,(when need-super-check '(set! this !this))
+						   ,@(j2s-scheme-init-instance-properties context mode return ctx))
+					       (scheme-class-super-declclass this context #f decl)))
+					  (else
+					   (scheme-class-super-declclass this context (not (eq? d decl)) decl)))))
+				   (else
+				    (scheme-class-super-declclass this context (not (eq? d decl)) decl)))))
+			    ((isa? decl J2SDeclFun)
+			     (scheme-class-super-declfun this context decl))
+			    ((isa? decl J2SDeclImport)
+			     ;; an import binding
+			     (with-access::J2SDeclImport decl (export)
+				(with-access::J2SExport export (decl)
+				   (loop decl))))
+			    (else
+			     (scheme-class-super-expr this context super))))))
+		  ((isa? super J2SFun)
+		   (scheme-class-super-fun this context super))
+		  (else
+		   (scheme-class-super-expr this context super))))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme-need-super-check? ...                                 */

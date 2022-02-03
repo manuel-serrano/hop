@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.5.x/hopscript/property_expd.sch       */
+;*    serrano/prgm/project/hop/hop/hopscript/property_expd.sch         */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Tue Feb  1 07:29:51 2022 (serrano)                */
+;*    Last change :  Thu Feb  3 09:45:00 2022 (serrano)                */
 ;*    Copyright   :  2016-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -1101,12 +1101,7 @@
 	      (if (null? cs)
 		  (if (or (memq 'pmap ccspecs) (memq 'pmap-inline ccspecs))
 		      `(if (eq? (js-pcache-cmap ,ccache) (js-uncachable-pmap))
-			   ,(if (memq 'pmap-inline ccspecs)
-				`(begin
-;* 				       (with-access::JsPropertyCache ,ccache (function) */
-;* 					  (set! function #f))          */
-				    ,(calln-uncachable %this ocspecs obj prop args ccache ocache loc))
-				(calln-uncachable %this ocspecs obj prop args ccache ocache loc))
+			   ,(calln-uncachable %this ocspecs obj prop args ccache ocache loc)
 			   ,(calln-miss %this obj prop args ccache ocache loc ccspecs ocspecs))
 		      (calln-uncachable %this ocspecs obj prop args ccache ocache loc))
 		  (case (car cs)
@@ -1122,8 +1117,6 @@
 		      `(if (eq? %cmap (js-pcache-pmap ,ccache))
 			   (begin
 			      (js-profile-log-cache ,ccache :pmap #t)
-;* 				 (with-access::JsPropertyCache ,ccache (function) */
-;* 				    (set! function (procedure-attr (js-pcache-method ,ccache)))) */
 			      ((js-pcache-method ,ccache) ,obj ,@args))
 			   ,(loop (cdr cs))))
 		     ((cmap)
@@ -1172,8 +1165,6 @@
 					     (procedure? proc)))
 				     (begin
 					(js-profile-log-cache ,ccache :vtable #t)
-;* 					   (with-access::JsPropertyCache ,ccache (function) */
-;* 					      (set! function (procedure-attr proc))) */
 					(proc ,obj ,@args))
 				     ,(loop (cdr cs))))))))
 		     (else
@@ -1224,8 +1215,8 @@
    (match-case x
       ((js-method-jsrecord-call-index
 	  (and (? symbol?) ?obj) (and (? fixnum?) ?index) ?name . ?rest)
-       (e `(with-access::JsConstructMap (js-object-cmap ,obj) (mptable)
-	      ((vector-ref mptable ,index) ,obj ,@rest))
+       (e `(with-access::JsConstructMap (js-object-cmap ,obj) (mrtable)
+	      ((vector-ref mrtable ,index) ,obj ,@rest))
 	  e))
       ((js-method-jsrecord-call-index
 	  ?obj (and (? fixnum?) ?index) ?name . ?rest)

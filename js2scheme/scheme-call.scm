@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Sat Jan  1 06:55:56 2022 (serrano)                */
+;*    Last change :  Wed Feb  2 16:34:17 2022 (serrano)                */
 ;*    Copyright   :  2018-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -1039,11 +1039,18 @@
 			  mode return ctx))))
 		  (else
 		   (error "js2scheme" "illegal builtin method" m)))))))
-   
-   (define (call-super-record-method fun::J2SAccess args::pair-nil superclazz::J2SClass)
+
+   (define (j2s-class-find-element/rtwin superclazz val rtwinp)
+      (let ((el (j2s-class-find-element superclazz val)))
+	 (if rtwinp
+	     (with-access::J2SClassElement el (rtwin)
+		rtwin)
+	     el)))
+	 
+   (define (call-super-record-method fun::J2SAccess args::pair-nil superclazz::J2SClass rtwinp)
       (with-access::J2SAccess fun (obj field loc)
 	 (with-access::J2SString field (val)
-	    (let ((el (j2s-class-find-element superclazz val)))
+	    (let ((el (j2s-class-find-element/rtwin superclazz val rtwinp)))
 	       (when (isa? el J2SClassElement)
 		  (with-access::J2SClassElement el (prop static clazz)
 		     (when (and (not static) (isa? prop J2SMethodPropertyInit))
@@ -1056,15 +1063,16 @@
 					     (j2s-scheme a mode return ctx))
 					args))))))))))))
    
-   (define (call-super-method fun args)
+   (define (call-super-method fun args self)
       (with-access::J2SAccess fun (obj field)
-	 (if (and (isa? (j2s-vtype obj) J2SRecord)
-		  (isa? field J2SString)
-		  (isa? (j2s-class-super-val (j2s-vtype obj)) J2SRecord))
-	     (or (call-super-record-method fun args
-		    (j2s-class-super-val (j2s-vtype obj)))
-		 (call-unknown-function 'direct fun '(this) args))
-	     (call-unknown-function 'direct fun '(this) args))))
+	 (with-access::J2SSuper self (super rtwinp)
+	    (let ((superclazz (or super
+				  (when (isa? (j2s-vtype obj) J2SRecord)
+				     (j2s-class-super-val (j2s-vtype obj))))))
+	       (if (and (isa? super J2SRecord) (isa? field J2SString))
+		   (or (call-super-record-method fun args superclazz rtwinp)
+		       (call-unknown-function 'direct fun '(this) args))
+		   (call-unknown-function 'direct fun '(this) args))))))
    
    (define (Array? self)
       (is-builtin-ref? self 'Array))
@@ -1091,14 +1099,16 @@
       (is-builtin-ref? self 'process))
    
    (define (mincspecs x y)
-      (filter (lambda (c) (memq c y)) x))
+      (if (pair? x)
+	  (filter (lambda (c) (memq c y)) x)
+	  '()))
    
    (define (call-ref-method self ccache ocache ccspecs fun::J2SAccess obj::J2SExpr args)
       
       (with-access::J2SAccess fun (loc field (ocspecs cspecs))
 	 (cond
 	    ((isa? self J2SSuper)
-	     (call-super-method fun args))
+	     (call-super-method fun args self))
 	    ((and (Array? self)
 		  (j2s-array-builtin-method fun args this mode return ctx))
 	     =>
@@ -1132,12 +1142,12 @@
 		  (with-access::J2SString field (val)
 		     (let ((el (j2s-class-find-element (j2s-vtype self) val)))
 			(when el
-			   (with-access::J2SClassElement el (prop static)
+			   (with-access::J2SClassElement el (prop static rtwin)
 			      (when (and (not static) (isa? prop J2SMethodPropertyInit))
 				 (with-access::J2SMethodPropertyInit prop (val)
 				    (with-access::J2SFun val (params)
 				       (when (=fx (length params) (length args))
-					  el)))))))))
+					  (or rtwin el))))))))))
 	     =>
 	     (lambda (el)
 		(with-access::J2SClassElement el (prop)

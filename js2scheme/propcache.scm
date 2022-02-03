@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.5.x/js2scheme/propcache.scm           */
+;*    serrano/prgm/project/hop/hop/js2scheme/propcache.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Tue Jan 18 14:23:14 2022 (serrano)                */
+;*    Last change :  Wed Feb  2 18:11:54 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Add caches to object property lookups                            */
@@ -157,11 +157,6 @@
 ;*    propcache* ::J2SAccess ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (propcache* this::J2SAccess count env ccall assig infunloop shared-pcache conf)
-   
-   (define (canbe-object? obj)
-      (and (not (type-number? (j2s-type obj)))
-	   (not (eq? (j2s-type obj) 'pair))))
-   
    (if infunloop
        (with-access::J2SAccess this (cache obj field loc)
 	  (unless (canbe-object? obj)
@@ -272,7 +267,7 @@
 	  (call-default-walker))
 	 ((isa? fun J2SAccess)
 	  (with-access::J2SAccess fun (obj)
-	     (if (eq? (j2s-type obj) 'pair)
+	     (if (not (canbe-object? obj))
 		 (call-default-walker)
 		 (begin
 		    (unless cache (set! cache (inc! count)))
@@ -349,3 +344,11 @@
       (append
 	 (propcache* test count env ccall assig inloopfunp shared-pcache conf)
 	 (propcache* body count env ccall assig #t shared-pcache conf))))
+
+;*---------------------------------------------------------------------*/
+;*    canbe-object? ...                                                */
+;*---------------------------------------------------------------------*/
+(define (canbe-object? obj)
+   (and (not (type-number? (j2s-type obj)))
+	(not (eq? (j2s-type obj) 'proxy))
+	(not (eq? (j2s-type obj) 'pair))))

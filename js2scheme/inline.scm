@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Wed Dec 29 09:01:05 2021 (serrano)                */
-;*    Copyright   :  2017-21 Manuel Serrano                            */
+;*    Last change :  Thu Feb  3 09:00:06 2022 (serrano)                */
+;*    Copyright   :  2017-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function/Method inlining optimization                            */
 ;*    -------------------------------------------------------------    */
@@ -762,6 +762,16 @@
 ;*    collect-proto-methods* ::J2SClass ...                            */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (collect-proto-methods* this::J2SDeclClass)
+   
+   (define (element-method el)
+      (with-access::J2SClassElement el (prop rtwin)
+	 (if rtwin
+	     (with-access::J2SClassElement rtwin (prop)
+		(with-access::J2SMethodPropertyInit prop (val)
+		   val))
+	     (with-access::J2SMethodPropertyInit prop (val)
+		val))))
+   
    (with-access::J2SDeclClass this (val)
       (if (isa? val J2SClass)
 	  (filter-map (lambda (el)
@@ -770,7 +780,8 @@
 			       (when (isa? name J2SString)
 				  (with-access::J2SString name ((str val))
 				     (when (check-id (string->symbol str))
-					(cons str (protoinfo prop met #f val))))))))
+					(let ((met (element-method el)))
+					   (cons str (protoinfo prop met #f val)))))))))
 	     (j2s-class-methods val :super #f))
 	  '())))
 

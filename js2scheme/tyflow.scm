@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Wed Feb  2 10:12:13 2022 (serrano)                */
+;*    Last change :  Wed Feb  2 16:09:45 2022 (serrano)                */
 ;*    Copyright   :  2016-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -344,7 +344,8 @@
    (let ((c (assq decl env)))
       (if (pair? c)
 	  (cdr c)
-	  (with-access::J2SDecl decl (vtype) vtype))))
+	  (with-access::J2SDecl decl (ctype vtype)
+	     (if (eq? ctype 'any) vtype ctype)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    env-nocapture ...                                                */
@@ -723,6 +724,23 @@
 		      (expr-type-add! this nenv ctx ty))))))))
 
 ;*---------------------------------------------------------------------*/
+;*    node-type ::J2SSuper ...                                         */
+;*---------------------------------------------------------------------*/
+(define-method (node-type  this::J2SSuper env::pair-nil ctx::pair)
+   (with-trace 'j2s-tyflow (format "node-type ::J2SSuper ~a" (cdr ctx))
+      (with-access::J2SSuper this (decl loc super context)
+	 (cond
+	    ((isa? super J2SClass)
+	     (expr-type-add! this env ctx super))
+	    ((isa? context J2SClass)
+	     (expr-type-add! this env ctx (or (j2s-class-super-val context) 'any)))
+	    (else
+	     (let ((ty (env-lookup env decl)))
+		(if (isa? ty J2SClass)
+		    (expr-type-add! this env ctx (or (j2s-class-super-val ty) 'any))
+		    (expr-type-add! this env ctx 'any))))))))
+
+;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SWithRef ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-type this::J2SWithRef env::pair-nil ctx::pair)
@@ -764,7 +782,7 @@
 ;*    node-type ::J2SDeclInit ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-type this::J2SDeclInit env::pair-nil ctx::pair)
-   (with-access::J2SDeclInit this (val id loc _usage writable utype mtype)
+   (with-access::J2SDeclInit this (val id loc _usage writable ctype utype mtype)
       (multiple-value-bind (ty env bk)
 	 (node-type val env ctx)
 	 ;; check the special case
@@ -779,6 +797,9 @@
 			      (unless (decl-usage-has? decl '(assig))
 				 (set! mtype val)))))))))
 	 (cond
+	    ((not (eq? ctype 'any))
+	     (decl-vtype-set! this ctype ctx)
+	     (return 'void (extend-env env this ctype) bk))
 	    ((and (not (eq? utype 'unknown)) (eq? (car ctx) 'hopscript))
 	     (decl-vtype-set! this utype ctx)
 	     (let ((tyv (j2s-type val)))
@@ -1124,10 +1145,12 @@
 	    (set! rtype rutype))
 	 (let ((fenv (append envp env)))
 	    (when thisp
-	       (with-access::J2SDecl thisp (vtype itype loc)
+	       (with-access::J2SDecl thisp (vtype ctype itype loc)
 		  (unless (or (eq? vtype 'object) (isa? vtype J2SClass))
 		     (decl-vtype-add! thisp itype ctx))
-		  (set! fenv (extend-env fenv thisp itype))))
+		  (set! fenv
+		     (extend-env fenv thisp
+			(if (eq? ctype 'any) itype ctype)))))
 	    (when argumentsp
 	       (decl-itype-add! argumentsp 'arguments ctx)
 	       (decl-vtype-add! argumentsp 'arguments ctx)
@@ -2155,51 +2178,6 @@
 ;*    node-type ::J2SClassElement ...                                  */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-type this::J2SClassElement env::pair-nil ctx::pair)
-
-   (define (J2SIsa decl clazz)
-      (with-access::J2SClass clazz ((rec decl))
-	 (with-access::J2SDecl decl (loc)
-	    (instantiate::J2SCall
-	       (%info (cons 'instanceof clazz))
-	       (loc loc)
-	       (type 'bool)
-	       (fun (instantiate::J2SHopRef
-		       (loc loc)
-		       (type 'function)
-		       (rtype 'bool)
-		       (id (class-predicate-id clazz))))
-	       (thisargs '())
-	       (args (list (instantiate::J2SRef
-			      (loc loc)
-			      (decl decl))))))))
-   
-   (define (type-record-method val::J2SFun clazz method::J2SString)
-      (with-access::J2SFun val (thisp params body loc)
-	 (let ((self (duplicate::J2SDeclInit thisp
-			(key (ast-decl-key))
-			(id '!this)
-			(_scmid '!this)
-			(vtype clazz)
-			(itype clazz)
-			(ctype clazz)
-			(val (J2SCast clazz (J2SRef thisp)))
-			(binder 'let-opt)
-			(hint '())))
-	       (endloc (node-endloc body)))
-	    (set! body
-	       (J2SBlock
-		  (J2SIf (J2SIsa thisp clazz)
-		     (J2SReturn #t
-			(J2SMethodCall*
-			   (J2SAccess (J2SRef thisp)
-			      (with-access::J2SString method (val)
-				 (duplicate::J2SString method
-				    (val (string-append val "%%R")))))
-			   (list (J2SRef thisp :type clazz))
-			   (map (lambda (p) (J2SRef p)) params)))
-		     (J2SLetRecBlock #f (list self)
-			(j2s-alpha body (list thisp) (list self)))))))))
-   
    (with-access::J2SClassElement this (prop type clazz static usage)
       (cond
 	 ((j2s-class-property-constructor? prop)
@@ -2219,22 +2197,14 @@
 		    (node-type-fun val env ctx)))
 	      (with-access::J2SDataPropertyInit prop (val)
 		 (with-access::J2SFun val (thisp params)
-		    (with-access::J2SDecl thisp (itype vtype eloc mtype)
-		       (unless (eq? itype 'object)
+		    (with-access::J2SDecl thisp (ctype itype vtype eloc mtype)
+		       (unless (or (not (eq? ctype 'any)) (eq? itype 'object))
 			  (set! mtype clazz)
 			  (set! itype 'object)
 			  (set! vtype 'any)
 			  (unfix! ctx "constructor type")))
 		    (node-type prop env ctx)))))
 	 (else
-	  (when (and (not static)
-		     (isa? prop J2SMethodPropertyInit)
-		     (isa? clazz J2SRecord))
-	     (with-access::J2SMethodPropertyInit prop (val name)
-		(with-access::J2SFun val (thisp)
-		   (with-access::J2SDecl thisp (ctype vtype)
-		      (when (and (eq? vtype 'unknown) (eq? ctype 'any))
-			 (type-record-method val clazz name))))))
 	  (let ((vty (node-type prop env ctx)))
 	     (when (eq? type 'unknown)
 		(cond

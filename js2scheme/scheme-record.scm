@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jul 15 07:09:51 2021                          */
-;*    Last change :  Sun Jan  2 18:29:32 2022 (serrano)                */
+;*    Last change :  Thu Feb  3 12:51:36 2022 (serrano)                */
 ;*    Copyright   :  2021-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Record generation                                                */
@@ -184,27 +184,31 @@
    (define (bind-record-instance-methods clazz::J2SRecord proto constrmap)
       
       (define (bind-method-override el)
-	 (with-access::J2SClassElement el (prop index)
+	 (with-access::J2SClassElement el (prop index rtwin)
 	    (with-access::J2SMethodPropertyInit prop (val name inlinecachevar)
 	       (let ((name (j2s-scheme-class-propname name mode return ctx)))
-		  `(let ((%fun ,(j2sfun->scheme val (class-element-id this el) #f mode return ctx)))
-		      (with-access::JsProcedure %fun (procedure)
-			 (vector-set! mptable ,index procedure))
-		      (vector-set! mntable ,index ,name)
-		      ,@(if inlinecachevar `((set! ,inlinecachevar %fun)) '())
-		      (js-bind! %this ,proto ,name :value %fun
-			 :writable #f :enumerable #f :configurable #f))))))
+		  (if (or (not rtwin) (not (eq? rtwin el)))
+		      `(let ((%fun ,(j2sfun->scheme val (class-element-id this el) #f mode return ctx)))
+			  (vector-set! mntable ,index ,name)
+			  (vector-set! mptable ,index ,(class-element-id clazz el))
+			  ,(if rtwin
+			       (with-access::J2SClassElement rtwin (prop index rtwin clazz)
+				  `(vector-set! mrtable ,index ,(class-element-id clazz rtwin)))
+			       `(vector-set! mrtable ,index ,(class-element-id clazz el)))
+			  ,@(if inlinecachevar `((set! ,inlinecachevar %fun)) '())
+			  (js-bind! %this ,proto ,name :value %fun
+			     :writable #f :enumerable #f :configurable #f)))))))
       
       (define (bind-method-inherit el)
-	 (with-access::J2SClassElement el (prop index clazz)
+	 (with-access::J2SClassElement el (prop index clazz rtwin)
 	    (with-access::J2SMethodPropertyInit prop (name)
 	       (let ((name (j2s-scheme-class-propname name mode return ctx)))
 		  (with-access::J2SClass clazz (cmap)
 		     (let ((omap (j2s-scheme cmap mode return ctx)))
-			`(with-access::JsConstructMap ,omap ((omptable mptable))
-			    (let ((%proc (vector-ref omptable ,index)))
-			       (vector-set! mptable ,index %proc)
-			       (vector-set! mntable ,index ,name)))))))))
+			`(with-access::JsConstructMap ,omap ((omptable mptable) (omrtable mrtable))
+			    (vector-set! mntable ,index ,name)
+			    (vector-set! mptable ,index (vector-ref omptable ,index))
+			    (vector-set! mrtable ,index (vector-ref omrtable ,index)))))))))
       
       (define (bind-method element)
 	 (with-access::J2SClassElement element (clazz)
@@ -214,7 +218,7 @@
       
       (let ((methods (class-sort-class-methods! this)))
 	 (if (pair? methods)
-	     `(with-access::JsConstructMap ,constrmap (mptable mntable)
+	     `(with-access::JsConstructMap ,constrmap (mptable mrtable mntable)
 		 ,@(map (lambda (entry)
 			   (let ((last (car (last-pair entry))))
 			      (bind-method last)))
@@ -268,13 +272,16 @@
 		   ,@(let ((ms (class-sort-class-methods! this)))
 			(if (pair? ms)
 			    (let ((sz (length ms)))
-			       `((with-access::JsConstructMap ,constrmap (mptable mntable)
-				   (set! mptable (make-vector ,sz))
-				   (set! mntable (make-vector ,sz)))))
+			       `((with-access::JsConstructMap ,constrmap (mptable mrtable mntable)
+				    (set! mptable (make-vector ,sz))
+				    (set! mrtable (make-vector ,sz))
+				    (set! mntable (make-vector ,sz)))))
 			    '()))
 		   ,(bind-record-instance-methods this proto constrmap)
-		   ,@(filter-map (lambda (m) (bind-static this clazz m)) elements)
-		   ,@(filter-map (lambda (m) (bind-prototype this proto m)) elements)
+		   ,@(filter-map (lambda (m) (bind-static this clazz m))
+			elements)
+		   ,@(filter-map (lambda (m) (bind-prototype this proto m))
+			elements)
 		   ,clazz)))))
    
    (define (let-super super proc)

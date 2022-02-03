@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 19 16:28:44 2021                          */
-;*    Last change :  Fri Dec 31 08:37:18 2021 (serrano)                */
-;*    Copyright   :  2021 Manuel Serrano                               */
+;*    Last change :  Thu Feb  3 09:30:00 2022 (serrano)                */
+;*    Copyright   :  2021-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Class related utility functions                                  */
 ;*---------------------------------------------------------------------*/
@@ -614,13 +614,16 @@
 	 (if (null? els)
 	     (reverse! res)
 	     (let ((el (car els)))
-		(with-access::J2SClassElement el (prop index)
+		(with-access::J2SClassElement el (prop index rtwin)
 		   (with-access::J2SPropertyInit prop (name)
-		      (if (isa? name J2SString)
+		      (if (and (isa? name J2SString) (not (eq? rtwin el)))
 			  (with-access::J2SString name (val)
 			     (multiple-value-bind (old idx)
 				(assoc-index val res)
 				(set! index idx)
+				(when rtwin
+				   (with-access::J2SClassElement rtwin (index)
+				      (set! index idx)))
 				(cond
 				   ((pair? old)
 				    (set-cdr! (last-pair old) (list el))

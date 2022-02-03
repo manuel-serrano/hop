@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Wed Feb  2 10:34:33 2022 (serrano)                */
+;*    Last change :  Wed Feb  2 13:57:26 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -301,6 +301,9 @@
 	      (type (default 'any))
 	      (clazz (default #f) (info '("notraverse")))
 	      (index::long (default -1) (info '("notraverse")))
+	      ;; the %R-twin for optimized sealed record (see record.scm)
+	      ;;   #f or the twin, maybe point to self
+	      (rtwin (default #f) (info '("notravserse")))
 	      ;; see usage-bit.sch
 	      (usage::uint32 (default (usage '()))))
 	   
@@ -359,6 +362,8 @@
 	   (final-class J2SThis::J2SRef)
 	   
 	   (final-class J2SSuper::J2SRef
+	      (rtwinp::bool (default #f) (info '("notraverse")))
+	      (super (default #f) (info '("notraverse")))
 	      (context (default 'plain) (info '("notraverse"))))
 
 	   (final-class J2SCond::J2SExpr
@@ -424,9 +429,6 @@
 	   
 	   (class J2SInit::J2SAssig)
 	   
-;* 	   (final-class J2SVAssig::J2SAssig)                           */
-;* 	   (final-class J2SCAssig::J2SAssig)                           */
-
 	   (final-class J2SFunBinding::J2SInit)
 	   
 	   (final-class J2SPrefix::J2SAssig
