@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Thu Nov 25 15:33:52 2021 (serrano)                */
-;*    Copyright   :  2017-21 Manuel Serrano                            */
+;*    Last change :  Fri Feb  4 07:46:24 2022 (serrano)                */
+;*    Copyright   :  2017-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
 ;*=====================================================================*/
@@ -23,6 +23,7 @@
 	   __js2scheme_stmtassign
 	   __js2scheme_compile
 	   __js2scheme_stage
+	   __js2scheme_classutils
 	   __js2scheme_scheme
 	   __js2scheme_scheme-cast
 	   __js2scheme_scheme-utils
@@ -581,7 +582,15 @@
 	  ((and (eq? (j2s-type r) 'function) (eq? (j2s-type l) 'object))
 	   `(js-object-function-instanceof? %this ,lhs ,rhs))
 	  ((eq? (j2s-type r) 'function)
-	   `(js-function-instanceof? %this ,lhs ,rhs))
+	   (if (isa? r J2SRef)
+	       (with-access::J2SRef r (decl)
+		  (if (isa? decl J2SDeclClass)
+		      (with-access::J2SDeclClass decl (val)
+			 (if (isa? val J2SRecord)
+			     `(,(class-predicate-id val) ,lhs)
+			     `(js-function-instanceof? %this ,lhs ,rhs)))
+		      `(js-function-instanceof? %this ,lhs ,rhs)))
+	       `(js-function-instanceof? %this ,lhs ,rhs)))
 	  (else
 	   `(js-instanceof? %this ,lhs ,rhs))))))
 

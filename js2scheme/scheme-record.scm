@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jul 15 07:09:51 2021                          */
-;*    Last change :  Thu Feb  3 12:51:36 2022 (serrano)                */
+;*    Last change :  Thu Feb  3 18:53:41 2022 (serrano)                */
 ;*    Copyright   :  2021-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Record generation                                                */
@@ -195,7 +195,12 @@
 			       (with-access::J2SClassElement rtwin (prop index rtwin clazz)
 				  `(vector-set! mrtable ,index ,(class-element-id clazz rtwin)))
 			       `(vector-set! mrtable ,index ,(class-element-id clazz el)))
-			  ,@(if inlinecachevar `((set! ,inlinecachevar %fun)) '())
+			  ,@(if inlinecachevar
+				(if rtwin
+				    (with-access::J2SClassElement rtwin (prop index rtwin clazz)
+				       `((set! ,inlinecachevar ,(class-element-id clazz rtwin))))
+				    `((set! ,inlinecachevar ,(class-element-id clazz el))))
+				'())
 			  (js-bind! %this ,proto ,name :value %fun
 			     :writable #f :enumerable #f :configurable #f)))))))
       

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug  6 14:30:50 2018                          */
-;*    Last change :  Wed Feb  2 16:54:46 2022 (serrano)                */
+;*    Last change :  Fri Feb  4 07:01:45 2022 (serrano)                */
 ;*    Copyright   :  2018-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Record (aka, sealed class) specific optimizations:               */
@@ -219,8 +219,9 @@
 			      (map (lambda (p) (J2SRef p)) params)))
 			(J2SIf (J2SIsaProxy thisp)
 			   (J2SLetRecBlock #f (list self)
-			      (patch-this-access!
-				 (j2s-alpha body (list thisp) (list self))))
+			      (J2SMeta 'inline 0 0
+				 (patch-this-access!
+				    (j2s-alpha body (list thisp) (list self)))))
 			   (J2SReturn #t
 			      (J2SPragma/bindings 'any
 				 '(^this) (list (J2SThis thisp))

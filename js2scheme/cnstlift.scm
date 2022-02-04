@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  manuel serrano                                    */
 ;*    Creation    :  Tue Jul  7 19:27:03 2020                          */
-;*    Last change :  Sat Jan  1 06:22:45 2022 (serrano)                */
+;*    Last change :  Fri Feb  4 08:10:20 2022 (serrano)                */
 ;*    Copyright   :  2020-22 manuel serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Constant lifting optimization.                                   */
@@ -28,7 +28,7 @@
 ;*        }                                                            */
 ;*    2. loop lifting:                                                 */
 ;*      This second optimization moves constant expressions out of     */
-;*      loop.s                                                         */
+;*      loops.                                                         */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
@@ -435,7 +435,6 @@
 ;*    cnst-expression ::J2SCacheCheck ...                              */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (cnst-expression this::J2SCacheCheck iscnst freevars depth)
-   (with-access::J2SCacheCheck this (obj owner)
-      (when (cnst-expression obj iscnst freevars depth)
-	 (isa? owner J2SRecord))))
+   (cell-set! iscnst #f)
+   #f)
    

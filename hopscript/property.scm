@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Thu Feb  3 09:44:15 2022 (serrano)                */
+;*    Last change :  Thu Feb  3 18:55:39 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -4847,11 +4847,12 @@
 	       ((eq? (vector-ref mntable i) name)
 		(let ((procedure (vector-ref mrtable i)))
 		   (if (=fx (procedure-arity procedure) (+fx 1 (length args)))
-		       (with-access::JsPropertyCache ccache (pmap method)
+		       (with-access::JsPropertyCache ccache (pmap method function)
 			  ;; correct arity, put in cache
 			  (js-validate-pmap-pcache! ccache)
 			  (set! pmap cmap)
 			  (set! method procedure)
+			  (set! function procedure)
 			  (apply procedure o args))
 		       (js-method-jsobject-call/cache-fill %this o name args
 			  ccache ocache point ccspecs ospecs))))

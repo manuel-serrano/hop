@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 20 07:58:36 2021                          */
-;*    Last change :  Wed Dec 29 09:08:39 2021 (serrano)                */
-;*    Copyright   :  2021 Manuel Serrano                               */
+;*    Last change :  Fri Feb  4 08:18:02 2022 (serrano)                */
+;*    Copyright   :  2021-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Loop constant lifting                                            */
 ;*    -------------------------------------------------------------    */
@@ -215,10 +215,10 @@
    (with-access::J2SBinary this (lhs rhs)
       (and (constant? lhs env) (constant? rhs env))))
 
-;*---------------------------------------------------------------------*/
-;*    constant? ::J2SCacheCheck ...                                    */
-;*---------------------------------------------------------------------*/
-(define-method (constant? this::J2SCacheCheck env)
-   (with-access::J2SCacheCheck this (obj owner)
-      (when (constant? obj env)
-	 (isa? owner J2SRecord))))
+;* {*---------------------------------------------------------------------*} */
+;* {*    constant? ::J2SCacheCheck ...                                    *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define-method (constant? this::J2SCacheCheck env)                  */
+;*    (with-access::J2SCacheCheck this (obj owner)                     */
+;*       (when (constant? obj env)                                     */
+;* 	 (isa? owner J2SRecord))))                                     */
