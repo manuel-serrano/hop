@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Wed Feb  2 13:57:26 2022 (serrano)                */
+;*    Last change :  Sat Feb  5 15:46:34 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -456,7 +456,7 @@
 	      ;; proto-method | instanceof | method | cmap-proto-method
 	      prop::symbol
 	      (cache read-only (info '("notraverse")))
-	      (owner::obj read-only (default #f) (info '("notraverse")))
+	      (owner::obj (info '("notraverse")))
 	      (obj::J2SExpr (info '("ast")))
 	      fields::pair-nil)
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 20 14:34:39 2016                          */
-;*    Last change :  Wed Feb  2 10:00:56 2022 (serrano)                */
+;*    Last change :  Sat Feb  5 15:53:06 2022 (serrano)                */
 ;*    Copyright   :  2016-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    AST Alpha conversion                                             */
@@ -350,6 +350,15 @@
 		       new))))
 	     (duplicate::J2SSuper this)))))
 
+;*---------------------------------------------------------------------*/
+;*    alpha ...                                                        */
+;*---------------------------------------------------------------------*/
+(define-method (alpha this::J2SCacheCheck)
+   (with-access::J2SCacheCheck this (owner obj)
+      (duplicate::J2SCacheCheck this
+	 (obj (alpha obj))
+	 (owner (if (isa? owner J2SRef) (alpha owner) owner)))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    alpha ::J2SFun ...                                               */
 ;*---------------------------------------------------------------------*/

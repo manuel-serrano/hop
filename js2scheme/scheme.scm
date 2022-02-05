@@ -2893,8 +2893,13 @@
 	  `(eq? (js-pcache-xmap (js-pcache-ref %pcache ,cache))
 	      (js-object-cmap ,(j2s-scheme obj mode return ctx))))
 	 ((method)
-	  `(eq? (js-pcache-function (js-pcache-ref %pcache ,cache))
-	      ,(j2s-scheme obj mode return ctx)))
+	  (if owner
+	      `(and (eq? (js-pcache-function (js-pcache-ref %pcache ,cache))
+		       ,(j2s-scheme obj mode return ctx))
+		    (eq? (js-pcache-pmap (js-pcache-ref %pcache ,cache))
+		       (js-object-cmap ,(j2s-scheme owner mode return ctx))))
+	      `(and (eq? (js-pcache-function (js-pcache-ref %pcache ,cache))
+		       ,(j2s-scheme obj mode return ctx)))))
 	 (else
 	  (error "j2s-scheme" "Illegal J2SCacheCheck property" prop)))))
 
@@ -2904,6 +2909,10 @@
 (define-method (j2s-scheme this::J2SCacheUpdate mode return ctx)
    (with-access::J2SCacheUpdate this (cache obj prop)
       (case prop
+	 ((proto-poly-method)
+	  `(with-access::JsPropertyCache (js-pcache-ref %pcache ,cache) (imap)
+	      (when (eq? xmap (js-not-a-pmap))
+		 (set! imap %cmap))))
 	 ((proto-method)
 	  `(with-access::JsPropertyCache (js-pcache-ref %pcache ,cache) (imap emap cmap pmap nmap amap xmap)
 	      (when (eq? xmap (js-not-a-pmap))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Wed Feb  2 16:49:39 2022 (serrano)                */
+;*    Last change :  Sat Feb  5 15:00:25 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -633,6 +633,12 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-type node)
    (cond
+      ((isa? node J2SRef)
+       (with-access::J2SRef node (decl type)
+	  (with-access::J2SDecl decl (ctype)
+	     (if (eq? ctype 'any)
+		 type
+		 ctype))))
       ((isa? node J2SExpr)
        (with-access::J2SExpr node (type)
 	  type))
@@ -646,8 +652,8 @@
    (cond
       ((isa? node J2SRef)
        (with-access::J2SRef node (decl)
-	  (with-access::J2SDecl decl (vtype)
-	     vtype)))
+	  (with-access::J2SDecl decl (ctype vtype)
+	     (if (eq? ctype 'any) vtype ctype))))
       ((isa? node J2SGlobalRef)
        (with-access::J2SGlobalRef node (decl)
 	  (with-access::J2SDecl decl (vtype)

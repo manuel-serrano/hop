@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.5.x/js2scheme/instanceof.scm          */
+;*    serrano/prgm/project/hop/hop/js2scheme/instanceof.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 24 16:22:25 2018                          */
-;*    Last change :  Sun Jan 30 09:04:10 2022 (serrano)                */
+;*    Last change :  Sat Feb  5 15:48:50 2022 (serrano)                */
 ;*    Copyright   :  2018-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Cache instanceof tests.                                          */
@@ -71,9 +71,9 @@
    (define (object-instanceof/cache obj rhs be loc)
       (let ((cache (get-cache prgm))
 	    (endloc (node-endloc rhs)))
-	 (J2SIf (J2SCacheCheck 'instanceof cache #f obj)
+	 (J2SIf (J2SCacheCheck 'instanceof cache (J2SUndefined) obj)
 	    (J2SReturn #t (J2SBool #t) be)
-	    (J2SIf (J2SCacheCheck '!instanceof cache #f obj)
+	    (J2SIf (J2SCacheCheck '!instanceof cache (J2SUndefined) obj)
 	       (J2SReturn #t (J2SBool #f) be)
 	       (J2SIf (duplicate::J2SBinary this
 			 (lhs (duplicate::J2SRef obj)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Fri Feb  4 07:02:11 2022 (serrano)                */
+;*    Last change :  Sat Feb  5 14:57:43 2022 (serrano)                */
 ;*    Copyright   :  2017-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function/Method inlining optimization                            */
@@ -1166,7 +1166,7 @@
    (define (cache-check c loc obj field kont inline::J2SStmt)
       (if (private-field? field)
 	  inline
-	  (J2SIf (J2SCacheCheck 'proto-method c #f obj field)
+	  (J2SIf (J2SCacheCheck 'proto-method c (J2SUndefined) obj field)
 	     inline
 	     (kont))))
    
@@ -1239,7 +1239,7 @@
 				   ;; callee: decl-or-id x fun
 				   (J2SIf
 				      (J2SCacheCheck 'method
-					 c #f
+					 c (J2SRef obj)
 					 (if (isa? v J2SDecl) (J2SRef v) (J2SHopRef v)))
 				      (J2SSeq*
 					 (map (lambda (c)
@@ -1318,7 +1318,7 @@
 				  v))
 			 vals)))
 	    (cond
-	       ((not (eq? (j2s-type obj) 'object))
+	       ((not (type-object? (j2s-type obj)))
 		(if (j2sref-ronly? obj)
 		    (with-access::J2SRef obj (decl)
 		       (LetBlock loc tmps
@@ -1370,7 +1370,7 @@
    (define (cache-check c loc owner obj field kont inline::J2SStmt)
       (if (private-field? field)
 	  inline
-	  (J2SIf (J2SCacheCheck 'proto-method c owner obj field)
+	  (J2SIf (J2SCacheCheck 'proto-method c #f obj field)
 	     inline
 	     (kont))))
 
@@ -1448,7 +1448,7 @@
 	 (with-access::J2SFun val (body thisp params (floc loc))
 	    (let ((vals (inline-args params args
 			   #f limit stack pmethods ingen prgm conf loc))
-		  (decl (J2SLetOpt '(ref) (gensym 'thisXXX) obj)))
+		  (decl (J2SLetOpt '(ref) (gensym 'this) obj)))
 	       (cache-check cache loc (protoinfo-owner callee) obj field kont
 		  (LetBlock floc (cons decl (filter (lambda (b) (isa? b J2SDecl)) vals))
 		     (J2SMetaInl (cons val stack)
@@ -1480,22 +1480,21 @@
 			     (J2SMethodCall/cache* f (list self) args
 				'(vtable-inline pmap-inline) c))))
 		   (J2SLetRecBlock #f (list r)
-		      (J2SIfIsRecord self
+		      (J2SIfIsRecord (j2s-alpha self '() '())
 			 (J2SNop)
 			 (let loop ((cs caches))
 			    (if (null? cs)
 				(J2SNop)
 				(let ((v (get-svar (cdar cs))))
-				   ;; see the compilation of 
 				   (J2SIf
 				      (J2SCacheCheck 'method
-					 c #f (J2SHopRef v))
+					 c (j2s-alpha self '() '()) (J2SHopRef v))
 				      (J2SSeq*
 					 (map (lambda (c)
 						 (J2SStmtExpr
 						    (if (eq? c (car cs))
 							(J2SCacheUpdate 'proto-method
-							   (car c) self)
+							   (car c) (j2s-alpha self '() '()))
 							(J2SUndefined))))
 					    caches))
 				      (loop (cdr cs)))))))
@@ -1508,7 +1507,7 @@
 
    (define (gen-check-object obj field args)
       (J2SIf (J2SHopCall (J2SHopRef/rtype 'js-object? 'bool) obj)
-	 (inline-object-method-call fun (j2s-alpha obj '() '()) args)
+	 (inline-object-method-call fun obj args)
 	 (J2SMeta 'inline 0 0
 	    (J2SReturn #t
 	       (J2SCall* (J2SAccess (j2s-alpha obj '() '()) field) args)))))
@@ -1525,7 +1524,7 @@
 			       v))
 		      vals)))
 	 (cond
-	    ((not (eq? (j2s-type obj) 'object))
+	    ((not (type-object? (j2s-type obj)))
 	     (if (simple-argument? obj)
 		 (if (pair? tmps)
 		     (LetBlock loc tmps
@@ -1540,6 +1539,9 @@
 		    (d (J2SLetOpt '(get) id obj)))
 		(LetBlock loc (cons d tmps)
 		   (inline-object-method-call fun (J2SRef d) args))))
+	    ((pair? tmps)
+	     (LetBlock loc tmps
+		(inline-object-method-call fun obj args)))
 	    (else
 	     (inline-object-method-call fun obj args))))))
 
