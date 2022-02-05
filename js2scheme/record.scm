@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug  6 14:30:50 2018                          */
-;*    Last change :  Fri Feb  4 07:01:45 2022 (serrano)                */
+;*    Last change :  Fri Feb  4 09:22:32 2022 (serrano)                */
 ;*    Copyright   :  2018-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Record (aka, sealed class) specific optimizations:               */
@@ -116,7 +116,9 @@
 			     (cond
 				(static
 				 (set! ndecls (cons (static-method el) ndecls)))
-				((not (j2s-class-property-constructor? prop))
+				((and (not (j2s-class-property-constructor? prop))
+				      (with-access::J2SDataPropertyInit prop (name)
+					 (isa? name J2SString)))
 				 (set! nels (cons (record-method el) nels)))))
 			    ((and static (isa? prop J2SDataPropertyInit))
 			     (set! ndecls (cons (static-data el) ndecls))))))
