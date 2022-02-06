@@ -2861,6 +2861,9 @@
       (with-access::J2SCacheCheck this (prop cache obj fields owner)
 	 `(js-object-cache-check-proto-method ,(j2s-scheme obj mode return ctx)
 	     (js-pcache-ref %pcache ,cache)
+	     ,(if (memq prop '(proto-method proto-method-poly))
+		  ''polymorphic
+		  ''monomorphic)
 	     ,(with-access::J2SString (car fields) (val)
 		 (if (isa? owner J2SClass)
 		     (with-access::J2SClass owner (name)
@@ -2880,7 +2883,7 @@
    
    (with-access::J2SCacheCheck this (prop cache obj fields owner)
       (case prop
-	 ((proto-method)
+	 ((proto-method proto-method-mono proto-method-poly)
 	  (or (record-cache-check this)
 	      (object-cache-check this)))
 	 ((cmap-proto-method)
@@ -2893,13 +2896,13 @@
 	  `(eq? (js-pcache-xmap (js-pcache-ref %pcache ,cache))
 	      (js-object-cmap ,(j2s-scheme obj mode return ctx))))
 	 ((method)
-	  (if owner
-	      `(and (eq? (js-pcache-function (js-pcache-ref %pcache ,cache))
-		       ,(j2s-scheme obj mode return ctx))
-		    (eq? (js-pcache-pmap (js-pcache-ref %pcache ,cache))
-		       (js-object-cmap ,(j2s-scheme owner mode return ctx))))
-	      `(and (eq? (js-pcache-function (js-pcache-ref %pcache ,cache))
-		       ,(j2s-scheme obj mode return ctx)))))
+	  `(and (eq? (js-pcache-function (js-pcache-ref %pcache ,cache))
+		   ,(j2s-scheme obj mode return ctx))))
+	 ((method-and-owner)
+	  `(and (eq? (js-pcache-function (js-pcache-ref %pcache ,cache))
+		   ,(j2s-scheme obj mode return ctx))
+		(eq? (js-pcache-pmap (js-pcache-ref %pcache ,cache))
+		   (js-object-cmap ,(j2s-scheme owner mode return ctx)))))
 	 (else
 	  (error "j2s-scheme" "Illegal J2SCacheCheck property" prop)))))
 
@@ -2909,11 +2912,11 @@
 (define-method (j2s-scheme this::J2SCacheUpdate mode return ctx)
    (with-access::J2SCacheUpdate this (cache obj prop)
       (case prop
-	 ((proto-poly-method)
+	 ((proto-method-mono)
 	  `(with-access::JsPropertyCache (js-pcache-ref %pcache ,cache) (imap)
-	      (when (eq? xmap (js-not-a-pmap))
+	      (let ((%cmap (js-object-cmap ,(j2s-scheme obj mode return ctx))))
 		 (set! imap %cmap))))
-	 ((proto-method)
+	 ((proto-method proto-method-poly)
 	  `(with-access::JsPropertyCache (js-pcache-ref %pcache ,cache) (imap emap cmap pmap nmap amap xmap)
 	      (when (eq? xmap (js-not-a-pmap))
 		 (let ((%cmap (js-object-cmap ,(j2s-scheme obj mode return ctx))))

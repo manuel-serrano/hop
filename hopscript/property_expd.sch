@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Thu Feb  3 09:45:00 2022 (serrano)                */
+;*    Last change :  Sun Feb  6 08:36:42 2022 (serrano)                */
 ;*    Copyright   :  2016-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -492,7 +492,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-object-cache-check-proto-method-expander x e)
    (match-case x
-      ((?- (and (? symbol?) ?obj) ?cache . ?-)
+      ((?- (and (? symbol?) ?obj) ?cache (quote polymorphic) . ?-)
        (e `(let ((%cmap (js-object-cmap ,obj)))
 	      (or (eq? %cmap (js-pcache-imap ,cache))
 		  (eq? %cmap (js-pcache-emap ,cache))
@@ -501,10 +501,13 @@
 		  (eq? %cmap (js-pcache-nmap ,cache))
 		  (eq? %cmap (js-pcache-amap ,cache))))
 	  e))
-      ((?- ?obj ?cache . ?-)
+      ((?- (and (? symbol?) ?obj) ?cache (quote monomorphic) . ?-)
+       (e `(eq? (js-object-cmap ,obj) (js-pcache-imap ,cache))
+	  e))
+      ((?- ?obj ?cache ?- . ?rest)
        (let ((o (gensym 'obj)))
 	  (e `(let ((,o ,obj))
-		 (js-object-cache-check-proto-method ,o ,cache))
+		 (js-object-cache-check-proto-method ,o ,cache ,@rest))
 	     e)))
       (else
        (error "js-object-cache-check-proto-method" "bad form" x))))

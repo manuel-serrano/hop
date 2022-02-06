@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Sat Feb  5 15:46:34 2022 (serrano)                */
+;*    Last change :  Sun Feb  6 08:31:14 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -453,7 +453,8 @@
 	      (field::J2SExpr (info '("ast"))))
 
 	   (final-class J2SCacheCheck::J2SExpr
-	      ;; proto-method | instanceof | method | cmap-proto-method
+	      ;; prop ::= proto-method | instanceof | method | cmap-proto-method
+	      ;;      | proto-method-poly | proto-method-mono
 	      prop::symbol
 	      (cache read-only (info '("notraverse")))
 	      (owner::obj (info '("notraverse")))
@@ -461,6 +462,7 @@
 	      fields::pair-nil)
 
 	   (final-class J2SCacheUpdate::J2SExpr
+	      ;; prop ::= proto-method-poly | proto-method-mono
 	      (prop::symbol read-only)
 	      (cache read-only (info '("notraverse")))
 	      (obj::J2SExpr (info '("ast"))))

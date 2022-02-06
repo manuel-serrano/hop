@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Sat Feb  5 14:57:43 2022 (serrano)                */
+;*    Last change :  Sun Feb  6 08:26:34 2022 (serrano)                */
 ;*    Copyright   :  2017-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function/Method inlining optimization                            */
@@ -1366,11 +1366,13 @@
 	    (set! pcache-size (+fx pcache-size 1))
 	    n)))
 
+   (define proto-method
+      (if (pair? (cdr callees)) 'proto-method-mono 'proto-method-poly))
    
    (define (cache-check c loc owner obj field kont inline::J2SStmt)
       (if (private-field? field)
 	  inline
-	  (J2SIf (J2SCacheCheck 'proto-method c #f obj field)
+	  (J2SIf (J2SCacheCheck proto-method c #f obj field)
 	     inline
 	     (kont))))
 
@@ -1480,24 +1482,25 @@
 			     (J2SMethodCall/cache* f (list self) args
 				'(vtable-inline pmap-inline) c))))
 		   (J2SLetRecBlock #f (list r)
-		      (J2SIfIsRecord (j2s-alpha self '() '())
-			 (J2SNop)
+;* 		      (J2SIfIsRecord (j2s-alpha self '() '())          */
+;* 			 (J2SNop)                                      */
 			 (let loop ((cs caches))
 			    (if (null? cs)
 				(J2SNop)
 				(let ((v (get-svar (cdar cs))))
 				   (J2SIf
-				      (J2SCacheCheck 'method
+				      (J2SCacheCheck 'method-and-owner
 					 c (j2s-alpha self '() '()) (J2SHopRef v))
 				      (J2SSeq*
 					 (map (lambda (c)
 						 (J2SStmtExpr
 						    (if (eq? c (car cs))
-							(J2SCacheUpdate 'proto-method
+							(J2SCacheUpdate proto-method
 							   (car c) (j2s-alpha self '() '()))
 							(J2SUndefined))))
 					    caches))
-				      (loop (cdr cs)))))))
+				      (loop (cdr cs))))))
+;* 			    )                                          */
 		      (J2SReturn #t (J2SRef r))))
 		(let ((cache (get-cache prgm)))
 		   (inline-method self field (car callees) args cache loc
