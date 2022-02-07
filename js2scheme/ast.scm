@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Sun Feb  6 08:31:14 2022 (serrano)                */
+;*    Last change :  Mon Feb  7 10:45:40 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -303,7 +303,7 @@
 	      (index::long (default -1) (info '("notraverse")))
 	      ;; the %R-twin for optimized sealed record (see record.scm)
 	      ;;   #f or the twin, maybe point to self
-	      (rtwin (default #f) (info '("notravserse")))
+	      (rtwin (default #f) (info '("notraverse")))
 	      ;; see usage-bit.sch
 	      (usage::uint32 (default (usage '()))))
 	   

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Mon Feb  7 07:05:51 2022 (serrano)                */
+;*    Last change :  Mon Feb  7 08:37:47 2022 (serrano)                */
 ;*    Copyright   :  2017-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function/Method inlining optimization                            */
@@ -73,8 +73,12 @@
    2)
 
 (define inline-max-function-size
-   ;; the maximum body size of inlined candidates
+   ;; the maximum body size of inlined function candidates
    160)
+
+(define inline-max-method-size
+   ;; the maximum body size of inlined method candidates
+   64)
 
 (define inline-min-dispatch-percentage
    ;; the minimum percentage of call
@@ -899,12 +903,12 @@
 				     (+fx inline-method-check-size
 					(function-size (protoinfo-method m))))
 				mets))))
-		  (when (or (<fx sz (*fx limit (length mets)))
-			    (and (<fx sz inline-max-function-size)
-				 (every (lambda (m)
-					   (let ((f (protoinfo-method m)))
-					      (function-leaf? f)))
-				    mets)))
+		  (when (and (<fx sz (*fx limit (length mets)))
+			     (and (<fx sz inline-max-method-size)
+				  (every (lambda (m)
+					    (let ((f (protoinfo-method m)))
+					       (function-leaf? f)))
+				     mets)))
 		     (sort (lambda (f1 f2)
 			      (>=fx (function-size (protoinfo-method f1))
 				 (function-size (protoinfo-method f2))))

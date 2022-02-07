@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 23 07:35:40 2017                          */
-;*    Last change :  Mon Feb  7 07:11:22 2022 (serrano)                */
+;*    Last change :  Mon Feb  7 08:09:26 2022 (serrano)                */
 ;*    Copyright   :  2017-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript public expanders                                       */
@@ -362,14 +362,14 @@
        (error "js-call-with-stack-yield" "bad form" x))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-record-instanceof? ...                                        */
+;*    js-record-instanceof?-expander ...                               */
 ;*---------------------------------------------------------------------*/
-(define (js-record-instanceof? x e)
+(define (js-record-instanceof?-expander x e)
    (match-case x
-      ((?- (? (? symbol?) ?obj) ?predicate)
-       `(or (,predicate ,obj)
-	    (and (js-proxy? ,obj)
-		 (,predicate (js-proxy-target ,obj)))))
+      ((?- (and (? symbol?) ?obj) ?predicate)
+       (e `(or (,predicate ,obj)
+	       (and (js-proxy? ,obj) (,predicate (js-proxy-target* ,obj))))
+	  e))
       ((?- ?obj ?predicate)
        (let ((tmp (gensym 'tmp)))
 	  (e `(let ((,tmp ,obj))

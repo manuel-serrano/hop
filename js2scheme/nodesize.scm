@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 24 07:26:29 2017                          */
-;*    Last change :  Wed Sep 15 18:54:59 2021 (serrano)                */
-;*    Copyright   :  2017-21 Manuel Serrano                            */
+;*    Last change :  Mon Feb  7 08:34:44 2022 (serrano)                */
+;*    Copyright   :  2017-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Compute an AST size (used when inlining)                         */
 ;*=====================================================================*/
@@ -29,6 +29,7 @@
 (define FUN-TAX 3)
 (define IF-TAX 2)
 (define CALL-TAX 3)
+(define ACCESS-TAX 3)
 (define LOOP-TAX 80)
 (define STMT-TAX 1)
 (define LETBLOCK-TAX 1)
@@ -157,6 +158,13 @@
 	 (node-size fun) (length args)
 	 (apply + (map node-size args)))))
 
+;*---------------------------------------------------------------------*/
+;*    node-size ::J2SAccess ...                                        */
+;*---------------------------------------------------------------------*/
+(define-method (node-size this::J2SAccess)
+   (with-access::J2SAccess this (obj field)
+      (+ ACCESS-TAX (node-size obj) (node-size field))))
+		  
 ;*---------------------------------------------------------------------*/
 ;*    node-size ::J2SLoop ...                                          */
 ;*---------------------------------------------------------------------*/

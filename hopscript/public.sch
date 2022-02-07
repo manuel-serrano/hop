@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Mon Oct 25 12:11:03 2021 (serrano)                */
-;*    Copyright   :  2016-21 Manuel Serrano                            */
+;*    Last change :  Mon Feb  7 08:10:50 2022 (serrano)                */
+;*    Copyright   :  2016-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript public expanders                                       */
 ;*=====================================================================*/
@@ -19,3 +19,9 @@
 ;*---------------------------------------------------------------------*/
 (define-expander js-call-with-stack-yield
    js-call-with-stack-yield-expander)
+
+;*---------------------------------------------------------------------*/
+;*    js-record-instanceof? ...                                        */
+;*---------------------------------------------------------------------*/
+(define-expander js-record-instanceof?
+   js-record-instanceof?-expander)

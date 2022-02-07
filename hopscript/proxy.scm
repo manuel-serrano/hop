@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Mon Feb  7 07:12:38 2022 (serrano)                */
+;*    Last change :  Mon Feb  7 08:10:11 2022 (serrano)                */
 ;*    Copyright   :  2018-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -36,7 +36,7 @@
 	   __hopscript_profile)
    
    (export (js-init-proxy! ::JsGlobalObject)
-	   (js-proxy-target ::JsProxy)
+	   (js-proxy-target*::JsObject ::JsProxy)
 	   (inline js-new-proxy ::JsGlobalObject ::obj ::obj)
 	   (inline js-new-proxy/caches ::JsGlobalObject ::obj ::obj
 	      ::JsPropertyCache ::JsPropertyCache ::JsPropertyCache)
@@ -89,6 +89,15 @@
       (js-debug-object (js-proxy-target obj))
       (fprint (current-error-port) ">>>>> handler: ")
       (js-debug-object handler)))
+
+;*---------------------------------------------------------------------*/
+;*    js-proxy-target* ...                                             */
+;*---------------------------------------------------------------------*/
+(define (js-proxy-target* o)
+   (let ((o (js-proxy-target o)))
+      (if (js-proxy? o)
+	  (js-proxy-target* o)
+	  o)))
 
 ;*---------------------------------------------------------------------*/
 ;*    jsarray ...                                                      */

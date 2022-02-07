@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 18:25:11 2006                          */
-;*    Last change :  Mon Dec 20 18:17:08 2021 (serrano)                */
-;*    Copyright   :  2006-21 Manuel Serrano                            */
+;*    Last change :  Mon Feb  7 08:11:38 2022 (serrano)                */
+;*    Copyright   :  2006-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript expanders installer                                    */
 ;*=====================================================================*/
@@ -265,6 +265,8 @@
 	     ,js-new-expander))
    (eval `(define-expander js-call-with-stack-yield
 	     ,js-call-with-stack-yield-expander))
+   (eval `(define-expander js-record-instanceof?-expander
+	     ,js-record-instanceof?-expander))
 
    (eval `(define-expander js-jsobject->jsarray
 	     ,js-jsobject->jsarray-expander))
