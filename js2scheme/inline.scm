@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Mon Feb  7 15:02:46 2022 (serrano)                */
+;*    Last change :  Mon Feb  7 16:21:37 2022 (serrano)                */
 ;*    Copyright   :  2017-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function/Method inlining optimization                            */
@@ -1115,7 +1115,7 @@
 	  (let ((fun (gensym '%met)))
 	     (protoinfo-svar-set! callee fun)
 	     (with-access::J2SProgram prgm (globals)
-		;; (set! globals (cons `(define ,fun #unspecified) globals))
+		(set! globals (cons `(define ,fun #unspecified) globals))
 		(with-access::J2SAssig (protoinfo-assig callee) (rhs loc)
 		   (set! rhs
 		      (J2SSequence
@@ -1185,7 +1185,7 @@
 	  (let ((fun (gensym '%met)))
 	     (protoinfo-svar-set! callee fun)
 	     (with-access::J2SProgram prgm (globals)
-		;; (set! globals (cons `(define ,fun #unspecified) globals))
+		(set! globals (cons `(define ,fun #unspecified) globals))
 		(let ((as (protoinfo-assig callee)))
 		   (cond
 		      ((isa? as J2SAssig)
@@ -1391,7 +1391,7 @@
 	  (let ((fun (gensym '%inlmet)))
 	     (protoinfo-svar-set! callee fun)
 	     (with-access::J2SProgram prgm (globals)
-		;; (set! globals (cons `(define ,fun #unspecified) globals))
+		(set! globals (cons `(define ,fun #unspecified) globals))
 		(let ((as (protoinfo-assig callee)))
 		   (cond
 		      ((isa? as J2SAssig)

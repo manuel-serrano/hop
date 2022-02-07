@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Thu Jan 27 11:24:08 2022 (serrano)                */
+;*    Last change :  Mon Feb  7 16:22:19 2022 (serrano)                */
 ;*    Copyright   :  2018-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -83,7 +83,7 @@
 		   ,@(j2s-tls-headers scmheaders)
 		   (letrec* ,(j2s-let-headers scmheaders)
 		      ,@(j2s-expr-headers scmheaders)
-		      ,@globals
+		      ;;,@globals
 		      ,esexports
 		      ,@esimports
 		      ,@esredirects
@@ -139,7 +139,7 @@
 		    ,@(j2s-tls-headers scmheaders)
 		    (letrec* ,(j2s-let-headers scmheaders)
 		       ,@(j2s-expr-headers scmheaders)
-		       ,@globals
+		       ;;,@globals
 		       ,esexports
 		       ,@esimports
 		       ,@esredirects
@@ -195,7 +195,7 @@
 		,@(js-define-tls this ctx)
 		,@(j2s-tls-headers scmheaders)
 		,@scmheaders
-		,@globals
+		;; ,@globals
 		,esexports
 		,@esimports
 		,@esredirects
@@ -337,7 +337,7 @@
 			   ,@(j2s-tls-headers scmheaders)
 			   (letrec* ,(j2s-let-headers scmheaders)
 			      ,@(j2s-expr-headers scmheaders)
-			      ,@globals
+			      ;; ,@globals
 			      ,esexports
 			      ,@esimports
 			      ,@esredirects
