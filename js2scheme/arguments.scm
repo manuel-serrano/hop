@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.4.x/js2scheme/arguments.scm           */
+;*    serrano/prgm/project/hop/hop/js2scheme/arguments.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec  5 09:14:00 2019                          */
-;*    Last change :  Thu May 13 09:46:35 2021 (serrano)                */
-;*    Copyright   :  2019-21 Manuel Serrano                            */
+;*    Last change :  Mon Feb  7 15:59:37 2022 (serrano)                */
+;*    Copyright   :  2019-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arguments optimization                                           */
 ;*    -------------------------------------------------------------    */
@@ -120,6 +120,14 @@
 	       (when (isa? field J2SString)
 		  (with-access::J2SString field (val)
 		     (string=? val "apply")))))))
+
+   (define (rtwin? node::J2SCall)
+      (with-access::J2SCall node (fun)
+	 (when (isa? fun J2SAccess)
+	    (with-access::J2SAccess fun (obj field)
+	       (when (isa? obj J2SSuper)
+		  (with-access::J2SSuper obj (context super)
+		     (eq? context super)))))))
    
    (with-access::J2SRef this (decl)
       (let loop ((decl decl))
@@ -133,7 +141,7 @@
 				(get-length? parent))
 		       (arguments-invalidate! decl))))
 		((isa? parent J2SCall)
-		 (unless (apply? parent)
+		 (unless (or (apply? parent) (rtwin? parent))
 		    (arguments-invalidate! decl)))
 		((isa? parent J2SDeclInit)
 		 (if (decl-usage-strict? parent '(init get))
