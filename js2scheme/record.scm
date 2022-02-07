@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug  6 14:30:50 2018                          */
-;*    Last change :  Fri Feb  4 09:22:32 2022 (serrano)                */
+;*    Last change :  Mon Feb  7 16:16:14 2022 (serrano)                */
 ;*    Copyright   :  2018-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Record (aka, sealed class) specific optimizations:               */
@@ -71,7 +71,7 @@
 	 (patch-method-element! el #f)
 	 (let ((nel (record-rtwin-element el)))
 	    (patch-method-element! nel #t)
-	    (record-property-dispatch! el nel)
+	    (record-property-dispatch! el nel args)
 	    nel)))
    
    (define (static-method el)
@@ -164,7 +164,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    record-proprty-dispatch! ...                                     */
 ;*---------------------------------------------------------------------*/
-(define (record-property-dispatch! el::J2SClassElement nel)
+(define (record-property-dispatch! el::J2SClassElement nel args)
    
    (define (J2SIsaClass decl clazz)
       (with-access::J2SClass clazz ((rec decl))
@@ -221,9 +221,12 @@
 			      (map (lambda (p) (J2SRef p)) params)))
 			(J2SIf (J2SIsaProxy thisp)
 			   (J2SLetRecBlock #f (list self)
-			      (J2SMeta 'inline 0 0
-				 (patch-this-access!
-				    (j2s-alpha body (list thisp) (list self)))))
+			      (if (config-get args :optim-proxy)
+				  (patch-this-access!
+				     (j2s-alpha body (list thisp) (list self)))
+				  (J2SMeta 'inline 0 0
+				     (patch-this-access!
+					(j2s-alpha body (list thisp) (list self))))))
 			   (J2SReturn #t
 			      (J2SPragma/bindings 'any
 				 '(^this) (list (J2SThis thisp))
