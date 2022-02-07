@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Sun Feb  6 08:26:34 2022 (serrano)                */
+;*    Last change :  Mon Feb  7 07:05:51 2022 (serrano)                */
 ;*    Copyright   :  2017-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function/Method inlining optimization                            */
@@ -91,6 +91,10 @@
 (define inline-arity-expansion-size-factor
    ;; the size of the function body 
    15)
+
+(define inline-method-check-size
+   ;; the size of a method check
+   10)
 
 ;*---------------------------------------------------------------------*/
 ;*    dev                                                              */
@@ -892,7 +896,8 @@
 			       (or (hashtable-get pmethods val) '())))
 		      (sz (apply +
 			     (map (lambda (m)
-				     (function-size (protoinfo-method m)))
+				     (+fx inline-method-check-size
+					(function-size (protoinfo-method m))))
 				mets))))
 		  (when (or (<fx sz (*fx limit (length mets)))
 			    (and (<fx sz inline-max-function-size)

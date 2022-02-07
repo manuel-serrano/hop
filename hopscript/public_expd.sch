@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 23 07:35:40 2017                          */
-;*    Last change :  Sat Dec 11 06:54:34 2021 (serrano)                */
-;*    Copyright   :  2017-21 Manuel Serrano                            */
+;*    Last change :  Mon Feb  7 07:11:22 2022 (serrano)                */
+;*    Copyright   :  2017-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript public expanders                                       */
 ;*    -------------------------------------------------------------    */
@@ -360,3 +360,20 @@
 	   (e `(,proc ,yield) e))))
       (else
        (error "js-call-with-stack-yield" "bad form" x))))
+
+;*---------------------------------------------------------------------*/
+;*    js-record-instanceof? ...                                        */
+;*---------------------------------------------------------------------*/
+(define (js-record-instanceof? x e)
+   (match-case x
+      ((?- (? (? symbol?) ?obj) ?predicate)
+       `(or (,predicate ,obj)
+	    (and (js-proxy? ,obj)
+		 (,predicate (js-proxy-target ,obj)))))
+      ((?- ?obj ?predicate)
+       (let ((tmp (gensym 'tmp)))
+	  (e `(let ((,tmp ,obj))
+		 (js-record-instanceof? ,tmp ,predicate))
+	     e)))
+      (else
+       (error "js-record-instanceof?" "bad form" x))))
