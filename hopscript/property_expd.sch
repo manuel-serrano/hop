@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Sun Feb  6 08:36:42 2022 (serrano)                */
+;*    Last change :  Tue Feb  8 14:48:05 2022 (serrano)                */
 ;*    Copyright   :  2016-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -1281,7 +1281,7 @@
 	     (iso (gensym 'isobj)))
 	 `(let ((,iso (js-object? ,obj)))
 	     ,(if (pair? bindings)
-		  `(if (or ,iso (not (or (eq? ,obj (js-undefined)) (null? ,obj))))
+		  `(if (or ,iso (not (js-null-or-undefined? ,obj)))
 		       (let ,bindings
 			  ,(expand-call %this iso obj name ccache ocache loc cs os nargs))
 		       (js-raise-type-error/loc %this ,loc

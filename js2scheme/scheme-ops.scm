@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Fri Feb  4 07:46:24 2022 (serrano)                */
+;*    Last change :  Tue Feb  8 14:15:13 2022 (serrano)                */
 ;*    Copyright   :  2017-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -1025,10 +1025,7 @@
 		      ((memq (j2s-type rhs) '(int32 uint32))
 		       `(=fx ,(asfixnum left tl) ,right))
 		      ((context-get ctx :=fx-as-eq #f)
-		       `(or (eq? ,(asfixnum left tl) ,right)
-			    (js-eqil?
-			       ,(box left tl ctx)
-			       ,(box right tr ctx))))
+		       `(js-eqil? ,(box left tl ctx) ,(box right tr ctx)))
 		      (else
 		       `(if (fixnum? ,right)
 			    (=fx ,(asfixnum left tl) ,right)
@@ -1082,10 +1079,9 @@
 			       ,(box left tl ctx)
 			       ,(box right tr ctx))))
 		      ((and (inrange-int32? lhs) (context-get ctx :=fx-as-eq #f))
-		       `(or (eq? ,(asfixnum left tl) ,right)
-			    (js-eqil?
-			       ,(box left tl ctx)
-			       ,(box right tr ctx))))
+		       `(js-eqil?
+			   ,(box left tl ctx)
+			   ,(box right tr ctx)))
 		      (else
 		       `(if (fixnum? ,right)
 			    ,(if (inrange-int32? lhs)

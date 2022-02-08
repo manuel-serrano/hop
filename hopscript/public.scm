@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.5.x/hopscript/public.scm              */
+;*    serrano/prgm/project/hop/hop/hopscript/public.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sun Jan 30 09:12:43 2022 (serrano)                */
+;*    Last change :  Tue Feb  8 14:14:23 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -2430,9 +2430,13 @@
 ;*    js-eqil? ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-eqil? x y)
-   (cond
-      ((fixnum? y) (=fx x y))
-      ((flonum? y) (=fl (fixnum->flonum x) y))))
+   (cond-expand
+      (bigloo-c
+       (or (eq? x y) (and (flonum? y) (=fl (fixnum->flonum x) y))))
+      (else
+       (cond
+	  ((fixnum? y) (=fx x y))
+	  ((flonum? y) (=fl (fixnum->flonum x) y))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-eqir? ...                                                     */

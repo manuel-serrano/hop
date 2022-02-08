@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Thu Feb  3 18:55:39 2022 (serrano)                */
+;*    Last change :  Tue Feb  8 14:49:52 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -2731,6 +2731,7 @@
    (with-access::JsPropertyCache cache (cntmiss (cname name) (cpoint point))
       (set! cntmiss (+u32 #u32:1 cntmiss)))
 
+   (js-debug-object o)
    (let loop ((obj o))
       (jsobject-find obj o name
 	 ;; map search
@@ -4813,6 +4814,7 @@
       (set! cpoint point)
       (set! usage 'call))
 
+   (tprint "CALL/MISS name=" name " " (typeof o))
    (with-access::JsPropertyCache ccache (pmap vindex method cntmiss vtable vmaps)
       (when (and (procedure? method)
 		 (not (eq? pmap (js-not-a-pmap)))
@@ -4968,10 +4970,12 @@
 	 (jsobject-find obj o n
 	    ;; map search
 	    (lambda (obj i)
+	       (tprint "FOUND name=" name " o=" (typeof o) " obj=" (typeof obj))
 	       (with-access::JsObject o ((omap cmap) __proto__)
 		  (with-access::JsObject obj ((wmap cmap))
 		     (with-access::JsConstructMap wmap (methods %id)
 			(let ((el-or-desc (js-object-ref obj i)))
+			   (tprint "EL=" (typeof el-or-desc))
 			   (cond
 			      ((or (isa? el-or-desc JsAccessorDescriptor)
 				   (isa? el-or-desc JsWrapperDescriptor))
@@ -4984,7 +4988,7 @@
 					 (cond
 					    ((<fx arity 0)
 					     ;; varargs functions, currently not cached...
-					     '(with-access::JsPropertyCache ccache (pmap emap cmap)
+					     (with-access::JsPropertyCache ccache (pmap emap cmap)
 						(set! emap (js-not-a-pmap))
 						(set! cmap (js-uncachable-pmap))
 						(set! pmap (js-not-a-pmap))))
@@ -5014,7 +5018,7 @@
 						   (set! cmethod proc))))
 					    (else
 					     ;; arity missmatch, never cache
-					     '(with-access::JsPropertyCache ccache (pmap emap cmap)
+					     (with-access::JsPropertyCache ccache (pmap emap cmap)
 						(set! emap (js-not-a-pmap))
 						(set! cmap (js-uncachable-pmap))
 						(set! pmap (js-not-a-pmap)))))))
