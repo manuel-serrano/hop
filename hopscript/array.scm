@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Copyright   :  2013-21 Manuel Serrano                            */
+;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
 ;*=====================================================================*/
@@ -215,7 +215,8 @@
    ;; export for bmem profiling
    (export (js-array-alloc-ctor::JsArray ::JsGlobalObject ::JsFunction))
 
-   (pragma (js-array-concat (args-noescape args))
+   (pragma (js-array-for-of (args-noescape))
+	   (js-array-concat (args-noescape args))
 	   (js-array-concat-apply (args-noescape vec))
 	   (js-array-maybe-concat (args-noescape args))
 	   (js-array-map-procedure (args-noescape proc))
