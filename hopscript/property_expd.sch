@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Tue Feb  8 14:48:05 2022 (serrano)                */
+;*    Last change :  Wed Feb  9 08:26:39 2022 (serrano)                */
 ;*    Copyright   :  2016-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -1110,13 +1110,7 @@
 		  (case (car cs)
 		     ((amap imap emap)
 		      (loop (cdr cs)))
-		     ((pmap)
-		      `(if (eq? %cmap (js-pcache-pmap ,ccache))
-			   (begin
-			      (js-profile-log-cache ,ccache :pmap #t)
-			      ((js-pcache-method ,ccache) ,obj ,@args))
-			   ,(loop (cdr cs))))
-		     ((pmap-inline)
+		     ((pmap pmap-inline)
 		      `(if (eq? %cmap (js-pcache-pmap ,ccache))
 			   (begin
 			      (js-profile-log-cache ,ccache :pmap #t)
@@ -1135,24 +1129,7 @@
 			  (if (>u32 cntmiss #u32:4096)
 			      ,(calln-uncachable %this ocspecs obj prop args ccache ocache loc)
 			      ,(loop (cdr cs)))))
-		     ((vtable)
-		      ;; vtable method call
-		      (cond-expand
-			 ((or no-vtable-cache no-vtable-cache-call)
-			  (loop (cdr cs)))
-			 (else
-			  `(with-access::JsConstructMap %cmap (vtable)
-			      (let ((vidx (js-pcache-vindex ,ccache))
-				    (proc #unspecified))
-				 (if (and (<fx vidx (vector-length vtable))
-					  (begin
-					     (set! proc (vector-ref vtable vidx))
-					     (procedure? proc)))
-				     (begin
-					(js-profile-log-cache ,ccache :vtable #t)
-					(proc ,obj ,@args))
-				     ,(loop (cdr cs))))))))
-		     ((vtable-inline)
+		     ((vtable vtable-inline)
 		      ;; vtable method call
 		      (cond-expand
 			 ((or no-vtable-cache no-vtable-cache-call)

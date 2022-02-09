@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Mon Feb  7 16:21:37 2022 (serrano)                */
+;*    Last change :  Tue Feb  8 16:26:35 2022 (serrano)                */
 ;*    Copyright   :  2017-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function/Method inlining optimization                            */
@@ -59,6 +59,7 @@
 ;*---------------------------------------------------------------------*/
 (define-macro (J2SMetaInl stack optim stmt)
    `(instantiate::J2SMetaInl
+       (meta 'inline)
        (loc loc)
        (inlstack ,stack)
        (debug 0)
@@ -830,10 +831,11 @@
 (define-walk-method (inline! this::J2SMetaInl
 		       targets limit::long stack::pair-nil
 		       pmethods ingen prgm conf)
-   (with-access::J2SMetaInl this (inlstack stmt loc)
-      (set! stmt
-	 (inline! stmt
-	    targets limit (append inlstack stack) pmethods ingen prgm conf))
+   (with-access::J2SMetaInl this (inlstack stmt loc optim)
+      (when (>fx optim 0)
+	 (set! stmt
+	    (inline! stmt
+	       targets limit (append inlstack stack) pmethods ingen prgm conf)))
       this))
    
 ;*---------------------------------------------------------------------*/
@@ -915,26 +917,28 @@
 			mets)))))))
 
    (define (inline-access-call this::J2SCall fun::J2SAccess args loc)
-      (let ((mets (find-inline-methods this fun (length args))))
-	 (when (pair? mets)
-	    (let* ((mets (filter-rutype
-			    (if (pair? targets)
-				(filter (lambda (t) (memq t mets)) targets)
-				mets)
-			    prgm))
-		   (vals (map protoinfo-method mets))
-		   (sz (apply + (map function-size vals))))
+      (with-access::J2SAccess fun (obj)
+	 (unless (eq? (j2s-type obj) 'proxy)
+	    (let ((mets (find-inline-methods this fun (length args))))
 	       (when (pair? mets)
-		  (inline-verb loc fun
-		     (map (lambda (x) '-) mets) sz limit 0 conf)
-		  (when (pair? stack) 
-		     (invalidate-function-size! (car stack)))
-		  (let ((e (inline-method-call fun mets args
-			      loc (node-endloc this)
-			      '() limit stack pmethods ingen prgm conf)))
-		     (inline-stmt->expr loc e
-			(function-rutype
-			   (protoinfo-method (car mets))))))))))
+		  (let* ((mets (filter-rutype
+				  (if (pair? targets)
+				      (filter (lambda (t) (memq t mets)) targets)
+				      mets)
+				  prgm))
+			 (vals (map protoinfo-method mets))
+			 (sz (apply + (map function-size vals))))
+		     (when (pair? mets)
+			(inline-verb loc fun
+			   (map (lambda (x) '-) mets) sz limit 0 conf)
+			(when (pair? stack) 
+			   (invalidate-function-size! (car stack)))
+			(let ((e (inline-method-call fun mets args
+				    loc (node-endloc this)
+				    '() limit stack pmethods ingen prgm conf)))
+			   (inline-stmt->expr loc e
+			      (function-rutype
+				 (protoinfo-method (car mets))))))))))))
    
    (define (inline-ref-call this::J2SCall fun::J2SRef thisargs args loc)
       (cond
@@ -1230,37 +1234,39 @@
 			     (obj (J2SRef obj))))
 		       (r (J2SLetOpt '(call) (gensym 'r)
 			     (J2SMethodCall/cache* f (list (J2SRef obj)) args
-				'(vtable-inline pmap-inline) c)))
+				'(vtable-inline pmap-inline poly) c)))
 		       (endloc (node-endloc node)))
 		   (J2SMetaInl '() 0
-		      (J2SLetRecBlock #f (list r)
-			 (let loop ((cs funcaches))
-			    (if (null? cs)
-				(J2SSeq*
-				   (map (lambda (c)
-					   (J2SStmtExpr
-					      (J2SCacheUpdate 'proto-reset
-						 (car c) (J2SRef obj))))
-				      funcaches))
-				(let* ((target (cdar cs))
-				       (v (function-glodecl (cdr target) prgm)))
-				   ;; cs: cache x callee
-				   ;; callee: decl-or-id x fun
-				   (J2SIf
-				      (J2SCacheCheck 'method
-					 c (J2SRef obj)
-					 (if (isa? v J2SDecl) (J2SRef v) (J2SHopRef v)))
-				      (J2SSeq*
-					 (map (lambda (c)
-						 (J2SStmtExpr
-						    (if (eq? c (car cs))
-							(J2SCacheUpdate 'proto-method
-							   (car c) (J2SRef obj))
-							(J2SCacheUpdate 'proto-reset
-							   (car c) (J2SRef obj)))))
-					    funcaches))
-				      (loop (cdr cs))))))
-			 (J2SReturn #t (J2SRef r)))))
+		      (if (isa? (j2s-type obj) J2SRecord)
+			  r
+			  (J2SLetRecBlock #f (list r)
+			     (let loop ((cs funcaches))
+				(if (null? cs)
+				    (J2SSeq*
+				       (map (lambda (c)
+					       (J2SStmtExpr
+						  (J2SCacheUpdate 'proto-reset
+						     (car c) (J2SRef obj))))
+					  funcaches))
+				    (let* ((target (cdar cs))
+					   (v (function-glodecl (cdr target) prgm)))
+				       ;; cs: cache x callee
+				       ;; callee: decl-or-id x fun
+				       (J2SIf
+					  (J2SCacheCheck 'method
+					     c (J2SRef obj)
+					     (if (isa? v J2SDecl) (J2SRef v) (J2SHopRef v)))
+					  (J2SSeq*
+					     (map (lambda (c)
+						     (J2SStmtExpr
+							(if (eq? c (car cs))
+							    (J2SCacheUpdate 'proto-method
+							       (car c) (J2SRef obj))
+							    (J2SCacheUpdate 'proto-reset
+							       (car c) (J2SRef obj)))))
+						funcaches))
+					  (loop (cdr cs))))))
+			     (J2SReturn #t (J2SRef r))))))
 		(let ((cache (get-cache prgm)))
 		   (inline-method (J2SRef obj)
 		      field (car targets) args cache loc
@@ -1375,13 +1381,15 @@
 	    (set! pcache-size (+fx pcache-size 1))
 	    n)))
 
-   (define proto-method
-      (if (pair? (cdr callees)) 'proto-method-mono 'proto-method-poly))
+   (define (proto-method obj)
+      (if (isa? (j2s-type obj) J2SRecord)
+	  (if (pair? (cdr callees)) 'record-method-mono 'record-method-poly)
+	  (if (pair? (cdr callees)) 'proto-method-mono 'proto-method-poly)))
    
    (define (cache-check c loc owner obj field kont inline::J2SStmt)
       (if (private-field? field)
 	  inline
-	  (J2SIf (J2SCacheCheck proto-method c #f obj field)
+	  (J2SIf (J2SCacheCheck (proto-method obj) c #f obj field)
 	     inline
 	     (kont))))
 
@@ -1474,43 +1482,44 @@
       (cond
 	 ((not (isa? obj J2SRef))
 	  (inline-expr-method obj field callee args cache loc kont))
-	 ((isa? (protoinfo-owner callee) J2SRecord)
+	 ((isa? (j2s-type (protoinfo-owner callee)) J2SRecord)
 	  (inline-record-method obj field callee args cache loc kont))
 	 (else
 	  (inline-object-method obj field callee args cache loc kont))))
    
    (define (inline-object-method-call fun self args)
-      (with-access::J2SAccess fun (field cspecs)
+      (with-access::J2SAccess fun (obj field cspecs)
 	 (let loop ((callees callees)
 		    (caches '()))
 	    (if (null? callees)
-		(let* ((c (get-cache prgm))
-		       (f (duplicate::J2SAccess fun
-			     (obj self)))
-		       (r (J2SLetOpt '(call) (gensym 'r)
-			     (J2SMethodCall/cache* f (list self) args
-				'(vtable-inline pmap-inline) c))))
-		   (J2SLetRecBlock #f (list r)
-;* 		      (J2SIfIsRecord (j2s-alpha self '() '())          */
-;* 			 (J2SNop)                                      */
-			 (let loop ((cs caches))
-			    (if (null? cs)
-				(J2SNop)
-				(let ((v (get-svar (cdar cs))))
-				   (J2SIf
-				      (J2SCacheCheck 'method-and-owner
-					 c (j2s-alpha self '() '()) (J2SHopRef v))
-				      (J2SSeq*
-					 (map (lambda (c)
-						 (J2SStmtExpr
-						    (if (eq? c (car cs))
-							(J2SCacheUpdate proto-method
-							   (car c) (j2s-alpha self '() '()))
-							(J2SUndefined))))
-					    caches))
-				      (loop (cdr cs))))))
-;* 			    )                                          */
-		      (J2SReturn #t (J2SRef r))))
+		(let ((f (duplicate::J2SAccess fun
+			    (obj self))))
+		   (if (isa? (j2s-type self) J2SRecord)
+		       (J2SMetaInl stack 0
+			  (J2SReturn #t
+			     (J2SMethodCall* f (list self) args)))
+		       (let* ((c (get-cache prgm))
+			      (r (J2SLetOpt '(call) (gensym 'r)
+				    (J2SMethodCall/cache* f (list self) args
+				       '(vtable-inline pmap-inline poly) c))))
+			  (J2SLetRecBlock #f (list r)
+			     (let loop ((cs caches))
+				(if (null? cs)
+				    (J2SNop)
+				    (let ((v (get-svar (cdar cs))))
+				       (J2SIf
+					  (J2SCacheCheck 'method-and-owner
+					     c (j2s-alpha self '() '()) (J2SHopRef v))
+					  (J2SSeq*
+					     (map (lambda (c)
+						     (J2SStmtExpr
+							(if (eq? c (car cs))
+							    (J2SCacheUpdate (proto-method obj)
+							       (car c) (j2s-alpha self '() '()))
+							    (J2SUndefined))))
+						caches))
+					  (loop (cdr cs))))))
+			     (J2SReturn #t (J2SRef r))))))
 		(let ((cache (get-cache prgm)))
 		   (inline-method self field (car callees) args cache loc
 		      (lambda ()
@@ -1548,7 +1557,7 @@
 		       (gen-check-object (J2SRef d) field args)))))
 	    ((not (isa? obj J2SRef))
 	     (let* ((id (gensym 'this))
-		    (d (J2SLetOpt '(get) id obj)))
+		    (d (J2SLetOpt/vtype (j2s-type obj) '(get) id obj)))
 		(LetBlock loc (cons d tmps)
 		   (inline-object-method-call fun (J2SRef d) args))))
 	    ((pair? tmps)

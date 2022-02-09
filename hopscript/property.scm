@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Tue Feb  8 14:49:52 2022 (serrano)                */
+;*    Last change :  Wed Feb  9 07:00:02 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -2731,7 +2731,6 @@
    (with-access::JsPropertyCache cache (cntmiss (cname name) (cpoint point))
       (set! cntmiss (+u32 #u32:1 cntmiss)))
 
-   (js-debug-object o)
    (let loop ((obj o))
       (jsobject-find obj o name
 	 ;; map search
@@ -4814,7 +4813,6 @@
       (set! cpoint point)
       (set! usage 'call))
 
-   (tprint "CALL/MISS name=" name " " (typeof o))
    (with-access::JsPropertyCache ccache (pmap vindex method cntmiss vtable vmaps)
       (when (and (procedure? method)
 		 (not (eq? pmap (js-not-a-pmap)))
@@ -4970,12 +4968,10 @@
 	 (jsobject-find obj o n
 	    ;; map search
 	    (lambda (obj i)
-	       (tprint "FOUND name=" name " o=" (typeof o) " obj=" (typeof obj))
 	       (with-access::JsObject o ((omap cmap) __proto__)
 		  (with-access::JsObject obj ((wmap cmap))
 		     (with-access::JsConstructMap wmap (methods %id)
 			(let ((el-or-desc (js-object-ref obj i)))
-			   (tprint "EL=" (typeof el-or-desc))
 			   (cond
 			      ((or (isa? el-or-desc JsAccessorDescriptor)
 				   (isa? el-or-desc JsWrapperDescriptor))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Wed Feb  2 16:23:10 2022 (serrano)                */
+;*    Last change :  Tue Feb  8 16:12:08 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -243,7 +243,9 @@
 		  :itype ,(type->sexp itype)
 		  :mtype ,(type->sexp mtype))))
 	 ((or (string-contains (or (getenv "HOPTRACE") "") "j2s:type"))
-	  `(:vtype ,(type->sexp vtype) :mtype ,(type->sexp mtype)))
+	  (if (eq? ctype 'any)
+	      `(:vtype ,(type->sexp vtype) :mtype ,(type->sexp mtype))
+	      `(:ctype ,(type->sexp ctype) :vtype ,(type->sexp vtype) :mtype ,(type->sexp mtype))))
 	 (else
 	  '()))))
       
