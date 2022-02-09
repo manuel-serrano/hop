@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.5.x/js2scheme/cast.scm                */
+;*    serrano/prgm/project/hop/hop/js2scheme/cast.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Mon Jan 17 17:00:40 2022 (serrano)                */
+;*    Last change :  Wed Feb  9 14:00:59 2022 (serrano)                */
 ;*    Copyright   :  2016-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -431,11 +431,15 @@
 	     ;; ms 13oct2021
 	     ;;(set! rhs (type-cast! (J2SRef d :type tr) '*))
 	     (set! rhs (type-cast! (J2SRef d :type tr) (j2s-type lhs)))
-	     (let ((tyb (if (eq? totype '*) type totype)))
-		(J2SBindExit/type tyb #f 
-		   (J2SLetRecBlock #f  (list d)
-		      (J2SStmtExpr this)
-		      (type-cast! (J2SRef d :type tr) tyb)))))))))
+	     (let* ((tyb (if (eq? totype '*) type totype))
+		    (ret (J2SReturn #t (type-cast! (J2SRef d :type tr) tyb)))
+		    (bex (J2SBindExit/type tyb #f 
+			    (J2SLetRecBlock #f  (list d)
+			       (J2SStmtExpr this)
+			       ret))))
+		(with-access::J2SReturn ret (from)
+		   (set! from bex)
+		   bex)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    type-cast! ::J2SPrefix ...                                       */
