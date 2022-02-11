@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/hopscript/promise.scm               */
+;*    serrano/prgm/project/hop/3.5.x/hopscript/promise.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 19 08:19:19 2015                          */
-;*    Last change :  Wed Apr 29 07:09:28 2020 (serrano)                */
-;*    Copyright   :  2015-21 Manuel Serrano                            */
+;*    Last change :  Fri Feb 11 12:43:10 2022 (serrano)                */
+;*    Copyright   :  2015-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript promises                     */
 ;*    -------------------------------------------------------------    */

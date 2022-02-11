@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/scheme-call.scm           */
+;*    serrano/prgm/project/hop/3.5.x/js2scheme/scheme-call.scm         */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Sat Jan  1 06:55:56 2022 (serrano)                */
+;*    Last change :  Fri Feb 11 16:11:46 2022 (serrano)                */
 ;*    Copyright   :  2018-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -443,7 +443,7 @@
       `(js-function-maybe-call0 ,(cadr args)
 	  ,(j2s-scheme obj mode return conf)
 	  ,(j2s-scheme (car args) mode return conf)
-	  ,(cadr args)))
+	  ,(caddr args)))
 
    (define (is-object-prototype-tostring? obj args)
       (when (=fx (length args) 3)
