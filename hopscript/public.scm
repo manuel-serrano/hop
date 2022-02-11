@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Tue Feb  8 14:14:23 2022 (serrano)                */
+;*    Last change :  Fri Feb 11 09:54:20 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -268,7 +268,11 @@
 	   (inline js-parseint-string ::obj)
 	   (inline js-parseint-any ::obj ::JsGlobalObject)
 	   (inline js-parseint-string-uint32 ::obj ::uint32)
-	   (js-parsefloat ::obj ::JsGlobalObject)))
+	   (js-parsefloat ::obj ::JsGlobalObject))
+
+   (extern (macro $js-totest::bool (::obj) "BGL_JSTOTEST")
+	   (macro $js-eqil?::bool (::long ::obj) "BGL_JSEQIL")
+	   (export js-toboolean-no-boolean "bgl_js_toboolean_no_boolean")))
 
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
@@ -1788,10 +1792,14 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-12.5         */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-totest obj)
-   (cond
-      ((boolean? obj) obj)
-      ((js-null-or-undefined? obj) #f)
-      (else (js-toboolean-no-boolean obj))))
+   (cond-expand
+      (bigloo-c
+       ($js-totest obj))
+      (else
+       (cond
+	  ((boolean? obj) obj)
+	  ((js-null-or-undefined? obj) #f)
+	  (else (js-toboolean-no-boolean obj))))))
       
 ;*---------------------------------------------------------------------*/
 ;*    js-totest-likely-object ...                                      */
@@ -2432,7 +2440,8 @@
 (define-inline (js-eqil? x y)
    (cond-expand
       (bigloo-c
-       (or (eq? x y) (and (flonum? y) (=fl (fixnum->flonum x) y))))
+       ;; (or (eq? x y) (and (flonum? y) (=fl (fixnum->flonum x) y)))
+       ($js-eqil? x y))
       (else
        (cond
 	  ((fixnum? y) (=fx x y))

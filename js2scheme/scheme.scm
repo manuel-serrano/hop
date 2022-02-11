@@ -1606,18 +1606,18 @@
 		     (eq? binder 'let-forin))))
 	  (with-access::J2SRef lhs (decl)
 	     (with-access::J2SDecl decl (binder)
-		(let* ((tmp (gensym))
+		(let* ((tmp (gensym 'forintmp))
 		       (name (j2s-decl-scm-id decl ctx))
-		       (props (gensym))
+		       (props (gensym 'forinprops))
 		       (set #unspecified))
 		(epairify-deep loc
 		   (if (or need-bind-exit-continue need-bind-exit-break)
 		       (for-in/break tmp name props obj body set op)
 		       (for-in/w-break tmp name props obj body set op)))))))
 	 (else
-	  (let* ((tmp (gensym))
-		 (name (gensym))
-		 (props (gensym))
+	  (let* ((tmp (gensym 'forintmp))
+		 (name (gensym 'forinname))
+		 (props (gensym 'forinprops))
 		 (set (set lhs name loc)))
 	     (epairify-deep loc
 		(if (or need-bind-exit-continue need-bind-exit-break)
@@ -1676,7 +1676,7 @@
 		      cache
 		      :optim #f
 		      :cachefun (or (is-function? rhs) (is-prototype? obj))))
-	     (let* ((tmp (gensym 'tmp))
+	     (let* ((tmp (gensym 'assigtmp))
 		    (access (duplicate::J2SAccess lhs (obj (J2SHopRef tmp))))
 		    (tyo (j2s-type obj)))
 		(cond
@@ -1774,7 +1774,7 @@
 		(let ((rhse (j2s-scheme rhs mode return ctx)))
 		   (epairify loc
 		      (if (boxed-type? (j2s-type rhs))
-			  (let ((tmp (gensym)))
+			  (let ((tmp (gensym 'assigtmp)))
 			     `(let ((,tmp ,rhse))
 				 ,(j2s-unresolved-put!
 				     (& id (context-program ctx))
@@ -2580,6 +2580,8 @@
 		  (cb (assq 'bool hint))
 		  (ca (assq 'array hint)))
 	       (cond
+		  ((and (pair? cs) (<fx (cdr cs) 0))
+		   #f)
 		  ((pair? cb)
 		   (if (pair? cs)
 		       (and (>=fx (cdr cb) 0) (<fx (cdr cb) (cdr cs)))
@@ -2623,7 +2625,9 @@
 		 (access (J2SAccess obj lit)))
 	     (with-access::J2SAccess access ((ahint hint))
 		(with-access::J2SAccess this (hint)
-		   (set! ahint hint)))
+		   (set! ahint hint))
+		(with-access::J2SHopRef lit (hint)
+		   (set! hint ahint)))
 	     `(let ((,tmp ,(j2s-scheme field mode return ctx)))
 		 ,(index-obj-literal-ref access obj lit cache cspecs loc)))))
    
@@ -2635,7 +2639,9 @@
 		 (access (J2SAccess (J2SHopRef tmp) field)))
 	     (with-access::J2SAccess access ((ahint hint))
 		(with-access::J2SAccess this (hint)
-		   (set! ahint hint)))
+		   (set! ahint hint))
+		(with-access::J2SHopRef ref (hint)
+		   (set! hint ahint)))
 	     `(let ((,tmp ,(j2s-scheme obj mode return ctx)))
 		 ,(index-obj-ref access ref field cache cspecs loc)))))
    

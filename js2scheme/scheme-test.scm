@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:41:17 2017                          */
-;*    Last change :  Sun Jul  4 18:40:07 2021 (serrano)                */
-;*    Copyright   :  2017-21 Manuel Serrano                            */
+;*    Last change :  Fri Feb 11 09:15:00 2022 (serrano)                */
+;*    Copyright   :  2017-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme test code generation                                      */
 ;*=====================================================================*/
@@ -60,6 +60,12 @@
 		 (j2s-totest (j2s-scheme test mode return conf))))))))
 
 ;*---------------------------------------------------------------------*/
+;*    j2s-test-not ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (j2s-test-not this::J2SExpr mode return conf)
+   (js-not (j2s-bool-test this mode return conf)))
+
+;*---------------------------------------------------------------------*/
 ;*    j2s-totest ...                                                   */
 ;*    -------------------------------------------------------------    */
 ;*    This function tries to push the totest conversion as deeply      */
@@ -103,11 +109,26 @@
 ;*    j2s-bool-test ::J2SExpr ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-bool-test this::J2SExpr mode return conf)
+   
+   (define (bool-test type)
+      (let ((sexp (j2s-scheme this mode return conf)))
+	 (j2s-cast sexp this type 'bool conf)))
+   
    (with-access::J2SExpr this (type)
-      (if (eq? type 'bool)
-	  (j2s-scheme this mode return conf)
-	  (let ((sexp (j2s-scheme this mode return conf)))
-	     (j2s-cast sexp this type 'bool conf)))))
+      (cond
+	 ((eq? type 'bool)
+	  (j2s-scheme this mode return conf))
+	 ((isa? this J2SBindExit)
+	  (with-access::J2SBindExit this (stmt type)
+	     (if (isa? stmt J2SIf)
+		 (with-access::J2SIf stmt (then else)
+		    (return-to-bool! then this)
+		    (return-to-bool! else this)
+		    (set! type 'bool)
+		    (j2s-scheme this mode return conf))
+		 (bool-test type))))
+	 (else
+	  (bool-test type)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-bool-test ::J2SParen ...                                     */
@@ -171,12 +192,6 @@
 	  (call-next-method))))
 
 ;*---------------------------------------------------------------------*/
-;*    j2s-test-not ...                                                 */
-;*---------------------------------------------------------------------*/
-(define (j2s-test-not this::J2SExpr mode return conf)
-   (js-not (j2s-bool-test this mode return conf)))
-
-;*---------------------------------------------------------------------*/
 ;*    notbool-expr? ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (notbool-expr? this::J2SNode)
@@ -194,3 +209,22 @@
        expr)
       (else
        `(js-toboolean ,expr))))
+
+;*---------------------------------------------------------------------*/
+;*    return-to-bool! ...                                              */
+;*---------------------------------------------------------------------*/
+(define-walk-method (return-to-bool! this::J2SNode target)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    return-to-bool! ...                                              */
+;*---------------------------------------------------------------------*/
+(define-walk-method (return-to-bool! this::J2SReturn target)
+   (with-access::J2SReturn this (expr from)
+      (if (eq? from target)
+	  (let ((ty (j2s-type expr)))
+	     (with-access::J2SExpr expr (loc)
+		(unless (eq? ty 'bool)
+		   (set! expr (J2SCast 'bool expr))))
+	     this)
+	  (call-default-walker))))

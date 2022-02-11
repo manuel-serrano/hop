@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.5.x/hopscript/_bglhopscript.c         */
+/*    serrano/prgm/project/hop/hop/hopscript/_bglhopscript.c           */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Fri Jan 21 16:33:16 2022 (serrano)                */
+/*    Last change :  Fri Feb 11 09:34:58 2022 (serrano)                */
 /*    Copyright   :  2016-22 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <bigloo.h>
 #include "bglhopscript.h"
+#include "bglhopscript_types.h"
 #include "bglhopscript_malloc.h"
 #include <pthread.h>
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Tue Feb  8 16:12:08 2022 (serrano)                */
+;*    Last change :  Fri Feb 11 08:14:05 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -276,6 +276,9 @@
 	      (if (pair? hint) `(:hint ,(map dump-hint-value hint)) '())))
 	  ((isa? this J2SExpr)
 	   (with-access::J2SExpr this (hint)
+	      (if (pair? hint) `(:hint ,(map dump-hint-value hint)) '())))
+	  ((isa? this J2SClassElement)
+	   (with-access::J2SClassElement this (hint)
 	      (if (pair? hint) `(:hint ,(map dump-hint-value hint)) '()))))
        '()))
 
@@ -1316,8 +1319,10 @@
 (define-method (j2s->list this::J2SHopRef stack)
    (set! stack (check-stack this stack))
    (with-access::J2SHopRef this (id module)
-      `(,@(call-next-method) ,id ,@(dump-type this)
-	  ,@(if module (list module) '()))))
+      `(,@(call-next-method) ,id
+	  ,@(if module (list module) '())
+	  ,@(dump-type this)
+	  ,@(dump-hint this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2Stilde ...                                         */
@@ -1401,6 +1406,7 @@
 		       (string-contains (or (getenv "HOPTRACE") "") "j2s:usage"))
 		   `(:usage ,(usage->keys usage))
 		   '())
+	     ,@(dump-hint this)
 	     ,(j2s->list prop stack)))))
 
 ;*---------------------------------------------------------------------*/

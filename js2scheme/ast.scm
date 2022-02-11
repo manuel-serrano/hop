@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Mon Feb  7 10:45:40 2022 (serrano)                */
+;*    Last change :  Fri Feb 11 08:11:44 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -305,7 +305,9 @@
 	      ;;   #f or the twin, maybe point to self
 	      (rtwin (default #f) (info '("notraverse")))
 	      ;; see usage-bit.sch
-	      (usage::uint32 (default (usage '()))))
+	      (usage::uint32 (default (usage '())))
+	      ;; hints
+	      (hint::pair-nil (default '()) (info '("notraverse"))))
 	   
 	   (final-class J2SCatch::J2SStmt
 	      param::J2SDecl

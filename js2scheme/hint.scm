@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Wed Feb  2 18:19:06 2022 (serrano)                */
+;*    Last change :  Fri Feb 11 08:02:17 2022 (serrano)                */
 ;*    Copyright   :  2016-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -183,6 +183,31 @@
 			    (add-hint! decl ty inc))))
 	    hints))))
 
+;*---------------------------------------------------------------------*/
+;*    add-hints! ::J2SClassElement ...                                 */
+;*---------------------------------------------------------------------*/
+(define-method (add-hints! this::J2SClassElement hints::pair-nil)
+   
+   (define (add-hint! this type inc)
+      (with-access::J2SClassElement this (hint)
+	 (let ((c (assq type hint)))
+	    (cond
+	       ((not (pair? c))
+		(set! hint (cons (cons type inc) hint)))
+	       ((=fx inc (minvalfx))
+		(set-cdr! c  inc))
+	       ((>=fx (cdr c) 0)
+		(set-cdr! c (+fx inc (cdr c))))))))
+   
+   (with-access::J2SClassElement this (hint)
+      (when (pair? hints)
+	 (for-each (lambda (hi)
+		      (let ((ty (car hi))
+			    (inc (cdr hi)))
+			 (unless (memq ty '(unknown any))
+			    (add-hint! this ty inc))))
+	    hints))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    j2s-hint ::J2SNode ...                                           */
 ;*---------------------------------------------------------------------*/
@@ -443,9 +468,28 @@
 		 (j2s-hint obj `((object . 5) (array . 5) (string . ,(minvalfx))))))))))
 
 ;*---------------------------------------------------------------------*/
+;*    j2s-access-find-class-element ...                                */
+;*    -------------------------------------------------------------    */
+;*    Returns the class element of the access node, or #f.             */
+;*---------------------------------------------------------------------*/
+(define (j2s-access-find-class-element this::J2SAccess)
+   (with-access::J2SAccess this (obj field)
+      (when (isa? field J2SString)
+	 (with-access::J2SString field (val)
+	    (let ((ty (j2s-type obj)))
+	       (when (isa? ty J2SClass)
+		  (multiple-value-bind (index el)
+		     (j2s-class-get-property ty val)
+		     el)))))))
+
+;*---------------------------------------------------------------------*/
 ;*    j2s-hint ::J2SAccess ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-hint this::J2SAccess hints)
+   (let ((el (j2s-access-find-class-element this)))
+      (when (isa? el J2SClassElement)
+	 (with-access::J2SClassElement el (hint)
+	    (add-hints! this hint))))
    (add-hints! this hints)
    (j2s-hint-access this #t))
 
@@ -454,7 +498,11 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-hint this::J2SAssig hints)
    (with-access::J2SAssig this (lhs rhs loc)
-      (when (isa? lhs J2SAccess) (j2s-hint-access lhs #f))
+      (when (isa? lhs J2SAccess)
+	 (let ((el (j2s-access-find-class-element lhs)))
+	    (when (isa? el J2SClassElement)
+	       (add-hints! el `((string . ,(minvalfx))))))
+	 (j2s-hint-access lhs #f))
       (j2s-hint rhs '())))
 
 ;*---------------------------------------------------------------------*/

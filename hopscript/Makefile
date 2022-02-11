@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Fri Aug 27 14:01:52 2021 (serrano)                */
+#*    Last change :  Fri Feb 11 09:34:49 2022 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOPSCRIPT library.                     */
 #*=====================================================================*/
@@ -11,6 +11,9 @@
 
 do: build
 install: install-library
+	cp bglhopscript.h \
+           $(DESTDIR)$(HOPLIBDIR)/hop/$(HOPRELEASE)/bglhopscript.h
+	chmod $(MODFILE) $(DESTDIR)$(HOPLIBDIR)/hop/$(HOPRELEASE)/bglhopscript.h
 	cp bglhopscript_malloc.h \
            $(DESTDIR)$(HOPLIBDIR)/hop/$(HOPRELEASE)/bglhopscript_malloc.h
 	chmod $(MODFILE) $(DESTDIR)$(HOPLIBDIR)/hop/$(HOPRELEASE)/bglhopscript_malloc.h
@@ -55,7 +58,7 @@ INCLUDES = stringliteral.sch names.sch property_expd.sch property.sch \
   stringliteral_expd.sch types.sch types_expd.sch arity.sch \
   constants_expd.sch constants.sch stringthread.sch function.sch arguments.sch
 
-C_INCLUDES = bglhopscript.h bglhopscript_malloc.h
+C_INCLUDES = bglhopscript.h bglhopscript_types.h bglhopscript_malloc.h
 
 #*---------------------------------------------------------------------*/
 #*    Sources                                                          */
@@ -99,9 +102,9 @@ getsources:
 	@ echo $(SOURCES)
 
 #*---------------------------------------------------------------------*/
-#*    bglhopscript.h                                                   */
+#*    bglhopscript_types.h                                             */
 #*---------------------------------------------------------------------*/
-bglhopscript.h: types.scm
+bglhopscript_types.h: types.scm
 	$(BIGLOO) $(EFLAGS) $(BCFLAGS) -copt $(CPICFLAGS) -copt $(CNANFLAGS) -copt "-I$(C_SRC_DIR)" -copt "$(CEFLAGS)" $< -o $@ -hgen
 
 #*---------------------------------------------------------------------*/
@@ -109,7 +112,7 @@ bglhopscript.h: types.scm
 #*---------------------------------------------------------------------*/
 o/%.o: .afile
 
-o/_bglhopscript.o: _bglhopscript.c bglhopscript.h bglhopscript_malloc.h
+o/_bglhopscript.o: _bglhopscript.c bglhopscript_types.h bglhopscript_malloc.h
 	@ $(call compile2,$(CCOMP),$(CCFLAGS), -c $< -o $@)
 
 o/expanders.o: expanders.sch public_expd.sch property_expd.sch \

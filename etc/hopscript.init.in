@@ -4,8 +4,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 21 08:47:34 2008                          */
-;*    Last change :  Fri Aug 27 13:53:22 2021 (serrano)                */
-;*    Copyright   :  2008-21 Manuel Serrano                            */
+;*    Last change :  Fri Feb 11 09:33:36 2022 (serrano)                */
+;*    Copyright   :  2008-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPSCRIPT init file.                                             */
 ;*=====================================================================*/
@@ -45,7 +45,7 @@
    (bigloo-compile
     ;; hopscript includes
     (set! *additional-include-foreign*
-       (cons* "bglhopscript_malloc.h" *additional-include-foreign*))
+       (cons* "bglhopscript.h" "bglhopscript_malloc.h" *additional-include-foreign*))
     ;; C compilation options
     (set! *cc-options*
        (cons "-I@BUILDDIR@/hopscript -I@LIBPATH@" *cc-options*))))

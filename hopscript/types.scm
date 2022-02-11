@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Thu Feb 10 15:35:18 2022 (serrano)                */
+;*    Last change :  Fri Feb 11 09:41:03 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -30,7 +30,8 @@
 	__hopscript_profile
 	__hopscript_lib)
 
-   (extern (include "bglhopscript_malloc.h"))
+   (extern (include "bglhopscript.h")
+	   (include "bglhopscript_malloc.h"))
 
    (extern (macro $pointer?::bool (::obj) "POINTERP")
 	   ($js-init-jsalloc::int (::uint32)
@@ -72,12 +73,20 @@
 	      "bgl_make_jsgenerator")
 	   (macro $js-object-inline-elements::vector (::JsObject)
 		  "HOP_JSOBJECT_INLINE_ELEMENTS")
+	   (macro $js-object-inline-elements-ref::obj (::JsObject ::long)
+		  "HOP_JSOBJECT_INLINE_ELEMENTS_REF")
+	   (macro $js-object-inline-elements-set!::obj (::JsObject ::long ::obj)
+		  "HOP_JSOBJECT_INLINE_ELEMENTS_SET")
 	   (macro $js-object-vector-inline?::bool (::JsArray)
 		  "HOP_JSARRAY_VECTOR_INLINEP")
 	   (macro $bgl-object-class-set!::long (::JsObject ::long)
 		  "BGL_OBJECT_CLASS_NUM_SET")
 	   (macro $bgl-class-num::long (::class)
-		  "BGL_CLASS_NUM"))
+		  "BGL_CLASS_NUM")
+
+ 	   (macro $js-object?::bool (::obj ::uint32) "BGL_JSOBJECT")
+ 	   (macro $js-array?::bool (::obj ::uint32) "BGL_JSARRAY")
+	   (macro $js-jsstring?::bool (::obj ::uint32) "BGL_JSSTRING"))
    
    (export (class WorkerHopThread::hopthread
 	      (%loop (default #f))
@@ -1237,12 +1246,14 @@
    (cond-expand
       ((and bigloo-c (not disable-inline) debug)
        (if (<fx idx (vector-length (js-object-inline-elements o)))
-	   (pragma::obj "VECTOR_REF( BVECTOR( (obj_t)(( ((obj_t *)(&(((BgL_jsobjectz00_bglt)(COBJECT($1)))->BgL_elementsz00))) + 1))), $2 )" o idx)
+	   ;; (pragma::obj "VECTOR_REF( BVECTOR( (obj_t)(( ((obj_t *)(&(((BgL_jsobjectz00_bglt)(COBJECT($1)))->BgL_elementsz00))) + 1))), $2 )" o idx)
+	   ($js-object-inline-elements-ref o idx)
 	   (begin
 	      (tprint "*** ASSERT ERROR:js-object-inline-ref idx=" idx)
 	      (js-debug-object o))))
       ((and bigloo-c (not disable-inline))
-       (pragma::obj "VECTOR_REF( BVECTOR( (obj_t)(( ((obj_t *)(&(((BgL_jsobjectz00_bglt)(COBJECT($1)))->BgL_elementsz00))) + 1))), $2 )" o idx))
+       ;; (pragma::obj "VECTOR_REF( BVECTOR( (obj_t)(( ((obj_t *)(&(((BgL_jsobjectz00_bglt)(COBJECT($1)))->BgL_elementsz00))) + 1))), $2 )" o idx)
+       ($js-object-inline-elements-ref o idx))
       (else
        (js-object-noinline-ref o idx))))
 
@@ -1253,12 +1264,14 @@
    (cond-expand
       ((and bigloo-c debug (not disable-inline))
        (if (<fx idx (vector-length (js-object-inline-elements o)))
-	   (pragma::obj "VECTOR_SET( BVECTOR( (obj_t)(( ((obj_t *)(&(((BgL_jsobjectz00_bglt)(COBJECT($1)))->BgL_elementsz00))) + 1))), $2, $3 )" o idx val)
+	   ;; (pragma::obj "VECTOR_SET( BVECTOR( (obj_t)(( ((obj_t *)(&(((BgL_jsobjectz00_bglt)(COBJECT($1)))->BgL_elementsz00))) + 1))), $2, $3 )" o idx val)
+	   ($js-object-inline-elements-set! o idx val)
 	   (begin
 	      (tprint "*** ASSERT ERROR:js-object-inline-set! idx=" idx)
 	      (js-debug-object o))))
       ((and bigloo-c (not disable-inline))
-       (pragma::obj "VECTOR_SET( BVECTOR( (obj_t)(( ((obj_t *)(&(((BgL_jsobjectz00_bglt)(COBJECT($1)))->BgL_elementsz00))) + 1))), $2, $3 )" o idx val))
+       ;; (pragma::obj "VECTOR_SET( BVECTOR( (obj_t)(( ((obj_t *)(&(((BgL_jsobjectz00_bglt)(COBJECT($1)))->BgL_elementsz00))) + 1))), $2, $3 )" o idx val)
+       ($js-object-inline-elements-set! o idx val))
       (else
        (js-object-noinline-set! o idx val))))
 
@@ -1698,9 +1711,13 @@
 ;*    js-object? ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-object? o)
-   (and ($object? o)
-	(=u32 (JS-OBJECT-MODE-JSOBJECTTAG)
-	   (bit-andu32 (js-object-mode o) (JS-OBJECT-MODE-JSOBJECTTAG)))))
+   (cond-expand
+      (bigloo-c
+       ($js-object? o (JS-OBJECT-MODE-JSOBJECTTAG)))
+      (else
+       (and ($object? o)
+	    (=u32 (JS-OBJECT-MODE-JSOBJECTTAG)
+	       (bit-andu32 (js-object-mode o) (JS-OBJECT-MODE-JSOBJECTTAG)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsobject? ...                                                 */
@@ -1732,9 +1749,13 @@
 ;*    js-jsstring? ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-jsstring? o)
-   (and ($object? o)
-	(=u32 (JS-OBJECT-MODE-JSSTRINGTAG)
-	   (bit-andu32 (js-object-mode o) (JS-OBJECT-MODE-JSSTRINGTAG)))))
+   (cond-expand
+      (bigloo-c
+       ($js-jsstring? o (JS-OBJECT-MODE-JSSTRINGTAG)))
+      (else
+       (and ($object? o)
+	    (=u32 (JS-OBJECT-MODE-JSSTRINGTAG)
+	       (bit-andu32 (js-object-mode o) (JS-OBJECT-MODE-JSSTRINGTAG)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-ascii? ...                                           */
@@ -1799,9 +1820,13 @@
 ;*    js-array? ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-array? o)
-   ;; assumes that all bits > JSARRAYTAG are about arrays
-   (and ($object? o)
-	(>=u32 (js-object-mode o) (JS-OBJECT-MODE-JSARRAYTAG))))
+   (cond-expand
+      (bigloo-c
+       ($js-array? o (JS-OBJECT-MODE-JSARRAYTAG)))
+      (else
+       ;; assumes that all bits > JSARRAYTAG are about arrays
+       (and ($object? o)
+	    (>=u32 (js-object-mode o) (JS-OBJECT-MODE-JSARRAYTAG))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-vector? ...                                                   */
