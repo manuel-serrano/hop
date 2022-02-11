@@ -304,7 +304,7 @@
 	    (("--js-preprocessor" ?pp (help "Enables JavaScript preprocessor"))
 	     (hopc-j2s-preprocessor-set! pp))
 	    
-	    (section "Optimization, profiling, and Debugging")
+	    (section "Optimization")
 	    (("-ftyflow" (help "Enable tyflow typing (-O)"))
 	     (hopc-j2s-flags-set! (cons* :optim-tyflow #t (hopc-j2s-flags))))
 	    (("-fno-tyflow" (help "Disable tyflow typing"))
@@ -493,6 +493,7 @@
 	     (hopc-j2s-flags-set! (cons* :optim-proxy #t (hopc-j2s-flags))))
 	    (("-fno-proxy" (help "Disable proxy optimization"))
 	     (hopc-j2s-flags-set! (cons* :optim-proxy #f (hopc-j2s-flags))))
+	    (section "Profiling")
 	    (("-fprofile" ?log (help "Profile log file optimization"))
 	     (hopc-j2s-flags-set! (cons* :profile-log log (hopc-j2s-flags)))
 	     (hopc-j2s-flags-set! (cons* :optim-cspecs #t (hopc-j2s-flags))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Fri Feb 11 08:02:17 2022 (serrano)                */
+;*    Last change :  Fri Feb 11 14:46:21 2022 (serrano)                */
 ;*    Copyright   :  2016-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -486,10 +486,14 @@
 ;*    j2s-hint ::J2SAccess ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-hint this::J2SAccess hints)
-   (let ((el (j2s-access-find-class-element this)))
-      (when (isa? el J2SClassElement)
-	 (with-access::J2SClassElement el (hint)
-	    (add-hints! this hint))))
+   (with-access::J2SAccess this (obj)
+      (when (isa? obj J2SAccess)
+	 (let ((el (j2s-access-find-class-element obj)))
+	    (when (isa? el J2SClassElement)
+	       (with-access::J2SClassElement el (hint)
+		  ;; if this is this.prop[i]
+		  ;; propagate the property hint of prop
+		  (add-hints! this hint))))))
    (add-hints! this hints)
    (j2s-hint-access this #t))
 
@@ -499,9 +503,13 @@
 (define-walk-method (j2s-hint this::J2SAssig hints)
    (with-access::J2SAssig this (lhs rhs loc)
       (when (isa? lhs J2SAccess)
-	 (let ((el (j2s-access-find-class-element lhs)))
-	    (when (isa? el J2SClassElement)
-	       (add-hints! el `((string . ,(minvalfx))))))
+	 (with-access::J2SAccess lhs (obj)
+	    (when (isa? obj J2SAccess)
+	       (let ((el (j2s-access-find-class-element obj)))
+		  ;; if the assigment is of the form: this.prop[i] = val
+		  ;; mark that this.prop cannot be a string
+		  (when (isa? el J2SClassElement)
+		     (add-hints! el `((string . ,(minvalfx))))))))
 	 (j2s-hint-access lhs #f))
       (j2s-hint rhs '())))
 

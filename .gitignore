@@ -45,7 +45,7 @@ test/nodejs/LOG
 
 # hopscript
 hopscript/hopscript.sch
-hopscript/bglhopscript.h
+hopscript/bglhopscript_types.h
 
 # node_modules
 node_modules/hopc/lib/ast.js

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Fri Feb 11 13:39:54 2022 (serrano)                */
+;*    Last change :  Fri Feb 11 15:33:07 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -849,7 +849,8 @@
    (define (update-noinline! pcache omap)
       (with-access::JsPropertyCache pcache (cmap cindex)
 	 (set! cmap omap)
-	 (set! cindex (-fx i (js-object-inline-length o)))))
+	 ;;(set! cindex (-fx i (js-object-inline-length o)))
+	 (set! cindex i)))
 
    (with-access::JsObject o (cmap)
       (if (<fx i (js-object-inline-length o))
@@ -884,7 +885,8 @@
    (define (update-noinline! pcache omap)
       (with-access::JsPropertyCache pcache (cmap cindex)
 	 (set! cmap omap)
-	 (set! cindex (-fx i (js-object-inline-length o)))))
+	 ;;(set! cindex (-fx i (js-object-inline-length o)))
+	 (set! cindex i)))
    
    (with-access::JsObject o (cmap)
       (if (<fx i (js-object-inline-length o))

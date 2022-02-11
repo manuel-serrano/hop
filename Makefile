@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Mon Apr 12 15:46:16 2021 (serrano)                */
+#*    Last change :  Fri Feb 11 14:53:51 2022 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -332,6 +332,7 @@ distclean: clean
 	$(RM) -f runtime/configure_macosx.sch
 	$(RM) -f runtime/configure_noarch.sch
 	$(RM) -f config.status
+	$(RM) -f hopscript/bglhopscript_types.h
 
 cleanall: distclean
 
