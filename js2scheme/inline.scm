@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Tue Feb  8 16:26:35 2022 (serrano)                */
+;*    Last change :  Fri Feb 11 18:40:12 2022 (serrano)                */
 ;*    Copyright   :  2017-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function/Method inlining optimization                            */
@@ -79,7 +79,7 @@
 
 (define inline-max-method-size
    ;; the maximum body size of inlined method candidates
-   64)
+   32)
 
 (define inline-min-dispatch-percentage
    ;; the minimum percentage of call
@@ -896,6 +896,8 @@
 	       (let* ((mets (filter (lambda (m::struct)
 				       (let ((f (protoinfo-method m)))
 					  (and (=fx (function-arity f) arity)
+					       (<fx (function-size f)
+						  inline-max-method-size)
 					       (function-fxarg? f)
 					       (not (memq f stack))
 					       (not (function-self-recursive? f)))))
@@ -905,6 +907,15 @@
 				     (+fx inline-method-check-size
 					(function-size (protoinfo-method m))))
 				mets))))
+		  '(when (isa? field J2SString)
+		     (with-access::J2SString field (val)
+			(when (string=? val "execute")
+			   (tprint "THIS=" (j2s->sexp this))
+			   (tprint "SZ=" sz " "
+			      (map (lambda (m)
+				     (+fx inline-method-check-size
+					(function-size (protoinfo-method m))))
+				mets)))))
 		  (when (and (<fx sz (*fx limit (length mets)))
 			     (and (<fx sz inline-max-method-size)
 				  (every (lambda (m)
