@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Mon Feb  7 14:11:34 2022 (serrano)                */
+;*    Last change :  Fri Feb 11 16:41:35 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -541,8 +541,8 @@
 	    (set! o (cons* :optim-strbuffer #t o)))
 	 (unless (memq :optim-testreduce o)
 	    (set! o (cons* :optim-testreduce #t o)))
-	 (unless (memq :optim-proxy o)
-	    (set! o (cons* :optim-proxy #t o)))
+;* 	 (unless (memq :optim-proxy o)                                 */
+;* 	    (set! o (cons* :optim-proxy #t o)))                        */
 	 )
       (when (>=fx l 3)
 	 (unless (memq :max-objinit-optim-size o)
