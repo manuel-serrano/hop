@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Fri Feb 11 15:33:07 2022 (serrano)                */
+;*    Last change :  Fri Feb 11 16:17:21 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -839,7 +839,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Used to get a direct object property.                            */
 ;*---------------------------------------------------------------------*/
-(define (js-pcache-update-get-direct! pcache::JsPropertyCache i o::JsObject)
+(define (js-pcache-update-get-direct! pcache::JsPropertyCache i o::JsObject PROP)
    
    (define (update-inline! pcache omap)
       (with-access::JsPropertyCache pcache (imap iindex)
@@ -849,8 +849,9 @@
    (define (update-noinline! pcache omap)
       (with-access::JsPropertyCache pcache (cmap cindex)
 	 (set! cmap omap)
-	 ;;(set! cindex (-fx i (js-object-inline-length o)))
-	 (set! cindex i)))
+	 (set! cindex (-fx i (js-object-inline-length o)))
+	 ;;(set! cindex i)
+	 ))
 
    (with-access::JsObject o (cmap)
       (if (<fx i (js-object-inline-length o))
@@ -885,8 +886,9 @@
    (define (update-noinline! pcache omap)
       (with-access::JsPropertyCache pcache (cmap cindex)
 	 (set! cmap omap)
-	 ;;(set! cindex (-fx i (js-object-inline-length o)))
-	 (set! cindex i)))
+	 (set! cindex (-fx i (js-object-inline-length o)))
+	 ;;(set! cindex i)
+	 ))
    
    (with-access::JsObject o (cmap)
       (if (<fx i (js-object-inline-length o))
@@ -2629,7 +2631,7 @@
 	    ((eq? pmap omap)
 	     (js-object-ref owner pindex))
 	    ((eq? cmap omap)
-	     (js-object-ref o cindex))
+	     (js-object-noinline-relative-ref o cindex))
 	    ((eq? amap omap)
 	     (let ((desc (js-object-ref owner aindex)))
 		(js-property-value o owner name desc %this)))
@@ -2669,7 +2671,7 @@
 		      ;; direct access to the direct object
 		      (cond
 			 ((<u32 cntmiss (vtable-threshold))
-			  (js-pcache-update-get-direct! cache i obj))
+			  (js-pcache-update-get-direct! cache i obj name))
 			 ((not (eq? prop (& "__proto__")))
 			  (with-access::JsObject o (cmap)
 			     (js-pcache-vtable! cache cmap i %this))))

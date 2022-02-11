@@ -1,5 +1,5 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/scheme-call.scm           */
+;*    serrano/prgm/project/hop/3.5.x/js2scheme/scheme-call.scm         */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
@@ -443,7 +443,7 @@
       `(js-function-maybe-call0 ,(cadr args)
 	  ,(j2s-scheme obj mode return conf)
 	  ,(j2s-scheme (car args) mode return conf)
-	  ,(cadr args)))
+	  ,(caddr args)))
 
    (define (is-object-prototype-tostring? obj args)
       (when (=fx (length args) 3)

@@ -2122,8 +2122,9 @@
 				       ,tmp))))
 			  ((eq? cmap (js-pcache-cmap (js-pcache-ref %pcache ,cache)))
 			   (let* ((,els elements)
-				  (,idx (-fx (js-pcache-cindex (js-pcache-ref %pcache ,cache))
-					   (js-object-inline-length ,otmp))))
+;* 				  (,idx (-fx (js-pcache-cindex (js-pcache-ref %pcache ,cache)) */
+;* 					   (js-object-inline-length ,otmp))) */
+				  (,idx (js-pcache-cindex (js-pcache-ref %pcache ,cache))))
 			      ,(if (eq? retval 'new)
 				   (let ((new (gensym '%new)))
 				      `(let* ((,tmp (vector-ref ,els ,idx))
@@ -2426,8 +2427,9 @@
 				 ,res))
 			     ((eq? cmap (js-pcache-cmap (js-pcache-ref %pcache ,cache)))
 			      (let* ((,els elements)
-				     (,idx (-fx (js-pcache-cindex (js-pcache-ref %pcache ,cache))
-					      (js-object-inline-length ,otmp)))
+;* 				     (,idx (-fx (js-pcache-cindex (js-pcache-ref %pcache ,cache)) */
+;* 					      (js-object-inline-length ,otmp))) */
+				     (,idx (js-pcache-cindex (js-pcache-ref %pcache ,cache)))
 				     (,tmp (vector-ref ,els ,idx))
 				     (,res ,(js-binop2 loc op typea
 					       (instantiate::J2SHopRef
