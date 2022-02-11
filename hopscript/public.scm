@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Fri Feb 11 09:54:20 2022 (serrano)                */
+;*    Last change :  Fri Feb 11 13:59:32 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -270,9 +270,9 @@
 	   (inline js-parseint-string-uint32 ::obj ::uint32)
 	   (js-parsefloat ::obj ::JsGlobalObject))
 
-   (extern (macro $js-totest::bool (::obj) "BGL_JSTOTEST")
-	   (macro $js-eqil?::bool (::long ::obj) "BGL_JSEQIL")
-	   (export js-toboolean-no-boolean "bgl_js_toboolean_no_boolean")))
+   (extern (macro $js-totest::bool (::obj) "HOP_JSTOTEST")
+	   (macro $js-eqil?::bool (::long ::obj) "HOP_JSEQIL")
+	   (export js-toboolean-no-boolean "hop_js_toboolean_no_boolean")))
 
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */

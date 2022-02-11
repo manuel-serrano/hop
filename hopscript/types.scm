@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Fri Feb 11 09:41:03 2022 (serrano)                */
+;*    Last change :  Fri Feb 11 11:16:45 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -73,6 +73,8 @@
 	      "bgl_make_jsgenerator")
 	   (macro $js-object-inline-elements::vector (::JsObject)
 		  "HOP_JSOBJECT_INLINE_ELEMENTS")
+	   (macro $js-object-inline-elements-length::long (::JsObject)
+		  "HOP_JSOBJECT_INLINE_ELEMENTS_LENGTH")
 	   (macro $js-object-inline-elements-ref::obj (::JsObject ::long)
 		  "HOP_JSOBJECT_INLINE_ELEMENTS_REF")
 	   (macro $js-object-inline-elements-set!::obj (::JsObject ::long ::obj)
@@ -84,9 +86,16 @@
 	   (macro $bgl-class-num::long (::class)
 		  "BGL_CLASS_NUM")
 
- 	   (macro $js-object?::bool (::obj ::uint32) "BGL_JSOBJECT")
- 	   (macro $js-array?::bool (::obj ::uint32) "BGL_JSARRAY")
-	   (macro $js-jsstring?::bool (::obj ::uint32) "BGL_JSSTRING"))
+ 	   (macro $js-object?::bool (::obj ::uint32)
+		  "HOP_JSOBJECTP")
+ 	   (macro $js-array?::bool (::obj ::uint32)
+		  "HOP_JSARRAYP")
+	   (macro $js-jsstring?::bool (::obj ::uint32)
+		  "HOP_JSSTRINGP")
+	   (macro $js-procedure?::bool (::obj ::uint32)
+		  "HOP_JSPROCEDUREP")
+	   (macro $js-object-mode-inline?::bool (::JsObject ::uint32)
+		  "HOP_JSOBJECT_MODE_INLINEP"))
    
    (export (class WorkerHopThread::hopthread
 	      (%loop (default #f))
@@ -359,7 +368,7 @@
 	      (rejecter (default #f))
 	      worker
 	      %this
-	      (%name (default (gensym 'promise))))
+	      (%name (default #f)))
 	   
 	   (final-class JsGenerator::JsObject
 	      %next
@@ -626,6 +635,7 @@
 	   (inline js-regexp-flags-unicode?::bool ::uint32)
 
 	   (inline js-object-inline-elements::vector ::JsObject)
+	   (inline js-object-inline-elements-length::long ::JsObject)
 	   (inline js-object-alloc-elements::vector ::JsObject)	   
 	   (inline js-object-noinline-elements::vector ::JsObject)
 	   (inline js-object-inline-length::long ::JsObject)
@@ -633,6 +643,8 @@
 	   (inline js-object-length::long ::JsObject)
 	   (inline js-object-inline-ref ::JsObject ::long)
 	   (inline js-object-inline-set! ::JsObject ::long ::obj)
+	   (inline js-object-noinline-relative-ref ::JsObject ::long)
+	   (inline js-object-noinline-relative-set! ::JsObject ::long ::obj)
 	   (inline js-object-noinline-ref ::JsObject ::long)
 	   (inline js-object-noinline-set! ::JsObject ::long ::obj)
 	   (inline js-object-ref ::JsObject ::long)
@@ -1056,8 +1068,12 @@
 	  (bit-andu32 (js-object-mode o) (bit-notu32 (JS-OBJECT-MODE-SEALED))))))
 
 (define-inline (js-object-mode-inline? o)
-   (=u32 (bit-andu32 (JS-OBJECT-MODE-INLINE) (js-object-mode o))
-      (JS-OBJECT-MODE-INLINE)))
+   (cond-expand
+      (bigloo-c
+       ($js-object-mode-inline? o (JS-OBJECT-MODE-INLINE)))
+      (else
+       (=u32 (bit-andu32 (JS-OBJECT-MODE-INLINE) (js-object-mode o))
+	  (JS-OBJECT-MODE-INLINE)))))
 
 (define-inline (js-object-mode-inline-set! o flag)
    (js-object-mode-set! o
@@ -1198,6 +1214,16 @@
        '#())))
 
 ;*---------------------------------------------------------------------*/
+;*    js-object-inline-elements-length ...                             */
+;*---------------------------------------------------------------------*/
+(define-inline (js-object-inline-elements-length o::JsObject)
+   (cond-expand
+      (bigloo-c
+       ($js-object-inline-elements-length o))
+      (else
+       (vector-length (js-object-inline-elements o)))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-object-noinline-elements ...                                  */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-object-noinline-elements o::JsObject)
@@ -1276,38 +1302,56 @@
        (js-object-noinline-set! o idx val))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-object-noinline-relative-ref ...                              */
+;*---------------------------------------------------------------------*/
+(define-inline (js-object-noinline-relative-ref o::JsObject idx::long)
+   (with-access::JsObject o (elements)
+      (vector-ref elements idx)))
+
+;*---------------------------------------------------------------------*/
 ;*    js-object-noinline-ref ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-object-noinline-ref o::JsObject idx::long)
    (with-access::JsObject o (elements)
-      (vector-ref elements
+      (js-object-noinline-relative-ref o
 	 (-fx idx (vector-length (js-object-inline-elements o))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-noinline-relative-set! ...                             */
+;*---------------------------------------------------------------------*/
+(define-inline (js-object-noinline-relative-set! o::JsObject idx::long val::obj)
+   (with-access::JsObject o (elements)
+      (vector-set! elements idx val)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-noinline-set! ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-object-noinline-set! o::JsObject idx::long val::obj)
    (with-access::JsObject o (elements)
-      (vector-set! elements
+      (js-object-noinline-relative-set! o
 	 (-fx idx (vector-length (js-object-inline-elements o))) val)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-ref ...                                                */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-object-ref o::JsObject idx::long)
-   (let ((ilen (vector-length (js-object-inline-elements o))))
-      (if (<fx idx ilen)
-	  (js-object-inline-ref o idx)
-	  (js-object-noinline-ref o idx))))
+   (if (js-object-mode-inline? o)
+       (let ((ilen (js-object-inline-elements-length o)))
+	  (if (<fx idx ilen)
+	      (js-object-inline-ref o idx)
+	      (js-object-noinline-relative-ref o (-fx idx ilen))))
+       (js-object-noinline-relative-ref o idx)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-set! ...                                               */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-object-set! o::JsObject idx::long val)
-   (let ((ilen (vector-length (js-object-inline-elements o))))
-      (if (<fx idx ilen)
-	  (js-object-inline-set! o idx val)
-	  (js-object-noinline-set! o idx val))))
+   (if (js-object-mode-inline? o)
+       (let ((ilen (js-object-inline-elements-length o)))
+	  (if (<fx idx ilen)
+	      (js-object-inline-set! o idx val)
+	      (js-object-noinline-relative-set! o (-fx idx ilen) val)))
+       (js-object-noinline-relative-set! o idx val)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-vector-inline-ref ...                                         */
@@ -1867,9 +1911,13 @@
 ;*    js-procedure? ...                                                */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-procedure? o)
-   (and (%object? o)
-	(=u32 (JS-OBJECT-MODE-JSPROCEDURETAG)
-	   (bit-andu32 (js-object-mode o) (JS-OBJECT-MODE-JSPROCEDURETAG)))))
+   (cond-expand
+      (bigloo-c
+       ($js-procedure? o (JS-OBJECT-MODE-JSPROCEDURETAG)))
+      (else
+       (and (%object? o)
+	    (=u32 (JS-OBJECT-MODE-JSPROCEDURETAG)
+	       (bit-andu32 (js-object-mode o) (JS-OBJECT-MODE-JSPROCEDURETAG)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-callable? ...                                                 */

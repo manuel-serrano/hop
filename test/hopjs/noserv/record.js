@@ -3,10 +3,10 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep  2 01:49:55 2017                          */
-/*    Last change :  Sun Jan  2 18:30:24 2022 (serrano)                */
+/*    Last change :  Fri Feb 11 14:39:32 2022 (serrano)                */
 /*    Copyright   :  2017-22 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
-/*    Testing HopScript records                                        */
+/*    Testing HopScript sealed classes                                 */
 /*=====================================================================*/
 "use hopscript";
 
@@ -16,11 +16,11 @@ import { ARS1, ARC1, ARSS2, ARSC2 } from "./aux/record1.js";
 /*---------------------------------------------------------------------*/
 /*    local constructors                                               */
 /*---------------------------------------------------------------------*/
-record RS1 {
+sealed class RS1 {
    x = 10;
 }
 
-record RC1 {
+sealed class RC1 {
    x = 11;
    xx;
    constructor(xx) {
@@ -28,16 +28,16 @@ record RC1 {
    }
 }
 
-record RSS2 extends RS1 {
+sealed class RSS2 extends RS1 {
    y = 20;
 }
 
-record RSC2 extends RC1 {
+sealed class RSC2 extends RC1 {
    y = 21;
    
 }
 
-record RCS2 extends RS1 {
+sealed class RCS2 extends RS1 {
    y = 20;
    yy;
    constructor(yy) {
@@ -46,7 +46,7 @@ record RCS2 extends RS1 {
    }
 }
 
-record RSSS3 extends RSS2 {
+sealed class RSSS3 extends RSS2 {
    z = 30;
 }
 
@@ -66,11 +66,11 @@ assert.deepEqual(rsss3, {x: 10, y: 20, z: 30}, "new RSSS3");
 /*---------------------------------------------------------------------*/
 /*    imported constructors                                            */
 /*---------------------------------------------------------------------*/
-record IRSS2 extends ARS1 {
+sealed class IRSS2 extends ARS1 {
    y = 200;
 }
 
-record IRCS2 extends ARS1 {
+sealed class IRCS2 extends ARS1 {
    y = 200;
    yy;
    constructor(_yy) {
@@ -79,11 +79,11 @@ record IRCS2 extends ARS1 {
    }
 }
 
-record IRSSS3 extends ARSS2 {
+sealed class IRSSS3 extends ARSS2 {
    z = 300;
 }
 
-record IRSSC3 extends ARSC2 {
+sealed class IRSSC3 extends ARSC2 {
    z = 303;
 }
 
