@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 25 15:52:55 2017                          */
-;*    Last change :  Sun Dec 26 09:03:43 2021 (serrano)                */
-;*    Copyright   :  2017-21 Manuel Serrano                            */
+;*    Last change :  Thu Feb 10 15:28:14 2022 (serrano)                */
+;*    Copyright   :  2017-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Types Companion macros                                           */
 ;*=====================================================================*/
@@ -490,3 +490,25 @@
        (e `(js-generator-inline-set! ,obj ,idx ,val) e))
       (else
        (error "js-generator-set!" "bad form" x))))
+
+;*---------------------------------------------------------------------*/
+;*    type-case ...                                                    */
+;*    -------------------------------------------------------------    */
+;*    (type-case                                                       */
+;*      ((type-predicate1? x) action1)                                 */
+;*      ((type-predicate2? x) action2)                                 */
+;*      (else ...))                                                    */
+;*---------------------------------------------------------------------*/
+(define (type-case-expander x e)
+   (match-case x
+      ((type-case ((?pred1 ?obj1) ?action1) . ?clauses)
+       (for-each (lambda (c)
+		    (match-case c
+		       (((?- (? (lambda (x) (eq? x obj1)))) . ?action) #t)
+		       (((kwote else) . ?action) #t)
+		       (else (error "type-case" "bad clause" x))))
+	  clauses))
+      (else
+       (error "type-case" "bad syntax" x))))
+       
+	  

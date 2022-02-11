@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Mon Feb  7 08:09:58 2022 (serrano)                */
+;*    Last change :  Thu Feb 10 15:35:18 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -664,6 +664,7 @@
 	   (inline js-not-a-index::long)
 	   (inline js-not-a-string-cache::pair)
 	   
+	   (inline $object?::bool ::obj)
 	   (inline js-object?::bool ::obj)
 	   (inline js-jsobject?::bool ::obj)
 	   (inline js-object-mapped?::bool ::JsObject)
@@ -1686,12 +1687,18 @@
    *js-not-a-vtable*)
 
 ;*---------------------------------------------------------------------*/
+;*    $object? ...                                                     */
+;*---------------------------------------------------------------------*/
+(define-inline ($object? o)
+   (cond-expand
+      ((and bigloo-c bigloo-unsafe) ($pointer? o))
+      (else (%object? o))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-object? ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-object? o)
-   (and (cond-expand
-	   ((and bigloo-c bigloo-unsafe) ($pointer? o))
-	   (else (%object? o)))
+   (and ($object? o)
 	(=u32 (JS-OBJECT-MODE-JSOBJECTTAG)
 	   (bit-andu32 (js-object-mode o) (JS-OBJECT-MODE-JSOBJECTTAG)))))
 
@@ -1725,7 +1732,7 @@
 ;*    js-jsstring? ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-jsstring? o)
-   (and (%object? o)
+   (and ($object? o)
 	(=u32 (JS-OBJECT-MODE-JSSTRINGTAG)
 	   (bit-andu32 (js-object-mode o) (JS-OBJECT-MODE-JSSTRINGTAG)))))
 
@@ -1793,7 +1800,7 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-array? o)
    ;; assumes that all bits > JSARRAYTAG are about arrays
-   (and (%object? o)
+   (and ($object? o)
 	(>=u32 (js-object-mode o) (JS-OBJECT-MODE-JSARRAYTAG))))
 
 ;*---------------------------------------------------------------------*/
