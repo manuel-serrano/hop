@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Fri Feb 11 16:17:13 2022 (serrano)                */
+;*    Last change :  Sat Feb 12 13:27:40 2022 (serrano)                */
 ;*    Copyright   :  2016-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -504,7 +504,7 @@
       ((?- (and (? symbol?) ?obj) ?cache (quote monomorphic) . ?-)
        (e `(eq? (js-object-cmap ,obj) (js-pcache-imap ,cache))
 	  e))
-      ((?- ?obj ?cache ?- . ?rest)
+      ((?- ?obj ?cache . ?rest)
        (let ((o (gensym 'obj)))
 	  (e `(let ((,o ,obj))
 		 (js-object-cache-check-proto-method ,o ,cache ,@rest))
