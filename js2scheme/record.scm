@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug  6 14:30:50 2018                          */
-;*    Last change :  Mon Feb  7 16:16:14 2022 (serrano)                */
+;*    Last change :  Sat Feb 12 16:10:41 2022 (serrano)                */
 ;*    Copyright   :  2018-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Record (aka, sealed class) specific optimizations:               */
@@ -224,7 +224,7 @@
 			      (if (config-get args :optim-proxy)
 				  (patch-this-access!
 				     (j2s-alpha body (list thisp) (list self)))
-				  (J2SMeta 'inline 0 0
+				  (J2SMeta 'inline 0 4
 				     (patch-this-access!
 					(j2s-alpha body (list thisp) (list self))))))
 			   (J2SReturn #t

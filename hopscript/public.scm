@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Fri Feb 11 13:59:32 2022 (serrano)                */
+;*    Last change :  Sat Feb 12 15:42:20 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -1832,8 +1832,8 @@
 ;*---------------------------------------------------------------------*/
 (define (js-toboolean-no-boolean obj)
    (cond
-      ((object? obj) (if (js-jsstring? obj) (js-jsstring-toboolean obj) #t))
       ((fixnum? obj) (not (=fx obj 0)))
+      ((%object? obj) (if (js-jsstring? obj) (js-jsstring-toboolean obj) #t))
       ((flonum? obj) (not (or (=fl obj 0.0) (nanfl? obj))))
       ((bignum? obj) (not (=bx obj #z0)))
       ((js-null-or-undefined? obj) #f)

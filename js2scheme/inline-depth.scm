@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Sat Feb 12 12:38:07 2022 (serrano)                */
+;*    Last change :  Sat Feb 12 16:12:32 2022 (serrano)                */
 ;*    Copyright   :  2017-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function/Method inlining optimization                            */
@@ -71,9 +71,12 @@
 (define-walk-method (inline! this::J2SMeta
 		       targets limit stack::pair-nil
 		       pmethods ingen prgm conf)
-   (with-access::J2SMeta this (optim debug meta)
-      (if (and (eq? meta 'inline) (or (=fx optim 0) (>fx debug 0)))
-	  this
+   (with-access::J2SMeta this (optim debug meta stmt)
+      (if (eq? meta 'inline)
+	  (if (or (=fx optim 0) (>fx debug 0))
+	      this
+	      (inline! stmt targets (fixnum->flonum optim)
+		 stack pmethods ingen prgm conf))
 	  (call-default-walker))))
    
 ;*---------------------------------------------------------------------*/
