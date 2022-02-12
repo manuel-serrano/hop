@@ -691,6 +691,7 @@
    (define conf (context-conf ctx))
    
    (define (js-get obj prop %this)
+      ;; FAUX CAR ON NE DOIT PAS FAIRE DE DEBUG SUR LES RECORDS
       (if (or (config-get conf :profile-cache #f)
 	      (> (config-get conf :debug 0) 0))
 	  `(js-get/debug ,obj ,prop %this ',loc)

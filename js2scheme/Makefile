@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Wed Feb  2 09:17:34 2022 (serrano)                */
+#*    Last change :  Sat Feb 12 08:52:24 2022 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the JS2SCHEME library.                     */
 #*=====================================================================*/
@@ -37,7 +37,8 @@ _OBJECTS = lexer header parser hopscript html ast usage dump utils freevars \
   syntax return loopexit symbol ronly resolve this any letfun letclass \
   use propcache bestpractice sourcemap debug stmtassign letopt unletrec \
   cps ecmascript5 narrow constant tyflow hint range loopspec cast vector \
-  array alpha letfusion constrsize ctor propcce cspecs sweep inline unthis \
+  array alpha letfusion constrsize ctor propcce cspecs sweep unthis \
+  inline inline-common inline-profile inline-depth inline-breadth \
   instanceof hintnum pce callapply multivar module checksum classutils \
   newtarget objinit arguments procedure cnstlift hop-module cse strbuffer \
   loopcnst var2let record genyield testreduce \
@@ -61,7 +62,8 @@ INCLUDES = ast.sch usage.sch usage-bit.sch scheme.sch
 #*---------------------------------------------------------------------*/
 #*    Sources                                                          */
 #*---------------------------------------------------------------------*/
-POPULATION = $(SOURCES) $(INCLUDES) make_lib.scm Makefile walk.sch token.sch
+POPULATION = $(SOURCES) $(INCLUDES) make_lib.scm Makefile \
+  walk.sch token.sch inline.sch
 
 #*---------------------------------------------------------------------*/
 #*    all                                                              */

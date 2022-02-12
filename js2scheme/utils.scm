@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Sat Feb  5 15:00:25 2022 (serrano)                */
+;*    Last change :  Sat Feb 12 12:27:35 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -354,27 +354,27 @@
    
    (define (class-subtype? type supertype)
       (or (eq? type supertype)
-	  (with-access::J2SClass type (super)
-	     (cond
-		((isa? super J2SRef)
-		 (with-access::J2SRef super (decl)
-		    (if (isa? decl J2SDeclClass)
-			(with-access::J2SDeclClass decl (val)
-			   (when (isa? val J2SClass)
-			      (class-subtype? val supertype)))
-			#t)))
-		((or (isa? super J2SUndefined) (isa? super J2SNull))
-		 #f)
-		(else
-		 #t)))))
+          (with-access::J2SClass type (super)
+             (cond
+                ((isa? super J2SRef)
+                 (with-access::J2SRef super (decl)
+                    (if (isa? decl J2SDeclClass)
+                        (with-access::J2SDeclClass decl (val)
+                           (when (isa? val J2SClass)
+                              (class-subtype? val supertype)))
+                        #t)))
+                ((or (isa? super J2SUndefined) (isa? super J2SNull))
+                 #f)
+                (else
+                 #t)))))
    
    (or (eq? supertype 'unknown)
        (noclass-subtype? type supertype)
        (and (isa? supertype J2SClass)
-	    (or (memq type '(any unknown obj object))
-		(and (isa? type J2SClass) (class-subtype? type supertype))))
+            (or (memq type '(any unknown obj object))
+                (and (isa? type J2SClass) (class-subtype? type supertype))))
        (and (isa? type J2SClass)
-	    (class-subtype? type supertype))))
+            (class-subtype? type supertype))))
 
 ;*---------------------------------------------------------------------*/
 ;*    type-name ...                                                    */
@@ -642,6 +642,9 @@
       ((isa? node J2SExpr)
        (with-access::J2SExpr node (type)
 	  type))
+      ((isa? node J2SDecl)
+       (with-access::J2SDecl node (ctype vtype)
+	  (if (eq? ctype 'any) vtype ctype)))
       (else
        'void)))
 

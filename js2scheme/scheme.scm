@@ -2817,7 +2817,7 @@
    (define (record-cache-check this::J2SCacheCheck)
       (with-access::J2SCacheCheck this (prop cache owner obj fields)
 	 (with-access::J2SString (car fields) (val)
-	    (let* ((rec (j2s-vtype obj))
+	    (let* ((rec owner)
 		   (el (j2s-class-find-super-element rec val)))
 	       (with-access::J2SRecord rec (cmap name)
 		  (when el
