@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Fri Feb 11 08:11:44 2022 (serrano)                */
+;*    Last change :  Tue Feb 15 09:40:53 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -529,9 +529,9 @@
 	   (class J2SExport::J2SStmt
 	      (id::symbol read-only)
 	      (alias::symbol read-only)
-	      (index::long (default -9998))
-	      (decl (default #f) (info '("jsonref")))
-	      (eprgm (default #f) (info '("notraverse"))))
+	      (index::long (default -9998) (info '("nojson")))
+	      (decl (default #f) (info '("nojson" "jsonref")))
+	      (eprgm (default #f) (info '("nojson" "notraverse"))))
 
 	   (class J2SExportDefault::J2SExport
 	      expr::J2SExpr)

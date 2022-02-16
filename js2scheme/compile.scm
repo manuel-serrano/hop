@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Fri Feb 11 16:41:35 2022 (serrano)                */
+;*    Last change :  Wed Feb 16 07:40:08 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -473,7 +473,7 @@
 			  (stage-exec (car driver) ast tmp count conf)
 			  (loop ast (cdr driver) (+fx (if on 1 0) count)))))))
 	 (let ((mmaps (config-get conf :mmaps)))
-	    (for-each close-mmap mmaps)))))
+	    (for-each (lambda (m) (close-mmap (cdr m))) mmaps)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    compile-opts ...                                                 */

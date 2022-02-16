@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.5.x/js2scheme/module.scm              */
+;*    serrano/prgm/project/hop/hop/js2scheme/module.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 15 15:16:16 2018                          */
-;*    Last change :  Sun Jan 23 19:12:23 2022 (serrano)                */
+;*    Last change :  Wed Feb 16 07:11:35 2022 (serrano)                */
 ;*    Copyright   :  2018-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES6 Module handling                                              */
@@ -384,7 +384,7 @@
 	 ((and (file-exists? x) (not (directory? x)))
 	  (cons (file-name-canonicalize x) 'file))
 	 (else
-	  (let loop ((sufs '(".js" ".mjs" ".hop" ".so" ".json" ".hss" ".css")))
+	  (let loop ((sufs '(".js" ".mjs" ".hop" ".ts" ".so" ".json" ".hss" ".css")))
 	     (when (pair? sufs)
 		(let* ((suffix (car sufs))
 		       (src (string-append x suffix)))

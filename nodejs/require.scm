@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.5.x/nodejs/require.scm                */
+;*    serrano/prgm/project/hop/hop/nodejs/require.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Tue Jan 25 18:38:03 2022 (serrano)                */
+;*    Last change :  Wed Feb 16 07:12:41 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -2345,7 +2345,7 @@
 	 ((string-suffix? ".hz" x)
 	  (resolve-autoload-hz x))
 	 (else
-	  (let loop ((sufs '(".js" ".mjs" ".hop" ".so" ".json" ".hss" ".css")))
+	  (let loop ((sufs '(".js" ".mjs" ".hop" ".ts" ".so" ".json" ".hss" ".css")))
 	     (when (pair? sufs)
 		(let* ((suffix (car sufs))
 		       (src (string-append x suffix)))
