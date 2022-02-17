@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  1 07:14:59 2018                          */
-;*    Last change :  Sun Dec 26 08:47:10 2021 (serrano)                */
-;*    Copyright   :  2018-21 Manuel Serrano                            */
+;*    Last change :  Thu Feb 17 14:43:38 2022 (serrano)                */
+;*    Copyright   :  2018-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs JavaScript/HTML parser                                     */
 ;*=====================================================================*/
@@ -71,7 +71,7 @@
      ;; binop
      (cons (rxor "<" ">" (rxq "+") (rxq "-") (rxq "*") "%" "=" "|" "/"
 		 "<<" ">>" ">>>" "[&^]") 'binop)
-     (cons (rxor "&&" "||" "in") 'binop1)
+     (cons (rxor "&&" "||" "in") 'binop)
      (cons "instanceof" 'binop)
      (cons "[?][?]" 'binop)
      (cons "[*][*]" 'binop)
@@ -184,11 +184,10 @@
      tok)
     ((ident)
      (let ((sym (intern (hopjs-parse-token-string tok))))
-       (message "sym=%s" sym)
        (case sym
 	 ((service return try catch while if var let const else
 		   new case switch for do default from throw export
-		   await async)
+		   await async class type extends interface declare)
 	  (aset tok 0 sym))
 	 ((function)
 	  (save-excursion
@@ -457,6 +456,9 @@
   (with-debug
    "hopjs-parse-expr utok=%s [%s]"
    utok (hopjs-parse-token-string utok)
+   (when (eq (hopjs-parse-token-type utok) 'qmark)
+     (hopjs-parse-consume-token-any)
+     (setq utok (hopjs-parse-peek-token)))
    (let* ((atok (hopjs-parse-expr-atomic utok))
 	  (tok (or (hopjs-parse-expr-simple atok multilinep) atok)))
      (hopjs-debug 0 "hopjs-parse-expr tok=%s [%s]"
@@ -488,10 +490,12 @@
    utok (hopjs-parse-token-string utok)
    (let* ((tok (hopjs-parse-consume-token-any))
 	  (ptok (hopjs-parse-peek-token)))
+     (when (and ptok (eq (hopjs-parse-token-type tok) 'qmark))
+       (hopjs-parse-consume-token-any))
      (when (or multilinep (hopjs-parse-same-linep ptok tok))
        (let ((ntok (hopjs-parse-expr ptok multilinep)))
 	 (hopjs-debug 0 "hopjs-parse-expr-colon ntok=%s [%s]"
-		      ntok (hopjs-parse-token-string ntok))
+		      ntok (and ntok (hopjs-parse-token-string ntok)))
 	 (if ntok
 	     (if (and (hopjs-parse-peek-token-same-linep ntok)
 		      (eq (hopjs-parse-peek-token-type) 'qmark))
@@ -599,15 +603,6 @@
 		(when (hopjs-parse-backward-sexp)
 		  (hopjs-parse-consume-token-any)))
 	    tok))
-;* 	 ((lbracket lparen)                                            */
-;* 	  (let ((otok (hopjs-parse-consume-token-any))                 */
-;* 		(ntok (hopjs-parse-peek-token)))                       */
-;* 	    (hopjs-debug                                               */
-;* 	     0 "hopjs-parse-expr-simple.paren otok=%s [%s]"            */
-;* 	     otok (when otok (hopjs-parse-token-string otok)))         */
-;* 	    (if (or multilinep (hopjs-parse-same-linep otok ntok))     */
-;* 		(hopjs-parse-expr ntok multilinep)                     */
-					;* 	      otok)))                                                  */
 	 (t
 	  '())
 	 (t
