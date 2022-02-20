@@ -301,6 +301,8 @@
 		   (j2s-compile-options))))
 	    (("--js-plugins" (help "Enables JavaScript plugins"))
 	     (hopc-j2s-plugins-set! #t))
+	    (("--js-no-plugins" (help "Disables JavaScript plugins"))
+	     (hopc-j2s-plugins-set! #f))
 	    (("--js-preprocessor" ?pp (help "Enables JavaScript preprocessor"))
 	     (hopc-j2s-preprocessor-set! pp))
 	    

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.5.x/js2scheme/lexer.scm               */
+;*    serrano/prgm/project/hop/hop/js2scheme/lexer.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:33:09 2013                          */
-;*    Last change :  Thu Jan 27 07:20:35 2022 (serrano)                */
+;*    Last change :  Sat Feb 19 07:05:14 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript lexer                                                 */
@@ -259,6 +259,16 @@
 			      (llong->bignum o)
 			      (llong->fixnum o)))
 		       (js-string->number (the-string) 8))))
+	  (token 'OCTALNUMBER val len)))
+      ((: "0o" (in ("17")) (* (in ("07"))))
+       ;; integer constant
+       (let* ((len (the-length))
+	      (val (if (>=fx len 18)
+		       (let ((o (octalllong (string->llong (the-string)))))
+			  (if (>llong o (bit-lshllong #l1 29))
+			      (llong->bignum o)
+			      (llong->fixnum o)))
+		       (js-string->number (the-substring 2 (the-length)) 8))))
 	  (token 'OCTALNUMBER val len)))
       ((: (+ digit) (: (in #\e #\E) #\- (+ digit)))
        ;; floating-point constant

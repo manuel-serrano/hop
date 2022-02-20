@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.5.x/hopc/driver.scm                   */
+;*    serrano/prgm/project/hop/hop/hopc/driver.scm                     */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Sun Jan 16 08:35:49 2022 (serrano)                */
+;*    Last change :  Sat Feb 19 08:51:48 2022 (serrano)                */
 ;*    Copyright   :  2014-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
@@ -144,7 +144,6 @@
 	     (format "%%~a_~a" dir mod))))
    
    (define (compile-javascript p)
-      (tprint "COMP-JS p=" p )
       (if (or (string-suffix? ".js" p) (string-suffix? ".mjs" p))
 	  (call-with-input-file p
 	     (lambda (in) (compile p in (language p))))
@@ -263,8 +262,8 @@
 		  :verbose (hop-verbose)
 		  :long-size (hopc-long-size)
 		  :int-size (hopc-int-size)
-		  :plugins-loader (hopc-plugins-loader)
 		  :libs-dir (hopc-libs-dir)
+		  :plugins-loader (hopc-plugins-loader)
 		  :debug (bigloo-debug)
 		  :warning (bigloo-warning)
 		  :node-modules-directory (hopc-node-modules-directory)
@@ -497,6 +496,7 @@
 	       temp)))
 
       (define (compile-language lang in opts file exec temp)
+	 ;;(tprint "compile.lang.1: " (hopc-plugins-loader))
 	 (let* ((comp (hopc-language-loader))
 		(jsmain (if (boolean? (hopc-js-module-main))
 			    (hopc-js-module-main)
@@ -752,16 +752,11 @@
 ;*    hopc-plugins-loader ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (hopc-plugins-loader)
-   (when (or (hopc-j2s-plugins) (hopc-j2s-preprocessor))
-      (hop-sofile-compile-policy-set! 'none)
-      (nowarning
-	 (lambda ()
-	    (when (library-load-init 'nodejs (hop-library-path))
-	       (library-load-init 'hopscript (hop-library-path))
-	       (library-load 'hopscript)
-	       (library-load 'nodejs)
-	       (eval '((@ hopscript-install-expanders! __hopscript_expanders)))
-	       (eval '((@ nodejs-plugins-toplevel-loader __nodejs_require))))))))
+   (or nodejs-plugins-loader
+       (when (or (hopc-j2s-plugins) (hopc-j2s-preprocessor))
+	  (hop-sofile-compile-policy-set! 'none)
+	  (hopc-nodejs-load)
+	  nodejs-plugins-loader)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopc-language-loader ...                                         */
@@ -784,6 +779,7 @@
 ;*    nodejs-loaded ...                                                */
 ;*---------------------------------------------------------------------*/
 (define nodejs-loaded #f)
+(define nodejs-plugins-loader #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    hopc-nodejs-load ...                                             */
@@ -797,7 +793,10 @@
 	    (when (library-load-init 'nodejs (hop-library-path))
 	       (library-load-init 'hopscript (hop-library-path))
 	       (library-load 'hopscript)
-	       (library-load 'nodejs)))
+	       (library-load 'nodejs)
+	       (eval '((@ hopscript-install-expanders! __hopscript_expanders)))
+	       (set! nodejs-plugins-loader
+		  (eval '((@ nodejs-plugins-toplevel-loader __nodejs_require))))))
 	 (let ((res #f))
 	    (for-each (lambda (b) (set! res (eval b))) bindings)
 	    res))))

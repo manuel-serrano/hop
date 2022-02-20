@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.5.x/hopc/hopc_param.scm               */
+;*    serrano/prgm/project/hop/hop/hopc/hopc_param.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Wed Jan 12 07:50:38 2022 (serrano)                */
+;*    Last change :  Sat Feb 19 07:31:48 2022 (serrano)                */
 ;*    Copyright   :  2004-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC global parameters                                           */
@@ -427,7 +427,7 @@
 ;*    Enable/disable j2s plugins                                       */
 ;*---------------------------------------------------------------------*/
 (define-parameter hopc-j2s-plugins
-   #f)
+   #t)
 
 ;*---------------------------------------------------------------------*/
 ;*    hopc-j2s-preprocessor ...                                        */
