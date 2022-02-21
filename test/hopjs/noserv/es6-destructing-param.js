@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb  7 09:48:34 2018                          */
-/*    Last change :  Thu May  6 16:19:45 2021 (serrano)                */
-/*    Copyright   :  2018-21 Manuel Serrano                            */
+/*    Last change :  Mon Feb 21 12:38:23 2022 (serrano)                */
+/*    Copyright   :  2018-22 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 2015+ destructuring function parameters       */
 /*=====================================================================*/
@@ -46,6 +46,18 @@ function hopf() {
    return len === 3 && s === Number.prototype.toString;
 }
 
+function hopg(a = "a", { s = "s", d = "d", e = "e" } = {e:3}, v) {
+   switch (v) {
+      case 1: return a === "a" && s === "s" && d === "d" && e === "3";
+      case 2: return a === 1 && s === "s" && d === "d" && e === "3";
+      case 3: return a === 1 && s === "s" && d === "d" && e === "e";
+      case 4: return a === 1 && s === "s" && d === "d" && e === "e";
+      case 5: return a === 1 && s === "S" && d === "d" && e === "e";
+      case 6: return a === 1 && s === "S" && d === "D" && e === "e";
+      default: return false;
+   }
+}
+
 console.log( "hop" );
 console.log( "   hopa()"); assert.ok( hopa( {a: 1, b: 2}, -1 ), "hopa" );
 console.log( "   hopa()"); assert.ok( hopa( {b: 2, a: 1}, -1 ), "hopa" );
@@ -55,6 +67,12 @@ console.log( "   hopc()"); assert.ok( hopc() === 11, "hopc" );
 console.log( "   hopd()"); assert.ok( hopd() === 30, "hopd" );
 console.log( "   hope()"); assert.ok( hope() === 123, "hope" );
 console.log( "   hopf()"); assert.ok( hopf(), "hopf" );
+console.log( "   hopg(1)"); assert.ok(hopg(1), "hopg.1");
+console.log( "   hopg(2)"); assert.ok(hopg(2, 1), "hopg.2");
+console.log( "   hopg(3)"); assert.ok(hopg(3, 1, 2), "hopg.3");
+console.log( "   hopg(4)"); assert.ok(hopg(4, 1, {}), "hopg.4");
+console.log( "   hopg(5)"); assert.ok(hopg(5, 1, {s: "S"}), "hopg.5");
+console.log( "   hopg(6)"); assert.ok(hopg(6, 1, {s: "S", d: "D"}), "hopg.6");
 
 /*---------------------------------------------------------------------*/
 /*    kangax                                                           */

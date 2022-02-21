@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Thu Jan 27 07:26:49 2022 (serrano)                */
+;*    Last change :  Mon Feb 21 11:14:34 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -588,7 +588,7 @@
 				   (loc loc)
 				   (id (gensym '%i))))
 			   (rhs (J2SRef tmp)))
-		       (with-access::J2SDeclInit decl (val id %info binder)
+		       (with-access::J2SDeclInit decl (val binder)
 			  (set! binder 'let)
 			  (set! val (instantiate::J2SDProducer
 				       (loc loc)
@@ -599,7 +599,7 @@
 		       (cons* tmp decl bindings))
 		    (let* ((assig (consume-token! '=))
 			   (rhs (assig-expr in-for-init? #f #f)))
-		       (with-access::J2SDeclInit decl (val id %info binder)
+		       (with-access::J2SDeclInit decl (val binder)
 			  (set! binder 'let)
 			  (set! val (instantiate::J2SDProducer
 				       (loc loc)
@@ -1756,14 +1756,44 @@
 		    #f))))
 	 ((LBRACE)
 	  (let ((id (string->symbol (format "%~a" idx)))
-		(loc (token-loc (peek-token))))
-	     (values
-		(instantiate::J2SDecl
-		   (binder 'param)
-		   (loc loc)
-		   (id id)
-		   (_scmid id))
-		(object-literal #t))))
+		(loc (token-loc (peek-token)))
+		(lit (object-literal #t))
+		(decl (instantiate::J2SDecl
+			 (binder 'param)
+			 (loc loc)
+			 (id id)
+			 (_scmid id))))
+	     (if (eq? (peek-token-type) '=)
+		 ;; a literal with a default value
+		 (begin
+		    (consume-any!)
+		    (let ((expr (assig-expr #f #f #f))
+			  (decl (instantiate::J2SDeclInit
+				   (val )
+				   (loc loc)
+				   (id id)
+				   (_scmid id))))
+		       (with-access::J2SDeclInit decl (val)
+			  (set! val (instantiate::J2SDProducer
+				       (loc loc)
+				       (size -1)
+				       (decl decl)
+				       (type 'object)
+				       (expr rhs))
+			     (values
+				(instantiate::J2SDeclInit
+				   (binder 'let)
+				   (val (instantiate::J2SDProducer
+					   (loc loc)
+					   (size -1)
+					   (decl decl)
+					   (type 'object)
+					   (expr rhs)))
+				   (loc loc)
+				   (id id)
+				   (_scmid id))
+				lit)))))
+		 (values decl lit))))
 	 ((LBRACKET)
 	  (let ((id (string->symbol (format "%~a" idx)))
 		(loc (token-loc (peek-token))))
@@ -3330,7 +3360,9 @@
 		   (val (instantiate::J2SSpread
 			   (loc (token-loc tokname))
 			   (stype 'object)
-			   (expr (primary #f #t))))))
+			   ;; 21feb2022
+			   ;; (expr (primary #f #t))
+			   (expr (assig-expr #f #f #f))))))
 	       (else
 		(let* ((loc (token-loc token))
 		       (val (case (peek-token-type)
