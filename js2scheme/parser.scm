@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Mon Feb 21 13:28:38 2022 (serrano)                */
+;*    Last change :  Mon Feb 21 14:44:17 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1229,9 +1229,13 @@
 		   (endloc endloc)
 		   (nodes (append (fun-body-params-defval params)
 			     (list (destructure-fun-params params args
-				      (instantiate::J2SReturn
+				      (instantiate::J2SBlock
 					 (loc loc)
-					 (expr expr)))))))))))
+					 (endloc endloc)
+					 (nodes (list
+						   (instantiate::J2SReturn
+						      (loc loc)
+						      (expr expr))))))))))))))
    
    (define (arrow-function args::pair-nil loc)
       ;; ES6 arrow functions
