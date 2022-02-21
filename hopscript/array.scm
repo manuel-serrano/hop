@@ -2082,11 +2082,36 @@
       :enumerable #f
       :hidden-class #t)
    
-   ;; @@iterator
+   ;; keys
+   ;; https://tc39.es/ecma262/multipage/indexed-collections.html#sec-array.prototype.keys
+   (define (array-prototype-array-keys this::obj)
+      (js-make-map-iterator this (lambda (key val) key) %this))
+   
+   (with-access::JsGlobalObject %this (js-symbol-iterator)
+      (js-bind! %this js-array-prototype (& "keys")
+	 :value (js-make-function %this array-prototype-array-keys
+		   (js-function-arity array-prototype-array-keys)
+		   (js-function-info :name "keys" :len 0)
+		   :prototype (js-undefined))
+	 :enumerable #f
+	 :hidden-class #t))
+
+   ;; values
    ;; http://www.ecma-international.org/ecma-262/6.0/#sec-22.1.3.30
    (define (array-prototype-array-values this::obj)
-      (js-make-iterator this %this))
+      (js-make-map-iterator this (lambda (key val) val) %this))
    
+   (with-access::JsGlobalObject %this (js-symbol-iterator)
+      (js-bind! %this js-array-prototype (& "values")
+	 :value (js-make-function %this array-prototype-array-values
+		   (js-function-arity array-prototype-array-values)
+		   (js-function-info :name "values" :len 0)
+		   :prototype (js-undefined))
+	 :enumerable #f
+	 :hidden-class #t))
+
+   ;; @@iterator
+   ;; http://www.ecma-international.org/ecma-262/6.0/#sec-22.1.3.30
    (with-access::JsGlobalObject %this (js-symbol-iterator)
       (js-bind! %this js-array-prototype js-symbol-iterator
 	 :value (js-make-function %this array-prototype-array-values

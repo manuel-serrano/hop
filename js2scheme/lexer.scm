@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:33:09 2013                          */
-;*    Last change :  Sat Feb 19 07:05:14 2022 (serrano)                */
+;*    Last change :  Mon Feb 21 11:01:02 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript lexer                                                 */
@@ -253,8 +253,9 @@
       ((: (+ #\0) (in ("17")) (* (in ("07"))))
        ;; integer constant
        (let* ((len (the-length))
+	      (str (the-substring 2 len))
 	      (val (if (>=fx len 18)
-		       (let ((o (octalllong (string->llong (the-string)))))
+		       (let ((o (octalllong (string->llong str 8))))
 			  (if (>llong o (bit-lshllong #l1 29))
 			      (llong->bignum o)
 			      (llong->fixnum o)))
@@ -263,13 +264,14 @@
       ((: "0o" (in ("17")) (* (in ("07"))))
        ;; integer constant
        (let* ((len (the-length))
+	      (str (the-substring 2 len))
 	      (val (if (>=fx len 18)
-		       (let ((o (octalllong (string->llong (the-string)))))
+		       (let ((o (octalllong (string->llong str 8))))
 			  (if (>llong o (bit-lshllong #l1 29))
 			      (llong->bignum o)
 			      (llong->fixnum o)))
-		       (js-string->number (the-substring 2 (the-length)) 8))))
-	  (token 'OCTALNUMBER val len)))
+		       (js-string->number str 8))))
+	  (token 'NUMBER val len)))
       ((: (+ digit) (: (in #\e #\E) #\- (+ digit)))
        ;; floating-point constant
        (token 'NUMBER (js-string->number (the-string)) (the-length)))
