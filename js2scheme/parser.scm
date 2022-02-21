@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Mon Feb 21 11:14:34 2022 (serrano)                */
+;*    Last change :  Mon Feb 21 13:28:38 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1224,12 +1224,12 @@
 	  (let* ((expr (assig-expr #f #f #f))
 		 (endloc (token-loc (peek-token) -1)))
 	     (with-access::J2SNode expr (loc)
-		(destructure-fun-params params args
-		   (instantiate::J2SBlock
-		      (loc loc)
-		      (endloc endloc)
-		      (nodes (append (fun-body-params-defval params)
-				(list (instantiate::J2SReturn
+		(instantiate::J2SBlock
+		   (loc loc)
+		   (endloc endloc)
+		   (nodes (append (fun-body-params-defval params)
+			     (list (destructure-fun-params params args
+				      (instantiate::J2SReturn
 					 (loc loc)
 					 (expr expr)))))))))))
    
@@ -1755,45 +1755,27 @@
 		       (hint hint))
 		    #f))))
 	 ((LBRACE)
-	  (let ((id (string->symbol (format "%~a" idx)))
-		(loc (token-loc (peek-token)))
-		(lit (object-literal #t))
-		(decl (instantiate::J2SDecl
-			 (binder 'param)
-			 (loc loc)
-			 (id id)
-			 (_scmid id))))
+	  (let* ((id (string->symbol (format "%~a" idx)))
+		 (loc (token-loc (peek-token)))
+		 (lit (object-literal #t)))
 	     (if (eq? (peek-token-type) '=)
 		 ;; a literal with a default value
 		 (begin
 		    (consume-any!)
-		    (let ((expr (assig-expr #f #f #f))
-			  (decl (instantiate::J2SDeclInit
-				   (val )
+		    (let* ((expr (assig-expr #f #f #f))
+			   (arg (instantiate::J2SDeclInit
+				   (binder 'param)
 				   (loc loc)
 				   (id id)
+				   (val expr)
 				   (_scmid id))))
-		       (with-access::J2SDeclInit decl (val)
-			  (set! val (instantiate::J2SDProducer
-				       (loc loc)
-				       (size -1)
-				       (decl decl)
-				       (type 'object)
-				       (expr rhs))
-			     (values
-				(instantiate::J2SDeclInit
-				   (binder 'let)
-				   (val (instantiate::J2SDProducer
-					   (loc loc)
-					   (size -1)
-					   (decl decl)
-					   (type 'object)
-					   (expr rhs)))
-				   (loc loc)
-				   (id id)
-				   (_scmid id))
-				lit)))))
-		 (values decl lit))))
+		       (values arg lit)))
+		 (let ((arg (instantiate::J2SDecl
+			       (binder 'param)
+			       (loc loc)
+			       (id id)
+			       (_scmid id))))
+		    (values arg lit)))))
 	 ((LBRACKET)
 	  (let ((id (string->symbol (format "%~a" idx)))
 		(loc (token-loc (peek-token))))
@@ -1904,15 +1886,22 @@
 			     (first #t)
 			     (pluginit #f))
 		     (if (eq? (peek-token-type) 'RBRACE)
-			 (let ((etoken (consume-any!)))
+			 (let* ((etoken (consume-any!))
+				(loc (token-loc token))
+				(endloc (token-loc etoken)))
 			    (pop-open-token etoken)
-			    (destructure-fun-params params args
-			       (instantiate::J2SBlock
-				  (loc (token-loc token))
-				  (endloc (token-loc etoken))
-				  (nodes (append (fun-body-params-defval params)
-					    (insert-pluginit (reverse! rev-ses)
-					       pluginit))))))
+			    (instantiate::J2SBlock
+			       (loc loc)
+			       (endloc endloc)
+			       (nodes (append (fun-body-params-defval params)
+					 (list
+					    (destructure-fun-params params args
+					       (instantiate::J2SBlock
+						  (loc loc)
+						  (endloc endloc)
+						  (nodes (append 
+							    (insert-pluginit (reverse! rev-ses)
+							       pluginit))))))))))
 			 (let* ((tok (peek-token))
 				(el (source-element)))
 			    (source-element-mode! el)
