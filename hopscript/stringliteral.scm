@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Mon Feb 14 18:28:18 2022 (serrano)                */
+;*    Last change :  Mon Feb 21 15:11:25 2022 (serrano)                */
 ;*    Copyright   :  2014-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -131,6 +131,8 @@
 	   (js-jsstring-maybe-tolocaleuppercase ::obj ::JsGlobalObject ::obj)
 	   (js-jsstring-split ::JsStringLiteral ::obj ::obj ::JsGlobalObject)
 	   (js-jsstring-maybe-split ::obj ::obj ::obj ::JsGlobalObject ::obj)
+	   (js-jsstring-endswith::bool ::JsStringLiteral ::obj ::obj ::JsGlobalObject)
+	   (js-jsstring-startswith::bool ::JsStringLiteral ::obj ::obj ::JsGlobalObject)
 	   (js-jsstring-prototype-padstart ::obj ::obj ::obj ::bool ::JsGlobalObject)
 	   (js-jsstring-replace-regexp ::obj ::regexp ::long ::bool ::obj ::JsGlobalObject)
 	   (js-jsstring-replace-regexp-fun1 ::obj ::regexp ::long ::bool ::procedure ::JsGlobalObject)
@@ -3553,6 +3555,26 @@
 		this separator limit))
 	    (else
 	     (loop (js-toobject %this this)))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-endswith ...                                         */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-endswith this::JsStringLiteral searchstr position %this)
+   (if (isa? searchstr JsRegExp)
+       (js-raise-type-error %this "illegal value ~s" searchstr)
+       (let ((str (js-tostring searchstr %this)))
+	  (string-suffix? (js-jsstring->string this) str
+	     (js-tointeger position %this)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-startswith ...                                       */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-startswith this::JsStringLiteral searchstr position %this)
+   (if (isa? searchstr JsRegExp)
+       (js-raise-type-error %this "illegal value ~s" searchstr)
+       (let ((str (js-tostring searchstr %this)))
+	  (string-prefix? (js-jsstring->string this) str
+	     (js-tointeger position %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    table22 ...                                                      */

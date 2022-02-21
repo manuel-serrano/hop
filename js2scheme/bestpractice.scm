@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Sun May  9 15:08:10 2021 (serrano)                */
-;*    Copyright   :  2013-21 Manuel Serrano                            */
+;*    Last change :  Mon Feb 21 14:57:38 2022 (serrano)                */
+;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Check strict mode best practice rules                            */
 ;*=====================================================================*/
@@ -71,6 +71,7 @@
 (define-walk-method (bestpractice this::J2SDeclFun mode parent)
    (when (and (eq? mode 'strict) parent (not (isa? parent J2SFun)))
       (with-access::J2SDeclFun this (id loc)
+	 (tprint "PARENT=" (typeof parent))
 	 (raise
 	    (instantiate::&io-parse-error
 	       (proc "js-symbol")

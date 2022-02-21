@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jul 11 10:52:32 2014                          */
-;*    Last change :  Thu Dec 23 08:51:18 2021 (serrano)                */
-;*    Copyright   :  2014-21 Manuel Serrano                            */
+;*    Last change :  Mon Feb 21 15:43:57 2022 (serrano)                */
+;*    Copyright   :  2014-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript source map generation                                 */
 ;*=====================================================================*/
@@ -53,7 +53,10 @@
 		   (mappings (assq-get 'mappings smap))
 		   (sources (assq-get 'sources smap))
 		   (base (dirname source-map))
-		   (root (or (assq-get 'sourceRoot smap) base))
+		   (sroot (assq-get 'sourceRoot smap))
+		   (root (if (and (string? sroot) (not (string-null? sroot)))
+			     sroot
+			     base))
 		   (file (assq-get 'file smap)))
 	       (when (and mappings sources file)
 		  (let* ((positions (read-line-positions

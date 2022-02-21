@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sun Oct 31 06:46:26 2021 (serrano)                */
-;*    Copyright   :  2013-21 Manuel Serrano                            */
+;*    Last change :  Mon Feb 21 15:07:27 2022 (serrano)                */
+;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
 ;*    -------------------------------------------------------------    */
@@ -482,6 +482,19 @@
       :enumerable #f
       :hidden-class #t)
 
+   ;; endsWith
+   ;; https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/endsWith
+   (define (endsWith this::obj searchString position)
+      (js-jsstring-endswith (js-cast-string %this this) searchString position %this))
+   
+   (js-bind! %this obj (& "endsWith")
+      :value (js-make-function %this split
+		(js-function-arity split)
+		(js-function-info :name "endsWith" :len 2)
+		:prototype (js-undefined))
+      :enumerable #f
+      :hidden-class #t)
+   
    ;; indexOf
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.7
    (define (indexof this::obj search position)
@@ -651,6 +664,19 @@
       :value (js-make-function %this split
 		(js-function-arity split)
 		(js-function-info :name "split" :len 2)
+		:prototype (js-undefined))
+      :enumerable #f
+      :hidden-class #t)
+   
+   ;; startsWith
+   ;; https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/startsWith
+   (define (startsWith this::obj searchString position)
+      (js-jsstring-startswith (js-cast-string %this this) searchString position %this))
+   
+   (js-bind! %this obj (& "startsWith")
+      :value (js-make-function %this split
+		(js-function-arity split)
+		(js-function-info :name "startsWith" :len 2)
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)

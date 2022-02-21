@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Thu Aug 19 11:31:51 2021 (serrano)                */
-;*    Copyright   :  2013-21 Manuel Serrano                            */
+;*    Last change :  Mon Feb 21 15:54:10 2022 (serrano)                */
+;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
 ;*    -------------------------------------------------------------    */
@@ -377,7 +377,9 @@
 		  obj)))
 	 
 	 (let ((name (pregexp-match "\\@@([^ ]*) hopscript"
-			(symbol->string! (car frame)))))
+			(if (string? (car frame))
+			    (car frame)
+			    (symbol->string! (car frame))))))
 	    (cond
 	       ((pair? name)
 		(let ((fun (cadr name))

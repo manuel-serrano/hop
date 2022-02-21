@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Mon Feb 21 14:44:17 2022 (serrano)                */
+;*    Last change :  Mon Feb 21 15:01:48 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1224,18 +1224,15 @@
 	  (let* ((expr (assig-expr #f #f #f))
 		 (endloc (token-loc (peek-token) -1)))
 	     (with-access::J2SNode expr (loc)
-		(instantiate::J2SBlock
-		   (loc loc)
-		   (endloc endloc)
-		   (nodes (append (fun-body-params-defval params)
-			     (list (destructure-fun-params params args
-				      (instantiate::J2SBlock
-					 (loc loc)
-					 (endloc endloc)
-					 (nodes (list
-						   (instantiate::J2SReturn
-						      (loc loc)
-						      (expr expr))))))))))))))
+		(fun-body-params-defval-block loc endloc params
+		   (destructure-fun-params params args
+		      (instantiate::J2SBlock
+			 (loc loc)
+			 (endloc endloc)
+			 (nodes (list
+				   (instantiate::J2SReturn
+				      (loc loc)
+				      (expr expr)))))))))))
    
    (define (arrow-function args::pair-nil loc)
       ;; ES6 arrow functions
@@ -1879,6 +1876,15 @@
    (define (fun-body-params-defval params::pair-nil)
       (filter-map param-defval params))
 
+   (define (fun-body-params-defval-block loc endloc params::pair-nil body)
+      (let ((defvals (fun-body-params-defval params)))
+	 (if (pair? defvals)
+	     (instantiate::J2SBlock
+		(loc loc)
+		(endloc endloc)
+		(nodes (append defvals (list body))))
+	     body)))
+
    (define (fun-body params::pair-nil args mode::symbol)
       (let ((cmode current-mode)
 	    (cplugins plugins))
@@ -1894,18 +1900,13 @@
 				(loc (token-loc token))
 				(endloc (token-loc etoken)))
 			    (pop-open-token etoken)
-			    (instantiate::J2SBlock
-			       (loc loc)
-			       (endloc endloc)
-			       (nodes (append (fun-body-params-defval params)
-					 (list
-					    (destructure-fun-params params args
-					       (instantiate::J2SBlock
-						  (loc loc)
-						  (endloc endloc)
-						  (nodes (append 
-							    (insert-pluginit (reverse! rev-ses)
-							       pluginit))))))))))
+			    (fun-body-params-defval-block loc endloc params
+			       (destructure-fun-params params args
+				  (instantiate::J2SBlock
+				     (loc loc)
+				     (endloc endloc)
+				     (nodes (insert-pluginit (reverse! rev-ses)
+					       pluginit))))))
 			 (let* ((tok (peek-token))
 				(el (source-element)))
 			    (source-element-mode! el)
