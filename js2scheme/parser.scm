@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Tue Feb 22 07:30:43 2022 (serrano)                */
+;*    Last change :  Tue Feb 22 07:42:09 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1876,21 +1876,14 @@
    (define (fun-body-params-defval params::pair-nil)
       (filter-map param-defval params))
 
-   (define (fun-body-params-defval-block loc endloc params::pair-nil body::J2SBlock)
+   (define (fun-body-params-defval-block loc endloc params::pair-nil body)
       (let ((defvals (fun-body-params-defval params)))
-	 (when (pair? defvals)
-	    (with-access::J2SBlock body (nodes)
-	       ;; find the first non-fun declaration
-	       (set! nodes
-		  (let loop ((nodes nodes))
-		     (cond
-			((null? nodes)
-			 defvals)
-			((isa? (car nodes) J2SDeclFun)
-			 (cons (car nodes) (loop (cdr nodes))))
-			(else
-			 (append defvals (cdr nodes))))))))
-	 body))
+	 (if (pair? defvals)
+	     (instantiate::J2SBlock
+		(loc loc)
+		(endloc endloc)
+		(nodes (append defvals (list body))))
+	     body)))
 
    (define (fun-body params::pair-nil args mode::symbol)
       (let ((cmode current-mode)
