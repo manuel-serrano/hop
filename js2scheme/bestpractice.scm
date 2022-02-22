@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Tue Feb 22 07:49:25 2022 (serrano)                */
+;*    Last change :  Tue Feb 22 07:58:39 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Check strict mode best practice rules                            */
@@ -62,6 +62,7 @@
    (with-access::J2SFun this (body id (fmode mode) params)
       (let ((body (if (any (lambda (p) (isa? p J2SDeclInit)) params)
 		      ;; default params values, skip the first block
+		      ;; see parser.scm
 		      (with-access::J2SBlock body (nodes)
 			 (car (last-pair nodes)))
 		      body)))

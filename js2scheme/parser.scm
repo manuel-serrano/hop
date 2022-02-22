@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Tue Feb 22 07:42:09 2022 (serrano)                */
+;*    Last change :  Tue Feb 22 07:58:35 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1879,6 +1879,7 @@
    (define (fun-body-params-defval-block loc endloc params::pair-nil body)
       (let ((defvals (fun-body-params-defval params)))
 	 (if (pair? defvals)
+	     ;; see bestpractice.scm (don't change that block)
 	     (instantiate::J2SBlock
 		(loc loc)
 		(endloc endloc)
