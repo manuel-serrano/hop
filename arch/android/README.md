@@ -8,6 +8,7 @@ This document explains how to compile Hop for Android devices and how
 to package it in an `apk` file. We _also_ show how to build an Hop
 application that runs inside an HTML container on the devices.
 
+
 Disclaimer
 ----------
 
@@ -25,6 +26,7 @@ Only a tiny subset of Android features are currently available in Hop.
 These are documented in this page. The Hop Scheme layer is generally more
 advanced because bindings are first created for Scheme and then ported
 to JavaScript.
+
 
 Requirements
 ------------
@@ -66,8 +68,9 @@ In addition, you will need the
  [Bigloo](http://www-sop.inria.fr/indes/fp/Bigloo/download.html) 
 and 
  [Hop](http://hop.inria.fr/home/download.html)
-source file distributions. In the rest, we assume that these
-files are stored in the `repodir` directory
+source file distributions (tarball files). In the rest, we assume that these
+files are stored in the `your-repodir` directory
+
 
 Default Build
 -------------
@@ -75,7 +78,7 @@ Default Build
 To build a full hop+bigloo stack and to produce an `apk` file:
 
     $ cd arch/android
-    $ export REPODIR=repodir
+    $ export REPODIR=your-repodir
     $ make apk 
 	
 The directory `repodir` must contain the tarball of the Bigloo version used

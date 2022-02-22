@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Tue Feb 22 10:44:38 2022 (serrano)                */
+;*    Last change :  Tue Feb 22 12:41:07 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1893,7 +1893,8 @@
 	 (unwind-protect
 	    (let ((token (push-open-token (consume-token! 'LBRACE))))
 	       (let ((loc (current-loc)))
-		  (let loop ((rev-ses '()))
+		  (let loop ((rev-ses '())
+			     (first #t))
 		     (if (eq? (peek-token-type) 'RBRACE)
 			 (let* ((etoken (consume-any!))
 				(loc (token-loc token))
@@ -1907,8 +1908,15 @@
 				     (nodes (reverse! rev-ses))))))
 			 (let* ((tok (peek-token))
 				(el (source-element)))
-			    (source-element-mode! el)
-			    (loop (cons el rev-ses)))))))
+			    (if (and first
+				     (or (isa? el J2SString)
+					 (and (isa? el J2SStmtExpr)
+					      (with-access::J2SStmtExpr el (expr)
+						 (isa? expr J2SString)))))
+				(begin
+				   (source-element-mode! el)
+				   (loop (cons el rev-ses) #t))
+				(loop (cons el rev-ses) #f)))))))
 	    (begin
 	       (set! current-mode cmode)
 	       (set! plugins cplugins)))))

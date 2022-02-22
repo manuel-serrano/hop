@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Sat Feb 12 16:12:32 2022 (serrano)                */
+;*    Last change :  Tue Feb 22 12:49:03 2022 (serrano)                */
 ;*    Copyright   :  2017-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function/Method inlining optimization                            */
@@ -132,6 +132,7 @@
 	   (not (function-newtarget? val))
 	   (not (function-delete-argument? val))
 	   (not (function-self-recursive? val))
+	   (eq? (function-mode val) (function-mode (car stack)))
 	   (inline-check-id id)))
 
    (define (method-type-compatible? fun::J2SAccess met::J2SFun)
@@ -237,26 +238,9 @@
 			    (inline-function-call fun thisargs args loc)
 			    (function-rutype fun))
 			 #t new-limit new-stack pmethods ingen prgm conf))))))
-;* 	 ((pair? targets)                                              */
-;* 	  (let ((targets (filter-rutype targets prgm)))                */
-;* 	     (when (pair? targets)                                     */
-;* 		(when (pair? stack)                                    */
-;* 		   (invalidate-function-size! (car stack)))            */
-;* 		(inline-stmt->expr loc                                 */
-;* 		   (inline-unknown-call fun thisargs  args loc         */
-;* 		      targets limit stack pmethods ingen prgm conf)    */
-;* 		   (function-rutype (car targets))))))                 */
 	 (else
 	  #f)))
 
-;*    (define (inline-expr-call this fun thisargs args loc)            */
-;*       (let ((decl (J2SDeclInit '(ref) (gensym '%fun) fun))          */
-;* 	    (endloc (node-endloc this)))                               */
-;* 	 (inline-stmt->expr loc                                        */
-;* 	    (J2SLetBlock (list decl)                                   */
-;* 	       (inline-ref-call this (J2SRef decl) thisargs args loc)) */
-;* 	    'unknown)))                                                */
-   
    (with-access::J2SCall this (fun thisargs args type loc cache protocol)
       (cond
 	 ;; not inlined calls
