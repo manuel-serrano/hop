@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/3.5.x/arch/android/Makefile             */
+#*    serrano/prgm/project/hop/hop/arch/android/Makefile               */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Mon Jan 24 07:18:38 2022 (serrano)                */
+#*    Last change :  Mon Feb 21 19:02:09 2022 (serrano)                */
 #*    Copyright   :  2010-22 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -344,7 +344,7 @@ $(ANDROIDBUILDDIR)/res/values/strings.xml \
   $(ANDROIDBUILDDIR)/src/fr/inria/hop/Hop.java:
 	rm -f $@.in
 	(hophz=hop; \
-         if [ "$(HOPHZ) " != " "]; then \
+         if [ "$(HOPHZ) " != " " ]; then \
            hophz=`basename $(HOPHZ)`; \
          fi; \
 	 cat $< \
@@ -498,7 +498,7 @@ $(ANDROIDBUILDDIR)/assets/hz:
 	pwd
 	if [ "$(HOPHZ) " != " " ]; then \
 	  mkdir -p $(ANDROIDBUILDDIR)/assets/hz; \
-	  cp $(ANDROIDWEBLET)$(HOPHZ) $(ANDROIDBUILDDIR)/assets/hz; \
+	  cp $(ANDROIDWEBLET)/$(HOPHZ) $(ANDROIDBUILDDIR)/assets/hz; \
         fi
 
 rename-jsgz:
@@ -743,7 +743,7 @@ apk.hop.configure:
 $(ANDROIDBUILDDIR)/$(HOPFULLNAME):
 	if [ -d $(HOPSOURCE) ]; then \
 	  (cd $(ANDROIDBUILDDIR); rm -rf $(ANDROIDBUILDDIR)/$(HOPBRANCH) $(ANDROIDBUILDDIR)/$(HOPFULLNAME)) && \
-          (cd $(ANDROIDBUILDDIR); git clone $(HOPSOURCE)) && \
+          (cd $(ANDROIDBUILDDIR); git clone $(HOPSOURCE) $(HOPBRANCH)) && \
           (cd $(ANDROIDBUILDDIR); cp $(HOPSOURCE)/share/hop-builtin-serializers.js $(ANDROIDBUILDDIR)/$(HOPBRANCH)/share) && \
           (cd $(ANDROIDBUILDDIR); cp $(HOPSOURCE)/etc/hoprc.hop $(ANDROIDBUILDDIR)/$(HOPBRANCH)/etc) && \
           (mv $(ANDROIDBUILDDIR)/$(HOPBRANCH) $(ANDROIDBUILDDIR)/$(HOPFULLNAME)) || exit 1; \
