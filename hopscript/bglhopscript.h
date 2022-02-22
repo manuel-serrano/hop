@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 11 09:35:38 2022                          */
-/*    Last change :  Fri Feb 11 14:26:12 2022 (serrano)                */
+/*    Last change :  Tue Feb 22 14:08:34 2022 (serrano)                */
 /*    Copyright   :  2022 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Macros for accelerating C compilation.                           */
@@ -22,16 +22,16 @@ extern bool_t hop_js_toboolean_no_boolean(obj_t);
 /*    Type predicates                                                  */
 /*---------------------------------------------------------------------*/
 #define HOP_JSOBJECTP(o, tag) \
-   (POINTERP(o) && ((BGL_OBJECT_HEADER_SIZE(o) & tag) == tag))
+   (BGL_OBJECTP(o) && ((BGL_OBJECT_HEADER_SIZE(o) & tag) == tag))
    
 #define HOP_JSARRAYP(o, tag) \
-   (POINTERP(o) && BGL_OBJECT_HEADER_SIZE(o) >= tag)
+   (BGL_OBJECTP(o) && BGL_OBJECT_HEADER_SIZE(o) >= tag)
 
 #define HOP_JSSTRINGP(o, tag) \
-   (POINTERP(o) && ((BGL_OBJECT_HEADER_SIZE(o) & tag) == tag))
+   (BGL_OBJECTP(o) && ((BGL_OBJECT_HEADER_SIZE(o) & tag) == tag))
 
 #define HOP_JSPROCEDUREP(o, tag) \
-   (POINTERP(o) && ((BGL_OBJECT_HEADER_SIZE(o) & tag) == tag))
+   (BGL_OBJECTP(o) && ((BGL_OBJECT_HEADER_SIZE(o) & tag) == tag))
 
 /*---------------------------------------------------------------------*/
 /*    Objects & properties predicates                                  */
