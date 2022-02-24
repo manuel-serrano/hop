@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Fri Feb 11 11:16:45 2022 (serrano)                */
+;*    Last change :  Thu Feb 24 09:18:29 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -34,6 +34,10 @@
 	   (include "bglhopscript_malloc.h"))
 
    (extern (macro $pointer?::bool (::obj) "POINTERP")
+	   (macro $hop-object-header-size::long (::object)
+		  "HOP_OBJECT_HEADER_SIZE")
+	   (macro $hop-object-header-size-set!::long (::object ::long)
+		  "HOP_OBJECT_HEADER_SIZE_SET")
 	   ($js-init-jsalloc::int (::uint32)
 	      "bgl_init_jsalloc")
 	   ($js-init-worker-jsalloc::int ()
@@ -2030,7 +2034,9 @@
 ;*    js-object-mode-set! ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-object-mode-set! o p)
-   (object-header-size-set! o (uint32->fixnum p)))
+   (cond-expand
+      (bigloo-c ($hop-object-header-size-set! o (uint32->fixnum p)))
+      (else (object-header-size-set! o (uint32->fixnum p)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-function-tag? ...                                      */

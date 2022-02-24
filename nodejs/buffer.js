@@ -820,3 +820,8 @@ Buffer.prototype.writeDoubleBE = function(value, offset, noAssert) {
     checkOffset(offset, 8, this.length);
   this.parent.writeDoubleBE(value, this.offset + offset, !!noAssert);
 };
+
+/*---------------------------------------------------------------------*/
+/*    from (added in node v5.10.0)                                     */
+/*---------------------------------------------------------------------*/
+Buffer.from = SlowBuffer.from;

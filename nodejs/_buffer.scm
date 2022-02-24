@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 30 06:52:06 2014                          */
-;*    Last change :  Sat Mar  7 06:37:11 2020 (serrano)                */
-;*    Copyright   :  2014-20 Manuel Serrano                            */
+;*    Last change :  Thu Feb 24 10:20:35 2022 (serrano)                */
+;*    Copyright   :  2014-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native native bindings                                           */
 ;*=====================================================================*/
@@ -151,6 +151,23 @@
 	       (js-put! buf (& "offset") 0 #f %this)
 	       (js-put! buf (& "parent") slowbuffer #f %this)
 	       buf)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-array->jsfastbuffer ...                                       */
+;*---------------------------------------------------------------------*/
+(define (js-array->jsfastbuffer arr %this)
+   (with-access::JsGlobalObject %this (js-buffer-proto)
+      (let* ((len::uint32 (js-array-length arr))
+	     (str (make-string (uint32->fixnum len))))
+	 (let loop ((i #u32:0))
+	    (unless (=u32 i len)
+	       (if (js-has-property arr (js-toname i %this) %this)
+		   (string-set! str (uint32->fixnum i)
+		      (integer->char
+			 (js-tointeger (js-get arr i %this) %this)))
+		   (string-set! str (uint32->fixnum i) #a000))
+	       (loop (+u32 i #u32:1))))
+	 (js-string->jsfastbuffer str %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsslowbuffer->string ...                                      */
@@ -1144,6 +1161,20 @@
 			 (set! buffer sbuf))))
 		(js-function-arity 4 0)
 		(js-function-info :name "makeFastBuffer" :len 4))
+      :writable #t :enumerable #t :configurable #t :hidden-class #f)
+
+   (js-bind! %this js-slowbuffer (& "from")
+      :value (js-make-function %this
+		(lambda (this obj offset-or-obj len)
+		   (cond
+		      ((js-jsstring? obj)
+		       (js-string->jsfastbuffer (js-jsstring->string obj) %this))
+		      ((js-array? obj)
+		       (js-array->jsfastbuffer obj %this))
+		      (else
+		       (js-undefined))))
+		(js-function-arity 3 0)
+		(js-function-info :name "from" :len 3))
       :writable #t :enumerable #t :configurable #t :hidden-class #f)
 
    js-slowbuffer)

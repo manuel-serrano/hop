@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Fri Feb 11 09:34:58 2022 (serrano)                */
+/*    Last change :  Thu Feb 24 11:22:36 2022 (serrano)                */
 /*    Copyright   :  2016-22 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -781,7 +781,7 @@ BGL_MAKE_JSOBJECT_SANS(int constrsize, obj_t constrmap, obj_t __proto__, uint32_
    o->BgL_cmapz00 = (BgL_jsconstructmapz00_bglt)constrmap;
    o->BgL_elementsz00 = empty_vector;
 
-   BGL_OBJECT_HEADER_SIZE_SET(BNANOBJECT(o), (long)mode);
+   HOP_OBJECT_HEADER_SIZE_SET(BNANOBJECT(o), (long)mode);
    BGL_OBJECT_WIDENING_SET(BNANOBJECT(o), __proto__);
    
    // elements initialization
@@ -937,7 +937,7 @@ BGL_MAKE_JSPROXY_SANS(obj_t target, obj_t handler,
    BGL_OBJECT_CLASS_NUM_SET(BNANOBJECT(o), JSPROXY_CLASS_NUM);
    
    // fields init
-   BGL_OBJECT_HEADER_SIZE_SET(BNANOBJECT(o), (long)mode);
+   HOP_OBJECT_HEADER_SIZE_SET(BNANOBJECT(o), (long)mode);
    BGL_OBJECT_WIDENING_SET(BNANOBJECT(o), target);
    
    o->BgL_handlerz00 = (struct BgL_jsobjectz00_bgl *)handler;
@@ -1051,7 +1051,7 @@ BGL_MAKE_JSFUNCTION_SANS(obj_t procedure,
    BGL_OBJECT_CLASS_NUM_SET(BNANOBJECT(o), JSFUNCTION_CLASS_NUM);
 
    // immutable fields init
-   BGL_OBJECT_HEADER_SIZE_SET(BNANOBJECT(o), (long)jsfunction_mode);
+   HOP_OBJECT_HEADER_SIZE_SET(BNANOBJECT(o), (long)jsfunction_mode);
    o->BgL_allocz00 = jsfunction_alloc;
    o->BgL_constrmapz00 = jsfunction_constrmap;
    o->BgL_elementsz00 = jsfunction_elements;
@@ -1187,7 +1187,7 @@ BGL_MAKE_JSMETHOD_SANS(obj_t procedure, obj_t method,
    BGL_OBJECT_CLASS_NUM_SET(BNANOBJECT(o), JSMETHOD_CLASS_NUM);
 
    // immutable fields init
-   BGL_OBJECT_HEADER_SIZE_SET(BNANOBJECT(o), (long)jsmethod_mode);
+   HOP_OBJECT_HEADER_SIZE_SET(BNANOBJECT(o), (long)jsmethod_mode);
    o->BgL_allocz00 = jsmethod_alloc;
    o->BgL_constrmapz00 = jsmethod_constrmap;
    o->BgL_elementsz00 = jsmethod_elements;
@@ -1318,7 +1318,7 @@ BGL_MAKE_JSPROCEDURE_SANS(obj_t procedure, long arity, obj_t __proto__) {
 
    // immutable fields init
    BGL_OBJECT_WIDENING_SET(BNANOBJECT(o), __proto__);
-   BGL_OBJECT_HEADER_SIZE_SET(BNANOBJECT(o), (long)jsprocedure_mode);
+   HOP_OBJECT_HEADER_SIZE_SET(BNANOBJECT(o), (long)jsprocedure_mode);
    o->BgL_cmapz00 = jsfunction_cmap;
    o->BgL_elementsz00 = empty_vector;
       
@@ -1434,7 +1434,7 @@ BGL_MAKE_JSSTRINGLITERALASCII_SANS(uint32_t len, obj_t left, obj_t right) {
    
    // immutable fields init
    BGL_OBJECT_WIDENING_SET(BNANOBJECT(o), BFALSE);
-   BGL_OBJECT_HEADER_SIZE_SET(BNANOBJECT(o), (long)jsstringliteralascii_mode);
+   HOP_OBJECT_HEADER_SIZE_SET(BNANOBJECT(o), (long)jsstringliteralascii_mode);
 
    return BNANOBJECT(o);
 }
@@ -1527,7 +1527,7 @@ bgl_jsstring_append_ascii(obj_t left, obj_t right) {
 	 poolstringliteralascii.buffer[poolstringliteralascii.idx++] = 0;
 	 alloc_spin_unlock(&lockstringliteralascii);
 
-	 BGL_OBJECT_HEADER_SIZE_SET(o, (long)jsstringliteralascii_normmode);
+	 HOP_OBJECT_HEADER_SIZE_SET(o, (long)jsstringliteralascii_normmode);
 	 
 	 ((BgL_jsstringliteralasciiz00_bglt)(COBJECT(o)))->BgL_lengthz00 = len; 
 	 ((BgL_jsstringliteralasciiz00_bglt)(COBJECT(o)))->BgL_leftz00 = nleft; 
@@ -1540,7 +1540,7 @@ bgl_jsstring_append_ascii(obj_t left, obj_t right) {
 
 	 {
 	    obj_t o = bgl_make_jsstringliteralascii(len, nleft, nright);
-	    BGL_OBJECT_HEADER_SIZE_SET(o, (long)jsstringliteralascii_normmode);
+	    HOP_OBJECT_HEADER_SIZE_SET(o, (long)jsstringliteralascii_normmode);
 	    return o;
 	 }
       }
@@ -1608,7 +1608,7 @@ static obj_t empty_vector = BVECTOR(&(_empty_vector.length));
    o->BgL_elementsz00 = empty_vector;				      \
    o->BgL_lengthz00 = len;					      \
    o->BgL_ilenz00 = ilen;					      \
-   BGL_OBJECT_HEADER_SIZE_SET(BNANOBJECT(o), (long)mode);	      \
+   HOP_OBJECT_HEADER_SIZE_SET(BNANOBJECT(o), (long)mode);	      \
    BGL_OBJECT_WIDENING_SET(BNANOBJECT(o), __proto__);	      \
 								      \
    /* vector initialization */					      \
@@ -1800,7 +1800,7 @@ bgl_make_jsgenerator(obj_t constrmap, obj_t __proto__, long sz, obj_t next, uint
    /* fields init */
    o->BgL_cmapz00 = (BgL_jsconstructmapz00_bglt)constrmap;
    o->BgL_elementsz00 = empty_vector;
-   BGL_OBJECT_HEADER_SIZE_SET(BNANOBJECT(o), (long)mode);
+   HOP_OBJECT_HEADER_SIZE_SET(BNANOBJECT(o), (long)mode);
    BGL_OBJECT_WIDENING_SET(BNANOBJECT(o), __proto__);
 
    /* vector initialization */
@@ -1831,7 +1831,7 @@ bgl_init_jsyield_object(obj_t p) {
 
    // fields init
    o->BgL_elementsz00 = empty_vector;
-   BGL_OBJECT_HEADER_SIZE_SET(BNANOBJECT(o), jsobject_mode);
+   HOP_OBJECT_HEADER_SIZE_SET(BNANOBJECT(o), jsobject_mode);
    
    // elements initialization
    vector = (obj_t)(&(o->BgL_elementsz00) + 1);

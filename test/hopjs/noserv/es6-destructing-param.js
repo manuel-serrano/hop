@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb  7 09:48:34 2018                          */
-/*    Last change :  Mon Feb 21 12:38:23 2022 (serrano)                */
+/*    Last change :  Thu Feb 24 12:31:17 2022 (serrano)                */
 /*    Copyright   :  2018-22 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 2015+ destructuring function parameters       */
@@ -46,10 +46,10 @@ function hopf() {
    return len === 3 && s === Number.prototype.toString;
 }
 
-function hopg(a = "a", { s = "s", d = "d", e = "e" } = {e:3}, v) {
+function hopg(v, a = "a", { s = "s", d = "d", e = "e" } = {e:3}) {
    switch (v) {
-      case 1: return a === "a" && s === "s" && d === "d" && e === "3";
-      case 2: return a === 1 && s === "s" && d === "d" && e === "3";
+      case 1: return a === "a" && s === "s" && d === "d" && e === 3;
+      case 2: return a === 1 && s === "s" && d === "d" && e === 3;
       case 3: return a === 1 && s === "s" && d === "d" && e === "e";
       case 4: return a === 1 && s === "s" && d === "d" && e === "e";
       case 5: return a === 1 && s === "S" && d === "d" && e === "e";
