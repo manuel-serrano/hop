@@ -2545,7 +2545,6 @@
 (define-inline (js-species->jsarray this::JsObject vec::vector %this::JsGlobalObject)
    (if (js-vector? this)
        (let ((v (js-vector-alloc (fixnum->uint32 (vector-length vec)) %this)))
-	  (tprint "WARNING js-species->jsarray VECTOR " (vector-length vec))
 	  (with-access::JsArray v ((nvec vec))
 	     (vector-blit! nvec 0 vec 0 (vector-length vec))
 	     v))

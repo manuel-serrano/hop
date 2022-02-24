@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Mon Dec 20 19:48:06 2021 (serrano)                */
-;*    Copyright   :  2013-21 Manuel Serrano                            */
+;*    Last change :  Thu Feb 24 18:13:02 2022 (serrano)                */
+;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Private (i.e., not exported by the lib) utilitary functions      */
 ;*=====================================================================*/
@@ -51,8 +51,6 @@
 	   (js-seal-property! ::JsPropertyDescriptor)
 	   (js-freeze-property! ::JsPropertyDescriptor)
 
-	   (generic js-valueof ::obj ::JsGlobalObject)
-	   
 	   (js-number->string ::obj)
 	   (js-serializer ::JsObject)
 	   (js-unserializer ::obj)))
@@ -160,12 +158,6 @@
 	 (with-access::JsValueDescriptor desc (writable)
 	    (when (eq? writable #t) (set! writable #f))))
       (when (eq? configurable #t) (set! configurable #f))))
-
-;*---------------------------------------------------------------------*/
-;*    js-valueof ::obj ...                                             */
-;*---------------------------------------------------------------------*/
-(define-generic (js-valueof obj::obj %this::JsGlobalObject)
-   (js-toobject %this obj))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-number->string ...                                            */

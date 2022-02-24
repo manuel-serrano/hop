@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 30 06:52:06 2014                          */
-;*    Last change :  Thu Feb 24 10:20:35 2022 (serrano)                */
+;*    Last change :  Thu Feb 24 17:07:24 2022 (serrano)                */
 ;*    Copyright   :  2014-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native native bindings                                           */
@@ -101,7 +101,9 @@
 ;*---------------------------------------------------------------------*/
 (define-method (js-typedarray-ref o::JsFastBuffer)
    (lambda (buf i)
-      (char->integer (string-ref buf i))))
+      (if (string? buf)
+	  (char->integer (string-ref buf i))
+	  (uint8->fixnum (u8vector-ref buf i)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-typedarray-set! ...                                           */
@@ -110,7 +112,9 @@
    (lambda (buf i v %this)
       (let* ((w (bit-andu32 #u32:255 (js-touint32 v %this)))
 	     (n (uint32->fixnum w)))
-	 (string-int-set! buf i n))))
+	 (if (string? buf)
+	     (string-int-set! buf i n)
+	     (u8vector-set! buf i (fixnum->uint8 n))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsTypeArray ...                                */
@@ -153,6 +157,12 @@
 	       buf)))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-jsstring->jsfastbuffer ...                                    */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring->jsfastbuffer obj offset-or-enc len %this)
+   (js-string->jsfastbuffer (js-jsstring->string obj) %this))
+
+;*---------------------------------------------------------------------*/
 ;*    js-array->jsfastbuffer ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (js-array->jsfastbuffer arr %this)
@@ -168,6 +178,94 @@
 		   (string-set! str (uint32->fixnum i) #a000))
 	       (loop (+u32 i #u32:1))))
 	 (js-string->jsfastbuffer str %this))))
+
+;*---------------------------------------------------------------------*/
+;*    js-arraybuffer->jsfastbuffer ...                                 */
+;*---------------------------------------------------------------------*/
+(define (js-arraybuffer->jsfastbuffer arr offset len %this)
+   (with-access::JsGlobalObject %this (js-buffer-proto js-slowbuffer-proto)
+      (with-access::JsArrayBuffer arr (data)
+	 (let* ((len::uint32 (if (eq? len (js-undefined))
+				 (fixnum->uint32 (u8vector-length data))
+				 (js-touint32 len %this)))
+		(offset::uint32 (if (eq? offset (js-undefined))
+				    #u32:0
+				    (js-touint32 offset %this)))
+		(slowbuffer (instantiateJsSlowBuffer
+			       (__proto__ js-slowbuffer-proto)
+			       (data data))))
+	    (js-put! slowbuffer (& "length") (uint32->fixnum len) #f %this)
+	    (with-access::JsSlowBuffer slowbuffer (data)
+	       (let ((buf (instantiateJsFastBuffer
+			     (__proto__ js-buffer-proto)
+			     (%data data)
+			     (frozen #f)
+			     (buffer slowbuffer)
+			     (byteoffset offset)
+			     (length len)
+			     (bpe 1))))
+		  (js-put! buf (& "length") (uint32->fixnum len) #f %this)
+		  (js-put! buf (& "offset") 0 #f %this)
+		  (js-put! buf (& "parent") slowbuffer #f %this)
+		  buf))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-buffer->jsfastbuffer ...                                      */
+;*---------------------------------------------------------------------*/
+(define (js-buffer->jsfastbuffer arr %this)
+   (with-access::JsGlobalObject %this (js-buffer-proto js-slowbuffer-proto)
+      (with-access::JsFastBuffer arr (buffer %data)
+	 (with-access::JsSlowBuffer buffer (data)
+	    (let* ((len::uint32 (fixnum->uint32
+				   (if (string? %data)
+				       (string-length %data)
+				       (u8vector-length %data))))
+		   (slowbuffer (instantiateJsSlowBuffer
+				  (__proto__ js-slowbuffer-proto)
+				  (data data))))
+	       (js-put! slowbuffer (& "length") (uint32->fixnum len) #f %this)
+	       (with-access::JsSlowBuffer slowbuffer (data)
+		  (let ((buf (instantiateJsFastBuffer
+				(__proto__ js-buffer-proto)
+				(%data data)
+				(frozen #f)
+				(buffer slowbuffer)
+				(byteoffset #u32:0)
+				(length len)
+				(bpe 1))))
+		     (js-put! buf (& "length") (uint32->fixnum len) #f %this)
+		     (js-put! buf (& "offset") 0 #f %this)
+		     (js-put! buf (& "parent") slowbuffer #f %this)
+		     buf)))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-object->jsfastbuffer ...                                      */
+;*---------------------------------------------------------------------*/
+(define (js-object->jsfastbuffer this obj offset-or-enc len %this)
+   (with-access::JsGlobalObject %this (js-buffer-proto js-slowbuffer-proto)
+      (let ((vof (js-valueof obj %this)))
+	 (if (eq? vof obj)
+	     (let ((prim (js-toprimitive-for-string obj %this)))
+		(js-jsstring->jsfastbuffer prim offset-or-enc len %this))
+	     (js-obj->jsfastbuffer this vof offset-or-enc len %this)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-obj->jsfastbuffer ...                                         */
+;*---------------------------------------------------------------------*/
+(define (js-obj->jsfastbuffer this obj offset-or-enc len %this)
+   (cond
+      ((js-jsstring? obj)
+       (js-jsstring->jsfastbuffer obj offset-or-enc len %this))
+      ((js-array? obj)
+       (js-array->jsfastbuffer obj %this))
+      ((isa? obj JsArrayBuffer)
+       (js-arraybuffer->jsfastbuffer obj offset-or-enc len %this))
+      ((isa? obj JsFastBuffer)
+       (js-buffer->jsfastbuffer obj %this))
+      ((isa? obj JsObject)
+       (js-object->jsfastbuffer this obj offset-or-enc len %this))
+      (else
+       (js-undefined))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsslowbuffer->string ...                                      */
@@ -1164,15 +1262,9 @@
       :writable #t :enumerable #t :configurable #t :hidden-class #f)
 
    (js-bind! %this js-slowbuffer (& "from")
-      :value (js-make-function %this
-		(lambda (this obj offset-or-obj len)
-		   (cond
-		      ((js-jsstring? obj)
-		       (js-string->jsfastbuffer (js-jsstring->string obj) %this))
-		      ((js-array? obj)
-		       (js-array->jsfastbuffer obj %this))
-		      (else
-		       (js-undefined))))
+      :value (js-make-function %this 
+		(lambda (this obj offset-or-enc len)
+		   (js-obj->jsfastbuffer this obj offset-or-enc len %this))
 		(js-function-arity 3 0)
 		(js-function-info :name "from" :len 3))
       :writable #t :enumerable #t :configurable #t :hidden-class #f)

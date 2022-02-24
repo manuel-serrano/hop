@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jun 18 07:29:16 2014                          */
-;*    Last change :  Fri Sep  3 09:10:07 2021 (serrano)                */
-;*    Copyright   :  2014-21 Manuel Serrano                            */
+;*    Last change :  Thu Feb 24 17:39:17 2022 (serrano)                */
+;*    Copyright   :  2014-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBufferView              */
 ;*=====================================================================*/
@@ -890,13 +890,64 @@
 				    (else (-u32 l beg)))))))
 		  (%js-typedarray this buffer
 		     (uint32->fixnum beg) (uint32->fixnum len))))))
+
+      ;; from
+      ;; https://262.ecma-international.org/6.0/#sec-%typedarray%.from
+      (define (typedarray-from this::obj arr mapfn T)
+	 ;; see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/from
+	 ;; 1. Let C be the this value.
+	 (let ((C this)
+	       ;; 2. Let items be ToObject(arrayLike).
+	       (items (js-toobject %this arr)))
+	    ;; 3. ReturnIfAbrupt(items).
+	    (when (or (eq? arr (js-undefined)) (eq? arr '()))
+	       (js-raise-type-error %this
+		  "from requires an array-like object - not null or undefined"
+		  arr))
+	    ;; 4. If mapfn is undefined, then let mapping be false.
+	    ;; 5. a If IsCallable(mapfn) is false, throw a TypeError exception.
+	    (when (and (not (eq? mapfn (js-undefined)))
+		       (not (js-procedure? mapfn)))
+	       (js-raise-type-error %this
+		  "TypedArray.from: when provided, the second argument must be a function"
+		  mapfn))
+	    ;; 5. b. If thisArg was supplied, let T be thisArg;
+	    ;; else let T be undefined.
+	    ;;  10. Let lenValue be Get(items, "length").
+	    ;; 11. Let len be ToLength(lenValue).
+	    (let ((len (js-get-length items %this)))
+	       ;; 13. If IsConstructor(C) is true, then
+	       ;; 13. a. Let A be the result of calling the [[Construct]]
+	       ;;     internal method of C with an argument list containing
+	       ;;     the single item len.
+	       ;; 14. a. Else, Let A be ArrayCreate(len).
+	       (let ((A (if (js-function? C)
+			    (js-toobject %this (js-new1 %this C len))
+			    (%js-typedarray this len))))
+		  ;; 16. Let k be 0.
+		  ;; 17. Repeat, while k < len... (also steps a - h)
+		  (let loop ((k 0))
+		     (when (<fx k len)
+			(let ((kvalue (js-get items k %this)))
+			   (if (eq? mapfn (js-undefined))
+			       (js-put! A k kvalue #f %this)
+			       (let ((v (js-call2 %this mapfn T kvalue k)))
+				  (js-put! A k v #f %this)))
+			   (loop (+fx k 1)))))
+		  (js-put-length! A len #f #f %this)
+		  A))))
       
       (js-bind! %this js-typedarray (& "from")
-	 :configurable #f :enumerable #f :value (js-not-implemented "from" %this)
+	 :configurable #f :enumerable #f
+	 :value (js-make-function %this typedarray-from
+		   (js-function-arity typedarray-from)
+		   (js-function-info :name "from" :len 0)
+		   :prototype (js-undefined))
 	 :hidden-class #t)
       
       (js-bind! %this js-typedarray (& "of")
-	 :configurable #f :enumerable #f :value (js-not-implemented "of" %this)
+	 :configurable #f :enumerable #f
+	 :value (js-not-implemented "of" %this)
 	 :hidden-class #t)
       
       ;; bind the Typedarray in the global object

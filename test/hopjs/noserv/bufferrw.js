@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Thu Feb 24 12:55:04 2022 (serrano)                */
+/*    Last change :  Thu Feb 24 17:04:05 2022 (serrano)                */
 /*    Copyright   :  2014-22 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Extra Nodejs buffer Testing                                      */
@@ -77,48 +77,74 @@ assert.strictEqual( b2[ 2 ], 0xbd );
 /*---------------------------------------------------------------------*/
 /*    from                                                             */
 /*---------------------------------------------------------------------*/
-const bf1 = Buffer.from([0x62, 0x75, 0x66, 0x66, 0x65, 0x72]);
-assert.equal(bf1.toString(), "buffer");
+function bufferFromArray() {
+   const bf1 = Buffer.from([0x62, 0x75, 0x66, 0x66, 0x65, 0x72]);
+   assert.equal(bf1.toString(), "buffer");
+}
 
-/* const arr = new Uint16Array(2);                                     */
-/*                                                                     */
-/* arr[0] = 5000;                                                      */
-/* arr[1] = 4000;                                                      */
-/*                                                                     */
-/* // Shares memory with `arr`.                                        */
-/* const buf = Buffer.from(arr.buffer);                                */
-/*                                                                     */
-/* console.log(buf);                                                   */
-/* // Prints: <Buffer 88 13 a0 0f>                                     */
-/*                                                                     */
-/* // Changing the original Uint16Array changes the Buffer also.       */
-/* arr[1] = 6000;                                                      */
-/*                                                                     */
-/* console.log(buf);                                                   */
-// Prints: <Buffer 88 13 70 17>
+function bufferFromArrayBuffer() {
+   const arr = new Uint16Array(2);
 
-/* const ab = new ArrayBuffer(10);                                     */
-/* const buf = Buffer.from(ab, 0, 2);                                  */
-/*                                                                     */
-/* console.log(buf.length);                                            */
-/* // Prints: 2                                                        */
+   arr[0] = 5000;
+   arr[1] = 4000;
 
+   // Shares memory with `arr`.
+   const bf2 = Buffer.from(arr.buffer);
+   assert.ok(bf2[0] === 0x88 && bf2[1] === 0x13 && bf2[2] === 0xa0 && bf2[3] === 0xf);
 
-/* const arrA = Uint8Array.from([0x63, 0x64, 0x65, 0x66]); // 4 elements */
-/* const arrB = new Uint8Array(arrA.buffer, 1, 2); // 2 elements       */
-/* console.log(arrA.buffer === arrB.buffer); // true                   */
-/*                                                                     */
-/* const buf = Buffer.from(arrB.buffer);                               */
-/* console.log(buf);                                                   */
-/* // Prints: <Buffer 63 64 65 66>                                     */
+   // Changing the original Uint16Array changes the Buffer also.
+   arr[1] = 6000;
 
+   assert.ok(bf2[0] === 0x88 && bf2[1] === 0x13 && bf2[2] === 0x70 && bf2[3] === 0x17);
 
-/* const buf1 = Buffer.from('buffer');                                 */
-/* const buf2 = Buffer.from(buf1);                                     */
-/*                                                                     */
-/* buf1[0] = 0x61;                                                     */
-/*                                                                     */
-/* console.log(buf1.toString());                                       */
-/* // Prints: auffer                                                   */
-/* console.log(buf2.toString());                                       */
-/* // Prints: buffer                                                   */
+   const ab = new ArrayBuffer(10);
+   const bf3 = Buffer.from(ab, 0, 2);
+
+   assert.equal(bf3.length, 2);
+
+   const arrA = Uint8Array.from([0x63, 0x64, 0x65, 0x66]); // 4 elements
+   const arrB = new Uint8Array(arrA.buffer, 1, 2); // 2 elements
+   console.log(arrA.buffer === arrB.buffer); // true
+
+   const bf4 = Buffer.from(arrB.buffer);
+   assert.ok(bf4[0] === 0x63 && bf4[1] === 0x64 && bf4[2] === 0x65 && bf4[3] === 0x66); 
+}
+
+function bufferFromBuffer() {
+   const buf1 = Buffer.from('buffer');
+   const buf2 = Buffer.from(buf1);
+
+   buf1[0] = 0x61;
+
+   assert.equal(buf1.toString(), "auffer");
+   assert.equal(buf2.toString(), "buffer");
+}
+
+function bufferFromObject() {
+   class Foo {
+      [Symbol.toPrimitive]() {
+         return 'this is a test';
+      }
+   }
+   const buf = Buffer.from(new String('this is a test'));
+   const buf2 = Buffer.from(new Foo(), 'utf8');
+   assert.equal(buf.toString(), "this is a test");
+   assert.equal(buf2.toString(), "this is a test");
+}
+
+function bufferFromString() {
+   const buf1 = Buffer.from('this is a tést');
+   const buf2 = Buffer.from('7468697320697320612074c3a97374', 'hex');
+
+   console.log(buf1.toString());
+   // Prints: this is a tést
+   console.log(buf2.toString());
+   // Prints: this is a tést
+   console.log(buf1.toString('latin1'));
+   // Prints: this is a tÃ©st}
+}
+
+bufferFromArray();
+bufferFromArrayBuffer();
+bufferFromBuffer();
+bufferFromString();

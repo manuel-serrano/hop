@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sat Feb 12 15:42:20 2022 (serrano)                */
+;*    Last change :  Thu Feb 24 18:13:15 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -218,6 +218,7 @@
 	   
 	   (js-toprimitive-for-string::JsStringLiteral ::obj ::JsGlobalObject)
 	   (generic js-toprimitive ::obj ::symbol ::JsGlobalObject)
+	   (generic js-valueof ::obj ::JsGlobalObject)
 	   
 	   (inline js-equal?::bool ::obj ::obj ::JsGlobalObject)
 	   (inline js-equal-fixnum?::bool ::obj ::obj ::JsGlobalObject)
@@ -2112,6 +2113,12 @@
 (define-method (js-toprimitive obj::JsWrapper preferredtype %this::JsGlobalObject)
    (with-access::JsWrapper obj (obj)
       obj))
+
+;*---------------------------------------------------------------------*/
+;*    js-valueof ::obj ...                                             */
+;*---------------------------------------------------------------------*/
+(define-generic (js-valueof obj::obj %this::JsGlobalObject)
+   (js-toobject %this obj))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-tojsstring ...                                                */
