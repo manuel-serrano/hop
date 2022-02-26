@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 30 06:52:06 2014                          */
-;*    Last change :  Thu Feb 24 17:07:24 2022 (serrano)                */
+;*    Last change :  Sat Feb 26 07:24:52 2022 (serrano)                */
 ;*    Copyright   :  2014-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native native bindings                                           */
@@ -159,8 +159,35 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring->jsfastbuffer ...                                    */
 ;*---------------------------------------------------------------------*/
-(define (js-jsstring->jsfastbuffer obj offset-or-enc len %this)
-   (js-string->jsfastbuffer (js-jsstring->string obj) %this))
+(define (js-jsstring->jsfastbuffer obj enc %this)
+   (if (and (isa? obj JsStringLiteralASCII)
+	    (memq obj '(#unspecified utf8 ascii latin1)))
+       (js-string->jsfastbuffer (string-copy (js-jsstring->string obj)) %this)
+       (let* ((data (js-jsstring->string obj))
+	      (str (cond
+		      ((or (eq? enc (& "utf8")) (eq? enc (js-undefined)))
+		       (multiple-value-bind (str enc)
+			  (utf8-normalize-utf16 data #t 0 (string-length data))
+			  str))
+		      ((eq? enc (& "binary"))
+		       (8bits-encode-utf8 data 0 (string-length data)))
+		      ((eq? enc (& "ascii"))
+		       (string-copy data))
+		      ((eq? enc (& "hex"))
+		       (string-hex-intern data))
+		      ((eq? enc (& "ucs2"))
+		       (ucs2-string->utf8-string
+			  (string->ucs2-string data 0 (string-length data))))
+		      ((eq? enc (& "latin1"))
+		       (iso-latin->utf8 data))
+		      ((eq? enc (& "base64"))
+		       (let ((ip (open-input-string! data 0 (string-length data)))
+			     (op (open-output-string)))
+			  (base64-encode-port ip op 0)
+			  (close-output-port op)))
+		      (else
+		       (js-raise-type-error %this "Bad encoding" enc)))))
+	  (js-string->jsfastbuffer str %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array->jsfastbuffer ...                                       */
@@ -213,6 +240,13 @@
 ;*    js-buffer->jsfastbuffer ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (js-buffer->jsfastbuffer arr %this)
+   
+   (define (u8vector-copy v)
+      (let* ((l (u8vector-length v))
+	     (n (make-u8vector l)))
+	 (u8vector-copy! n 0 v 0 l)
+	 n))
+   
    (with-access::JsGlobalObject %this (js-buffer-proto js-slowbuffer-proto)
       (with-access::JsFastBuffer arr (buffer %data)
 	 (with-access::JsSlowBuffer buffer (data)
@@ -220,23 +254,25 @@
 				   (if (string? %data)
 				       (string-length %data)
 				       (u8vector-length %data))))
+		   (data (if (string? %data)
+			     (string-copy %data)
+			     (u8vector-copy %data)))
 		   (slowbuffer (instantiateJsSlowBuffer
 				  (__proto__ js-slowbuffer-proto)
 				  (data data))))
 	       (js-put! slowbuffer (& "length") (uint32->fixnum len) #f %this)
-	       (with-access::JsSlowBuffer slowbuffer (data)
-		  (let ((buf (instantiateJsFastBuffer
-				(__proto__ js-buffer-proto)
-				(%data data)
-				(frozen #f)
-				(buffer slowbuffer)
-				(byteoffset #u32:0)
-				(length len)
-				(bpe 1))))
-		     (js-put! buf (& "length") (uint32->fixnum len) #f %this)
-		     (js-put! buf (& "offset") 0 #f %this)
-		     (js-put! buf (& "parent") slowbuffer #f %this)
-		     buf)))))))
+	       (let ((buf (instantiateJsFastBuffer
+			     (__proto__ js-buffer-proto)
+			     (%data data)
+			     (frozen #f)
+			     (buffer slowbuffer)
+			     (byteoffset #u32:0)
+			     (length len)
+			     (bpe 1))))
+		  (js-put! buf (& "length") (uint32->fixnum len) #f %this)
+		  (js-put! buf (& "offset") 0 #f %this)
+		  (js-put! buf (& "parent") slowbuffer #f %this)
+		  buf))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object->jsfastbuffer ...                                      */
@@ -246,7 +282,7 @@
       (let ((vof (js-valueof obj %this)))
 	 (if (eq? vof obj)
 	     (let ((prim (js-toprimitive-for-string obj %this)))
-		(js-jsstring->jsfastbuffer prim offset-or-enc len %this))
+		(js-jsstring->jsfastbuffer prim offset-or-enc %this))
 	     (js-obj->jsfastbuffer this vof offset-or-enc len %this)))))
 
 ;*---------------------------------------------------------------------*/
@@ -255,7 +291,7 @@
 (define (js-obj->jsfastbuffer this obj offset-or-enc len %this)
    (cond
       ((js-jsstring? obj)
-       (js-jsstring->jsfastbuffer obj offset-or-enc len %this))
+       (js-jsstring->jsfastbuffer obj offset-or-enc %this))
       ((js-array? obj)
        (js-array->jsfastbuffer obj %this))
       ((isa? obj JsArrayBuffer)

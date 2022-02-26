@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Thu Feb 24 17:04:05 2022 (serrano)                */
+/*    Last change :  Thu Feb 24 18:39:42 2022 (serrano)                */
 /*    Copyright   :  2014-22 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Extra Nodejs buffer Testing                                      */
@@ -104,7 +104,7 @@ function bufferFromArrayBuffer() {
 
    const arrA = Uint8Array.from([0x63, 0x64, 0x65, 0x66]); // 4 elements
    const arrB = new Uint8Array(arrA.buffer, 1, 2); // 2 elements
-   console.log(arrA.buffer === arrB.buffer); // true
+   assert.ok(arrA.buffer === arrB.buffer); // true
 
    const bf4 = Buffer.from(arrB.buffer);
    assert.ok(bf4[0] === 0x63 && bf4[1] === 0x64 && bf4[2] === 0x65 && bf4[3] === 0x66); 
@@ -136,12 +136,8 @@ function bufferFromString() {
    const buf1 = Buffer.from('this is a tést');
    const buf2 = Buffer.from('7468697320697320612074c3a97374', 'hex');
 
-   console.log(buf1.toString());
-   // Prints: this is a tést
-   console.log(buf2.toString());
-   // Prints: this is a tést
-   console.log(buf1.toString('latin1'));
-   // Prints: this is a tÃ©st}
+   assert.equal(buf1.toString('hex'), '7468697320697320612074c3a97374');
+   assert.equal(buf2.toString('hex'), '7468697320697320612074c3a97374');
 }
 
 bufferFromArray();
