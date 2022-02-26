@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Tue Feb 22 12:49:03 2022 (serrano)                */
+;*    Last change :  Sat Feb 26 10:42:11 2022 (serrano)                */
 ;*    Copyright   :  2017-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function/Method inlining optimization                            */
@@ -192,13 +192,13 @@
 		   (loop (cdr mets) (-fx size (+fx fs inline-method-check-size)))))))))
 
    (define (inline-access-call this::J2SCall fun::J2SAccess args loc)
-      (with-access::J2SAccess fun (obj)
+      (with-access::J2SAccess fun (obj field)
 	 (unless (eq? (j2s-type obj) 'proxy)
 	    (let* ((quota (quota limit args))
 		   (mets (find-inline-access-candidates this fun args))
 		   (mets (filter-rutype
 			    (if (pair? targets)
-				(filter (lambda (t) (memq t mets)) targets)
+				(filter (lambda (t) (memq t mets0)) targets)
 				mets)
 			    prgm))
 		   (mets (reduce-for-quota mets args quota)))

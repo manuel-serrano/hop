@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Fri Feb 11 08:14:05 2022 (serrano)                */
+;*    Last change :  Sat Feb 26 10:47:45 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -813,6 +813,7 @@
 		`(,@(call-next-method) ,@(if generator '(*) '())
 		    :name ,name :mode ,mode :idgen ,idgen :constrsize ,constrsize
 		    ,@(dump-loc loc)
+		    ,@(dump-size this)
 		    ,@(dump-key key)
 		    ,@(dump-scope scope)
 		    ,@(dump-access decl)
@@ -829,7 +830,6 @@
 		    ,@(if argumentsp `(:argumentsp ,(j2s->list argumentsp nstack)) '())
 		    ,@(if vararg `(:vararg ,vararg) '())
 		    ,@(if src '() `(:src #f))
-		    ,@(dump-size this)
 		    ,(j2s->list* params nstack)
 		    ,(j2s->list body nstack))))
 	    ((isa? decl J2SDecl)
@@ -837,6 +837,7 @@
 		`(,@(call-next-method) ,@(if generator '(*) '())
 		    :name ,name :mode ,mode :idgen ,idgen :constrsize ,constrsize
 		    ,@(dump-loc loc)
+		    ,@(dump-size this)
 		    ,@(dump-key key)
 		    ,@(dump-scope scope)
 		    ,@(dump-access decl)
@@ -859,6 +860,7 @@
 	     `(,@(call-next-method) ,@(if generator '(*) '())
 		 :name ,name :mode ,mode :idgen ,idgen :constrsize ,constrsize
 		 ,@(dump-loc loc)
+		 ,@(dump-size this)
 		 ,@(dump-info this)
 		 ,@(dump-type this)
 		 ,@(dump-rtype this)

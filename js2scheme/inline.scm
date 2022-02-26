@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Sat Feb 12 07:01:43 2022 (serrano)                */
+;*    Last change :  Sat Feb 26 10:41:23 2022 (serrano)                */
 ;*    Copyright   :  2017-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function/Method inlining optimization                            */
@@ -79,7 +79,7 @@
 (define (j2s-inline-noprofile this::J2SProgram conf)
    (let ((mi (config-get conf :optim-inline-strategy 'depth)))
       (case mi
-	 ((breadth) (j2s-inline-breadth this conf))
 	 ((depth) (j2s-inline-depth this conf))
+	 ((breadth) (j2s-inline-breadth this conf))
 	 (else (error "j2s-inline" "unknown inline method" mi)))))
 
