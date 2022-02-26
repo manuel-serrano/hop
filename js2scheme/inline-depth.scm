@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Sat Feb 26 10:42:11 2022 (serrano)                */
+;*    Last change :  Sat Feb 26 11:21:25 2022 (serrano)                */
 ;*    Copyright   :  2017-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function/Method inlining optimization                            */
@@ -198,7 +198,7 @@
 		   (mets (find-inline-access-candidates this fun args))
 		   (mets (filter-rutype
 			    (if (pair? targets)
-				(filter (lambda (t) (memq t mets0)) targets)
+				(filter (lambda (t) (memq t mets)) targets)
 				mets)
 			    prgm))
 		   (mets (reduce-for-quota mets args quota)))
