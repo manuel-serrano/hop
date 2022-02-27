@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Wed Feb  2 16:09:45 2022 (serrano)                */
+;*    Last change :  Sun Feb 27 08:43:55 2022 (serrano)                */
 ;*    Copyright   :  2016-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -144,8 +144,8 @@
 	    (display " hint-block" (current-error-port)))
 	 (j2s-hint-block! this conf))
       (unless (config-get conf :optim-integer)
-	 (force-type this 'integer 'number #t))
-	 ;;(force-unary-type! this))
+	 (force-type this 'integer 'number #f))
+      (force-type this 'unknown 'any #t)
       (cleanup-hint! this)
       (program-cleanup! this))
    this)
@@ -2601,6 +2601,10 @@
 	       " " (j2s->sexp this)))
 	 (cell-set! cell #t)
 	 (set! vtype to))
+      (unless (or (isa? this J2SDeclClass) (isa? this J2SDeclFun))
+	 (tprint "FORCE " (j2s->sexp this) " final=" final
+	    " vtype=" (type->sexp vtype) " val="
+	    (type->sexp (j2s-type val))))
       (when (and final
 		 (not (eq? vtype 'any))
 		 (not (type-eq? vtype (j2s-type val))))

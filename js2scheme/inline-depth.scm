@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Sun Feb 27 06:47:31 2022 (serrano)                */
+;*    Last change :  Sun Feb 27 07:01:11 2022 (serrano)                */
 ;*    Copyright   :  2017-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function/Method inlining optimization                            */
@@ -244,14 +244,14 @@
 				mets)
 			    prgm))
 		   (mets (reduce-for-quota mets args quota)))
-	       (when (and (isa? field J2SString)
-			  (with-access::J2SString field (val)
-			     (string=? val "linear_combination")))
-		  (tprint "CALL " loc " " (length mets) " quota=" quota
-		     " limit=" limit " size=" (node-size this)
-		     " isize=" (map (lambda (m)
-				       (method-size (protoinfo-method m)))
-				  mets)))
+;* 	       (when (and (isa? field J2SString)                       */
+;* 			  (with-access::J2SString field (val)          */
+;* 			     (string=? val "linear_combination")))     */
+;* 		  (tprint "CALL " loc " " (length mets) " quota=" quota */
+;* 		     " limit=" limit " size=" (node-size this)         */
+;* 		     " isize=" (map (lambda (m)                        */
+;* 				       (method-size (protoinfo-method m))) */
+;* 				  mets)))                              */
 	       (when (pair? mets)
 		  (let* ((funs (map protoinfo-method mets))
 			 (size (apply + (map method-size funs)))
