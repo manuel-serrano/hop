@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Sat Feb 26 11:21:25 2022 (serrano)                */
+;*    Last change :  Sun Feb 27 06:47:31 2022 (serrano)                */
 ;*    Copyright   :  2017-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function/Method inlining optimization                            */
@@ -53,7 +53,7 @@
 		       (if (config-get conf :optim-inline-class-method)
 			   (append-map collect-proto-methods* decls)
 			   '())))))
-	 (inline! this #f 16.0 '() pms #f this conf)
+	 (inline! this #f 24.0 '() pms #f this conf)
 	 (ptable-verb pms))
       (j2s-inline-cleanup! this conf)))
 
@@ -106,6 +106,48 @@
 	       generator prgm conf)))
       this))
 
+;*---------------------------------------------------------------------*/
+;*    inline! ::J2SWhile ...                                           */
+;*---------------------------------------------------------------------*/
+(define-walk-method (inline! this::J2SWhile
+		       targets limit stack::pair-nil
+		       pmethods ingen prgm conf)
+   (with-access::J2SWhile this (test body)
+      (set! test (inline! test targets limit stack pmethods ingen prgm conf))
+      (let ((nlimit (if (flonum? limit) (*fl limit 1.1) limit)))
+	 ;; push the limit by 10% inside loops
+	 (set! body (inline! body targets nlimit stack pmethods ingen prgm conf))
+	 this)))
+		  
+;*---------------------------------------------------------------------*/
+;*    inline! ::J2SFor ...                                             */
+;*---------------------------------------------------------------------*/
+(define-walk-method (inline! this::J2SFor
+		       targets limit stack::pair-nil
+		       pmethods ingen prgm conf)
+   (with-access::J2SFor this (init test incr body)
+      (set! init (inline! init targets limit stack pmethods ingen prgm conf))
+      (set! test (inline! test targets limit stack pmethods ingen prgm conf))
+      (set! incr (inline! incr targets limit stack pmethods ingen prgm conf))
+      (let ((nlimit (if (flonum? limit) (*fl limit 1.1) limit)))
+	 ;; push the limit by 10% inside loops
+	 (set! body (inline! body targets nlimit stack pmethods ingen prgm conf))
+	 this)))
+		  
+;*---------------------------------------------------------------------*/
+;*    inline! ::J2SForIn ...                                           */
+;*---------------------------------------------------------------------*/
+(define-walk-method (inline! this::J2SForIn
+		       targets limit stack::pair-nil
+		       pmethods ingen prgm conf)
+   (with-access::J2SForIn this (lhs obj body)
+      (set! lhs (inline! lhs targets limit stack pmethods ingen prgm conf))
+      (set! obj (inline! obj targets limit stack pmethods ingen prgm conf))
+      (let ((nlimit (if (flonum? limit) (*fl limit 1.1) limit)))
+	 ;; push the limit by 10% inside loops
+	 (set! body (inline! body targets nlimit stack pmethods ingen prgm conf))
+	 this)))
+		  
 ;*---------------------------------------------------------------------*/
 ;*    inline! ::J2SCall ...                                            */
 ;*---------------------------------------------------------------------*/
@@ -202,6 +244,14 @@
 				mets)
 			    prgm))
 		   (mets (reduce-for-quota mets args quota)))
+	       (when (and (isa? field J2SString)
+			  (with-access::J2SString field (val)
+			     (string=? val "linear_combination")))
+		  (tprint "CALL " loc " " (length mets) " quota=" quota
+		     " limit=" limit " size=" (node-size this)
+		     " isize=" (map (lambda (m)
+				       (method-size (protoinfo-method m)))
+				  mets)))
 	       (when (pair? mets)
 		  (let* ((funs (map protoinfo-method mets))
 			 (size (apply + (map method-size funs)))
