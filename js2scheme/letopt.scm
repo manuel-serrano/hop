@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Sun Feb 27 09:48:07 2022 (serrano)                */
+;*    Last change :  Sun Feb 27 10:02:07 2022 (serrano)                */
 ;*    Copyright   :  2015-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Let optimisation                                                 */
@@ -164,8 +164,6 @@
 		  ((null? ns)
 		   (optimize-letblock! this))
 		  ((not (get-let-inits (car ns) decls))
-		   (tprint "NOT GET-LET-INITS " (j2s->sexp (car ns))
-		      " DECLS=" (map j2s->sexp decls))
 		   (if (null? (get-used-decls (car ns) decls))
 		       (loop (cdr ns) (cons (car ns) stmts))
 		       (begin
