@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 20 14:34:39 2016                          */
-;*    Last change :  Sat Feb  5 15:53:06 2022 (serrano)                */
+;*    Last change :  Sun Feb 27 09:09:06 2022 (serrano)                */
 ;*    Copyright   :  2016-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    AST Alpha conversion                                             */
@@ -87,25 +87,26 @@
 ;*    alpha ::J2SNode ...                                              */
 ;*---------------------------------------------------------------------*/
 (define-method (alpha this::J2SNode)
-   (let* ((clazz (object-class this))
-	  (ctor (class-constructor clazz))
-	  (inst ((class-allocator clazz)))
-	  (fields (class-all-fields clazz)))
-      ;; instance fields
-      (let loop ((i (-fx (vector-length fields) 1)))
-	 (when (>=fx i 0)
-	    (let* ((f (vector-ref-ur fields i))
-		   (v ((class-field-accessor f) this))
-		   (fi (class-field-info f))
-		   (nv (cond
-			  ((and (pair? fi) (member "notraverse" fi)) v)
-			  ((pair? v) (map alpha v))
-			  (else (alpha v)))))
-	       ((class-field-mutator f) inst nv)
-	       (loop (-fx i 1)))))
-      ;; constructor
-      (when (procedure? ctor) ctor inst)
-      inst))
+   (with-access::J2SNode this (loc)
+      (let* ((clazz (object-class this))
+	     (ctor (class-constructor clazz))
+	     (inst ((class-allocator clazz)))
+	     (fields (class-all-fields clazz)))
+	 ;; instance fields
+	 (let loop ((i (-fx (vector-length fields) 1)))
+	    (when (>=fx i 0)
+	       (let* ((f (vector-ref-ur fields i))
+		      (v ((class-field-accessor f) this))
+		      (fi (class-field-info f))
+		      (nv (cond
+			     ((and (pair? fi) (member "notraverse" fi)) v)
+			     ((pair? v) (map alpha v))
+			     (else (alpha v)))))
+		  ((class-field-mutator f) inst nv)
+		  (loop (-fx i 1)))))
+	 ;; constructor
+	 (when (procedure? ctor) (ctor inst))
+	 inst)))
 
 ;*---------------------------------------------------------------------*/
 ;*    alpha ::J2SProgram ...                                           */
@@ -286,7 +287,9 @@
 			  (type (min-type type vtype))
 			  (decl new))))
 		   ((isa? new J2SExpr)
-		    (alpha new))
+		    (if (eq? new this)
+			this
+			(alpha new)))
 		   (else
 		    (error "alpha"
 		       (format "ref: new must be a decl or an expr (~a)"

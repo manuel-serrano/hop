@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Sun Feb 27 07:01:11 2022 (serrano)                */
+;*    Last change :  Sun Feb 27 08:59:07 2022 (serrano)                */
 ;*    Copyright   :  2017-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function/Method inlining optimization                            */
@@ -118,7 +118,7 @@
 	 ;; push the limit by 10% inside loops
 	 (set! body (inline! body targets nlimit stack pmethods ingen prgm conf))
 	 this)))
-		  
+
 ;*---------------------------------------------------------------------*/
 ;*    inline! ::J2SFor ...                                             */
 ;*---------------------------------------------------------------------*/
@@ -133,7 +133,7 @@
 	 ;; push the limit by 10% inside loops
 	 (set! body (inline! body targets nlimit stack pmethods ingen prgm conf))
 	 this)))
-		  
+
 ;*---------------------------------------------------------------------*/
 ;*    inline! ::J2SForIn ...                                           */
 ;*---------------------------------------------------------------------*/
@@ -256,18 +256,18 @@
 		  (let* ((funs (map protoinfo-method mets))
 			 (size (apply + (map method-size funs)))
 			 (used (maxfx 1 (-fx size (length args)))))
-		  (inline-verb loc fun
-		     (map (lambda (x) '-) mets) size quota 0 conf)
-		  (let* ((funs (map protoinfo-method mets))
-			 (new-limit (-fx quota used))
-			 (new-stack (append funs stack)))
-		     (inline!
-			(inline-stmt->expr loc
-			   (inline-method-call fun mets args
-			      loc (node-endloc this)
-			      '() limit stack pmethods ingen prgm conf)
-			   (function-rutype (protoinfo-method (car mets))))
-			#t new-limit new-stack pmethods ingen prgm conf))))))))
+		     (inline-verb loc fun
+			(map (lambda (x) '-) mets) size quota 0 conf)
+		     (let* ((funs (map protoinfo-method mets))
+			    (new-limit (-fx quota used))
+			    (new-stack (append funs stack)))
+			(inline!
+			   (inline-stmt->expr loc
+			      (inline-method-call fun mets args
+				 loc (node-endloc this)
+				 '() limit stack pmethods ingen prgm conf)
+			      (function-rutype (protoinfo-method (car mets))))
+			   #t new-limit new-stack pmethods ingen prgm conf))))))))
    
    (define (inline-ref-call this::J2SCall ref::J2SRef thisargs args loc)
       (cond

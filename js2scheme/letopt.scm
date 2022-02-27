@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Sun Feb 27 07:07:08 2022 (serrano)                */
+;*    Last change :  Sun Feb 27 08:56:09 2022 (serrano)                */
 ;*    Copyright   :  2015-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Let optimisation                                                 */
@@ -444,49 +444,6 @@
       (or (used-in-inits? decl inits)
 	  (used-in-rests? decl rests)))
 
-   (define (used-before-init?2 decl::J2SNode inits::pair-nil rests::pair-nil)
-
-      (define (is-init? this::J2SStmt decl)
-	 (when (isa? this J2SStmtExpr)
-	    (with-access::J2SStmtExpr this (expr)
-	       (when (isa? expr J2SInit)
-		  (eq? (init-decl expr) decl)))))
-      
-      (define (used-in-inits? decl inits)
-	 (let ((decls (list decl)))
-	    (let loop ((inits inits))
-	       (cond
-		  ((null? inits)
-		   #f)
-		  ((eq? decl (car inits))
-		   (loop (cdr inits)))
-		  ((memq decl (get-used-decls (car inits) decls))
-		   #t)
-		  (else
-		   (loop (cdr inits)))))))
-
-      (define (used-in-rests? decl rests)
-	 (let ((decls (list decl)))
-	    (let loop ((rests rests))
-	       (cond
-		  ((null? rests)
-		   #f)
-		  ((is-init? (car rests) decl)
-		   #f)
-		  ((begin (tprint "CARREST=" (j2s->sexp (car rests))) #f)
-		   #f)
-		  ((memq decl (get-used-decls (car rests) decls))
-		   (tprint "USED IN REST " (j2s->sexp (car rests)))
-		   #t)
-		  (else
-		   (loop (cdr rests)))))))
-
-      (tprint "init2 decl=" (j2s->sexp decl) " "
-	 (used-in-inits? decl inits)
-	 " " (used-in-rests? decl rests))
-      (or (used-in-inits? decl inits)
-	  (used-in-rests? decl rests)))
-
    (define (init-unopt? init decls)
       (with-trace 'j2s-letopt "init-unopt?"
 	 (trace-item "init=" (j2s->sexp init))
@@ -533,8 +490,6 @@
 			     decl)
 			    ((used-before-init? decl inits rests)
 			     ;; potentially used before initialized
-			     (tprint "UNINT.1 " (j2s->sexp decl))
-			     (used-before-init?2 decl inits rests)
 			     (mark-decl-noopt! decl))
 			    (else
 			     ;; never used before initialized
