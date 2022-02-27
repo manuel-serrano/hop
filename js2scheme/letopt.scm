@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Sun Feb 27 12:18:12 2022 (serrano)                */
+;*    Last change :  Sun Feb 27 12:34:18 2022 (serrano)                */
 ;*    Copyright   :  2015-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Let optimisation                                                 */
@@ -941,7 +941,7 @@
 (define (mark-used-noopt*! node decls)
    (with-trace 'j2s-letopt "mark-used-noopt*"
       (trace-item "node=" (j2s->sexp node))
-      (trace-item "no-used*=" (map j2s->sexp (node-used* node decls #t)))
+      (trace-item "no-used*=" (map j2s->sexp (node-used* node decls #t #f)))
       (for-each (lambda (d)
 		   (with-trace 'j2s-letopt "mark-used-noopt"
 		      (with-access::J2SDecl d (id)
