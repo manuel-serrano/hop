@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Sun Feb 27 10:02:07 2022 (serrano)                */
-;*    Copyright   :  2015-22 Manuel Serrano                            */
+;*    Last change :  Sun Oct 17 10:59:30 2021 (serrano)                */
+;*    Copyright   :  2015-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Let optimisation                                                 */
 ;*    -------------------------------------------------------------    */
@@ -247,7 +247,7 @@
 		       (with-access::J2SDecl d (binder)
 			  (not (memq binder '(let-opt let-forin)))))
 		decls)
-	     ;; move before the letblock statements not using any
+	     ;; try to move before the letblock statements not using any
 	     ;; of the introduced variable
 	     (split-letblock! this)
 	     ;; at least one binding is already optimized, splitting is
@@ -404,17 +404,6 @@
 
    (define (used-before-init? decl::J2SNode inits::pair-nil rests::pair-nil)
 
-      (define (is-init? this::J2SStmt decl)
-	 (cond
-	    ((isa? this J2SStmtExpr)
-	    (with-access::J2SStmtExpr this (expr)
-	       (when (isa? expr J2SInit)
-		  (eq? (init-decl expr) decl))))
-	    ((isa? this J2SSeq)
-	     (with-access::J2SSeq this (nodes)
-		(when (and (pair? nodes) (null? (cdr nodes)))
-		   (is-init? (car nodes) decl))))))
-	       
       (define (used-in-inits? decl inits)
 	 (let ((decls (list decl)))
 	    (let loop ((inits inits))
@@ -433,8 +422,6 @@
 	    (let loop ((rests rests))
 	       (cond
 		  ((null? rests)
-		   #f)
-		  ((is-init? (car rests) decl)
 		   #f)
 		  ((memq decl (get-used-decls (car rests) decls))
 		   #t)
@@ -616,19 +603,17 @@
 	  (let loop ((nodes nodes)
 		     (inits '()))
 	     (if (null? nodes)
-		 (reverse! inits)
+		 (when (pair? inits)
+		    (reverse! inits))
 		 (let ((n::J2SStmt (car nodes)))
-		    (if (isa? n J2SStmtExpr)
-			(let ((expr (get-init-stmtexpr n)))
-			   (if expr
-			       (loop (cdr nodes) (cons expr inits))
-			       (reverse! inits)))
-			(reverse! inits)))))))
+		    (when (isa? n J2SStmtExpr)
+		       (let ((expr (get-init-stmtexpr n)))
+			  (when expr
+			     (loop (cdr nodes) (cons expr inits))))))))))
       ((isa? node J2SStmtExpr)
        (let ((expr (get-init-stmtexpr node)))
-	  (if expr
-	      (list expr)
-	      '())))))
+	  (when expr
+	     (list expr))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    get-inits ...                                                    */
@@ -803,15 +788,6 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-used* node::J2SNode decls store)
    (call-default-walker))
-
-;*---------------------------------------------------------------------*/
-;*    node-used* ::J2SInit ...                                         */
-;*---------------------------------------------------------------------*/
-(define-walk-method (node-used* node::J2SInit decls store)
-   (with-access::J2SInit node (lhs rhs)
-      (if (isa? lhs J2SRef)
-	  (node-used* rhs decls store)
-	  (call-default-walker))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-used* ::J2SDecl ...                                         */
