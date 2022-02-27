@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Sun Feb 27 11:16:25 2022 (serrano)                */
+;*    Last change :  Sun Feb 27 12:18:12 2022 (serrano)                */
 ;*    Copyright   :  2015-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Let optimisation                                                 */
@@ -163,7 +163,7 @@
 	       (cond
 		  ((null? ns)
 		   (optimize-letblock! this))
-		  ((not (get-let-inits (car ns) decls))
+		  ((not (get-inits (car ns) decls))
 		   (if (null? (get-used-decls (car ns) decls))
 		       (loop (cdr ns) (cons (car ns) stmts))
 		       (begin
@@ -187,7 +187,7 @@
 		   ;; should never be reached
 		   (trace-item "<<<.1 " (j2s->sexp this))
 		   this)
-		  ((not (get-let-inits (car n) decls))
+		  ((not (get-inits (car n) decls))
 		   (trace-item "---.2 " (j2s->sexp (car n)))
 		   ;; optimize recursively
 		   (set-car! n (j2s-letopt! (car n)))
@@ -314,7 +314,7 @@
 	       ((null? nodes)
 		(trace-item "inits.1=" (map j2s->sexp inits))
 		(values '() inits))
-	       ((get-let-inits (car nodes) decls)
+	       ((get-inits (car nodes) decls)
 		=>
 		(lambda (is) (loop (cdr nodes) (append! inits is))))
 	       ((isa? (car nodes) J2SNop)
@@ -434,7 +434,9 @@
 	       (cond
 		  ((null? rests)
 		   #f)
-		  ((memq decl (get-used-decls (car rests) decls))
+		  ((is-init? (car rests) decl)
+		   #f)
+		  ((memq decl (get-ref-decls (car rests) decls))
 		   #t)
 		  (else
 		   (loop (cdr rests)))))))
@@ -614,17 +616,21 @@
 	  (let loop ((nodes nodes)
 		     (inits '()))
 	     (if (null? nodes)
-		 (when (pair? inits)
-		    (reverse! inits))
+		 (reverse! inits)
 		 (let ((n::J2SStmt (car nodes)))
-		    (when (isa? n J2SStmtExpr)
-		       (let ((expr (get-init-stmtexpr n)))
-			  (when expr
-			     (loop (cdr nodes) (cons expr inits))))))))))
+		    (if (isa? n J2SStmtExpr)
+			(let ((expr (get-init-stmtexpr n)))
+			   (if expr
+			       (loop (cdr nodes) (cons expr inits))
+			       '()))
+			'()))))))
       ((isa? node J2SStmtExpr)
        (let ((expr (get-init-stmtexpr node)))
-	  (when expr
-	     (list expr))))))
+	  (if expr
+	      (list expr)
+	      '())))
+      (else
+       '())))
 
 ;*---------------------------------------------------------------------*/
 ;*    get-inits ...                                                    */
@@ -792,45 +798,62 @@
 ;*    Amongst DECLS, returns those that appear in NODE.                */
 ;*---------------------------------------------------------------------*/
 (define (get-used-decls node::J2SNode decls::pair-nil)
-   (delete-duplicates! (node-used* node decls #t) eq?))
+   (delete-duplicates! (node-used* node decls #t #f) eq?))
+
+;*---------------------------------------------------------------------*/
+;*    get-ref-decls ...                                                */
+;*    -------------------------------------------------------------    */
+;*    Amongst DECLS, returns those that appear are referenced in NODE. */
+;*---------------------------------------------------------------------*/
+(define (get-ref-decls node::J2SNode decls::pair-nil)
+   (delete-duplicates! (node-used* node decls #t #t) eq?))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-used* ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (node-used* node::J2SNode decls store)
+(define-walk-method (node-used* node::J2SNode decls store initp)
    (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    node-used* ::J2SInit ...                                         */
+;*---------------------------------------------------------------------*/
+(define-walk-method (node-used* node::J2SInit decls store initp)
+   (with-access::J2SInit node (lhs rhs)
+      (if (and (isa? lhs J2SRef) initp)
+	  (node-used* rhs decls store initp)
+	  (call-default-walker))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-used* ::J2SDecl ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (node-used* node::J2SDecl decls store)
+(define-walk-method (node-used* node::J2SDecl decls store initp)
    (if (memq node decls) (list node) '()))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-used* ::J2Ref ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (node-used* node::J2SRef decls store)
+(define-walk-method (node-used* node::J2SRef decls store initp)
    (with-access::J2SRef node (decl)
       (if (memq decl decls) (list decl) '())))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-used* ::J2SDeclInit ...                                     */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (node-used* node::J2SDeclInit decls store)
+(define-walk-method (node-used* node::J2SDeclInit decls store initp)
    (with-access::J2SDeclInit node (val)
-      (node-used* val decls store)))
+      (node-used* val decls store initp)))
       
 ;*---------------------------------------------------------------------*/
 ;*    node-used* ::J2SFun ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (node-used* node::J2SFun decls store)
+(define-walk-method (node-used* node::J2SFun decls store initp)
    (with-access::J2SFun node (%info body decl)
       (if (isa? %info FunInfo)
 	  (with-access::FunInfo %info (used)
 	     used)
 	  (let ((info (instantiate::FunInfo)))
 	     (set! %info info)
-	     (let ((bodyused (node-used* body decls #f)))
+	     (let ((bodyused (node-used* body decls #f initp)))
 		(if store
 		    (begin
 		       (with-access::FunInfo info (used)
@@ -929,7 +952,7 @@
 			    (when (isa? d J2SDeclInit)
 			       (with-access::J2SDeclInit d (val)
 				  (mark-used-noopt*! val decls)))))))
-	 (node-used* node decls #t))))
+	 (node-used* node decls #t #f))))
    
 ;*---------------------------------------------------------------------*/
 ;*    j2s-letopt-global-literals! ...                                  */
