@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Sun Feb 27 08:56:09 2022 (serrano)                */
+;*    Last change :  Sun Feb 27 09:48:07 2022 (serrano)                */
 ;*    Copyright   :  2015-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Let optimisation                                                 */
@@ -164,6 +164,8 @@
 		  ((null? ns)
 		   (optimize-letblock! this))
 		  ((not (get-let-inits (car ns) decls))
+		   (tprint "NOT GET-LET-INITS " (j2s->sexp (car ns))
+		      " DECLS=" (map j2s->sexp decls))
 		   (if (null? (get-used-decls (car ns) decls))
 		       (loop (cdr ns) (cons (car ns) stmts))
 		       (begin
@@ -247,7 +249,7 @@
 		       (with-access::J2SDecl d (binder)
 			  (not (memq binder '(let-opt let-forin)))))
 		decls)
-	     ;; try to move before the letblock statements not using any
+	     ;; move before the letblock statements not using any
 	     ;; of the introduced variable
 	     (split-letblock! this)
 	     ;; at least one binding is already optimized, splitting is
@@ -616,17 +618,19 @@
 	  (let loop ((nodes nodes)
 		     (inits '()))
 	     (if (null? nodes)
-		 (when (pair? inits)
-		    (reverse! inits))
+		 (reverse! inits)
 		 (let ((n::J2SStmt (car nodes)))
-		    (when (isa? n J2SStmtExpr)
-		       (let ((expr (get-init-stmtexpr n)))
-			  (when expr
-			     (loop (cdr nodes) (cons expr inits))))))))))
+		    (if (isa? n J2SStmtExpr)
+			(let ((expr (get-init-stmtexpr n)))
+			   (if expr
+			       (loop (cdr nodes) (cons expr inits))
+			       (reverse! inits)))
+			(reverse! inits)))))))
       ((isa? node J2SStmtExpr)
        (let ((expr (get-init-stmtexpr node)))
-	  (when expr
-	     (list expr))))))
+	  (if expr
+	      (list expr)
+	      '())))))
 
 ;*---------------------------------------------------------------------*/
 ;*    get-inits ...                                                    */
