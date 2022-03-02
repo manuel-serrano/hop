@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Dec 31 10:12:32 2020                          */
-/*    Last change :  Wed Mar  2 08:13:03 2022 (serrano)                */
+/*    Last change :  Wed Mar  2 08:31:09 2022 (serrano)                */
 /*    Copyright   :  2020-22 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Asking runtime (dangerous) permissions for Android >= 23         */
@@ -54,11 +54,12 @@ public class HopPermission implements HopStage {
 	       .getPackageInfo(context.getPackageName(), PackageManager.GET_PERMISSIONS);
 	    String[] permissions = info.requestedPermissions;
 
-	    Log.d("HopPermission", "permissions.length=" + permissions.length);
-	    if (permissions.length > 0) {
+	    if ( permissions != null && permissions.length > 0) {
 	       String[] tmp = new String[permissions.length];
 	       int i, j = 0;
 
+	       Log.d("HopPermission", "permissions.length=" + permissions.length);
+	       
 	       for (i = 0; i < permissions.length; i++) {
 		  Log.d("HopPermission", "perm="
 			+ permissions[i] + " level="
