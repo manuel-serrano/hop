@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Mon Feb 21 19:02:09 2022 (serrano)                */
+#*    Last change :  Wed Mar  2 08:24:52 2022 (serrano)                */
 #*    Copyright   :  2010-22 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -498,7 +498,11 @@ $(ANDROIDBUILDDIR)/assets/hz:
 	pwd
 	if [ "$(HOPHZ) " != " " ]; then \
 	  mkdir -p $(ANDROIDBUILDDIR)/assets/hz; \
-	  cp $(ANDROIDWEBLET)/$(HOPHZ) $(ANDROIDBUILDDIR)/assets/hz; \
+	  if [ -f $(HOPHZ) ]; then \
+	    cp $(HOPHZ) $(ANDROIDBUILDDIR)/assets/hz; \
+          else \
+	    cp $(ANDROIDWEBLET)/$(HOPHZ) $(ANDROIDBUILDDIR)/assets/hz; \
+          fi \
         fi
 
 rename-jsgz:
