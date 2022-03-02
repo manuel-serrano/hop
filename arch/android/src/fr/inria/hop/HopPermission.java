@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Dec 31 10:12:32 2020                          */
-/*    Last change :  Wed Mar  2 08:31:09 2022 (serrano)                */
+/*    Last change :  Wed Mar  2 08:33:50 2022 (serrano)                */
 /*    Copyright   :  2020-22 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Asking runtime (dangerous) permissions for Android >= 23         */
@@ -54,7 +54,7 @@ public class HopPermission implements HopStage {
 	       .getPackageInfo(context.getPackageName(), PackageManager.GET_PERMISSIONS);
 	    String[] permissions = info.requestedPermissions;
 
-	    if ( permissions != null && permissions.length > 0) {
+	    if (permissions != null && permissions.length > 0) {
 	       String[] tmp = new String[permissions.length];
 	       int i, j = 0;
 
@@ -84,6 +84,8 @@ public class HopPermission implements HopStage {
 	       } else {
 		  handler.sendEmptyMessage(HopLauncher.MSG_INSTALL_PERMISSION);
 	       }
+	    } else {
+	       handler.sendEmptyMessage(HopLauncher.MSG_INSTALL_PERMISSION);
 	    }
 	 } catch (Exception e) {
 	    e.printStackTrace();
