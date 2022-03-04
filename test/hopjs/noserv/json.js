@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.2.x/test/hopjs/noserv/json.js         */
+/*    serrano/prgm/project/hop/3.5.x/test/hopjs/noserv/json.js         */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Fri Nov 23 19:09:04 2018 (serrano)                */
-/*    Copyright   :  2014-18 Manuel Serrano                            */
+/*    Last change :  Fri Mar  4 12:58:39 2022 (serrano)                */
+/*    Copyright   :  2014-22 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing JSON encoding/decoding                                   */
 /*=====================================================================*/
@@ -30,6 +30,9 @@ assert.deepEqual( JSON.stringify( obj2 ), "[null]" );
 
 var obj3 = { foo: undefined, bar: null };
 assert.deepEqual( JSON.stringify( obj3 ), '{"bar":null}' );
+
+var obj4 = {a: NaN};
+assert.deepEqual( JSON.stringify( obj4 ), '{"a":null}' );
 
 /*---------------------------------------------------------------------*/
 /*    parse                                                            */

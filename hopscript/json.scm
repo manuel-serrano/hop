@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/hopscript/json.scm                  */
+;*    serrano/prgm/project/hop/3.5.x/hopscript/json.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sat Aug 28 06:55:48 2021 (serrano)                */
-;*    Copyright   :  2013-21 Manuel Serrano                            */
+;*    Last change :  Fri Mar  4 13:01:42 2022 (serrano)                */
+;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Json                         */
 ;*    -------------------------------------------------------------    */
@@ -380,6 +380,8 @@
 	     (cond
 		((fixnum? value)
 		 (js-ascii->jsstring (fixnum->string value)))
+		((nanfl? value)
+		 (& "null"))
 		((not (infinitefl? value))
 		 (js-ascii->jsstring (number->string value)))
 		((= value +inf.0)
