@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/work/hopdroid/apps.hss                  */
+/*    serrano/prgm/project/hop/hop/weblets/hopdroid/apps.hss           */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Nov 25 14:11:20 2020                          */
-/*    Last change :  Thu Nov 26 10:59:36 2020 (serrano)                */
-/*    Copyright   :  2020 Manuel Serrano                               */
+/*    Last change :  Fri Mar  4 07:11:14 2022 (serrano)                */
+/*    Copyright   :  2020-22 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    APPS hss                                                         */
 /*=====================================================================*/
@@ -115,8 +115,6 @@ div.app-action-buttons {
 
 div.app-action-button {
     flex-grow: 1;
-    margin-left: 32px;
-    margin-right: 32px;
     text-align: center;
     padding: 16px;
     font-weight: normal;

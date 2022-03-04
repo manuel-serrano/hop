@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Jul  5 09:42:40 2016                          */
-/*    Last change :  Sun Dec 27 16:59:18 2020 (serrano)                */
-/*    Copyright   :  2016-20 Manuel Serrano                            */
+/*    Last change :  Thu Mar  3 18:58:46 2022 (serrano)                */
+/*    Copyright   :  2016-22 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Spawn Hop service (not the Hop process).                         */
 /*=====================================================================*/
@@ -34,7 +34,7 @@ public class HopIntenter implements HopStage {
    ArrayBlockingQueue<String> queue;
    Activity activity;
 
-   public HopIntenter( Activity a, Handler h, ArrayBlockingQueue<String> q ) {
+   public HopIntenter(Activity a, Handler h, ArrayBlockingQueue<String> q) {
       super();
       activity = a;
       handler = h;
@@ -42,8 +42,8 @@ public class HopIntenter implements HopStage {
    }
    
    final ServiceConnection hopconnection = new ServiceConnection() {
-	 public void onServiceConnected( ComponentName className, IBinder service ) {
-	    Log.d( "HopIntenter", "onServiceConnected" );
+	 public void onServiceConnected(ComponentName className, IBinder service) {
+	    Log.d("HopIntenter", "onServiceConnected");
 	    hopservice = ((HopService.HopBinder)service).getService();
 
 	    try {
@@ -51,56 +51,60 @@ public class HopIntenter implements HopStage {
 	       hopservice.queue = queue;
 	       hopservice.hopdroid.activity = activity;
 	       hopservice.onConnect();
-	    } catch( Exception e ) {
-	       Log.e( "HopIntenter", "error while connecting to service: " +
-		      e.toString() );
+	    } catch(Exception e) {
+	       Log.e("HopIntenter", "error while connecting to service: " +
+		      e.toString());
 	       e.printStackTrace();
-	       activity.unbindService( hopconnection );
+	       activity.unbindService(hopconnection);
 	    }
 	 }
 
-	 public void onServiceDisconnected( ComponentName className ) {
-	    Log.d( "HopIntenter", "onServiceDisconnected" );
+	 public void onServiceDisconnected(ComponentName className) {
+	    Log.d("HopIntenter", "onServiceDisconnected");
 	    hopservice = null;
 	 }
       };
    
-   void raise( String stage, int kmsg, Exception e ) {
+   void raise(String stage, int kmsg, Exception e) {
       String msg = e.getMessage();
       
-      Log.e( stage, e.toString() );
+      Log.e(stage, e.toString());
       e.printStackTrace();
       
-      if( msg == null ) msg = e.getClass().getName();
+      if (msg == null) msg = e.getClass().getName();
       
-      handler.sendMessage( android.os.Message.obtain( handler, kmsg, e ) );
+      handler.sendMessage(android.os.Message.obtain(handler, kmsg, e));
    }
 
-   void raise( String stage, int kmsg, String msg ) {
-      Log.e( stage, msg );
+   void raise(String stage, int kmsg, String msg) {
+      Log.e(stage, msg);
       
-      handler.sendMessage( android.os.Message.obtain( handler, kmsg, msg ) );
+      handler.sendMessage(android.os.Message.obtain(handler, kmsg, msg));
    }
 
-   public void exec( Context context, Object clazz ) {
-      Log.d( "HopIntenter", "exec " + ((Class)clazz).getName() );
+   public void exec(Context context, Object clazz) {
+      Log.d("HopIntenter", "exec " + ((Class)clazz).getName());
       
-      hopintent = new Intent( context, (Class)clazz );
+      hopintent = new Intent(context, (Class)clazz);
       
-      if( !HopHzService.isBackground() ) {
-	 Log.d( "HopIntenter", "starting service \"" + ((Class)clazz).getName() + "\"" );
-	 
-	 activity.startService( hopintent );
+      if (!HopHzService.isBackground()) {
+	 Log.d("HopIntenter", "starting service \"" + ((Class)clazz).getName() + "\"");
+
+	 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+	    context.startForegroundService(hopintent);
+	 } else {
+	    activity.startService(hopintent);
+	 }
       }
 
-      activity.bindService( hopintent, hopconnection, Context.BIND_AUTO_CREATE );
+      activity.bindService(hopintent, hopconnection, Context.BIND_AUTO_CREATE);
    }
 
    public void abort() {
-      Log.d( "HopIntenter", "abort..." );
+      Log.d("HopIntenter", "abort...");
 
-      activity.unbindService( hopconnection );
-      if( hopservice != null ) {
+      activity.unbindService(hopconnection);
+      if (hopservice != null) {
 	 hopservice.stopSelf();
       }
    }

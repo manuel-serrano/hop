@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Nov 25 08:32:40 2020                          */
-/*    Last change :  Sun Jan 23 07:41:35 2022 (serrano)                */
+/*    Last change :  Thu Mar  3 18:41:03 2022 (serrano)                */
 /*    Copyright   :  2020-22 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    hopdroid apps                                                    */
@@ -13,7 +13,7 @@
 import fs from 'fs';
 import path from 'path';
 
-const weblets = require( "./_weblets.hop" );
+const weblets = require("./_weblets.hop");
 
 import * as sp from hop.spage;
 import { NAVTITLE } from './xml.js';
@@ -29,7 +29,7 @@ export function APPS(attrs, ...nodes) {
 	   <li>
 	     <div class="icon apps-icon">
 	       <svg:img class="apps-icon" width="16px" height="16px" 
-			src=${require.resolve( "./icons/grid-3x3-gap.svg" )}/>
+			src=${require.resolve("./icons/grid-3x3-gap.svg")}/>
 	     </div>
 	   </li>
 	   <li>
@@ -48,25 +48,25 @@ export function APPS(attrs, ...nodes) {
 /*---------------------------------------------------------------------*/
 /*    readDirApps ...                                                  */
 /*---------------------------------------------------------------------*/
-function readDirApps( dir ) {
-   function extra( pkg ) {
+function readDirApps(dir) {
+   function extra(pkg) {
       const p = pkg.prefix;
       
-      pkg.ctime = fs.lstatSync( p ).ctime;
-      if( !("icon" in pkg) ) {
-	 const icon = path.join( p, "etc", "logo.png" );
+      pkg.ctime = fs.lstatSync(p).ctime;
+      if (!("icon" in pkg)) {
+	 const icon = path.join(p, "etc", "logo.png");
 	 
-	 if( fs.existsSync( icon ) ) {
+	 if (fs.existsSync(icon)) {
 	    pkg.icon = icon;
 	 }
       } else {
-	 pkg.icon = path.join( p, pkg.icon );
+	 pkg.icon = path.join(p, pkg.icon);
       }
       return pkg;
    }
    
-   if( fs.existsSync( dir ) && fs.lstatSync( dir ).isDirectory() ) {
-      return weblets.findWeblets( dir ).map( extra );
+   if (fs.existsSync(dir) && fs.lstatSync(dir).isDirectory()) {
+      return weblets.findWeblets(dir).map(extra);
    } else {
       return [];
    }
@@ -76,21 +76,21 @@ function readDirApps( dir ) {
 /*    apps ...                                                         */
 /*---------------------------------------------------------------------*/
 service apps() {
-   const wldir = require( hop.config ).autoloadPath;
+   const wldir = require(hop.config).autoloadPath;
    const apps = wldir
-	    .flatMap( readDirApps )
-            .sort( (x, y) => x.name >= y.name );
+	    .flatMap(readDirApps)
+            .sort((x, y) => x.name >= y.name);
    
    return <div class="apps">
-     ${apps.map( APP )}
+     ${apps.map(APP)}
    </div>;
 }
 
 /*---------------------------------------------------------------------*/
 /*    ICIMG ...                                                        */
 /*---------------------------------------------------------------------*/
-function ICIMG( attrs ) {
-   if( attrs.src.match( /[.]svg$/ ) ) {
+function ICIMG(attrs) {
+   if (attrs.src.match(/[.]svg$/)) {
       return <svg:img src=${attrs.src} width="32px" height="32px"/>;
    } else {
       return <img src=${attrs.src}/>;
@@ -100,8 +100,8 @@ function ICIMG( attrs ) {
 /*---------------------------------------------------------------------*/
 /*    APP ...                                                          */
 /*---------------------------------------------------------------------*/
-function APP( a ) {
-   return <sp.sptab class="tabapp" svc=${app} arg=${JSON.stringify( a )}>
+function APP(a) {
+   return <sp.sptab class="tabapp" svc=${app} arg=${JSON.stringify(a)}>
      <sp.sptabhead>
        <div class="config apps-app sptabhead unselected">
 	 <div class="app-icon">
@@ -122,37 +122,37 @@ function APP( a ) {
 /*---------------------------------------------------------------------*/
 /*    app ...                                                          */
 /*---------------------------------------------------------------------*/
-service app( app ) {
-   const a = JSON.parse( app );
+service app(app) {
+   const a = JSON.parse(app);
 
    return <div class="app-page">
      
      <script>
-       function remove( el ) {
-	  if( confirm( `Remove Application ${${app.name}}?`) ) {
-	     ${appRemove}( ${app} )
+       function remove(el) {
+	  if (confirm(`Remove Application ${${app.name}}?`)) {
+	     ${appRemove}(${app.name})
 		.post()
-		.then( err => {
-		   if( err ) {
-		      alert( err );
+		.then(err => {
+		   if (err) {
+		      alert(err);
 		   } else {
-		      document.getElementById( "spage" ).pop();
+		      document.getElementById("spage").pop();
 		   }
-		} );
+		});
 	  }
        }
        
-       function purge( el ) {
-	  if( confirm( `Purge Application ${${app.name}}?`) ) {
-	     ${appPurge}( ${app} )
+       function purge(el) {
+	  if (confirm(`Purge Application ${${app.name}}?`)) {
+	     ${appPurge}(${app.name})
 		.post()
-		.then( err => {
-		   if( err ) {
-		      alert( err );
+		.then(err => {
+		   if (err) {
+		      alert(err);
 		   } else {
-		      document.getElementById( "spage" ).pop();
+		      document.getElementById("spage").pop();
 		   }
-		} );
+		});
 	  }
        }
      </script>
@@ -165,25 +165,25 @@ service app( app ) {
        	 ${a.name}
        </div>
        <div class="app-action-buttons">
-       	 <div class="app-action-button" onclick=~{alert( "open not implemented yet" )}>
+       	 <div class="app-action-button" onclick=~{alert("open not implemented yet")}>
        	   <svg:img class="app-action" width="24px" height="24px" 
-		    src=${require.resolve( "./icons/box-arrow-up-right.svg" )}/>
+		    src=${require.resolve("./icons/box-arrow-up-right.svg")}/>
        	   <div class="app-button-text"> OPEN </div>
        	 </div>
-       	 <div class="app-action-button" onclick=~{remove( this )}>
+       	 <div class="app-action-button" onclick=~{remove(this)}>
        	   <svg:img class="app-action" width="24px" height="24px" 
-		    src=${require.resolve( "./icons/trash.svg" )}/>
+		    src=${require.resolve("./icons/trash.svg")}/>
        	   <div class="app-button-text"> REMOVE </div>
        	 </div>
-       	 <div class="app-action-button" onclick=~{purge( this )}>
+       	 <div class="app-action-button" onclick=~{purge(this)}>
        	   <svg:img class="app-action" width="24px" height="24px" 
-		    src=${require.resolve( "./icons/x-octagon.svg" )}/>
+		    src=${require.resolve("./icons/x-octagon.svg")}/>
        	   <div class="app-button-text"> UNINSTALL </div>
        	 </div>
        </div>
      </div>
      
-     ${serviceInfo( a )}
+     ${serviceInfo(a)}
      
    </div>
 }
@@ -191,8 +191,8 @@ service app( app ) {
 /*---------------------------------------------------------------------*/
 /*    serviceInfo ...                                                  */
 /*---------------------------------------------------------------------*/
-function serviceInfo( a ) {
-   const { files, size } = statDir( a.prefix );
+function serviceInfo(a) {
+   const { files, size } = statDir(a.prefix);
    
    return <div class="app-info">
      
@@ -202,31 +202,31 @@ function serviceInfo( a ) {
 
      <appentry title="Version"
 	       value=${a.version}
-	       icon=${require.resolve( "./icons/tag.svg" )}/>
+	       icon=${require.resolve("./icons/tag.svg")}/>
      
      <appentry title="Installation date"
 	       value=${a.ctime}
 	       valueclass="valuedate"
-	       icon=${require.resolve( "./icons/calendar2-check.svg" )}/>
+	       icon=${require.resolve("./icons/calendar2-check.svg")}/>
 
      <appentry title="Install directory"
 	       value=${a.directory}
-	       icon=${require.resolve( "./icons/house-door.svg" )}/>
+	       icon=${require.resolve("./icons/house-door.svg")}/>
 
      <appentry title="Install size"
-	       value=${`${(size/1024/1024).toFixed( 2 )}MB`}
-	       icon=${require.resolve( "./icons/calculator.svg" )}/>
+	       value=${`${(size/1024/1024).toFixed(2)}MB`}
+	       icon=${require.resolve("./icons/calculator.svg")}/>
 
      <appentry title="Number of installed files"
 	       value=${files}
-	       icon=${require.resolve( "./icons/box-seam.svg" )}/>
+	       icon=${require.resolve("./icons/box-seam.svg")}/>
    </div>
 }
 
 /*---------------------------------------------------------------------*/
 /*    APPENTRY ...                                                     */
 /*---------------------------------------------------------------------*/
-function APPENTRY( attr, ... nodes ) {
+function APPENTRY(attr, ... nodes) {
    return <div class="config app-info-entry">
      <svg:img class="icon" width="16px" height="16px" src=${attr.icon}/>
      <div>
@@ -241,22 +241,22 @@ function APPENTRY( attr, ... nodes ) {
 /*    -------------------------------------------------------------    */
 /*    Count the number of files and the cumulated file sizes.          */
 /*---------------------------------------------------------------------*/
-function statDir( dir ) {
+function statDir(dir) {
    let files = 0, size = 0;
    
-   fs.readdirSync( dir ).forEach( f => {
-	 const p = path.join( dir, f );
-	 const s = fs.lstatSync( p );
+   fs.readdirSync(dir).forEach(f => {
+	 const p = path.join(dir, f);
+	 const s = fs.lstatSync(p);
 	 
-   	 if( s.isDirectory() ) {
-	    const { files: sfiles, size: ssize } = statDir( p );
+   	 if (s.isDirectory()) {
+	    const { files: sfiles, size: ssize } = statDir(p);
 	    files += sfiles;
 	    size += ssize;
 	 } else {
 	    files++;
 	    size += s.size;
 	 }
-      } );
+      });
    
    return { files: files, size: size };
 }
@@ -264,20 +264,22 @@ function statDir( dir ) {
 /*---------------------------------------------------------------------*/
 /*    appRemove ...                                                    */
 /*---------------------------------------------------------------------*/
-service appRemove( app ) {
-   console.log( "removing...", app );
+service appRemove(app) {
+   console.log("removing (not implemented)...", app);
 }
 
 /*---------------------------------------------------------------------*/
 /*    appPurge ...                                                     */
 /*---------------------------------------------------------------------*/
-service appPurge( app ) {
-   console.log( "purgin...", app );
+service appPurge(app) {
+   console.log("purging (not implemented)...", app);
 }
 
 /*---------------------------------------------------------------------*/
 /*    services                                                         */
 /*---------------------------------------------------------------------*/
 apps.path = "/hop/hopdroid/apps";
-appRemove.path = "/hop/hopdroid/apps/app/remove";
-appPurge.path = "/hop/hopdroid/apps/app/purge";
+//appRemove.path = "/hop/hopdroid/apps/app/remove";
+//appPurge.path = "/hop/hopdroid/apps/app/purge";
+appRemove.path = "/hop/hz/uninstall";
+appPurge.path = "/hop/hz/remove";
