@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Sun Jan  9 16:02:50 2022 (serrano)                */
+;*    Last change :  Sat Mar  5 12:46:26 2022 (serrano)                */
 ;*    Copyright   :  2014-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -652,44 +652,60 @@
 		 scheme->js)
 	     fail))
 	 ((js-procedure? success)
-	  (thread-start!
-	     (instantiate::hopthread
-		(name "post-url")
-		(body (lambda ()
-			 (post
-			    (lambda (x)
-			       (js-worker-exec (js-current-worker) "post" #t
-				  (lambda ()
-				     (js-call1-jsprocedure %this success %this
-					(scheme->js x)))))
-			    (lambda (x)
-			       (js-worker-exec (js-current-worker) "post" #t
-				  (lambda ()
-				     (fail x)))))))))
+	  (let ((w (js-current-worker)))
+	     (with-access::WorkerHopThread w (%loop)
+		(let ((h (instantiate::UvIdle
+			    (loop %loop)
+			    (cb list))))
+		   (uv-idle-start h)
+		   (thread-start!
+		      (instantiate::hopthread
+			 (name "post-url")
+			 (body (lambda ()
+				  (post
+				     (lambda (x)
+					(js-worker-exec (js-current-worker) "post" #t
+					   (lambda ()
+					      (uv-idle-stop h)
+					      (js-call1-jsprocedure %this success %this
+						 (scheme->js x)))))
+				     (lambda (x)
+					(js-worker-exec (js-current-worker) "post" #t
+					   (lambda ()
+					      (uv-idle-stop h)
+					      (fail x))))))))))))
 	  (js-undefined))
 	 (else
 	  (with-access::JsGlobalObject %this (js-promise)
 	     (letrec ((p (js-new %this js-promise
 			    (js-make-function %this
 			       (lambda (_ resolve reject)
-				  (thread-start!
-				     (instantiate::hopthread
-					(name "post-url-promise")
-					(body (lambda ()
-						 (post
-						    (lambda (x)
-						       (js-worker-exec (js-current-worker) "post" #t
-							  (lambda ()
-							     (js-promise-async p
-								(lambda ()
-								   (js-promise-resolve p
-								      (scheme->js x)))))))
-						    (lambda (x)
-						       (js-worker-exec (js-current-worker) "post" #t
-							  (lambda ()
-							     (js-promise-async p
-								(lambda ()
-								   (js-promise-reject p x))))))))))))
+				  (let ((w (js-current-worker)))
+				     (with-access::WorkerHopThread w (%loop)
+					(let ((h (instantiate::UvIdle
+						    (loop %loop)
+						    (cb list))))
+					   (uv-idle-start h)
+					   (thread-start!
+					      (instantiate::hopthread
+						 (name "post-url-promise")
+						 (body (lambda ()
+							  (post
+							     (lambda (x)
+								(js-worker-exec (js-current-worker) "post" #t
+								   (lambda ()
+								      (js-promise-async p
+									 (lambda ()
+									    (uv-idle-stop h)
+									    (js-promise-resolve p
+									       (scheme->js x)))))))
+							     (lambda (x)
+								(js-worker-exec (js-current-worker) "post" #t
+								   (lambda ()
+								      (js-promise-async p
+									 (lambda ()
+									    (uv-idle-stop h)
+									    (js-promise-reject p x)))))))))))))))
 			       (js-function-arity 2 0)
 			       (js-function-info :name "executor" :len 2)))))
 		p))))))

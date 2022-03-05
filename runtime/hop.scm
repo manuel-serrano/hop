@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.4.x/runtime/hop.scm                   */
+;*    serrano/prgm/project/hop/hop/runtime/hop.scm                     */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Fri Apr 16 15:20:32 2021 (serrano)                */
-;*    Copyright   :  2004-21 Manuel Serrano                            */
+;*    Last change :  Sat Mar  5 12:51:49 2022 (serrano)                */
+;*    Copyright   :  2004-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
 ;*=====================================================================*/
@@ -430,7 +430,7 @@
 		  body)
    (set! hop-to-hop-id (-fx hop-to-hop-id 1))
    (hop-verb 1 (hop-color hop-to-hop-id hop-to-hop-id " WITH-URL")
-	     ": " url "\n")
+      ": " url "\n")
    (with-trace 'with-hop "with-url"
       (trace-item "url=" url)
       (trace-item "method=" method)
@@ -491,7 +491,14 @@
 			(suc (if (procedure? success) success (lambda (x) x)))
 			(hdl (make-http-callback url r suc fail #f ctx 'text
 				json-parser x-javascript-parser)))
-		    (http-send-request r hdl :body body)))))))))
+		    (with-handler
+		       (lambda (e)
+			  (if (procedure? fail)
+			      (fail e)
+			      (raise e)))
+		       (with-error-to-file "/dev/null"
+			  (lambda ()
+			     (http-send-request r hdl :body body))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    with-hop-remote ...                                              */

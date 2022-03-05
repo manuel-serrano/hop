@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Mon Feb 21 15:54:10 2022 (serrano)                */
+;*    Last change :  Sat Mar  5 12:57:18 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
@@ -94,6 +94,12 @@
 		 (stack (string->obj (url-decode (vector-ref o 2)) ctx))
 		 (proc (js-string->jsstring (vector-ref o 3)))
 		 (location (vector-ref o 4)))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-tostring ::&exception ...                                     */
+;*---------------------------------------------------------------------*/
+(define-method (js-tostring obj::&exception %this::JsGlobalObject)
+   (with-error-to-string (lambda () (exception-notify obj))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-donate ::JsError ...                                          */

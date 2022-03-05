@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Wed Jan 12 07:56:11 2022 (serrano)                */
+;*    Last change :  Sat Mar  5 12:14:46 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -160,6 +160,9 @@
       (cond
 	 ((null? n)
 	  (reverse! (append nnodes funs)))
+	 ((isa? (car n) J2SVarDecls)
+	  (with-access::J2SVarDecls (car n) (decls)
+	     (loop (cdr n) funs (cons (car n) nnodes) (append env decls))))
 	 ((not (isa? (car n) J2SDecl))
 	  (loop (cdr n) funs (cons (car n) nnodes) env))
 	 (else
