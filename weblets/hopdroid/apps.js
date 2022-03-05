@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Nov 25 08:32:40 2020                          */
-/*    Last change :  Thu Mar  3 18:41:03 2022 (serrano)                */
+/*    Last change :  Sat Mar  5 10:23:07 2022 (serrano)                */
 /*    Copyright   :  2020-22 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    hopdroid apps                                                    */
@@ -17,6 +17,12 @@ const weblets = require("./_weblets.hop");
 
 import * as sp from hop.spage;
 import { NAVTITLE } from './xml.js';
+
+/*---------------------------------------------------------------------*/
+/*    service imports                                                  */
+/*---------------------------------------------------------------------*/
+service hzUninstall();
+service hzRemove();
 
 /*---------------------------------------------------------------------*/
 /*    APPS ...                                                         */
@@ -130,7 +136,7 @@ service app(app) {
      <script>
        function remove(el) {
 	  if (confirm(`Remove Application ${${app.name}}?`)) {
-	     ${appRemove}(${app.name})
+	     ${hzRemove}(${app.name})
 		.post()
 		.then(err => {
 		   if (err) {
@@ -144,7 +150,7 @@ service app(app) {
        
        function purge(el) {
 	  if (confirm(`Purge Application ${${app.name}}?`)) {
-	     ${appPurge}(${app.name})
+	     ${hzUninstall}(${app.name})
 		.post()
 		.then(err => {
 		   if (err) {
@@ -262,24 +268,10 @@ function statDir(dir) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    appRemove ...                                                    */
-/*---------------------------------------------------------------------*/
-service appRemove(app) {
-   console.log("removing (not implemented)...", app);
-}
-
-/*---------------------------------------------------------------------*/
-/*    appPurge ...                                                     */
-/*---------------------------------------------------------------------*/
-service appPurge(app) {
-   console.log("purging (not implemented)...", app);
-}
-
-/*---------------------------------------------------------------------*/
 /*    services                                                         */
 /*---------------------------------------------------------------------*/
 apps.path = "/hop/hopdroid/apps";
 //appRemove.path = "/hop/hopdroid/apps/app/remove";
 //appPurge.path = "/hop/hopdroid/apps/app/purge";
-appRemove.path = "/hop/hz/uninstall";
-appPurge.path = "/hop/hz/remove";
+hzUninstall.path = "/hop/hz/uninstall";
+hzRemove.path = "/hop/hz/remove";
