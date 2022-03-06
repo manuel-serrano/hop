@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:30:23 2010                          */
-;*    Last change :  Wed May 20 17:16:20 2020 (serrano)                */
-;*    Copyright   :  2010-21 Manuel Serrano                            */
+;*    Last change :  Sun Mar  6 08:47:26 2022 (serrano)                */
+;*    Copyright   :  2010-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android Phone implementation                                     */
 ;*=====================================================================*/
@@ -225,6 +225,7 @@
 	    (hashtable-update! %event-table event
 	       (lambda (v) (cons proc v))
 	       (list proc)))
+	 (tprint "add-event-listener " event)
 	 ;; emit the registration to hopdroid
 	 (let ((op (socket-output %sock-event)))
 	    ;; protocol version
