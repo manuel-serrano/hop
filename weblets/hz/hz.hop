@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 08:37:11 2006                          */
-;*    Last change :  Sat Mar  5 12:40:23 2022 (serrano)                */
+;*    Last change :  Sun Mar  6 05:40:35 2022 (serrano)                */
 ;*    Copyright   :  2006-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP weblets managers.                                            */
@@ -120,9 +120,9 @@
 		       req)))))))
 
 ;*---------------------------------------------------------------------*/
-;*    hz/remove ...                                                    */
+;*    hz/purge ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define-service (hz/remove #!key name url id)
+(define-service (hz/purge #!key name url id)
    (let ((req (current-request)))
       (if (not (authorized-service? req 'admin))
 	  (access-denied req)
@@ -136,6 +136,7 @@
 		(if (isa? w weblet)
 		    (begin
 		       (hz-remove-weblet w req)
+		       (hz-db-remove-weblet w)
 		       #t)
 		    (http-error
 		       (format "Cannot find weblet ~s" id)
