@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Nov 25 08:32:40 2020                          */
-/*    Last change :  Sun Mar  6 05:59:59 2022 (serrano)                */
+/*    Last change :  Sun Mar  6 06:30:40 2022 (serrano)                */
 /*    Copyright   :  2020-22 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    hopdroid apps                                                    */
@@ -21,6 +21,7 @@ import { NAVTITLE } from './xml.js';
 /*---------------------------------------------------------------------*/
 /*    service imports                                                  */
 /*---------------------------------------------------------------------*/
+service hzRemove();
 service hzUninstall();
 service hzPurge();
 
@@ -271,6 +272,7 @@ function statDir(dir) {
 /*    services                                                         */
 /*---------------------------------------------------------------------*/
 apps.path = "/hop/hopdroid/apps";
+hzRemove.path = "/hop/hz/remove";
 hzUninstall.path = "/hop/hz/uninstall";
 hzPurge.path = "/hop/hz/purge";
-hzRemove.path = "/hop/hz/remove";
+
