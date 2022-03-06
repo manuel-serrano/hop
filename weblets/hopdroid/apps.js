@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Nov 25 08:32:40 2020                          */
-/*    Last change :  Sun Mar  6 06:30:40 2022 (serrano)                */
+/*    Last change :  Sun Mar  6 10:53:15 2022 (serrano)                */
 /*    Copyright   :  2020-22 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    hopdroid apps                                                    */
@@ -15,9 +15,10 @@ import path from 'path';
 
 const weblets = require("./_weblets.hop");
 
-import * as sp from hop.spage;
+import * as sp from "hop:spage";
 import { NAVTITLE } from './xml.js';
-
+import { uninstall as hzUninstall, purge as hzPurge } from "hop:hz";
+   
 /*---------------------------------------------------------------------*/
 /*    service imports                                                  */
 /*---------------------------------------------------------------------*/
@@ -50,6 +51,16 @@ export function APPS(attrs, ...nodes) {
        <navtitle spageid="spage" class="sphead selected" arrow="&#8592;">Applications</navtitle>
      </sp.sptabhead>
    </sp.sptab>
+}
+
+/*---------------------------------------------------------------------*/
+/*    hz ...                                                           */
+/*---------------------------------------------------------------------*/
+service hz(action, name) {
+   switch (action) {
+      case "remove": return hzUninstall(name);
+      case "uninstall": return hzPurge(name);
+   }
 }
 
 /*---------------------------------------------------------------------*/
@@ -137,7 +148,7 @@ service app(app) {
      <script>
        function remove(el) {
 	  if (confirm(`Remove Application ${${app.name}}?`)) {
-	     ${hzRemove}(${app.name})
+	     ${hz}("remove", ${app.name})
 		.post()
 		.then(err => {
 		   if (err) {
@@ -149,9 +160,9 @@ service app(app) {
 	  }
        }
        
-       function purge(el) {
+       function uninstall(el) {
 	  if (confirm(`Purge Application ${${app.name}}?`)) {
-	     ${hzPurge}(${app.name})
+	     ${hz}("uninstall", ${app.name})
 		.post()
 		.then(err => {
 		   if (err) {
@@ -166,7 +177,7 @@ service app(app) {
      
      <div class="app-header">
        <div class="app-icon">
-       	 ${ a.icon ? <img src=${a.icon}/> : "" }
+       	 ${ a.icon ? <icimg src=${a.icon}/> : "" }
        </div>
        <div class="app-title">
        	 ${a.name}
@@ -182,7 +193,7 @@ service app(app) {
 		    src=${require.resolve("./icons/trash.svg")}/>
        	   <div class="app-button-text"> REMOVE </div>
        	 </div>
-       	 <div class="app-action-button" onclick=~{purge(this)}>
+       	 <div class="app-action-button" onclick=~{uninstall(this)}>
        	   <svg:img class="app-action" width="24px" height="24px" 
 		    src=${require.resolve("./icons/x-octagon.svg")}/>
        	   <div class="app-button-text"> UNINSTALL </div>

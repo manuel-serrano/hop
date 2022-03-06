@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 11 16:16:28 2010                          */
-/*    Last change :  Thu Dec 31 09:45:03 2020 (serrano)                */
-/*    Copyright   :  2010-20 Manuel Serrano                            */
+/*    Last change :  Sun Mar  6 10:02:51 2022 (serrano)                */
+/*    Copyright   :  2010-22 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    A small proxy used by Hop to access the resources of the phone.  */
 /*=====================================================================*/
@@ -714,12 +714,9 @@ public class HopDroid extends Thread {
       synchronized( eventtable ) {
 	 Integer i = (Integer)eventtable.get( event );
 
-	 Log.i( HOPDROID, "pushEvent event=[" + event + "] value=["
-		+ value + "] i=" + i );
 	 if( (i != null) && (i > 0) ) {
 	    try {
 	       final OutputStream op = eventclient.getOutputStream();
-	       Log.i( HOPDROID, "pushEvent event=[" + event + "] op=" + op );
 
 	       if( op != null ) {
 		  op.write( "\"".getBytes() );
@@ -733,6 +730,9 @@ public class HopDroid extends Thread {
 	       Log.e( HOPDROID, "pushEvent error: " + e );
 	       e.printStackTrace();
 	    }
+	 } else {
+	    Log.i( HOPDROID, "pushEvent event=[" + event + "] value=["
+		   + value + "] i=" + i );
 	 }
       }
    }
