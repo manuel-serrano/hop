@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 08:37:11 2006                          */
-;*    Last change :  Sun Mar  6 05:40:35 2022 (serrano)                */
+;*    Last change :  Sun Mar  6 06:16:45 2022 (serrano)                */
 ;*    Copyright   :  2006-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP weblets managers.                                            */
@@ -114,6 +114,28 @@
 		(if (isa? w weblet)
 		    (begin
 		       (hz-uninstall-weblet w)
+		       #t)
+		    (http-error
+		       (format "Cannot find weblet ~s" id)
+		       req)))))))
+
+;*---------------------------------------------------------------------*/
+;*    hz/remove ...                                                     */
+;*---------------------------------------------------------------------*/
+(define-service (hz/remove #!key name url id)
+   (let ((req (current-request)))
+      (if (not (authorized-service? req 'admin))
+	  (access-denied req)
+	  (begin
+	     (when (file-exists? (hz-prefs)) (hz-preferences-load (hz-prefs)))
+	     (hz-db-init!)
+	     (let ((w (cond
+			 (name (hz-db-find-by-name name))
+			 (url (hz-db-find-by-url url))
+			 (id (hz-db-find-by-id id)))))
+		(if (isa? w weblet)
+		    (begin
+		       (hz-remove-weblet w req)
 		       #t)
 		    (http-error
 		       (format "Cannot find weblet ~s" id)
