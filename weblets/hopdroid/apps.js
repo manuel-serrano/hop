@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Nov 25 08:32:40 2020                          */
-/*    Last change :  Sat Mar  5 10:54:43 2022 (serrano)                */
+/*    Last change :  Sun Mar  6 05:59:59 2022 (serrano)                */
 /*    Copyright   :  2020-22 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    hopdroid apps                                                    */
@@ -22,7 +22,7 @@ import { NAVTITLE } from './xml.js';
 /*    service imports                                                  */
 /*---------------------------------------------------------------------*/
 service hzUninstall();
-service hzRemove();
+service hzPurge();
 
 /*---------------------------------------------------------------------*/
 /*    APPS ...                                                         */
@@ -150,7 +150,7 @@ service app(app) {
        
        function purge(el) {
 	  if (confirm(`Purge Application ${${app.name}}?`)) {
-	     ${hzUninstall}(${app.name})
+	     ${hzPurge}(${app.name})
 		.post()
 		.then(err => {
 		   if (err) {
@@ -272,4 +272,5 @@ function statDir(dir) {
 /*---------------------------------------------------------------------*/
 apps.path = "/hop/hopdroid/apps";
 hzUninstall.path = "/hop/hz/uninstall";
+hzPurge.path = "/hop/hz/purge";
 hzRemove.path = "/hop/hz/remove";
