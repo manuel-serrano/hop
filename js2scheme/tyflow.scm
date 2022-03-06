@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Sun Feb 27 09:35:04 2022 (serrano)                */
+;*    Last change :  Sun Mar  6 16:55:10 2022 (serrano)                */
 ;*    Copyright   :  2016-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -195,7 +195,7 @@
 (define (decl-vtype-set! decl::J2SDecl ty::obj ctx::pair)
    (with-access::J2SDecl decl (ctype vtype id loc)
       [assert (ty) (or (eq? vtype 'unknown) (eq? vtype ty))]
-      (unless (eq? ctype 'any)
+      (unless (memq ctype '(any unknown))
 	 (set! ty ctype))
       (when (or (eq? vtype 'unknown) (not (eq? vtype ty)))
 	 (unfix! ctx (format "J2SDecl.vset(~a, ~a) vtype=~a/~a" id loc
@@ -797,14 +797,13 @@
 			      (unless (decl-usage-has? decl '(assig))
 				 (set! mtype val)))))))))
 	 (cond
-	    ((not (eq? ctype 'any))
+	    ((not (memq ctype '(any unknown)))
 	     (decl-vtype-set! this ctype ctx)
 	     (return 'void (extend-env env this ctype) bk))
 	    ((and (not (eq? utype 'unknown)) (eq? (car ctx) 'hopscript))
 	     (decl-vtype-set! this utype ctx)
 	     (let ((tyv (j2s-type val)))
 		(unless (utype-compatible? utype tyv)
-		   (tprint "uteyp=" utype " tuv=" tyv)
 		   (if (memq tyv '(unknown any object))
 		       (set! val (J2SCheck utype val))
 		       (utype-error val utype tyv))))
@@ -1166,7 +1165,8 @@
 (define (node-type-fun-decl this::J2SFun env::pair-nil ctx)
    (with-access::J2SFun this (body decl)
       (when (isa? decl J2SDecl)
-	 (decl-vtype-set! decl (funtype this) ctx))
+	 (let ((ty (funtype this)))
+	    (decl-vtype-set! decl ty ctx)))
       (filter-map (lambda (c)
 		     (let ((d (car c))
 			   (t (cdr c)))
