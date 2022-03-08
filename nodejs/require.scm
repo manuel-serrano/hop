@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Wed Feb 16 07:12:41 2022 (serrano)                */
+;*    Last change :  Tue Mar  8 07:50:33 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -1285,6 +1285,7 @@
 			       :driver (nodejs-driver)
 			       :driver-name "nodejs-driver"
 			       :filename filename
+			       :source src
 			       :language (or lang "hopscript")
 			       :node-modules-directory (nodejs-node-modules-directory)
 			       :mmap-src m
@@ -1312,6 +1313,7 @@
 		  :driver-name "nodejs-driver"
 		  :language (or lang "hopscript")
 		  :filename filename
+		  :source src
 		  :node-modules-directory (nodejs-node-modules-directory)
 		  :module-main #f
 		  :module-name (symbol->string mod)
@@ -1334,6 +1336,7 @@
 		     :driver (nodejs-driver)
 		     :driver-name "nodejs-driver"
 		     :filename filename
+		     :source src
 		     :language (or lang "hopscript")
 		     :node-modules-directory (nodejs-node-modules-directory)
 		     :module-main #f
@@ -1355,17 +1358,16 @@
 	     (val (assq :value obj)))
 	 (cond
 	    ((or (not (pair? ty)) (not (pair? val)))
-	     (error (format "nodejs-compile:~a" lang) "wrong status" obj))
+	     (error lang "wrong status" obj))
 	    ((equal? (cdr ty) "error")
-	     (error (format "nodejs-compile:~a" lang) "error" (cdr val)))
+	     (error lang "error" (cdr val)))
 	    ((equal? (cdr ty) "json-error")
-	     (let ((proc (format "nodejs-compile:~a" lang)))
-		(nodejs-language-notify-error (cdr val) proc)
-		(error (format "nodejs-compile:~a" lang) "aborting" src)))
+	     (nodejs-language-notify-error (cdr val) lang)
+	     (error lang "aborting" src))
 	    ((equal? (cdr ty) "filename")
 	     (compile-file (cdr val) mod))
 	    (else
-	     (error (format "nodejs-compile:~a" lang) "don't know what to do with" obj)))))
+	     (error lang "don't know what to do with" obj)))))
    
    (define (compile src mod lang)
       (cond
@@ -1905,13 +1907,19 @@
 ;*    find-new-sofile ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (find-new-sofile filename::bstring worker-slave)
-   (let ((sopath (hop-find-sofile filename
-		    :suffix (if worker-slave "_w" ""))))
-      (if (string? sopath)
-	  (when (>= (file-modification-time sopath)
-		   (file-modification-time filename))
-	     sopath)
-	  sopath)))
+   (with-trace 'require "find-new-sofile"
+      (trace-item "filename=" filename)
+      (let ((sopath (hop-find-sofile filename
+		       :suffix (if worker-slave "_w" ""))))
+	 (trace-item "sopath=" sopath)
+	 (if (string? sopath)
+	     (begin
+		(trace-item "file.mtime=" (file-modification-time sopath))
+		(trace-item "sofi.mtime=" (file-modification-time filename))
+		(when (>= (file-modification-time sopath)
+			 (file-modification-time filename))
+		   sopath))
+	     sopath))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-load ...                                                  */
@@ -1920,38 +1928,42 @@
 	   #!key lang srcalias (commonjs-export #unspecified))
 
    (define (loadso-or-compile filename lang worker-slave)
-      (let loop ((sopath (find-new-sofile filename worker-slave)))
-	 (cond
-	    ((and (string? sopath) (hop-sofile-enable))
-	     (multiple-value-bind (p _)
-		(hop-dynamic-load sopath)
-		(if (and (procedure? p) (=fx (procedure-arity p) 4))
-		    p
-		    (js-raise-error %ctxthis
-		       (format "Wrong compiled file format ~s" sopath)
-		       sopath))))
-	    ((or (not (symbol? sopath)) (not (eq? sopath 'error)))
-	     (case (hop-sofile-compile-policy)
-		((aot)
-		 (if (hop-sofile-enable)
-		     (loop (nodejs-socompile src filename lang worker-slave))
-		     (nodejs-compile src filename %ctxthis %ctxmodule
-			:lang lang :commonjs-export commonjs-export
-			:worker-slave worker-slave)))
-		((nte nte1 nte+)
-		 (when (hop-sofile-enable)
-		    (nodejs-socompile-queue-push filename lang worker-slave))
-		 (nodejs-compile src filename %ctxthis %ctxmodule
-			     :lang lang :commonjs-export commonjs-export
-			     :worker-slave worker-slave))
-		(else
-		 (nodejs-compile src filename %ctxthis %ctxmodule
-		    :lang lang :commonjs-export commonjs-export
-		    :worker-slave worker-slave))))
-	    (else
-	     (nodejs-compile src filename %ctxthis %ctxmodule
-		:lang lang :commonjs-export commonjs-export
-		:worker-slave worker-slave)))))
+      (with-trace 'require "loadso-or-compile"
+	 (trace-item "filename=" filename " lang=" lang
+	    " slave=" (if worker-slave #t #f))
+	 (let loop ((sopath (find-new-sofile filename worker-slave)))
+	    (trace-item "sopath=" sopath)
+	    (cond
+	       ((and (string? sopath) (hop-sofile-enable))
+		(multiple-value-bind (p _)
+		   (hop-dynamic-load sopath)
+		   (if (and (procedure? p) (=fx (procedure-arity p) 4))
+		       p
+		       (js-raise-error %ctxthis
+			  (format "Wrong compiled file format ~s" sopath)
+			  sopath))))
+	       ((or (not (symbol? sopath)) (not (eq? sopath 'error)))
+		(case (hop-sofile-compile-policy)
+		   ((aot)
+		    (if (hop-sofile-enable)
+			(loop (nodejs-socompile src filename lang worker-slave))
+			(nodejs-compile src filename %ctxthis %ctxmodule
+			   :lang lang :commonjs-export commonjs-export
+			   :worker-slave worker-slave)))
+		   ((nte nte1 nte+)
+		    (when (hop-sofile-enable)
+		       (nodejs-socompile-queue-push filename lang worker-slave))
+		    (nodejs-compile src filename %ctxthis %ctxmodule
+		       :lang lang :commonjs-export commonjs-export
+		       :worker-slave worker-slave))
+		   (else
+		    (nodejs-compile src filename %ctxthis %ctxmodule
+		       :lang lang :commonjs-export commonjs-export
+		       :worker-slave worker-slave))))
+	       (else
+		(nodejs-compile src filename %ctxthis %ctxmodule
+		   :lang lang :commonjs-export commonjs-export
+		   :worker-slave worker-slave))))))
 
    (define (load-module-js)
       (with-trace 'require "require@load-module-js"
@@ -2800,29 +2812,28 @@
 	 :object-return (lambda (o)
 			   (reverse! (cell-ref o)))
 	 :parse-error (lambda (msg fname loc)
-			 (error/location "hopc" msg str
-			    fname loc))))
-      
+			 (error/location proc msg str fname loc))))
+
    (let ((errs (call-with-input-string str parse)))
       (for-each (lambda (err)
 		   (match-case err
 		      (((error . ?msg) (at (file . ?filename) (loc . ?loc)))
 		       (error-notify/location
 			  (instantiate::&error
-			     (proc "hopc")
+			     (proc (format "hopc:~a" proc))
 			     (msg msg)
 			     (obj proc))
 			  filename loc))
 		      (((error . ?msg))
 		       (error-notify
 			  (instantiate::&error
-			     (proc "hopc")
+			     (proc (format "hopc:~a" proc))
 			     (msg msg)
 			     (obj proc))))
 		      (else
 		       (error-notify
 			  (instantiate::&error
-			     (proc proc)
+			     (proc (format "hopc:~a" proc))
 			     (msg "compilation error")
 			     (obj err))))))
 	 errs)))

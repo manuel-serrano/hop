@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 15 15:16:16 2018                          */
-;*    Last change :  Wed Feb 16 07:11:35 2022 (serrano)                */
+;*    Last change :  Tue Mar  8 08:47:39 2022 (serrano)                */
 ;*    Copyright   :  2018-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES6 Module handling                                              */
@@ -451,7 +451,7 @@
    (define (resolve-error x)
       (raise
 	 (instantiate::&io-file-not-found-error
-	    (proc "resolve")
+	    (proc "hopc:resolve")
 	    (msg (format "Cannot find module in ~s" dir))
 	    (obj name)
 	    (fname (cadr loc))
@@ -461,7 +461,7 @@
       (open-string-hashtable-get (get-core-modules) name))
 
    (define hop-modules-path
-      (let* ((name (config-get args :filename #f))
+      (let* ((name (config-get args :source (config-get args :filename #f)))
 	     (file (if (string-prefix? "/" name)
 		       name
 		       (file-name-canonicalize (make-file-name (pwd) name))))

@@ -3,14 +3,13 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Tue Feb 15 10:45:16 2022 (serrano)                */
+;*    Last change :  Tue Mar  8 07:07:31 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
-;*    JavaScript Return -> bind-exit                                   */
+;*    Post parsing syntactic checks.                                   */
 ;*    -------------------------------------------------------------    */
-;*    This module implements the JavaScript return removal. After      */
-;*    this pass, return are no longer expected in the tree. They       */
-;*    are replaced with either bind-exit calls or by tail returns.     */
+;*    This pass verifies that the AST produced by the parser is        */
+;*    well formed.                                                     */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/

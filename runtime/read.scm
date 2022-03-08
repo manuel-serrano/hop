@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.5.x/runtime/read.scm                  */
+;*    serrano/prgm/project/hop/hop/runtime/read.scm                    */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Tue Jan 18 14:05:18 2022 (serrano)                */
+;*    Last change :  Tue Mar  8 08:37:47 2022 (serrano)                */
 ;*    Copyright   :  2005-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -1025,13 +1025,15 @@
 			 (loop (cdr paths))))))))))
    
    (define (soprecompiled sopath)
-      (cond
-	 ((more-recent? sopath)
-	  sopath)
-	 ((more-recent? (errfile sopath))
-	  (cons 'error (errfile sopath)))
-	 (else
-	  #f)))
+      (with-trace 'sofile "hop-find-sofile, soprecompiled"
+	 (trace-item "sopath=" sopath)
+	 (cond
+	    ((more-recent? sopath)
+	     sopath)
+	    ((more-recent? (errfile sopath))
+	     (cons 'error (errfile sopath)))
+	    (else
+	     #f))))
    
    (define (find-in-sodir dir base)
       (or (soprecompiled 
@@ -1045,51 +1047,56 @@
 		(hop-soname path "")))))
    
    (define (find-in-dir dir base)
-      (or (soprecompiled 
-	     (make-file-path dir "so" (hop-so-dirname)
-		(string-append base (so-suffix))))
-	  (soprecompiled 
-	     (make-file-path (hop-sofile-directory)
-		(string-append base (so-suffix))))
-	  (soprecompiled 
-	     (make-file-path dir "libs" (hop-so-dirname)
-		(string-append base (so-suffix))))
-	  (soprecompiled 
-	     (make-file-path dir ".so" (hop-so-dirname)
-		(string-append base
-		   (cond-expand
-		      (bigloo-unsafe "_u")
-		      (else "_s"))
-		   "-" (hop-version) (so-suffix))))
-	  (soprecompiled 
-	     (make-file-path dir ".libs" (hop-so-dirname)
-		(string-append base
-		   (cond-expand
-		      (bigloo-unsafe "_u")
-		      (else "_s"))
-		   "-" (hop-version) (so-suffix))))))
+      (with-trace 'sofile "hop-find-sofile, find-in-dir"
+	 (trace-item "dir=" dir)
+	 (trace-item "base=" base)
+	 (or (soprecompiled 
+		(make-file-path dir "so" (hop-so-dirname)
+		   (string-append base (so-suffix))))
+	     (soprecompiled 
+		(make-file-path (hop-sofile-directory)
+		   (string-append base (so-suffix))))
+	     (soprecompiled 
+		(make-file-path dir "libs" (hop-so-dirname)
+		   (string-append base (so-suffix))))
+	     (soprecompiled 
+		(make-file-path dir ".so" (hop-so-dirname)
+		   (string-append base
+		      (cond-expand
+			 (bigloo-unsafe "_u")
+			 (else "_s"))
+		      "-" (hop-version) (so-suffix))))
+	     (soprecompiled 
+		(make-file-path dir ".libs" (hop-so-dirname)
+		   (string-append base
+		      (cond-expand
+			 (bigloo-unsafe "_u")
+			 (else "_s"))
+		      "-" (hop-version) (so-suffix)))))))
    
    ;; check the path directory first
-   (when (hop-sofile-enable)
-      (let* ((dir (dirname path))
-	     (base (prefix (basename path))))
-	 (or (find-in-dir dir base)
-	     (find-in-sodir dir base)
-	     ;; if not found check the user global libs repository
-	     (let ((sopath (hop-sofile-path path :suffix suffix)))
-		(cond
-		   ((more-recent? sopath)
-		    sopath)
-		   ((more-recent? (errfile sopath))
-		    (cons 'error (errfile sopath)))
-		   (else
-		    (or (find-in-unix-path (hop-soname path suffix))
-			(find-in-unix-path path)
-			(let ((sopath (make-file-name dir
-					 (string-append base
-					    (so-suffix)))))
-			   (when (file-exists? sopath)
-			      sopath))))))))))
+   (with-trace 'sofile "hop-find-sofile"
+      (trace-item "path=" path " so-enable=" (hop-sofile-enable))
+      (when (hop-sofile-enable)
+	 (let* ((dir (dirname path))
+		(base (prefix (basename path))))
+	    (or (find-in-dir dir base)
+		(find-in-sodir dir base)
+		;; if not found check the user global libs repository
+		(let ((sopath (hop-sofile-path path :suffix suffix)))
+		   (cond
+		      ((more-recent? sopath)
+		       sopath)
+		      ((more-recent? (errfile sopath))
+		       (cons 'error (errfile sopath)))
+		      (else
+		       (or (find-in-unix-path (hop-soname path suffix))
+			   (find-in-unix-path path)
+			   (let ((sopath (make-file-name dir
+					    (string-append base
+					       (so-suffix)))))
+			      (when (file-exists? sopath)
+				 sopath)))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-soname ...                                                   */
