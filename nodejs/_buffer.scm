@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 30 06:52:06 2014                          */
-;*    Last change :  Sat Feb 26 07:24:52 2022 (serrano)                */
+;*    Last change :  Fri Mar 11 18:41:28 2022 (serrano)                */
 ;*    Copyright   :  2014-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native native bindings                                           */
@@ -853,6 +853,43 @@
 		   (byte-set! data (+fx 5 i) (u8vector-ref buf 2))
 		   (byte-set! data (+fx 6 i) (u8vector-ref buf 1))
 		   (byte-set! data (+fx 7 i) (u8vector-ref buf 0)))))))
+
+   (define (js-buffer-fill this value start end)
+      (let* ((sdata (if (isa? this JsSlowBuffer)
+			(with-access::JsSlowBuffer this (data) data)
+			(with-access::JsTypedArray this (%data) %data)))
+	     (slength (string-length sdata))
+	     (start (if (eq? start (js-undefined))
+			0
+			(->fixnum start)))
+	     (end (if (eq? end (js-undefined))
+		      slength
+		      (->fixnum end)))
+	     (val (js-tointeger value %this)))
+	 (cond
+	    ((<fx end start)
+	     (js-raise-range-error %this
+		"sourceEnd < sourceStart" #f))
+	    ((=fx end start)
+	     0)
+	    ((>=fx start slength)
+	     (js-raise-range-error %this
+		"sourceStart out of bounds" #f))
+	    ((>fx end slength)
+	     (js-raise-range-error %this
+		"sourceEnd out of bounds" #f))
+	    (else
+	     (let ((v (integer->char
+			 (uint8->fixnum
+			    (fixnum->uint8
+			       (if (flonum? val)
+				   (flonum->fixnum val)
+				   val))))))
+		(let loop ((i start))
+		   (when (<fx i end)
+		      (string-int-set! sdata i (char->integer v))
+		      (loop (+fx i 1))))
+		(js-undefined))))))
    
    ;; binarySlice
    (js-bind! %this slowbuffer-proto (& "binarySlice")
@@ -1137,42 +1174,7 @@
 
    (js-bind! %this slowbuffer-proto (& "fill")
       :value (js-make-function %this
-		(lambda (this value start end)
-		   (let* ((sdata (if (isa? this JsSlowBuffer)
-				     (with-access::JsSlowBuffer this (data) data)
-				     (with-access::JsTypedArray this (%data) %data)))
-			  (slength (string-length sdata))
-			  (start (if (eq? start (js-undefined))
-				     0
-				     (->fixnum start)))
-			  (end (if (eq? end (js-undefined))
-				   slength
-				   (->fixnum end)))
-			  (val (js-tointeger value %this)))
-		      (cond
-			 ((<fx end start)
-			  (js-raise-range-error %this
-			     "sourceEnd < sourceStart" #f))
-			 ((=fx end start)
-			  0)
-			 ((>=fx start slength)
-			  (js-raise-range-error %this
-			     "sourceStart out of bounds" #f))
-			 ((>fx end slength)
-			  (js-raise-range-error %this
-			     "sourceEnd out of bounds" #f))
-			 (else
-			  (let ((v (integer->char
-				      (uint8->fixnum
-					 (fixnum->uint8
-					    (if (flonum? val)
-						(flonum->fixnum val)
-						val))))))
-			     (let loop ((i start))
-				(when (<fx i end)
-				   (string-int-set! sdata i (char->integer v))
-				   (loop (+fx i 1))))
-			     (js-undefined))))))
+		js-buffer-fill
 		(js-function-arity 3 0)
 		(js-function-info :name "fill" :len 3))
       :writable #t :enumerable #t :configurable #t :hidden-class #f)
@@ -1275,8 +1277,8 @@
    (js-bind! %this js-slowbuffer (& "makeFastBuffer")
       :value (js-make-function %this
 		(lambda (this sbuf buf offset len)
-		   ;; this function is called by the JavaScript Buffer constructor,
-		   ;; which is defined in the buffer.js module
+		   ;; this function is called by the JavaScript Buffer
+		   ;; constructor, which is defined in the buffer.js module
 		   (with-access::JsSlowBuffer sbuf (data)
 		      (with-access::JsTypedArray buf (buffer length byteoffset %data)
 			 (cond
@@ -1297,6 +1299,23 @@
 		(js-function-info :name "makeFastBuffer" :len 4))
       :writable #t :enumerable #t :configurable #t :hidden-class #f)
 
+   (js-bind! %this js-slowbuffer (& "alloc")
+      :value (js-make-function %this 
+		(lambda (this size fill encoding)
+		   (with-access::JsGlobalObject %this (js-buffer-proto)
+		      (let* ((len (uint32->fixnum (js-touint32 size %this)))
+			     (str (make-string len
+				     (if (fixnum? fill)
+					 (integer->char fill)
+					 0)))
+			     (buf (js-string->jsfastbuffer str %this)))
+			 (unless (or (eq? fill (js-undefined)) (fixnum? fill))
+			    (js-buffer-fill buf fill 0 len))
+			 buf)))
+		(js-function-arity 3 0)
+		(js-function-info :name "alloc" :len 3))
+      :writable #t :enumerable #t :configurable #t :hidden-class #f)
+      
    (js-bind! %this js-slowbuffer (& "from")
       :value (js-make-function %this 
 		(lambda (this obj offset-or-enc len)

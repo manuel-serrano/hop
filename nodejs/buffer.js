@@ -842,4 +842,5 @@ Buffer.prototype.writeDoubleBE = function(value, offset, noAssert) {
 /*---------------------------------------------------------------------*/
 /*    from (added in node v5.10.0)                                     */
 /*---------------------------------------------------------------------*/
+Buffer.alloc = SlowBuffer.alloc;
 Buffer.from = SlowBuffer.from;
