@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 18:25:11 2006                          */
-;*    Last change :  Mon Feb  7 08:11:38 2022 (serrano)                */
+;*    Last change :  Sat Mar 19 15:11:56 2022 (serrano)                */
 ;*    Copyright   :  2006-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript expanders installer                                    */
@@ -279,5 +279,8 @@
    (eval `(define-expander declare-tls
 	     ,js-declare-tls-expander))
    (eval `(define-expander define-tls
-	     ,js-define-tls-expander)))
+	     ,js-define-tls-expander))
+
+   (eval `(define-expander js-export
+	     ,js-export-expander)))
       

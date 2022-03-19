@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar  8 11:35:48 2019                          */
-;*    Last change :  Sun Dec 19 15:30:14 2021 (serrano)                */
-;*    Copyright   :  2019-21 Manuel Serrano                            */
+;*    Last change :  Sat Mar 19 14:41:34 2022 (serrano)                */
+;*    Copyright   :  2019-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop (Scheme) module parser used when a JS module imports         */
 ;*    a Hop module.                                                    */
@@ -28,88 +28,81 @@
 ;*    hop-compile ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (hop-compile in #!key driver tmp #!rest args)
-   (parse-module (input-port-name in) (read in #t) args))
-
-;*---------------------------------------------------------------------*/
-;*    parse-module ...                                                 */
-;*---------------------------------------------------------------------*/
-(define (parse-module path module args)
-   
-   (match-case module
-      ((module ?name . ?clauses)
-       (when (>= (config-get args :verbose 0) 3)
-	  (let ((margin (config-get args :verbmargin 0)))
-	     (display "  " (current-error-port))
-	     (display margin (current-error-port))
-	     (display name (current-error-port))))
-       (let ((exports (append-map (lambda (c)
-				     (match-case c
-					((export . ?exports)
-					 (filter-map (lambda (e)
-							(parse-export name e))
-					    exports))
-					(else
-					 '())))
-			 clauses)))
-	  (let ((n 0))
-	     (for-each (lambda (e)
-			  (with-access::J2SExport e (index)
-			     (set! index n)
-			     (set! n (+fx n 1))))
-		exports))
-	  (instantiate::J2SProgram
-	     (loc `(at ,path 0))
-	     (endloc `(at ,path 0))
-	     (exports exports)
-	     (module name)
-	     (mode 'hop)
-	     (path path)
-	     (nodes '()))))
-      (else
-       (raise
-	  (instantiate::&io-parse-error
-	     (proc "hop")
-	     (msg "Illegal module")
-	     (obj module)
-	     (fname (cadr (cer module)))
-	     (location (caddr (cer module))))))))
+   (let ((path (input-port-name in)))
+      (let loop ()
+	 (let ((prgm (parse-export path (read in #t) args)))
+	    (cond
+	       ((eof-object? prgm)
+		(raise
+		   (instantiate::&io-parse-error
+		      (proc "hop")
+		      (msg "Cannot find hopscript function")
+		      (obj path))))
+	       ((not prgm)
+		(loop))
+	       (else
+		prgm))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    parse-export ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (parse-export mod export)
-   (match-case export
-      ((?fun . ?args)
-       (let ((id (id-of-id fun)))
-	  (co-instantiate
-		((expo (instantiate::J2SExport
-			  (loc (cer export))
-			  (id id)
-			  (alias id)
-			  (decl decl)))
-		 (decl (instantiate::J2SDeclExtern
-			  (loc (cer export))
-			  (id id)
-			  (writable #f)
-			  (scope '%hop)
-			  (vtype 'procedure)
-			  (hidden-class #f)
-			  (export expo)
-			  (val (instantiate::J2SPragma
-				  (type 'procedure)
-				  (loc (cer export))
-				  (expr ""))))))
-	     expo)))
+(define (parse-export path exp args)
+   
+   (define (js-export id index)
+      (co-instantiate
+	    ((expo (instantiate::J2SExport
+		      (loc (cer exp))
+		      (id id)
+		      (index index)
+		      (alias id)
+		      (decl decl)))
+	     (decl (instantiate::J2SDeclExtern
+		      (loc (cer exp))
+		      (id id)
+		      (writable #f)
+		      (scope '%hop)
+		      (vtype 'procedure)
+		      (hidden-class #f)
+		      (export expo)
+		      (val (instantiate::J2SPragma
+			      (type 'procedure)
+			      (loc (cer exp))
+			      (expr ""))))))
+	 expo))
+   
+   (match-case exp
+      ((define (hopscript %this this %scope %module) ?body)
+       (match-case body
+	  ((js-export ?exports . ?body)
+	   (when (>= (config-get args :verbose 0) 3)
+	      (let ((margin (config-get args :verbmargin 0)))
+		 (display "  " (current-error-port))
+		 (display margin (current-error-port))
+		 (display path (current-error-port))))
+	   (let ((exports (map js-export exports (iota (length exports)))))
+	      (instantiate::J2SProgram
+		 (loc `(at ,path 0))
+		 (endloc `(at ,path 0))
+		 (exports exports)
+		 (module path)
+		 (mode 'hop)
+		 (path path)
+		 (nodes '()))))
+	  (else
+	   (raise
+	      (instantiate::&io-parse-error
+		 (proc "hop")
+		 (msg "Export missing")
+		 (obj exp)
+		 (fname (cadr (cer exp)))
+		 (location (caddr (cer exp))))))))
+      ((define (hopscript . ?-) . ?body)
+       (raise
+	  (instantiate::&io-parse-error
+	     (proc "hop")
+	     (msg "Wrong hopscript signature")
+	     (obj exp)
+	     (fname (cadr (cer exp)))
+	     (location (caddr (cer exp))))))
       (else
        #f)))
-
-;*---------------------------------------------------------------------*/
-;*    id-of-id ...                                                     */
-;*---------------------------------------------------------------------*/
-(define (id-of-id id::symbol)
-   (let* ((s (symbol->string! id))
-	  (i (string-index s #\:)))
-      (if i
-	  (string->symbol (substring s 0 i))
-	  id)))
-	 

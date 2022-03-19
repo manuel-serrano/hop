@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Sun Jan 23 08:34:39 2022 (serrano)                */
+#*    Last change :  Sat Mar 19 13:20:03 2022 (serrano)                */
 #*    Copyright   :  2004-22 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -1678,6 +1678,8 @@ echo "" >> $init
 cat hopscript/names_expd.sch >> $init
 echo "" >> $init
 cat hopscript/tls_expd.sch >> $init
+echo "" >> $init
+cat hopscript/export_expd.sch >> $init
 echo "" >> $init
 cat hopscript/expanders.sch >> $init
 echo "" >> $init

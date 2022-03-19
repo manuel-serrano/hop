@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Fri Feb 11 09:34:49 2022 (serrano)                */
+#*    Last change :  Sat Mar 19 13:19:20 2022 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOPSCRIPT library.                     */
 #*=====================================================================*/
@@ -56,7 +56,8 @@ SOURCES = $(_OBJECTS:%=%.scm) $(_C_OBJECTS:%=%.c)
 INCLUDES = stringliteral.sch names.sch property_expd.sch property.sch \
   expanders.sch arithmetic.sch call.sch array.sch number.sch public_expd.sch \
   stringliteral_expd.sch types.sch types_expd.sch arity.sch \
-  constants_expd.sch constants.sch stringthread.sch function.sch arguments.sch
+  constants_expd.sch constants.sch stringthread.sch function.sch arguments.sch \
+  export_expd.sch export.sch
 
 C_INCLUDES = bglhopscript.h bglhopscript_types.h bglhopscript_malloc.h
 
