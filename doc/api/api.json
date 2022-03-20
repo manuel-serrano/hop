@@ -21,6 +21,7 @@
 	      "../node_modules/vcf/doc/vcf.md",
 	      "../node_modules/texinfo/doc/texinfo.md",
 	      "../node_modules/text/doc/text.md",
-              "../node_modules/xml/doc/xml.md"
+              "../node_modules/xml/doc/xml.md",
+              "../node_modules/zeroconf/doc/zeroconf.md"
 	    ]
 }

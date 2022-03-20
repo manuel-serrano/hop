@@ -284,6 +284,7 @@ h4.glyphicon:before {
   font-weight: 400;
   line-height: 1;
   -webkit-font-smoothing: antialiased;
+   content:"\e041";
 }
 
 h3.parameter:before,
