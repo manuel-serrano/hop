@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Mon Dec 20 19:51:11 2021 (serrano)                */
-;*    Copyright   :  2013-21 Manuel Serrano                            */
+;*    Last change :  Sun Mar 20 08:19:53 2022 (serrano)                */
+;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
 ;*=====================================================================*/
@@ -270,7 +270,7 @@
 ;*    The cmap structure is defined in property.scm.                   */
 ;*---------------------------------------------------------------------*/
 (define (js-literal->jsobject::JsObject elements::vector names::vector %this)
-   (let ((cm (js-names->cmap names #f)))
+   (let ((cm (js-names->cmap names :inline #f)))
       (instantiateJsObject
 	 (cmap cm)
 	 (__proto__ (js-object-proto %this))

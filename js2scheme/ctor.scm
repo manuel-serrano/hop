@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb  1 13:36:09 2017                          */
-;*    Last change :  Fri Aug 13 16:00:03 2021 (serrano)                */
-;*    Copyright   :  2017-21 Manuel Serrano                            */
+;*    Last change :  Sun Mar 20 07:16:30 2022 (serrano)                */
+;*    Copyright   :  2017-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Constructor optimization                                         */
 ;*    -------------------------------------------------------------    */
@@ -240,7 +240,7 @@
 		(set! globals
 		   (cons* 
 		      `(define ,cmap
-			  (js-names->cmap (vector ,@(init-names init)) #t))
+			  (js-names->cmap (vector ,@(init-names init)) :inline #t))
 		      `(define ,offset 0)
 		      `(define ,cnt 0)
 		      globals))

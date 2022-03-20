@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 15 09:04:07 2011                          */
-;*    Last change :  Tue Oct  8 13:12:36 2019 (serrano)                */
-;*    Copyright   :  2011-19 Manuel Serrano                            */
+;*    Last change :  Sun Mar 20 08:50:47 2022 (serrano)                */
+;*    Copyright   :  2011-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Avahi support for Hop                                            */
 ;*=====================================================================*/
@@ -182,7 +182,7 @@
 			(apply avahi-entry-group-add-service! group
 			   :name name
 			   :type type
-			   :port (hop-default-port)
+			   :port (or port (hop-default-port))
 			   opts)
 			;; tell the server to register the service
 			(avahi-entry-group-commit group)))))))))

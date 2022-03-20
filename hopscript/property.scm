@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Fri Feb 11 16:17:21 2022 (serrano)                */
+;*    Last change :  Sun Mar 20 07:15:44 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -67,7 +67,7 @@
 	   (inline property-name::JsStringLiteral ::struct)
 
 	   (merge-cmap!::JsConstructMap ::JsConstructMap ::JsConstructMap)
-	   (js-names->cmap::JsConstructMap ::vector ::bool)
+	   (js-names->cmap::JsConstructMap ::vector #!key (writable #f) (enumerable #t) (configurable #t) (accessor #f) (inline #f))
 	   (js-strings->cmap::JsConstructMap ::vector)
 	   (js-object-literal-init! ::JsObject)
 	   (js-object-literal-spread-assign! ::JsObject ::obj ::JsGlobalObject)
@@ -462,7 +462,7 @@
 	    (if (flags-inline? flags) "I" "V")
 	    (if (flags-writable? flags) "w" "r")
 	    (if (flags-enumerable? flags) "e" "-")
-	    (if (flags-configurable? flags) "g" "-")
+	    (if (flags-configurable? flags) "c" "-")
 	    (if (flags-accessor? flags) "a" "-")))))
 	 
 ;*---------------------------------------------------------------------*/
@@ -1183,11 +1183,12 @@
 ;*    -------------------------------------------------------------    */
 ;*    Used by j2sscheme to create literal objects.                     */
 ;*---------------------------------------------------------------------*/
-(define (js-names->cmap names inline)
+(define (js-names->cmap names #!key (writable #f) (enumerable #t) (configurable #t) (accessor #f) (inline #f))
    (js-make-jsconstructmap
       :props (vector-map (lambda (n)
 			    (prop n
-			       (property-flags #t #t #t #f inline)))
+			       (property-flags
+				  writable enumerable configurable accessor inline)))
 		names)
       :methods (make-vector (vector-length names) #unspecified)))
       

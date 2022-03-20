@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Thu Feb 24 18:13:15 2022 (serrano)                */
+;*    Last change :  Sat Mar 19 18:40:13 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -2981,6 +2981,7 @@
       ((boolean? obj) (& "boolean"))
       ((eq? obj (js-null)) (& "object"))
       ((bignum? obj) (& "bigint"))
+      ((object? obj) (& "object"))
       (else (js-string->jsstring (typeof obj)))))
 
 ;*---------------------------------------------------------------------*/

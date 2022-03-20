@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Mar 19 13:17:15 2022                          */
-;*    Last change :  Sat Mar 19 15:23:36 2022 (serrano)                */
+;*    Last change :  Sat Mar 19 17:43:40 2022 (serrano)                */
 ;*    Copyright   :  2022 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript JS-EXPORT expander                                     */
@@ -14,8 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (define (js-export-expander x e)
    (match-case x
-      ((js-export ?bindings . ?body)
-       (let* ((len (length bindings))
+      ((js-export ?vars . ?body)
+       (let* ((len (length vars))
 	      (nums (iota len)))
 	  (e `(&with!
 		 (define %evars
@@ -26,15 +26,15 @@
 			     ,@(map (lambda (v i)
 				       `(js-evar-info (& ,(symbol->string v))
 					   '(,i) '() #f))
-				  bindings nums)
+				  vars nums)
 			     `(js-evar-info (& "default")
-				`(,len) '() #f)))
-		       (set! evars (make-vector ,len (js-undefined)))
+				 `(,len) '() #f)))
+		       (set! evars (make-vector ,(+fx len 1) (js-undefined)))
 		       evars))
 		 ,@body
 		 ,@(map (lambda (v i)
 			   `(vector-set! %evars ,i ,v))
-		      nums bindings)
+		      vars nums)
 		 (vector-set! %evars ,len
 		    (js-get %module (& "exports" 1) %this)))
 	     e)))
