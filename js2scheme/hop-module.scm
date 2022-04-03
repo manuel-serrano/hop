@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar  8 11:35:48 2019                          */
-;*    Last change :  Sat Mar 19 14:41:34 2022 (serrano)                */
+;*    Last change :  Tue Mar 29 14:06:05 2022 (serrano)                */
 ;*    Copyright   :  2019-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop (Scheme) module parser used when a JS module imports         */
@@ -71,8 +71,8 @@
 	 expo))
    
    (match-case exp
-      ((define (hopscript %this this %scope %module) ?body)
-       (match-case body
+      ((define (hopscript %this this %scope %module) ??- ?exp)
+       (match-case exp
 	  ((js-export ?exports . ?body)
 	   (when (>= (config-get args :verbose 0) 3)
 	      (let ((margin (config-get args :verbmargin 0)))

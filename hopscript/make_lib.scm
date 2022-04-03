@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug  9 14:00:32 2013                          */
-;*    Last change :  Mon Dec 13 05:53:28 2021 (serrano)                */
-;*    Copyright   :  2013-21 Manuel Serrano                            */
+;*    Last change :  Tue Mar 29 14:11:20 2022 (serrano)                */
+;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    THe module used to build the hopscript heap file.                */
 ;*=====================================================================*/
@@ -108,6 +108,7 @@
 	   
 	   (class JsValueDescriptor)
 	   (class JsAccessorDescriptor)
+	   (class JsWrapperDescriptor)
 
 	   (class MessageEvent)
 	   (class WorkerHopThread)
