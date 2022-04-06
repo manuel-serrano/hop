@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat May 17 06:10:40 2014                          */
-;*    Last change :  Wed Apr 28 09:33:47 2021 (serrano)                */
-;*    Copyright   :  2014-21 Manuel Serrano                            */
+;*    Last change :  Wed Apr  6 06:39:22 2022 (serrano)                */
+;*    Copyright   :  2014-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    File system bindings                                             */
 ;*=====================================================================*/
@@ -226,12 +226,12 @@
    (define (fdatasync this path callback)
       (nodejs-fdatasync %worker %this process path callback))
    
-   (define (mkdir this path mode callback)
+   (define (mkdir this path mode recursive callback)
       (if (eq? callback (js-undefined))
 	  (if (js-procedure? mode)
-	      (nodejs-mkdir %worker %this process path #o777 mode)
-	      (nodejs-mkdir %worker %this process path mode #f))
-	  (nodejs-mkdir %worker %this process path mode callback)))
+	      (nodejs-mkdir %worker %this process path #o777 recursive mode)
+	      (nodejs-mkdir %worker %this process path mode recursive #f))
+	  (nodejs-mkdir %worker %this process path mode recursive callback)))
    
    (define (close this fd callback)
       (if (fixnum? fd)

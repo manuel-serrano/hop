@@ -412,6 +412,8 @@ function modeNum(m, def) {
   switch (typeof m) {
     case 'number': return m;
     case 'string': return parseInt(m, 8);
+    // ms (6 apr 2022)
+    case 'object': "mode" in m ? modeNum(m.mode,def) : def;
     default:
       if (def) {
         return modeNum(def);
@@ -645,13 +647,17 @@ fs.mkdir = function(path, mode, callback) {
   if (!nullCheck(path, callback)) return;
   binding.mkdir(pathModule._makeLong(path),
                 modeNum(mode, 511 /*=0777*/),
+		// ms (6 apr 2022)
+		typeof mode === 'object' ? mode.recursive : false,
                 callback);
 };
 
 fs.mkdirSync = function(path, mode) {
   nullCheck(path);
   return binding.mkdir(pathModule._makeLong(path),
-                       modeNum(mode, 511 /*=0777*/));
+                       modeNum(mode, 511 /*=0777*/),
+		       // ms (6 apr 2022)
+     		       typeof mode === 'object' ? mode.recursive : false);
 };
 
 fs.readdir = function(path, callback) {

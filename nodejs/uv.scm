@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.5.x/nodejs/uv.scm                     */
+;*    serrano/prgm/project/hop/hop/nodejs/uv.scm                       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Thu Jan 27 12:45:47 2022 (serrano)                */
+;*    Last change :  Wed Apr  6 06:35:35 2022 (serrano)                */
 ;*    Copyright   :  2014-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -128,7 +128,7 @@
 	   (nodejs-unlink ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::obj)
 	   (nodejs-rmdir ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::obj)
 	   (nodejs-fdatasync ::WorkerHopThread ::JsGlobalObject ::JsObject ::int ::obj)
-	   (nodejs-mkdir ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::int ::obj)
+	   (nodejs-mkdir ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::int ::obj ::obj)
 	   (nodejs-open ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::long ::long ::obj)
 	   (nodejs-utimes ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::obj ::obj ::obj)
 	   (nodejs-futimes ::WorkerHopThread ::JsGlobalObject ::JsObject ::int ::obj ::obj ::obj)
@@ -1383,7 +1383,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-mkdir ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-mkdir %worker %this process path mode callback)
+(define (nodejs-mkdir %worker %this process path mode recursive callback)
    
    (define (mkdir-callback res)
       (cond
@@ -1399,17 +1399,48 @@
 	     (!js-callback1 'mkdir %worker %this
 		callback (js-undefined) exn)))))
    
-   (if (js-procedure? callback)
-       (uv-fs-mkdir (js-jsstring->string path) mode
-	  :loop (worker-loop %worker)
-	  :callback mkdir-callback)
-       (let ((r (uv-fs-mkdir (js-jsstring->string path) mode)))
-	  (if (and (integer? r) (<fx r 0))
-	      (js-raise
-		 (fs-errno-exn
-		    (format "mkdir: cannot mkdir ~a" (js-jsstring->string path))
-		    r %this))
-	      r))))
+   (define (mkdir-async dir callback)
+      (uv-fs-mkdir dir mode
+	 :loop (worker-loop %worker)
+	 :callback callback))
+
+   (define (mkdirs-async dir callback)
+      (let loop ((dir dir))
+	 (let ((parent (dirname dir)))
+	    (if (directory? parent)
+		(mkdir-async dir callback)
+		(mkdir-async parent
+		   (lambda (res)
+		      (if (and (fixnum? res) (=fx res 0))
+			  (mkdir-async dir callback)
+			  (callback res))))))))
+   
+   (define (mkdir-sync dir)
+      (let ((r (uv-fs-mkdir dir mode)))
+	 (if (and (integer? r) (<fx r 0))
+	     (js-raise
+		(fs-errno-exn
+		   (format "mkdir: cannot mkdir ~s" dir)
+		   r %this))
+	     r)))
+   
+   (define (mkdirs-sync dir)
+      (let loop ((dir dir))
+	 (let ((parent (dirname dir)))
+	    (if (directory? parent)
+		(mkdir-sync dir)
+		(and (loop parent) (mkdir-sync dir))))))
+   
+   (let loop ((dir (js-jsstring->string path)))
+      (cond
+	 (recursive
+	  (if (js-procedure? callback)
+	      (mkdirs-async dir mkdir-callback)
+	      (mkdirs-sync dir)))
+	 ((js-procedure? callback)
+	  (mkdir-async dir mkdir-callback))
+	 (else
+	  (mkdir-sync dir)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-write ...                                                 */
