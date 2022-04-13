@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Tue Feb 22 12:41:07 2022 (serrano)                */
+;*    Last change :  Wed Apr  6 19:32:27 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1041,7 +1041,8 @@
 			 (location (caddr loc))))
 		   (let* ((endloc (node-endloc body))
 			  (nparams (map (lambda (p)
-					   (duplicate::J2SDecl p))
+					   (duplicate::J2SDecl p
+					      (key (ast-decl-key))))
 				      params))
 			  (nbody (J2SBlock
 				    (J2SReturn #t
@@ -2601,31 +2602,6 @@
 		(when (eq? (peek-token-type) 'ID)
 		   (token-push-back! (make-token 'DOT "." loc)))
 		(loop (J2SUnary '?. expr))))
-	    ((?.tbr)
-	     (let ((token (consume-any!)))
-		(case (peek-token-type)
-		   ((ID)
-		    (let* ((loc (token-loc token))
-			   (endloc loc))
-		       (token-push-back! (make-token 'DOT "." loc))
-		       (let* ((id (gensym 'tmp))
-			      (param (instantiate::J2SDecl
-					(loc loc)
-					(id id)
-					(binder 'param)))
-			      (test (J2SBinary 'OR
-				       (J2SBinary '===
-					  (J2SUnresolvedRef id) (J2SUndefined))
-				       (J2SBinary '===
-					  (J2SUnresolvedRef id) (J2SNull))))
-			      (body (J2SCond test
-				       (J2SUndefined)
-				       (loop (J2SUnresolvedRef id))))
-			      (arrow (J2SArrow '|| (list param)
-					(J2SBlock body))))
-			  (J2SCall arrow expr))))
-		   (else
-		    (parse-token-error "Wrong token" (consume-any!))))))
 	    (else
 	     expr))))
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 15 15:16:16 2018                          */
-;*    Last change :  Tue Mar  8 08:47:39 2022 (serrano)                */
+;*    Last change :  Sun Apr 10 08:50:33 2022 (serrano)                */
 ;*    Copyright   :  2018-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES6 Module handling                                              */
@@ -449,6 +449,16 @@
 	 (resolve-path-file-or-directory path)))
    
    (define (resolve-error x)
+      (tprint "ERROR " name)
+      (tprint "hop-modules-path=" hop-modules-path)
+      (tprint "source=" (config-get args :source #f))
+      (tprint "lib-path=" (config-get args :hop-library-path "."))
+      (tprint "node-modules=" (config-get args :node-modules-directory "."))
+      (tprint "ARGS=" (let loop ((args args))
+			 (if (null? args)
+			     '()
+			     (cons (car args)
+				(loop (cddr args))))))
       (raise
 	 (instantiate::&io-file-not-found-error
 	    (proc "hopc:resolve")
@@ -466,7 +476,8 @@
 		       name
 		       (file-name-canonicalize (make-file-name (pwd) name))))
 	     (dir (if (string? file) (dirname file) (pwd))))
-	 (cons* (make-file-name dir "node_modules")
+	 (cons* dir
+	    (make-file-name dir "node_modules")
 	    (config-get args :hop-library-path ".")
 	    (list (config-get args :node-modules-directory ".")))))
    
@@ -563,6 +574,7 @@
 			 (let ((iprgm (case lang
 					 ((hop)
 					  (hop-compile in
+					     :source path
 					     :verbose (if (<=fx verb 2) 0 verb)
 					     :verbmargin margin
 					     :module-import #t
@@ -571,6 +583,7 @@
 					     :import-loc loc))
 					 (else
 					  (j2s-compile in
+					     :source path
 					     :driver (j2s-export-driver)
 					     :warning 0
 					     :module-import #t
@@ -580,6 +593,7 @@
 					     :import-program prgm
 					     :import-loc loc
 					     :commonjs-export #t
+					     :node-modules-directory (config-get args :node-modules-directory)
 					     :plugins-loader (config-get args :plugins-loader #f))))))
 			    (module-cache-put! path iprgm))))))))))
 

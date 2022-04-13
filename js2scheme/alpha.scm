@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 20 14:34:39 2016                          */
-;*    Last change :  Sun Feb 27 09:09:06 2022 (serrano)                */
+;*    Last change :  Wed Apr 13 14:04:21 2022 (serrano)                */
 ;*    Copyright   :  2016-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    AST Alpha conversion                                             */
@@ -375,13 +375,15 @@
 		(nparams (map j2sdecl-duplicate params))
 		(nfun (duplicate::J2SFun this
 			 (decl ndecl)
-			 (params nparams)
-			 (method (when method
-				    (j2s-alpha method (list decl) (list ndecl))))
-			 (body body))))
-	    (with-access::J2SFun nfun (body)
+			 (params nparams))))
+	    (with-access::J2SFun nfun (body method)
 	       (with-access::J2SDeclFun ndecl (val)
 		  (set! val nfun))
+	       (when method
+		  (set! method
+		     (j2s-alpha method
+			(cons* decl this thisp params)
+			(cons* ndecl nfun nthisp nparams))))
 	       (set! body
 		  (if thisp
 		      (j2s-alpha body
@@ -398,18 +400,21 @@
 		(nthisp (when thisp (j2sdecl-duplicate thisp)))
 		(nfun (duplicate::J2SFun this
 			 (params nparams)
-			 (thisp (when thisp nthisp))
-			 (method (alpha method))
-			 (body body))))
-	    (with-access::J2SFun nfun (body)
+			 (thisp (when thisp nthisp)))))
+	    (with-access::J2SFun nfun (body method)
+	       (when method
+		  (set! method
+		     (j2s-alpha method
+			(cons thisp params)
+			(cons nthisp nparams))))
 	       (set! body
 		  (if thisp
 		      (j2s-alpha body
-			 (cons* this thisp params)
-			 (cons* nfun nthisp nparams))
+			 (cons thisp params)
+			 (cons nthisp nparams))
 		      (j2s-alpha body
-			 (cons this params)
-			 (cons nfun nparams)))))
+			 params
+			 nparams))))
 	    nfun)))
    
    (with-access::J2SFun this (decl)
@@ -575,23 +580,30 @@
    (cond
       ((isa? p J2SDeclFunType)
        (duplicate::J2SDeclFunType p
+	  (%info #unspecified)
 	  (key (ast-decl-key))))
       ((isa? p J2SDeclFun)
        (duplicate::J2SDeclFun p
+	  (%info #unspecified)
 	  (key (ast-decl-key))))
       ((isa? p J2SDeclClass)
        (duplicate::J2SDeclClass p
+	  (%info #unspecified)
 	  (key (ast-decl-key))))
       ((isa? p J2SDeclInit)
        (duplicate::J2SDeclInit p
+	  (%info #unspecified)
 	  (key (ast-decl-key))))
        ((isa? p J2SDeclRest)
 	(duplicate::J2SDeclRest p
+	   (%info #unspecified)
 	   (key (ast-decl-key))))
        ((isa? p J2SDeclArguments)
 	(duplicate::J2SDeclArguments p
+	   (%info #unspecified)
 	   (key (ast-decl-key))))
       (else
        (duplicate::J2SDecl p
+	  (%info #unspecified)
 	  (key (ast-decl-key))))))
 

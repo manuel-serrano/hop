@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Wed Feb 16 07:40:08 2022 (serrano)                */
+;*    Last change :  Sun Apr 10 09:20:37 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -639,7 +639,7 @@
 	 (set! o (cons* :filename filename o)))
 
       (when (member (config-get args :language)
-	       '("hopscript" "ecmascript6" "ecmascript2017"))
+	       '("hopscript" "ecmascript6" "ecmascript2017" "ts"))
 	 (for-each (lambda (k)
 		      (unless (memq k o)
 			 (set! o (cons* k #t o))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Sat Feb 26 10:47:45 2022 (serrano)                */
+;*    Last change :  Thu Apr  7 11:10:00 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -689,7 +689,7 @@
 (define-method (j2s->list this::J2SRef stack)
    (let ((nstack (check-stack this stack)))
       (with-access::J2SRef this (decl loc)
-	 (with-access::J2SDecl decl (id key scope)
+	 (with-access::J2SDecl decl (id key scope %info)
 	    `(,@(call-next-method) ,id
 		,@(dump-loc loc)
 		,@(dump-scope scope)
@@ -777,6 +777,16 @@
    (let ((nstack (check-stack this stack)))
       (with-access::J2SLiteralValue this (val)
 	 `(,(string->symbol (typeof this)) ,(format "~a" val)))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s->list ::j2SRegExp ...                                        */
+;*---------------------------------------------------------------------*/
+(define-method (j2s->list this::J2SRegExp stack)
+   (let ((nstack (check-stack this stack)))
+      (with-access::J2SRegExp this (val flags inline)
+	 `(,(string->symbol (typeof this))
+	   ,(format "~a" val)
+	   :flags ,flags :inline ,inline))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SArray ...                                         */
