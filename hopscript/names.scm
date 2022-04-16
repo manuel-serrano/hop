@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Mar 30 06:29:09 2019                          */
-;*    Last change :  Sat Sep 11 08:17:45 2021 (serrano)                */
-;*    Copyright   :  2019-21 Manuel Serrano                            */
+;*    Last change :  Fri Apr 15 08:07:13 2022 (serrano)                */
+;*    Copyright   :  2019-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Property names (see stringliteral.scm)                           */
 ;*=====================================================================*/
@@ -480,7 +480,9 @@
    
    (define (enlarge-vec! len)
       (let* ((nlen (minfx
-		      (if (>fx (*fx 2 len) num) (*fx 2 len) (+fx 16 num))
+		      (if (>fx (*fx 2 len) (+fx 10 num))
+			  (*fx 2 len)
+			  (+fx 16 num))
 		      (+fx (jsindex-threshold) 10)))
 	     (nvec (copy-vector js-integer-names nlen)))
 	 (vector-fill! nvec #f len)
@@ -500,8 +502,6 @@
        (let ((len (vector-length js-integer-names)))
 	  (when (<=fx len (+fx 10 num))
 	     (enlarge-vec! len))
-	  (when (=fx num js-integer-length)
-	     (set! js-integer-length (+fx num 1)))
 	  (or (vector-ref js-integer-names (+fx num 10))
 	      (let ((name (number-name num)))
 		 (vector-set! js-integer-names (+fx num 10) name)

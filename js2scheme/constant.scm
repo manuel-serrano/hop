@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Thu Dec  9 08:07:34 2021 (serrano)                */
-;*    Copyright   :  2013-21 Manuel Serrano                            */
+;*    Last change :  Thu Apr 14 18:00:17 2022 (serrano)                */
+;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preallocate constant objects (regexps, literal cmaps,            */
 ;*    closed functions, ronly literal objects, ...)                    */
@@ -223,7 +223,7 @@
 			      (val this))))
 		     this))
 		((and (pair? keys) (every (lambda (x) x) keys))
-		 (let ((n (add-cmap! loc (list->vector keys) env #t)))
+		 (let ((n (add-cmap! loc (list->vector (map (lambda (k) (cons k #t)) keys)) env #t)))
 		    (set! cmap
 		       (instantiate::J2SLiteralCnst
 			  (loc loc)
@@ -485,6 +485,7 @@
       (unless cmap
 	 (call-default-walker)
 	 (let* ((p (j2s-class-instance-properties this))
+		(c (not (isa? this J2SRecord)))
 		(n (add-cmap! loc
 		      (list->vector
 			 (filter-map (lambda (prop)
@@ -492,7 +493,7 @@
 					   (with-access::J2SPropertyInit prop (name)
 					      (when (isa? name J2SString)
 						 (with-access::J2SString name (val)
-						    (string->symbol val))))))
+						    (cons (string->symbol val) c))))))
 			    p))
 		      env #f)))
 	    (set! cmap

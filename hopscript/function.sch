@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Dec  7 06:32:41 2019                          */
-;*    Last change :  Thu Aug 19 08:38:37 2021 (serrano)                */
-;*    Copyright   :  2019-21 Manuel Serrano                            */
+;*    Last change :  Thu Apr 14 07:35:39 2022 (serrano)                */
+;*    Copyright   :  2019-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function macros for js2scheme                                    */
 ;*=====================================================================*/
@@ -55,7 +55,7 @@
 	  (e `'#(,name ,len #f ,path ,start ,end 100 3f) e))
 	 ((?- :name (and (? string?) ?name)
 	     :len (and (? integer?) ?len)
-	     :path (and (? string?) ?path)
+	     :path (and (? (lambda (p) (or (string? p) (eq? p '%sourcepath)))) ?path)
 	     :start (and (? fixnum?) ?start)
 	     :end (and (? fixnum?) ?end)
 	     :new-target ?new-target)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Mon Feb  7 16:22:19 2022 (serrano)                */
+;*    Last change :  Thu Apr 14 07:21:01 2022 (serrano)                */
 ;*    Copyright   :  2018-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -50,13 +50,15 @@
 	       (if (pair? records)
 		   `((export ,@(map j2s-record-declaration records)))
 		   '()))
+	   "glop0"
 	   (define __js_strings #f)
 	   (define __js_rxcaches #f)
 	   (%define-cnst-table ,(length cnsts))
 	   (%define-pcache ,pcache-size)
+	   (define %sourcepath ,(context-get ctx :filename))
 	   (define %pcache
 	      (js-make-pcache-table ,pcache-size
-		 ,(context-get ctx :filename)
+		 %sourcepath
 		 ,@(if (or (context-get ctx :profile-cache #f)
 			   (context-get ctx :profile-location #f))
 		       (list `',(j2s-profile-cache this))
@@ -106,9 +108,11 @@
 		   `((export ,@(map j2s-record-declaration records)))
 		   '())
 	       '((option (register-srfi! 'hopjs-worker-slave))))
+	   "glop2"
 	    ;; (&begin!) must not be a constant! (_do not_ use quote)
 	    (define __js_strings #f)
 	    (define __js_rxcaches #f)
+	    (define %sourcepath ,(context-get ctx :filename))
 	    (define %source (or (the-loading-file) "/"))
 	    (define %resource (dirname %source))
 	    ,@(map j2s-record-predicate records)
@@ -121,7 +125,7 @@
 		    (define js-integer-names (js-get-js-integer-names))
 		    (define %pcache
 		       (js-make-pcache-table ,pcache-size
-			  ,(context-get ctx :filename)
+			  %sourcepath
 			  ,@(if (or (context-get ctx :profile-cache #f)
 				    (context-get ctx :profile-location #f))
 				(list `',(j2s-profile-cache this))
@@ -174,9 +178,10 @@
 		     records)
 		(%define-cnst-table ,(length cnsts))
 		(%define-pcache ,pcache-size)	       
+		(define %sourcepath ,(context-get ctx :filename))
 		(define %pcache
 		   (js-make-pcache-table ,pcache-size
-		      ,(context-get ctx :filename)
+		      %sourcepath
 		      ,@(if (or (context-get ctx :profile-cache #f)
 				(context-get ctx :profile-location #f))
 			    (list `',(j2s-profile-cache this))
@@ -206,10 +211,10 @@
       ;; transforms a list of (define id var) into a list of (id var)
       (map cdr globals))
 
-   (with-access::J2SProgram this (module main nodes headers decls
-					 mode name pcache-size call-size
-					 cnsts loc
-					 %info)
+   (with-access::J2SProgram this (path module main nodes headers decls
+				    mode name pcache-size call-size
+				    cnsts loc
+				    %info)
       (set! %info '())
       (let* ((nctx (compiler-context-set! ctx
 		      :array (j2s-find-extern-decl headers 'Array)
@@ -352,14 +357,16 @@
 	       (if (pair? records)
 		   `((export ,@(map j2s-record-declaration records)))
 		   '()))
+	   "glop3"
 	   (define __js_strings #f)
 	   (define __js_rxcaches #f)
 	   (%define-cnst-table ,(length cnsts))
 	   (%define-pcache ,pcache-size)
 	   (hop-sofile-compile-policy-set! 'static)
+	   (define %sourcepath ,(context-get ctx :filename))
 	   (define %pcache
 	      (js-make-pcache-table ,pcache-size
-		 ,(context-get ctx :filename)
+		 %sourcepath
 		 ,@(if (or (context-get ctx :profile-cache #f)
 			   (context-get ctx :profile-location #f))
 		       (list `',(j2s-profile-cache this))
@@ -414,15 +421,17 @@
 	       (if (pair? records)
 		   `((export ,@(map j2s-record-declaration records)))
 		   '()))
+	      "glop1"
 		,@(filter fundef? globals)
 		,@(filter fundef? body)
 		(define __js_strings ,(j2s-jsstring-init this))
 		(define __js_rxcaches ,(j2s-regexp-caches-init this))
+		(define %sourcepath ,(context-get ctx :filename))
 		(%define-cnst-table ,(length cnsts))
 		(%define-pcache ,pcache-size)
 		(define %pcache
 		   (js-make-pcache-table ,pcache-size
-		      ,(context-get ctx :filename)
+		      %sourcepath
 		      ,@(if (or (context-get ctx :profile-cache #f)
 				(context-get ctx :profile-location #f))
 			    (list `',(j2s-profile-cache this))
@@ -819,7 +828,9 @@
 		(vector (if inline 3 1) val flags)))
 	    ((isa? this J2SCmap)
 	     (with-access::J2SCmap this (val)
-		(vector 2 (vector-map symbol->string val))))
+		(vector 2
+		   (vector-map (lambda (e) (cons (symbol->string (car e)) (cdr e)))
+		      val))))
 	    ((isa? this J2SObjInit)
 	     (with-access::J2SObjInit this (inits cmap)
 		(with-access::J2SLiteralCnst cmap (index)

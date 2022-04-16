@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 24 13:11:25 2019                          */
-;*    Last change :  Wed Apr 13 14:49:03 2022 (serrano)                */
+;*    Last change :  Thu Apr 14 08:20:13 2022 (serrano)                */
 ;*    Copyright   :  2019-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Mark global variables potentially used before being initialized. */
@@ -154,9 +154,7 @@
 ;*    uninit* ::J2SDecl ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-method (uninit* this::J2SDecl env)
-   (with-access::J2SDeclInit this (val)
-      (uninit* val env)
-      (cons this env)))
+   (cons this env))
    
 ;*---------------------------------------------------------------------*/
 ;*    uninit* ...                                                      */

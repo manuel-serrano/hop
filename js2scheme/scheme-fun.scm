@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Sat Jan  1 06:33:19 2022 (serrano)                */
+;*    Last change :  Thu Apr 14 07:16:52 2022 (serrano)                */
 ;*    Copyright   :  2017-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -1229,15 +1229,6 @@
 ;*    j2s-function-info ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (j2s-function-info val::J2SFun name loc ctx)
-
-   (define (file-relative? path)
-      (or (=fx (string-length path) 0)
-	  (not (char=? (string-ref path 0) (file-separator)))))
-   
-   (define (absolute-path path)
-      (if (file-relative? path)
-	  (file-name-canonicalize (make-file-name (pwd) path))
-	  (file-name-canonicalize path)))
    
    (define (function-len val)
       (with-access::J2SFun val (params mode vararg body name generator
@@ -1251,14 +1242,18 @@
 	    ((at ?path ?start)
 	     (match-case endloc
 		((at ?- ?end)
-		 `(js-function-info
-		     :name ,(symbol->string name)
-		     :len ,(function-len val)
-		     :path ,(absolute-path path)
-		     :start ,start :end ,(+fx 1 end)
-		     :new-target ,(when (memq new-target '(global argument)) #t)))
-		(else
-		 (error "j2s-function-src" "bad location" loc))))
+		 (let ((p (absolute-path path)))
+		    `(js-function-info
+			:name ,(symbol->string name)
+			:len ,(function-len val)
+			:path ,(if (equal? p (context-get ctx :filename))
+				   '%sourcepath
+				   p)
+			:start ,start :end ,(+fx 1 end)
+			:new-target ,(when (memq new-target '(global argument))
+					#t))))
+		 (else
+		  (error "j2s-function-src" "bad location" loc))))
 	    (else
 	     (error "j2s-function-src" "bad location" loc))))))
 

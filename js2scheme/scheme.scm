@@ -751,7 +751,8 @@
       ;; see constant.scm
       (epairify loc
 	 `(js-strings->cmap
-	     (vector ,@(map symbol->string (vector->list val)))))))
+	     ',(vector-map (lambda (e) (cons (symbol->string (car e)) (cdr e)))
+		 val)))))
 	 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SNull ...                                         */

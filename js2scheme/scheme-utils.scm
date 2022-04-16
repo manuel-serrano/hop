@@ -127,7 +127,9 @@
 
 	   (importpath-var ::J2SImportPath)
 	   (importpath-evar ::J2SImportPath)
-	   (importpath-rvar ::J2SImportPath ::pair)))
+	   (importpath-rvar ::J2SImportPath ::pair)
+
+	   (absolute-path ::bstring)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-unresolved-workspaces ...                                    */
@@ -1645,3 +1647,16 @@
 (define (importpath-rvar i::J2SImportPath rindexes)
    (with-access::J2SImportPath i (index)
       (string->symbol (format "%import-evars~a:~(:)" index rindexes))))
+
+;*---------------------------------------------------------------------*/
+;*    absolute-path ...                                                */
+;*---------------------------------------------------------------------*/
+(define (absolute-path path)
+   
+   (define (file-relative? path)
+      (or (=fx (string-length path) 0)
+	  (not (char=? (string-ref path 0) (file-separator)))))
+   
+   (if (file-relative? path)
+       (file-name-canonicalize (make-file-name (pwd) path))
+       (file-name-canonicalize path)))

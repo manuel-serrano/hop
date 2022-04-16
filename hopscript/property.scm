@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sun Mar 20 07:15:44 2022 (serrano)                */
+;*    Last change :  Thu Apr 14 18:02:46 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -1201,14 +1201,16 @@
    (let ((len (vector-length names)))
       (js-make-jsconstructmap
 	 :ctor (make-cell len)
-	 :props (vector-map (lambda (n)
-			       (if (and (>fx (string-length n) 0)
-					(char=? (string-ref n 0) #\#))
-				   ;; private name
-				   (prop (js-string->private-name n)
-				      (property-flags #t #f #f #f #t))
-				   (prop (js-string->name n)
-				      (property-flags #t #t #t #f #t))))
+	 :props (vector-map (lambda (e)
+			       (let ((n (if (pair? e) (car e) e))
+				     (c (if (pair? e) (cdr e) #t)))
+				  (if (and (>fx (string-length n) 0)
+					   (char=? (string-ref n 0) #\#))
+				      ;; private name
+				      (prop (js-string->private-name n)
+					 (property-flags #t #f #f #f #t))
+				      (prop (js-string->name n)
+					 (property-flags #t #t c #f #t)))))
 		   names)
 	 :methods (make-vector len #unspecified))))
       
