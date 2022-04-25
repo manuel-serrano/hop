@@ -447,11 +447,13 @@
 				 (with-access::J2SImport import (path)
 				    `(js-import-ref
 					,(importpath-rvar ipath (reverse rindexes))
-					,index (@ ,(symbol->string id) ,path)))))))
+					,index (@ ,(symbol->string id) ,path)
+					',id))))))
 		    (with-access::J2SExport export (index)
 		       (with-access::J2SImport import (ipath path)
 			  `(js-import-ref ,(importpath-evar ipath) ,index
-			      (@ ,(symbol->string id) ,path)))))))
+			      (@ ,(symbol->string id) ,path)
+			      ',id))))))
 	    ((and export (or (not (decl-ronly? decl)) (not (j2s-let-opt? decl))))
 	     (with-access::J2SExport export (index decl)
 		`(vector-ref %evars ,index)))

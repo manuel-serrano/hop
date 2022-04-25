@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Thu Apr 14 07:21:01 2022 (serrano)                */
+;*    Last change :  Sun Apr 24 15:43:28 2022 (serrano)                */
 ;*    Copyright   :  2018-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -531,19 +531,28 @@
 	    (with-access::J2SImport import (iprgm ipath loc)
 	       (with-access::J2SImportPath ipath (index)
 		  (with-access::J2SProgram iprgm (exports)
-		     (filter-map (lambda (x)
-				    (when (isa? x J2SRedirect)
-				       (let loop ((x x)
-						  (rindexes '())
-						  (expr evarid))
-					  (with-access::J2SRedirect x ((rindex index) export import)
-					     (if (isa? export J2SRedirect)
-						 (loop export (cons rindex rindexes)
-						    `(js-redirect-ref ,expr ,rindex ',loc))
-						 (with-access::J2SImport import (ipath)
-						    (let ((rvarid (importpath-rvar im (reverse (cons rindex rindexes)))))
-						       `(define ,rvarid
-							   (js-redirect-ref ,expr ,rindex ',loc )))))))))
+		     (append-map (lambda (x)
+				    (if (isa? x J2SRedirect)
+					(let loop ((x x)
+						   (rindexes '())
+						   (expr evarid))
+					   (with-access::J2SRedirect x ((rindex index) export import)
+					      (if (isa? export J2SRedirect)
+						  (loop export (cons rindex rindexes)
+						     `((js-redirect-ref ,expr ,rindex ',loc)))
+						  (with-access::J2SImport import (ipath iprgm)
+						     (let ((rvarid (importpath-rvar im (reverse (cons rindex rindexes)))))
+							(cons
+							   `(define ,rvarid
+							       (js-redirect-ref ,expr ,rindex ',loc ))
+							   (with-access::J2SProgram iprgm (exports)
+							      (append-map (lambda (export)
+									     (if (isa? export J2SRedirect)
+										 (loop export (cons rindex rindexes)
+										    rvarid)
+										 '()))
+								 exports))))))))
+					'()))
 			exports)))))))
    
    (with-access::J2SProgram this (imports exports)
