@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Tue Mar  8 07:50:33 2022 (serrano)                */
+;*    Last change :  Tue Apr 26 13:58:12 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -2822,14 +2822,14 @@
 			  (instantiate::&error
 			     (proc (format "hopc:~a" proc))
 			     (msg msg)
-			     (obj proc))
+			     (obj '%no-error-obj))
 			  filename loc))
 		      (((error . ?msg))
 		       (error-notify
 			  (instantiate::&error
 			     (proc (format "hopc:~a" proc))
 			     (msg msg)
-			     (obj proc))))
+			     (obj '%no-error-obj))))
 		      (else
 		       (error-notify
 			  (instantiate::&error

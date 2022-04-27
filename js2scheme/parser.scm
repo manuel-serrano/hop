@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Wed Apr  6 19:32:27 2022 (serrano)                */
+;*    Last change :  Tue Apr 26 14:14:02 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -333,11 +333,14 @@
 	    ((eq? (token-value token) 'async)
 	     (let* ((token (consume-any!))
 		    (next (peek-token-type)))
-		(if (eq? next 'function)
-		    (async-declaration token)
-		    (begin
-		       (token-push-back! token)
-		       (statement)))))
+		(cond
+		   ((eq? next 'function)
+		    (async-declaration token))
+		   ((eq? next '=>)
+		    (async-declaration token))
+		   (else
+		    (token-push-back! token)
+		    (statement)))))
 	    ((eq? (token-value token) 'sealed)
 	     (let* ((token (consume-any!))
 		    (next (peek-token-type)))
@@ -2763,6 +2766,8 @@
       (case (peek-token-type)
 	 ((function)
 	  (async-expression token))
+	 ((=>)
+	  (async-expression token))
 	 ((ID)
 	  (let ((id (consume-any!)))
 	     (if (eq? (peek-token-type) '=>)
@@ -3641,8 +3646,8 @@
 ;*    desctructure-or ...                                              */
 ;*    -------------------------------------------------------------    */
 ;*    When destructuring, the undefined (and only it) value is         */
-;*    considered as absent. Hence, a tradition OR that that            */
-;*    checks, undefined, false, null, cannot be used.                  */
+;*    considered as absent. Hence, a tradition OR that checks          */
+;*    undefined, false, null, cannot be used.                          */
 ;*---------------------------------------------------------------------*/
 (define (destructure-or loc axs def)
    (J2SBinary 'OR* axs def))

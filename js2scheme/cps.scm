@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Wed Dec 29 08:43:12 2021 (serrano)                */
-;*    Copyright   :  2013-21 Manuel Serrano                            */
+;*    Last change :  Wed Apr 27 11:54:52 2022 (serrano)                */
+;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript CPS transformation                                    */
 ;*    -------------------------------------------------------------    */
@@ -566,19 +566,34 @@
 ;*---------------------------------------------------------------------*/
 (define-method (cps this::J2SBinary k r kbreaks kcontinues fun conf)
    (assert-kont k KontExpr this)
-   (with-access::J2SBinary this (lhs rhs loc)
-      (cps lhs
-	 (KontExpr (lambda (klhs::J2SExpr)
-		      (cps rhs
-			 (KontExpr (lambda (krhs::J2SExpr)
-				      (kcall k
-					 (duplicate::J2SBinary this
-					    (lhs klhs)
-					    (rhs krhs))))
-			    this k)
-			 r kbreaks kcontinues fun conf))
-	    this k)
-	 r kbreaks kcontinues fun conf)))
+   (with-access::J2SBinary this (lhs rhs loc op)
+      (case op
+	 ((OR OR*)
+	  (cps lhs
+	     (KontExpr (lambda (klhs::J2SExpr)
+			  (cps (J2SCond klhs klhs rhs)
+			     (KontExpr (lambda (krhs::J2SExpr)
+					  (kcall k krhs))
+				this k)
+			     r kbreaks kcontinues fun conf))
+		this k)
+	     r kbreaks kcontinues fun conf))
+	 ((&&)
+	  (cps (J2SCond lhs rhs (J2SBool #f))
+	     k r kbreaks kcontinues fun conf))
+	 (else
+	  (cps lhs
+	     (KontExpr (lambda (klhs::J2SExpr)
+			  (cps rhs
+			     (KontExpr (lambda (krhs::J2SExpr)
+					  (kcall k
+					     (duplicate::J2SBinary this
+						(lhs klhs)
+						(rhs krhs))))
+				this k)
+			     r kbreaks kcontinues fun conf))
+		this k)
+	     r kbreaks kcontinues fun conf)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    cps ::J2SSequence ...                                            */
