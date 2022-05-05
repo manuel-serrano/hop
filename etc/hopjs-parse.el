@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  1 07:14:59 2018                          */
-;*    Last change :  Fri Apr 29 08:34:49 2022 (serrano)                */
+;*    Last change :  Thu May  5 21:02:55 2022 (serrano)                */
 ;*    Copyright   :  2018-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs JavaScript/HTML parser                                     */
@@ -559,6 +559,7 @@
        ((var const let) (hopjs-parse-decls otok indent))
        ((return) (hopjs-parse-return otok indent))
        ((for) (hopjs-parse-for otok indent))
+       ((try) (hopjs-parse-try otok indent))
        (t (hopjs-parse-stmt-expr otok indent))))))
 
 ;*---------------------------------------------------------------------*/
@@ -741,6 +742,36 @@
 			-1))))))
        (t
 	-1)))))
+
+;*---------------------------------------------------------------------*/
+;*    hopjs-parse-try ...                                              */
+;*---------------------------------------------------------------------*/
+(defun hopjs-parse-try (otok indent)
+  (with-debug
+   "hopjs-parse-try (%s) otok=%s ntok=%s" (point)
+   otok (hopjs-parse-peek-token)
+   (let ((ttok (hopjs-parse-pop-token)))
+     (if (eq (hopjs-parse-peek-token-type) 'eop)
+	 (hopjs-parse-token-column otok indent)
+       (let ((e (hopjs-parse-stmt ttok 3)))
+	 (orn e
+	      (case (hopjs-parse-peek-token-type)
+		((eop)
+		 (hopjs-parse-token-column ttok 2))
+		((catch)
+		 (hopjs-parse-pop-token)
+		 (orn (hopjs-parse-paren-expr otok indent)
+		      (let ((e (hopjs-parse-stmt ttok 3)))
+			(orn e
+			     (case (hopjs-parse-peek-token-type)
+			       ((eop)
+				(hopjs-parse-token-column ttok 2))
+			       ((finally)
+				(hopjs-parse-stmt ttok 3))
+			       (t
+				-1))))))
+		(t
+		 -1))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-parse-args ...                                             */
