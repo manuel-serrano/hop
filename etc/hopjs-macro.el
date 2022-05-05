@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/etc/hopjs-macro.el                */
+;*    serrano/prgm/project/hop/hop/etc/hopjs-macro.el                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Nov  4 15:33:55 2018                          */
-;*    Last change :  Mon Feb 25 11:40:26 2019 (serrano)                */
-;*    Copyright   :  2018-21 Manuel Serrano                            */
+;*    Last change :  Sun May  1 09:44:32 2022 (serrano)                */
+;*    Copyright   :  2018-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    hopjs internal macros                                            */
 ;*=====================================================================*/
@@ -54,10 +54,23 @@
   `(cl-case ,expr ,@clauses))
 
 ;*---------------------------------------------------------------------*/
+;*    orn ...                                                          */
+;*---------------------------------------------------------------------*/
+(defmacro orn (expr &rest exprs)
+  ;; or-numberp
+  (if (nullp exprs)
+      expr
+    `(let ((_e ,expr))
+       (if (numberp _e)
+	   _e
+	 (orn ,@exprs)))))
+
+;*---------------------------------------------------------------------*/
 ;*    with-debug ...                                                   */
 ;*---------------------------------------------------------------------*/
 (defmacro with-debug (fmt &rest args)
-  (if debug-on-error
+  (message "with-debug %s" (or debug-on-error (getenv "EMACSDEBUG")))
+  (if (or debug-on-error (getenv "EMACSDEBUG"))
       `(progn
 	 (hopjs-debug 1 ,fmt ,@(reverse (cdr (reverse args))))
 	 (let ((__r (progn ,@(last args))))

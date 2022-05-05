@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Thu Apr 21 07:05:38 2022 (serrano)                */
+;*    Last change :  Fri Apr 29 09:13:59 2022 (serrano)                */
 ;*    Copyright   :  2014-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -18,7 +18,7 @@
 
 (require 'hopjs-config)
 (require 'hopjs-parse)
-(require 'hopjs-indent)
+;* (require 'hopjs-indent)                                             */
 
 ;*---------------------------------------------------------------------*/
 ;*    debugging, to be removed                                         */
@@ -43,25 +43,12 @@
   "\C-x\C-e"
   '(lambda ()
      (interactive)
-     (let ((pos (point)))
-       (message "------------- hopjs-parse-line %s -> %s"
-		pos (hopjs-parse-line pos)))))
-
-(define-key (current-local-map)
-  "\C-x\C-e"
-  '(lambda ()
-     (interactive)
-     (let ((pos (point)))
-       (message "------------- hopjs-parse-line %s -> %s"
-		pos (hopjs-parse-line pos)))))
-
-(define-key (current-local-map)
-  "\C-x\C-e"
-  '(lambda ()
-     (interactive)
-     (let ((pos (point)))
-       (message "------------- hopjs-parse-line %s -> %s"
-		pos (hopjs-parse-line pos)))))
+     (let ((b (current-buffer)))
+       (switch-to-buffer-other-window "*Messages*")
+       (toggle-read-only)
+       (erase-buffer)
+       (toggle-read-only)
+       (switch-to-buffer-other-window b))))
 
 (define-key (current-local-map)
   "\C-x\C-t"
@@ -279,6 +266,22 @@
     ((14) (concat "             " mark fmt))
     ((15) (concat "              " mark fmt))
     ((16) (concat "               " mark fmt))
+    ((17) (concat "                " mark fmt))
+    ((18) (concat "                 " mark fmt))
+    ((19) (concat "                  " mark fmt))
+    ((20) (concat "                   " mark fmt))
+    ((21) (concat "                    " mark fmt))
+    ((22) (concat "                     " mark fmt))
+    ((23) (concat "                      " mark fmt))
+    ((24) (concat "                       " mark fmt))
+    ((25) (concat "                        " mark fmt))
+    ((26) (concat "                         " mark fmt))
+    ((27) (concat "                          " mark fmt))
+    ((28) (concat "                           " mark fmt))
+    ((29) (concat "                            " mark fmt))
+    ((30) (concat "                             " mark fmt))
+    ((31) (concat "                              " mark fmt))
+    ((32) (concat "                               " mark fmt))
     (t (concat "         ~" mark fmt))))
    
 (defconst hopjs-debug (or debug-on-error (getenv "EMACSDEBUG")))
@@ -1271,8 +1274,9 @@ usage: (js-return)  -- [RET]"
 	  (mov '())
 	  (ocol 0))
       (beginning-of-line)
-      (let ((icol (hopjs-indent (point))))
-	(when icol
+      (skip-chars-forward "[ \t]+")
+      (let ((icol (hopjs-parse-at (point))))
+	(when (and icol (>= icol 0))
 	  (beginning-of-line)
 	  (when (looking-at "[ \t]+")
 	    (let* ((p (point))
