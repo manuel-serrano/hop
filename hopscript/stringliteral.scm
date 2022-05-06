@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Mon Feb 21 15:11:25 2022 (serrano)                */
+;*    Last change :  Wed May  4 08:31:37 2022 (serrano)                */
 ;*    Copyright   :  2014-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -4395,39 +4395,38 @@
 ;*---------------------------------------------------------------------*/
 (define (js-jsstring-match-regexp this rx %this)
    (with-access::JsGlobalObject %this (js-regexp js-array js-regexp-prototype js-string-pcache)
-      (let* ()
-	 (with-access::JsRegExp rx (flags)
-	    ;; 7
-	    (if (not (js-regexp-flags-global? flags))
-		;; match _always_ invoke the native exec, even if
-		;; RegExp.prototype.exec is modified
-		(js-regexp-prototype-exec-no-global rx this %this)
-		;; 8
-		(let ((lastindex 0)
-		      (previousLastIndex 0)
-		      (a (js-null)))
-		   (let loop ((n 0))
-		      (let ((result (js-regexp-prototype-exec-string-global rx this lastindex %this)))
-			 (set! lastindex
-			    (js-get-jsobject-name/cache rx (& "lastIndex")
-			       #f %this (js-pcache-ref js-string-pcache 17)))
-			 (if (eq? result (js-null))
-			     a
-			     (let ((thisIndex lastindex))
-				(if (=fx thisIndex previousLastIndex)
-				    (begin
-				       (set! lastindex (+fx thisIndex 1))
-				       (js-put-jsobject-name/cache! rx (& "lastIndex") lastindex
-					  #f %this (js-pcache-ref js-string-pcache 17))
-				       (set! previousLastIndex (+fx 1 thisIndex)))
-				    (set! previousLastIndex thisIndex))
-				(when (eq? a (js-null))
-				   (set! a (js-array-construct-alloc/length %this 1)))
-				(with-access::JsArray result (vec)
-				   (let ((matchStr (vector-ref vec 0)))
-				      (js-array-index-set! a (fixnum->uint32 n)
-					 matchStr #f %this)))
-				(loop (+fx 1 n))))))))))))
+      (with-access::JsRegExp rx (flags)
+	 ;; 7
+	 (if (not (js-regexp-flags-global? flags))
+	     ;; match _always_ invoke the native exec, even if
+	     ;; RegExp.prototype.exec is modified
+	     (js-regexp-prototype-exec-no-global rx this %this)
+	     ;; 8
+	     (let ((lastindex 0)
+		   (previousLastIndex 0)
+		   (a (js-null)))
+		(let loop ((n 0))
+		   (let ((result (js-regexp-prototype-exec-string-global rx this lastindex %this)))
+		      (set! lastindex
+			 (js-get-jsobject-name/cache rx (& "lastIndex")
+			    #f %this (js-pcache-ref js-string-pcache 17)))
+		      (if (eq? result (js-null))
+			  a
+			  (let ((thisIndex lastindex))
+			     (if (=fx thisIndex previousLastIndex)
+				 (begin
+				    (set! lastindex (+fx thisIndex 1))
+				    (js-put-jsobject-name/cache! rx (& "lastIndex") lastindex
+				       #f %this (js-pcache-ref js-string-pcache 17))
+				    (set! previousLastIndex (+fx 1 thisIndex)))
+				 (set! previousLastIndex thisIndex))
+			     (when (eq? a (js-null))
+				(set! a (js-array-construct-alloc/length %this 1)))
+			     (with-access::JsArray result (vec)
+				(let ((matchStr (vector-ref vec 0)))
+				   (js-array-index-set! a (fixnum->uint32 n)
+				      matchStr #f %this)))
+			     (loop (+fx 1 n)))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-match-regexp-from-string ...                         */

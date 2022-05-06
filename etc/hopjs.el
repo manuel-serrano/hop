@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Fri Apr 29 09:13:59 2022 (serrano)                */
+;*    Last change :  Fri May  6 07:56:53 2022 (serrano)                */
 ;*    Copyright   :  2014-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -43,6 +43,8 @@
   "\C-x\C-e"
   '(lambda ()
      (interactive)
+     (when (< (frame-width (selected-frame)) 128)
+       (set-frame-width (selected-frame) 128))
      (let ((b (current-buffer)))
        (switch-to-buffer-other-window "*Messages*")
        (toggle-read-only)
@@ -282,6 +284,24 @@
     ((30) (concat "                             " mark fmt))
     ((31) (concat "                              " mark fmt))
     ((32) (concat "                               " mark fmt))
+    ((33) (concat "                                " mark fmt))
+    ((34) (concat "                                 " mark fmt))
+    ((35) (concat "                                  " mark fmt))
+    ((36) (concat "                                   " mark fmt))
+    ((37) (concat "                                    " mark fmt))
+    ((38) (concat "                                     " mark fmt))
+    ((39) (concat "                                      " mark fmt))
+    ((40) (concat "                                       " mark fmt))
+    ((41) (concat "                                        " mark fmt))
+    ((42) (concat "                                         " mark fmt))
+    ((43) (concat "                                          " mark fmt))
+    ((44) (concat "                                           " mark fmt))
+    ((45) (concat "                                            " mark fmt))
+    ((46) (concat "                                             " mark fmt))
+    ((47) (concat "                                              " mark fmt))
+    ((48) (concat "                                               " mark fmt))
+    ((49) (concat "                                                " mark fmt))
+    ((50) (concat "                                                 " mark fmt))
     (t (concat "         ~" mark fmt))))
    
 (defconst hopjs-debug (or debug-on-error (getenv "EMACSDEBUG")))

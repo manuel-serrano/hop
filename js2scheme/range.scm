@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Wed Dec 29 08:15:10 2021 (serrano)                */
-;*    Copyright   :  2016-21 Manuel Serrano                            */
+;*    Last change :  Mon May  2 15:30:00 2022 (serrano)                */
+;*    Copyright   :  2016-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
 ;*=====================================================================*/
@@ -874,9 +874,13 @@
       (with-handler
 	 ;; ignore floating point exceptions
 	 (lambda (e) #f)
-	 (let ((min (/ (interval-min left) (interval-max right)))
-	       (max (/ (interval-max left) (interval-min right))))
-	    (when (and (integer? min) (integer? max))
+	 (when (and (> (interval-min left) 0)
+		    (> (interval-max left) 0)
+		    (> (interval-min right) 0)
+		    (> (interval-max right) 0))
+	    (let ((min (/ (interval-min left) (interval-max right)))
+		  (max (/ (interval-max left) (interval-min right))))
+	       ;; (when (and (integer? min) (integer? max))
 	       (let ((intr (interval
 			      (if (flonum? min)
 				  (flonum->llong (truncate min))
