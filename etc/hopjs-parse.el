@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  1 07:14:59 2018                          */
-;*    Last change :  Sat May  7 06:27:59 2022 (serrano)                */
+;*    Last change :  Sat May  7 21:16:10 2022 (serrano)                */
 ;*    Copyright   :  2018-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs JavaScript/HTML parser                                     */
@@ -516,11 +516,11 @@
        ((ident)
 	(let ((itok (hopjs-parse-pop-token)))
 	  (orn (hopjs-parse-args ftok hopjs-parse-args-indent)
-	       (hopjs-parse-block otok 0))))
+	       (hopjs-parse-block otok indent))))
        ((lparen)
 	(let ((ltok (hopjs-parse-peek-token)))
 	  (orn (hopjs-parse-args ltok 1)
-	       (hopjs-parse-block otok 0))))
+	       (hopjs-parse-block otok indent))))
        (t
 	-1)))))
 
@@ -540,7 +540,7 @@
 	 (while (not res)
 	   (let ((tok (hopjs-parse-peek-token)))
 	     (hopjs-debug
-	      0 "hopjs-parse-block.next otok=%s ntok=%s" otok tok)
+	      0 "hopjs-parse-block.next otok=%s indent=%s ntok=%s" otok indent tok)
 	     (case (hopjs-parse-token-type tok)
 	       ((eop)
 		(setq res (hopjs-parse-token-column otok (+ indent hopjs-parse-block-indent))))
@@ -605,11 +605,12 @@
      (hopjs-debug 0 "hopjs-parse-stmt-expr.next e=%s ntok=%s"
 		  e (hopjs-parse-peek-token))
      (orn e
-	  (let ((tok (hopjs-parse-pop-token)))
+	  (let ((tok (hopjs-parse-peek-token)))
 	    (case (hopjs-parse-token-type tok)
 	      ((eop)
 	       (hopjs-parse-token-column otok indent))
 	      ((semicolon)
+	       (hopjs-parse-pop-token)
 	       otok)
 	      (t
 	       otok)))))))
