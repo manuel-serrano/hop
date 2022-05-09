@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Wed May  4 08:31:37 2022 (serrano)                */
+;*    Last change :  Mon May  9 09:08:18 2022 (serrano)                */
 ;*    Copyright   :  2014-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -26,7 +26,8 @@
 	   __hopscript_private
 	   __hopscript_property
 	   __hopscript_array
-	   __hopscript_regexp)
+	   __hopscript_regexp
+	   __hopscript_generator)
 
    (extern ($js-jsstring-append-ascii::JsStringLiteralASCII (::JsStringLiteralASCII ::JsStringLiteralASCII) "bgl_jsstring_append_ascii"))
    
@@ -146,6 +147,7 @@
 	   (js-jsstring-match-regexp-from-string ::JsStringLiteral ::JsStringLiteral ::JsRegExp ::JsGlobalObject)
 	   (js-jsstring-match-regexp-from-string-as-bool::bool ::JsStringLiteral ::JsStringLiteral ::JsRegExp ::JsGlobalObject)
 	   (js-jsstring-maybe-match ::obj ::obj ::JsGlobalObject ::obj)
+	   (js-jsstring-match-all ::JsStringLiteral ::JsRegExp ::JsGlobalObject)
 	   (js-jsstring-naturalcompare ::JsStringLiteral ::obj ::JsGlobalObject)
 	   (js-jsstring-maybe-naturalcompare ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-jsstring-localecompare ::JsStringLiteral ::obj ::JsGlobalObject)
@@ -4486,6 +4488,31 @@
 		this regexp)))
 	 (else
 	  (loop (js-toobject %this this))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-match-all ...                                        */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-match-all this regexp %this)
+   (letrec ((%gen (js-make-generator 0
+		     (lambda (%v %e %gen %yield %this)
+			(let ((l #u32:0))
+			   (let loop ((%v %v) (%e %e) (%gen %gen) (%yield %yield) (%this %this))
+			      (let ((m (js-regexp-prototype-exec-string-global regexp this
+					  (uint32->fixnum l) %this)))
+				 (if (eq? m (js-null))
+				     (js-generator-yield %gen %yield
+					(js-undefined) #t
+					loop %this)
+				     (with-access::JsArray m (elements vec)
+					(set! l (+u32 (fixnum->uint32 (vector-ref elements 0))
+						   (js-jsstring-length (vector-ref vec 0))))
+					(js-generator-yield %gen %yield
+					   m #f
+					   loop %this)))))))
+		     (with-access::JsGlobalObject %this (js-generator-prototype)
+			js-generator-prototype)
+		     %this)))
+      %gen))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-naturalcompare ...                                   */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Mon Feb 21 15:07:27 2022 (serrano)                */
+;*    Last change :  Mon May  9 08:38:05 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -481,7 +481,7 @@
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
-
+   
    ;; endsWith
    ;; https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/endsWith
    (define (endsWith this::obj searchString position)
@@ -501,7 +501,7 @@
       (let ((searchstr (js-tojsstring search %this)))
 	 (js-jsstring-indexof
 	    (js-cast-string-normalize! %this this) searchstr position %this)))
-
+   
    (js-bind! %this obj (& "indexOf")
       :value (js-make-function %this indexof
 		(js-function-arity 1 1 'optional)
@@ -560,6 +560,26 @@
       :value (js-make-function %this match
 		(js-function-arity match)
 		(js-function-info :name "match" :len 1)
+		:prototype (js-undefined))
+      :enumerable #f
+      :hidden-class #t)
+   
+   ;; matchAll
+   ;; https://tc39.es/ecma262/multipage/text-processing.html#sec-string.prototype.matchall
+   (define (matchAll this::obj regexp)
+      (cond
+	 ((not (isa? regexp JsRegExp))
+	  (js-raise-type-error %this "argument not a regexp ~a" (typeof regexp)))
+	 ((with-access::JsRegExp regexp (flags)
+	     (not (js-regexp-flags-global? flags)))
+	  (js-raise-type-error %this "argument not a \"g\" regexp ~a" regexp))
+	 (else
+	  (js-jsstring-match-all (js-cast-string %this this) regexp %this))))
+   
+   (js-bind! %this obj (& "matchAll")
+      :value (js-make-function %this matchAll
+		(js-function-arity match)
+		(js-function-info :name "matchAll" :len 1)
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)

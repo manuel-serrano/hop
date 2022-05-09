@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  1 07:14:59 2018                          */
-;*    Last change :  Sun May  8 18:14:57 2022 (serrano)                */
+;*    Last change :  Mon May  9 07:52:53 2022 (serrano)                */
 ;*    Copyright   :  2018-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs JavaScript/HTML parser                                     */
@@ -191,7 +191,7 @@
 ;*    hopjs-parse-token ...                                            */
 ;*---------------------------------------------------------------------*/
 (defsubst hopjs-parse-token (type b e)
-  (if hopjs-parse-debug
+  (if (or t hopjs-parse-debug)
       (vector type b e
 	      (unless (memq type '(bof blank))
 		(buffer-substring-no-properties b e)))
@@ -269,11 +269,16 @@
 	    (= (point) eol)))))))
 
 (defsubst hopjs-parse-token-string (tok)
-  (if (eq (hopjs-parse-token-type tok) 'bof)
-      "<BOF>"
-    (buffer-substring-no-properties
-     (hopjs-parse-token-beginning tok)
-     (hopjs-parse-token-end tok))))
+  (if (or t hopjs-parse-debug)
+      (aref tok 3)
+    (if (eq (hopjs-parse-token-type tok) 'bof)
+	"<BOF>"
+      (buffer-substring-no-properties
+       (hopjs-parse-token-beginning tok)
+       (hopjs-parse-token-end tok)))))
+
+(defsubst hopjs-parse-token-string= (tok str)
+  (string= (hopjs-parse-token-string tok) str))
 
 (defun hopjs-parse-token-beginning-tag (tok)
   (1+ (hopjs-parse-token-beginning tok)))
@@ -476,8 +481,6 @@
   (with-debug
    "hopjs-parse-find-start-pos line=%s pos=%s" (line-number-at-pos pos) pos
    (save-excursion
-     (when (and (= (current-column) 0) (> (line-number-at-pos) 1))
-       (previous-line 1))
      (let ((res nil))
        (while (not res)
 	 (if (= (line-number-at-pos) 1)
@@ -932,42 +935,50 @@
       (let ((tok (hopjs-parse-pop-token)))
 	(hopjs-debug 0 "hopjs-parse-var.= tok=%s" (hopjs-parse-peek-token))
 	(case (hopjs-parse-peek-token-type)
-	      ((eop)
-	       (hopjs-parse-token-column otok indent))
-	      ((=)
-	       (let ((etok (hopjs-parse-pop-token)))
-		 (hopjs-debug 0 "hopjs-parse-var.next tok=%s" (hopjs-parse-peek-token))
-		 (if (eq (hopjs-parse-peek-token-type) 'eop)
-		     (hopjs-parse-token-column otok hopjs-parse-assig-indent)
-		   (let ((e (hopjs-parse-assig-expr otok hopjs-parse-assig-indent)))
-		     (orn e
-		       (if (eq (hopjs-parse-peek-token-type) 'eop)
-			   (hopjs-parse-token-column otok hopjs-parse-assig-indent)
-			 tok))))))
-	      ((semicolon comma in of)
-	       otok)
-	      (t
-	       -41))))
+	  ((eop)
+	   (hopjs-parse-token-column otok indent))
+	  ((=)
+	   (let ((etok (hopjs-parse-pop-token)))
+	     (hopjs-debug 0 "hopjs-parse-var.next tok=%s" (hopjs-parse-peek-token))
+	     (if (eq (hopjs-parse-peek-token-type) 'eop)
+		 (hopjs-parse-token-column otok hopjs-parse-assig-indent)
+	       (let ((e (hopjs-parse-assig-expr otok hopjs-parse-assig-indent)))
+		 (orn e
+		      (if (eq (hopjs-parse-peek-token-type) 'eop)
+			  (hopjs-parse-token-column otok hopjs-parse-assig-indent)
+			tok))))))
+	  ((semicolon comma in)
+	   otok)
+	  ((ident)
+	   (if (hopjs-parse-token-string= (hopjs-parse-peek-token) "of")
+	       otok
+	     -42))
+	  (t
+	   -41))))
      ((lbrace lbracket)
       (hopjs-debug 0 "hopjs-parse-destructure.= tok=%s" (hopjs-parse-peek-token))
       (orn (hopjs-parse-primary otok indent)
 	   (case (hopjs-parse-peek-token-type)
-		 ((eop)
-		  (hopjs-parse-token-column otok indent))
-		 ((=)
-		  (let ((etok (hopjs-parse-pop-token)))
-		    (hopjs-debug 0 "hopjs-parse-destructure.next tok=%s" (hopjs-parse-peek-token))
-		    (if (eq (hopjs-parse-peek-token-type) 'eop)
-			(hopjs-parse-token-column otok hopjs-parse-assig-indent)
-		      (let ((e (hopjs-parse-assig-expr otok hopjs-parse-assig-indent)))
-			(orn e
-			     (if (eq (hopjs-parse-peek-token-type) 'eop)
-				 (hopjs-parse-token-column otok hopjs-parse-assig-indent)
-			       tok))))))
-		 ((semicolon comma in of)
-		  otok)
-		 (t
-		  -42))))
+	     ((eop)
+	      (hopjs-parse-token-column otok indent))
+	     ((=)
+	      (let ((etok (hopjs-parse-pop-token)))
+		(hopjs-debug 0 "hopjs-parse-destructure.next tok=%s" (hopjs-parse-peek-token))
+		(if (eq (hopjs-parse-peek-token-type) 'eop)
+		    (hopjs-parse-token-column otok hopjs-parse-assig-indent)
+		  (let ((e (hopjs-parse-assig-expr otok hopjs-parse-assig-indent)))
+		    (orn e
+			 (if (eq (hopjs-parse-peek-token-type) 'eop)
+			     (hopjs-parse-token-column otok hopjs-parse-assig-indent)
+			   tok))))))
+	     ((semicolon comma in of)
+	      otok)
+	     ((ident)
+	      (if (hopjs-parse-token-string= (hopjs-parse-peek-token) "of")
+		  otok
+		-44))
+	     (t
+	      -43))))
      (t
       -40))))
 
@@ -1200,6 +1211,9 @@
 		(setq res (hopjs-parse-token-column atok aindent)))
 	       ((rparen)
 		(setq res (hopjs-parse-pop-token)))
+	       ((comment)
+		(hopjs-parse-pop-token)
+		nil)
 	       (t
 		(let ((e (if (and (hopjs-parse-token-rcollapsingp (hopjs-parse-peek-token))
 				  (hopjs-parse-token-in-linep ltok (hopjs-parse-peek-token)))

@@ -18,3 +18,12 @@ connection on the port `80`. The most relevant files for this are:
 
   * arch/archlinux/rc.d/hop.in
   * arch/debian/init.d
+
+
+### Shebang ###
+
+To run Hop with a shebang (`#!/...` unix directive), use the following:
+
+```shell[:@shell]
+#!/usr/bin/env -S hop --no-server --
+```

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sun Sep 26 16:53:25 2021 (serrano)                */
-;*    Copyright   :  2013-21 Manuel Serrano                            */
+;*    Last change :  Mon May  9 09:48:21 2022 (serrano)                */
+;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript regexps                      */
 ;*=====================================================================*/
@@ -153,6 +153,22 @@
 	    nobj))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-debug-object ...                                              */
+;*---------------------------------------------------------------------*/
+(define-method (js-debug-object obj::JsRegExp #!optional (msg ""))
+   (call-next-method)
+   (with-access::JsRegExp obj (flags)
+      (fprint (current-error-port) "   flags=" flags)
+      (fprint (current-error-port) "     global="
+	 (js-regexp-flags-global? flags))
+      (fprint (current-error-port) "     icase="
+	 (js-regexp-flags-ignorecase? flags))
+      (fprint (current-error-port) "     multi="
+	 (js-regexp-flags-multiline? flags))
+      (fprint (current-error-port) "     uni="
+	 (js-regexp-flags-unicode? flags))))
+   
+;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsRegexp ...                                   */
 ;*    -------------------------------------------------------------    */
 ;*    See runtime/js_comp.scm in the Hop library for the definition    */
@@ -162,16 +178,15 @@
    (js-with-context ctx "hop->javascript"
       (lambda ()
 	 (let ((%this ctx))
-	    (with-access::JsRegExp o (global)
-	       (display "/" op)
-	       (display (js-get o (& "source") %this) op)
-	       (display "/" op)
-	       (when (js-totest (js-get o (& "global") %this))
-		  (display "g" op))
-	       (when (js-totest (js-get o (& "ignoreCase") %this))
-		  (display "i" op))
-	       (when (js-totest (js-get o (& "multiline") %this))
-		  (display "m" op)))))))
+	    (display "/" op)
+	    (display (js-get o (& "source") %this) op)
+	    (display "/" op)
+	    (when (js-totest (js-get o (& "global") %this))
+	       (display "g" op))
+	    (when (js-totest (js-get o (& "ignoreCase") %this))
+	       (display "i" op))
+	    (when (js-totest (js-get o (& "multiline") %this))
+	       (display "m" op))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-init-regexp! ...                                              */
@@ -898,6 +913,9 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    js-regexp-prototype-exec-string-global ...                       */
+;*    -------------------------------------------------------------    */
+;*    !!! WARNING: If the result shape changes, modify                 */
+;*    JS-JSSTRING-MATCH-ALL                                            */
 ;*---------------------------------------------------------------------*/
 (define (js-regexp-prototype-exec-string-global this::JsRegExp
 	   jss::JsStringLiteral lastindex::long
