@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  1 07:14:59 2018                          */
-;*    Last change :  Mon May  9 15:59:30 2022 (serrano)                */
+;*    Last change :  Mon May  9 21:07:34 2022 (serrano)                */
 ;*    Copyright   :  2018-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs JavaScript/HTML parser                                     */
@@ -533,30 +533,33 @@
   (with-debug
    "hopjs-parse-at (%s)" limit
    (save-excursion
-     (goto-char (hopjs-parse-find-start-pos limit))
-     (hopjs-debug 0 "hopjs-parse-at.start=%s" (point))
-     (setq hopjs-parse-tokens (hopjs-parse-tokenify (point) limit))
-     (let ((res nil))
-       (while (not (numberp res))
-	 (let* ((tok (hopjs-parse-peek-token))
-		(indent (hopjs-parse-token-column tok)))
-	   (case (hopjs-parse-token-type tok)
-	     ((function function*)
-	      (setq res (hopjs-parse-function tok indent)))
-	     ((class)
-	      (setq res (hopjs-parse-class tok indent)))
-	     ((async)
-	      (let ((tok (hopjs-parse-pop-token)))
-		(if (memq (hopjs-parse-peek-token-type) '(function function*))
-		    (setq res (hopjs-parse-function tok indent))
-		  -1)))
-	     ((export)
-	      (setq res (hopjs-parse-export tok indent)))
-	     ((import)
-	      (setq res (hopjs-parse-import tok indent)))
-	     (t
-	      (setq res (hopjs-parse-stmt tok indent))))))
-       res))))
+     (if (and (= (current-column) 0) (not (looking-at "[ \t]+")))
+	 nil
+       (progn
+	 (goto-char (hopjs-parse-find-start-pos limit))
+	 (hopjs-debug 0 "hopjs-parse-at.start=%s" (point))
+	 (setq hopjs-parse-tokens (hopjs-parse-tokenify (point) limit))
+	 (let ((res nil))
+	   (while (not (numberp res))
+	     (let* ((tok (hopjs-parse-peek-token))
+		    (indent (hopjs-parse-token-column tok)))
+	       (case (hopjs-parse-token-type tok)
+		 ((function function*)
+		  (setq res (hopjs-parse-function tok indent)))
+		 ((class)
+		  (setq res (hopjs-parse-class tok indent)))
+		 ((async)
+		  (let ((tok (hopjs-parse-pop-token)))
+		    (if (memq (hopjs-parse-peek-token-type) '(function function*))
+			(setq res (hopjs-parse-function tok indent))
+		      -1)))
+		 ((export)
+		  (setq res (hopjs-parse-export tok indent)))
+		 ((import)
+		  (setq res (hopjs-parse-import tok indent)))
+		 (t
+		  (setq res (hopjs-parse-stmt tok indent))))))
+	   res))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-parse-function ...                                         */

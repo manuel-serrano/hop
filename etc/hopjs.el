@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Fri May  6 07:56:53 2022 (serrano)                */
+;*    Last change :  Mon May  9 21:02:23 2022 (serrano)                */
 ;*    Copyright   :  2014-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -1296,7 +1296,8 @@ usage: (js-return)  -- [RET]"
       (beginning-of-line)
       (skip-chars-forward "[ \t]+")
       (let ((icol (hopjs-parse-at (point))))
-	(when (and icol (>= icol 0))
+	(cond
+	 ((and icol (>= icol 0))
 	  (beginning-of-line)
 	  (when (looking-at "[ \t]+")
 	    (let* ((p (point))
@@ -1336,7 +1337,9 @@ usage: (js-return)  -- [RET]"
 	     ((< ccol icol)
 	      (line-move-to-column ccol))
 	     (t
-	      (line-move-to-column ccol)))))))))
+	      (line-move-to-column ccol))))))
+	 ((and icol (< icol 0))
+	  (message "parse-error: %s" icol))))))
    ((hopjs-old-indent-function)
     (funcall hopjs-old-indent-function))))
 
