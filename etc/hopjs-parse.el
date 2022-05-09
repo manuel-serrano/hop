@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  1 07:14:59 2018                          */
-;*    Last change :  Mon May  9 07:52:53 2022 (serrano)                */
+;*    Last change :  Mon May  9 15:59:30 2022 (serrano)                */
 ;*    Copyright   :  2018-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs JavaScript/HTML parser                                     */
@@ -841,10 +841,11 @@
 		((else)
 		 (hopjs-parse-pop-token)
 		 (hopjs-debug 0 "hopjs-parse-if.else otok=%s ntok=%s" otok
-			      (hopjs-parse-peek-token-type))
-		 (if (eq (hopjs-parse-peek-token-type) 'if)
-		     (orn (hopjs-parse-if otok indent) itok)
-		   (orn (hopjs-parse-stmt itok 0) itok)))
+			      (hopjs-parse-peek-token))
+		 (case (hopjs-parse-peek-token-type)
+		   ((if) (orn (hopjs-parse-if otok indent) itok))
+		   ((lbrace) (orn (hopjs-parse-stmt otok indent) itok))
+		   (t (orn (hopjs-parse-stmt itok 0) itok))))
 		(t
 		 itok))))))))
 
