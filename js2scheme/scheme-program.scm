@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Sun Apr 24 15:43:28 2022 (serrano)                */
+;*    Last change :  Tue May 10 13:00:51 2022 (serrano)                */
 ;*    Copyright   :  2018-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -539,7 +539,7 @@
 					   (with-access::J2SRedirect x ((rindex index) export import)
 					      (if (isa? export J2SRedirect)
 						  (loop export (cons rindex rindexes)
-						     `((js-redirect-ref ,expr ,rindex ',loc)))
+						     `(js-redirect-ref ,expr ,rindex ',loc))
 						  (with-access::J2SImport import (ipath iprgm)
 						     (let ((rvarid (importpath-rvar im (reverse (cons rindex rindexes)))))
 							(cons

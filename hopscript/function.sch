@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Dec  7 06:32:41 2019                          */
-;*    Last change :  Thu Apr 14 07:35:39 2022 (serrano)                */
+;*    Last change :  Tue May 10 13:13:42 2022 (serrano)                */
 ;*    Copyright   :  2019-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function macros for js2scheme                                    */
@@ -43,23 +43,50 @@
 	 ((?- :name (and (? string?) ?name)
 	     :len (and (? fixnum?) ?len)
 	     :tostring #f
-	     :path (and (? string?) ?path)
+	     :path ?path
 	     :start (and (? fixnum?) ?start)
 	     :end (and (? fixnum?) ?end))
-	  (e `'#(,name ,len #f ,path ,start ,end 100 #f) e))
+	  (e (cond
+		((string? path)
+		 `'#(,name ,len #f ,path ,start ,end 100 #f))
+		((eq? path '%sourcepath)
+		 `(let ((v '#(,name ,len #f "" ,start ,end 100 #f)))
+		     (vector-set! v 3 %sourcepath)
+		     v))
+		(else
+		 `(vector ,name ,len #f ,path ,start ,end 100 #f)))
+	     e))
 	 ((?- :name (and (? string?) ?name)
 	     :len (and (? integer?) ?len)
-	     :path (and (? string?) ?path)
+	     :path ?path
 	     :start (and (? fixnum?) ?start)
 	     :end (and (? fixnum?) ?end))
-	  (e `'#(,name ,len #f ,path ,start ,end 100 3f) e))
+	  (e (cond
+		((string? path)
+		 `'#(,name ,len #f ,path ,start ,end 100 #f))
+		((eq? path '%sourcepath)
+		 `(let ((v '#(,name ,len #f "" ,start ,end 100 #f)))
+		     (vector-set! v 3 %sourcepath)
+		     v))
+		(else
+		 `(vector ,name ,len #f ,path ,start ,end 100 #f)))
+	     e))
 	 ((?- :name (and (? string?) ?name)
 	     :len (and (? integer?) ?len)
-	     :path (and (? (lambda (p) (or (string? p) (eq? p '%sourcepath)))) ?path)
+	     :path ?path
 	     :start (and (? fixnum?) ?start)
 	     :end (and (? fixnum?) ?end)
 	     :new-target ?new-target)
-	  (e `'#(,name ,len #f ,path ,start ,end 100 ,new-target) e))
+	  (e (cond
+		((string? path)
+		 `'#(,name ,len #f ,path ,start ,end 100 ,new-target))
+		((eq? path '%sourcepath)
+		 `(let ((v '#(,name ,len #f "" ,start ,end 100 ,new-target)))
+		     (vector-set! v 3 %sourcepath)
+		     v))
+		(else
+		 `(vector ,name ,len #f ,path ,start ,end 100 ,new-target)))
+	     e))
 	 ((?- :name (and (? string?) ?name)
 	     :len (and (? integer?) ?len))
 	  (if (epair? x)
