@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Wed May 11 08:54:33 2022 (serrano)                */
+;*    Last change :  Thu May 12 09:21:47 2022 (serrano)                */
 ;*    Copyright   :  2014-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -30,7 +30,6 @@
      (load-library "hopjs.el")
      (load-library "hopjs-macro.el")
      (load-library "hopjs-parse.el")
-     (load-library "hopjs-indent.el")
      (load-library "hopjs-config.el")))
 
 (define-key (current-local-map)
