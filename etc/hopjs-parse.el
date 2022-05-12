@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  1 07:14:59 2018                          */
-;*    Last change :  Thu May 12 11:13:01 2022 (serrano)                */
+;*    Last change :  Thu May 12 19:11:55 2022 (serrano)                */
 ;*    Copyright   :  2018-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs JavaScript/HTML parser                                     */
@@ -1606,6 +1606,8 @@
       (hopjs-parse-array ctx otok indent))
      ((lbrace)
       (hopjs-parse-object ctx otok indent))
+     ((ohtml)
+      (hopjs-parse-xml ctx otok indent))
      (t
       (let ((p (assoc (hopjs-parse-token-string (hopjs-parse-peek-token)) (aref ctx 1))))
 	(if (consp p)
@@ -1784,3 +1786,85 @@
        (t
 	-1020)))))
 
+;*---------------------------------------------------------------------*/
+;*    hopjs-parse-xml ...                                              */
+;*---------------------------------------------------------------------*/
+(defun hopjs-parse-xml (ctx otok indent)
+  (with-debug
+   "hopjs-parse-xml (%s) otok=%s indent=%s ntok=%s"
+   (point) otok indent (hopjs-parse-peek-token)
+   (let ((xtok (hopjs-parse-pop-token)))
+     (case (hopjs-parse-peek-token-type)
+       ((eop)
+	(hopjs-parse-token-column otok indent))
+       ((ident)
+	(hopjs-parse-xml-attrs ctx xtok hopjs-parse-args-indent))
+       ((chtml)
+	xtok)
+       ((binop)
+	(if (string= (hopjs-parse-peek-token-string) ">")
+	    xtok
+	  -2001))
+       (t
+	-2000)))))
+
+;*---------------------------------------------------------------------*/
+;*    hopjs-parse-xml-attrs ...                                        */
+;*---------------------------------------------------------------------*/
+(defun hopjs-parse-xml-attrs (ctx otok indent)
+  (with-debug
+   "hopjs-parse-xml-attrs (%s) otok=%s indent=%s ntok=%s"
+   (point) otok indent (hopjs-parse-peek-token)
+   (let ((res nil))
+     (while (not res)
+       (let ((tok (hopjs-parse-peek-token)))
+	 (hopjs-debug 0 "hopjs-parse-xml.next ntok=%s" tok)
+	 (case (hopjs-parse-token-type tok)
+           ((eop)
+	    (setq res (hopjs-parse-token-column otok indent)))
+	   ((ident cssident class)
+	    (let ((itok (hopjs-parse-xml-attr-ident)))
+	      (case (hopjs-parse-peek-token-type)
+		((eop)
+		 (setq res (hopjs-parse-token-column otok hopjs-parse-args-indent)))
+		((=)
+		 (hopjs-parse-pop-token)
+		 (let ((e (hopjs-parse-primary ctx itok hopjs-parse-args-indent)))
+		   (if (numberp e)
+		       e
+		     (case (hopjs-parse-peek-token-type)
+		       ((eop)
+			e)
+		       ((ident cssident class)
+			nil)
+		       (t
+			(setq res -2002))))))
+		((chtml)
+		 (hopjs-parse-pop-token)
+		 (setq res tok))
+		((binop)
+		 (if (string= (hopjs-parse-peek-token-string) ">")
+		     (progn
+		       (hopjs-parse-pop-token)
+		       (setq res tok))
+		   (setq res -2003)))
+		(t
+		 (setq res -2004)))))
+	   (t
+	    (setq res -2005)))))
+     res)))
+  
+;*---------------------------------------------------------------------*/
+;*    hopjs-parse-xml-attr-ident ...                                   */
+;*---------------------------------------------------------------------*/
+(defun hopjs-parse-xml-attr-ident ()
+  (with-debug
+   "hopjs-parse-xml-attr-ident (%s) otok=%s indent=%s ntok=%s"
+   (point) otok indent (hopjs-parse-peek-token)
+   (let ((res (hopjs-parse-pop-token)))
+     (while (or (memq (hopjs-parse-peek-token-type) '(ident cssident class))
+		(and (eq (hopjs-parse-peek-token-type) 'binop)
+		     (string= (hopjs-parse-peek-token-string) "-")))
+       (hopjs-parse-pop-token))
+     res)))
+  
