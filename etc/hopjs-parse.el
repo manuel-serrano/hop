@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  1 07:14:59 2018                          */
-;*    Last change :  Fri May 13 07:11:18 2022 (serrano)                */
+;*    Last change :  Fri May 13 09:15:48 2022 (serrano)                */
 ;*    Copyright   :  2018-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs JavaScript/HTML parser                                     */
@@ -864,7 +864,7 @@
 	(hopjs-parse-token-column otok indent))
        ((lbrace)
 	(if (eq (hopjs-parse-peek-token-type) 'eop)
-	    (setq res (hopjs-parse-token-column otok indent))
+	    (setq res (hopjs-parse-token-column otok (+ indent hopjs-parse-block-indent)))
 	  (let* ((res nil)
 		 (collapse (and (hopjs-parse-token-lcollapsingp otok)
 				(hopjs-parse-token-in-linep otok btok)))
@@ -1530,7 +1530,9 @@
        (hopjs-parse-expr ctx otok indent))
       ((yield await)
        (hopjs-parse-pop-token)
-       (hopjs-parse-assig-expr ctx tok indent))
+       (if (eq (hopjs-parse-peek-token-type) 'eop)
+	   (hopjs-parse-token-column otok indent)
+	 (hopjs-parse-assig-expr ctx tok indent)))
       (t
        (let ((p (hopjs-parse-primary ctx otok indent)))
 	 (orn p
