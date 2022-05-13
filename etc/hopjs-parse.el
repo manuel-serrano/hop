@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  1 07:14:59 2018                          */
-;*    Last change :  Fri May 13 05:25:50 2022 (serrano)                */
+;*    Last change :  Fri May 13 10:47:16 2022 (serrano)                */
 ;*    Copyright   :  2018-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs JavaScript/HTML parser                                     */
@@ -128,6 +128,8 @@
      (cons "~{" 'tilde)
      ;; dollar escape
      (cons "[$]{" 'dollar)
+     ;; sealed classes
+     (cons "sealed[ \t\n]+class" 'class)
      ;; ident
      (cons (rx: id_start (rx* id_part)) 'ident)
      ;; scheme ident
@@ -179,8 +181,8 @@
      (rx: async "service[ ]+?" ident "*")
      (rx: async "service[ ]+?" ident "*" arg_list "[ ]*{")
      ;; class
-     (rx: "class[ ]+" ident "*" "[ ]*{")
-     (rx: "class[ ]+" ident "*" "extends[ ]+" ident "[ ]*{")
+     (rx: "\\(?:sealed[ \t]*\\)class[ ]+" ident "*" "[ ]*{")
+     (rx: "\\(?:sealed[ \t]*\\)class[ ]+" ident "*" "extends[ ]+" ident "[ ]*{")
      ;; export, import
      "(?:export|import)[ +]"
      ;; hiphop plugins
@@ -615,11 +617,11 @@
        ((ident)
 	(let ((itok (hopjs-parse-pop-token)))
 	  (orn (hopjs-parse-args ctx ftok hopjs-parse-args-indent nil)
-	       (hopjs-parse-block ctx otok indent))))
+	       (hopjs-parse-block ctx otok (max indent hopjs-parse-block-indent)))))
        ((lparen)
 	(let ((ltok (hopjs-parse-peek-token)))
 	  (orn (hopjs-parse-args ctx ltok 1 nil)
-	       (hopjs-parse-block ctx otok indent))))
+	       (hopjs-parse-block ctx otok (max indent hopjs-parse-block-indent)))))
        (t
 	-1)))))
 
