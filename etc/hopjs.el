@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Thu May 12 09:21:47 2022 (serrano)                */
+;*    Last change :  Fri May 13 11:19:06 2022 (serrano)                */
 ;*    Copyright   :  2014-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -110,6 +110,7 @@
 	(make-face-bold face))
       (when underline
 	(set-face-underline face nil))
+      (set-face-attribute face (selected-frame) :height 1.0)
       face)))
 
 (defvar font-lock-face-hopjs0
