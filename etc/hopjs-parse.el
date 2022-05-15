@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  1 07:14:59 2018                          */
-;*    Last change :  Sat May 14 06:31:16 2022 (serrano)                */
+;*    Last change :  Sun May 15 10:42:22 2022 (serrano)                */
 ;*    Copyright   :  2018-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs JavaScript/HTML parser                                     */
@@ -170,7 +170,8 @@
 	 (ident (rx: id_start (rx* id_part)))
 	 (arg (rx: "[^,() \t]+"))
 	 (arg_list (rx: "[(][^)]*[)]"))
-	 (async "(?:async[ ]*)?"))
+	 (async "(?:async[ ]*)?")
+	 (xmltag (rx: "<[[:digit:]]*" "[[:alnum:]_]" (rx* "[[:alnum:]_.:]*"))))
     (rxor
      ;; functions
      (rx: async "function[*]?[ ]+[*]?")
@@ -185,6 +186,15 @@
      (rx: "\\(?:sealed[ \t]*\\)class[ ]+" ident "*" "extends[ ]+" ident "[ ]*{")
      ;; export, import
      "(?:export|import)[ +]"
+     ;; variable declarations or assignments
+     "^\\(?:var\\|let\\|const\\)[ \t]"
+     (rx: "^" ident "[ \t]*=")
+     ;; top level calls
+     (rx: "^" ident "\\([.]" ident "\\)*[ \t]*(")
+     ;; blocks
+     "^{"
+     ;; xml
+     (rx: "^" xmltag)
      ;; hiphop plugins
      (rx: "module[ ]+" ident "*[ ]*" arg_list "[ ]*{")
      (rx: "module[ ]+" ident "*[ ]*" arg_list "(?:[ ]*" "implements[ ]+" ident ")?[ ]*{")
@@ -564,7 +574,9 @@
 	     (let ((end (point)))
 	       (beginning-of-line)
 	       (skip-chars-forward "[ \t]*")
-	       (if (and (= (current-column) 0) (> end (point)))
+	       (if (and (= (current-column) 0)
+			(> end (point))
+			(re-search-forward hopjs-parse-start-stmt-rx end t 1))
 		   (setq res (point))
 		 (let ((beg (point)))
 		   (when (re-search-forward "//[^n]" end t 1)
@@ -1695,19 +1707,40 @@
 	 ((lbrace)
 	  (let ((collapse2 (hopjs-parse-token-in-linep atok (hopjs-parse-peek-token)))
 		(collapse3 (hopjs-parse-token-in-linep tok atok)))
-	    (hopjs-debug 0 "hopjs-parse-arrow.lbrace otok=%s atok=%s ntok=%s collapse2=%s"
-			 otok atok (hopjs-parse-peek-token) collapse2)
-	    (cond
-	     ((and collapse collapse2)
-	      (hopjs-parse-block ctx otok indent))
-	     (collapse
-	      (hopjs-parse-block ctx otok (+ hopjs-parse-block-indent indent)))
-	     (collapse3
-	      (hopjs-parse-block ctx tok 0))
-	     (collapse2
-	      (hopjs-parse-block ctx atok 0))
-	     (t
-	      (hopjs-parse-block ctx atok hopjs-parse-block-indent)))))
+	    (hopjs-debug 0 "hopjs-parse-arrow.lbrace otok=%s atok=%s ntok=%s collapse=%s collapse2=%s"
+			 otok atok (hopjs-parse-peek-token) collapse collapse2)
+	    (let ((tok (hopjs-parse-pop-token)))
+	      (cond
+	       ((and collapse collapse2)
+		(if (eq (hopjs-parse-peek-token-type) 'eop)
+		    (hopjs-parse-block ctx otok hopjs-parse-block-indent)
+		  (progn
+		    (hopjs-parse-push-token tok)
+		    (hopjs-parse-block ctx otok indent))))
+	       (collapse
+		(if (eq (hopjs-parse-peek-token-type) 'eop)
+		    (hopjs-parse-block ctx otok hopjs-parse-block-indent)
+		  (progn
+		    (hopjs-parse-push-token tok)
+		    (hopjs-parse-block ctx otok (+ hopjs-parse-block-indent indent)))))
+	       (collapse3
+		(if (eq (hopjs-parse-peek-token-type) 'eop)
+		    (hopjs-parse-block ctx otok hopjs-parse-block-indent)
+		  (progn
+		    (hopjs-parse-push-token tok)
+		    (hopjs-parse-block ctx tok 0))))
+	       (collapse2
+		(if (eq (hopjs-parse-peek-token-type) 'eop)
+		    (hopjs-parse-block ctx otok hopjs-parse-block-indent)
+		  (progn
+		    (hopjs-parse-push-token tok)
+		    (hopjs-parse-block ctx atok 0))))
+	       (t
+		(if (eq (hopjs-parse-peek-token-type) 'eop)
+		    (hopjs-parse-block ctx otok hopjs-parse-block-indent)
+		  (progn
+		    (hopjs-parse-push-token tok)
+		    (hopjs-parse-block ctx atok hopjs-parse-block-indent))))))))
 	 (t
 	  (hopjs-parse-expr ctx otok (+ indent aindent))))))))
 	
