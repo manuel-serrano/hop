@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Mon May 16 10:32:53 2022 (serrano)                */
+;*    Last change :  Tue May 17 07:55:33 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -1006,13 +1006,16 @@
 ;*    extend-cmap ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (extend-cmap omap::JsConstructMap name flags::long)
-   (with-access::JsConstructMap omap (props methods ctor)
+   (with-access::JsConstructMap omap (props methods ctor mptable mrtable mntable)
       (let ((newprops (vector-extend props (prop name flags)))
 	    (newmethods (vector-extend methods #unspecified)))
 	 (js-make-jsconstructmap
 	    :ctor ctor
 	    :props newprops
-	    :methods newmethods))))
+	    :methods newmethods
+	    :mrtable mrtable
+	    :mntable mntable
+	    :mptable mptable))))
 
 ;*---------------------------------------------------------------------*/
 ;*    extend-cmap! ...                                                 */
