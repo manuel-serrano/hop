@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sat Apr  9 19:11:08 2022 (serrano)                */
+;*    Last change :  Mon May 16 10:40:39 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -58,7 +58,8 @@
 	   (inline js-new-return-fast::JsObject ::JsFunction ::JsObject)
 	   
 	   (js-new-sans-construct ::JsGlobalObject f)
-
+	   (js-new-sans-construct-unsealed ::JsGlobalObject f)
+	   
 	   (inline js-object-alloc ::JsGlobalObject ::JsFunction)
 	   (inline js-object-alloc-fast ::JsGlobalObject ::JsFunction)
 	   (js-object-alloc-lazy ::JsGlobalObject ::JsFunction)
@@ -1579,6 +1580,28 @@
 	  (let ((o (alloc %this ctor)))
 	     (js-new-target-pop! %this)
 	     (js-new-return ctor o o))))
+      ((js-proxy? ctor)
+       (js-new/proxy %this ctor '()))
+      (else
+       (js-raise-type-error %this "new: object is not a function ~s" ctor))))
+
+;*---------------------------------------------------------------------*/
+;*    js-new-sans-construct-unsealed ...                               */
+;*---------------------------------------------------------------------*/
+(define (js-new-sans-construct-unsealed %this ctor)
+   ;; used to initialize non sealed classes prototype
+   (cond
+      ((js-function? ctor)
+       (with-access::JsFunction ctor (name alloc)
+	  (let ((o (alloc %this ctor)))
+	     (js-new-target-pop! %this)
+	     (if (isa? o JsRecord)
+		(with-access::JsRecord o (cmap)
+		   (let ((no (instantiateJsObject
+				(cmap cmap)
+				(__proto__ o))))
+		      (js-new-return ctor no no)))
+		(js-new-return ctor o o)))))
       ((js-proxy? ctor)
        (js-new/proxy %this ctor '()))
       (else

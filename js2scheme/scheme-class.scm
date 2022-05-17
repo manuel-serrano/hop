@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:01:46 2017                          */
-;*    Last change :  Wed Feb  2 14:03:22 2022 (serrano)                */
+;*    Last change :  Mon May 16 10:41:50 2022 (serrano)                */
 ;*    Copyright   :  2017-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES2015 Scheme class generation                                   */
@@ -270,7 +270,7 @@
 		    (js-object-proto-set! o (js-null))
 		    o)))
 	    (else
-	     `(js-new-sans-construct %this ,%super)))))
+	     `(js-new-sans-construct-unsealed %this ,%super)))))
    
    (define (class->lambda clazz::J2SClass arity loc)
       (let ((args (map! (lambda (i)

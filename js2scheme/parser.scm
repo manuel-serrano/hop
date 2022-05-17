@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Tue Apr 26 14:14:02 2022 (serrano)                */
+;*    Last change :  Mon May 16 10:14:01 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -2579,7 +2579,7 @@
 				       (loc (token-loc field))
 				       (val field-str))))))
 		   (else
-		    (parse-token-error "Wrong property name" field)))))
+		    (parse-token-error "Wrong property name (access)" field)))))
 	    ((LPAREN)
 	     (if call-allowed?
 		 (let* ((loc (token-loc (peek-token)))
@@ -3324,7 +3324,7 @@
 		   (else
 		    (if (j2s-reserved-id? (peek-token-type))
 			(property-accessor (consume-any!) tokname name props)
-			(parse-token-error "Wrong property name" (peek-token))))))
+			(parse-token-error "Wrong property name (init)" (peek-token))))))
 	       ((and (pair? tokname) (eq? (token-tag tokname) 'DOTS))
 		(instantiate::J2SDataPropertyInit
 		   (loc (token-loc tokname))

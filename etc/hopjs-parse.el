@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  1 07:14:59 2018                          */
-;*    Last change :  Mon May 16 09:01:56 2022 (serrano)                */
+;*    Last change :  Mon May 16 09:41:07 2022 (serrano)                */
 ;*    Copyright   :  2018-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs JavaScript/HTML parser                                     */
@@ -90,7 +90,7 @@
      ;; indent line comments
      (cons "///[^\n]*" 'indent-comment)
      ;; line comments
-     (cons "//[^/\n]*" 'comment)
+     (cons (rxor "//\n" "//[^/][^\n]*") 'comment)
      ;; comments
      (cons "/[*]\\(?:[^*]\\|[*][^/]\\)*[*]+/" 'comment)
      ;; numbers
@@ -181,8 +181,9 @@
      (rx: "^service[ ]+?" ident "*")
      (rx: "^service[ ]+?" ident "*" arg_list "[ ]*{")
      ;; class
-     (rx: "^\\(?:sealed[ \t]*\\)class[ ]+" ident "*" "[ ]*{")
-     (rx: "^\\(?:sealed[ \t]*\\)class[ ]+" ident "*" "extends[ ]+" ident "[ ]*{")
+     (rx: "^class[ ]+" ident "*" "[ ]*{")
+     (rx: "^class[ ]+" ident "*" "[ ]*extends[ ]+" ident "[ ]*{")
+     (rx: "^sealed[ \t]**class[ ]+" ident "[ ]*")
      ;; export, import
      "^\\(?:export|import\\)[ +]"
      ;; variable declarations or assignments
@@ -1586,7 +1587,7 @@
 	    (case (hopjs-parse-peek-token-type)
 	      ((eop)
 	       (hopjs-parse-token-column otok indent))
-	      ((ident type catch)
+	      ((ident type catch declare interface)
 	       (hopjs-parse-pop-token)
 	       (funcall axs))
 	      (t
@@ -1625,7 +1626,7 @@
       (hopjs-parse-token-column (hopjs-parse-pop-token) 0))
      ((number string boolean regexp catch)
       (hopjs-parse-pop-token))
-     ((ident type)
+     ((ident type declare interface)
       (let ((p (assoc (hopjs-parse-token-string (hopjs-parse-peek-token)) (aref ctx 1))))
 	(if (consp p)
 	    (funcall (cdr p) ctx otok indent)

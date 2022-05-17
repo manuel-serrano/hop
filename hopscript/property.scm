@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Thu Apr 14 18:02:46 2022 (serrano)                */
+;*    Last change :  Mon May 16 10:32:53 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -3374,6 +3374,12 @@
 	    (js-invalidate-pmap-pcaches! %this "extend-property" name)
 	    (js-define-own-property o name newdesc throw %this)
 	    v)))
+
+   (define (sealed-typeof o)
+      (let ((n (typeof o)))
+	 (if (string-prefix? "&JsRec" n)
+	     (substring n 6)
+	     n)))
    
    (define (extend-object! _o)
       (with-trace 'prop "extend-object!"
@@ -3382,7 +3388,7 @@
 	    (cond
 	       ((not (js-object-mode-extensible? o))
 		;; 8.12.9. step 3
-		(reject (format "sealed object (~s)" (typeof o))))
+		(reject (format "sealed object (~s)" (sealed-typeof o))))
 	       ((not extend)
 		;; 11.13.1
 		(js-raise-reference-error/loc %this loc

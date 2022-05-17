@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Sat Mar  5 12:14:46 2022 (serrano)                */
+;*    Last change :  Mon May 16 10:23:24 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -960,8 +960,8 @@
 	    (with-access::J2SExpr super (loc)
 	       (raise
 		  (instantiate::&io-parse-error
-		     (proc "record")
-		     (msg "Super is not a record")
+		     (proc "sealed class")
+		     (msg "Super is not a sealed class")
 		     (obj name)
 		     (fname (cadr loc))
 		     (location (caddr loc))))))
