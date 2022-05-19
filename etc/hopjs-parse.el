@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  1 07:14:59 2018                          */
-;*    Last change :  Mon May 16 09:41:07 2022 (serrano)                */
+;*    Last change :  Wed May 18 07:37:55 2022 (serrano)                */
 ;*    Copyright   :  2018-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs JavaScript/HTML parser                                     */
@@ -46,6 +46,19 @@
 ;*    nullp                                                            */
 ;*---------------------------------------------------------------------*/
 (defsubst nullp (o) (not (consp o)))
+
+;*---------------------------------------------------------------------*/
+;*    hopjs-parse-initial-context ...                                  */
+;*    -------------------------------------------------------------    */
+;*    This is the context of the parsing that dynamically changes      */
+;*    when entering a plugin parser, e.g., the hiphop parser.          */
+;*    The context is an alist of string and parser.                    */
+;*---------------------------------------------------------------------*/
+(defvar hopjs-parse-initial-context
+  (vector
+   '()	 ;; statements
+   '()   ;; expressions
+   nil)) ;; expression start
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-parse-tokens ...                                           */
@@ -105,7 +118,7 @@
      ;; unop
      (cons (rxor (rxq "!") (rxq "~") (rxq "++") (rxq "--")) 'unop)
      ;; binop
-     (cons (rxor "<" "<=" ">" ">=" (rxq "+") (rxq "-") (rxq "*") "%" "==+" "!==+" "|" "/"
+     (cons (rxor "<" "<=" ">" ">=" (rxq "+") (rxq "-") (rxq "[*]") "%" "==+" "!==+" "|" "/"
 		 "<<" ">>" ">>>" "[&^]") 'binop)
      (cons (rxor "&&" "||" "??") 'binop)
      (cons "instanceof" 'binop)
@@ -185,7 +198,7 @@
      (rx: "^class[ ]+" ident "*" "[ ]*extends[ ]+" ident "[ ]*{")
      (rx: "^sealed[ \t]**class[ ]+" ident "[ ]*")
      ;; export, import
-     "^\\(?:export|import\\)[ +]"
+     "^\\(?:export\\|import\\)[ +]"
      ;; variable declarations or assignments
      "^\\(?:var\\|let\\|const\\)[ \t]"
      (rx: "^" ident "[ \t]*=")
@@ -351,7 +364,7 @@
      (let ((sym (intern (hopjs-parse-token-string tok))))
        (case sym
 	 ((service return try catch finally while break if var let const else
-		   new case switch for do default from as throw export
+		   new case switch for do default from as throw export import
 		   await async class type extends interface declare)
 	  (aset tok 0 sym))
 	 ((function)
@@ -421,7 +434,9 @@
       (goto-char pos)
       (beginning-of-line)
       (while (<= (point) limit)
+	(message "tok..p=%s limit=%s" (point) limit)
 	(let ((tok (looking-at-token)))
+	  (message "glop t=%s m=%s" tok (looking-at "[^ \t\n;<>{}()[\]]+"))
 	  (cond
 	   (tok
 	    (if (eq (hopjs-parse-token-type tok) 'ohtml)
@@ -552,6 +567,14 @@
      res)))
 
 ;*---------------------------------------------------------------------*/
+;*    hopjs-parse-start-stmtp ...                                      */
+;*---------------------------------------------------------------------*/
+(defun hopjs-parse-start-stmtp (end)
+  (or (re-search-forward hopjs-parse-start-stmt-rx end t 1)
+      (and (aref hopjs-parse-initial-context 2)
+	   (re-search-forward (aref hopjs-parse-initial-context 2) end t 1))))
+
+;*---------------------------------------------------------------------*/
 ;*    hopjs-parse-find-start-pos ...                                   */
 ;*    -------------------------------------------------------------    */
 ;*    Find the pos from which the indentation will be computed.        */
@@ -573,20 +596,13 @@
 	     (end-of-line)
 	     (let ((end (point)))
 	       (beginning-of-line)
-	       '(hopjs-debug 0 "hopjs-parse-find-start-pos line=[%s] match=%s"
-			    (buffer-substring-no-properties
-			     (point) (+ (point) (min 20 (- end (point)))))
-			    (save-excursion
-			      (re-search-forward hopjs-parse-start-stmt-rx
-						 end t 1)))
-	       (if (and (> end (point))
-			(re-search-forward hopjs-parse-start-stmt-rx end t 1))
+	       (if (and (> end (point)) (hopjs-parse-start-stmtp end))
 		   (setq res (point))
 		 (let ((beg (point)))
 		   (when (re-search-forward "//[^n]" end t 1)
 		     (setq end (match-beginning 0))
 		     (goto-char beg))
-		   (when (re-search-forward hopjs-parse-start-stmt-rx end t 1)
+		   (when (hopjs-parse-start-stmtp end)
 		     (let ((candidate (match-beginning 0)))
 		       (hopjs-debug 0 "hopjs-parse-start-stmt-rx goto %s"
 				  (1- (match-end 0)))  
@@ -608,18 +624,6 @@
     (when (numberp indent)
       (beginning-of-line)
       (indent-to indent))))
-
-;*---------------------------------------------------------------------*/
-;*    hopjs-parse-initial-context ...                                  */
-;*    -------------------------------------------------------------    */
-;*    This is the context of the parsing that dynamically changes      */
-;*    when entering a plugin parser, e.g., the hiphop parser.          */
-;*    The context is an alist of string and parser.                    */
-;*---------------------------------------------------------------------*/
-(defvar hopjs-parse-initial-context
-  (vector
-   '()	 ;; statements
-   '())) ;; expressions
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-parse-at ...                                               */
@@ -819,6 +823,37 @@
 	 res))
       (t
        -100)))))
+
+;*---------------------------------------------------------------------*/
+;*    hopjs-parse-import ...                                           */
+;*---------------------------------------------------------------------*/
+(defun hopjs-parse-import (ctx otok indent)
+  (with-debug
+   "hopjs-parse-import (%s) otok=%s indent=%s ntok=%s"
+   (point) otok indent (hopjs-parse-peek-token)
+   (let ((etok (hopjs-parse-pop-token)))
+     (case (hopjs-parse-peek-token-type)
+       ((eop)
+	(hopjs-parse-token-column etok indent))
+       ((binop)
+	(if (string= (hopjs-parse-token-string (hopjs-parse-peek-token)) "*")
+	    (or (hopjs-parse-sequence
+		 ctx otok (+ indent hopjs-parse-args-indent)
+		 '(binop as ident from string semicolon))
+		-201)))
+       ((lbrace)
+	(orn (hopjs-parse-export-vars ctx etok hopjs-parse-args-indent)
+	     (case (hopjs-parse-peek-token-type)
+	       ((eop)
+		(hopjs-parse-token-column otok (+ indent hopjs-parse-args-indent)))
+	       ((semicolon)
+		(hopjs-parse-pop-token)
+		etok))))
+       ((ident function async class sealed)
+	(hopjs-parse-pop-token)
+	(hopjs-parse-stmt cts etok hopjs-parse-args-indent))
+       (t
+	-200)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-parse-stmt ...                                             */
@@ -2181,3 +2216,24 @@
 	      (t
 	       -9005)))))))
   
+;*---------------------------------------------------------------------*/
+;*    hopjs-parse-sequence ...                                         */
+;*---------------------------------------------------------------------*/
+(defun hopjs-parse-sequence (ctx otok indent seq)
+  (with-debug
+   "hopjs-parse-sequence (%s) otok=%s indent=%s ntok=%s"
+   (point) otok indent (hopjs-parse-peek-token)
+   (let ((res nil))
+     (while (consp seq)
+       (hopjs-debug 0 "hopjs-parse-sequence ntok=%s seq=%s"
+		    (hopjs-parse-peek-token) seq)
+       (cond
+	((eq (hopjs-parse-peek-token-type) 'eop)
+	 (hopjs-parse-token-column otok indent))
+	((eq (hopjs-parse-peek-token-type) (car seq))
+	 (setq seq (cdr seq))
+	 (setq res (hopjs-parse-pop-token)))
+	(t
+	 (setq seq nil))))
+     res)))
+	
