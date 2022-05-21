@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 29 21:14:17 2015                          */
-;*    Last change :  Tue Oct 26 15:28:01 2021 (serrano)                */
-;*    Copyright   :  2015-21 Manuel Serrano                            */
+;*    Last change :  Sat May 21 09:41:14 2022 (serrano)                */
+;*    Copyright   :  2015-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript generators                   */
 ;*    -------------------------------------------------------------    */
@@ -135,17 +135,15 @@
 
       (define (js-next this val)
 	 (if (isa? this JsGenerator)
-	     (with-access::JsGenerator this (%next)
-		(let ((y (js-make-yield #f #f %this)))
-		   (js-generator-next val #f this y %this)))
+	     (let ((y (js-make-yield #f #f %this)))
+		(js-generator-next val #f this y %this))
 	     (js-raise-type-error %this "argument not a generator ~a"
 		(typeof this))))
 
       (define (js-throw this val)
 	 (if (isa? this JsGenerator)
-	     (with-access::JsGenerator this (%next)
-		(let ((y (js-make-yield #f #f %this)))
-		   (js-generator-next val #t this y %this)))
+	     (let ((y (js-make-yield #f #f %this)))
+		(js-generator-next val #t this y %this))
 	     (js-raise-type-error %this "argument not a generator ~a"
 		(typeof this))))
       
@@ -443,11 +441,10 @@
 (define-inline (js-generator-next val exn this::JsGenerator yield %this)
    (with-access::JsGenerator this (%next)
       (let loop ((v (%next val exn this yield %this)))
-	 (if (eq? v #t)
+	 (if (eq? v 'bounce)
 	     ;; bouncing
-	     (loop ((js-generator-ref this 1)
-		    (js-generator-ref this 0)
-		    #f this yield %this))
+	     (with-access::JsGenerator this (%bounce)
+		(loop ((cdr %bounce) (car %bounce) #f this yield %this)))
 	     v))))
 
 ;*---------------------------------------------------------------------*/
@@ -465,33 +462,38 @@
 
    (define (yield*-loop-sans-bounce v e gen yield %this)
       ;; currently not used, see js-generator-next
-      (let ((val (js-generator-ref gen 0)))
-	 (let* ((n (js-generator-next (js-undefined) #f val yield %this))
-		(done (js-object-inline-ref n 1))
-		(value (js-object-inline-ref n 0)))
-	    (if done
-		(let ((kont (js-generator-ref gen 1))
-		      (value (js-object-inline-ref n 0)))
-		   (kont value #f gen yield %this))
-		n))))
+      (with-access::JsGenerator gen (%bounce)
+	 (let ((val (car %bounce)))
+	    (let* ((n (js-generator-next (js-undefined) #f val yield %this))
+		   (done (js-object-inline-ref n 1))
+		   (value (js-object-inline-ref n 0)))
+	       (if done
+		   (let ((kont (cdr %bounce))
+			 (value (js-object-inline-ref n 0)))
+		      (kont value #f gen yield %this))
+		   n)))))
 
    (define (yield*-loop v e gen yield %this)
-      (let ((val (js-generator-ref gen 0)))
-	 (let* ((n (js-generator-next (js-undefined) #f val yield %this))
-		(done (js-object-inline-ref n 1))
-		(value (js-object-inline-ref n 0)))
-	    (if done
-		(let ((value (js-object-inline-ref n 0)))
-		   (js-generator-set! gen 0 value)
-		   ;; bouncing to avoid stack growth
-		   #t)
-		n))))
+      (with-access::JsGenerator gen (%bounce)
+	 (let ((val (car %bounce)))
+	    (let* ((n (js-generator-next (js-undefined) #f val yield %this))
+		   (done (js-object-inline-ref n 1))
+		   (value (js-object-inline-ref n 0)))
+	       (if done
+		   (let ((value (js-object-inline-ref n 0)))
+		      (set-car! %bounce value)
+		      ;; bouncing to avoid stack growth
+		      'bounce)
+		   n)))))
    
    (define (yield*-generator val %this)
-      (with-access::JsGenerator gen (%next)
+      (with-access::JsGenerator gen (%next %env %bounce)
 	 (set! %next yield*-loop)
-	 (js-generator-set! gen 0 val)
-	 (js-generator-set! gen 1 kont))
+	 (if (pair? %bounce)
+	     (begin
+		(set-car! %bounce val)
+		(set-cdr! %bounce kont))
+	     (set! %bounce (cons val kont))))
       (yield*-loop (js-undefined) #f gen yield %this))
 
    (define (yield*-procedure next val %this js-generator-pcache)

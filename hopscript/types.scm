@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Tue May 17 07:56:30 2022 (serrano)                */
+;*    Last change :  Sat May 21 15:44:53 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -376,6 +376,7 @@
 	   
 	   (final-class JsGenerator::JsObject
 	      %next
+	      (%bounce (default #unspecified))
 	      (%env::vector read-only))
 
 	   (abstract-class JsYield::JsObject
