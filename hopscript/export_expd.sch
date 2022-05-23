@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Mar 19 13:17:15 2022                          */
-;*    Last change :  Sat Mar 19 17:43:40 2022 (serrano)                */
+;*    Last change :  Mon May 23 08:33:44 2022 (serrano)                */
 ;*    Copyright   :  2022 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript JS-EXPORT expander                                     */
@@ -27,16 +27,20 @@
 				       `(js-evar-info (& ,(symbol->string v))
 					   '(,i) '() #f))
 				  vars nums)
-			     `(js-evar-info (& "default")
-				 `(,len) '() #f)))
+			     (js-evar-info (& "default")
+				'(,len) '() #f)))
 		       (set! evars (make-vector ,(+fx len 1) (js-undefined)))
 		       evars))
 		 ,@body
-		 ,@(map (lambda (v i)
-			   `(vector-set! %evars ,i ,v))
-		      vars nums)
-		 (vector-set! %evars ,len
-		    (js-get %module (& "exports" 1) %this)))
+		 (let ((exports (js-get %module (& "exports") %this)))
+		    ,@(map (lambda (v i)
+			      `(begin
+				  (vector-set! %evars ,i ,v)
+				  (js-bind! %this exports
+				     (& ,(symbol->string v))
+				     :value ,v :writable #f :enumerable #f)))
+			 vars nums)
+		    (vector-set! %evars ,len exports)))
 	     e)))
       (else
        (error "js-export" "Bad form" x))))

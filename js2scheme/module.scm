@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 15 15:16:16 2018                          */
-;*    Last change :  Sun Apr 10 08:50:33 2022 (serrano)                */
+;*    Last change :  Mon May 23 09:42:16 2022 (serrano)                */
 ;*    Copyright   :  2018-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES6 Module handling                                              */
@@ -378,9 +378,35 @@
 ;*    nodejs/require.scm).                                             */
 ;*---------------------------------------------------------------------*/
 (define (resolve-module-file name::bstring dir::bstring loc args)
+
+   (define (resolve-autoload-hz hz)
+      (cond
+	 ((hz-local-weblet-path hz (get-autoload-directories))
+	  => resolve-directory)
+	 ((hz-cache-path hz)
+	  => resolve-directory)
+	 (else
+	  (let ((dir (hz-download-to-cache hz (hop-hz-repositories))))
+	     (if (directory? dir)
+		 (resolve-directory dir)
+		 #f)))))
+   
+   (define (resolve-hz hz)
+      (let ((dir (hz-download-to-cache hz (hop-hz-repositories))))
+	 (if (directory? dir)
+	     (resolve-directory dir)
+	     #f)))
    
    (define (resolve-file x)
       (cond
+	 ((string-suffix? ".hz" x)
+	  (cond
+	     ((not (file-exists? x))
+	      (resolve-autoload-hz x))
+	     ((not (directory? x))
+	      (resolve-hz x))
+	     (else
+	      #f)))
 	 ((and (file-exists? x) (not (directory? x)))
 	  (cons (file-name-canonicalize x) 'file))
 	 (else

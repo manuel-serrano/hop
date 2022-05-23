@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  1 07:14:59 2018                          */
-;*    Last change :  Thu May 19 07:53:39 2022 (serrano)                */
+;*    Last change :  Sun May 22 06:41:36 2022 (serrano)                */
 ;*    Copyright   :  2018-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs JavaScript/HTML parser                                     */
@@ -40,7 +40,7 @@
 (defconst hopjs-parse-decl-indent 3)
 (defconst hopjs-parse-property-indent 3)
 (defconst hopjs-parse-call-indent 3)
-(defconst hopjs-parse-xml-indent 3)
+(defconst hopjs-parse-xml-indent 2)
 
 ;*---------------------------------------------------------------------*/
 ;*    nullp                                                            */
@@ -118,12 +118,12 @@
      ;; unop
      (cons (rxor (rxq "!") (rxq "~") (rxq "++") (rxq "--")) 'unop)
      ;; binop
-     (cons (rxor "<" "<=" ">" ">=" "[+]" (rxq "-") "[*]" "%" "==+" "!==+" "|" "/"
+     (cons (rxor "<" "<=" ">" ">=" (rxq "+") (rxq "-") (rxq "*") (rxq "%") "==+" "!==+" "|" "/"
 		 "<<" ">>" ">>>" "[&^]") 'binop)
-     (cons (rxor "&&" "||" "??") 'binop)
+     (cons (rxor "&&" "||" (rxq "??")) 'binop)
      (cons "instanceof" 'binop)
-     (cons "[?][?]" 'binop)
-     (cons "[*][*]" 'binop)
+     (cons (rxq "??") 'binop)
+     (cons (rxq "**") 'binop)
      (cons "in" 'in)
      (cons (rxor "=" "[+*%^&|-]=" "<<=" ">>=" ">>>=") '=)
      ;; prefix
@@ -434,9 +434,8 @@
       (goto-char pos)
       (beginning-of-line)
       (while (<= (point) limit)
-	(message "tok..p=%s limit=%s" (point) limit)
 	(let ((tok (looking-at-token)))
-	  (message "glop t=%s m=%s" tok (looking-at "[^ \t\n;<>{}()[\]]+"))
+	  (message "tok..p=%s limit=%s -> tok=%s" (point) limit tok)
 	  (cond
 	   (tok
 	    (if (eq (hopjs-parse-token-type tok) 'ohtml)
@@ -526,7 +525,7 @@
 	 (last '())
 	 (res 'loop)
 	 (limit (point)))
-     (hopjs-debug 0 "hopjs-parse-at.start=%s" limit)
+     (hopjs-debug 0 "hopjs-parse-find-opening-tok limit=%s" limit)
      (goto-char (hopjs-parse-find-start-pos limit))
      (setq hopjs-parse-tokens (reverse (cdr (hopjs-parse-tokenify (point) limit))))
      (while (eq res 'loop)
@@ -571,7 +570,7 @@
 ;*---------------------------------------------------------------------*/
 (defun hopjs-parse-start-stmtp (end)
   (or (re-search-forward hopjs-parse-start-stmt-rx end t 1)
-      (and (aref hopjs-parse-initial-context 2)
+      (and (= (length hopjs-parse-initial-context) 2)
 	   (re-search-forward (aref hopjs-parse-initial-context 2) end t 1))))
 
 ;*---------------------------------------------------------------------*/
@@ -1853,7 +1852,7 @@
 		   (if (eq (hopjs-parse-peek-token-type) 'eop)
 		       (setq res (hopjs-parse-token-column otok (- indent nshift)))
 		     (setq res tok))))
-		((ident type as)
+		((ident type as string)
 		 (let ((tok (hopjs-parse-pop-token)))
 		   (hopjs-debug 0 "hopjs-parse-object.lbrace.ident tok=%s ntok=%s"
 				tok (hopjs-parse-peek-token))

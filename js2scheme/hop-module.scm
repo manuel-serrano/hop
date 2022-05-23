@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar  8 11:35:48 2019                          */
-;*    Last change :  Tue Mar 29 14:06:05 2022 (serrano)                */
+;*    Last change :  Mon May 23 08:03:19 2022 (serrano)                */
 ;*    Copyright   :  2019-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop (Scheme) module parser used when a JS module imports         */
@@ -79,7 +79,8 @@
 		 (display "  " (current-error-port))
 		 (display margin (current-error-port))
 		 (display path (current-error-port))))
-	   (let ((exports (map js-export exports (iota (length exports)))))
+	   (let* ((fullexp (append exports '(default)))
+		  (exports (map js-export fullexp (iota (length fullexp)))))
 	      (instantiate::J2SProgram
 		 (loc `(at ,path 0))
 		 (endloc `(at ,path 0))
@@ -92,16 +93,16 @@
 	   (raise
 	      (instantiate::&io-parse-error
 		 (proc "hop")
-		 (msg "Export missing")
+		 (msg "Cannot find export \"(js-export (id ...) ...)\"")
 		 (obj exp)
 		 (fname (cadr (cer exp)))
 		 (location (caddr (cer exp))))))))
-      ((define (hopscript . ?-) . ?body)
+      ((define (and ?sig (hopscript . ?-)) . ?body)
        (raise
 	  (instantiate::&io-parse-error
 	     (proc "hop")
-	     (msg "Wrong hopscript signature")
-	     (obj exp)
+	     (msg "Wrong hopscript signature, expecting \"(hopscript %this this %scope %module)\"")
+	     (obj sig)
 	     (fname (cadr (cer exp)))
 	     (location (caddr (cer exp))))))
       (else

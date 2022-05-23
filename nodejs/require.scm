@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Tue Apr 26 13:58:12 2022 (serrano)                */
+;*    Last change :  Mon May 23 09:44:33 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -829,7 +829,7 @@
    (define debug #f)
    
    (define (bind-export! modobj mod id export margin)
-      (with-access::JsModule mod (evars default imports redirects)
+      (with-access::JsModule mod (evars imports redirects)
 	 (let* ((idx (js-evar-info-index export))
 		(redirect (js-evar-info-redirect export))
 		(writable (js-evar-info-writable export)))
@@ -882,7 +882,7 @@
 		   :configurable #f :writable #f))))))
 
    (define (bind-exports! modobj mod margin)
-      (with-access::JsModule mod (evars exports default imports redirects)
+      (with-access::JsModule mod (evars exports imports redirects)
 	 (vector-for-each
 	    (lambda (export)
 	       (let ((id (js-evar-info-id export)))
@@ -891,7 +891,7 @@
    
    (define (module-namespace mod::JsModule)
       (with-access::JsGlobalObject %this (js-symbol-tostringtag)
-	 (with-access::JsModule mod (evars exports default imports redirects)
+	 (with-access::JsModule mod (evars exports imports redirects)
 	    (let ((modobj (instantiateJsObject
 			     (__proto__ (js-object-proto %this)))))
 	       (bind-exports! modobj mod "")

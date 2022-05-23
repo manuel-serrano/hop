@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Mon May 16 10:23:24 2022 (serrano)                */
+;*    Last change :  Mon May 23 08:23:00 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -881,6 +881,7 @@
 	    (check-strict-mode-eval id "Declaration name" loc))
 	 (when (and (j2s-let? this)
 		    (or (not (eq? mode 'hopscript))
+			(not odecl)
 			(not (j2s-global? odecl))))
 	    (unless (eq? ndecl this)
 	       (raise
