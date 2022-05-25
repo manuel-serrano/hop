@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/runtime/hz.scm                    */
+;*    serrano/prgm/project/hop/hop/runtime/hz.scm                      */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 05:30:17 2007                          */
-;*    Last change :  Mon May 30 18:18:44 2016 (serrano)                */
-;*    Copyright   :  2007-20 Manuel Serrano                            */
+;*    Last change :  Tue May 24 07:24:51 2022 (serrano)                */
+;*    Copyright   :  2007-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with HZ packages.                          */
 ;*=====================================================================*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  1 07:14:59 2018                          */
-;*    Last change :  Sun May 22 06:41:36 2022 (serrano)                */
+;*    Last change :  Tue May 24 08:58:47 2022 (serrano)                */
 ;*    Copyright   :  2018-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs JavaScript/HTML parser                                     */
@@ -429,38 +429,41 @@
 ;*    Returns the list of tokens between pos and limit                 */
 ;*---------------------------------------------------------------------*/
 (defun hopjs-parse-tokenify (pos limit &optional rev)
-  (save-excursion
-    (let ((tokens '()))
-      (goto-char pos)
-      (beginning-of-line)
-      (while (<= (point) limit)
-	(let ((tok (looking-at-token)))
-	  (message "tok..p=%s limit=%s -> tok=%s" (point) limit tok)
-	  (cond
-	   (tok
-	    (if (eq (hopjs-parse-token-type tok) 'ohtml)
-		;; ohtml must be split in two parts: the tag and the attr
-		(progn
-		  (goto-char (match-end 1))
-		  (aset tok 2 (match-end 1))
-		  (setq tokens (cons tok tokens)))
-	      (progn
-		(goto-char (hopjs-parse-token-end tok))
-		(setq tokens (cons tok tokens)))))
-	   ((looking-at "[^ \t\n;<>{}()[\]]+")
-	    (let ((tok (hopjs-parse-token
-			'text (match-beginning 0) (match-end 0))))
-	      (setq tokens (cons tok tokens))
-	      (goto-char (match-end 0))))
-	   (t
-	    (setq tokens
-		  (cons (hopjs-parse-token 'blank (point) (point))
-			tokens))
-	    (forward-char 1)))))
-      (setq tokens (cons (hopjs-parse-token 'eop (point) (point)) tokens))
-      (let ((r (if rev tokens (reverse tokens))))
-	(hopjs-debug 0 "hopjs-parse-tokenify %s/%s -> %s" pos limit r)
-	r))))
+  (with-debug
+   "hopjs-parse-tokenify pos=%s limit=%s"
+   pos limit
+   (save-excursion
+     (let ((tokens '()))
+       (goto-char pos)
+       (beginning-of-line)
+       (while (<= (point) limit)
+	 (let ((tok (looking-at-token)))
+	   (hopjs-debug 0 "tok..p=%s limit=%s -> tok=%s" (point) limit tok)
+	   (cond
+	    (tok
+	     (if (eq (hopjs-parse-token-type tok) 'ohtml)
+		 ;; ohtml must be split in two parts: the tag and the attr
+		 (progn
+		   (goto-char (match-end 1))
+		   (aset tok 2 (match-end 1))
+		   (setq tokens (cons tok tokens)))
+	       (progn
+		 (goto-char (hopjs-parse-token-end tok))
+		 (setq tokens (cons tok tokens)))))
+	    ((looking-at "[^ \t\n;<>{}()[\]]+")
+	     (let ((tok (hopjs-parse-token
+			 'text (match-beginning 0) (match-end 0))))
+	       (setq tokens (cons tok tokens))
+	       (goto-char (match-end 0))))
+	    (t
+	     (setq tokens
+		   (cons (hopjs-parse-token 'blank (point) (point))
+			 tokens))
+	     (forward-char 1)))))
+       (setq tokens (cons (hopjs-parse-token 'eop (point) (point)) tokens))
+       (let ((r (if rev tokens (reverse tokens))))
+	 (hopjs-debug 0 "hopjs-parse-tokenify %s/%s -> %s" pos limit r)
+	 r)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-parse-pop-token ...                                        */
