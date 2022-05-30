@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  1 07:14:59 2018                          */
-;*    Last change :  Tue May 24 08:58:47 2022 (serrano)                */
+;*    Last change :  Wed May 25 15:49:55 2022 (serrano)                */
 ;*    Copyright   :  2018-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs JavaScript/HTML parser                                     */
@@ -1624,7 +1624,7 @@
 	    (case (hopjs-parse-peek-token-type)
 	      ((eop)
 	       (hopjs-parse-token-column otok indent))
-	      ((ident type catch declare interface)
+	      ((ident type catch declare interface class)
 	       (hopjs-parse-pop-token)
 	       (funcall axs))
 	      (t
