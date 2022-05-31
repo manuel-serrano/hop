@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  1 07:14:59 2018                          */
-;*    Last change :  Tue May 24 08:58:47 2022 (serrano)                */
+;*    Last change :  Tue May 31 07:15:27 2022 (serrano)                */
 ;*    Copyright   :  2018-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs JavaScript/HTML parser                                     */
@@ -61,6 +61,12 @@
    nil)) ;; expression start
 
 ;*---------------------------------------------------------------------*/
+;*    hopjs-parse-context-copy ...                                     */
+;*---------------------------------------------------------------------*/
+(defun hopjs-parse-context-copy (ctx)
+  (vector (aref ctx 0) (aref ctx 1) (aref ctx 2)))
+				 
+;*---------------------------------------------------------------------*/
 ;*    hopjs-parse-tokens ...                                           */
 ;*---------------------------------------------------------------------*/
 (defvar hopjs-parse-tokens '())
@@ -94,7 +100,7 @@
 	 (scmid_part "[^ (){}\"]")
 	 (scmid_start "#[:]")
 	 (cssid_part "[[:alnum:][:multibyte:][:nonascii:]$_#-]")
-	 (cssid_start "[[:alpha:][:multibyte:][:nonascii:]$_#-]")
+	 (cssid_start "\\(?:[[:alpha:][:multibyte:][:nonascii:]$_#]\\|--\\)")
 	 (letter "[[:alpha:][:nonascii:]]")
 	 (tagid (rx: "[[:digit:]]*" "[[:alnum:]_]" (rx* "[[:alnum:]_.:]*"))))
     (list
@@ -436,7 +442,7 @@
      (let ((tokens '()))
        (goto-char pos)
        (beginning-of-line)
-       (while (<= (point) limit)
+       (while (and (<= (point) limit) (< (point) (point-max)))
 	 (let ((tok (looking-at-token)))
 	   (hopjs-debug 0 "tok..p=%s limit=%s -> tok=%s" (point) limit tok)
 	   (cond
@@ -888,14 +894,14 @@
 ;*    hopjs-parse-plugin ...                                           */
 ;*---------------------------------------------------------------------*/
 (defun hopjs-parse-plugin (ctx otok indent)
-  (with-debug
-   "hopjs-parse-plugin (%s) otok=%s indent=%s ntok=%s"
-   (point) otok indent (hopjs-parse-peek-token)
-   (let ((p (assoc (hopjs-parse-token-string (hopjs-parse-peek-token)) (aref ctx 0))))
-     (hopjs-debug 0 "hopjs-parse-plugin p=%s" p)
-     (if (consp p)
-	 (funcall (cdr p) ctx otok indent)
-       (hopjs-parse-stmt-expr ctx otok indent)))))
+  (let ((p (assoc (hopjs-parse-token-string (hopjs-parse-peek-token))
+		  (aref ctx 0))))
+    (if (consp p)
+	(with-debug
+	 "hopjs-parse-plugin (%s) otok=%s indent=%s ntok=%s"
+	 (point) otok indent (hopjs-parse-peek-token)
+	 (funcall (cdr p) ctx otok indent))
+      (hopjs-parse-stmt-expr ctx otok indent))))
   
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-parse-comment-indent ...                                   */
@@ -1177,12 +1183,13 @@
        ((eop)
 	(hopjs-parse-token-column otok indent))
        ((lparen)
-	(let ((tok (hopjs-parse-pop-token)))
-	  (orn (hopjs-parse-stmt ctx ftok hopjs-parse-args-indent)
+	(let ((tok (hopjs-parse-pop-token))
+	      (fctx (hopjs-parse-for-in-context ctx)))
+	  (orn (hopjs-parse-stmt fctx ftok hopjs-parse-args-indent)
 	       (if (memq (hopjs-parse-peek-token-type) '(in of))
 		   (progn
 		     (hopjs-debug 0 "hopjs-parse-for.in ntok=%s"
-					 (hopjs-parse-peek-token))
+				  (hopjs-parse-peek-token))
 		     (hopjs-parse-pop-token)
 		     (orn (hopjs-parse-expr ctx tok hopjs-parse-args-indent)
 			  (if (eq (hopjs-parse-peek-token-type) 'rparen)
@@ -1203,6 +1210,16 @@
 			-1))))))
        (t
 	-1)))))
+
+;*---------------------------------------------------------------------*/
+;*    hopjs-parse-for-in-context ...                                   */
+;*---------------------------------------------------------------------*/
+(defun hopjs-parse-for-in-context (ctx)
+  (let ((nctx (hopjs-parse-context-copy ctx)))
+    (aset nctx 1
+	  (cons (cons "in" #'(lambda (ctx o indent) nil))
+		(aref ctx 1)))
+    nctx))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-parse-try ...                                              */
@@ -1528,11 +1545,18 @@
        (hopjs-parse-token-column otok indent)
      (let ((e (hopjs-parse-unary-expr ctx otok indent)))
        (orn e
-	    (if (memq (hopjs-parse-peek-token-type) '(binop in))
-		(let ((tok (hopjs-parse-pop-token)))
-		  (orn (hopjs-parse-binary-expr ctx otok indent)
-		       e))
-	      e))))))
+	    (case (hopjs-parse-peek-token-type)
+	      ((binop)
+	       (let ((tok (hopjs-parse-pop-token)))
+		 (orn (hopjs-parse-binary-expr ctx otok indent) e)))
+	      ((in)
+	       (let ((p (assoc "in" (aref ctx 1))))
+		 (if p
+		     (orn (funcall (cdr p) ctx otok indent) e)
+		   (let ((tok (hopjs-parse-pop-token)))
+		     (orn (hopjs-parse-binary-expr ctx otok indent) e)))))
+	      (t
+	       e)))))))
   
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-parse-unary-expr ...                                       */
@@ -1549,7 +1573,8 @@
 	(hopjs-parse-expr ctx otok indent)))
      (t
       (if (and (eq (hopjs-parse-peek-token-type) 'binop)
-	       (string= (hopjs-parse-token-string (hopjs-parse-peek-token)) "+"))
+	       (let ((str (hopjs-parse-token-string (hopjs-parse-peek-token))))
+		 (or (string= str "+") (string= str "-"))))
 	  (let ((tok (hopjs-parse-pop-token)))
 	    (hopjs-parse-expr ctx otok indent))
 	(let ((e (hopjs-parse-lhs ctx otok indent)))
