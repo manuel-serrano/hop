@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Sat Feb 19 08:51:48 2022 (serrano)                */
+;*    Last change :  Fri Jun  3 11:51:36 2022 (serrano)                */
 ;*    Copyright   :  2014-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
@@ -17,7 +17,8 @@
    (library scheme2js hopscheme js2scheme hop)
 
    (import  hopc_parseargs
-	    hopc_param)
+	    hopc_param
+	    hopc_hop)
 
    (eval    (library hop))
 
@@ -159,7 +160,7 @@
 	 (match-case (cer exp)
 	    ((at ?file . ?-) (dirname file)))))
 
-   (define (compile-module exp)
+   (define (compile-module exp src dst)
       (match-case exp
 	 ((module ?id . ?clauses)
 	  ;; this produces a side effect
@@ -172,7 +173,9 @@
 			     ((<TILDE> ??- :src (quote ?import) ??-)
 			      (set! iimports (cons import iimports)))
 			     (else
-			      (set! nclauses (cons c nclauses)))))
+			      (set! nclauses
+				 (cons (hop-module-rebase c src dst)
+				    nclauses)))))
 		clauses)
 	     (values
 		`(module ,id ,@(reverse! nclauses))
@@ -190,7 +193,7 @@
 		  (match-case exp
 		     ((module . ?-)
 		      (multiple-value-bind (mod env)
-			 (compile-module exp)
+			 (compile-module exp fname (output-port-name out))
 			 (pp mod out)
 			 (pp `(define the-loading-file
 				 (let ((file (hop-sofile-rebase ,(sobase-path fname))))
@@ -303,6 +306,7 @@
          (let* ((opts (append (cons file (srfi-opts)) opts))
                 (proc (apply run-process (hopc-bigloo) opts))
                 (cmd (format "~a ~l" (hopc-bigloo) opts)))
+	    (tprint "CMD=" cmd)
             (signal sigterm
                (lambda (sig)
                   (process-kill proc)
@@ -374,7 +378,7 @@
 	    (else
 	     (compile-pipe opts comp file))))
       
-      (define (compile-hop in opts file temp)
+      (define (compile-hop-with-deps in opts file temp deps)
 	 (let* ((mext "(lambda (exp)
 			(match-case exp
 			   ((module . ?rest)
@@ -390,12 +394,14 @@
 				   (loop (cdr clauses) clauses)))))
 			   (else
 			    exp)))")
-		(options `("-extend-module"
-			     ,mext
-			     "--force-cc-o"
-			     "-rpath" ,(make-file-path (hop-lib-directory)
-					  "hop" (hop-version))
-			     "-I" ,(dirname file)))
+		(options (append
+			    `("-extend-module"
+				,mext
+				"--force-cc-o"
+				"-rpath" ,(make-file-path (hop-lib-directory)
+					     "hop" (hop-version))
+				"-I" ,(dirname file))
+			    deps))
 		(mkcomp (lambda (write)
 			   (lambda (out)
 			      (let loop ((cenv #f))
@@ -404,7 +410,7 @@
 				       (match-case exp
 					  ((module . ?-)
 					   (multiple-value-bind (mod env)
-					      (compile-module exp)
+					      (compile-module exp (input-port-name in) (output-port-name out))
 					      (write mod out)
 					      (write `(define the-loading-file
 							 (let ((file (hop-sofile-rebase ,(sobase-path fname))))
@@ -427,6 +433,29 @@
 		   (append (cons "-fread-internal-src" options) opts)
 		   (mkcomp (lambda (exp port) (write (obj->string exp) port)))
 		   file temp))))
+
+      (define (compile-hop in opts file temp)
+	 (let* ((imports (hop-module-imports file))
+		(deps (map (lambda (import)
+			      (let* ((temp (unless (string-suffix? ".scm" import)
+					      (make-file-name (os-tmp)
+						 (string-append
+						    (prefix (basename import))
+						    ".scm"))))
+				     (obj (make-file-name (os-tmp)
+					      (string-append
+						 (prefix (basename import))
+						 ".o")))
+				     (file (make-file-name (dirname file) import))
+				     (opts (cons* "-o" obj (bigloo-options))))
+				 (call-with-input-file file
+				    (lambda (in)
+				       (tprint "opts=" opts " temp=" temp)
+				       (compile-hop-with-deps in opts file temp '())))
+				 obj))
+			 imports)))
+	    (tprint file " -> " imports)
+	    (compile-hop-with-deps in opts file temp deps)))
 
       (define (compile-scheme in opts file temp)
 	 (compiler

@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov  5 19:11:10 2012                          */
 ;*    Last change :  Wed Oct 14 09:23:21 2015 (serrano)                */
-;*    Copyright   :  2012-15 Manuel Serrano                            */
+;*    Copyright   :  2012-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScheme runtime interface                                      */
 ;*=====================================================================*/

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.5.x/hopscheme/hopscheme.scm           */
+;*    serrano/prgm/project/hop/hop/hopscheme/hopscheme.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Wed Feb 17 18:39:39 2010                          */
-;*    Last change :  Thu Jan 20 09:42:40 2022 (serrano)                */
+;*    Last change :  Fri Jun  3 15:19:58 2022 (serrano)                */
 ;*    Copyright   :  2010-22 Florian Loitsch and Manuel Serrano        */
 ;*    -------------------------------------------------------------    */
 ;*    Hopscheme                                                        */
@@ -50,7 +50,7 @@
 ;*    '(import m1), etc.                                               */
 ;*---------------------------------------------------------------------*/
 (define (hopscheme-compile-module clauses base)
-   (list (precompile-headers clauses base)))
+   (list (precompile-headers clauses (file-name-canonicalize base))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopscheme-compile-file ...                                       */

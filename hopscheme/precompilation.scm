@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscheme/precompilation.scm      */
+;*    serrano/prgm/project/hop/hop/hopscheme/precompilation.scm        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Tue Mar  9 05:13:01 2010                          */
-;*    Last change :  Sun Jan  7 14:38:37 2018 (serrano)                */
-;*    Copyright   :  2010-18 Manuel Serrano                            */
+;*    Last change :  Fri Jun  3 15:08:27 2022 (serrano)                */
+;*    Copyright   :  2010-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Module pre-compilation                                           */
 ;*=====================================================================*/
@@ -40,7 +40,9 @@
 	 (trace-item "files=" files)
 	 (if compiled
 	     compiled
-	     (error "hopscheme" "Could not find module" m)))))
+	     (error "hopscheme"
+		(format "Could not find module ~s from base" m)
+		base)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    precompile-headers ...                                           */

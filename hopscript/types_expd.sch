@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 25 15:52:55 2017                          */
-;*    Last change :  Thu Feb 10 15:28:14 2022 (serrano)                */
+;*    Last change :  Fri Jun  3 14:28:34 2022 (serrano)                */
 ;*    Copyright   :  2017-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Types Companion macros                                           */
@@ -451,7 +451,7 @@
 	   (e `(with-handler
 		  (lambda (e)
 		     (fprintf (current-error-port)
-			"js-import-ref: cannot import \"~a\"" ',x)
+			"js-import-ref: cannot import \"~a\"" ',debug)
 		     (raise e))
 		  (vector-ref ,v ,idx))
 	      e)

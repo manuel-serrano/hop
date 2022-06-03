@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Mar 26 09:29:33 2009                          */
-;*    Last change :  Sun Mar 29 11:55:19 2020 (serrano)                */
-;*    Copyright   :  2009-20 Manuel Serrano                            */
+;*    Last change :  Fri Jun  3 12:43:18 2022 (serrano)                */
+;*    Copyright   :  2009-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP module resolver                                          */
 ;*=====================================================================*/
@@ -77,7 +77,6 @@
 	     '())
 	    (else
 	     (let ((rfiles (resolver module files (find-afile abase))))
-		(trace-item "rfiles=" rfiles " abase=" abase)
 		(if (pair? rfiles)
 		    (hop-module-afile-resolver module rfiles)
 		    (let ((f (or (hop-module-path-resolver module ".")
