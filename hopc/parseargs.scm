@@ -40,6 +40,7 @@
    (args-parse-usage #f)
    (newline)
    (print "Shell Variables:")
+   (print "   - HOPHZREPOSITORY: repository of hz files")
    (print "   - HOPTRACE: hop internal trace [HOPTRACE=\"key1, key2, ...\"]")
    (print "      j2s:stage, j2s:type, j2s:type+, j2s:hint, j2s:range, j2s:usage, j2s:key,")
    (print "      j2s:loc, j2s:cache, j2s:dump, j2s:info, j2s:size, j2s:tail")

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 05:30:17 2007                          */
-;*    Last change :  Tue May 24 07:24:51 2022 (serrano)                */
+;*    Last change :  Fri Jun  3 11:27:51 2022 (serrano)                */
 ;*    Copyright   :  2007-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with HZ packages.                          */
@@ -223,7 +223,8 @@
 		      (download-url url dir)
 		      (make-file-name dir base))
 		     ((not (string=? scheme "*"))
-		      (error "hz" "Cannot find module" url))
+		      (error "hz" (format "Cannot find module ~s in repository" hzurl)
+			 hzrepo))
 		     (else
 		      (let* ((name (hz-server-resolve-name url))
 			     (dir (make-file-name dest (prefix name)))

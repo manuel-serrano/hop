@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Mon May  9 07:59:30 2022 (serrano)                */
+;*    Last change :  Fri Jun  3 11:42:42 2022 (serrano)                */
 ;*    Copyright   :  2004-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -667,11 +667,12 @@
    (args-parse-usage #f)
    (newline)
    (print "Shell Variables:")
+   (print "   - HOPHZREPOSITORY: repository of hz files")
    (print "   - HOPTRACE: hop internal trace [HOPTRACE=\"key1, key2, ...\"]")
    (print "      j2s:info, j2s:type, j2s:utype, j2s:hint, j2s:usage, j2s:key")
    (print "      j2s:dump, nodejs:compile, hopscript:cache, hopscript:hint")
    (print "      j2s:scope")
-   (print "   - HOPVEROSE: an integer")
+   (print "   - HOPVERBOSE: an integer")
    (print "   - HOPCFLAGS: hopc compilation flags")
    (print "   - NODE_DEBUG: nodejs internal debugging [NODE_DEBUG=key]")
    (print "   - NODE_PATH: nodejs require path")

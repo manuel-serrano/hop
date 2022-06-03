@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Thu Dec 23 06:20:32 2021 (serrano)                */
-;*    Copyright   :  2004-21 Manuel Serrano                            */
+;*    Last change :  Fri Jun  3 11:41:42 2022 (serrano)                */
+;*    Copyright   :  2004-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
 ;*=====================================================================*/
@@ -1462,7 +1462,10 @@
 ;*    hop-hz-repositories ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-hz-repositories
-   '())
+   (let ((s (getenv "HOPHZREPOSITORY")))
+      (if (string? s)
+	  (unix-path->list s)
+	  '())))
 
 (define (hop-hz-repositories-add! v)
    (hop-hz-repositories-set! (cons v (hop-hz-repositories))))

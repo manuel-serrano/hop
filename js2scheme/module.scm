@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 15 15:16:16 2018                          */
-;*    Last change :  Mon May 23 09:42:16 2022 (serrano)                */
+;*    Last change :  Fri Jun  3 11:32:14 2022 (serrano)                */
 ;*    Copyright   :  2018-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES6 Module handling                                              */
@@ -385,6 +385,16 @@
 	  => resolve-directory)
 	 ((hz-cache-path hz)
 	  => resolve-directory)
+	 ((and (null? (hop-hz-repositories))
+	       (not (or (string-prefix? "http://" hz)
+			(string-prefix? "https://" hz))))
+	  (raise
+	     (instantiate::&io-error
+		(proc "import")
+		(msg "No local repository provided (set HOP_HZ_REPOSITORY or hopcrc.js)")
+		(obj hz)
+		(fname (cadr loc))
+		(location (caddr loc)))))
 	 (else
 	  (let ((dir (hz-download-to-cache hz (hop-hz-repositories))))
 	     (if (directory? dir)
