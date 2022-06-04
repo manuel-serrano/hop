@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Thu Mar 19 18:20:11 2020 (serrano)                */
-;*    Copyright   :  2004-21 Manuel Serrano                            */
+;*    Last change :  Sat Jun  4 07:08:01 2022 (serrano)                */
+;*    Copyright   :  2004-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOPC entry point                                             */
 ;*=====================================================================*/
@@ -32,7 +32,8 @@
 (define (main args)
    ;; no debug by default
    (bigloo-warning-set! 1)
-   (bigloo-debug-set! 0)
+   (let ((trace (getenv "BIGLOOTRACE")))
+      (bigloo-debug-set! (if (string? trace) 1 0)))
    ;; set the Hop cond-expand identification
    (register-srfi! 'hopc)
    (for-each register-eval-srfi! (hop-srfis))

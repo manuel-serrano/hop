@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Fri Jun  3 11:51:36 2022 (serrano)                */
+;*    Last change :  Fri Jun  3 17:44:16 2022 (serrano)                */
 ;*    Copyright   :  2014-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
@@ -306,7 +306,6 @@
          (let* ((opts (append (cons file (srfi-opts)) opts))
                 (proc (apply run-process (hopc-bigloo) opts))
                 (cmd (format "~a ~l" (hopc-bigloo) opts)))
-	    (tprint "CMD=" cmd)
             (signal sigterm
                (lambda (sig)
                   (process-kill proc)
@@ -450,11 +449,9 @@
 				     (opts (cons* "-o" obj (bigloo-options))))
 				 (call-with-input-file file
 				    (lambda (in)
-				       (tprint "opts=" opts " temp=" temp)
 				       (compile-hop-with-deps in opts file temp '())))
 				 obj))
 			 imports)))
-	    (tprint file " -> " imports)
 	    (compile-hop-with-deps in opts file temp deps)))
 
       (define (compile-scheme in opts file temp)

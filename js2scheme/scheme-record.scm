@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jul 15 07:09:51 2021                          */
-;*    Last change :  Thu Feb  3 18:53:41 2022 (serrano)                */
+;*    Last change :  Fri Jun  3 18:42:47 2022 (serrano)                */
 ;*    Copyright   :  2021-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Record generation                                                */
@@ -458,7 +458,9 @@
    
    (define (this-for-super-decl thisp)
       (with-access::J2SDecl thisp (loc)
-	 (let* ((thisp-safe (duplicate::J2SDecl thisp (binder 'let-opt)))
+	 (let* ((thisp-safe (duplicate::J2SDecl thisp
+			       (binder 'let-opt)
+			       (key (ast-decl-key))))
 		(decl (J2SLetOpt '(ref) '!this (J2SThis thisp-safe))))
 	    (with-access::J2SDecl thisp (binder)
 	       (set! binder 'let))
@@ -533,7 +535,9 @@
 			   (with-access::J2SClassElement superctor (prop)
 			      (with-access::J2SMethodPropertyInit prop (val)
 				 (with-access::J2SFun val (params)
-				    (map (lambda (d) (duplicate::J2SDecl d))
+				    (map (lambda (d)
+					    (duplicate::J2SDecl d
+					       (key (ast-decl-key))))
 				       params))))
 			   '())))
 	    (j2s-record-constructor-fun this

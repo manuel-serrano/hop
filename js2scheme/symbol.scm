@@ -3,13 +3,14 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Mon May 23 08:23:00 2022 (serrano)                */
+;*    Last change :  Fri Jun  3 19:59:41 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
 ;*    -------------------------------------------------------------    */
 ;*    This pass implements the J2SVarDecls lifting. After this pass,   */
-;*    the AST should no longer contains any J2SVarDecls node.          */
+;*    the AST should no longer contains any J2SVarDecls node except    */
+;*    in TILDE nodes.                                                  */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
