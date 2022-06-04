@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Fri Jun  3 17:44:16 2022 (serrano)                */
+;*    Last change :  Sat Jun  4 07:45:58 2022 (serrano)                */
 ;*    Copyright   :  2014-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
@@ -404,7 +404,9 @@
 		(mkcomp (lambda (write)
 			   (lambda (out)
 			      (let loop ((cenv #f))
-				 (let ((exp (hopc-read in :cenv cenv)))
+				 (let* ((exp (hopc-read in :cenv cenv))
+					;; (path fname)
+					(path file))
 				    (unless (eof-object? exp)
 				       (match-case exp
 					  ((module . ?-)
@@ -412,7 +414,7 @@
 					      (compile-module exp (input-port-name in) (output-port-name out))
 					      (write mod out)
 					      (write `(define the-loading-file
-							 (let ((file (hop-sofile-rebase ,(sobase-path fname))))
+							 (let ((file (hop-sofile-rebase ,(sobase-path path))))
 							    (lambda ()
 							       file)))
 						 out)
@@ -436,20 +438,20 @@
       (define (compile-hop in opts file temp)
 	 (let* ((imports (hop-module-imports file))
 		(deps (map (lambda (import)
-			      (let* ((temp (unless (string-suffix? ".scm" import)
+			      (let* ((path import)
+				     (temp (unless (string-suffix? ".scm" path)
 					      (make-file-name (os-tmp)
 						 (string-append
-						    (prefix (basename import))
+						    (prefix (basename path))
 						    ".scm"))))
 				     (obj (make-file-name (os-tmp)
 					      (string-append
-						 (prefix (basename import))
+						 (prefix (basename path))
 						 ".o")))
-				     (file (make-file-name (dirname file) import))
-				     (opts (cons* "-o" obj (bigloo-options))))
-				 (call-with-input-file file
+				     (opts (cons* "-c" "-o" obj (bigloo-options))))
+				 (call-with-input-file path
 				    (lambda (in)
-				       (compile-hop-with-deps in opts file temp '())))
+				       (compile-hop-with-deps in opts path temp '())))
 				 obj))
 			 imports)))
 	    (compile-hop-with-deps in opts file temp deps)))

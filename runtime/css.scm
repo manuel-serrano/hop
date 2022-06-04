@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Mon Oct 14 10:24:41 2019 (serrano)                */
-;*    Copyright   :  2005-19 Manuel Serrano                            */
+;*    Last change :  Sat Jun  4 10:57:09 2022 (serrano)                */
+;*    Copyright   :  2005-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
 ;*=====================================================================*/
@@ -433,9 +433,10 @@
 	  (loading-file-set! file)
 	  (if (input-port? p)
 	      (unwind-protect
-		 (begin
+		 (let ((mod `(module ,(gensym)))
+		       (loc `(at ,file 1)))
 		    ;; each hss file is read inside a dummy empty module
-		    (eval `(module ,(gensym)))
+		    (eval (econs (car mod) (cdr mod) loc))
 		    (with-handler
 		       (lambda (e)
 			  (when (isa? e &exception)
@@ -806,7 +807,15 @@
 			  (raise e))
 			 (else
 			  (raise e))))
-		   (eval exp))))))))
+		   (let ((e (cond
+			       ((epair? exp)
+				exp)
+			       ((pair? exp)
+				(econs (car exp) (cdr exp)
+				   `(at ,(input-port-name ip) 1)))
+			       (else
+				exp))))
+		      (eval e)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-display ::css-hash-color ...                              */
