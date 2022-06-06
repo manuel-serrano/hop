@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun  3 11:52:52 2022                          */
-;*    Last change :  Sat Jun  4 07:48:56 2022 (serrano)                */
+;*    Last change :  Mon Jun  6 06:28:36 2022 (serrano)                */
 ;*    Copyright   :  2022 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop specific utilities                                           */
@@ -51,15 +51,20 @@
 (define (imports clause dir stack)
    
    (define (find-module-in-path import name)
-      (let ((name (symbol->string name)))
-	 (let ((hop (string-append name ".hop")))
+      (let ((file (symbol->string name)))
+	 (let ((hop (string-append file ".hop")))
 	    (if (file-exists? hop)
 		hop
-		(let ((scm (string-append name ".scm")))
-		   (if (file-exists? scm)
-		       scm
+		(let ((scm (string-append file ".scm")))
+		   (cond
+		      ((file-exists? scm)
+		       scm)
+		      (((bigloo-module-resolver) name '() dir)
+		       =>
+		       (lambda (f) (car f)))
+		      (else
 		       (error/source "hopc"
-			  "Cannot find module" name import)))))))
+			  "Cannot find module" name import))))))))
 
    (define (rebase file dir)
       (if (absolute? file)
