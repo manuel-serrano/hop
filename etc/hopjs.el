@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Wed Jun  1 07:18:25 2022 (serrano)                */
+;*    Last change :  Mon Jun  6 08:25:27 2022 (serrano)                */
 ;*    Copyright   :  2014-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -482,8 +482,10 @@
   "On indent automatiquement sur un RET.
 usage: (js-return)  -- [RET]"
   (interactive)
-  (newline)
-  (hopjs-auto-indent))
+  (let ((split (not (looking-at "[ \t]*\n"))))
+    (newline)
+    (when split (insert " "))
+    (hopjs-auto-indent)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-in-string-comment-p ...                                    */
