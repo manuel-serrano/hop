@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  1 07:14:59 2018                          */
-;*    Last change :  Tue May 31 07:15:27 2022 (serrano)                */
+;*    Last change :  Mon Jun  6 08:13:56 2022 (serrano)                */
 ;*    Copyright   :  2018-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs JavaScript/HTML parser                                     */
@@ -234,6 +234,9 @@
 	      (unless (memq type '(bof blank))
 		(buffer-substring-no-properties b e)))
     (vector type b e)))
+
+(defconst hopjs-parse-idents
+  '(ident cssident class))
 
 (defsubst hopjs-parse-tokenp (obj)
   (and (vectorp obj) (= (length obj) (if hopjs-parse-debug 4 3))))
@@ -1570,13 +1573,13 @@
       (hopjs-parse-token-column otok indent))
      ((unop)
       (let ((tok (hopjs-parse-pop-token)))
-	(hopjs-parse-expr ctx otok indent)))
+	(hopjs-parse-unary-expr ctx otok indent)))
      (t
       (if (and (eq (hopjs-parse-peek-token-type) 'binop)
 	       (let ((str (hopjs-parse-token-string (hopjs-parse-peek-token))))
 		 (or (string= str "+") (string= str "-"))))
 	  (let ((tok (hopjs-parse-pop-token)))
-	    (hopjs-parse-expr ctx otok indent))
+	    (hopjs-parse-unary-expr ctx otok indent))
 	(let ((e (hopjs-parse-lhs ctx otok indent)))
 	  (hopjs-debug
 	   0 "hopjs-parse-unary.next e=%s ntok=%s"
@@ -1865,13 +1868,15 @@
 	(hopjs-parse-token-column otok indent))
        ((lbrace)
 	(let* ((res nil)
-	       (collapse (and (hopjs-parse-token-lcollapsingp otok)
+	       (collapse (and (or (hopjs-parse-token-lcollapsingp otok)
+				  (memq (hopjs-parse-token-type otok) hopjs-parse-idents))
 			      (hopjs-parse-token-in-linep otok ltok)))
 	       (pshift (if collapse 0 hopjs-parse-args-indent))
 	       (nshift (if collapse hopjs-parse-args-indent 0)))
 	  (while (not res)
 	    (let ((tok (hopjs-parse-peek-token)))
-	      (hopjs-debug 0 "hopjs-parse-object.lbrace ntok=%s" tok)
+	      (hopjs-debug 0 "hopjs-parse-object.lbrace otok=%s ltok=%s ntok=%s collapse=%s"
+			   otok ltok tok collapse)
 	      (case (hopjs-parse-token-type tok)
                 ((eop)
 		 (setq res (hopjs-parse-token-column otok indent)))
@@ -2103,7 +2108,7 @@
    "hopjs-parse-xml-attr-ident (%s) otok=%s indent=%s ntok=%s"
    (point) otok indent (hopjs-parse-peek-token)
    (let ((res (hopjs-parse-pop-token)))
-     (while (or (memq (hopjs-parse-peek-token-type) '(ident cssident class))
+     (while (or (memq (hopjs-parse-peek-token-type) hopjs-parse-idents)
 		(and (eq (hopjs-parse-peek-token-type) 'binop)
 		     (string= (hopjs-parse-peek-token-string) "-")))
        (hopjs-parse-pop-token))
