@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  1 07:14:59 2018                          */
-;*    Last change :  Mon Jun  6 08:13:56 2022 (serrano)                */
+;*    Last change :  Tue Jun  7 17:02:35 2022 (serrano)                */
 ;*    Copyright   :  2018-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs JavaScript/HTML parser                                     */
@@ -862,7 +862,7 @@
 		etok))))
        ((ident function async class sealed)
 	(hopjs-parse-pop-token)
-	(hopjs-parse-stmt cts etok hopjs-parse-args-indent))
+	(hopjs-parse-stmt ctx etok hopjs-parse-args-indent))
        (t
 	-200)))))
 
