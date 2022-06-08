@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Sun Jan  2 17:37:11 2022 (serrano)                */
+;*    Last change :  Tue Jun  7 19:59:33 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -627,7 +627,7 @@
 	   __proto__ prototype
 	   (strict 'normal) (minlen -1) 
 	   (size 0) (constrsize 3)
-	   (constrmap (js-not-a-cmap)) (shared-cmap #t)
+ 	   (constrmap (js-not-a-cmap)) (shared-cmap #t)
 	   (clazz #f))
    (with-access::JsGlobalObject %this (js-function js-object
 					 js-function-cmap

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  1 07:14:59 2018                          */
-;*    Last change :  Tue Jun  7 17:02:35 2022 (serrano)                */
+;*    Last change :  Tue Jun  7 19:07:07 2022 (serrano)                */
 ;*    Copyright   :  2018-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs JavaScript/HTML parser                                     */
@@ -148,7 +148,7 @@
      ;; dollar escape
      (cons "[$]{" 'dollar)
      ;; sealed classes
-     (cons "sealed[ \t\n]+class" 'class)
+     (cons "@?sealed[ \t\n]+class" 'class)
      ;; ident
      (cons (rx: id_start (rx* id_part)) 'ident)
      ;; scheme ident
