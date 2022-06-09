@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Tue Feb 15 09:40:53 2022 (serrano)                */
+;*    Last change :  Wed Jun  8 08:15:29 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -1585,6 +1585,7 @@
 		      (lambda (c)
 			 (with-handler
 			    (lambda (exn)
+			       (exception-notify exn)
 			       (error "json->ast"
 				  (format "~a: illegal field assignment \"~s::~a\"" cname n t)
 				  (cdr c)))
@@ -1596,8 +1597,8 @@
 			 (format "Missing field \"~a\"" n) cname)))
 		  (loop (-fx i 1)))))
 	 ;; constructor
-	 (when (procedure? ctor) ctor inst)
-	 inst))
+	 (when (procedure? ctor) (ctor inst))
+	 (json-node-ctor! inst)))
 
    (json-parse ip
       :expr #t
@@ -1741,6 +1742,23 @@
       (set! expr (call-with-input-string expr read))
       node))
 
+;*---------------------------------------------------------------------*/
+;*    json-node-ctor! ...                                              */
+;*---------------------------------------------------------------------*/
+(define-generic (json-node-ctor! this::J2SNode)
+   this)
+
+;*---------------------------------------------------------------------*/
+;*    json-node-ctor! ::J2SClass ...                                   */
+;*---------------------------------------------------------------------*/
+(define-method (json-node-ctor! this::J2SClass)
+   (with-access::J2SClass this (elements)
+      (for-each (lambda (el)
+		   (with-access::J2SClassElement el (clazz)
+		      (set! clazz this)))
+	 elements)
+      this))
+      
 ;*---------------------------------------------------------------------*/
 ;*    j2sdeclinit-val-fun ...                                          */
 ;*---------------------------------------------------------------------*/

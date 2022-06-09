@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Fri Jun  3 19:59:41 2022 (serrano)                */
+;*    Last change :  Wed Jun  8 07:57:03 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -1198,7 +1198,7 @@
 	 (raise
 	    (instantiate::&io-parse-error
 	       (proc "hopc (symbol)")
-	       (msg "`super' keyword unexpected here")
+	       (msg (format "`super' call unexpected in context (~a)" (typeof ctx)))
 	       (obj (j2s-expression-src loc conf "super"))
 	       (fname (cadr loc))
 	       (location (caddr loc))))))
@@ -1272,7 +1272,7 @@
 	  (raise
 	     (instantiate::&io-parse-error
 		(proc "hopc (symbol)")
-		(msg "`super' keyword unexpected here")
+		(msg (format "`super' keyword unexpected in context (~a)" (typeof ctx)))
 		(obj (j2s-expression-src loc conf "super"))
 		(fname (cadr loc))
 		(location (caddr loc))))
