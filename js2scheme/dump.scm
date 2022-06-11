@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Fri Jun 10 16:52:32 2022 (serrano)                */
+;*    Last change :  Sat Jun 11 07:39:22 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -1384,7 +1384,7 @@
    (set! stack (check-stack this stack))
    (with-access::J2SClass this (name super elements decl loc need-dead-zone-check)
       `(,(string->symbol (typeof this))
-	,@(if name (list :name name) '())
+	:name ,name
 	:super ,(j2s->list super stack)
 	:need-dead-zone-check ,need-dead-zone-check
 	,@(dump-loc loc)

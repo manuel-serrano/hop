@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Wed Jun  8 08:15:29 2022 (serrano)                */
+;*    Last change :  Sat Jun 11 07:56:36 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -1695,6 +1695,14 @@
       (when decl (json-mark-decl! decl env))
       (call-default-walker)))
 
+;* {*---------------------------------------------------------------------*} */
+;* {*    json-mark-decl! ::J2SClass ...                                   *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define-walk-method (json-mark-decl! node::J2SClass env)            */
+;*    (with-access::J2SClass node (decl)                               */
+;*       (when decl (json-mark-decl! decl env))                        */
+;*       (call-default-walker)))                                       */
+
 ;*---------------------------------------------------------------------*/
 ;*    json-link-decl! ::J2SNode ...                                    */
 ;*---------------------------------------------------------------------*/
@@ -1708,7 +1716,7 @@
    (with-access::J2SRef node (decl)
       (with-access::%JSONDecl decl (%id)
 	 (if (or (<fx %id 0) (>fx %id (vector-length env)))
-	     (error "json->ast" "Illegal reference" %id)
+	     (error "json->ast:J2SRef" "Illegal reference" %id)
 	     (set! decl (vector-ref env %id)))
 	 (call-default-walker))))
 
@@ -1719,7 +1727,7 @@
    (with-access::J2SDConsumer node (decl)
       (with-access::%JSONDecl decl (%id)
 	 (if (or (<fx %id 0) (>fx %id (vector-length env)))
-	     (error "json->ast" "Illegal reference" %id)
+	     (error "json->ast:J2SConsumer" "Illegal reference" %id)
 	     (set! decl (vector-ref env %id)))
 	 (call-default-walker))))
 
@@ -1730,7 +1738,18 @@
    (with-access::J2SDProducer node (decl)
       (with-access::%JSONDecl decl (%id)
 	 (if (or (<fx %id 0) (>fx %id (vector-length env)))
-	     (error "json->ast" "Illegal reference" %id)
+	     (error "json->ast:J2SProducer" "Illegal reference" %id)
+	     (set! decl (vector-ref env %id)))
+	 (call-default-walker))))
+
+;*---------------------------------------------------------------------*/
+;*    json-link-decl! ::J2SClass ...                                   */
+;*---------------------------------------------------------------------*/
+(define-walk-method (json-link-decl! node::J2SClass env)
+   (with-access::J2SClass node (decl)
+      (with-access::%JSONDecl decl (%id)
+	 (if (or (<fx %id 0) (>fx %id (vector-length env)))
+	     (error "json->ast:J2SClass" "Illegal reference" %id)
 	     (set! decl (vector-ref env %id)))
 	 (call-default-walker))))
 
@@ -1752,7 +1771,7 @@
 ;*    json-node-ctor! ::J2SClass ...                                   */
 ;*---------------------------------------------------------------------*/
 (define-method (json-node-ctor! this::J2SClass)
-   (with-access::J2SClass this (elements)
+   (with-access::J2SClass this (elements decl)
       (for-each (lambda (el)
 		   (with-access::J2SClassElement el (clazz)
 		      (set! clazz this)))
