@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  1 07:14:59 2018                          */
-;*    Last change :  Sat Jun 18 07:42:46 2022 (serrano)                */
+;*    Last change :  Sat Jun 18 07:56:15 2022 (serrano)                */
 ;*    Copyright   :  2018-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs JavaScript/HTML parser                                     */
@@ -114,7 +114,7 @@
      (cons "/[*]\\(?:[^*]\\|[*][^/]\\)*[*]+/" 'comment)
      ;; numbers
      (cons (rxor "\\(?:0[xo]\\)?[0-9]+\\>"
-		 "[eE]?-?[0-9]+\\>"
+		 "[eE]-?[0-9]+\\>"
 		 "?[0-9]+\\(?:[.][0-9]+\\)?\\>")
 	   'number)
      (cons (rxor "-Infinity" "Infinity") 'number)
@@ -124,13 +124,13 @@
      ;; unop
      (cons (rxor (rxq "!") (rxq "~") (rxq "++") (rxq "--")) 'unop)
      ;; binop
-     (cons (rxor "<" "<=" ">" ">=" (rxq "+") (rxq "-") (rxq "*") (rxq "%") "==+" "!==+" "|" "/"
+     (cons (rxor "<=?" ">=?" (rxq "+") (rxq "-") (rxq "*") (rxq "%") "==+" "!==+" "|" "/"
 		 "<<" ">>" ">>>" "[&^]") 'binop)
      (cons (rxor "&&" "||" (rxq "??")) 'binop)
      (cons "instanceof" 'binop)
      (cons (rxq "??") 'binop)
      (cons (rxq "**") 'binop)
-     (cons "in" 'in)
+     (cons "in\\>" 'in)
      (cons (rxor "=" "[+*%^&|-]=" "<<=" ">>=" ">>>=") '=)
      ;; prefix
      (cons (rxor (rx: (rxq "+") (rxq "+")) "--") 'prefix)
@@ -420,7 +420,7 @@
 	  (l hopjs-parse-regexps)
 	  (end 0)
 	  (beg (+ (point) 1)))
-      (while (consp l)
+      (while (and (consp l) (not token))
 	(when (and (looking-at (caar l)) (> (match-end 0) end))
 	  (setq token
 		(hopjs-regexp-to-token
@@ -928,7 +928,11 @@
 	(hopjs-parse-token-column otok indent))
        ((lbrace)
 	(if (eq (hopjs-parse-peek-token-type) 'eop)
-	    (setq res (hopjs-parse-token-column otok (+ indent hopjs-parse-block-indent)))
+	    (let ((collapse (and (hopjs-parse-token-lcollapsingp otok)
+				 (hopjs-parse-token-in-linep otok btok))))
+	      (if collapse
+		  (setq res (hopjs-parse-token-column otok indent))
+		  (setq res (hopjs-parse-token-column otok (+ indent hopjs-parse-block-indent)))))
 	  (let* ((res nil)
 		 (collapse (and (hopjs-parse-token-lcollapsingp otok)
 				(hopjs-parse-token-in-linep otok btok)))
@@ -941,6 +945,8 @@
 		(case (hopjs-parse-token-type tok)
 		  ((eop)
 		   (setq res (hopjs-parse-token-column otok (+ indent pshift))))
+		  ((comment)
+		   (hopjs-parse-pop-token))
 		  ((rbrace)
 		   (hopjs-parse-pop-token)
 		   (if (eq (hopjs-parse-peek-token-type) 'eop)
@@ -1370,6 +1376,8 @@
 		(setq res (hopjs-parse-token-column ltok lindent)))
 	       ((rbrace case default)
 		(setq res tok))
+	       ((comment)
+		(hopjs-parse-pop-token))
 	       (t
 		(let ((s (hopjs-parse-stmt ctx ltok lindent)))
 		  (cond
@@ -1616,6 +1624,9 @@
        (if (eq (hopjs-parse-peek-token-type) 'eop)
 	   (hopjs-parse-token-column otok indent)
 	 (hopjs-parse-assig-expr ctx tok indent)))
+      ((comment)
+       (hopjs-parse-pop-token)
+       (hopjs-parse-new-expr ctx otok indent))
       (t
        (let ((p (hopjs-parse-primary ctx otok indent)))
 	 (orn p
@@ -1889,6 +1900,10 @@
 		   (if (eq (hopjs-parse-peek-token-type) 'eop)
 		       (setq res (hopjs-parse-token-column otok (- indent nshift)))
 		     (setq res tok))))
+		((comment)
+		 (let ((tok (hopjs-parse-pop-token)))
+		   (when (eq (hopjs-parse-peek-token-type) 'eop)
+		     (setq res (hopjs-parse-token-column otok (+ indent pshift))))))
 		((dots)
 		 (let ((tok (hopjs-parse-pop-token)))
 		   (when (eq (hopjs-parse-peek-token-type) 'eop)
