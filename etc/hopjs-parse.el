@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  1 07:14:59 2018                          */
-;*    Last change :  Sat Jun 18 07:56:15 2022 (serrano)                */
+;*    Last change :  Sat Jun 18 10:20:02 2022 (serrano)                */
 ;*    Copyright   :  2018-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs JavaScript/HTML parser                                     */
@@ -115,7 +115,8 @@
      ;; numbers
      (cons (rxor "\\(?:0[xo]\\)?[0-9]+\\>"
 		 "[eE]-?[0-9]+\\>"
-		 "?[0-9]+\\(?:[.][0-9]+\\)?\\>")
+		 "[0-9]*\\(?:[.][0-9]\\)\\>"
+		 "[0-9]+\\(?:[.][0-9]*\\)\\>")
 	   'number)
      (cons (rxor "-Infinity" "Infinity") 'number)
      ;; punctuation
@@ -124,12 +125,10 @@
      ;; unop
      (cons (rxor (rxq "!") (rxq "~") (rxq "++") (rxq "--")) 'unop)
      ;; binop
-     (cons (rxor "<=?" ">=?" (rxq "+") (rxq "-") (rxq "*") (rxq "%") "==+" "!==+" "|" "/"
+     (cons (rxor "<=?" ">=?" (rxq "+") (rxq "-") "[*][*]?"
+		 (rxq "%") "==+" "!==+" "||?" "&&?" "/"
 		 "<<" ">>" ">>>" "[&^]") 'binop)
-     (cons (rxor "&&" "||" (rxq "??")) 'binop)
      (cons "instanceof" 'binop)
-     (cons (rxq "??") 'binop)
-     (cons (rxq "**") 'binop)
      (cons "in\\>" 'in)
      (cons (rxor "=" "[+*%^&|-]=" "<<=" ">>=" ">>>=") '=)
      ;; prefix
@@ -1025,8 +1024,11 @@
    (let ((wtok (hopjs-parse-pop-token)))
      (if (eq (hopjs-parse-peek-token-type) 'eop)
 	 (hopjs-parse-token-column otok indent)
-       (orn (hopjs-parse-paren-expr ctx otok indent)
-	    (hopjs-parse-stmt ctx wtok 0))))))
+       (orn (hopjs-parse-paren-expr ctx wtok hopjs-parse-args-indent)
+	    (let ((indent (if (eq (hopjs-parse-peek-token-type) 'lbrace)
+			      indent
+			    (+ indent hopjs-parse-block-indent))))
+	      (hopjs-parse-stmt ctx otok indent)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-parse-do ...                                               */
@@ -1521,7 +1523,7 @@
 ;*---------------------------------------------------------------------*/
 (defun hopjs-parse-cond-expr (ctx otok indent)
   (with-debug
-   "hopjs-parse-cond-expr (%s) tok=%s indent=%s ntok=%s"
+   "hopjs-parse-cond-expr (%s) otok=%s indent=%s ntok=%s"
    (point) otok indent (hopjs-parse-peek-token)
    (let ((b (hopjs-parse-binary-expr ctx otok indent)))
      (hopjs-debug 0 "hopjs-parse-cond-expr.next b=%s ntok=%s"
@@ -1533,7 +1535,7 @@
 			     b (hopjs-parse-peek-token))
 		(if (eq (hopjs-parse-peek-token-type) 'eop)
 		    (hopjs-parse-token-column otok indent)
-		  (let ((e (hopjs-parse-assig-expr ctx tok 0)))
+		  (let ((e (hopjs-parse-assig-expr ctx otok hopjs-parse-binary-indent)))
 		    (hopjs-debug 0 "hopjs-parse-cond-expr.colon e=%s ntok=%s"
 				 e (hopjs-parse-peek-token))
 		    (orn e
