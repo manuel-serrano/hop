@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Fri Jun  3 11:51:36 2022 (serrano)                */
+;*    Last change :  Sat Jun  4 07:45:58 2022 (serrano)                */
 ;*    Copyright   :  2014-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
@@ -306,7 +306,6 @@
          (let* ((opts (append (cons file (srfi-opts)) opts))
                 (proc (apply run-process (hopc-bigloo) opts))
                 (cmd (format "~a ~l" (hopc-bigloo) opts)))
-	    (tprint "CMD=" cmd)
             (signal sigterm
                (lambda (sig)
                   (process-kill proc)
@@ -405,7 +404,9 @@
 		(mkcomp (lambda (write)
 			   (lambda (out)
 			      (let loop ((cenv #f))
-				 (let ((exp (hopc-read in :cenv cenv)))
+				 (let* ((exp (hopc-read in :cenv cenv))
+					;; (path fname)
+					(path file))
 				    (unless (eof-object? exp)
 				       (match-case exp
 					  ((module . ?-)
@@ -413,7 +414,7 @@
 					      (compile-module exp (input-port-name in) (output-port-name out))
 					      (write mod out)
 					      (write `(define the-loading-file
-							 (let ((file (hop-sofile-rebase ,(sobase-path fname))))
+							 (let ((file (hop-sofile-rebase ,(sobase-path path))))
 							    (lambda ()
 							       file)))
 						 out)
@@ -437,24 +438,22 @@
       (define (compile-hop in opts file temp)
 	 (let* ((imports (hop-module-imports file))
 		(deps (map (lambda (import)
-			      (let* ((temp (unless (string-suffix? ".scm" import)
+			      (let* ((path import)
+				     (temp (unless (string-suffix? ".scm" path)
 					      (make-file-name (os-tmp)
 						 (string-append
-						    (prefix (basename import))
+						    (prefix (basename path))
 						    ".scm"))))
 				     (obj (make-file-name (os-tmp)
 					      (string-append
-						 (prefix (basename import))
+						 (prefix (basename path))
 						 ".o")))
-				     (file (make-file-name (dirname file) import))
-				     (opts (cons* "-o" obj (bigloo-options))))
-				 (call-with-input-file file
+				     (opts (cons* "-c" "-o" obj (bigloo-options))))
+				 (call-with-input-file path
 				    (lambda (in)
-				       (tprint "opts=" opts " temp=" temp)
-				       (compile-hop-with-deps in opts file temp '())))
+				       (compile-hop-with-deps in opts path temp '())))
 				 obj))
 			 imports)))
-	    (tprint file " -> " imports)
 	    (compile-hop-with-deps in opts file temp deps)))
 
       (define (compile-scheme in opts file temp)

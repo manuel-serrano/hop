@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun  3 11:52:52 2022                          */
-;*    Last change :  Fri Jun  3 15:34:40 2022 (serrano)                */
+;*    Last change :  Mon Jun  6 06:28:36 2022 (serrano)                */
 ;*    Copyright   :  2022 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop specific utilities                                           */
@@ -23,42 +23,86 @@
 ;*    Find (recursively) imported hop modules                          */
 ;*---------------------------------------------------------------------*/
 (define (hop-module-imports file)
-   (call-with-input-file file
-      (lambda (in)
-	 (let ((exp (read in)))
-	    (match-case exp
-	       ((module ?name . ?clauses)
-		(append-map (lambda (c) (find-module-imports name c)) clauses))
-	       (else
-		(error/source "hop-module-imports" "wrong module" file exp)))))))
+   (module-imports file '()))
 
 ;*---------------------------------------------------------------------*/
-;*    find-module-imports ...                                          */
+;*    module-imports ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (find-module-imports module clause)
+(define (module-imports file stack)
+   (call-with-input-file file
+      (lambda (in)
+	 (let ((exp (read in))
+	       (dir (dirname (file-name-canonicalize file))))
+	    (match-case exp
+	       ((module ?name . ?clauses)
+		(let loop ((clauses clauses)
+			   (stack stack))
+		   (if (null? clauses)
+		       stack
+		       (loop (cdr clauses)
+			  (imports (car clauses) dir stack)))))
+	       (else
+		(error/source "hop-module-imports" "wrong module"
+		   file exp)))))))
+
+;*---------------------------------------------------------------------*/
+;*    imports ...                                                      */
+;*---------------------------------------------------------------------*/
+(define (imports clause dir stack)
    
    (define (find-module-in-path import name)
-      (let ((name (symbol->string name)))
-	 (let ((hop (string-append name ".hop")))
+      (let ((file (symbol->string name)))
+	 (let ((hop (string-append file ".hop")))
 	    (if (file-exists? hop)
 		hop
-		(let ((scm (string-append name ".scm")))
-		   (if (file-exists? scm)
-		       scm
+		(let ((scm (string-append file ".scm")))
+		   (cond
+		      ((file-exists? scm)
+		       scm)
+		      (((bigloo-module-resolver) name '() dir)
+		       =>
+		       (lambda (f) (car f)))
+		      (else
 		       (error/source "hopc"
-			  "Cannot find module" name import)))))))
+			  "Cannot find module" name import))))))))
+
+   (define (rebase file dir)
+      (if (absolute? file)
+	  file
+	  (file-name-canonicalize (make-file-name dir file))))
 
    (match-case clause
       (((or import from) . ?imports)
-       (map (lambda (import)
-	       (match-case import
-		  ((?name ?file) file)
-		  ((? symbol?) (find-module-in-path clause import))
-		  (else (error/source "hopc" "Illegal import"
-			   import clause))))
-	  imports))
+       (let loop ((imports imports)
+		  (stack stack))
+	  (if (null? imports)
+	      stack
+	      (match-case (car imports)
+		 ((?name ?file)
+		  (let ((path (rebase file dir)))
+		     (if (member path stack)
+			 stack
+			 (loop (cdr imports)
+			    (module-imports path (cons path stack))))))
+		 ((? symbol?)
+		  (let* ((file (find-module-in-path clause (car imports)))
+			 (path (rebase file dir)))
+		     (if (member path stack)
+			 stack
+			 (loop (cdr imports)
+			    (module-imports path (cons path stack))))))
+		 (else
+		  (error/source "hopc" "Illegal import"
+		     (car imports) clause))))))
       (else
-       '())))
+       stack)))
+
+;*---------------------------------------------------------------------*/
+;*    absolute? ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (absolute? file)
+   (when (>fx (string-length file) 0)
+      (char=? (string-ref file 0) runtime-file-separator)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-module-rebase ...                                            */
@@ -66,10 +110,6 @@
 ;*    Rebase explicitly imported modules.                              */
 ;*---------------------------------------------------------------------*/
 (define (hop-module-rebase clause src dst)
-   
-   (define (absolute? file)
-      (when (>fx (string-length file) 0)
-	 (char=? (string-ref file 0) runtime-file-separator)))
    
    (define (rebase import abase)
       (match-case import

@@ -36,9 +36,11 @@
 		;; evaluate the server side module
 		(when (and (not imported?)
 			   (scheme2js-config 'hop-module-compilation))
-		   (eval (cons* 'module
-			    (gensym (symbol-append '$ (cadr header)))
-			    (reverse! rev-dollar-clauses)))))
+		   (let ((mod (cons* 'module
+				 (gensym (symbol-append '$ (cadr header)))
+				 (reverse! rev-dollar-clauses)))
+			 (loc `(at ,src 1)))
+		      (eval  (econs (car mod) (cdr mod) loc)))))
 	       ((eq? (car hdr) '$)
 		(loop (cddr hdr)
 		      (cons (cadr hdr) rev-dollar-clauses)))

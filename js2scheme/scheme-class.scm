@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:01:46 2017                          */
-;*    Last change :  Mon May 16 10:41:50 2022 (serrano)                */
+;*    Last change :  Fri Jun  3 18:42:19 2022 (serrano)                */
 ;*    Copyright   :  2017-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES2015 Scheme class generation                                   */
@@ -908,7 +908,9 @@
 
    (define (this-for-super-decl thisp)
       (with-access::J2SDecl thisp (loc)
-	 (let* ((thisp-safe (duplicate::J2SDecl thisp (binder 'let-opt)))
+	 (let* ((thisp-safe (duplicate::J2SDecl thisp
+			       (binder 'let-opt)
+			       (key (ast-decl-key))))
 		(decl (J2SLetOpt '(ref) '!this (J2SThis thisp-safe))))
 	    (with-access::J2SDecl thisp (binder)
 	       (set! binder 'let))

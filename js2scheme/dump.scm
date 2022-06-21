@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Thu Apr  7 11:10:00 2022 (serrano)                */
+;*    Last change :  Sat Jun 11 07:39:22 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -243,9 +243,7 @@
 		  :itype ,(type->sexp itype)
 		  :mtype ,(type->sexp mtype))))
 	 ((or (string-contains (or (getenv "HOPTRACE") "") "j2s:type"))
-	  (if (eq? ctype 'any)
-	      `(:vtype ,(type->sexp vtype) :mtype ,(type->sexp mtype))
-	      `(:ctype ,(type->sexp ctype) :vtype ,(type->sexp vtype) :mtype ,(type->sexp mtype))))
+	  `(:ctype ,(type->sexp ctype) :vtype ,(type->sexp vtype) :mtype ,(type->sexp mtype)))
 	 (else
 	  '()))))
       
@@ -1386,7 +1384,7 @@
    (set! stack (check-stack this stack))
    (with-access::J2SClass this (name super elements decl loc need-dead-zone-check)
       `(,(string->symbol (typeof this))
-	,@(if name (list :name name) '())
+	:name ,name
 	:super ,(j2s->list super stack)
 	:need-dead-zone-check ,need-dead-zone-check
 	,@(dump-loc loc)

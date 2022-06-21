@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Wed Jun  1 07:18:25 2022 (serrano)                */
+;*    Last change :  Tue Jun  7 16:03:32 2022 (serrano)                */
 ;*    Copyright   :  2014-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -18,7 +18,6 @@
 
 (require 'hopjs-config)
 (require 'hopjs-parse)
-;* (require 'hopjs-indent)                                             */
 
 ;*---------------------------------------------------------------------*/
 ;*    debugging, to be removed                                         */
@@ -482,8 +481,10 @@
   "On indent automatiquement sur un RET.
 usage: (js-return)  -- [RET]"
   (interactive)
-  (newline)
-  (hopjs-auto-indent))
+  (let ((split (not (looking-at "[ \t]*\n"))))
+    (newline)
+    (when split (insert " "))
+    (hopjs-auto-indent)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-in-string-comment-p ...                                    */
@@ -1243,6 +1244,45 @@ usage: (js-return)  -- [RET]"
 ;*    'face face))                                                     */
 
 ;*---------------------------------------------------------------------*/
+;*    hopjs-visit-import ...                                           */
+;*---------------------------------------------------------------------*/
+(defun hopjs-visit-import (pos)
+  (interactive "d")
+  (let ((name (hopjs-visit-import-get-file-name pos)))
+    (when name (find-file name))))
+
+;*---------------------------------------------------------------------*/
+;*    hopjs-visit-import-other-window ...                              */
+;*---------------------------------------------------------------------*/
+(defun hopjs-visit-import-other-window (pos)
+  (interactive "d")
+  (let ((name (hopjs-visit-import-get-file-name pos)))
+    (when name (find-file-other-window name))))
+
+;*---------------------------------------------------------------------*/
+;*    hopjs-visit-import-other-frame ...                               */
+;*---------------------------------------------------------------------*/
+(defun hopjs-visit-import-other-frame (pos)
+  (interactive "d")
+  (let ((name (hopjs-visit-import-get-file-name pos)))
+    (when name (find-file-other-frame name))))
+
+;*---------------------------------------------------------------------*/
+;*    hopjs-visit-import-get-file-name ...                             */
+;*---------------------------------------------------------------------*/
+(defun hopjs-visit-import-get-file-name (pos)
+  (when (eq (get-text-property pos 'face) 'font-lock-string-face)
+    (let ((init (point)))
+      (when (re-search-backward "\"" (point-min) t)
+	(let ((beg (point)))
+	  (goto-char init)
+	  (when (re-search-forward "\"" (point-max) t)
+	    (let* ((end (point))
+		   (name (buffer-substring-no-properties (1+ beg) (1- end)))
+		   (dir (file-name-directory (buffer-file-name (current-buffer)))))
+	      (concat dir "/" name))))))))
+
+;*---------------------------------------------------------------------*/
 ;*    hopjs-mode-line-format ...                                       */
 ;*---------------------------------------------------------------------*/
 (defun hopjs-mode-line-format ()
@@ -1281,14 +1321,17 @@ usage: (js-return)  -- [RET]"
     (define-key map ")" 'hopjs-electric-paren)
     (local-unset-key ">")
     (define-key map ">" 'hopjs-electric-abra)
-    (define-key map "\C-c\C-c" 'hopjs-close-paren-tag)))
+    (define-key map "\C-c\C-c" 'hopjs-close-paren-tag)
+    (define-key map "\C-x." 'hopjs-visit-import)
+    (define-key map "\C-x4." 'hopjs-visit-import-other-window)
+    (define-key map "\C-x5." 'hopjs-visit-import-other-frame)))
 
 ;*---------------------------------------------------------------------*/
 ;*    tooltip ...                                                      */
 ;*---------------------------------------------------------------------*/
 (defvar hopjs-tooltip-map (make-sparse-keymap))
 ;; mouse-2
-(define-key hopjs-tooltip-map[(mouse-2)]
+(define-key hopjs-tooltip-map [(mouse-2)]
   (function hopjs-doc-entry))
 
 ;*---------------------------------------------------------------------*/

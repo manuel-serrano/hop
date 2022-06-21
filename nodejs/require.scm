@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Fri Jun  3 11:07:44 2022 (serrano)                */
+;*    Last change :  Fri Jun  3 17:38:31 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -1759,6 +1759,7 @@
 			     estr))))))))
    
    (define (dump-error cmd sopath msg)
+      (fprint (current-error-port) msg "\n")
       (call-with-output-file (string-append sopath ".err")
 	 (lambda (op)
 	    (display cmd op)
@@ -1821,9 +1822,9 @@
 				 ;; bigloo
 				 ,(format "--bigloo=~a" (hop-bigloo))
 				 ;; verbosity
-				 ,@(if (= (hop-verbose) 0)
-				       (if (eq? nodejs-debug-compile 'yes) '("-v4") '())
-				       (list (format "-v~a" (hop-verbose))))
+				 ,@(if (eq? nodejs-debug-compile 'yes)
+				       (list (format "-v~a" (hop-verbose)))
+				       '())
 				 ;; source
 				 ,@(cond
 				      ((string? src)
