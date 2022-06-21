@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  1 07:14:59 2018                          */
-;*    Last change :  Tue May 31 07:15:27 2022 (serrano)                */
+;*    Last change :  Tue Jun 21 09:37:54 2022 (serrano)                */
 ;*    Copyright   :  2018-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs JavaScript/HTML parser                                     */
@@ -774,6 +774,8 @@
 	       ((semicolon)
 		(hopjs-parse-pop-token)
 		etok))))
+       ((function const var let)
+	(hopjs-parse-function ctx otok indent))
        (t
 	-2)))))
      
