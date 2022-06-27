@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/hopscript/arithmetic32.scm          */
+;*    /tmp/HOP/hop/hopscript/arithmetic32.scm                          */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Fri Oct 29 08:23:31 2021 (serrano)                */
-;*    Copyright   :  2017-21 Manuel Serrano                            */
+;*    Last change :  Sat Jun 25 17:18:32 2022 (serrano)                */
+;*    Copyright   :  2017-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on 32bit and nan64 platforms               */
 ;*=====================================================================*/
@@ -413,14 +413,14 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (+fx/overflow x::obj y::obj)
    (cond-expand
-      ((and bigloo-c (config have-overflow #t) (config nan-tagging #t))
+      ((and bigloo-c (not bigloo-saw) (config have-overflow #t) (config nan-tagging #t))
        (let ((res::int 0))
 	  (if (pragma::bool "__builtin_sadd_overflow((int)((long)$1), (int)((long)$2), &$3)"
 		 x y (pragma res))
 	      (pragma::real "DOUBLE_TO_REAL(((double)(CINT($1)))+((double)(CINT($2))))"
 		 x y)
 	      (pragma::bint "BINT($1)" res))))
-      ((and bigloo-c (config have-overflow #t))
+      ((and bigloo-c (not bigloo-saw) (config have-overflow #t))
        (let ((res::long 0))
 	  (if (pragma::bool "__builtin_saddl_overflow((long)$1, (long)$2-TAG_INT, &$3)"
 		 x y (pragma res))
@@ -437,14 +437,14 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (+fx32/overflow x::long y::long)
    (cond-expand
-      ((and bigloo-c (config have-overflow #t) (config nan-tagging #t))
+      ((and bigloo-c (not bigloo-saw) (config have-overflow #t) (config nan-tagging #t))
        (let ((res::int 0))
 	  (if (pragma::bool "__builtin_sadd_overflow((int)$1, (int)$2, &$3)"
 		 x y (pragma res))
 	      (pragma::real "DOUBLE_TO_REAL(((double)($1))+((double)($2)))"
 		 x y)
 	      (pragma::bint "BINT($1)" res))))
-      ((and bigloo-c (config have-overflow #t))
+      ((and bigloo-c (not bigloo-saw) (config have-overflow #t))
        (let ((res::long 0))
 	  (if (pragma::bool "__builtin_saddl_overflow($1, $2, &$3)"
 		 x y (pragma res))
@@ -468,14 +468,14 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (+u32/overflow x::uint32 y::uint32)
    (cond-expand
-      ((and bigloo-c (config have-overflow #t) (config nan-tagging #t))
+      ((and bigloo-c (not bigloo-saw) (config have-overflow #t) (config nan-tagging #t))
        (let ((res::uint32 0))
 	  (if (pragma::bool "__builtin_uadd_overflow($1, $2, &$3)"
 		 x y (pragma res))
 	      (pragma::real "DOUBLE_TO_REAL(((double)($1))+((double)($2)))"
 		 x y)
 	      (js-uint32-tointeger res))))
-      ((and bigloo-c (config have-overflow #t))
+      ((and bigloo-c (not bigloo-saw) (config have-overflow #t))
        (let ((res::ulong 0))
 	  (if (pragma::bool "__builtin_uaddl_overflow($1, $2, &$3)"
 		 x y (pragma res))
@@ -548,14 +548,14 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (-fx/overflow x::obj y::obj)
    (cond-expand
-      ((and bigloo-c (config have-overflow #t) (config nan-tagging #t))
+      ((and bigloo-c (not bigloo-saw) (config have-overflow #t) (config nan-tagging #t))
        (let ((res::int 0))
 	  (if (pragma::bool "__builtin_ssub_overflow((int)((long)$1), (int)((long)$2), &$3)"
 		 x y (pragma res))
 	      (pragma::real "DOUBLE_TO_REAL(((double)(CINT($1)))+((double)(CINT($2))))"
 		 x y)
 	      (pragma::bint "BINT($1)" res))))
-      ((and bigloo-c (config have-overflow #t))
+      ((and bigloo-c (not bigloo-saw) (config have-overflow #t))
        (let ((res::long 0))
 	  (if (pragma::bool "__builtin_ssubl_overflow((long)$1, (long)$2-TAG_INT, &$3)"
 		 x y (pragma res))
@@ -572,14 +572,14 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (-fx32/overflow x::long y::long)
    (cond-expand
-      ((and bigloo-c (config have-overflow #t) (config nan-tagging #t))
+      ((and bigloo-c (not bigloo-saw) (config have-overflow #t) (config nan-tagging #t))
        (let ((res::int32 #s32:0))
 	  (if (pragma::bool "__builtin_ssub_overflow($1, $2, &$3)"
 		 x y (pragma res))
 	      (pragma::real "DOUBLE_TO_REAL(((double)($1))-((double)($2)))"
 		 x y)
 	     (pragma::bint "BINT($1)" res))))
-      ((and bigloo-c (config have-overflow #t))
+      ((and bigloo-c (not bigloo-saw) (config have-overflow #t))
        (let ((res::long 0))
 	  (if (pragma::bool "__builtin_ssubl_overflow($1, $2, &$3)"
 		 x y (pragma res))
@@ -603,14 +603,14 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (-u32/overflow x::uint32 y::uint32)
    (cond-expand
-      ((and bigloo-c (config have-overflow #t) (config nan-tagging #t))
+      ((and bigloo-c (not bigloo-saw) (config have-overflow #t) (config nan-tagging #t))
        (let ((res::uint32 0))
 	  (if (pragma::bool "__builtin_usub_overflow($1, $2, &$3)"
 		 x y (pragma res))
 	      (pragma::real "DOUBLE_TO_REAL(((double)($1))-((double)($2)))"
 		 x y)
 	      (js-uint32-tointeger res))))
-      ((and bigloo-c (config have-overflow #t))
+      ((and bigloo-c (not bigloo-saw) (config have-overflow #t))
        (let ((res::ulong 0))
 	  (if (pragma::bool "__builtin_usubl_overflow($1, $2, &$3)"
 		 x y (pragma res))
@@ -667,7 +667,7 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (*fx/overflow x::obj y::obj)
    (cond-expand
-      ((and bigloo-c (config have-overflow #t) (config nan-tagging #t))
+      ((and bigloo-c (not bigloo-saw) (config have-overflow #t) (config nan-tagging #t))
        (let ((res::int32 #s32:0))
 	  (cond
 	     ((pragma::bool "__builtin_smul_overflow((int)((long)$1), (int)((long)$2), &$3)"
@@ -681,7 +681,7 @@
 		  (pragma::bint "BINT($1)" res)))
 	     (else
 	      (pragma::bint "BINT($1)" res)))))
-      ((and bigloo-c (config have-overflow #t))
+      ((and bigloo-c (not bigloo-saw) (config have-overflow #t))
        (let ((res::long 0))
 	  (cond
 	     ((pragma::bool "__builtin_smull_overflow((long)(CINT($1)), (long)(CINT($2)), &$3)"
@@ -732,14 +732,14 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (*u32/overflow x::uint32 y::uint32)
    (cond-expand
-      ((and bigloo-c (config have-overflow #t) (config nan-tagging #t))
+      ((and bigloo-c (not bigloo-saw) (config have-overflow #t) (config nan-tagging #t))
        (let ((res::uint32 0))
 	  (if (pragma::bool "__builtin_umul_overflow($1, $2, &$3)"
 		 x y (pragma res))
 	      (pragma::real "DOUBLE_TO_REAL(((double)($1))*((double)($2)))"
 		 x y)
 	      (js-uint32-tointeger (pragma::uint32 "(uint32_t)$1" res)))))
-      ((and bigloo-c (config have-overflow #t))
+      ((and bigloo-c (not bigloo-saw) (config have-overflow #t))
        (let ((res::ulong 0))
 	  (if (pragma::bool "__builtin_umull_overflow($1, $2, &$3)"
 		 x y (pragma res))

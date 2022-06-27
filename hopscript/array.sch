@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/hopscript/array.sch                 */
+;*    /tmp/HOP/hop/hopscript/array.sch                                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec 18 08:02:30 2016                          */
-;*    Last change :  Thu Oct 21 14:37:59 2021 (serrano)                */
-;*    Copyright   :  2016-21 Manuel Serrano                            */
+;*    Last change :  Sat Jun 25 16:40:34 2022 (serrano)                */
+;*    Copyright   :  2016-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Array macros for js2scheme                                       */
 ;*=====================================================================*/
@@ -230,7 +230,7 @@
        (match-case proc
 	  ((lambda (?v) . ?body)
 	   (cond-expand
-	      ((and bigloo-c (config have-c99-stack-alloc #t) (not devel) (not debug))
+	      ((and bigloo-c (not bigloo-saw) (config have-c99-stack-alloc #t) (not devel) (not debug))
 	       (let ((p (gensym 'p))
 		     (len (length args)))
 		  `(let ()
@@ -251,7 +251,7 @@
        (match-case proc
 	  ((lambda (?v) . ?body)
 	   (cond-expand
-	      ((and bigloo-c (config have-c99-stack-alloc #t) (not devel) (not debug))
+	      ((and bigloo-c (not bigloo-saw) (config have-c99-stack-alloc #t) (not devel) (not debug))
 	       (let ((p (gensym 'p))
 		     (l (gensym 'l)))
 		  `(let ((,l ,len))
@@ -270,7 +270,7 @@
        (match-case proc
 	  ((lambda (?v) . ?body)
 	   (cond-expand
-	      ((and bigloo-c (config have-c99-stack-alloc #t) (not devel) (not debug))
+	      ((and bigloo-c (not bigloo-saw) (config have-c99-stack-alloc #t) (not devel) (not debug))
 	       (let* ((p (gensym 'p))
 		      (i (gensym 'i))
 		      (len (gensym 'l))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  1 07:14:59 2018                          */
-;*    Last change :  Tue Jun 21 09:37:54 2022 (serrano)                */
+;*    Last change :  Tue Jun 21 13:38:58 2022 (serrano)                */
 ;*    Copyright   :  2018-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs JavaScript/HTML parser                                     */
@@ -468,6 +468,7 @@
 		   (cons (hopjs-parse-token 'blank (point) (point))
 			 tokens))
 	     (forward-char 1)))))
+       (skip-chars-backward " \t")
        (setq tokens (cons (hopjs-parse-token 'eop (point) (point)) tokens))
        (let ((r (if rev tokens (reverse tokens))))
 	 (hopjs-debug 0 "hopjs-parse-tokenify %s/%s -> %s" pos limit r)
@@ -656,6 +657,7 @@
 	   (while (not (numberp res))
 	     (let* ((tok (hopjs-parse-peek-token))
 		    (indent (hopjs-parse-token-column tok)))
+	       (hopjs-debug 0 "hopjs-parse-at.tok tok=%s indent=%s" tok indent)
 	       (case (hopjs-parse-token-type tok)
 		 ((function function* service)
 		  (setq res (hopjs-parse-function hopjs-parse-initial-context tok indent)))

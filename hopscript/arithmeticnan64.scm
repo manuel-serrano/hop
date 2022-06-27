@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/arithmeticnan64.scm     */
+;*    /tmp/HOP/hop/hopscript/arithmeticnan64.scm                       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Sun Apr 22 14:06:12 2018 (serrano)                */
-;*    Copyright   :  2017-18 Manuel Serrano                            */
+;*    Last change :  Sat Jun 25 17:19:29 2022 (serrano)                */
+;*    Copyright   :  2017-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on nan+64bit platforms                     */
 ;*=====================================================================*/
@@ -282,7 +282,7 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (+fx/overflow x::obj y::obj)
    (cond-expand
-      ((and bigloo-c (config have-overflow #t))
+      ((and bigloo-c (not bigloo-saw) (config have-overflow #t))
        (let ((res::long 0))
 	  (if (pragma::bool "__builtin_saddl_overflow((long)$1, (long)$2-TAG_INT, &$3)"
 		 x y (pragma res))
@@ -299,7 +299,7 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (+fx32/overflow x::long y::long)
    (cond-expand
-      ((and bigloo-c (config have-overflow #t))
+      ((and bigloo-c (not bigloo-saw) (config have-overflow #t))
        (let ((res::long 0))
 	  (if (pragma::bool "__builtin_saddl_overflow($1, $2, &$3)"
 		 x y (pragma res))
@@ -323,7 +323,7 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (+u32/overflow x::uint32 y::uint32)
    (cond-expand
-      ((and bigloo-c (config have-overflow #t))
+      ((and bigloo-c (not bigloo-saw) (config have-overflow #t))
        (let ((res::long 0))
 	  (if (pragma::bool "__builtin_uaddl_overflow($1, $2, &$3)"
 		 x y (pragma res))
@@ -367,7 +367,7 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (-fx32/overflow x::long y::long)
    (cond-expand
-      ((and bigloo-c (config have-overflow #t))
+      ((and bigloo-c (not bigloo-saw) (config have-overflow #t))
        (let ((res::long 0))
 	  (if (pragma::bool "__builtin_ssubl_overflow($1, $2, &$3)"
 		 x y (pragma res))
@@ -391,7 +391,7 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (-u32/overflow x::uint32 y::uint32)
    (cond-expand
-      ((and bigloo-c (config have-overflow #t))
+      ((and bigloo-c (not bigloo-saw) (config have-overflow #t))
        (overflow29 (int32->fixnum (uint32->int32 (-u32 x y)))))
       (else
        (let ((z::long (pragma::long "(~($1 ^ $2)) & 0x80000000" x y)))
@@ -422,7 +422,7 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (*fx/overflow x::long y::long)
    (cond-expand
-      ((and bigloo-c (config have-overflow #t))
+      ((and bigloo-c (not bigloo-saw) (config have-overflow #t))
        (let ((res::long 0))
 	  (cond
 	     ((pragma::bool "__builtin_smull_overflow($1, $2, &$3)"
@@ -474,7 +474,7 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (*u32/overflow x::uint32 y::uint32)
    (cond-expand
-      ((and bigloo-c (config have-overflow #t))
+      ((and bigloo-c (not bigloo-saw) (config have-overflow #t))
        (let ((res::long 0))
 	  (if (pragma::bool "__builtin_umull_overflow($1, $2, &$3)"
 		 x y (pragma res))
