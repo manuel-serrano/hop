@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Sun Jul  3 18:18:10 2022 (serrano)                */
+;*    Last change :  Sun Jul  3 18:29:24 2022 (serrano)                */
 ;*    Copyright   :  2014-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -1357,16 +1357,18 @@ usage: (js-return)  -- [RET]"
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-auto-indent ...                                            */
 ;*---------------------------------------------------------------------*/
-(defun hopjs-auto-indent (&optional ccol)
+(defun hopjs-auto-indent (&optional col)
   (interactive)
   (cond
    (hopjs-indent-custom
-    (let ((mov '())
+    (let ((ccol (current-column))
 	  (ocol 0)
-	  (opos (point)))
+	  (opos (point))
+	  (mov nil))
       (beginning-of-line)
       (skip-chars-forward "[ \t]+")
       (let ((icol (hopjs-parse-at (point))))
+	(message "ocol=%s ccol=%s -> icol=%s" ocol ccol icol)
 	(cond
 	 ((and icol (>= icol 0))
 	  (beginning-of-line)
@@ -1411,10 +1413,9 @@ usage: (js-return)  -- [RET]"
 	      (line-move-to-column ccol))))))
 	 ((and icol (< icol 0))
 	  (message "parse-error: %s %s" icol ccol)
-	  (let ((col (current-column)))
-	    (if (and (= col 0) (looking-at "\n"))
-		(indent-to ccol)
-	      (goto-char opos))))
+	  (if (and col (> col 0) (looking-at "\n"))
+	      (indent-to col)
+	    (goto-char opos)))
 	 ((and (not icol) (> ccol 0))
 	  (goto-char opos))))))
    ((hopjs-old-indent-function)
