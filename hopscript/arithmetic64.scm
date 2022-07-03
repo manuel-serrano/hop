@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/hopscript/arithmetic64.scm          */
+;*    /tmp/HOP/hop/hopscript/arithmetic64.scm                          */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Mon Nov 22 20:28:49 2021 (serrano)                */
-;*    Copyright   :  2017-21 Manuel Serrano                            */
+;*    Last change :  Sat Jun 25 17:14:22 2022 (serrano)                */
+;*    Copyright   :  2017-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on 64 bit platforms                        */
 ;*=====================================================================*/
@@ -597,7 +597,7 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (*fx/overflow x::long y::long)
    (cond-expand
-      ((and bigloo-c (config have-overflow #t))
+      ((and bigloo-c (not bigloo-saw) (config have-overflow #t))
        (let ((res::long 0))
 	  (cond
 	     ((pragma::bool "__builtin_smull_overflow((long)$1, (long)$2, &$3)"
@@ -641,7 +641,7 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (*fx/overflow-sans-zero x::long y::long)
    (cond-expand
-      ((and bigloo-c (config have-overflow #t))
+      ((and bigloo-c (not bigloo-saw) (config have-overflow #t))
        (let ((res::long 0))
 	  (cond
 	     ((pragma::bool "__builtin_smull_overflow((long)$1, (long)$2, &$3)"
@@ -671,9 +671,8 @@
 ;*    *s32/overflow ...                                                */
 ;*---------------------------------------------------------------------*/
 (define-inline (*s32/overflow x::int32 y::int32)
-;*    (*fx/overflow-sans-zero (int32->fixnum x) (int32->fixnum y))     */
    (cond-expand
-      ((and bigloo-c (config have-overflow #t))
+      ((and bigloo-c (not bigloo-saw) (config have-overflow #t))
        (let ((res::long 0))
 	  ;; left align the 32bit numbers (64-53-1)=10
 	  (if (pragma::bool "__builtin_smull_overflow($1 << 10, $2, &$3)"
@@ -689,7 +688,7 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (*u32/overflow x::uint32 y::uint32)
    (cond-expand
-      ((and bigloo-c (config have-overflow #t))
+      ((and bigloo-c (not bigloo-saw) (config have-overflow #t))
        (let ((res::long 0))
 	  (if (pragma::bool "__builtin_umull_overflow($1, $2, &$3)"
 		 x y (pragma res))

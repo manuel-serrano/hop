@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/nodejs/require.scm                  */
+;*    /tmp/HOP/hop/nodejs/require.scm                                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Fri Jun  3 17:38:31 2022 (serrano)                */
+;*    Last change :  Sat Jun 25 17:15:35 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -65,6 +65,22 @@
       (if (string? env)
 	  (string->integer env)
 	  #f)))
+
+;*---------------------------------------------------------------------*/
+;*    %env-push-trace ...                                              */
+;*---------------------------------------------------------------------*/
+(define-macro (%env-push-trace denv traceid val)
+   (cond-expand
+      ((and bigloo-c (not bigloo-saw)) `($env-push-trace ,denv ,traceid ,val))
+      (else #unspecified)))
+
+;*---------------------------------------------------------------------*/
+;*    %env-pop-trace ...                                               */
+;*---------------------------------------------------------------------*/
+(define-macro (%env-pop-trace denv)
+   (cond-expand
+      ((and bigloo-c (not bigloo-saw)) `($env-pop-trace ,denv))
+      (else #unspecified)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-debug ...                                                    */
@@ -756,9 +772,9 @@
 		   (let ((dyn::dynamic-env (current-dynamic-env))
 			 (mod (evmodule-name %module)))
 		      (let ()
-			 ($env-push-trace dyn mod loc)
+			 (%env-push-trace dyn mod loc)
 			 (let ((v (eval `(@ ,(car sym) ,mod))))
-			    ($env-pop-trace dyn)
+			    (%env-pop-trace dyn)
 			    v))))))
 	    ((string? %module)
 	     (dynamic-load-symbol-get
@@ -2270,9 +2286,9 @@
 	    (if (eq? mod (js-absent))
 		(let ((env (current-dynamic-env)))
 		   (let ()
-		      ($env-push-trace env path loc)
+		      (%env-push-trace env path loc)
 		      (let ((v (load-module path path worker %this %module lang compiler #f)))
-			 ($env-pop-trace env)
+			 (%env-pop-trace env)
 			 v)))
 		mod)))))
 

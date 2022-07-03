@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/runtime/read.scm                    */
+;*    /tmp/HOP/hop/runtime/read.scm                                    */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Tue Mar  8 08:37:47 2022 (serrano)                */
+;*    Last change :  Sat Jun 25 16:25:03 2022 (serrano)                */
 ;*    Copyright   :  2005-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -1150,6 +1150,30 @@
        file))
 
 ;*---------------------------------------------------------------------*/
+;*    %env-push-trace ...                                              */
+;*---------------------------------------------------------------------*/
+(define-macro (%env-push-trace denv traceid val)
+   (cond-expand
+      ((and bigloo-c (not bigloo-saw)) `($env-push-trace ,denv ,traceid ,val))
+      (else #unspecified)))
+
+;*---------------------------------------------------------------------*/
+;*    %env-pop-trace ...                                               */
+;*---------------------------------------------------------------------*/
+(define-macro (%env-pop-trace denv)
+   (cond-expand
+      ((and bigloo-c (not bigloo-saw)) `($env-pop-trace ,denv))
+      (else #unspecified)))
+
+;*---------------------------------------------------------------------*/
+;*    %env-set-trace-location ...                                      */
+;*---------------------------------------------------------------------*/
+(define-macro (%env-set-trace-location denv val)
+   (cond-expand
+      ((and bigloo-c (not bigloo-saw)) `($env-set-trace-location ,denv ,val))
+      (else #unspecified)))
+
+;*---------------------------------------------------------------------*/
 ;*    hop-load-file ...                                                */
 ;*    -------------------------------------------------------------    */
 ;*    The C code generation imposes the variable traceid not to        */
@@ -1179,7 +1203,7 @@
 			 (m (eval-module)))
 		      (unwind-protect
 			 (let ()
-			    ($env-push-trace denv traceid #f)
+			    (%env-push-trace denv traceid #f)
 			    (when afile (hop-load-afile apath))
 			    (loading-file-set! path)
 			    (when (evmodule? env) (eval-module-set! env))
@@ -1195,13 +1219,13 @@
 					       :cenv cenv :menv menv
 					       :location loc)))
 				      (when (epair? e)
-					 ($env-set-trace-location denv (cer e)))
+					 (%env-set-trace-location denv (cer e)))
 				      (if (eof-object? e)
 					  (let ((nm (eval-module)))
 					     (when (and (not (eq? m nm))
 							(evmodule? nm))
 						(evmodule-check-unbound nm #f))
-					     ($env-pop-trace denv)
+					     (%env-pop-trace denv)
 					     last)
 					  (let ((val (eval! e (eval-module))))
 					     (when (isa? val xml-tilde)
@@ -1218,12 +1242,12 @@
 					       :cenv cenv :menv menv
 					       :location loc)))
 				      (when (epair? e)
-					 ($env-set-trace-location denv (cer e)))
+					 (%env-set-trace-location denv (cer e)))
 				      (if (eof-object? e)
 					  (let ((nm (eval-module)))
 					     (unless (eq? m nm)
 						(evmodule-check-unbound nm #f))
-					     ($env-pop-trace denv)
+					     (%env-pop-trace denv)
 					     (reverse! res))
 					  (let ((val (eval! e (eval-module))))
 					     (loop (cons val res) #f))))))
@@ -1234,12 +1258,12 @@
 					       :cenv cenv :menv menv
 					       :location loc)))
 				      (when (epair? e)
-					 ($env-set-trace-location denv (cer e)))
+					 (%env-set-trace-location denv (cer e)))
 				      (if (eof-object? e)
 					  (let ((nm (eval-module)))
 					     (unless (eq? m nm)
 						(evmodule-check-unbound nm #f))
-					     ($env-pop-trace denv)
+					     (%env-pop-trace denv)
 					     (unless (eq? m nm) nm))
 					  (let ((val (eval! e (eval-module))))
 					     (loop #f))))))

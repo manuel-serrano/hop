@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/hopscript/arithmetic.scm            */
+;*    /tmp/HOP/hop/hopscript/arithmetic.scm                            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 07:42:21 2017                          */
-;*    Last change :  Fri Nov 19 18:51:55 2021 (serrano)                */
-;*    Copyright   :  2017-21 Manuel Serrano                            */
+;*    Last change :  Sat Jun 25 16:57:01 2022 (serrano)                */
+;*    Copyright   :  2017-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JS arithmetic operations (see 32 and 64 implementations).        */
 ;*=====================================================================*/
@@ -392,7 +392,7 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (jsintegerfl? n::double)
    (and (cond-expand
-	   (bigloo-c
+	   ((and bigloo-c (not bigloo-saw))
 	    (let ((intpart::double 0.0))
 	       (=fl ($modf n (pragma::void* "&($1)" (pragma intpart))) 0.0)))
 	   (else
