@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  1 07:14:59 2018                          */
-;*    Last change :  Sun Jul  3 18:42:39 2022 (serrano)                */
+;*    Last change :  Mon Jul  4 08:45:08 2022 (serrano)                */
 ;*    Copyright   :  2018-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs JavaScript/HTML parser                                     */
@@ -594,7 +594,8 @@
 ;*---------------------------------------------------------------------*/
 (defun hopjs-parse-start-stmtp (end)
   (or (re-search-forward hopjs-parse-start-stmt-rx end t 1)
-      (and (>= (length hopjs-parse-initial-context) 2)
+      (and (>= (length hopjs-parse-initial-context) 3)
+	   (aref hopjs-parse-initial-context 2)
 	   (re-search-forward (aref hopjs-parse-initial-context 2) end t 1))))
 
 ;*---------------------------------------------------------------------*/
