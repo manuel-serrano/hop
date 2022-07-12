@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Mon Dec 27 13:59:08 2021 (serrano)                */
-;*    Copyright   :  2013-21 Manuel Serrano                            */
+;*    Last change :  Tue Jul 12 16:29:00 2022 (serrano)                */
+;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for client side code).                                   */
 ;*=====================================================================*/
@@ -1533,7 +1533,7 @@
 		   `("} from " ,(import-path path) ";\n")))))))
 
    (if (context-get ctx :es6-module-client #f)
-       (with-access::J2SImport this (names ipath dollarpath %info)
+       (with-access::J2SImport this (names ipath dollarpath path %info)
 	  (if (eq? %info 'generated)
 	      '()
 	      (let ((p (cond
@@ -1542,10 +1542,12 @@
 			  ((isa? ipath J2SImportPath)
 			   (with-access::J2SImportPath ipath (name)
 			      (string-append "'" name "'")))
-			  (#t
-			   '(glop))
+			  ((string? path)
+			   (string-append "'" path "'"))
 			  (else
-			   (error "import" "Illegal path" (j2s->sexp this))))))
+			   (error "import"
+			      (format "Illegal path (~a)" (typeof path))
+			      (j2s->sexp this))))))
 		 (set! %info 'generated)
 		 (import-module this p))))
        '()))
