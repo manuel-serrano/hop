@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 20 14:34:39 2016                          */
-;*    Last change :  Fri Jun  3 18:19:29 2022 (serrano)                */
+;*    Last change :  Fri Jul 22 15:53:02 2022 (serrano)                */
 ;*    Copyright   :  2016-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    AST Alpha conversion                                             */
@@ -517,6 +517,37 @@
 		       (duplicate::J2SSeq this (nodes nnodes))))
 		(call-next-method))))))
 
+;*---------------------------------------------------------------------*/
+;*    alpha ::J2SFor ...                                               */
+;*---------------------------------------------------------------------*/
+(define-method (alpha this::J2SFor)
+   (with-trace 'inline "alpha::J2SFor"
+      (trace-item "this=" (j2s->sexp this))
+      (with-access::J2SFor this (init test incr body)
+	 (if (isa? init J2SVarDecls)
+	     (with-access::J2SVarDecls init (decls)
+		(let ((ndecls (map j2sdecl-duplicate decls)))
+		   (set! init (j2s-alpha init decls ndecls))
+		   (set! test (j2s-alpha test decls ndecls))
+		   (set! body (j2s-alpha body decls ndecls))
+		   this))
+	     (call-next-method)))))
+	 
+;*---------------------------------------------------------------------*/
+;*    alpha ::J2SForIn ...                                             */
+;*---------------------------------------------------------------------*/
+(define-method (alpha this::J2SForIn)
+   (with-trace 'inline "alpha::J2SForIn"
+      (trace-item "this=" (j2s->sexp this))
+      (with-access::J2SForIn this (lhs obj body)
+	 (if (isa? lhs J2SVarDecls)
+	     (with-access::J2SVarDecls lhs (decls)
+		(let ((ndecls (map j2sdecl-duplicate decls)))
+		   (set! obj (j2s-alpha obj decls ndecls))
+		   (set! body (j2s-alpha body decls ndecls))
+		   this))
+	     (call-next-method)))))
+	 
 ;*---------------------------------------------------------------------*/
 ;*    alpha ::J2SLetBlock ...                                          */
 ;*---------------------------------------------------------------------*/
