@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  1 07:14:59 2018                          */
-;*    Last change :  Fri Jul 22 08:28:48 2022 (serrano)                */
+;*    Last change :  Tue Aug  9 07:17:13 2022 (serrano)                */
 ;*    Copyright   :  2018-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs JavaScript/HTML parser                                     */
@@ -108,6 +108,7 @@
 	   'number)
      (cons (rxor "-Infinity" "Infinity") 'number)
      ;; punctuation
+     (cons "[.][.][].]" 'dots)
      (cons (rxor "[{}()[.;,:?]" (rxq "]")) 'punct)
      (cons "[?][.]" 'dot)
      ;; unop
@@ -123,8 +124,6 @@
      (cons (rxor "=" "[+*%^&|-]=" "<<=" ">>=" ">>>=") '=)
      ;; prefix
      (cons (rxor (rx: (rxq "+") (rxq "+")) "--") 'prefix)
-     ;; dots
-     (cons "[.][.][].]" 'dots)
      ;; strings
      (cons (rxor "\"\\([^\"\\]\\|\\\\.\\)*\"" "'[^']*'" "`[^`]*`") 'string)
      ;; regexp
