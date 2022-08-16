@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  1 07:14:59 2018                          */
-;*    Last change :  Tue Aug  9 07:17:13 2022 (serrano)                */
+;*    Last change :  Wed Aug 10 08:34:21 2022 (serrano)                */
 ;*    Copyright   :  2018-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs JavaScript/HTML parser                                     */
@@ -115,6 +115,18 @@
      (cons (rxor (rxq "!") (rxq "~") (rxq "++") (rxq "--")) 'unop)
      ;; arrow
      (cons "=>" '=>)
+     ;; html-comment
+     (cons "<!--\\(?:[^-]\\|-[^-]\\|--[^>]\\)[-]+->" 'html-comment)
+     ;; otag
+     (cons (rx: "<" tagid ">") 'otag)
+     ;; ctag
+     (cons (rx: "</" tagid ">") 'ctag)
+     ;; ohtml
+     (cons (rx: "\\(<" tagid "\\)[ \t\n]+") 'ohtml)
+     ;; chtml
+     (cons "/>" 'chtml)
+     ;; html
+     (cons (rx: "<" tagid "/>") 'html)
      ;; binop
      (cons (rxor "<=?" ">=?" (rxq "+") (rxq "-") "[*][*]?"
 		 (rxq "%") "==+" "!==+" "||?" "&&?" "/"
@@ -139,18 +151,6 @@
      (cons (rx: id_start (rx* id_part)) 'ident)
      ;; scheme ident
      (cons (rx: scmid_start (rx* scmid_part)) 'ident)
-     ;; html-comment
-     (cons "<!--\\(?:[^-]\\|-[^-]\\|--[^>]\\)[-]+->" 'html-comment)
-     ;; otag
-     (cons (rx: "<" tagid ">") 'otag)
-     ;; ctag
-     (cons (rx: "</" tagid ">") 'ctag)
-     ;; ohtml
-     (cons (rx: "\\(<" tagid "\\)[ \t\n]+") 'ohtml)
-     ;; chtml
-     (cons "/>" 'chtml)
-     ;; html
-     (cons (rx: "<" tagid "/>") 'html)
      ;; end of comment
      (cons (rxq "*/") 'ecomment)
      ;; scheme mark
