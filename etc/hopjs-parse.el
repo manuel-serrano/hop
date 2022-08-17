@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  1 07:14:59 2018                          */
-;*    Last change :  Wed Aug 10 08:34:21 2022 (serrano)                */
+;*    Last change :  Wed Aug 17 11:43:57 2022 (serrano)                */
 ;*    Copyright   :  2018-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs JavaScript/HTML parser                                     */
@@ -2197,7 +2197,7 @@
 		      (if (eq (hopjs-parse-peek-token-type) 'eop)
 			  (cond
 			   ((hopjs-parse-token-in-linep otok xtok)
-			    (hopjs-parse-xml ctx otok 0))
+			    (hopjs-parse-token-column otok 0))
 			   ((hopjs-parse-token-in-linep xtok ctok)
 			    (hopjs-parse-token-column xtok 0))
 			   (t
