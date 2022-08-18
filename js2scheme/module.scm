@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 15 15:16:16 2018                          */
-;*    Last change :  Fri Jun  3 11:32:14 2022 (serrano)                */
+;*    Last change :  Wed Aug 17 14:08:47 2022 (serrano)                */
 ;*    Copyright   :  2018-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES6 Module handling                                              */
@@ -485,16 +485,6 @@
 	 (resolve-path-file-or-directory path)))
    
    (define (resolve-error x)
-      (tprint "ERROR " name)
-      (tprint "hop-modules-path=" hop-modules-path)
-      (tprint "source=" (config-get args :source #f))
-      (tprint "lib-path=" (config-get args :hop-library-path "."))
-      (tprint "node-modules=" (config-get args :node-modules-directory "."))
-      (tprint "ARGS=" (let loop ((args args))
-			 (if (null? args)
-			     '()
-			     (cons (car args)
-				(loop (cddr args))))))
       (raise
 	 (instantiate::&io-file-not-found-error
 	    (proc "hopc:resolve")
