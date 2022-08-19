@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Thu Apr 14 18:00:17 2022 (serrano)                */
+;*    Last change :  Fri Aug 19 09:18:49 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preallocate constant objects (regexps, literal cmaps,            */
@@ -40,22 +40,27 @@
 ;*    j2s-constant ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (j2s-constant this conf)
+
+   (define (key-hashnumber v)
+      (if (pair? v)
+	  (get-hashnumber (car v))
+	  (get-hashnumber v)))
    
    (define (keys-hashnumber v)
       (cond
 	 ((not (vector? v))
-	  (get-hashnumber v))
+	  (key-hashnumber v))
 	 ((=fx (vector-length v) 0)
 	  0)
 	 ((=fx (vector-length v) 1)
-	  (get-hashnumber (vector-ref v 0)))
+	  (key-hashnumber (vector-ref v 0)))
 	 (else
 	  (let loop ((i (-fx (vector-length v) 2))
-		     (n (get-hashnumber
+		     (n (key-hashnumber
 			   (vector-ref v (-fx (vector-length v) 1)))))
 	     (if (=fx i 0)
 		 n
-		 (bit-xor (get-hashnumber (vector-ref v i)) n))))))
+		 (bit-xor (key-hashnumber (vector-ref v i)) n))))))
    
    (when (isa? this J2SProgram)
       (with-access::J2SProgram this (nodes headers decls loc pcache-size cnsts)
@@ -131,6 +136,8 @@
    (let* ((t (env-inits-table env))
 	  (k keys)
 	  (old (when sharing (hashtable-get t k))))
+      (when (and sharing (not old))
+	 (tprint "ADD-CMAP..." keys " " ((struct-ref t 4) k)))
       ;; don't store empty cmap in the hash table in order to get
       ;; separated cmap for all empty object creation sites
       (or old

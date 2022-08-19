@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  2 08:22:25 2007                          */
-;*    Last change :  Thu Apr 18 07:50:19 2019 (serrano)                */
-;*    Copyright   :  2007-20 Manuel Serrano                            */
+;*    Last change :  Thu Aug 18 10:26:52 2022 (serrano)                */
+;*    Copyright   :  2007-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop SVG support.                                                 */
 ;*=====================================================================*/
@@ -436,7 +436,6 @@
 		      (error "<SVG:IMG>" "Illegal file format" ip)))
 		  ip)))
 
-   (tprint "read-brute..")
    (multiple-value-bind (encoding prelude)
       (read-upto-svg-markup p)
       (let loop ((attrs '())
