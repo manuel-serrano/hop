@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Fri Aug 19 09:18:49 2022 (serrano)                */
+;*    Last change :  Fri Aug 19 09:38:16 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preallocate constant objects (regexps, literal cmaps,            */
@@ -136,8 +136,6 @@
    (let* ((t (env-inits-table env))
 	  (k keys)
 	  (old (when sharing (hashtable-get t k))))
-      (when (and sharing (not old))
-	 (tprint "ADD-CMAP..." keys " " ((struct-ref t 4) k)))
       ;; don't store empty cmap in the hash table in order to get
       ;; separated cmap for all empty object creation sites
       (or old
