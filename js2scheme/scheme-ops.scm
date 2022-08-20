@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Tue Feb  8 14:15:13 2022 (serrano)                */
+;*    Last change :  Sat Aug 20 09:17:42 2022 (serrano)                */
 ;*    Copyright   :  2017-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -2426,6 +2426,10 @@
 				      `(remainderfx ,(asfixnum left tl)
 					  ,(asfixnum right tr))
 				      lhs 'bint type ctx)))
+			      ((eq? tl 'int53)
+			       (j2s-cast
+				  `(remainderfx ,left ,(asfixnum right tr))
+				  lhs 'bint type ctx))
 			      ((eq? (number type) 'integer)
 			       `(if (fixnum? ,left)
 				    ,(j2s-cast
@@ -2503,8 +2507,6 @@
 			   (j2s-cast `(%$$__ ,(tonumeric32 left tl ctx)
 					 ,(tonumeric32 right tr ctx) %this)
 			      lhs (number type) type ctx)))))))))))
-
-
 
 ;*---------------------------------------------------------------------*/
 ;*    remainders32-minus-zero ...                                      */
