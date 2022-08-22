@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Thu Feb 24 11:22:36 2022 (serrano)                */
+/*    Last change :  Sun Aug 21 08:29:33 2022 (serrano)                */
 /*    Copyright   :  2016-22 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -24,6 +24,15 @@
 #  define FILLER_COMMA 
 #else
 #  define FILLER_COMMA ,
+#endif
+
+/*---------------------------------------------------------------------*/
+/*    BHOPOBJECT                                                       */
+/*---------------------------------------------------------------------*/
+#if (defined(TAG_RESERVED))
+#  define BHOPOBJECT(o) BRESERVEDOBJECT(o)
+#else
+#  define BHOPOBJECT(o) BNANOBJECT(o)
 #endif
 
 /*---------------------------------------------------------------------*/
@@ -775,14 +784,14 @@ BGL_MAKE_JSOBJECT_SANS(int constrsize, obj_t constrmap, obj_t __proto__, uint32_
    int i;
 
    // class initialization
-   BGL_OBJECT_CLASS_NUM_SET(BNANOBJECT(o), JSOBJECT_CLASS_NUM);
+   BGL_OBJECT_CLASS_NUM_SET(BHOPOBJECT(o), JSOBJECT_CLASS_NUM);
    
    // fields init
    o->BgL_cmapz00 = (BgL_jsconstructmapz00_bglt)constrmap;
    o->BgL_elementsz00 = empty_vector;
 
-   HOP_OBJECT_HEADER_SIZE_SET(BNANOBJECT(o), (long)mode);
-   BGL_OBJECT_WIDENING_SET(BNANOBJECT(o), __proto__);
+   HOP_OBJECT_HEADER_SIZE_SET(BHOPOBJECT(o), (long)mode);
+   BGL_OBJECT_WIDENING_SET(BHOPOBJECT(o), __proto__);
    
    // elements initialization
    vector = (obj_t)(&(o->BgL_elementsz00) + 1);
@@ -807,7 +816,7 @@ BGL_MAKE_JSOBJECT_SANS(int constrsize, obj_t constrmap, obj_t __proto__, uint32_
    }
 #endif
 
-   return BNANOBJECT(o);
+   return BHOPOBJECT(o);
 }
 
 /*---------------------------------------------------------------------*/
@@ -934,11 +943,11 @@ BGL_MAKE_JSPROXY_SANS(obj_t target, obj_t handler,
    BgL_jsproxyz00_bglt o = (BgL_jsproxyz00_bglt)HOP_MALLOC(bsize);
 
    // class initialization
-   BGL_OBJECT_CLASS_NUM_SET(BNANOBJECT(o), JSPROXY_CLASS_NUM);
+   BGL_OBJECT_CLASS_NUM_SET(BHOPOBJECT(o), JSPROXY_CLASS_NUM);
    
    // fields init
-   HOP_OBJECT_HEADER_SIZE_SET(BNANOBJECT(o), (long)mode);
-   BGL_OBJECT_WIDENING_SET(BNANOBJECT(o), target);
+   HOP_OBJECT_HEADER_SIZE_SET(BHOPOBJECT(o), (long)mode);
+   BGL_OBJECT_WIDENING_SET(BHOPOBJECT(o), target);
    
    o->BgL_handlerz00 = (struct BgL_jsobjectz00_bgl *)handler;
    o->BgL_getcachez00 = getcache;
@@ -948,7 +957,7 @@ BGL_MAKE_JSPROXY_SANS(obj_t target, obj_t handler,
    o->BgL_cmapz00 = (BgL_jsconstructmapz00_bglt)jsproxy_constrmap;
    o->BgL_elementsz00 = jsproxy_elements;
    
-   return BNANOBJECT(o);
+   return BHOPOBJECT(o);
 }
 
 /*---------------------------------------------------------------------*/
@@ -1048,10 +1057,10 @@ BGL_MAKE_JSFUNCTION_SANS(obj_t procedure,
    BgL_jsfunctionz00_bglt o = (BgL_jsfunctionz00_bglt)HOP_MALLOC(JSFUNCTION_SIZE);
 
    // class initialization
-   BGL_OBJECT_CLASS_NUM_SET(BNANOBJECT(o), JSFUNCTION_CLASS_NUM);
+   BGL_OBJECT_CLASS_NUM_SET(BHOPOBJECT(o), JSFUNCTION_CLASS_NUM);
 
    // immutable fields init
-   HOP_OBJECT_HEADER_SIZE_SET(BNANOBJECT(o), (long)jsfunction_mode);
+   HOP_OBJECT_HEADER_SIZE_SET(BHOPOBJECT(o), (long)jsfunction_mode);
    o->BgL_allocz00 = jsfunction_alloc;
    o->BgL_constrmapz00 = jsfunction_constrmap;
    o->BgL_elementsz00 = jsfunction_elements;
@@ -1063,7 +1072,7 @@ BGL_MAKE_JSFUNCTION_SANS(obj_t procedure,
    if (procedure)
 #endif
    {
-      BGL_OBJECT_WIDENING_SET(BNANOBJECT(o), __proto__);
+      BGL_OBJECT_WIDENING_SET(BHOPOBJECT(o), __proto__);
       o->BgL_procedurez00 = procedure;
       o->BgL_arityz00 = arity;
       o->BgL_infoz00 = info;
@@ -1080,7 +1089,7 @@ BGL_MAKE_JSFUNCTION_SANS(obj_t procedure,
    }
 #endif
 
-   return BNANOBJECT(o);
+   return BHOPOBJECT(o);
 }
 
 /*---------------------------------------------------------------------*/
@@ -1184,10 +1193,10 @@ BGL_MAKE_JSMETHOD_SANS(obj_t procedure, obj_t method,
    BgL_jsmethodz00_bglt o = (BgL_jsmethodz00_bglt)HOP_MALLOC(JSMETHOD_SIZE);
 
    // class initialization
-   BGL_OBJECT_CLASS_NUM_SET(BNANOBJECT(o), JSMETHOD_CLASS_NUM);
+   BGL_OBJECT_CLASS_NUM_SET(BHOPOBJECT(o), JSMETHOD_CLASS_NUM);
 
    // immutable fields init
-   HOP_OBJECT_HEADER_SIZE_SET(BNANOBJECT(o), (long)jsmethod_mode);
+   HOP_OBJECT_HEADER_SIZE_SET(BHOPOBJECT(o), (long)jsmethod_mode);
    o->BgL_allocz00 = jsmethod_alloc;
    o->BgL_constrmapz00 = jsmethod_constrmap;
    o->BgL_elementsz00 = jsmethod_elements;
@@ -1199,7 +1208,7 @@ BGL_MAKE_JSMETHOD_SANS(obj_t procedure, obj_t method,
    if (procedure)
 #endif
    {
-      BGL_OBJECT_WIDENING_SET(BNANOBJECT(o), __proto__);
+      BGL_OBJECT_WIDENING_SET(BHOPOBJECT(o), __proto__);
       o->BgL_procedurez00 = procedure;
       o->BgL_methodz00 = method;
       o->BgL_arityz00 = arity;
@@ -1217,7 +1226,7 @@ BGL_MAKE_JSMETHOD_SANS(obj_t procedure, obj_t method,
    }
 #endif
 
-   return BNANOBJECT(o);
+   return BHOPOBJECT(o);
 }
 
 /*---------------------------------------------------------------------*/
@@ -1314,11 +1323,11 @@ BGL_MAKE_JSPROCEDURE_SANS(obj_t procedure, long arity, obj_t __proto__) {
    BgL_jsprocedurez00_bglt o = (BgL_jsprocedurez00_bglt)HOP_MALLOC(JSPROCEDURE_SIZE);
 
    // class initialization
-   BGL_OBJECT_CLASS_NUM_SET(BNANOBJECT(o), JSPROCEDURE_CLASS_NUM);
+   BGL_OBJECT_CLASS_NUM_SET(BHOPOBJECT(o), JSPROCEDURE_CLASS_NUM);
 
    // immutable fields init
-   BGL_OBJECT_WIDENING_SET(BNANOBJECT(o), __proto__);
-   HOP_OBJECT_HEADER_SIZE_SET(BNANOBJECT(o), (long)jsprocedure_mode);
+   BGL_OBJECT_WIDENING_SET(BHOPOBJECT(o), __proto__);
+   HOP_OBJECT_HEADER_SIZE_SET(BHOPOBJECT(o), (long)jsprocedure_mode);
    o->BgL_cmapz00 = jsfunction_cmap;
    o->BgL_elementsz00 = empty_vector;
       
@@ -1332,7 +1341,7 @@ BGL_MAKE_JSPROCEDURE_SANS(obj_t procedure, long arity, obj_t __proto__) {
       o->BgL_cmapz00 = jsprocedure_cmap;
    }
 
-   return BNANOBJECT(o);
+   return BHOPOBJECT(o);
 }
 
 /*---------------------------------------------------------------------*/
@@ -1425,7 +1434,7 @@ BGL_MAKE_JSSTRINGLITERALASCII_SANS(uint32_t len, obj_t left, obj_t right) {
    BgL_jsstringliteralasciiz00_bglt o = (BgL_jsstringliteralasciiz00_bglt)HOP_MALLOC(JSSTRINGLITERALASCII_SIZE);
 
    // class initialization
-   BGL_OBJECT_CLASS_NUM_SET(BNANOBJECT(o), JSSTRINGLITERALASCII_CLASS_NUM);
+   BGL_OBJECT_CLASS_NUM_SET(BHOPOBJECT(o), JSSTRINGLITERALASCII_CLASS_NUM);
 
    // field init
    o->BgL_lengthz00 = len;
@@ -1433,10 +1442,10 @@ BGL_MAKE_JSSTRINGLITERALASCII_SANS(uint32_t len, obj_t left, obj_t right) {
    o->BgL_rightz00 = right;
    
    // immutable fields init
-   BGL_OBJECT_WIDENING_SET(BNANOBJECT(o), BFALSE);
-   HOP_OBJECT_HEADER_SIZE_SET(BNANOBJECT(o), (long)jsstringliteralascii_mode);
+   BGL_OBJECT_WIDENING_SET(BHOPOBJECT(o), BFALSE);
+   HOP_OBJECT_HEADER_SIZE_SET(BHOPOBJECT(o), (long)jsstringliteralascii_mode);
 
-   return BNANOBJECT(o);
+   return BHOPOBJECT(o);
 }
 
 /*---------------------------------------------------------------------*/
@@ -1601,15 +1610,15 @@ static obj_t empty_vector = BVECTOR(&(_empty_vector.length));
    obj_t vector;						      \
 								      \
    /* class initialization */					      \
-   BGL_OBJECT_CLASS_NUM_SET(BNANOBJECT(o), JSARRAY_CLASS_NUM);  \
+   BGL_OBJECT_CLASS_NUM_SET(BHOPOBJECT(o), JSARRAY_CLASS_NUM);  \
 								      \
    /* fields init */						      \
    o->BgL_cmapz00 = (BgL_jsconstructmapz00_bglt)constrmap;	      \
    o->BgL_elementsz00 = empty_vector;				      \
    o->BgL_lengthz00 = len;					      \
    o->BgL_ilenz00 = ilen;					      \
-   HOP_OBJECT_HEADER_SIZE_SET(BNANOBJECT(o), (long)mode);	      \
-   BGL_OBJECT_WIDENING_SET(BNANOBJECT(o), __proto__);	      \
+   HOP_OBJECT_HEADER_SIZE_SET(BHOPOBJECT(o), (long)mode);	      \
+   BGL_OBJECT_WIDENING_SET(BHOPOBJECT(o), __proto__);	      \
 								      \
    /* vector initialization */					      \
    if (size > 0) {						      \
@@ -1639,7 +1648,7 @@ static obj_t empty_vector = BVECTOR(&(_empty_vector.length));
 obj_t
 bgl_make_jsarray_sans_init(long size, uint32_t len, uint32_t ilen, obj_t constrmap, obj_t __proto__, uint32_t mode) {
    BGL_MAKE_JSARRAY_SANS_INIT(o, size, len, ilen, constrmap, __proto__, mode);
-   return BNANOBJECT(o);
+   return BHOPOBJECT(o);
 }
 
 /*---------------------------------------------------------------------*/
@@ -1660,7 +1669,7 @@ bgl_make_jsarray(long size, uint32_t len, obj_t constrmap, obj_t __proto__, obj_
       }
    }
 
-   return BNANOBJECT(array);
+   return BHOPOBJECT(array);
 }
 
 /*---------------------------------------------------------------------*/
@@ -1776,7 +1785,7 @@ bgl_profile_get_pcaches() {
       pcache_t *pcache = (pcache_t *)CAR(table);
 
       while (--i >= 0) {
-	 res = MAKE_PAIR(BNANOBJECT(&(pcache[i])), res);
+	 res = MAKE_PAIR(BHOPOBJECT(&(pcache[i])), res);
       }
 
       tables = CDR(tables);
@@ -1795,13 +1804,13 @@ bgl_make_jsgenerator(obj_t constrmap, obj_t __proto__, long sz, obj_t next, uint
    obj_t env;
 
    /* class initialization */
-   BGL_OBJECT_CLASS_NUM_SET(BNANOBJECT(o), JSGENERATOR_CLASS_NUM);
+   BGL_OBJECT_CLASS_NUM_SET(BHOPOBJECT(o), JSGENERATOR_CLASS_NUM);
 
    /* fields init */
    o->BgL_cmapz00 = (BgL_jsconstructmapz00_bglt)constrmap;
    o->BgL_elementsz00 = empty_vector;
-   HOP_OBJECT_HEADER_SIZE_SET(BNANOBJECT(o), (long)mode);
-   BGL_OBJECT_WIDENING_SET(BNANOBJECT(o), __proto__);
+   HOP_OBJECT_HEADER_SIZE_SET(BHOPOBJECT(o), (long)mode);
+   BGL_OBJECT_WIDENING_SET(BHOPOBJECT(o), __proto__);
 
    /* vector initialization */
    env = (obj_t)(&(o->BgL_z52envz52) + 1);
@@ -1813,7 +1822,7 @@ bgl_make_jsgenerator(obj_t constrmap, obj_t __proto__, long sz, obj_t next, uint
    o->BgL_z52nextz52 = next;
    o->BgL_z52envz52 = env;
 
-   return BNANOBJECT(o);
+   return BHOPOBJECT(o);
 }
 
 /*---------------------------------------------------------------------*/
@@ -1827,11 +1836,11 @@ bgl_init_jsyield_object(obj_t p) {
    int i;
 
    // class initialization
-   BGL_OBJECT_CLASS_NUM_SET(BNANOBJECT(o), JSYIELD_CLASS_NUM);
+   BGL_OBJECT_CLASS_NUM_SET(BHOPOBJECT(o), JSYIELD_CLASS_NUM);
 
    // fields init
    o->BgL_elementsz00 = empty_vector;
-   HOP_OBJECT_HEADER_SIZE_SET(BNANOBJECT(o), jsobject_mode);
+   HOP_OBJECT_HEADER_SIZE_SET(BHOPOBJECT(o), jsobject_mode);
    
    // elements initialization
    vector = (obj_t)(&(o->BgL_elementsz00) + 1);
@@ -1849,5 +1858,5 @@ bgl_init_jsyield_object(obj_t p) {
    }
 #endif
    
-   return BNANOBJECT(o);
+   return BHOPOBJECT(o);
 }

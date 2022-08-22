@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Mon Dec 27 13:45:27 2021 (serrano)                */
+#*    Last change :  Mon Aug 22 08:33:37 2022 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the NODEJS library.                        */
 #*=====================================================================*/
@@ -27,6 +27,8 @@ TARGETNAME = nodejs
 HOPAPPLIBS = js2scheme hop hopscript
 
 BLIBFLAGS = $(BCFLAGSRTS)
+
+BHOPCFLAGS += --bootstrap-mode
 
 #*---------------------------------------------------------------------*/
 #*    Scheme extended objects                                          */
