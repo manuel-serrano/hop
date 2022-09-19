@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Tue May 10 13:00:51 2022 (serrano)                */
+;*    Last change :  Mon Aug 22 08:08:20 2022 (serrano)                */
 ;*    Copyright   :  2018-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -383,8 +383,8 @@
 	   (hopjs-standalone-set! #t)
 	   (define %source ,path)
 	   (define %resource (dirname %source))
-	   ,@(if (context-get ctx :libs-dir #f)
-		 `((hop-sofile-directory-set! ,(context-get ctx :libs-dir #f)))
+	   ,@(if (context-get ctx :sofile-dir #f)
+		 `((hop-sofile-directory-set! ,(context-get ctx :sofile-dir #f)))
 		 '())
 	   ,@(map j2s-record-predicate records)
 	   ,@(js-declare-tls this ctx)
@@ -464,8 +464,8 @@
 		,@esredirects
 		,@(filter nofundef? globals)
 		,@toplevel
-		,@(if (context-get ctx :libs-dir #f)
-		      `((hop-sofile-directory-set! ,(context-get ctx :libs-dir #f)))
+		,@(if (context-get ctx :sofile-dir #f)
+		      `((hop-sofile-directory-set! ,(context-get ctx :sofile-dir #f)))
 		      '())
 		,@(map j2s-record-predicate records)
 		,@(append-map (lambda (rec)

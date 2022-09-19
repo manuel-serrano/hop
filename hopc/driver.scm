@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Sat Jun  4 07:45:58 2022 (serrano)                */
+;*    Last change :  Mon Aug 22 08:08:02 2022 (serrano)                */
 ;*    Copyright   :  2014-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
@@ -233,7 +233,7 @@
 		  :long-size (hopc-long-size)
 		  :int-size (hopc-int-size)
 		  :plugins-loader (hopc-plugins-loader)
-		  :libs-dir (hopc-libs-dir)
+		  :sofile-dir (hopc-sofile-dir)
 		  :debug (bigloo-debug)
 		  :warning (bigloo-warning)
 		  :node-modules-directory (hopc-node-modules-directory)
@@ -265,7 +265,7 @@
 		  :verbose (hop-verbose)
 		  :long-size (hopc-long-size)
 		  :int-size (hopc-int-size)
-		  :libs-dir (hopc-libs-dir)
+		  :sofile-dir (hopc-sofile-dir)
 		  :plugins-loader (hopc-plugins-loader)
 		  :debug (bigloo-debug)
 		  :warning (bigloo-warning)
@@ -513,7 +513,7 @@
 			:long-size (hopc-long-size)
 			:int-size (hopc-int-size)
 			:plugins-loader (hopc-plugins-loader)
-			:libs-dir (hopc-libs-dir)
+			:sofile-dir (hopc-sofile-dir)
 			:debug (bigloo-debug)
 			:warning (bigloo-warning)
 			:function-nice-name (string? temp)
@@ -816,7 +816,7 @@
    (nowarning
       (lambda ()
 	 (hop-sofile-compile-policy-set! 'none)
-	 (unless nodejs-loaded
+	 (unless (or nodejs-loaded (hopc-bootstrap-mode))
 	    (set! nodejs-loaded #t)
 	    (when (library-load-init 'nodejs (hop-library-path))
 	       (library-load-init 'hopscript (hop-library-path))

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    /tmp/HOP/hop/hopscript/arithmetic64.scm                          */
+;*    serrano/prgm/project/hop/hop/hopscript/arithmetic64.scm          */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Sat Jun 25 17:14:22 2022 (serrano)                */
+;*    Last change :  Sat Aug 27 11:11:14 2022 (serrano)                */
 ;*    Copyright   :  2017-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on 64 bit platforms                        */
@@ -477,6 +477,7 @@
 ;*    Fixnum addition on 64 bits machines (three tagging bits).        */
 ;*---------------------------------------------------------------------*/
 (define-inline (+fx/overflow::obj x::long y::long)
+   ;; see arithmetic.sch
    (overflow53 (+fx x y)))
 
 ;*---------------------------------------------------------------------*/

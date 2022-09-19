@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Sun Nov 21 19:58:10 2021 (serrano)                */
+;*    Last change :  Sat Aug 20 09:25:36 2022 (serrano)                */
 ;*    Copyright   :  2017-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Casting values from JS types to SCM implementation types.        */
@@ -702,7 +702,7 @@
 	   `(int->uint32 ,v)))
       ((uint32? v)
        v)
-      ((eq? (j2s-type expr) 'uint32)
+      ((eq? (j2s-type expr) 'int53)
        `(fixnum->uint32 ,v))
       (else
        `(js-touint32 ,v %this))))

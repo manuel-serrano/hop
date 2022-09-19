@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jun 18 07:29:16 2014                          */
-;*    Last change :  Thu Feb 24 17:39:17 2022 (serrano)                */
+;*    Last change :  Mon Aug 22 07:32:14 2022 (serrano)                */
 ;*    Copyright   :  2014-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBufferView              */
@@ -239,10 +239,10 @@
    
 (define (js-new-int8array::JsInt8Array l::uint32 %this::JsGlobalObject)
    (with-access::JsGlobalObject %this (js-int8array js-arraybuffer)
-      (let* ((b (instantiate::JsArrayBuffer
+      (let* ((b (instantiateJsArrayBuffer
 		   (cmap (js-not-a-cmap))
 		   (data (make-u8vector (uint32->fixnum l)))))
-	     (o (instantiate::JsInt8Array
+	     (o (instantiateJsInt8Array
 		   (length l)
 		   (bpe #u32:1)
 		   (buffer b)
@@ -285,10 +285,10 @@
 
 (define (js-new-uint8array::JsUint8Array l::uint32 %this::JsGlobalObject)
    (with-access::JsGlobalObject %this (js-uint8array js-arraybuffer)
-      (let* ((b (instantiate::JsArrayBuffer
+      (let* ((b (instantiateJsArrayBuffer
 		  (cmap (js-not-a-cmap))
 		  (data (make-u8vector (uint32->fixnum l)))))
-	    (o (instantiate::JsUint8Array
+	    (o (instantiateJsUint8Array
 		  (length l)
 		  (bpe #u32:1)
 		  (buffer b)

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 11 09:35:38 2022                          */
-/*    Last change :  Thu Feb 24 09:07:57 2022 (serrano)                */
+/*    Last change :  Sat Aug 20 17:26:39 2022 (serrano)                */
 /*    Copyright   :  2022 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Macros for accelerating C compilation.                           */
@@ -21,30 +21,28 @@ extern bool_t hop_js_toboolean_no_boolean(obj_t);
 /*---------------------------------------------------------------------*/
 /*    Type predicates                                                  */
 /*---------------------------------------------------------------------*/
-#if defined(BGL_AAA_SHIFT)
-#  define HOP_AAAVAL 1
-#  define HOP_TAG(tag) (tag << BGL_AAA_SHIFT | HOP_AAAVAL)
-#  define HOP_OBJECTP(o) POINTERP(o)
-#  define HOP_OBJECT_HEADER_SIZE(o) BGL_OBJECT_HEADER_AAASIZE(o)
-#  define HOP_OBJECT_HEADER_SIZE_SET(o, s) BGL_OBJECT_HEADER_AAASIZE_SET(o, s, HOP_AAAVAL)
+#if defined(TAG_RESERVED)
+#  define HOP_OBJECTP(o) BGL_RESERVEDP(o)
+#  define HOP_JSOBJECTP(o, tag) \
+     HOP_OBJECTP(o)
 #else
-#  define HOP_TAG(tag) tag
 #  define HOP_OBJECTP(o) BGL_OBJECTP(o)
-#  define HOP_OBJECT_HEADER_SIZE(o) BGL_OBJECT_HEADER_SIZE(o)
-#  define HOP_OBJECT_HEADER_SIZE_SET(o, s) BGL_OBJECT_HEADER_SIZE_SET(o, s)
+#  define HOP_JSOBJECTP(o, tag) \
+     (HOP_OBJECTP(o) && \
+        ((HOP_OBJECT_HEADER_SIZE(o) & tag) == tag))
 #endif
 
-#define HOP_JSOBJECTP(o, tag) \
-   (HOP_OBJECTP(o) && ((HOP_OBJECT_HEADER_SIZE(o) & HOP_TAG(tag)) == HOP_TAG(tag)))
-   
+#define HOP_OBJECT_HEADER_SIZE(o) BGL_OBJECT_HEADER_SIZE(o)
+#define HOP_OBJECT_HEADER_SIZE_SET(o, s) BGL_OBJECT_HEADER_SIZE_SET(o, s)
+
 #define HOP_JSARRAYP(o, tag) \
-   (HOP_OBJECTP(o) && HOP_OBJECT_HEADER_SIZE(o) >= HOP_TAG(tag))
+   (HOP_OBJECTP(o) && HOP_OBJECT_HEADER_SIZE(o) >= tag)
 
 #define HOP_JSSTRINGP(o, tag) \
-   (HOP_OBJECTP(o) && ((HOP_OBJECT_HEADER_SIZE(o) & HOP_TAG(tag)) == HOP_TAG(tag)))
+   (HOP_OBJECTP(o) && ((HOP_OBJECT_HEADER_SIZE(o) & tag) == tag))
 
 #define HOP_JSPROCEDUREP(o, tag) \
-   (HOP_OBJECTP(o) && ((HOP_OBJECT_HEADER_SIZE(o) & HOP_TAG(tag)) == HOP_TAG(tag)))
+   (HOP_OBJECTP(o) && ((HOP_OBJECT_HEADER_SIZE(o) & tag) == tag))
 
 /*---------------------------------------------------------------------*/
 /*    Objects & properties predicates                                  */

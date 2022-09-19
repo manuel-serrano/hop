@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Sat Feb 19 07:31:48 2022 (serrano)                */
+;*    Last change :  Mon Aug 22 08:07:52 2022 (serrano)                */
 ;*    Copyright   :  2004-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC global parameters                                           */
@@ -33,6 +33,9 @@
 	    
 	    (hopc-pass::symbol)
 	    (hopc-pass-set! ::symbol)
+
+	    (hopc-bootstrap-mode::bool)
+	    (hopc-bootstrap-mode-set! ::bool)
 
 	    (hopc-js-target::symbol)
 	    (hopc-js-target-set! ::symbol)
@@ -87,8 +90,8 @@
 	    (hopc-source-language::symbol)
 	    (hopc-source-language-set! ::symbol)
 
-	    (hopc-libs-dir::obj)
-	    (hopc-libs-dir-set! ::obj)
+	    (hopc-sofile-dir::obj)
+	    (hopc-sofile-dir-set! ::obj)
 
 	    (hopc-sobase::obj)
 	    (hopc-sobase-set! ::bstring)
@@ -190,6 +193,12 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hopc-pass
    'link)
+
+;*---------------------------------------------------------------------*/
+;*    hopc-bootstrap-mode ...                                          */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-bootstrap-mode
+   #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    hopc-js-target ...                                               */
@@ -309,9 +318,9 @@
    'auto)
 
 ;*---------------------------------------------------------------------*/
-;*    hopc-libs-dir ...                                                */
+;*    hopc-sofile-dir ...                                              */
 ;*---------------------------------------------------------------------*/
-(define-parameter hopc-libs-dir
+(define-parameter hopc-sofile-dir
    #f)
 
 ;*---------------------------------------------------------------------*/
