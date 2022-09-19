@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Tue Feb  8 14:15:13 2022 (serrano)                */
+;*    Last change :  Mon Sep 19 10:33:43 2022 (serrano)                */
 ;*    Copyright   :  2017-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -2137,10 +2137,12 @@
 	  (if-fixnum? left tl
 	     `(fixnum->int32 (/fx ,(asfixnum left tl) ,(asfixnum right tr)))
 	     `(flonum->int32 (/fl ,(asreal left tl) ,(asreal right tr)))))
+	 ((or (eq? tl 'real) (eq? tl 'real))
+	  `(flonum->int32 (/fl ,(asreal left tl) ,(asreal right tr))))
 	 (else
 	  (if-fixnums? left tl right tr
-	     `(fixnum->int32 (/fx ,(asfixnum left tl) ,(asfixnum right tr)))
-	     `(flonum->int32 (/fl ,(asreal left tl) ,(asreal right tr)))))))
+	     `(fixnum->int32 (/fx ,left ,right))
+	     `(js-toint32 (/js ,left ,right %this) %this)))))
 
    (define (divu32 left right tl tr)
       (cond
@@ -2645,7 +2647,10 @@
 	      ((flonum->fixnum ?expr) expr)
 	      (else `(if (fixnum? ,val) (fixnum->flonum ,val) ,val))))))
       (else
-       val)))
+       `(cond
+	   ((flonum? ,val) ,val)
+	   ((fixnum? ,val) (fixnum->flonum ,val))
+	   (else (exact->inexact (js-tonumber ,val %this)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    coerceint32 ...                                                  */
