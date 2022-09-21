@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 15 15:16:16 2018                          */
-;*    Last change :  Wed Aug 17 14:08:47 2022 (serrano)                */
+;*    Last change :  Wed Sep 21 11:01:03 2022 (serrano)                */
 ;*    Copyright   :  2018-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES6 Module handling                                              */
@@ -602,6 +602,7 @@
 					  (hop-compile in
 					     :source path
 					     :verbose (if (<=fx verb 2) 0 verb)
+					     :verbose 20
 					     :verbmargin margin
 					     :module-import #t
 					     :module-env env

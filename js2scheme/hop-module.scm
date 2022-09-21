@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar  8 11:35:48 2019                          */
-;*    Last change :  Mon May 23 08:03:19 2022 (serrano)                */
+;*    Last change :  Wed Sep 21 11:02:38 2022 (serrano)                */
 ;*    Copyright   :  2019-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop (Scheme) module parser used when a JS module imports         */
@@ -69,8 +69,10 @@
 			      (loc (cer exp))
 			      (expr ""))))))
 	 expo))
-   
+
    (match-case exp
+      ((cond-expand . ?-)
+       (parse-export path (expand-once exp) args))
       ((define (hopscript %this this %scope %module) ??- ?exp)
        (match-case exp
 	  ((js-export ?exports . ?body)
@@ -105,5 +107,9 @@
 	     (obj sig)
 	     (fname (cadr (cer exp)))
 	     (location (caddr (cer exp))))))
+      ((begin . ?rest)
+       (any (lambda (exp) (parse-export path exp args)) rest))
       (else
-       #f)))
+       (if (eof-object? exp)
+	   exp
+	   #f))))

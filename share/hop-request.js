@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Sat Mar 21 11:38:17 2020 (serrano)                */
-/*    Copyright   :  2004-21 Manuel Serrano                            */
+/*    Last change :  Wed Sep 21 12:18:29 2022 (serrano)                */
+/*    Copyright   :  2004-22 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
 /*=====================================================================*/
@@ -37,8 +37,8 @@ var hop_busy_anim_32_32 = "data:image/gif;base64,R0lGODlhIAAgAOf/AAMABQACAAABDgA
 /*---------------------------------------------------------------------*/
 /*    HopService ...                                                   */
 /*---------------------------------------------------------------------*/
-function HopService( base, dir ) {
-   var o = function() { return new HopFrame( this, base, arguments ) };
+function HopService(base, dir) {
+   var o = function() { return new HopFrame(this, base, arguments) };
    o.base = base;
    o.dir = dir;
    o.__proto__ = HopService.prototype;
@@ -48,61 +48,61 @@ function HopService( base, dir ) {
 
 HopService.prototype = {
    hop_bigloo_serialize: hop_bigloo_serialize_service,
-   resource: function( file ) { return this.dir + "/" + file },
+   resource: function(file) { return this.dir + "/" + file },
    __proto__: Function.prototype
 }
 
 /*---------------------------------------------------------------------*/
 /*    hop_apply_form_url ...                                           */
 /*---------------------------------------------------------------------*/
-function hop_apply_form_url( service, args ) {
+function hop_apply_form_url(service, args) {
    var nargs = null;
    var els = args[ 0 ].elements;
 
-   for( i = els.length - 1 ; i >=0 ; i-- ) {
-      if( els[ i ].type === "checkbox" ) {
-	 nargs = sc_cons( els[ i ].checked ? els[ i ].value : false, nargs );
-	 nargs = sc_cons( sc_jsstring2keyword( els[ i ].name ), nargs );
+   for (i = els.length - 1 ; i >=0 ; i--) {
+      if (els[ i ].type === "checkbox") {
+	 nargs = sc_cons(els[ i ].checked ? els[ i ].value : false, nargs);
+	 nargs = sc_cons(sc_jsstring2keyword(els[ i ].name), nargs);
       } else {
-	 if( els[ i ].type === "radio" ) {
-	    if( els[ i ].checked ) {
-	       nargs = sc_cons( els[ i ].value, nargs );
-	       nargs = sc_cons( sc_jsstring2keyword( els[ i ].name ), nargs );
+	 if (els[ i ].type === "radio") {
+	    if (els[ i ].checked) {
+	       nargs = sc_cons(els[ i ].value, nargs);
+	       nargs = sc_cons(sc_jsstring2keyword(els[ i ].name), nargs);
 	    }
 	 } else {
-	    if( els[ i ].name !== "" ) {
-	       nargs = sc_cons( els[ i ].value, nargs );
-	       nargs = sc_cons( sc_jsstring2keyword( els[ i ].name ), nargs );
+	    if (els[ i ].name !== "") {
+	       nargs = sc_cons(els[ i ].value, nargs);
+	       nargs = sc_cons(sc_jsstring2keyword(els[ i ].name), nargs);
 	    }
 	 }
       }
    }
 
-   return hop_apply_url( service, nargs );
+   return hop_apply_url(service, nargs);
 }
 
 /*---------------------------------------------------------------------*/
 /*    hop_apply_url ...                                                */
 /*---------------------------------------------------------------------*/
 /*** META ((export #t) (arity #t)) */
-function hop_apply_url( service, args ) {
-   if( sc_isPair( args ) ) {
+function hop_apply_url(service, args) {
+   if (sc_isPair(args)) {
       return service
 	 + "?hop-encoding=hop"
-	 + "&vals=" + hop_bigloo_serialize( args );
+	 + "&vals=" + hop_bigloo_serialize(args);
    } else {
-      if( !args ) {
+      if (!args) {
 	 return service;
       } else {
-         if( (args.length === 1) && hop_is_dom_form_element( args[ 0 ] ) ) {
-	    return hop_apply_form_url( service, args );
+         if ((args.length === 1) && hop_is_dom_form_element(args[ 0 ])) {
+	    return hop_apply_form_url(service, args);
          } else {
-            if( (args.length === 1) && hop_is_dom_formdata_element( args[ 0 ] ) ) {
+            if ((args.length === 1) && hop_is_dom_formdata_element(args[ 0 ])) {
 	       return service;
             } else {
 	       return service
 		  + "?hop-encoding=hop"
-   		  + "&vals=" + hop_bigloo_serialize( new HopArguments( args ) );
+   		  + "&vals=" + hop_bigloo_serialize(new HopArguments(args));
             }
 	 }
       }
@@ -114,33 +114,33 @@ function hop_apply_url( service, args ) {
 /*    -------------------------------------------------------------    */
 /*    Used by node.js                                                  */
 /*---------------------------------------------------------------------*/
-function hop_object_to_dsssl_args( obj ) {
+function hop_object_to_dsssl_args(obj) {
    var res = null;
 
-   for( var p in obj ) {
-      res = sc_cons( obj[ p ], sc_cons( sc_jsstring2keyword( p ), res ) );
+   for (var p in obj) {
+      res = sc_cons(obj[ p ], sc_cons(sc_jsstring2keyword(p), res));
    }
 
-   return sc_reverseBang( res );
+   return sc_reverseBang(res);
 }
 
 /*---------------------------------------------------------------------*/
 /*    hop_default_failure ...                                          */
 /*---------------------------------------------------------------------*/
 /*** META ((export #t) (arity #t)) */
-function hop_default_failure( exc, xhr ) {
-   if( !document ) {
-      alert( "with-hop failed!" );
+function hop_default_failure(exc, xhr) {
+   if (!document) {
+      alert("with-hop failed!");
       return;
    }
 
-   if( xhr ) {
-      var nexc = new Error( "statusText" in xhr ? xhr.statusText : "server error" );
+   if (xhr) {
+      var nexc = new Error("statusText" in xhr ? xhr.statusText : "server error");
 
-      if( xhr.svc ) {
+      if (xhr.svc) {
 	 var svc = xhr.svc;
-	 var i = svc.indexOf( "?" );
-	 nexc.name = i ? svc.substring( 0, i ) : svc;
+	 var i = svc.indexOf("?");
+	 nexc.name = i ? svc.substring(0, i) : svc;
       } else {
 	 nexc.name = "with-hop"
       }
@@ -151,7 +151,7 @@ function hop_default_failure( exc, xhr ) {
 
       throw nexc;
    } else {
-      if( exc instanceof Object ) {
+      if (exc instanceof Object) {
 	 exc.scClientOnly = true;
 	 throw exc;
       } else {
@@ -164,22 +164,22 @@ function hop_default_failure( exc, xhr ) {
 /*    hop_anim_16_16 ...                                               */
 /*---------------------------------------------------------------------*/
 #if HOP_SCHEME
-function hop_anim_16_16( title ) {
-   if( !hop_busy_vis_16_16 ) {
-      var vis = document.createElement( "div" );
+function hop_anim_16_16(title) {
+   if (!hop_busy_vis_16_16) {
+      var vis = document.createElement("div");
       vis.className = "hop-busy-anim";
       vis.count = false;
 
-      var img = document.createElement( "img" );
+      var img = document.createElement("img");
       img.className = "hop-busy-anim";
 
-      if( !hop_config.inline_image ) {
+      if (!hop_config.inline_image) {
 	 img.src = hop_share_directory() + "/icons/anims/busy-anim-16.gif";
       } else {
 	 img.src = hop_busy_anim_16_16;
       }
 
-      vis.appendChild( img );
+      vis.appendChild(img);
       
       hop_busy_vis_16_16 = vis;
    }
@@ -190,22 +190,22 @@ function hop_anim_16_16( title ) {
 /*---------------------------------------------------------------------*/
 /*    hop_anim_32_32 ...                                               */
 /*---------------------------------------------------------------------*/
-function hop_anim_32_32( title ) {
-   if( !hop_busy_vis_32_32 ) {
-      var vis = document.createElement( "div" );
+function hop_anim_32_32(title) {
+   if (!hop_busy_vis_32_32) {
+      var vis = document.createElement("div");
       vis.className = "hop-busy-anim";
       vis.count = false;
 
-      var img = document.createElement( "img" );
+      var img = document.createElement("img");
       img.className = "hop-busy-anim";
 
-      if( !hop_config.inline_image ) {
+      if (!hop_config.inline_image) {
 	 img.src = hop_share_directory() + "/icons/anims/busy-anim-32.gif";
       } else {
 	 img.src = hop_busy_anim_32_32;
       }
 
-      vis.appendChild( img );
+      vis.appendChild(img);
       hop_busy_vis_32_32 = vis;
    }
 
@@ -222,15 +222,15 @@ var hop_anim_container = false;
 /*    hop_default_anim_set ...                                         */
 /*---------------------------------------------------------------------*/
 /*** META ((export with-hop-default-anim-set!) (arity -2)) */
-function hop_default_anim_set( anim, container ) {
+function hop_default_anim_set(anim, container) {
    var old = hop_default_anim;
-   if( typeof( anim ) === "string" ) {
-      var img = hop_anim_32_32( "custom" ).firstChild;
+   if (typeof(anim) === "string") {
+      var img = hop_anim_32_32("custom").firstChild;
 
       img.src = anim;
    }
 
-   if( container ) {
+   if (container) {
       hop_anim_container = container;
    }
    
@@ -254,17 +254,17 @@ var hop_anim_fun = false;
 /*---------------------------------------------------------------------*/
 /*    hop_stop_anim ...                                                */
 /*---------------------------------------------------------------------*/
-function hop_stop_anim( xhr ) {
-   if( xhr.hop_anim ) {
-      if( xhr.hop_anim_interval ) {
-	 clearInterval( xhr.hop_anim_interval );
+function hop_stop_anim(xhr) {
+   if (xhr.hop_anim) {
+      if (xhr.hop_anim_interval) {
+	 clearInterval(xhr.hop_anim_interval);
 	 xhr.hop_anim_interval = false;
       }
 
-      if( xhr.hop_anim != true ) {
+      if (xhr.hop_anim != true) {
 	 xhr.hop_anim.count--;
-	 if( xhr.hop_anim.count === 1 )
-	    node_style_set( xhr.hop_anim, "display", "none" );
+	 if (xhr.hop_anim.count === 1)
+	    node_style_set(xhr.hop_anim, "display", "none");
       }
    }
 }
@@ -272,23 +272,23 @@ function hop_stop_anim( xhr ) {
 /*---------------------------------------------------------------------*/
 /*    hop_start_anim ...                                               */
 /*---------------------------------------------------------------------*/
-function hop_start_anim( service, user_anim ) {
-   var anim = user_anim( service );
+function hop_start_anim(service, user_anim) {
+   var anim = user_anim(service);
 
-   if( !anim.count ) {
-      if( typeof( hop_anim_container ) === "string" ) {
-	 hop_anim_container = document.getElementById( hop_anim_container );
+   if (!anim.count) {
+      if (typeof(hop_anim_container) === "string") {
+	 hop_anim_container = document.getElementById(hop_anim_container);
 	 }
-      if( !hop_anim_container ) {
+      if (!hop_anim_container) {
 	 hop_anim_container = document.body;
       }
 
-      hop_anim_container.appendChild( anim );
+      hop_anim_container.appendChild(anim);
       anim.count = 2;
    } else {
       anim.count++;
       anim.title = service;
-      node_style_set( anim, "display", "block" );
+      node_style_set(anim, "display", "block");
    }
 
    return anim;
@@ -297,7 +297,7 @@ function hop_start_anim( service, user_anim ) {
 /*---------------------------------------------------------------------*/
 /*    hop_default_success ...                                          */
 /*---------------------------------------------------------------------*/
-function hop_default_success( h, xhr ) {
+function hop_default_success(h, xhr) {
    return h;
 }
 
@@ -306,66 +306,66 @@ function hop_default_success( h, xhr ) {
 /*    -------------------------------------------------------------    */
 /*    Convert a string with mixed % and plain chars into Uint8.        */
 /*---------------------------------------------------------------------*/
-function hexStringToUint8( str ) {
+function hexStringToUint8(str) {
    var l = str.length;
-   var res = new Uint8Array( l );
+   var res = new Uint8Array(l);
    
-   var z = '0'.charCodeAt( 0 );
-   var n = '9'.charCodeAt( 0 );
-   var a = 'a'.charCodeAt( 0 );
-   var f = 'f'.charCodeAt( 0 );
-   var A = 'A'.charCodeAt( 0 );
+   var z = '0'.charCodeAt(0);
+   var n = '9'.charCodeAt(0);
+   var a = 'a'.charCodeAt(0);
+   var f = 'f'.charCodeAt(0);
+   var A = 'A'.charCodeAt(0);
    
-   function hex_to_num( c ) {
-      if( (c >= z) && ( c<= n) ) {
+   function hex_to_num(c) {
+      if ((c >= z) && (c<= n)) {
 	 return c - z;
       }
-      if( (c >= a) && ( c<= f) ) {
+      if ((c >= a) && (c<= f)) {
 	 return (c - a) + 10;;
       }
       return (c - A) + 10;
    }
 
-   for( var r = 0, w = 0; r < l; w++ ) {
-      if( str.charAt( r ) === '%' ) {
-	 var d1 = hex_to_num( str.charCodeAt( r + 1 ) );
-	 var d2 = hex_to_num( str.charCodeAt( r + 2 ) );
+   for (var r = 0, w = 0; r < l; w++) {
+      if (str.charAt(r) === '%') {
+	 var d1 = hex_to_num(str.charCodeAt(r + 1));
+	 var d2 = hex_to_num(str.charCodeAt(r + 2));
 	 r += 3;
 	 res[ w ] = (d1 << 4) + d2;
       } else {
-	 res[ w ] = str.charCodeAt( r++ );
+	 res[ w ] = str.charCodeAt(r++);
       }
    }
 
-   return res.slice( 0, w );
+   return res.slice(0, w);
 }
 
 /*---------------------------------------------------------------------*/
 /*    hexToUint8 ...                                                   */
 /*---------------------------------------------------------------------*/
-function hexToUint8( str ) {
+function hexToUint8(str) {
    var l = str.length;
-   var res = new Uint8Array( l );
+   var res = new Uint8Array(l);
    
-   var z = '0'.charCodeAt( 0 );
-   var n = '9'.charCodeAt( 0 );
-   var a = 'a'.charCodeAt( 0 );
-   var f = 'f'.charCodeAt( 0 );
-   var A = 'A'.charCodeAt( 0 );
+   var z = '0'.charCodeAt(0);
+   var n = '9'.charCodeAt(0);
+   var a = 'a'.charCodeAt(0);
+   var f = 'f'.charCodeAt(0);
+   var A = 'A'.charCodeAt(0);
    
-   function hex_to_num( c ) {
-      if( (c >= z) && ( c<= n) ) {
+   function hex_to_num(c) {
+      if ((c >= z) && (c<= n)) {
 	 return c - z;
       }
-      if( (c >= a) && ( c<= f) ) {
+      if ((c >= a) && (c<= f)) {
 	 return (c - a) + 10;;
       }
       return (c - A) + 10;
    }
       
-   for( var i = 0; i < l; i++ ) {
-      var d1 = hex_to_num( str.charCodeAt( i * 2 ) );
-      var d2 = hex_to_num( str.charCodeAt( i * 2 + 1 ) );
+   for (var i = 0; i < l; i++) {
+      var d1 = hex_to_num(str.charCodeAt(i * 2));
+      var d2 = hex_to_num(str.charCodeAt(i * 2 + 1));
 
       res[ i ] = (d1 << 4) + d2;
    }
@@ -376,34 +376,34 @@ function hexToUint8( str ) {
 /*---------------------------------------------------------------------*/
 /*    ab2string ...                                                    */
 /*---------------------------------------------------------------------*/
-function ab2string( abuf ) {
-   var buf = new Uint8Array( abuf );
+function ab2string(abuf) {
+   var buf = new Uint8Array(abuf);
    var pointer = 0;
    var end = buf.length;
    var res = "";
    
-   while( pointer < end ) {
+   while (pointer < end) {
       var code = buf[ pointer++ ];
-      if( code < 128 ) {
-	 res += String.fromCharCode( code );
+      if (code < 128) {
+	 res += String.fromCharCode(code);
       } else {
 	 var code2 = buf[ pointer++ ];
-	 if( code < 224 ) {
+	 if (code < 224) {
 	    code2 = ((code - 192) << 6) + (code2 - 128);
-	    res += String.fromCharCode( code2 );
+	    res += String.fromCharCode(code2);
 	 } else {
 	    var code3 = buf[ pointer++ ];
-	    if( code < 240 ) {
+	    if (code < 240) {
 	       code3 = ((code - 224) << 12)
 		  + ((code2 - 128) << 6) + (code3 - 128);
-	       res += String.fromCharCode( code3 );
+	       res += String.fromCharCode(code3);
 	    } else {
 	       var code4 = buf[ pointer++ ];
 	       code4 = ((code - 240) << 18)
 		  + ((code2 - 128) << 12)
 		  + ((code3 - 128) << 6)
 		  + (code4 - 128);
-	       res += String.fromCharCode( code4 );
+	       res += String.fromCharCode(code4);
 	    }
 	 }
       }
@@ -418,42 +418,42 @@ function ab2string( abuf ) {
 /*    Unserialize the object contained in the XHR response. The        */
 /*    unserialization method depends on the mime type of the response. */
 /*---------------------------------------------------------------------*/
-function hop_request_unserialize( xhr, svc ) {
+function hop_request_unserialize(xhr, svc) {
    var content_type = ("content_type" in xhr) ?
-       xhr[ "content_type" ] : hop_header_content_type( xhr );
-   var m = content_type.match( "([a-zA-Z/-]+)(?:;[ ]*charset=([a-zA-Z[0-9]-]+))?" );
+       xhr[ "content_type" ] : hop_header_content_type(xhr);
+   var m = content_type.match("([a-zA-Z/-]+)(?:;[ ]*charset=([a-zA-Z[0-9]-]+))?");
 
    var ctype = content_type;
    var cset = "utf8";
    
-   if( m ) {
+   if (m) {
       ctype = m[ 1 ];
-      if( m[ 2 ] && m[ 2 ] !== "UTF-8" ) {
+      if (m[ 2 ] && m[ 2 ] !== "UTF-8") {
 	 cset = m[ 2 ];
       } else {
 	 cset = "utf8";
       }
    }      
    
-   if( ctype === "application/x-hop" ) {
-      if( xhr.responseType === "arraybuffer" ) {
-	 return hop_bytearray_to_obj( new Uint8Array( xhr.response ), undefined, cset );
+   if (ctype === "application/x-hop") {
+      if (xhr.responseType === "arraybuffer") {
+	 return hop_bytearray_to_obj(new Uint8Array(xhr.response), undefined, cset);
       } else {
-	 return hop_bytearray_to_obj( hexToUint8( xhr.responseText ), undefined, cset );
+	 return hop_bytearray_to_obj(hexToUint8(xhr.responseText), undefined, cset);
       }
    } else {
       var rep = (xhr.responseType === "arraybuffer") ?
-	  ab2string( xhr.response ) : xhr.responseText;
-      if( ctype === "application/x-javascript" ) {
-	 return eval( rep );
-      } else if( ctype === "application/x-url-hop" ) {
-	 return hop_url_encoded_to_obj( rep );
-      } else if( ctype === "application/x-json-hop" ) {
-	 return hop_bytearray_to_obj( hop_json_parse( rep ), undefined, cset );
-      } else if( (ctype === "text/html") || (ctype === "application/xhtml+xml") ) {
-	 return hop_create_element( rep );
-      } else if( ctype === "application/json" ) {
-	 return hop_json_parse( rep );
+	  ab2string(xhr.response) : xhr.responseText;
+      if (ctype === "application/x-javascript") {
+	 return eval(rep);
+      } else if (ctype === "application/x-url-hop") {
+	 return hop_url_encoded_to_obj(rep);
+      } else if (ctype === "application/x-json-hop") {
+	 return hop_bytearray_to_obj(hop_json_parse(rep), undefined, cset);
+      } else if ((ctype === "text/html") || (ctype === "application/xhtml+xml")) {
+	 return hop_create_element(rep);
+      } else if (ctype === "application/json") {
+	 return hop_json_parse(rep);
       } else {
 	 return rep;
       }
@@ -463,102 +463,102 @@ function hop_request_unserialize( xhr, svc ) {
 /*---------------------------------------------------------------------*/
 /*    hop_request_onready ...                                          */
 /*---------------------------------------------------------------------*/
-function hop_request_onready( xhr, svc, succ, fail ) {
+function hop_request_onready(xhr, svc, succ, fail) {
 
-   function xhr_hop_success_callback( succ ) {
-      if( svc.indexOf( "/hop/public/server-debug" ) === 0 ) {
+   function xhr_hop_success_callback(succ) {
+      if (svc.indexOf("/hop/public/server-debug") === 0) {
 	 return succ;
       } else {
-	 return hop_callback( succ, xhr.precontext, "with-hop" );
+	 return hop_callback(succ, xhr.precontext, "with-hop");
       }
    }
       
-   function xhr_hop_failure_callback( fail ) {
-      if( svc.indexOf( "/hop/public/server-debug" ) === 0 ) {
+   function xhr_hop_failure_callback(fail) {
+      if (svc.indexOf("/hop/public/server-debug") === 0) {
 	 return fail;
       } else {
 	 /* restore the context at the moment of the xhr */
 	 var ctx = xhr.precontext;
 
 	 /* prepend the server context to the pre xhr context */
-	 var hd = xhr.getResponseHeader( "Hop-Debug-Stack" );
-	 if( typeof hd === "string" ) {
-	    var sstack = hop_url_encoded_to_obj( hd );
-	    ctx = sc_cons( "Server Trace:", sc_appendBang( sstack, ctx ) );
+	 var hd = xhr.getResponseHeader("Hop-Debug-Stack");
+	 if (typeof hd === "string") {
+	    var sstack = hop_url_encoded_to_obj(hd);
+	    ctx = sc_cons("Server Trace:", sc_appendBang(sstack, ctx));
 	 }
 
-	 return hop_callback( fail, ctx, "with-hop" )
+	 return hop_callback(fail, ctx, "with-hop")
       }
    }
 
-   function onSuccess( xhr, svc, succ ) {
+   function onSuccess(xhr, svc, succ) {
       var o;
 
-      if( hop_debug() > 0 ) {
-	 succ = xhr_hop_success_callback( succ );
+      if (hop_debug() > 0) {
+	 succ = xhr_hop_success_callback(succ);
 	 
 	 try {
-	    o = hop_request_unserialize( xhr, svc );
-	 } catch( e ) {
-	    console.log( "cannot unserialize response", svc );
-	    hop_callback_handler( e, xhr.precontext );
+	    o = hop_request_unserialize(xhr, svc);
+	 } catch(e) {
+	    console.log("cannot unserialize response", svc);
+	    hop_callback_handler(e, xhr.precontext);
 	 }
       } else {
-	 o = hop_request_unserialize( xhr, svc );
+	 o = hop_request_unserialize(xhr, svc);
       }
 
-      return succ( o, xhr );
+      return succ(o, xhr);
    }
 
-   function onError( xhr, svc, fail ) {
-      var err = xhr.getResponseHeader( "Hop-Error" );
+   function onError(xhr, svc, fail) {
+      var err = xhr.getResponseHeader("Hop-Error");
       
-      if( err ) {
+      if (err) {
 	 var o;
 
-	 fail = xhr_hop_failure_callback( fail );
+	 fail = xhr_hop_failure_callback(fail);
 
 	 try {
-	    o = hop_request_unserialize( xhr, svc );
-	 } catch( e ) {
-	    console.log( "cannot unserialize response", svc );
-	    hop_callback_handler( e, xhr.precontext );
+	    o = hop_request_unserialize(xhr, svc);
+	 } catch(e) {
+	    console.log("cannot unserialize response", svc);
+	    hop_callback_handler(e, xhr.precontext);
 	 }
       } else {
-	 o = hop_request_unserialize( xhr, svc );
+	 o = hop_request_unserialize(xhr, svc);
       }
 
-      return fail( o, xhr );
+      return fail(o, xhr);
    }
 
    try {
-      switch( xhr.status ) {
+      switch(xhr.status) {
          case 200:
-	    return onSuccess( xhr, svc, succ );
+	    return onSuccess(xhr, svc, succ);
 	    
          case 204:
   	    return false;
 	    
          case 259:
-	    hop_set_cookie( xhr );
+	    hop_set_cookie(xhr);
 	    return false;
 	    
          case 400:
          case 407:
 	 case 500:
-	    return onError( xhr, svc, fail );
+	    return onError(xhr, svc, fail);
 	    
 	 default:
-	    if( (typeof xhr.status === "number") &&
-  		(xhr.status > 200) && (xhr.status < 300) ) {
-	       return onSuccess( xhr, svc, succ );
+	    if ((typeof xhr.status === "number") &&
+  		(xhr.status > 200) && (xhr.status < 300)) {
+	       return onSuccess(xhr, svc, succ);
   	    } else {
-	       return onError( xhr, svc, fail );
+	       return onError(xhr, svc, fail);
   	    }
       }
    } finally {
-      if( typeof hop_stop_anim === "function" ) { 
-	 hop_stop_anim( xhr );
+      if (typeof hop_stop_anim === "function") { 
+	 hop_stop_anim(xhr);
       }
    }
       
@@ -568,14 +568,14 @@ function hop_request_onready( xhr, svc, succ, fail ) {
 /*---------------------------------------------------------------------*/
 /*    Hop ...                                                          */
 /*---------------------------------------------------------------------*/
-function Hop( svc, success, failure ) {
-   return withHOP( svc.url, success, failure, undefined, false, null );
+function Hop(svc, success, failure) {
+   return withHOP(svc.url, success, failure, undefined, false, null);
 }
 
 /*---------------------------------------------------------------------*/
 /*    HopFrame ...                                                     */
 /*---------------------------------------------------------------------*/
-function HopFrame( srv, path, args, options, header ) {
+function HopFrame(srv, path, args, options, header) {
    this.srv = srv;
    this.path = path;
    this.args = args;
@@ -584,9 +584,9 @@ function HopFrame( srv, path, args, options, header ) {
 }
 
 HopFrame.prototype.toString = function() {
-   var url = hop_apply_url( this.path, this.args );
+   var url = hop_apply_url(this.path, this.args);
    
-   if( this.srv instanceof HopServer ) {
+   if (this.srv instanceof HopServer) {
       var srv = this.srv;
       url = (srv.ssl ? "https://" : "http://")
 	 + (srv.authentication ? srv.authentication + "@" : "")
@@ -600,38 +600,38 @@ HopFrame.prototype.toString = function() {
 /*---------------------------------------------------------------------*/
 /*    HopFrame.prototype.post ...                                      */
 /*---------------------------------------------------------------------*/
-HopFrame.prototype.post = function post( success, opt_or_fail ) {
+HopFrame.prototype.post = function post(success, opt_or_fail) {
    var svc = this.toString();
-   var arg = hop_is_dom_formdata_element( this.args[ 0 ] ) ?
+   var arg = hop_is_dom_formdata_element(this.args[ 0 ]) ?
        this.args[ 0 ] : null;
 
-   if( this.srv instanceof WebSocket ) {
-      return WebSocketPost( this, success, opt_or_fail );
-   } else if( success ) {
-      if( opt_or_fail instanceof Function || opt_or_fail == undefined ) {
-	 return withHOP( svc, success, opt_or_fail, this.options, false, arg );
+   if (this.srv instanceof WebSocket) {
+      return WebSocketPost(this, success, opt_or_fail);
+   } else if (success) {
+      if (opt_or_fail instanceof Function || opt_or_fail == undefined) {
+	 return withHOP(svc, success, opt_or_fail, this.options, false, arg);
       } else {
-	 return withHOP( svc, success, false, opt_or_fail, false, arg );
+	 return withHOP(svc, success, false, opt_or_fail, false, arg);
       }
-   } else if( "Promise" in window ) {
+   } else if ("Promise" in window) {
       var frame = this;
-      var promise = new Promise( function( resolve, reject ) {
-	 return withHOP( svc, resolve, reject, frame.options, false, arg );
-      } );
+      var promise = new Promise(function(resolve, reject) {
+	 return withHOP(svc, resolve, reject, frame.options, false, arg);
+      });
 
-      if( hop_debug() > 0 ) {
+      if (hop_debug() > 0) {
 	 var stk;
 	 
 	 try {
-	    throw new Error( "with-hop" );
-	 } catch( e ) {
-	    stk = sc_append( hop_get_exception_stack( e ),
-			     hop_current_stack_context );
+	    throw new Error("with-hop");
+	 } catch(e) {
+	    stk = sc_append(hop_get_exception_stack(e),
+			     hop_current_stack_context);
 	 }
 
-	 Promise.race( [ promise ] ).then( function( _ ) { }, function( err ) {
-	    hop_report_exception( err, stk );
-	 } );
+	 Promise.race([ promise ]).then(function(_) { }, function(err) {
+	    hop_report_exception(err, stk);
+	 });
       }
 	 
       return promise;
@@ -641,18 +641,18 @@ HopFrame.prototype.post = function post( success, opt_or_fail ) {
 /*---------------------------------------------------------------------*/
 /*    HopFrame.prototype.postSync ...                                  */
 /*---------------------------------------------------------------------*/
-HopFrame.prototype.postSync = function call( opt ) {
-   if( this.srv instanceof WebSocket ) {
-      throw new Error( "postSync not supported on websocket" );
+HopFrame.prototype.postSync = function call(opt) {
+   if (this.srv instanceof WebSocket) {
+      throw new Error("postSync not supported on websocket");
    } else {
-      return withHOP( this.url, function( v ) { return v }, false, opt, true );
+      return withHOP(this.url, function(v) { return v }, false, opt, true);
    }
 }
 
-HopFrame.prototype.setOptions = function( opts ) {
+HopFrame.prototype.setOptions = function(opts) {
    this.options = opts; return this;
 }
-HopFrame.prototype.setHeader = function( header ) {
+HopFrame.prototype.setHeader = function(header) {
    this.header = header; return this;
 }
 
@@ -661,37 +661,37 @@ HopFrame.prototype.hop_bigloo_serialize = hop_bigloo_serialize_hopframe;
 /*---------------------------------------------------------------------*/
 /*    onPostMessage ...                                                */
 /*---------------------------------------------------------------------*/
-function onPostMessage( e ) {
-   if( e.data instanceof ArrayBuffer ) {
-      var buf = new Uint8Array( e.data );
+function onPostMessage(e) {
+   if (e.data instanceof ArrayBuffer) {
+      var buf = new Uint8Array(e.data);
 
       // 58 is ':' ascii code
-      var i0 = buf.indexOf( 58 );
-      var i1 = buf.indexOf( 58, i0 + 1 );
-      var i2 = buf.indexOf( 58, i1 + 1 );
-      var i3 = buf.indexOf( 58, i2 + 1 );
+      var i0 = buf.indexOf(58);
+      var i1 = buf.indexOf(58, i0 + 1);
+      var i2 = buf.indexOf(58, i1 + 1);
+      var i3 = buf.indexOf(58, i2 + 1);
 
-      if( String.fromCharCode.apply( null, buf.slice( 0, i0 ) ) === "PoST" ) {
+      if (String.fromCharCode.apply(null, buf.slice(0, i0)) === "PoST") {
 	 e.stopPropagation = true;
 	 e.preventDefault = true;
-	 var id = parseInt( String.fromCharCode.apply( null, buf.slice( i0 + 1, i1 ) ) );
-	 var status = parseInt( String.fromCharCode.apply( null, buf.slice( i1 + 1, i2 ) ) );
-	 var ctype = String.fromCharCode.apply( null, buf.slice( i2 + 1, i3 ) ) 
-	 var msg = buf.slice( i3 + 1 );
+	 var id = parseInt(String.fromCharCode.apply(null, buf.slice(i0 + 1, i1)));
+	 var status = parseInt(String.fromCharCode.apply(null, buf.slice(i1 + 1, i2)));
+	 var ctype = String.fromCharCode.apply(null, buf.slice(i2 + 1, i3)) 
+	 var msg = buf.slice(i3 + 1);
 	 var val = (ctype === "application/x-frame-hop")
-	    ? hop_bytearray_to_obj( msg, undefined, cset )
+	    ? hop_bytearray_to_obj(msg, undefined, cset)
 	    : (ctype === "application/x-frame-json")
-	    ? hop_json_parse( String.fromCharCode.apply( null, msg ) )
-	    : String.fromCharCode.apply( null, msg );
+	    ? hop_json_parse(String.fromCharCode.apply(null, msg))
+	    : String.fromCharCode.apply(null, msg);
 
-	 if( this.postHandlers[ id ] ) {
-	    if( status >= 100 && status <= 299 ) {
-	       if( this.postHandlers[ id ].succ ) {
-		  this.postHandlers[ id ].succ( val );
+	 if (this.postHandlers[ id ]) {
+	    if (status >= 100 && status <= 299) {
+	       if (this.postHandlers[ id ].succ) {
+		  this.postHandlers[ id ].succ(val);
 	       }
 	    } else {
-	       if( this.postHandlers[ id ].fail ) {
-		  this.postHandlers[ id ].fail( val );
+	       if (this.postHandlers[ id ].fail) {
+		  this.postHandlers[ id ].fail(val);
 	       }
 	    }
 	    delete this.postHandlers[ id ];
@@ -703,64 +703,64 @@ function onPostMessage( e ) {
 /*---------------------------------------------------------------------*/
 /*    WebSocketPostFrame ...                                           */
 /*---------------------------------------------------------------------*/
-function WebSocketPostFrame( frame, succ, fail ) {
+function WebSocketPostFrame(frame, succ, fail) {
    
-   function closeFrame( f ) {
-      if( f.fail ) f.fail( "connection closed" );
+   function closeFrame(f) {
+      if (f.fail) f.fail("connection closed");
    }
    
    var ws = frame.srv;
 
-   if( !("postHandlers" in ws) ) {
+   if (!("postHandlers" in ws)) {
       ws.postHandlers = {};
       ws.postCount = 0;
       ws.binaryType = "arraybuffer";
 
-      ws.addEventListener( "message", onPostMessage.bind( ws ) );
-      ws.addEventListener( "close", function( e ) {
-	 if( ws.preOpenQueue ) { ws.preOpenQueue.forEach( closeFrame ) }
-	 for( var k in ws.postHandlers ) { closeFrame( ws.postHandlers[ k ] ) }
-      } );
+      ws.addEventListener("message", onPostMessage.bind(ws));
+      ws.addEventListener("close", function(e) {
+	 if (ws.preOpenQueue) { ws.preOpenQueue.forEach(closeFrame) }
+	 for (var k in ws.postHandlers) { closeFrame(ws.postHandlers[ k ]) }
+      });
    }
 
    var msg = "PoST:" + ws.postCount
        + ":application/x-frame-hop:" + frame.toString();
    
    ws.postHandlers[ ws.postCount++ ] = { succ: succ, fail: fail };
-   ws.send( hexStringToUint8( msg ) );
+   ws.send(hexStringToUint8(msg));
    return;
 }
 
 /*---------------------------------------------------------------------*/
 /*    WebSocketPost ...                                                */
 /*---------------------------------------------------------------------*/
-function WebSocketPost( frame, succ, fail ) {
+function WebSocketPost(frame, succ, fail) {
    var ws = frame.srv;
    
-   if( ws.readyState != ws.OPEN ) {
-      if( !("preOpenQueue" in ws) ) {
+   if (ws.readyState != ws.OPEN) {
+      if (!("preOpenQueue" in ws)) {
 	 ws.preOpenQueue = [];
-	 ws.addEventListener( "open", function() {
-	    ws.preOpenQueue.forEach( function( el ) {
-	       WebSocketPostFrame.apply( undefined, el );
-	    } );
-	 } )
+	 ws.addEventListener("open", function() {
+	    ws.preOpenQueue.forEach(function(el) {
+	       WebSocketPostFrame.apply(undefined, el);
+	    });
+	 })
       }
 
-      if( succ || fail ) {
-	 ws.preOpenQueue.push( [ frame, succ, fail ] );
+      if (succ || fail) {
+	 ws.preOpenQueue.push([ frame, succ, fail ]);
       } else {
-	 return new Promise( function( resolve, reject ) {
-	    ws.preOpenQueue.push( [ frame, resolve, reject ] );
-	 } )
+	 return new Promise(function(resolve, reject) {
+	    ws.preOpenQueue.push([ frame, resolve, reject ]);
+	 })
       }
    } else {
-      if( succ || fail ) {
-	 return WebSocketPostFrame( frame, succ, fail );
+      if (succ || fail) {
+	 return WebSocketPostFrame(frame, succ, fail);
       } else {
-	 return new Promise( function( resolve, reject ) {
-	    WebSocketPostFrame( frame, resolve, reject );
-	 } );
+	 return new Promise(function(resolve, reject) {
+	    WebSocketPostFrame(frame, resolve, reject);
+	 });
       }
    }
 }
@@ -768,24 +768,24 @@ function WebSocketPost( frame, succ, fail ) {
 /*---------------------------------------------------------------------*/
 /*    withHOP ...                                                      */
 /*---------------------------------------------------------------------*/
-function withHOP( svc, success, fail, opt, force_sync, arg ) {
+function withHOP(svc, success, fail, opt, force_sync, arg) {
    var sync = force_sync;
    var anim = true;
    var header = false;
 
-   if( opt instanceof Object ) {
-      if( "sync" in opt ) sync = opt.sync;
-      if( "asynchronous" in opt ) sync = !opt.asynchronous;
-      if( "fail" in opt ) fail = opt.fail;
-      if( "anim" in opt ) anim = opt.anim;
-      if( "header" in opt ) header = opt.header;
+   if (opt instanceof Object) {
+      if ("sync" in opt) sync = opt.sync;
+      if ("asynchronous" in opt) sync = !opt.asynchronous;
+      if ("fail" in opt) fail = opt.fail;
+      if ("anim" in opt) anim = opt.anim;
+      if ("header" in opt) header = opt.header;
    }
 
-   return hop_send_request( svc, sync, success, fail, anim,
+   return hop_send_request(svc, sync, success, fail, anim,
 			    hop_serialize_request_env(),
 			    false, false, false, false, header,
 			    "javascript",
-			    arg );
+			    arg);
 }
 			    
 /*---------------------------------------------------------------------*/
@@ -795,7 +795,7 @@ function withHOP( svc, success, fail, opt, force_sync, arg ) {
 /*    functions.                                                       */
 /*---------------------------------------------------------------------*/
 /*** META ((export #t) (arity #t)) */
-function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x, loc, header, idiom, arg ) {
+function hop_send_request(svc, sync, success, failure, anim, henv, auth, t, x, loc, header, idiom, arg) {
    var xhr = x ? x : hop_make_xml_http_request();
 
    /* MS, 20 Jun 08: I cannot understand why but sometime global functions */
@@ -805,37 +805,37 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x, 
    var fail = (typeof failure === "function") ? failure : hop_default_failure;
 
    function onreadystatechange() {
-      if( this.readyState === 4 ) {
-	 return hop_request_onready( this, svc, succ, fail );
+      if (this.readyState === 4) {
+	 return hop_request_onready(this, svc, succ, fail);
       } else {
 	 return false;
       }
    }
 
-   if( !sync ) {
-      xhr.open( arg ? "POST" : "PUT", svc, true );
+   if (!sync) {
+      xhr.open(arg ? "POST" : "PUT", svc, true);
 
-      if( ("responseType" in xhr) && hop_config.uint8array ) {
+      if (("responseType" in xhr) && hop_config.uint8array) {
 	 xhr.onload = onreadystatechange;
 	 xhr.responseType = "arraybuffer";
-	 xhr.setRequestHeader( "Hop-Serialize", "x-hop" );
-	 xhr.setRequestHeader( "Hop-ResponseType", "arraybuffer" );
-      } else if( hop_config.uint8array ) {
+	 xhr.setRequestHeader("Hop-Serialize", "x-hop");
+	 xhr.setRequestHeader("Hop-ResponseType", "arraybuffer");
+      } else if (hop_config.uint8array) {
 	 xhr.onload = onreadystatechange;
-	 xhr.setRequestHeader( "Hop-Serialize", "x-hop" );
+	 xhr.setRequestHeader("Hop-Serialize", "x-hop");
       } else {
 	 xhr.onreadystatechange = onreadystatechange;
-	 xhr.setRequestHeader( "Hop-Serialize", "javascript" );
+	 xhr.setRequestHeader("Hop-Serialize", "javascript");
       }
    } else {
-      xhr.open( arg ? "POST" : "PUT", svc, false );
+      xhr.open(arg ? "POST" : "PUT", svc, false);
       
       xhr.onreadystatechange = onreadystatechange;
-      xhr.setRequestHeader( "Hop-Serialize", "javascript" );
+      xhr.setRequestHeader("Hop-Serialize", "javascript");
    }
 
-   if( t ) {
-      if( "setTimeouts" in xhr ) {
+   if (t) {
+      if ("setTimeouts" in xhr) {
 	 xhr.setTimeouts = t;
       } else {
 	 xhr.timeout = t;
@@ -843,114 +843,114 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x, 
       }
    }
 
-   if( (hop_debug() > 0)
-       && (svc.indexOf( "/hop/public/server-debug" ) != 0) ) {
+   if ((hop_debug() > 0)
+       && (svc.indexOf("/hop/public/server-debug") != 0)) {
       /* debug mode, get the context and send the client-stack to the */
       /* server, except if we are calling a debug service.            */
       try {
-	 throw new Error( "with-hop" );
-      } catch( e ) {
-	 var i = svc.indexOf( "?" );
-	 var svcname = i ? svc.substring( 0, i ) : svc;
+	 throw new Error("with-hop");
+      } catch(e) {
+	 var i = svc.indexOf("?");
+	 var svcname = i ? svc.substring(0, i) : svc;
 
-	 if( svcname.indexOf( "/hop/" ) === 0 ) {
-	    svcname = svcname.substring( 5 );
+	 if (svcname.indexOf("/hop/") === 0) {
+	    svcname = svcname.substring(5);
 	 }
 
-	 var typ = sc_cons( sc_jsstring2symbol( "type" ),
-			    sc_jsstring2symbol( "client" ) );
-	 var fmt = sc_cons( sc_jsstring2symbol( "format" ),
-			    sc_jsstring2string( "~~~a" ) );
+	 var typ = sc_cons(sc_jsstring2symbol("type"),
+			    sc_jsstring2symbol("client"));
+	 var fmt = sc_cons(sc_jsstring2symbol("format"),
+			    sc_jsstring2string("~~~a"));
 
 	 var name = (idiom === "javascript" ?
 		     svcname + ".post(...)" 
 		     : "(with-hop (" + svcname + "...) ...)");
-	 var frame = sc_cons( name,
-			      sc_cons( loc,
-				       sc_cons( fmt, sc_cons( typ, null ) ) ) );
+	 var frame = sc_cons(name,
+			      sc_cons(loc,
+				       sc_cons(fmt, sc_cons(typ, null))));
 
-	 var estk = sc_append( hop_get_exception_stack( e ),
-			       hop_current_stack_context );
-	 var stk = sc_cons( "Service trace:", sc_cons( frame, estk ) );
+	 var estk = sc_append(hop_get_exception_stack(e),
+			       hop_current_stack_context);
+	 var stk = sc_cons("Service trace:", sc_cons(frame, estk));
 
          xhr.precontext = stk;
-         xhr.setRequestHeader( 'Hop-Debug-Stack', hop_bigloo_serialize( stk ) );
+         xhr.setRequestHeader('Hop-Debug-Stack', hop_bigloo_serialize(stk));
       }
    }
 
-   if( arg === null ) {
-      xhr.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8' );
-      if( hop_config.navigator_family != "safari" &&
+   if (arg === null) {
+      xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8');
+      if (hop_config.navigator_family != "safari" &&
 	  hop_config.navigator_family != "mozilla" &&
 	  hop_config.navigator_family != "chrome" &&
-	  hop_config.navigator_family != "webkit" ) {
-	 xhr.setRequestHeader( 'Connection', 'close' );
+	  hop_config.navigator_family != "webkit") {
+	 xhr.setRequestHeader('Connection', 'close');
       }
-      if( henv.length > 0 ) {
-	 xhr.setRequestHeader( 'Hop-Env', henv );
+      if (henv.length > 0) {
+	 xhr.setRequestHeader('Hop-Env', henv);
       }
-      if( header instanceof Object ) {
-	 for( var k in header ) {
-	    xhr.setRequestHeader( k, header[ k ] );
+      if (header instanceof Object) {
+	 for (var k in header) {
+	    xhr.setRequestHeader(k, header[ k ]);
 	 }
       }
-      if( ("multipart" in xhr) && (xhr.multipart === true) ) {
+      if (("multipart" in xhr) && (xhr.multipart === true)) {
 	 /* This header is needed to let the server */
 	 /* disable timeout for this connection     */
-	 xhr.setRequestHeader( 'Xhr-Multipart', "true" );
+	 xhr.setRequestHeader('Xhr-Multipart', "true");
       }
    }
    
-   if( auth ) {
-      xhr.setRequestHeader( 'Authorization', auth );
+   if (auth) {
+      xhr.setRequestHeader('Authorization', auth);
    }
 
    xhr.svc = svc;
-   xhr.onerror = function( e ) { 
-      if( typeof hop_stop_anim === "function" ) { 
-	 hop_stop_anim( xhr );
+   xhr.onerror = function(e) { 
+      if (typeof hop_stop_anim === "function") { 
+	 hop_stop_anim(xhr);
       }
-      return fail( e, xhr );
+      return fail(e, xhr);
    };
    
    try {
-      xhr.send( arg );
+      xhr.send(arg);
 
-      if( anim ) {
+      if (anim) {
 	 var a = (anim instanceof Function) ? anim : hop_default_anim_get();
 	 
-	 if( hop_has_setInterval ) {
+	 if (hop_has_setInterval) {
 	    xhr.hop_anim = true;
 	    xhr.hop_anim_interval =
-	       setInterval( function() {
-		     clearInterval( xhr.hop_anim_interval );
-		     if( xhr.hop_anim === true )
-			xhr.hop_anim = hop_start_anim( svc, a );
-		  }, hop_anim_latency );
+	       setInterval(function() {
+		     clearInterval(xhr.hop_anim_interval);
+		     if (xhr.hop_anim === true)
+			xhr.hop_anim = hop_start_anim(svc, a);
+		  }, hop_anim_latency);
 	 } else {
 	    xhr.hop_anim_interval = false;
-	    xhr.hop_anim = hop_start_anim( svc, a );
+	    xhr.hop_anim = hop_start_anim(svc, a);
 	 }
       } else {
 	 xhr.hop_anim = false;
       }
 
-      if( sync ) {
-	 if( xhr.readyState === 4 ) {
+      if (sync) {
+	 if (xhr.readyState === 4) {
 	    return xhr.onreadystatechange();
 	 } else {
-	    var exc = new Error( "\"" + svc
+	    var exc = new Error("\"" + svc
 				 + " \", with-hop synchronous call failed -- "
-				 + "readyState: " + xhr.readyState );
-	    hop_callback_handler( exc, xhr.precontext );
+				 + "readyState: " + xhr.readyState);
+	    hop_callback_handler(exc, xhr.precontext);
 	 }
       }
-   } catch( e ) {
-      if( typeof hop_stop_anim === "function" ) { 
-	 hop_stop_anim( xhr );
+   } catch(e) {
+      if (typeof hop_stop_anim === "function") { 
+	 hop_stop_anim(xhr);
       }
 
-      return fail( e, xhr );
+      return fail(e, xhr);
    }
 
    return xhr;
@@ -965,46 +965,46 @@ var hop_xdomain_msg = {};
 /*---------------------------------------------------------------------*/
 /*    with_hop_xdomain ...                                             */
 /*---------------------------------------------------------------------*/
-function with_hop_xdomain( host, port, svc, sync, success, failure, anim, henv, auth, t, x, header ) {
-   if( !port ) port = 80;
+function with_hop_xdomain(host, port, svc, sync, success, failure, anim, henv, auth, t, x, header) {
+   if (!port) port = 80;
 
-   if( sync ) {
-      sc_error( svc,
+   if (sync) {
+      sc_error(svc,
 		"cross domain with-hop must be asynchronous",
-		host + ":" + port, 2 );
+		host + ":" + port, 2);
    } else {
       var key = hop_xdomain_key++;
       var id = "__xdomain:" + host + ":" + port;
-      var el = document.getElementById( id );
+      var el = document.getElementById(id);
       var origin = "http://" + host + ":" + port;
       var src = origin + "/hop/public/xdomain"
       var msg = key + " " + svc + " " + hop_serialize_request_env() +
-	  " " + (auth ? auth : "") + (header instanceof object ? JSON.stringify( header ) : false);
+	  " " + (auth ? auth : "") + (header instanceof object ? JSON.stringify(header) : false);
 
       hop_xdomain_msg[ key ] = { success: success, failure: failure, svc: svc };
 
-      if( !el ) {
-	 el = document.createElement( "iframe" );
+      if (!el) {
+	 el = document.createElement("iframe");
 	 el.src = src;
 	 el.id = id;
 
-	 hop_add_event_listener( el, "load", function() {
-	    el.contentWindow.postMessage( msg, origin );
-	 }, true );
+	 hop_add_event_listener(el, "load", function() {
+	    el.contentWindow.postMessage(msg, origin);
+	 }, true);
 
 
-	 hop_add_event_listener( window, "message", function( event ) {
-	    if( event.origin === origin ) {
-	       hop_xdomain_onmessage( event, key );
+	 hop_add_event_listener(window, "message", function(event) {
+	    if (event.origin === origin) {
+	       hop_xdomain_onmessage(event, key);
 	    }
-	 }, false );
+	 }, false);
 	 
-	 node_style_set( el, "display", "none" );
-	 document.body.appendChild( el );
+	 node_style_set(el, "display", "none");
+	 document.body.appendChild(el);
       } else {
-	 hop_add_event_listener( el, "load", function() {
-	    el.contentWindow.postMessage( msg, origin );
-	 }, true );
+	 hop_add_event_listener(el, "load", function() {
+	    el.contentWindow.postMessage(msg, origin);
+	 }, true);
       }
    }
 }
@@ -1012,24 +1012,24 @@ function with_hop_xdomain( host, port, svc, sync, success, failure, anim, henv, 
 /*---------------------------------------------------------------------*/
 /*    hop_xdomain_onmessage ...                                        */
 /*---------------------------------------------------------------------*/
-function hop_xdomain_onmessage( event ) {
+function hop_xdomain_onmessage(event) {
    var xhr = new Object();
-   var m = event.data.match( "([^ ]+) ([0-9]+) ([^ ]+) ([^ ]+)( *)" );
+   var m = event.data.match("([^ ]+) ([0-9]+) ([^ ]+) ([^ ]+)(*)");
    var key = m[ 1 ];
    
-   xhr.status = parseInt( m[ 2 ] );
+   xhr.status = parseInt(m[ 2 ]);
    xhr.content_type = m[ 3 ];
    xhr.hop_serialize = m[ 4 ];
-   xhr.responseText = event.data.substring( m[ 0 ].length );
+   xhr.responseText = event.data.substring(m[ 0 ].length);
    
    // Install a fake 'getResponseHeader' procedure to please
    // 'xhr_hop_failure_callback'.
    xhr.getResponseHeader = function(h) { return null; };
 
-   hop_request_onready( xhr,
+   hop_request_onready(xhr,
 			hop_xdomain_msg[ key ].svc,
 			hop_xdomain_msg[ key ].success,
-			hop_xdomain_msg[ key ].failure );
+			hop_xdomain_msg[ key ].failure);
 }
 
 
@@ -1037,11 +1037,11 @@ function hop_xdomain_onmessage( event ) {
 /*    with_hop ...                                                     */
 /*---------------------------------------------------------------------*/
 /*** META ((export #t) (arity -2)) */
-function with_hop( svc, success, failure, sync, anim, timeout, header ) {
-   return hop_send_request( svc, sync,
+function with_hop(svc, success, failure, sync, anim, timeout, header) {
+   return hop_send_request(svc, sync,
 			    success, failure,
 			    anim, hop_serialize_request_env(), false,
-			    timeout, header, "hop", null );
+			    timeout, header, "hop", null);
 }
 
 /*---------------------------------------------------------------------*/
@@ -1165,17 +1165,17 @@ var hop_request_env_invalid = false;
 /*---------------------------------------------------------------------*/
 /*** META ((export #t) (arity #t)) */
 function hop_serialize_request_env() {
-   if( hop_request_env_invalid ) {
+   if (hop_request_env_invalid) {
       var tmp = null;
 
-      for( var p in hop_request_env ) {
-	 if( (typeof hop_request_env[ p ] != "function") &&
-	     (hop_request_env[ p ] != undefined) ) {
-	    tmp = sc_cons( sc_cons( p, hop_request_env[ p ] ), tmp );
+      for (var p in hop_request_env) {
+	 if ((typeof hop_request_env[ p ] != "function") &&
+	     (hop_request_env[ p ] != undefined)) {
+	    tmp = sc_cons(sc_cons(p, hop_request_env[ p ]), tmp);
 	 }
       }
 
-      hop_request_env_string = hop_bigloo_serialize( tmp );
+      hop_request_env_string = hop_bigloo_serialize(tmp);
    }
       
    return hop_request_env_string;
@@ -1199,7 +1199,7 @@ function hop_request_reset() {
 /*    hop_request_set ...                                              */
 /*---------------------------------------------------------------------*/
 /*** META ((export request-set!) (arity #t)) */
-function hop_request_set( key, val ) {
+function hop_request_set(key, val) {
    hop_request_env_invalid = true;
    hop_request_env[ key ] = val;
    return val;
@@ -1212,7 +1212,7 @@ function hop_request_set( key, val ) {
            (arity #t)
            (peephole (hole 1 "hop_request[" key"]")))
 */
-function hop_request_get( key ) {
+function hop_request_get(key) {
    return hop_request[ key ];
 }
 
