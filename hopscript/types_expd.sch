@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 25 15:52:55 2017                          */
-;*    Last change :  Fri Jun  3 14:28:34 2022 (serrano)                */
+;*    Last change :  Sun Sep 25 17:09:43 2022 (serrano)                */
 ;*    Copyright   :  2017-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Types Companion macros                                           */
@@ -451,7 +451,8 @@
 	   (e `(with-handler
 		  (lambda (e)
 		     (fprintf (current-error-port)
-			"js-import-ref: cannot import \"~a\"" ',debug)
+			"js-import-ref: cannot import \"~a\""
+			,(if (null? debug) ''() (car debug)))
 		     (raise e))
 		  (vector-ref ,v ,idx))
 	      e)
@@ -469,7 +470,8 @@
 	      (if (vector? v)
 		  (vector-ref v ,idx)
 		  (js-raise-type-error/loc %this ,loc
-		     "Cannot access before initialization" ',debug)))
+		     "Cannot access before initialization"
+		     ,(if (null? debug) ''() (car debug)))))
 	  e))
       (else
        (error "js-redirect-ref" "wrong syntax" x))))
