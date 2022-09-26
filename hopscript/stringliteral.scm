@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Mon May  9 09:08:18 2022 (serrano)                */
+;*    Last change :  Mon Sep 26 09:10:10 2022 (serrano)                */
 ;*    Copyright   :  2014-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -37,6 +37,7 @@
 	   (js-jsstring-for-in str ::procedure ::JsGlobalObject)
 	   (js-jsstring-for-of str ::procedure ::JsGlobalObject)
 	   (inline js-ascii->jsstring::JsStringLiteralASCII ::bstring)
+	   (inline js-8bits->jsstring::JsStringLiteral8BITS ::bstring)
 	   (js-substring->jsstring::JsStringLiteral ::bstring ::long ::long)
 	   (inline js-utf8->jsstring::JsStringLiteralUTF8 ::bstring)
 	   (inline js-utf8->jsstring/ulen::JsStringLiteralUTF8 ::bstring ::uint32)
@@ -556,6 +557,18 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-ascii->jsstring::JsStringLiteralASCII val::bstring)
    (let ((o (instantiate::JsStringLiteralASCII
+	       (length (fixnum->uint32 (string-length val)))
+	       (left val)
+	       (right (js-not-a-string-cache)))))
+      (js-object-mode-set! o (js-jsstring-normalized-ascii-mode))
+      (object-widening-set! o #f)
+      o))
+
+;*---------------------------------------------------------------------*/
+;*    js-8bits->jsstring ...                                           */
+;*---------------------------------------------------------------------*/
+(define-inline (js-8bits->jsstring::JsStringLiteral8BITS val::bstring)
+   (let ((o (instantiate::JsStringLiteral8BITS
 	       (length (fixnum->uint32 (string-length val)))
 	       (left val)
 	       (right (js-not-a-string-cache)))))

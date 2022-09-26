@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 30 06:52:06 2014                          */
-;*    Last change :  Fri Mar 11 18:41:28 2022 (serrano)                */
+;*    Last change :  Mon Sep 26 07:46:57 2022 (serrano)                */
 ;*    Copyright   :  2014-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native native bindings                                           */
@@ -55,6 +55,20 @@
 ;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
 (define __js_strings (&begin!))
+
+;*---------------------------------------------------------------------*/
+;*    js-arraybuffer-length ::JsSlowBuffer ...                         */
+;*---------------------------------------------------------------------*/
+(define-method (js-arraybuffer-length o::JsSlowBuffer)
+   (with-access::JsSlowBuffer o (data)
+      (string-length data)))
+
+;*---------------------------------------------------------------------*/
+;*    js-get-length ::JsSlowBuffer ...                                 */
+;*---------------------------------------------------------------------*/
+(define-method (js-get-length o::JsSlowBuffer %this #!optional cache)
+   (with-access::JsSlowBuffer o (data)
+      (string-length data)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-init-buffer! ...                                              */
@@ -555,6 +569,20 @@
    (blit-string-ascii-decode! string1 o1 string2 o2 len))
 
 ;*---------------------------------------------------------------------*/
+;*    blit-string-binary! ...                                          */
+;*---------------------------------------------------------------------*/
+(define (blit-string-binary! string1::bstring o1 string2::bstring o2 len)
+   (let ((len1 (string-length string1)))
+      (let loop ((i o1)
+		 (j 0)
+		 (l 0))
+	 (if (and (<fx j len) (<fx i len1))
+	     (let ((n (string-ref-ur string1 (+fx o1 i))))
+		(string-set-ur! string2 (+fx o2 j) n)
+		(loop (+fx i 1) (+fx j 1) (+fx l 1)))
+	     l))))
+
+;*---------------------------------------------------------------------*/
 ;*    blit-string-utf8! ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (blit-string-utf8! string1::bstring o1 string2::bstring o2 len)
@@ -986,8 +1014,11 @@
 					 (minfx length
 					    (-fx (string-length data) offset))))))
 			     (if (>fx n 0)
-				 (let ((l (blit-string-binary-decode!
-					     (js-jsstring->string string) 0 data offset n)))
+				 (let ((l (if (isa? string JsStringLiteral8BITS)
+					      (blit-string-binary!
+						 (js-jsstring->string string) 0 data offset n)
+					      (blit-string-binary-decode!
+						 (js-jsstring->string string) 0 data offset n))))
 				    (js-put! js-slowbuffer (& "_charsWritten") l #t %this)
 				    l)
 				 n)))
@@ -1265,9 +1296,12 @@
 			     ((string=? enc "latin1")
 			      (string-length (js-jsstring->string string)))
 			     ((or (string-ci=? enc "ascii")
-				  (string=? enc "binary")
 				  (string=? enc "buffer"))
 			      (utf8-string-length (js-jsstring->string string)))
+			     ((string=? enc "binary")
+			      (if (isa? string JsStringLiteral8BITS)
+				  (string-length (js-jsstring->string string))
+				  (utf8-string-length (js-jsstring->string string))))
 			     (else
 			      (utf8-string-length (js-jsstring->string string)))))))
 		(js-function-arity 2 0)

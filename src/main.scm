@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Mon May  9 07:56:07 2022 (serrano)                */
+;*    Last change :  Mon Sep 26 03:33:18 2022 (serrano)                */
 ;*    Copyright   :  2004-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -254,18 +254,18 @@
 	 (lambda (path . test)
 	    (js-worker-exec %worker "hop-loader" #t
 	       (lambda ()
-		  (nodejs-load path path %global %module %worker :commonjs-export #f)))))
+		  (nodejs-load path path %global %module %worker :commonjs-export #t)))))
       (hop-loader-add! "ast.json"
 	 (lambda (path . test)
 	    (js-worker-exec %worker "hop-loader" #t
 	       (lambda ()
-		  (nodejs-load path path %global %module %worker :commonjs-export #f)))))
+		  (nodejs-load path path %global %module %worker :commonjs-export #t)))))
       ;; ts loader
       (hop-loader-add! "ts"
 	 (lambda (path . test)
 	    (js-worker-exec %worker "hop-loader" #t
 	       (lambda ()
-		  (nodejs-load path path %global %module %worker :lang "ts" :commonjs-export #f)))))
+		  (nodejs-load path path %global %module %worker :lang "ts" :commonjs-export #t)))))
       ;; profiling
       (when (hop-profile)
 	 (js-profile-init `(:server #t) #f #f))

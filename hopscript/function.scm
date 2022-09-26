@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Tue Jun  7 19:59:33 2022 (serrano)                */
+;*    Last change :  Sun Sep 25 23:15:40 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -1533,7 +1533,7 @@
       ((and (integer? req) (integer? opl))
        (if (null? protocol)
 	   (if (=fx opl 0)
-	       (+ req 1)
+	       (+fx req 1)
 	       (error "js-function-arity"
 		  "illegal optional for fix args"
 		  (vector req opl protocol)))

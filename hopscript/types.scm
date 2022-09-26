@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Sat May 21 15:44:53 2022 (serrano)                */
+;*    Last change :  Mon Sep 26 09:09:49 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -213,6 +213,8 @@
 	      (index::uint32 read-only))
 	   
 	   (class JsStringLiteralSubstring::JsStringLiteralASCII)
+	   
+	   (class JsStringLiteral8BITS::JsStringLiteralASCII)
 	   
 	   (class JsStringLiteralBuffer::JsStringLiteralSubstring)
 	   

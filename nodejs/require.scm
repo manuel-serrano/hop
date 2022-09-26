@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    /tmp/HOP/hop/nodejs/require.scm                                  */
+;*    serrano/prgm/project/hop/hop/nodejs/require.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Sat Jun 25 17:15:35 2022 (serrano)                */
+;*    Last change :  Mon Sep 26 03:20:27 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -723,7 +723,7 @@
    (let* ((respath (nodejs-resolve path %this %module 'import))
 	  (mod (nodejs-load-module respath worker %this %module
 		 :commonjs-export commonjs-export :loc loc)))
-      (with-access::JsModule mod ((mc checksum) evars)
+      (with-access::JsModule mod ((mc checksum))
 	 (if (or (=fx checksum 0) (=fx checksum mc) (=fx mc 0))
 	     mod
 	     (js-raise-type-error/loc %this loc
