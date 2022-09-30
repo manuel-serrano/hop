@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Mon Sep 26 03:33:18 2022 (serrano)                */
+;*    Last change :  Mon Sep 26 15:35:08 2022 (serrano)                */
 ;*    Copyright   :  2004-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -514,7 +514,7 @@
 	     (with-access::WorkerHopThread %worker (%this prerun)
 		(js-worker-push-thunk! %worker "nodejs-load"
 		   (lambda ()
-		      (nodejs-load path path %global %module %worker :lang "ts" :commonjs-export #f))))))
+		      (nodejs-load path path %global %module %worker :lang "ts" :commonjs-export #t))))))
 	 ((string=? (basename path) "package.json")
 	  (load-package path))
 	 (else

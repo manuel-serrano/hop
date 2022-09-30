@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Mon Sep 26 03:20:27 2022 (serrano)                */
+;*    Last change :  Wed Sep 28 10:45:41 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -1949,6 +1949,8 @@
 	 (trace-item "filename=" filename " lang=" lang
 	    " slave=" (if worker-slave #t #f))
 	 (let loop ((sopath (find-new-sofile filename worker-slave)))
+	    (when (getenv "HOPDEBUG")
+	       (tprint "LOADSO-OR-COMPILE filename=" filename " lang=" lang " sopath=" sopath))
 	    (trace-item "sopath=" sopath)
 	    (cond
 	       ((and (string? sopath) (hop-sofile-enable))

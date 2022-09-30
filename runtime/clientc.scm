@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Mar 25 14:37:34 2009                          */
-;*    Last change :  Thu Mar 19 14:20:40 2020 (serrano)                */
-;*    Copyright   :  2009-20 Manuel Serrano                            */
+;*    Last change :  Fri Sep 30 18:42:52 2022 (serrano)                */
+;*    Copyright   :  2009-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP client-side compiler                                         */
 ;*=====================================================================*/
@@ -207,6 +207,8 @@
 	 (with-access::clientc (hop-clientc) (filec jsc jsonc htmlc)
 	    (cond
 	       ((string-suffix? ".js" path)
+		(jsc path name output query))
+	       ((string-suffix? ".ts" path)
 		(jsc path name output query))
 	       ((string-suffix? ".json" path)
 		(jsonc path name output query))

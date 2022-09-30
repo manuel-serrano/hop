@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Thu Mar 26 14:44:41 2020 (serrano)                */
-;*    Copyright   :  2005-20 Manuel Serrano                            */
+;*    Last change :  Fri Sep 30 17:53:04 2022 (serrano)                */
+;*    Copyright   :  2005-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
 ;*=====================================================================*/
