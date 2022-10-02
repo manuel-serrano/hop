@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Mon May 16 10:14:01 2022 (serrano)                */
+;*    Last change :  Sat Oct  1 08:38:26 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -413,6 +413,7 @@
 	 ((var) (var-decl-list #f))
 	 ((let) (let-decl-list #f))
 	 ((const) (const-decl-list #f))
+	 ((type) (type-decl-list))
 	 ((SEMICOLON) (empty-statement))
 	 ((if) (iff))
 	 ((for while do) (iteration))
@@ -540,17 +541,71 @@
 	       (val (J2SUndefined))
 	       (utype ty)))))
 
+   (define (type-decl-list)
+      ;; TypeScript type block, for now simply ignored
+      (consume-token! 'type)
+      (let loop ()
+	 (consume-token! 'ID)
+	 (consume-token! '=)
+	 (typescript-type)
+	 (if (eq? (peek-token-type) 'COMA)
+	     (begin
+		(consume-any!)
+		(loop))
+	     (empty-statement))))
+
    (define (type-name ty)
       (if (eq? ty 'vector)
 	  'jsvector
 	  ty))
+
+   (define (typescript-type-list)
+      (let ((t (typescript-type)))
+	 (if (eq? (peek-token-type) 'COMA)
+	     (typescript-type-list)
+	     t)))
+   
+   (define (typescript-type)
+      ;; incomplete parsing of typescript types, should be completed
+      (case (peek-token-type)
+	 ((ID)
+	  (let ((ty (consume-token! 'ID)))
+	     (case (peek-token-type)
+		((LBRACKET)
+		 (consume-any!)
+		 (consume-token! 'RBRACKET)
+		 'vector)
+		((BIT_OR)
+		 (consume-any!)
+		 (typescript-type))
+		((OTAG)
+		 (consume-any!)
+		 (tprint "OTTAG...")
+		 (let ((t (typescript-type)))
+		    (tprint "T=" t " " (peek-token-type))
+		    (consume-token! 'CTAG)))
+		(else
+		 (type-name (token-value ty))))))
+	 ((LPAREN)
+	  (consume-any!)
+	  (let ((t (typescript-type-list)))
+	     (consume-token! 'RPAREN)
+	     (if (eq? (peek-token-type) '=>)
+		 (begin
+		    (consume-any!)
+		    (typescript-type))
+		 t)))
+	 ((void)
+	  (consume-any!)
+	  'void)
+	 (else
+	  (parse-token-error "Illegal type expression" (consume-any!)))))
    
    (define (opt-type)
       (cond
 	 ((and (eq? (peek-token-type) ':) (eq? current-mode 'hopscript))
 	  (consume-any!)
-	  (let ((ty (consume-token! 'ID)))
-	     (type-name (token-value ty))))
+	  (typescript-type))
 	 ((eq? (peek-token-type) 'TYPE)
 	  (type-name (token-value (consume-any!))))
 	 (else
@@ -1894,6 +1949,9 @@
       (let ((cmode current-mode)
 	    (cplugins plugins))
 	 (set! current-mode mode)
+	 (when (eq? (peek-token-type) ':)
+	    (consume-any!)
+	    (typescript-type))
 	 (unwind-protect
 	    (let ((token (push-open-token (consume-token! 'LBRACE))))
 	       (let ((loc (current-loc)))

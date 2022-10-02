@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:33:09 2013                          */
-;*    Last change :  Mon Feb 21 11:01:02 2022 (serrano)                */
+;*    Last change :  Sun Oct  2 20:02:21 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript lexer                                                 */
@@ -88,7 +88,7 @@
      "import"))
 
 (define *hopscript-reserved-list*
-   '())
+   '("type"))
 
 (define *future-strict-reserved-list*
    '("implements"
