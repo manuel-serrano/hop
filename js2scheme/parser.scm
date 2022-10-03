@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Sat Oct  1 08:38:26 2022 (serrano)                */
+;*    Last change :  Mon Oct  3 14:33:37 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -212,7 +212,7 @@
 	     (peek-token)))))
 
    (define (peek-token-id? val)
-      (and (eq? (peek-token-type) 'ID) (eq? (peek-token-value) val)))
+      (and (memq (peek-token-type) '(ID type)) (eq? (peek-token-value) val)))
    
    (define (eof?)
       (eq? (peek-token-type) 'EOF))
@@ -565,48 +565,57 @@
 	     (typescript-type-list)
 	     t)))
    
-   (define (typescript-type)
-      ;; incomplete parsing of typescript types, should be completed
+   (define (typescript-simple-type)
       (case (peek-token-type)
 	 ((ID)
 	  (let ((ty (consume-token! 'ID)))
 	     (case (peek-token-type)
 		((LBRACKET)
+		 ;; array type
 		 (consume-any!)
 		 (consume-token! 'RBRACKET)
 		 'vector)
-		((BIT_OR)
-		 (consume-any!)
-		 (typescript-type))
 		((OTAG)
 		 (consume-any!)
 		 (tprint "OTTAG...")
 		 (let ((t (typescript-type)))
-		    (tprint "T=" t " " (peek-token-type))
-		    (consume-token! 'CTAG)))
+		    'any))
 		(else
 		 (type-name (token-value ty))))))
 	 ((LPAREN)
-	  (consume-any!)
 	  (let ((t (typescript-type-list)))
-	     (consume-token! 'RPAREN)
 	     (if (eq? (peek-token-type) '=>)
 		 (begin
 		    (consume-any!)
-		    (typescript-type))
+		    (typescript-type)
+		    'function)
 		 t)))
 	 ((void)
 	  (consume-any!)
 	  'void)
 	 (else
 	  (parse-token-error "Illegal type expression" (consume-any!)))))
+      
+   (define (typescript-type)
+      (let ((ty (typescript-simple-type)))
+	 (case (peek-token-type)
+	    ((BIT_OR)
+	     ;; union type
+	     (consume-any!)
+	     (typescript-type))
+	    ((&)
+	     ;; intersection type
+	     (consume-any!)
+	     (typescript-type))
+	    (else
+	     ty))))
    
    (define (opt-type)
       (cond
 	 ((and (eq? (peek-token-type) ':) (eq? current-mode 'hopscript))
 	  (consume-any!)
 	  (typescript-type))
-	 ((eq? (peek-token-type) 'TYPE)
+	 ((eq? (peek-token-type) 'type)
 	  (type-name (token-value (consume-any!))))
 	 (else
 	  'unknown)))
@@ -1787,7 +1796,7 @@
 
    (define (consume-param! idx maybe-expr?)
       (case (peek-token-type)
-	 ((ID)
+	 ((ID type)
 	  (let* ((token (consume-any!))
 		 (loc (token-loc token))
 		 (hint '())
@@ -2621,6 +2630,7 @@
 		(cond
 		   ((or (eq? key 'ID)
 			(eq? key 'RESERVED)
+			(eq? key 'type)
 			(j2s-reserved-id? key))
 		    (loop (instantiate::J2SAccess
 			     (loc (token-loc ignore))
@@ -2718,7 +2728,7 @@
 				  ((export) (export (consume-any!)))
 				  (else (statement)))))
 		      (loop (cons stmt rev-stats))))
-		  ((ID)
+		  ((ID type)
 		   (let ((token (peek-token)))
 		      (cond
 			 ((and plugins (assq (token-value token) plugins))
@@ -2826,7 +2836,7 @@
 	  (async-expression token))
 	 ((=>)
 	  (async-expression token))
-	 ((ID)
+	 ((ID type)
 	  (let ((id (consume-any!)))
 	     (if (eq? (peek-token-type) '=>)
 		 (begin
@@ -2903,7 +2913,7 @@
 	     (instantiate::J2SUnresolvedRef
 		(loc loc)
 		(id 'super))))
-	 ((ID RESERVED)
+	 ((ID RESERVED type)
 	  (let ((token (consume-any!)))
 	     (cond
 		((and plugins (assq (token-value token) plugins))
@@ -2911,7 +2921,7 @@
 		 (lambda (p)
 		    ((cdr p) token #f conf parser-controller)))
 		((and (eq? (token-value token) 'service)
-		      (memq (peek-token-type) '(LPAREN ID)))
+		      (memq (peek-token-type) '(LPAREN ID type)))
 		 (token-push-back! token)
 		 (service-expression))
 		((eq? (token-value token) 'async)
@@ -3193,7 +3203,7 @@
 		    (val (symbol->string (token-value token)))))
 	      (parse-token-error "Private field must be declared in an enclosing class"
 		 (consume-any!))))
-	 ((ID RESERVED)
+	 ((ID RESERVED type)
 	  (let ((token (consume-any!)))
 	     (case (token-value token)
 		((get set)
@@ -3349,7 +3359,7 @@
 	    (cond
 	       ((memq name '(get set))
 		(case (peek-token-type)
-		   ((ID RESERVED)
+		   ((ID RESERVED type)
 		    (property-accessor (consume-any!) tokname name props))
 		   ((STRING ESTRING OSTRING)
 		    (let* ((tok (consume-any!))
@@ -3398,7 +3408,7 @@
 		(let* ((loc (token-loc token))
 		       (val (case (peek-token-type)
 			       ((COMMA RBRACE)
-				(if (eq? (token-tag token) 'ID)
+				(if (memq (token-tag token) '(ID type))
 				    (instantiate::J2SUnresolvedRef
 				       (loc loc)
 				       (id (token-value token)))
