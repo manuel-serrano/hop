@@ -2530,7 +2530,7 @@
 	 (else
 	  (with-access::JsGlobalObject %this (js-array-prototype js-array-cmap)
 	     (let* ((vec (make-vector (DEFAULT-EMPTY-ARRAY-SIZE) (js-absent)))
-		    (o (instantiateJsArray
+		    (o (instantiate::JsArray
 			  (cmap js-array-cmap)
 			  (length #u32:0)
 			  (ilen #u32:0)

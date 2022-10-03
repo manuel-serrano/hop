@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Wed Sep 28 10:45:41 2022 (serrano)                */
+;*    Last change :  Mon Oct  3 19:47:45 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -64,7 +64,7 @@
    (let ((env (getenv "HOP_DEBUG")))
       (if (string? env)
 	  (string->integer env)
-	  #f)))
+	  0)))
 
 ;*---------------------------------------------------------------------*/
 ;*    %env-push-trace ...                                              */
@@ -86,7 +86,7 @@
 ;*    hop-debug ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (hop-debug)
-   (or env-debug (bigloo-debug)))
+   env-debug)
 
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
@@ -113,7 +113,7 @@
       '("hopscript" "html" "json" "hop" "ecmascript5"
 	"ecmascript6" "ecmascript2017" "ecmascript2018"
 	"ecmascript2019" "ecmascript2020" "ecmascript2021"
-	"ecmascript2022")))
+	"ecmascript2022" "typescript")))
 
 ;*---------------------------------------------------------------------*/
 ;*    default scope length                                             */
@@ -160,8 +160,11 @@
 		       name ofile query #f %ctxworker %ctxthis %ctxmodule lang)
 		    (nodejs-compile-client-file-lang ifile name ofile query
 		       %ctxworker %ctxthis %ctxmodule lang)))
-	     (nodejs-compile-file-client-hopscript ifile ifile name ofile query #f
-		%ctxworker %ctxthis %ctxmodule "hopscript")))))
+	     (let ((lang (if (string-suffix? ".ts" name)
+			     "typescript"
+			     "hopscript")))
+		(nodejs-compile-file-client-hopscript ifile ifile name ofile query #f
+		   %ctxworker %ctxthis %ctxmodule lang))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-compile-client-file-lang ...                              */
@@ -432,7 +435,7 @@
 
    (js-worker-exec %ctxworker "module->javascript" #t
       (lambda ()
-	 (let ((esplainp (memq query '(mjs es))))
+	 (let ((esplainp (memq query '(mjs es ts))))
 	    (init-dummy-module! %ctxthis %ctxworker)
 	    (let ((header (unless esplainp
 			     (format "var exports = {}; var module = { id: ~s, filename: ~s, loaded: true, exports: exports, paths: [~a] };\nhop[ '%modules' ][ '~a' ] = module.exports;\nfunction require( url ) { return hop[ '%require' ]( url, module ) }\n"
@@ -1949,7 +1952,7 @@
 	 (trace-item "filename=" filename " lang=" lang
 	    " slave=" (if worker-slave #t #f))
 	 (let loop ((sopath (find-new-sofile filename worker-slave)))
-	    (when (getenv "HOPDEBUG")
+	    (when (hop-debug)
 	       (tprint "LOADSO-OR-COMPILE filename=" filename " lang=" lang " sopath=" sopath))
 	    (trace-item "sopath=" sopath)
 	    (cond
@@ -1984,8 +1987,10 @@
 		   :lang lang :commonjs-export commonjs-export
 		   :worker-slave worker-slave))))))
 
-   (define (load-module-js)
+   (define (load-module-js lang)
       (with-trace 'require "require@load-module-js"
+	 (when (hop-debug)
+	    (tprint "LOAD-MODULE-JS filename=" filename " lang=" lang))
 	 (with-access::WorkerHopThread worker (%this prehook parent)
 	    (with-access::JsGlobalObject %this (js-object js-main)
 	       (let ((hopscript (loadso-or-compile filename lang parent))
@@ -2170,11 +2175,11 @@
    (define (load-module)
       (cond
 	 ((or (string-suffix? ".js" filename) (string-suffix? ".mjs" filename))
-	  (load-module-js))
+	  (load-module-js lang))
 	 ((string-suffix? ".ts" filename)
-	  (load-module-js))
+	  (load-module-js "typescript"))
 	 ((string-suffix? ".ast.json" filename)
-	  (load-module-js))
+	  (load-module-js lang))
 	 ((string-suffix? ".html" filename)
 	  (load-module-html))
 	 ((string-suffix? ".hop" filename)
@@ -2191,11 +2196,11 @@
 	     ((mime-html? filename)
 	      (load-module-html))
 	     (else
-	      (load-module-js))))
+	      (load-module-js lang))))
 	 ((not (string-index (basename filename) #\.))
-	  (load-module-js))
+	  (load-module-js lang))
 	 ((compiler-available? filename)
-	  (load-module-js))
+	  (load-module-js lang))
 	 (else
 	  (not-found filename))))
 

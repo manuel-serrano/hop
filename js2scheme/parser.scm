@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Mon Oct  3 14:33:37 2022 (serrano)                */
+;*    Last change :  Mon Oct  3 20:21:56 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -562,10 +562,13 @@
    (define (typescript-type-list)
       (let ((t (typescript-type)))
 	 (if (eq? (peek-token-type) 'COMA)
-	     (typescript-type-list)
+	     (begin
+		(consume-any!)
+		(typescript-type-list))
 	     t)))
    
    (define (typescript-simple-type)
+      (tprint "typescript-type-simple..." (peek-token-type))
       (case (peek-token-type)
 	 ((ID)
 	  (let ((ty (consume-token! 'ID)))
@@ -583,7 +586,9 @@
 		(else
 		 (type-name (token-value ty))))))
 	 ((LPAREN)
+	  (consume-any!)
 	  (let ((t (typescript-type-list)))
+	     (consume-token! 'RPAREN)
 	     (if (eq? (peek-token-type) '=>)
 		 (begin
 		    (consume-any!)
@@ -597,6 +602,7 @@
 	  (parse-token-error "Illegal type expression" (consume-any!)))))
       
    (define (typescript-type)
+      (tprint "typescript-type...")
       (let ((ty (typescript-simple-type)))
 	 (case (peek-token-type)
 	    ((BIT_OR)
@@ -1215,12 +1221,13 @@
       (with-access::J2SFun fun (generator body mode thisp name)
 	 (cond
 	    ((and (not (config-get conf :es2017-async))
-		  (not (string=? lang "hopscript")))
+		  (not (string=? lang "hopscript"))
+		  (not (string=? lang "typescript")))
 	     (parse-node-error
-		"Async function requires hopscript or ecmascript2017 mode" fun))
+		"async function requires hopscript or ecmascript2017 mode" fun))
 	    (generator
 	     (parse-node-error
-		"Wrong async function declaration" fun))
+		"wrong async function declaration" fun))
 	    (else
 	     (with-access::J2SBlock body (loc endloc)
 		(let ((gen (instantiate::J2SFun
@@ -3567,6 +3574,7 @@
 		  v)))))
 
    (define (main-parser input-port conf)
+      (print "PARSE " (input-port-name input-port) " lang=" lang)
       (case (config-get conf :parser #f)
 	 ((script-expression) (with-tilde tilde-expression))
 	 ((tilde-expression) (with-tilde tilde-expression))

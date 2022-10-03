@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:33:09 2013                          */
-;*    Last change :  Sun Oct  2 20:02:21 2022 (serrano)                */
+;*    Last change :  Mon Oct  3 19:44:44 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript lexer                                                 */
@@ -88,6 +88,9 @@
      "import"))
 
 (define *hopscript-reserved-list*
+   '())
+
+(define *typescript-reserved-list*
    '("type"))
 
 (define *future-strict-reserved-list*
@@ -109,6 +112,10 @@
 (for-each (lambda (word)
 	     (putprop! (string->symbol word) 'hopscript-reserved #t))
 	  *hopscript-reserved-list*)
+
+(for-each (lambda (word)
+	     (putprop! (string->symbol word) 'typescript-reserved #t))
+	  *typescript-reserved-list*)
 
 (for-each (lambda (word)
 	     (putprop! (string->symbol word) 'future-strict-reserved #t))
@@ -377,6 +384,9 @@
 	     ((and (getprop symbol 'hopscript-reserved)
 		   (string=? lang "hopscript"))
 	      (token symbol symbol (the-length)))
+	     ((and (getprop symbol 'typescript-reserved)
+		   (string=? lang "typescript"))
+	      (token symbol symbol (the-length)))
 	     (else
 	      (token 'ID symbol (the-length))))))
       ((: #\# id_start (* id_part))
@@ -412,6 +422,9 @@
 			    (token symbol symbol (the-length)))
 			   ((and (getprop symbol 'hopscript-reserved)
 				 (string=? lang "hopscript"))
+			    (token symbol symbol (the-length)))
+			   ((and (getprop symbol 'typescript-reserved)
+				 (string=? lang "typescript"))
 			    (token symbol symbol (the-length)))
 			   (else
 			    (token 'ID symbol (the-length)))))

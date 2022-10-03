@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 15 15:16:16 2018                          */
-;*    Last change :  Wed Sep 21 11:01:03 2022 (serrano)                */
+;*    Last change :  Mon Oct  3 20:56:51 2022 (serrano)                */
 ;*    Copyright   :  2018-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES6 Module handling                                              */
@@ -621,6 +621,7 @@
 					     :import-loc loc
 					     :commonjs-export #t
 					     :node-modules-directory (config-get args :node-modules-directory)
+					     :language (symbol->string lang)
 					     :plugins-loader (config-get args :plugins-loader #f))))))
 			    (module-cache-put! path iprgm))))))))))
 
@@ -695,6 +696,7 @@
 	 ((string=? suf "hop") 'hop)
 	 ((string=? suf "json") 'json)
 	 ((member suf '("html" "xml")) 'hopscript)
+	 ((string=? suf "ts") 'typescript)
 	 (else 'js)))
 
    (let ((suf (suffix path)))
