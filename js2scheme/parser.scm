@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Mon Oct  3 20:21:56 2022 (serrano)                */
+;*    Last change :  Mon Oct  3 22:00:49 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -568,7 +568,6 @@
 	     t)))
    
    (define (typescript-simple-type)
-      (tprint "typescript-type-simple..." (peek-token-type))
       (case (peek-token-type)
 	 ((ID)
 	  (let ((ty (consume-token! 'ID)))
@@ -580,9 +579,7 @@
 		 'vector)
 		((OTAG)
 		 (consume-any!)
-		 (tprint "OTTAG...")
-		 (let ((t (typescript-type)))
-		    'any))
+		 'any)
 		(else
 		 (type-name (token-value ty))))))
 	 ((LPAREN)
@@ -602,7 +599,6 @@
 	  (parse-token-error "Illegal type expression" (consume-any!)))))
       
    (define (typescript-type)
-      (tprint "typescript-type...")
       (let ((ty (typescript-simple-type)))
 	 (case (peek-token-type)
 	    ((BIT_OR)
@@ -618,7 +614,7 @@
    
    (define (opt-type)
       (cond
-	 ((and (eq? (peek-token-type) ':) (eq? current-mode 'hopscript))
+	 ((and (eq? (peek-token-type) ':) (string=? lang "typescript"))
 	  (consume-any!)
 	  (typescript-type))
 	 ((eq? (peek-token-type) 'type)
@@ -1803,7 +1799,7 @@
 
    (define (consume-param! idx maybe-expr?)
       (case (peek-token-type)
-	 ((ID type)
+	 ((ID)
 	  (let* ((token (consume-any!))
 		 (loc (token-loc token))
 		 (hint '())
@@ -3574,7 +3570,6 @@
 		  v)))))
 
    (define (main-parser input-port conf)
-      (print "PARSE " (input-port-name input-port) " lang=" lang)
       (case (config-get conf :parser #f)
 	 ((script-expression) (with-tilde tilde-expression))
 	 ((tilde-expression) (with-tilde tilde-expression))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Mon Oct  3 19:47:45 2022 (serrano)                */
+;*    Last change :  Mon Oct  3 22:02:14 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -86,7 +86,7 @@
 ;*    hop-debug ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (hop-debug)
-   env-debug)
+   (or env-debug (bigloo-debug)))
 
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
@@ -160,7 +160,7 @@
 		       name ofile query #f %ctxworker %ctxthis %ctxmodule lang)
 		    (nodejs-compile-client-file-lang ifile name ofile query
 		       %ctxworker %ctxthis %ctxmodule lang)))
-	     (let ((lang (if (string-suffix? ".ts" name)
+	     (let ((lang (if (string-suffix? ".ts" ifile)
 			     "typescript"
 			     "hopscript")))
 		(nodejs-compile-file-client-hopscript ifile ifile name ofile query #f
@@ -1952,7 +1952,7 @@
 	 (trace-item "filename=" filename " lang=" lang
 	    " slave=" (if worker-slave #t #f))
 	 (let loop ((sopath (find-new-sofile filename worker-slave)))
-	    (when (hop-debug)
+	    (when (>fx (hop-debug) 0)
 	       (tprint "LOADSO-OR-COMPILE filename=" filename " lang=" lang " sopath=" sopath))
 	    (trace-item "sopath=" sopath)
 	    (cond
@@ -1989,7 +1989,7 @@
 
    (define (load-module-js lang)
       (with-trace 'require "require@load-module-js"
-	 (when (hop-debug)
+	 (when (>fx (hop-debug) 0)
 	    (tprint "LOAD-MODULE-JS filename=" filename " lang=" lang))
 	 (with-access::WorkerHopThread worker (%this prehook parent)
 	    (with-access::JsGlobalObject %this (js-object js-main)

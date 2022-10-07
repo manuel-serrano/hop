@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Fri Sep 30 17:53:04 2022 (serrano)                */
+;*    Last change :  Tue Oct  4 08:56:56 2022 (serrano)                */
 ;*    Copyright   :  2005-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
@@ -113,8 +113,14 @@
 	 ((not (authorized-path? req abspath))
 	  (access-denied req))
 	 ((not (file-exists? abspath))
-	  ;; an error
-	  (http-get-file-not-found req))
+	  (let ((ts (string-append abspath ".ts")))
+	     ;; ts require import not to mention the file suffix
+	     (if (file-exists? ts)
+		 (begin
+		    (set! abspath ts)
+		    (http-get req))
+		 ;; an error
+		 (http-get-file-not-found req))))
 	 (query
 	  ;;; a file with query arguments
 	  (http-get-file-query req))

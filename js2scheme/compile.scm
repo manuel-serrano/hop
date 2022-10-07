@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Mon Oct  3 21:00:11 2022 (serrano)                */
+;*    Last change :  Mon Oct  3 22:03:09 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -443,8 +443,6 @@
 			  filename))))
 	  (opts (compile-opts filename in args))
 	  (conf (cons* :mmaps '() :tmp tmp opts)))
-      (tprint "j2s-compile in=" (input-port-name in) " opts="
-	 (config-get opts :language))
       (when (config-get opts :debug-stage)
 	 (make-directories tmp))
       (when (>=fx (config-get opts :warning -1) 0)

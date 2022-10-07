@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Mon Sep 26 15:35:08 2022 (serrano)                */
+;*    Last change :  Wed Oct  5 07:52:22 2022 (serrano)                */
 ;*    Copyright   :  2004-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -249,7 +249,7 @@
 	 (lambda (path . test)
 	    (js-worker-exec %worker "hop-loader" #t
 	       (lambda ()
-		  (nodejs-load path path %global %module %worker)))))
+		  (nodejs-load path path %global %module %worker :commonjs-export #t)))))
       (hop-loader-add! "mjs"
 	 (lambda (path . test)
 	    (js-worker-exec %worker "hop-loader" #t
@@ -343,7 +343,7 @@
 	       (let ((oldload (hop-rc-loaded)))
 		  (hop-rc-loaded! #f)
 		  (unwind-protect
-		     (nodejs-load path path %global %module %worker)
+		     (nodejs-load path path %global %module %worker :commonjs-export #t)
 		     (begin
 			(hop-rc-loaded! oldload)
 			(synchronize rcmutex
@@ -500,7 +500,7 @@
 	     (with-access::WorkerHopThread %worker (%this prerun)
 		(js-worker-push-thunk! %worker "nodejs-load"
 		   (lambda ()
-		      (nodejs-load path path %global %module %worker))))))
+		      (nodejs-load path path %global %module %worker :commonjs-export #t))))))
 	 ((string-suffix? ".mjs" path)
 	  ;; javascript
 	  (when %worker
