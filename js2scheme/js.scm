@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Tue Jul 12 16:29:00 2022 (serrano)                */
+;*    Last change :  Fri Oct  7 09:09:46 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for client side code).                                   */
@@ -1163,7 +1163,8 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2SBinary tildec dollarc mode evalp ctx)
    (with-access::J2SBinary this (lhs rhs op)
-      (if (eq? op 'OR*)
+      (case op
+	 ((OR*)
 	  (let ((tmp (gensym)))
 	     (cons this
 		(append
@@ -1171,11 +1172,15 @@
 		   (j2s-js rhs tildec dollarc mode evalp ctx)
 		   (list ";})(")
 		   (j2s-js lhs tildec dollarc mode evalp ctx)
-		   (list "))"))))
+		   (list "))")))))
+	 ((as)
+	  ;; typescript as
+	  (j2s-js lhs tildec dollarc mode evalp ctx))
+	 (else
 	  (cons this
 	     (append (j2s-js lhs tildec dollarc mode evalp ctx)
 		(list " " (j2s-op op) " ")
-		(j2s-js rhs tildec dollarc mode evalp ctx))))))
+		(j2s-js rhs tildec dollarc mode evalp ctx)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2STilde ...                                            */

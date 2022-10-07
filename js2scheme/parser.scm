@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Mon Oct  3 22:00:49 2022 (serrano)                */
+;*    Last change :  Fri Oct  7 07:38:01 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -79,7 +79,7 @@
 	 ((at ?fname ?loc)
 	  (raise
 	     (instantiate::&io-parse-error
-		(proc "hopc")
+		(proc (format "hopc (~a)" lang))
 		(msg (if (eq? (token-tag token) 'BAD) (cadr token) msg))
 		(obj (if (eq? (token-tag token) 'BAD) (cddr token) (token-value token)))
 		(fname fname)
@@ -87,7 +87,7 @@
 	 (else
 	  (raise
 	     (instantiate::&io-parse-error
-		(proc "hopc")
+		(proc (format "hopc (~a)" lang))
 		(msg (if (eq? (token-tag token) 'BAD) (cadr token) msg))
 		(obj (if (eq? (token-tag token) 'BAD) (cddr token) (token-value token))))))))
    
@@ -212,7 +212,9 @@
 	     (peek-token)))))
 
    (define (peek-token-id? val)
-      (and (memq (peek-token-type) '(ID type)) (eq? (peek-token-value) val)))
+      (if (eq? (peek-token-type) 'ID)
+	  (eq? (peek-token-value) val)
+	  (eq? (peek-token-type) val)))
    
    (define (eof?)
       (eq? (peek-token-type) 'EOF))
@@ -375,6 +377,10 @@
 	     ((import) (import (consume-any!)))
 	     ((export) (export (consume-any!)))
 	     (else (statement))))
+	 ((type)
+	  (type-decl-list))
+	 ((interface)
+	  (interface))
 	 ((EOF)
 	  (parse-eof-error (peek-token)))
 	 ((ERROR)
@@ -413,7 +419,6 @@
 	 ((var) (var-decl-list #f))
 	 ((let) (let-decl-list #f))
 	 ((const) (const-decl-list #f))
-	 ((type) (type-decl-list))
 	 ((SEMICOLON) (empty-statement))
 	 ((if) (iff))
 	 ((for while do) (iteration))
@@ -542,7 +547,7 @@
 	       (utype ty)))))
 
    (define (type-decl-list)
-      ;; TypeScript type block, for now simply ignored
+      ;; typescript type block, for now simply ignored
       (consume-token! 'type)
       (let loop ()
 	 (consume-token! 'ID)
@@ -553,6 +558,28 @@
 		(consume-any!)
 		(loop))
 	     (empty-statement))))
+
+   (define (interface)
+      ;; typescript interface block, for now simply ignored
+
+      (define (interface-property)
+	 (consume-token! 'ID)
+	 (when (eq? (peek-token-type) '?)
+	    (consume-any!))
+	 (consume-token! ':)
+	 (typescript-type))
+   
+      (consume-token! 'interface)
+      (consume-token! 'ID)
+      (consume-token! 'LBRACE)
+      (let loop ()
+	 (if (eq? (peek-token-type) 'RBRACE)
+	     (instantiate::J2SNop
+		(loc (token-loc (consume-any!))))
+	     (begin
+		(interface-property)
+		(consume-token! 'SEMICOLON)
+		(loop)))))
 
    (define (type-name ty)
       (if (eq? ty 'vector)
@@ -1545,25 +1572,26 @@
 		       (dollarpath (instantiate::J2SUndefined (loc loc)))))))
 	    ((*)
 	     (consume-any!)
-	     (let ((as (consume-token! 'ID)))
-		(if (eq? (token-value as) 'as)
-		    (let* ((id (consume-token! 'ID))
-			   (fro (consume-token! 'ID)))
-		       (if (eq? (token-value fro) 'from)
-			   (multiple-value-bind (path dollarpath)
-			      (consume-module-path!)
-			      (let ((impns (instantiate::J2SImportName
-					      (loc (token-loc id))
-					      (id '*)
-					      (alias (token-value id)))))
-				 (instantiate::J2SImport
-				    (loc (token-loc token))
-				    (names (list impns))
-				    (path path)
-				    (dollarpath dollarpath))))
-			   (parse-token-error "Illegal import, \"from\" expected"
-			      fro)))
-		    (parse-token-error "Illegal import, \"as\" expected" as))))
+	     (if (peek-token-id? 'as)
+		 (let* ((as (consume-any!))
+			(id (consume-token! 'ID))
+			(fro (consume-token! 'ID)))
+		    (if (eq? (token-value fro) 'from)
+			(multiple-value-bind (path dollarpath)
+			   (consume-module-path!)
+			   (let ((impns (instantiate::J2SImportName
+					   (loc (token-loc id))
+					   (id '*)
+					   (alias (token-value id)))))
+			      (instantiate::J2SImport
+				 (loc (token-loc token))
+				 (names (list impns))
+				 (path path)
+				 (dollarpath dollarpath))))
+			(parse-token-error "Illegal import, \"from\" expected"
+			   fro)))
+		 (parse-token-error "Illegal import, \"as\" expected"
+		    (consume-any!))))
 	    ((LPAREN)
 	     (if (not first)
 		 (parse-token-error "Illegal import, unexpected parenthesis"
@@ -2341,7 +2369,7 @@
 	 ((^) 9)
 	 ((&) 10)
 	 ((== != === !==) 11)
-	 ((< > <= >= instanceof in) 12)
+	 ((< > <= >= instanceof in as) 12)
 	 ((<< >> >>>) 13)
 	 ((+ -) 14)
 	 ((* / % **) 15)

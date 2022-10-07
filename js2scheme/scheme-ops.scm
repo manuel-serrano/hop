@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Sat Aug 20 09:17:42 2022 (serrano)                */
+;*    Last change :  Fri Oct  7 09:11:02 2022 (serrano)                */
 ;*    Copyright   :  2017-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -416,6 +416,8 @@
        (js-min-max loc '>>= lhs rhs mode return ctx))
       ((MIN)
        (js-min-max loc '<<= lhs rhs mode return ctx))
+      ((as)
+       (box (j2s-scheme lhs mode return ctx) (j2s-type lhs) ctx))
       (else
        (with-tmp lhs rhs mode return ctx
 	  (lambda (left right)

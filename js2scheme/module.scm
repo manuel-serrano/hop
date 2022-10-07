@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 15 15:16:16 2018                          */
-;*    Last change :  Mon Oct  3 20:56:51 2022 (serrano)                */
+;*    Last change :  Fri Oct  7 07:56:57 2022 (serrano)                */
 ;*    Copyright   :  2018-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES6 Module handling                                              */
@@ -609,6 +609,12 @@
 					     :import-program prgm
 					     :import-loc loc))
 					 (else
+					  ;; Warning: ;; currently, typescript
+					  ;; type is not imported. This should
+					  ;; be supported in the future. For
+					  ;; that, the imported modules must
+					  ;; be compiled with something similar
+					  ;; to compile-language@hopc_driver
 					  (j2s-compile in
 					     :source path
 					     :driver (j2s-export-driver)

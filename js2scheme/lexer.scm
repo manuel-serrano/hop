@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:33:09 2013                          */
-;*    Last change :  Mon Oct  3 19:44:44 2022 (serrano)                */
+;*    Last change :  Fri Oct  7 07:57:30 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript lexer                                                 */
@@ -91,7 +91,7 @@
    '())
 
 (define *typescript-reserved-list*
-   '("type"))
+   '("as" "interface" "type"))
 
 (define *future-strict-reserved-list*
    '("implements"
