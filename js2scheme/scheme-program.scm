@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Mon Aug 22 08:08:20 2022 (serrano)                */
+;*    Last change :  Sat Oct  8 17:41:09 2022 (serrano)                */
 ;*    Copyright   :  2018-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -50,7 +50,6 @@
 	       (if (pair? records)
 		   `((export ,@(map j2s-record-declaration records)))
 		   '()))
-	   "glop0"
 	   (define __js_strings #f)
 	   (define __js_rxcaches #f)
 	   (%define-cnst-table ,(length cnsts))
@@ -108,7 +107,6 @@
 		   `((export ,@(map j2s-record-declaration records)))
 		   '())
 	       '((option (register-srfi! 'hopjs-worker-slave))))
-	   "glop2"
 	    ;; (&begin!) must not be a constant! (_do not_ use quote)
 	    (define __js_strings #f)
 	    (define __js_rxcaches #f)
@@ -357,7 +355,6 @@
 	       (if (pair? records)
 		   `((export ,@(map j2s-record-declaration records)))
 		   '()))
-	   "glop3"
 	   (define __js_strings #f)
 	   (define __js_rxcaches #f)
 	   (%define-cnst-table ,(length cnsts))
@@ -421,7 +418,6 @@
 	       (if (pair? records)
 		   `((export ,@(map j2s-record-declaration records)))
 		   '()))
-	      "glop1"
 		,@(filter fundef? globals)
 		,@(filter fundef? body)
 		(define __js_strings ,(j2s-jsstring-init this))

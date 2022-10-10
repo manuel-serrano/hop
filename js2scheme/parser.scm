@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Fri Oct  7 07:38:01 2022 (serrano)                */
+;*    Last change :  Sat Oct  8 07:10:02 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -561,16 +561,11 @@
 
    (define (interface)
       ;; typescript interface block, for now simply ignored
-
-      (define (interface-property)
-	 (consume-token! 'ID)
-	 (when (eq? (peek-token-type) '?)
-	    (consume-any!))
-	 (consume-token! ':)
-	 (typescript-type))
-   
       (consume-token! 'interface)
       (consume-token! 'ID)
+      (interface-properties))
+
+   (define (interface-properties)
       (consume-token! 'LBRACE)
       (let loop ()
 	 (if (eq? (peek-token-type) 'RBRACE)
@@ -578,8 +573,27 @@
 		(loc (token-loc (consume-any!))))
 	     (begin
 		(interface-property)
-		(consume-token! 'SEMICOLON)
-		(loop)))))
+		(case (peek-token-type)
+		   ((SEMICOLON)
+		    (consume-token! 'SEMICOLON)
+		    (loop))
+		   ((RBRACE)
+		    (loop))
+		   (else
+		    (parse-token-error "Illegal type expression"
+		       (consume-any!))))))))
+
+   (define (interface-property)
+      (if (memq (peek-token-type) '(ID class))
+	  (consume-any!)
+	  (let ((tok (consume-any!)))
+	     (parse-token-error 
+		(format "Expected ident got \"~a\"" (token-tag tok))
+		tok)))
+      (when (eq? (peek-token-type) '?)
+	 (consume-any!))
+      (consume-token! ':)
+      (typescript-type))
 
    (define (type-name ty)
       (if (eq? ty 'vector)
@@ -593,32 +607,46 @@
 		(consume-any!)
 		(typescript-type-list))
 	     t)))
+
+   (define (typescript-args-list)
+      (consume-token! 'ID)
+      (consume-token! ':)
+      (let ((t (typescript-type)))
+	 (if (eq? (peek-token-type) 'COMA)
+	     (begin
+		(consume-any!)
+		(typescript-args-list))
+	     t)))
    
    (define (typescript-simple-type)
       (case (peek-token-type)
 	 ((ID)
-	  (let ((ty (consume-token! 'ID)))
-	     (case (peek-token-type)
-		((LBRACKET)
-		 ;; array type
-		 (consume-any!)
-		 (consume-token! 'RBRACKET)
-		 'vector)
-		((OTAG)
-		 (consume-any!)
-		 'any)
-		(else
-		 (type-name (token-value ty))))))
+	  (type-name (token-value (consume-token! 'ID))))
 	 ((LPAREN)
 	  (consume-any!)
-	  (let ((t (typescript-type-list)))
-	     (consume-token! 'RPAREN)
-	     (if (eq? (peek-token-type) '=>)
-		 (begin
-		    (consume-any!)
-		    (typescript-type)
-		    'function)
+	  (if (eq? (peek-token-type) 'ID)
+	      (let ((id (consume-any!)))
+		 (if (eq? (peek-token-type) ':)
+		     ;; function type
+		     (begin
+			(consume-any!)
+			(typescript-type)
+			(unless (eq? (peek-token-type) 'RPAREN)
+			   (typescript-args-list))
+			(consume-token! 'RPAREN)
+			(consume-token! '=>)
+			(typescript-type)
+			'function)
+		     (begin
+			(token-push-back! id)
+			(let ((t (typescript-type-list)))
+			   (consume-token! 'RPAREN)
+			   t))))
+	      (let ((t (typescript-type)))
+		 (consume-token! 'RPAREN)
 		 t)))
+	 ((LBRACE)
+	  (interface-properties))
 	 ((void)
 	  (consume-any!)
 	  'void)
@@ -628,6 +656,11 @@
    (define (typescript-type)
       (let ((ty (typescript-simple-type)))
 	 (case (peek-token-type)
+	    ((LBRACKET)
+	     ;; array type
+	     (consume-any!)
+	     (consume-token! 'RBRACKET)
+	     'vector)
 	    ((BIT_OR)
 	     ;; union type
 	     (consume-any!)
@@ -636,6 +669,10 @@
 	     ;; intersection type
 	     (consume-any!)
 	     (typescript-type))
+	    ((OTAG)
+	     ;; parametric type
+	     (consume-any!)
+	     ty)
 	    (else
 	     ty))))
    

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Mon Oct  3 22:02:14 2022 (serrano)                */
+;*    Last change :  Sat Oct  8 17:44:04 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -86,7 +86,7 @@
 ;*    hop-debug ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (hop-debug)
-   (or env-debug (bigloo-debug)))
+   (max env-debug (bigloo-debug)))
 
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
@@ -1952,8 +1952,6 @@
 	 (trace-item "filename=" filename " lang=" lang
 	    " slave=" (if worker-slave #t #f))
 	 (let loop ((sopath (find-new-sofile filename worker-slave)))
-	    (when (>fx (hop-debug) 0)
-	       (tprint "LOADSO-OR-COMPILE filename=" filename " lang=" lang " sopath=" sopath))
 	    (trace-item "sopath=" sopath)
 	    (cond
 	       ((and (string? sopath) (hop-sofile-enable))
@@ -1989,8 +1987,6 @@
 
    (define (load-module-js lang)
       (with-trace 'require "require@load-module-js"
-	 (when (>fx (hop-debug) 0)
-	    (tprint "LOAD-MODULE-JS filename=" filename " lang=" lang))
 	 (with-access::WorkerHopThread worker (%this prehook parent)
 	    (with-access::JsGlobalObject %this (js-object js-main)
 	       (let ((hopscript (loadso-or-compile filename lang parent))
