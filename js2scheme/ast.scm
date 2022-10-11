@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Sat Jun 11 07:56:36 2022 (serrano)                */
+;*    Last change :  Tue Oct 11 08:37:51 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -52,6 +52,7 @@
 	      (module read-only (default #f))
 	      (cnsts::pair-nil (default '()))
 	      (decls::pair-nil (default '()) (info '("ast")))
+	      (types::pair-nil (default '()) (info '("ast")))
 	      (headers::pair-nil (default '()) (info '("ast")))
 	      (globals::pair-nil (default '()) (info '("ast")))
 	      (strings::pair-nil (default '()) (info '("nojson" "notraverse")))
@@ -132,6 +133,8 @@
 	   (final-class J2SDeclImport::J2SDecl
 	      (alias read-only (default #f) (info '("notraverse")))
 	      (import::obj read-only (info '("notraverse"))))
+
+	   (final-class J2SDeclInterface::J2SDecl)
 
 	   (abstract-class J2SExpr::J2SNode
 	      ;; the type of the expression

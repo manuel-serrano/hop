@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Sat Mar  5 12:46:26 2022 (serrano)                */
+;*    Last change :  Tue Oct 11 08:14:04 2022 (serrano)                */
 ;*    Copyright   :  2014-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -299,6 +299,7 @@
 	       `(hostname . ,(js-string->jsstring (hostname)))
 	       `(arch . ,(js-string->jsstring (hop-arch)))
 	       `(modulesDir . ,(js-string->jsstring (nodejs-modules-directory)))
+	       `(rcDir ,(js-string->jsstring (hop-rc-directory)))
 	       `(standalone . ,hopjs-standalone)
 	       `(engine . ,(& "hop"))
 	       `(isServer . #t)

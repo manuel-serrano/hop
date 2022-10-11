@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Wed Jun  8 07:57:03 2022 (serrano)                */
+;*    Last change :  Tue Oct 11 08:37:22 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -67,7 +67,7 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-symbol this conf)
    (when (isa? this J2SProgram)
-      (with-access::J2SProgram this (nodes loc mode headers decls)
+      (with-access::J2SProgram this (nodes loc mode headers decls types)
 	 ;; filters out double definitions
 	 (set! nodes (decl-cleanup-duplicate! nodes))
 	 (let* ((%this (instantiate::J2SDecl
@@ -1600,21 +1600,33 @@
 ;*    resolve-exports ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (resolve-exports this::J2SProgram env conf)
-   (with-access::J2SProgram this (exports)
+   (with-access::J2SProgram this (exports types)
       (for-each (lambda (x)
 		   (with-access::J2SExport x (id from loc decl index)
 		      (unless (or (isa? x J2SRedirect) (isa? x J2SExportDefault))
-			 (let ((d (or decl (find-decl id env))))
-			    (if d
+			 (cond
+			    ((or decl (find-decl id env))
+			     =>
+			     (lambda (d)
 				(with-access::J2SDecl d (export scope)
 				   (set! scope 'export)
 				   (set! export x)
-				   (set! decl d))
-				(raise
-				   (instantiate::&io-parse-error
-				      (proc "hopc (symbol)")
-				      (msg "undefined exported variable")
-				      (obj id)
-				      (fname (cadr loc))
-				      (location (caddr loc)))))))))
+				   (set! decl d))))
+			    ((assq id types)
+			     =>
+			     (lambda (d)
+				;; a typescript type declaration
+				(set! decl
+				   (instantiate::J2SDeclInterface
+				      (id (cdr d))
+				      (loc loc)))))
+			    (else
+			     (tprint "ty=" types)
+			     (raise
+				(instantiate::&io-parse-error
+				   (proc "hopc (symbol)")
+				   (msg "undefined exported variable")
+				   (obj id)
+				   (fname (cadr loc))
+				   (location (caddr loc)))))))))
 	 exports)))

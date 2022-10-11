@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Mar 22 15:03:30 2014                          */
-/*    Last change :  Fri May 13 10:39:54 2022 (serrano)                */
+/*    Last change :  Tue Oct 11 08:13:21 2022 (serrano)                */
 /*    Copyright   :  2014-22 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hopscript/Hop binding.                                           */
@@ -25,6 +25,7 @@ exports.isServer = hop.isServer;
 exports.isWorker = hop.isWorker;
 exports.hostname = hop.hostname;
 exports.version = hop.version;
+exports.rcDirectory = hop.rcDir;
 exports.__defineGetter__('port', hop.port);
 exports.__defineGetter__('ports', hop.ports);
 exports.standalone = hop.standalone;

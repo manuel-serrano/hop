@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Sat Oct  8 07:10:02 2022 (serrano)                */
+;*    Last change :  Tue Oct 11 08:41:01 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -41,6 +41,7 @@
    (define current-mode 'normal)
    (define source-map (config-get conf :source-map #f))
    (define fun-src (config-get conf :fun-src #t))
+   (define interfaces '())
 
    (define es-module #f)
    
@@ -562,7 +563,9 @@
    (define (interface)
       ;; typescript interface block, for now simply ignored
       (consume-token! 'interface)
-      (consume-token! 'ID)
+      (set! interfaces
+	 (cons (cons (token-value (consume-token! 'ID)) 'interface)
+	    interfaces))
       (interface-properties))
 
    (define (interface-properties)
@@ -3559,6 +3562,7 @@
 		  (main (config-get conf :module-main #f))
 		  (name (config-get conf :module-name #f))
 		  (mode mode)
+		  (types (append interfaces '()))
 		  (exports (reverse exports))
 		  (nodes (map! (lambda (n) (dialect n mode conf)) nodes)))
 	       conf))))
