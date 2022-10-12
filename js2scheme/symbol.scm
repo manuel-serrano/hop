@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Tue Oct 11 08:37:22 2022 (serrano)                */
+;*    Last change :  Tue Oct 11 08:59:13 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -1621,7 +1621,6 @@
 				      (id (cdr d))
 				      (loc loc)))))
 			    (else
-			     (tprint "ty=" types)
 			     (raise
 				(instantiate::&io-parse-error
 				   (proc "hopc (symbol)")
