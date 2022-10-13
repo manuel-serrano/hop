@@ -485,3 +485,6 @@ if (isWindows) {
     return path;
   };
 }
+
+// MS 13 oct 2022
+exports.isAbsolute = function(path) { return path.charAt(0) === '/'; }
