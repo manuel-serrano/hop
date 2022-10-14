@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Tue Oct 11 08:59:13 2022 (serrano)                */
+;*    Last change :  Fri Oct 14 07:44:42 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -1612,13 +1612,13 @@
 				   (set! scope 'export)
 				   (set! export x)
 				   (set! decl d))))
-			    ((assq id types)
+			    ((memq id types)
 			     =>
 			     (lambda (d)
 				;; a typescript type declaration
 				(set! decl
 				   (instantiate::J2SDeclInterface
-				      (id (cdr d))
+				      (id id)
 				      (loc loc)))))
 			    (else
 			     (raise

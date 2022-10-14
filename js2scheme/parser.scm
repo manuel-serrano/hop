@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Tue Oct 11 08:41:01 2022 (serrano)                */
+;*    Last change :  Fri Oct 14 07:44:15 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -563,9 +563,7 @@
    (define (interface)
       ;; typescript interface block, for now simply ignored
       (consume-token! 'interface)
-      (set! interfaces
-	 (cons (cons (token-value (consume-token! 'ID)) 'interface)
-	    interfaces))
+      (set! interfaces (cons (token-value (consume-token! 'ID)) interfaces))
       (interface-properties))
 
    (define (interface-properties)
