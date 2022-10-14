@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sun Sep 26 18:55:18 2021 (serrano)                */
-;*    Copyright   :  2013-21 Manuel Serrano                            */
+;*    Last change :  Fri Oct 14 14:59:10 2022 (serrano)                */
+;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Math                         */
 ;*    -------------------------------------------------------------    */
@@ -253,6 +253,34 @@
 	 :value (js-make-function %this js-math-log
 		   (js-function-arity js-math-log)
 		   (js-function-info :name "log" :len 1))
+	 :writable #t
+	 :configurable #t
+	 :enumerable #f
+	 :hidden-class #f)
+      
+      ;; log2
+      ;; https://tc39.es/ecma262/multipage/numbers-and-dates.html#sec-math.log2
+      (define (js-math-log2 this x)
+	 (log2 (js-tonumber x %this)))
+      
+      (js-bind! %this js-math (& "log2")
+	 :value (js-make-function %this js-math-log2
+		   (js-function-arity js-math-log2)
+		   (js-function-info :name "log2" :len 1))
+	 :writable #t
+	 :configurable #t
+	 :enumerable #f
+	 :hidden-class #f)
+      
+      ;; log10
+      ;; https://tc39.es/ecma262/multipage/numbers-and-dates.html#sec-math.log2
+      (define (js-math-log10 this x)
+	 (log10 (js-tonumber x %this)))
+      
+      (js-bind! %this js-math (& "log10")
+	 :value (js-make-function %this js-math-log10
+		   (js-function-arity js-math-log10)
+		   (js-function-info :name "log10" :len 1))
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f

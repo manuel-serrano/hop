@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sun Nov 14 12:19:11 2021 (serrano)                */
-;*    Copyright   :  2013-21 Manuel Serrano                            */
+;*    Last change :  Fri Oct 14 15:43:59 2022 (serrano)                */
+;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
 ;*=====================================================================*/
@@ -413,6 +413,7 @@
 ;*    js-maybe-tofixed ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (js-maybe-tofixed this fractiondigits %this::JsGlobalObject cache)
+   (tprint "MAYBE=" (typeof this))
    (if (or (fixnum? this) (flonum? this))
        (js-number-tofixed this fractiondigits %this)
        (with-access::JsGlobalObject %this (js-number-pcache)
