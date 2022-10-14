@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Sun Sep 25 23:15:40 2022 (serrano)                */
+;*    Last change :  Fri Oct 14 13:13:12 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -254,15 +254,22 @@
 (define-method (js-get-jsobject-name/cache-miss o::JsProcedure p::obj
 		  throw::bool %this::JsGlobalObject
 		  cache::JsPropertyCache)
-   (cond
-      ((eq? (js-toname p %this) (& "length"))
-       (if (js-function? o)
-	   (call-next-method)
-	   (js-get-length-jsprocedure o)))
-      ((eq? (js-toname p %this) (& "prototype"))
-       (js-undefined))
-      (else
-       (call-next-method))))
+   (let ((n (js-toname p %this)))
+      (cond
+	 ((eq? n (& "length"))
+	  (if (js-function? o)
+	      (call-next-method)
+	      (js-get-length-jsprocedure o)))
+	 ((eq? n (& "prototype"))
+	  (js-undefined))
+	 ((eq? n (& "name"))
+	  (js-undefined))
+	 ((eq? n (& "caller"))
+	  (js-undefined))
+	 ((eq? n (& "arguments"))
+	  (js-undefined))
+	 (else
+	  (call-next-method)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get ::JsProcedure ...                                         */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Tue May 17 07:55:33 2022 (serrano)                */
+;*    Last change :  Fri Oct 14 12:23:56 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -73,6 +73,7 @@
 	   (js-object-literal-spread-assign! ::JsObject ::obj ::JsGlobalObject)
 
 	   (js-object-unmap! ::JsObject)
+	   (js-object-unhash! ::JsObject)
 
 	   (js-property-descriptor ::JsGlobalObject isvalue::bool
 	      #!key writable enumerable configurable value get set)
@@ -1334,18 +1335,20 @@
    (let ((hash (gensym 'hash))
 	 (prop (gensym 'prop))
 	 (name (gensym 'name)))
-      `(with-access::JsObject ,o ((,hash elements))
-	  (let ((,prop (prop-hashtable-get ,hash (js-jsstring->string ,p))))
-	     (cond
-		(,prop
-		 (,succeed ,o ,prop))
-		,@(if (or (null? proxy) (car proxy))
-		   `(((js-proxy? ,o)
-		      (,succeed ,o (make-cell (js-proxy-property-descriptor-index ,o ,p)))))
-		   '())
-		(else
-		 (set! ,p (js-toname ,p %this))
-		 (,fail)))))))
+      `(if (js-jsstring? ,p)
+	   (with-access::JsObject ,o ((,hash elements))
+	      (let ((,prop (prop-hashtable-get ,hash (js-jsstring->string ,p))))
+		 (cond
+		    (,prop
+		     (,succeed ,o ,prop))
+		    ,@(if (or (null? proxy) (car proxy))
+		       `(((js-proxy? ,o)
+			  (,succeed ,o (make-cell (js-proxy-property-descriptor-index ,o ,p)))))
+		       '())
+		    (else
+		     (set! ,p (js-toname ,p %this))
+		     (,fail)))))
+	   (,fail))))
 
 ;*---------------------------------------------------------------------*/
 ;*    jsobject-hash-find/string ...                                    */
@@ -1621,6 +1624,25 @@
 			 (vector-set! vec i desc)
 			 (loop (-fx i 1))))))))))
    o)
+
+;*---------------------------------------------------------------------*/
+;*    js-object-unhash! ...                                            */
+;*---------------------------------------------------------------------*/
+(define (js-object-unhash! o::JsObject)
+   (js-object-mode-enumerable-set! o #t)
+   (js-object-mode-plain-set! o #f)
+   (js-object-mode-isprotoof-set! o #t)
+   (with-access::JsObject o (cmap elements)
+      (let ((vec (make-vector (hashtable-size elements)))
+	    (i -1))
+	 (hashtable-for-each elements
+	    (lambda (k c)
+	       (set! i (+fx i 1))
+	       (let ((p (cell-ref c)))
+		  (vector-set! vec i p))))
+	 (set! elements vec)
+	 (set! cmap (js-not-a-cmap))
+	 o)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-hashable? ...                                          */
@@ -3403,7 +3425,11 @@
 		(extend-mapped-object!))
 	       ((js-object-hashed? o)
 		;; 8.12.5, step 6
-		(extend-hashed-object!))
+		(if (js-jsstring? name)
+		    (extend-hashed-object!)
+		    (begin
+		       (js-object-unhash! o)
+		       (extend-properties-object!))))
 	       (else
 		;; 8.12.5, step 6
 		(extend-properties-object!))))))
@@ -4300,7 +4326,11 @@
 	  ((js-object-mapped? o)
 	   (define-own-property-extend-mapped o name desc))
 	  ((js-object-hashed? o)
-	   (define-own-property-extend-hashed o name desc))
+	   (if (js-jsstring? name)
+	       (define-own-property-extend-hashed o name desc)
+	       (begin
+		  (js-object-unhash! o)
+		  (define-own-property-extend-unmapped o name desc))))
 	  (else
 	   (define-own-property-extend-unmapped o name desc)))
        (let ((current (js-get-own-property o name %this)))
@@ -4499,10 +4529,12 @@
       ((js-object-hashed? o)
        (with-access::JsObject o (elements)
 	  (with-access::JsPropertyDescriptor new (name)
-	     (let ((e (prop-hashtable-get elements (js-jsstring->string name))))
-		(if (cell? e)
-		    (cell-set! e new)
-		    (js-replace-own-property! (js-object-proto o) old new))))))
+	     (if (js-jsstring? name)
+		 (let ((e (prop-hashtable-get elements (js-jsstring->string name))))
+		    (if (cell? e)
+			(cell-set! e new)
+			(js-replace-own-property! (js-object-proto o) old new)))
+		 (js-replace-own-property! (js-object-proto o) old new)))))
       (else
        ;; update the unmapped object
        (with-access::JsObject o (elements)
