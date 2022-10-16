@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Fri Oct 14 07:44:15 2022 (serrano)                */
+;*    Last change :  Sun Oct 16 11:56:29 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -554,7 +554,7 @@
 	 (consume-token! 'ID)
 	 (consume-token! '=)
 	 (typescript-type)
-	 (if (eq? (peek-token-type) 'COMA)
+	 (if (eq? (peek-token-type) 'COMMA)
 	     (begin
 		(consume-any!)
 		(loop))
@@ -603,7 +603,7 @@
 
    (define (typescript-type-list)
       (let ((t (typescript-type)))
-	 (if (eq? (peek-token-type) 'COMA)
+	 (if (eq? (peek-token-type) 'COMMA)
 	     (begin
 		(consume-any!)
 		(typescript-type-list))
@@ -613,7 +613,7 @@
       (consume-token! 'ID)
       (consume-token! ':)
       (let ((t (typescript-type)))
-	 (if (eq? (peek-token-type) 'COMA)
+	 (if (eq? (peek-token-type) 'COMMA)
 	     (begin
 		(consume-any!)
 		(typescript-args-list))
@@ -633,6 +633,7 @@
 			(consume-any!)
 			(typescript-type)
 			(unless (eq? (peek-token-type) 'RPAREN)
+			   (consume-token! 'COMMA)
 			   (typescript-args-list))
 			(consume-token! 'RPAREN)
 			(consume-token! '=>)
