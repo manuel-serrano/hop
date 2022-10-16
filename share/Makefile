@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/3.4.x/share/Makefile                    */
+#*    serrano/prgm/project/hop/hop/share/Makefile                      */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Fri Apr  9 10:16:26 2021 (serrano)                */
-#*    Copyright   :  2004-21 Manuel Serrano                            */
+#*    Last change :  Sun Oct 16 13:31:26 2022 (serrano)                */
+#*    Copyright   :  2004-22 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
 #*=====================================================================*/
@@ -307,6 +307,7 @@ hopjs_u.js: hop-boot.js hop-autoconf.js $(RTSCONFIG) \
 	echo "function hop_callback_listener_context(m) { return m; }" >> $@
 	echo "function hop_callback_html_context(m) { return m; }" >> $@
 	echo "function hop_callback_handler( e, ctx ) { throw e; }" >> $@
+	echo "function sc_typeof(o) { return typeof(o); }" >> $@
 	echo "function sc_error( proc, msg, obj ) { throw msg; }" >> $@
 	cat $(filter %.js,$^) \
                | sed -n '1h;1!H;$${;g;s%/[*]\([^*]\|[*][^/]\)*[*]/%%g;p;}' \
