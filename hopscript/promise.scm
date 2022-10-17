@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.5.x/hopscript/promise.scm             */
+;*    serrano/prgm/project/hop/hop/hopscript/promise.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 19 08:19:19 2015                          */
-;*    Last change :  Fri Feb 11 12:43:10 2022 (serrano)                */
+;*    Last change :  Mon Oct 17 13:48:17 2022 (serrano)                */
 ;*    Copyright   :  2015-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript promises                     */
@@ -65,7 +65,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (js-donate obj::JsPromise worker::WorkerHopThread %this)
    (js-undefined))
-   
+
 ;*---------------------------------------------------------------------*/
 ;*    scheme->response ::JsPromise ...                                 */
 ;*---------------------------------------------------------------------*/

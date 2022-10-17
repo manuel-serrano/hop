@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep  4 09:28:11 2008                          */
-;*    Last change :  Mon Oct 28 14:56:06 2019 (serrano)                */
-;*    Copyright   :  2008-20 Manuel Serrano                            */
+;*    Last change :  Mon Oct 17 13:57:52 2022 (serrano)                */
+;*    Copyright   :  2008-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The pipeline into which requests transit.                        */
 ;*=====================================================================*/
@@ -87,6 +87,7 @@
       (with-access::http-request req (method scheme host port path header)
          (when (>=fx (hop-verbose) 1)
 	    (hop-verb 4 (hop-color id id " CONNECT.header") ": "
+	       path " " 
 	       (with-output-to-string (lambda () (write header))) "\n")
 	    (hop-verb 1 (if (isa? req http-proxy-request)
 			    (hop-color req req
@@ -137,7 +138,7 @@
 	    (http-connect-verb scd id sock req mode num)
 	    ;; decrement the keep-alive number (we have a valid connection)
 	    (when (eq? mode 'keep-alive) (keep-alive--))
-	    ;; start compting the answer
+	    ;; start computing the answer
 	    (let ((keep-alive-timeout (stage scd thread stage-response id req)))
 	       (when (fixnum? keep-alive-timeout)
 		  (loop 'keep-alive keep-alive-timeout (+fx num 1))))))))
@@ -226,7 +227,6 @@
 ;*    request.                                                         */
 ;*---------------------------------------------------------------------*/
 (define (stage-response scd thread id req)
-   ;;(current-request-set! thread req)
    (hop-verb 3 (hop-color id id " RESPONSE") (format " ~a" thread) "\n")
    (with-stage-handler response-error-handler (scd req)
       (let ((resp (with-time (request->response req thread) id "RESPONSE")))
@@ -611,8 +611,10 @@
 				      (exec-error-handler e scd req))
 				   (stage-exec scd thread id req resps))))
 			(if (integer? tmt)
-			    (spawn scd stage-request id socket tmt 'keep-alive)
-			    (socket-shutdown socket)))))))
+			    (stage-request scd thread id socket tmt 'keep-alive)
+			    (begin
+			       (socket-shutdown socket)
+			       #f)))))))
 	 #f)))
 
 ;*---------------------------------------------------------------------*/
