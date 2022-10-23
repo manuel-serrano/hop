@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Mar 22 15:03:30 2014                          */
-/*    Last change :  Tue Oct 11 08:13:21 2022 (serrano)                */
+/*    Last change :  Sun Oct 23 06:50:05 2022 (serrano)                */
 /*    Copyright   :  2014-22 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hopscript/Hop binding.                                           */
@@ -25,7 +25,11 @@ exports.isServer = hop.isServer;
 exports.isWorker = hop.isWorker;
 exports.hostname = hop.hostname;
 exports.version = hop.version;
+exports.buildId = hop.buildId;
+exports.buildTag = hop.buildTag;
+exports.buildArch = hop.buildArch;
 exports.rcDirectory = hop.rcDir;
+exports.cacheDirectory = hop.cacheDir;
 exports.__defineGetter__('port', hop.port);
 exports.__defineGetter__('ports', hop.ports);
 exports.standalone = hop.standalone;
@@ -55,7 +59,7 @@ exports.recordOf = hop.recordOf;
 /*    Responses                                                        */
 /*---------------------------------------------------------------------*/
 exports.HTTPResponseHop = hop.HTTPResponseHop;
-exports.HTTPResponseXml = hop.HTTPResponseXml;
+exports.HTTPResponseXML = hop.HTTPResponseXml;
 exports.HTTPResponseFile = hop.HTTPResponseFile;
 exports.HTTPResponseString = hop.HTTPResponseString;
 exports.HTTPResponseAuthentication = hop.HTTPResponseAuthentication;
@@ -64,7 +68,7 @@ exports.HTTPResponseProxy = hop.HTTPResponseProxy;
 
 const jsonContentType = { "contentType": "application/json" };
 
-exports.HTTPResponseJson = function(obj) {
+exports.HTTPResponseJSON = function(obj) {
    return hop.HTTPResponseString(JSON.stringify(obj), jsonContentType);
 }
 

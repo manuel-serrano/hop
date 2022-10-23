@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Tue Oct 11 08:14:04 2022 (serrano)                */
+;*    Last change :  Sun Oct 23 06:39:56 2022 (serrano)                */
 ;*    Copyright   :  2014-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -300,9 +300,13 @@
 	       `(arch . ,(js-string->jsstring (hop-arch)))
 	       `(modulesDir . ,(js-string->jsstring (nodejs-modules-directory)))
 	       `(rcDir ,(js-string->jsstring (hop-rc-directory)))
+	       `(cacheDir ,(js-string->jsstring (hop-cache-directory)))
 	       `(standalone . ,hopjs-standalone)
 	       `(engine . ,(& "hop"))
 	       `(isServer . #t)
+	       `(buildId . ,(hop-build-id))
+	       `(buildTag . ,(hop-build-tag))
+	       `(buildArch . ,(hop-build-arch))
 	       `(isWorker . ,(not (js-main-worker? %worker)))
 	       `(loginCookieCryptKey . ,(hop-login-cookie-crypt-key))
 
