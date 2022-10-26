@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Wed Apr  6 06:35:35 2022 (serrano)                */
+;*    Last change :  Wed Oct 26 17:37:16 2022 (serrano)                */
 ;*    Copyright   :  2014-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -1480,7 +1480,7 @@
 	 (str (js-jsstring->string string)))
       (if file
 	  (if (js-procedure? callback)
-	      (uv-fs-write (int->uvhandle %worker %this fd) str length
+	      (uv-fs-write (int->uvhandle %worker %this fd) str (string-length str)
 		 :callback (lambda (obj)
 			      (if (<fx obj 0)
 				  (!js-callback3 'write %worker %this
@@ -1492,7 +1492,7 @@
 		 :offset offset
 		 :position (to-int64 %this "write" position #s64:-1)
 		 :loop (worker-loop %worker))
-	      (uv-fs-write (int->uvhandle %worker %this fd) str length
+	      (uv-fs-write (int->uvhandle %worker %this fd) str (string-length str)
 		 :offset offset
 		 :position (to-int64 %this "write" position #s64:-1)
 		 :loop (worker-loop %worker)))

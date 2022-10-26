@@ -1748,7 +1748,6 @@ SyncWriteStream.prototype.write = function(data, arg1, arg2) {
     }
   }
   assertEncoding(encoding);
-
   // Change strings to buffers. SLOW
   if (typeof data == 'string') {
      // MS: 30apr2019, modification to save buffer allocations

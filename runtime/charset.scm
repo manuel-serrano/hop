@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/runtime/charset.scm               */
+;*    serrano/prgm/project/hop/hop/runtime/charset.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 10 06:46:43 2007                          */
-;*    Last change :  Tue Nov 18 16:23:46 2014 (serrano)                */
-;*    Copyright   :  2007-14 Manuel Serrano                            */
+;*    Last change :  Wed Oct 26 17:09:24 2022 (serrano)                */
+;*    Copyright   :  2007-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with charset.                              */
 ;*=====================================================================*/
@@ -23,7 +23,7 @@
 ;*---------------------------------------------------------------------*/
 (define (charset-alias charset)
    (case charset
-      ((UTF-8 utf-8)
+      ((UTF-8 utf-8 UTF8 utf8)
        'UTF-8)
       ((ISO-8859-1 ISO-8859-2 ISO-LATIN-1 ISO-8869-1 ISO8859-1
         iso-8859-1 iso-8859-2 iso-latin-1 iso-8869-1 iso8859-1)
