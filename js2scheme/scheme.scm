@@ -747,14 +747,22 @@
 ;*    j2s-scheme ::J2SCmap ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SCmap mode return ctx)
-   (with-access::J2SCmap this (loc val)
+   (with-access::J2SCmap this (loc val ctor)
       ;; change the building of J2SCmap to build directly
       ;; a list of string (do this when the new branch is full ready)
       ;; see constant.scm
-      (epairify loc
-	 `(js-strings->cmap
-	     ',(vector-map (lambda (e) (cons (symbol->string (car e)) (cdr e)))
-		 val)))))
+      (let ((expr `(js-strings->cmap
+		      ',(vector-map (lambda (e) (cons (symbol->string (car e)) (cdr e)))
+			   val))))
+	 (epairify loc
+	    (if ctor
+		expr
+		;; if the cmap is not associated to a constructor, the constant is
+		;; a pair (the CTOR field) that points to a pair whose car is
+		;; the cmap itself and whose cdr is the object allocation size
+		;; (see JS-STRINGS->CMAP@hopscript/proprety.scm and
+		;; JS-CTOR-CONSTRSIZE-EXTEND!@hopscript/proprety.scm)
+		`(with-access::JsContructMap ,expr (ctor) ctor))))))
 	 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SNull ...                                         */
@@ -3140,29 +3148,26 @@
 		`(let ((,ctorcmap ,(j2s-scheme cmap mode return ctx)))
 		    (js-object-literal-init!
 		       (instantiateJsObject
-			  (cmap ,ctorcmap)
+			  (cmap (if (pair? ,ctorcmap) (car ,ctorcmap) ,ctorcmap))
 			  (__proto__ (js-object-proto %this))
-			  (elements (subvector (with-access::JsConstructMap ,ctorcmap (ctor)
-						  (if (cell? ctor)
-						      (cell-ref ctor)
-						      ,(length vals)))
+			  (elements (subvector (if (pair? ,ctorcmap)
+						   (cdr ,ctorcmap)
+						   ,(length vals))
 				       ,@vals)))))))
 	    ((null? vals)
 	     (let ((omap (gensym 'cmap)))
 		`(let ((,omap ,(j2s-scheme cmap mode return ctx)))
-		    (with-access::JsConstructMap ,omap ((constrsize ctor))
-		       (instantiateJsObject
-			  (cmap ,omap)
-			  (__proto__ (js-object-proto %this))
-			  (elements (make-vector (cell-ref constrsize))))))))
+		    (instantiateJsObject
+		       (cmap (car ,omap))
+		       (__proto__ (js-object-proto %this))
+		       (elements (make-vector (cdr ,omap)))))))
 	    (else
 	     (let ((omap (gensym 'cmap)))
 		`(let ((,omap ,(j2s-scheme cmap mode return ctx)))
-		    (with-access::JsConstructMap ,omap ((constrsize ctor))
-		       (instantiateJsObject
-			  (cmap ,omap)
-			  (__proto__ (js-object-proto %this))
-			  (elements (subvector (cell-ref constrsize) ,@vals))))))))))
+		    (instantiateJsObject
+		       (cmap (car ,omap))
+		       (__proto__ (js-object-proto %this))
+		       (elements (subvector (cdr ,omap) ,@vals)))))))))
    
    (define (new->jsobj loc inits)
       (let ((tmp (gensym)))

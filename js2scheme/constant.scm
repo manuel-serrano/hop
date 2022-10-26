@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Fri Aug 19 09:38:16 2022 (serrano)                */
+;*    Last change :  Wed Oct 26 07:06:24 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preallocate constant objects (regexps, literal cmaps,            */
@@ -132,7 +132,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    add-cmap! ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define (add-cmap! loc keys env::struct sharing)
+(define (add-cmap! loc keys env::struct sharing ctor::bool)
    (let* ((t (env-inits-table env))
 	  (k keys)
 	  (old (when sharing (hashtable-get t k))))
@@ -145,7 +145,8 @@
 	     (let ((cnst (instantiate::J2SCmap
 			    (type 'pair)
 			    (loc loc)
-			    (val keys))))
+			    (val keys)
+			    (ctor ctor))))
 		(env-list-set! env (cons cnst (env-list env)))
 		n)))))
 
@@ -212,7 +213,7 @@
 		 ;; and j2sscheme/scheme-program.scm)
 		 this)
 		((null? keys)
-		 (let ((n (add-cmap! loc '#() env #f)))
+		 (let ((n (add-cmap! loc '#() env #f #f)))
 		    (set! cmap
 		       (instantiate::J2SLiteralCnst
 			  (loc loc)
@@ -228,7 +229,7 @@
 			      (val this))))
 		     this))
 		((and (pair? keys) (every (lambda (x) x) keys))
-		 (let ((n (add-cmap! loc (list->vector (map (lambda (k) (cons k #t)) keys)) env #t)))
+		 (let ((n (add-cmap! loc (list->vector (map (lambda (k) (cons k #t)) keys)) env #t #f)))
 		    (set! cmap
 		       (instantiate::J2SLiteralCnst
 			  (loc loc)
@@ -500,7 +501,7 @@
 						 (with-access::J2SString name (val)
 						    (cons (string->symbol val) c))))))
 			    p))
-		      env #f)))
+		      env #f #t)))
 	    (set! cmap
 	       (instantiate::J2SLiteralCnst
 		  (loc loc)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Sat Oct  8 17:41:09 2022 (serrano)                */
+;*    Last change :  Wed Oct 26 07:00:37 2022 (serrano)                */
 ;*    Copyright   :  2018-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -832,8 +832,8 @@
 	     (with-access::J2SRegExp this (loc val flags inline)
 		(vector (if inline 3 1) val flags)))
 	    ((isa? this J2SCmap)
-	     (with-access::J2SCmap this (val)
-		(vector 2
+	     (with-access::J2SCmap this (val ctor)
+		(vector (if ctor 2 10)
 		   (vector-map (lambda (e) (cons (symbol->string (car e)) (cdr e)))
 		      val))))
 	    ((isa? this J2SObjInit)

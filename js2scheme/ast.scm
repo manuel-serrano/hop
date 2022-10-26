@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Thu Oct 13 19:42:48 2022 (serrano)                */
+;*    Last change :  Wed Oct 26 07:00:23 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -398,7 +398,9 @@
 	   (final-class J2SRegExp::J2SLiteralValue
 	      (flags::bstring read-only)
 	      (inline::bool (default #f)))
-	   (final-class J2SCmap::J2SLiteralValue)
+	   (final-class J2SCmap::J2SLiteralValue
+	      ;; ctor is #t iff there is a ctor (a function) for that cmap
+	      (ctor::bool (default #t)))
 
 	   (final-class J2SLiteralCnst::J2SLiteral
 	      (index::long read-only)

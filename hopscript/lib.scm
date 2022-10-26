@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Sat Apr  9 19:46:14 2022 (serrano)                */
+;*    Last change :  Tue Oct 25 20:35:05 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -104,7 +104,7 @@
       (let* ((cmap (vector-ref cnsts (vector-ref el 1)))
 	     (vals (vector-ref el 2))
 	     (obj (js-make-jsobject (vector-length vals)
-		     cmap (js-object-proto %this))))
+		     (car cmap) (js-object-proto %this))))
 	 (let loop ((i (-fx (vector-length vals) 1)))
 	    (if (<fx i 0)
 		obj
@@ -158,6 +158,12 @@
 			  ;; a literal cmap
 			  (let ((props (vector-ref el 1)))
 			     (js-strings->cmap props)))
+			 ((10)
+			  ;; a literal cmap for a literal object
+			  (let ((props (vector-ref el 1)))
+			     (let ((cmap (js-strings->cmap props)))
+				(with-access::JsConstructMap cmap (ctor)
+				   ctor))))
 			 ((3 5)
 			  ;; an inlined regexp
 			  (constant-inline-regexp el))

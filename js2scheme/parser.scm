@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Sun Oct 16 11:56:29 2022 (serrano)                */
+;*    Last change :  Tue Oct 25 18:16:21 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1284,7 +1284,8 @@
 	 (cond
 	    ((and (not (config-get conf :es2017-async))
 		  (not (string=? lang "hopscript"))
-		  (not (string=? lang "typescript")))
+		  (not (string=? lang "typescript"))
+		  (not (memq current-mode '(hopscript strict))))
 	     (parse-node-error
 		"async function requires hopscript or ecmascript2017 mode" fun))
 	    (generator

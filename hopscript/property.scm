@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Fri Oct 14 12:23:56 2022 (serrano)                */
+;*    Last change :  Tue Oct 25 19:33:46 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -609,7 +609,9 @@
 	      (set! constrmap (clone-cmap constrmap))
 	      (set! constrsize (+fx constrsize 1))))))
       ((cell? ctor)
+       (tprint "SHOULD NOT BE HERE...")
        (cond
+	  (#t #f)
 	  ((>fx (cell-ref ctor) sz)
 	   #unspecified)
 	  ((>=fx (cell-ref ctor) (ctor-max-constrsize))
@@ -617,7 +619,19 @@
 	  ((<fx sz (ctor-max-constrsize))
 	   (cell-set! ctor (+fx sz 1)))
 	  (else
-	   (cell-set! ctor (+fx (cell-ref ctor) 1)))))))
+	   (cell-set! ctor (+fx (cell-ref ctor) 1)))))
+      ((pair? ctor)
+       (cond
+	  ((>fx (cdr ctor) sz)
+	   #unspecified)
+	  ((>=fx (cdr ctor) (ctor-max-constrsize))
+	   #unspecified)
+	  ((<fx sz (ctor-max-constrsize))
+	   (set-car! ctor (clone-cmap (car ctor)))
+	   (set-cdr! ctor (+fx sz 1)))
+	  (else
+	   (set-car! ctor (clone-cmap (car ctor)))
+	   (set-cdr! ctor (+fx (cdr ctor) 1)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-extend! ...                                            */
@@ -631,6 +645,8 @@
       (let* ((ilen (js-object-inline-length obj))
 	     (rnlen (-fx nlen ilen))
 	     (nels (copy-vector elements rnlen)))
+;* 	 (tprint "COPY-VECTOR el=" (vector-length elements) " rnlne=" rnlen */
+;* 	    " ilen=" ilen " idx=" idx " nlen=" nlen)                   */
 	 (vector-set! nels (-fx idx ilen) value)
 	 (set! elements nels)
 	 obj)))
@@ -1202,21 +1218,25 @@
 ;*    Used by j2sscheme to create literal objects.                     */
 ;*---------------------------------------------------------------------*/
 (define (js-strings->cmap names)
-   (let ((len (vector-length names)))
-      (js-make-jsconstructmap
-	 :ctor (make-cell len)
-	 :props (vector-map (lambda (e)
-			       (let ((n (if (pair? e) (car e) e))
-				     (c (if (pair? e) (cdr e) #t)))
-				  (if (and (>fx (string-length n) 0)
-					   (char=? (string-ref n 0) #\#))
-				      ;; private name
-				      (prop (js-string->private-name n)
-					 (property-flags #t #f #f #f #t))
-				      (prop (js-string->name n)
-					 (property-flags #t #t c #f #t)))))
-		   names)
-	 :methods (make-vector len #unspecified))))
+   (let* ((len (vector-length names))
+	  (ctor (cons #unspecified len))
+	  (props (vector-map (lambda (e)
+				(let ((n (if (pair? e) (car e) e))
+				      (c (if (pair? e) (cdr e) #t)))
+				   (if (and (>fx (string-length n) 0)
+					    (char=? (string-ref n 0) #\#))
+				       ;; private name
+				       (prop (js-string->private-name n)
+					  (property-flags #t #f #f #f #t))
+				       (prop (js-string->name n)
+					  (property-flags #t #t c #f #t)))))
+		    names))
+	  (cmap (js-make-jsconstructmap
+		   :ctor ctor
+		   :props props
+		   :methods (make-vector len #unspecified))))
+      (set-car! ctor cmap)
+      cmap))
       
 ;*---------------------------------------------------------------------*/
 ;*    js-object-literal-init! ...                                      */
