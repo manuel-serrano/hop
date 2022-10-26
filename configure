@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Sat Mar 19 13:20:03 2022 (serrano)                */
+#*    Last change :  Wed Oct 26 10:05:48 2022 (serrano)                */
 #*    Copyright   :  2004-22 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -608,6 +608,7 @@ if [ ! -f $bigloo ]; then
    fi
 fi
 
+# check the Bigloo version
 bglversion=`$bigloo -q -eval "(exit (display (bigloo-config 'release-number)))"`
 
 $bigloo -q -eval "(exit (if (string>=? (bigloo-config 'release-number) \"$bigloorequired\") 0 1))"
@@ -620,6 +621,17 @@ if [ $? != "0" ]; then
   echo "   $bigloourl" >&2
   exit 1;
 fi
+
+# check the Bigloo libraries
+libdir=`$bigloo -q -eval "(begin (print (bigloo-config 'library-directory)) (exit 0))"`
+
+for lib in libbigloo_s-$bglversion.a libbigloo_u-$bglversion.a libbigloo_s_mt-$bglversion.so libbigloo_u_mt-$bglversion.so; do
+  if [ ! -f $libdir/$lib ]; then
+    echo "*** ERROR:configure:bigloo not propertly installed, library missing" >&2
+    echo "$libdir/$lib" >&2
+    exit 1
+  fi
+done
 
 #*---------------------------------------------------------------------*/
 #*    checking awk                                                     */
