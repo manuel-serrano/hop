@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 13 14:06:56 2015                          */
-#*    Last change :  Fri Oct 28 13:50:38 2022 (serrano)                */
+#*    Last change :  Fri Oct 28 18:00:31 2022 (serrano)                */
 #*    Copyright   :  2015-22 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Nodejs compatible script engine                                  */
@@ -20,7 +20,6 @@ export DYLD_LIBRARY_PATH
 server=--no-server
 debug=
 rest=
-optim=-O3
 
 # command parsing
 while : ; do
@@ -50,4 +49,4 @@ while : ; do
 done
       
 
-exec @HOP@ $optim $server $debug -- $rest
+exec @HOP@ $server $debug -- $rest
