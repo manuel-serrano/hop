@@ -1,0 +1,53 @@
+#!/bin/sh
+#*=====================================================================*/
+#*    serrano/prgm/project/hop/hop/etc/hopjs.sh.in                     */
+#*    -------------------------------------------------------------    */
+#*    Author      :  Manuel Serrano                                    */
+#*    Creation    :  Tue Oct 13 14:06:56 2015                          */
+#*    Last change :  Fri Oct 28 13:50:38 2022 (serrano)                */
+#*    Copyright   :  2015-22 Manuel Serrano                            */
+#*    -------------------------------------------------------------    */
+#*    Nodejs compatible script engine                                  */
+#*=====================================================================*/
+
+LD_LIBRARY_PATH=@HOPLIBDIR@:$LD_LIBRARY_PATH
+DYLD_LIBRARY_PATH=@HOPLIBDIR@:$DYLD_LIBRARY_PATH
+
+export LD_LIBRARY_PATH
+export DYLD_LIBRARY_PATH
+
+# default arguments
+server=--no-server
+debug=
+rest=
+optim=-O3
+
+# command parsing
+while : ; do
+  case $1 in
+    "")
+      break;;
+
+    -p|--http-port)
+      shift
+      server=-p $1
+      break;;
+
+    -h|--help)
+      echo "Usage: hopjs [-p PORT] [--http-port PORT] [-g] prog.js arg1 arg2 ..."
+      echo ""
+      echo "Use \"hop --help\" to view all hop options."
+      exit 1
+      break;;
+
+    -g)
+      debug=-g;;
+
+    *)
+      rest="$rest $1";;
+  esac
+  shift
+done
+      
+
+exec @HOP@ $optim $server $debug -- $rest

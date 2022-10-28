@@ -311,7 +311,6 @@ function formatPrimitive(ctx, value) {
       return ctx.stylize('undefined', 'undefined');
 
     case 'string':
-       #:tprint("FP string", value);
       var simple = '\'' + JSON.stringify(value).replace(/^"|"$/g, '')
                                                .replace(/'/g, "\\'")
                                                .replace(/\\"/g, '"') + '\'';

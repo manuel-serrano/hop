@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Wed Oct 26 10:05:48 2022 (serrano)                */
+#*    Last change :  Fri Oct 28 13:39:00 2022 (serrano)                */
 #*    Copyright   :  2004-22 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -1141,7 +1141,7 @@ if [ "$mach " = " " ]; then
   mach="`$bigloo -lib-dir $bigloolibdir -eval \"(begin (display (bigloo-config 'os-name)) (exit 0))\"`-`$bigloo -lib-dir $bigloolibdir -eval \"(begin (display (bigloo-config 'os-arch)) (exit 0))\"`"
 fi
 
-for p in hopc.sh hop.sh hopaot.sh; do
+for p in hopc.sh hop.sh hopjs.sh hopaot.sh; do
   cat etc/$p.in \
     | sed -e "s|@RELEASE@|$version|" \
           -e "s|@BIGLOO@|$bigloo|" \

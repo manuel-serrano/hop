@@ -38,7 +38,7 @@ service hello() {
 To run this program put this code in the file `hello` and execute:
 
 ```sh[:@shell]
-$ hop -p 8080 hello.js
+$ hopjs -p 8080 hello.js
 ```
 
 You can now browse `http://localhost:8080/hop/hello`.
