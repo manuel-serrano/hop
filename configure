@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Fri Oct 28 13:39:00 2022 (serrano)                */
+#*    Last change :  Sat Oct 29 06:48:58 2022 (serrano)                */
 #*    Copyright   :  2004-22 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -623,12 +623,12 @@ if [ $? != "0" ]; then
 fi
 
 # check the Bigloo libraries
-libdir=`$bigloo -q -eval "(begin (print (bigloo-config 'library-directory)) (exit 0))"`
+bgllibdir=`$bigloo -q -eval "(begin (print (bigloo-config 'library-directory)) (exit 0))"`
 
 for lib in libbigloo_s-$bglversion.a libbigloo_u-$bglversion.a libbigloo_s_mt-$bglversion.so libbigloo_u_mt-$bglversion.so; do
-  if [ ! -f $libdir/$lib ]; then
+  if [ ! -f $bgllibdir/$lib ]; then
     echo "*** ERROR:configure:bigloo not propertly installed, library missing" >&2
-    echo "$libdir/$lib" >&2
+    echo "$bgllibdir/$lib" >&2
     exit 1
   fi
 done
