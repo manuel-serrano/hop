@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Tue Oct 25 18:16:21 2022 (serrano)                */
+;*    Last change :  Sun Oct 30 18:32:12 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -623,6 +623,9 @@
       (case (peek-token-type)
 	 ((ID)
 	  (type-name (token-value (consume-token! 'ID))))
+	 ((null)
+	  (consume-any!)
+	  "null")
 	 ((LPAREN)
 	  (consume-any!)
 	  (if (eq? (peek-token-type) 'ID)
