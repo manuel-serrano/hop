@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 13 14:06:56 2015                          */
-#*    Last change :  Fri Oct 28 18:00:31 2022 (serrano)                */
+#*    Last change :  Thu Nov  3 08:07:30 2022 (serrano)                */
 #*    Copyright   :  2015-22 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Nodejs compatible script engine                                  */
@@ -49,4 +49,8 @@ while : ; do
 done
       
 
-exec @HOP@ $server $debug -- $rest
+if [ "$rest " = " " ]; then
+  exec @HOP@ $server $debug --repljs
+else
+  exec @HOP@ $server $debug -- $rest
+fi

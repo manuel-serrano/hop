@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Mar 22 15:03:30 2014                          */
-/*    Last change :  Sun Oct 23 21:08:40 2022 (serrano)                */
+/*    Last change :  Thu Nov  3 08:09:41 2022 (serrano)                */
 /*    Copyright   :  2014-22 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hopscript/Hop binding.                                           */
@@ -21,6 +21,7 @@ export { Generic };
 /*    info                                                             */
 /*---------------------------------------------------------------------*/
 exports.engine = hop.engine;
+exports.debug = hop.debug;
 exports.isServer = hop.isServer;
 exports.isWorker = hop.isWorker;
 exports.hostname = hop.hostname;

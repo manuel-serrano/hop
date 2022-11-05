@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Sat Oct  8 17:44:04 2022 (serrano)                */
+;*    Last change :  Thu Nov  3 08:13:12 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -24,7 +24,8 @@
 	   __nodejs_process
 	   __nodejs_syncg)
 
-   (export (nodejs-new-module::JsObject ::bstring ::bstring ::WorkerHopThread ::JsGlobalObject)
+   (export (nodejs-hop-debug)
+	   (nodejs-new-module::JsObject ::bstring ::bstring ::WorkerHopThread ::JsGlobalObject)
 	   (nodejs-require ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring)
 	   (nodejs-import-module::JsModule ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring ::long ::bool ::obj)
 	   (nodejs-import-module-core::JsModule ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring ::long ::bool ::obj ::vector)
@@ -83,9 +84,9 @@
       (else #unspecified)))
 
 ;*---------------------------------------------------------------------*/
-;*    hop-debug ...                                                    */
+;*    nodejs-hop-debug ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (hop-debug)
+(define (nodejs-hop-debug)
    (max env-debug (bigloo-debug)))
 
 ;*---------------------------------------------------------------------*/
@@ -232,7 +233,7 @@
 ;*---------------------------------------------------------------------*/
 (define (nodejs-compile-file-client-hopscript obj ifile name ofile
 	   query srcalias %ctxworker %ctxthis %ctxmodule lang::bstring)
-   (let* ((srcmap (when (>fx (hop-debug) 0)
+   (let* ((srcmap (when (>fx (nodejs-hop-debug) 0)
 		     (string-append ofile ".map")))
 	  (op (if (string=? ofile "-")
 		  (current-output-port)
@@ -248,7 +249,7 @@
 		      %ctxworker %ctxthis %ctxmodule lang)
 		   (unless (eq? op (current-output-port))
 		      (close-output-port op)))))
-      (when (>fx (hop-debug) 0)
+      (when (>fx (nodejs-hop-debug) 0)
 	 (call-with-output-file srcmap
 	    (lambda (p)
 	       (generate-source-map tree ifile ofile p))))))
@@ -403,16 +404,16 @@
 	 :parser 'client-program
 	 :es6-module-client (eq? query 'mjs)
 	 :warning-global #f
-	 :driver (if (or (<=fx (hop-debug) 0) esplainp)
+	 :driver (if (or (<=fx (nodejs-hop-debug) 0) esplainp)
 		     (j2s-javascript-driver)
 		     (j2s-javascript-debug-driver))
-	 :driver-name (if (or (<=fx (hop-debug) 0) "esplainp")
+	 :driver-name (if (or (<=fx (nodejs-hop-debug) 0) "esplainp")
 			  "j2s-javascript-driver"
 			  "j2s-javascript-debug-driver")
 	 :language lang
 	 :site 'client
 	 :plugins-loader (make-plugins-loader %ctxthis %ctxmodule (js-current-worker))
-	 :debug (if esplainp 0 (hop-debug))))
+	 :debug (if esplainp 0 (nodejs-hop-debug))))
    
    (define (compile obj header offset esplainp worker this)
       (let ((tree (hopscript->javascript obj filename
@@ -494,7 +495,7 @@
 ;*    nodejs-driver ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-driver)
-   (if (> (hop-debug) 0) (j2s-debug-driver) (j2s-optim-driver)))
+   (if (> (nodejs-hop-debug) 0) (j2s-debug-driver) (j2s-optim-driver)))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-file->paths ...                                           */
@@ -1239,7 +1240,7 @@
 ;*    debug-compile-trace ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (debug-compile-trace tag filename #!optional target)
-   (when (or (>=fx (hop-debug) 2)
+   (when (or (>=fx (nodejs-hop-debug) 2)
 	     (string-contains (or (getenv "HOPTRACE") "") "nodejs:compile"))
       (display "compiling (" (current-error-port))
       (display tag (current-error-port))
@@ -1260,7 +1261,7 @@
    (define (cache-path filename)
       (make-cache-name 
 	 (string-append (string-replace (prefix filename) #\/ #\_)
-	    (if (>fx (hop-debug) 0) "-g.scm" ".scm"))))
+	    (if (>fx (nodejs-hop-debug) 0) "-g.scm" ".scm"))))
    
    (define (load-cache filename)
       (when (hop-cache-enable)
@@ -1277,7 +1278,7 @@
 	 (let ((path (cache-path filename)))
 	    (with-handler
 	       (lambda (e)
-		  (when (>=fx (hop-debug) 1)
+		  (when (>=fx (nodejs-hop-debug) 1)
 		     (exception-notify e)
 		     (with-output-to-port (current-error-port)
 			(lambda ()
@@ -1316,7 +1317,7 @@
 			       :commonjs-export commonjs-export
 			       :es6-module-client #t
 			       :warning-global warning-global
-			       :debug (hop-debug))
+			       :debug (nodejs-hop-debug))
 			    (close-mmap m)))))))))
    
    (define (compile-url url::bstring mod)
@@ -1341,7 +1342,7 @@
 		  :plugins-loader (make-plugins-loader %ctxthis %ctxmodule (js-current-worker))
 		  :commonjs-export commonjs-export
 		  :es6-module-client #t
-		  :debug (hop-debug))))))
+		  :debug (nodejs-hop-debug))))))
    
    (define (compile-ast ast::J2SProgram mod)
       (with-trace 'require "compile-ast"
@@ -1366,7 +1367,7 @@
 		     :plugins-loader (make-plugins-loader %ctxthis %ctxmodule (js-current-worker))
 		     :commonjs-export commonjs-export
 		     :es6-module-client #t
-		     :debug (hop-debug))
+		     :debug (nodejs-hop-debug))
 		  (when (mmap? m)
 		     (close-mmap m)))))))
 

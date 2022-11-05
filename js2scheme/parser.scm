@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Sun Oct 30 18:32:12 2022 (serrano)                */
+;*    Last change :  Sat Nov  5 11:41:45 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -611,6 +611,8 @@
 
    (define (typescript-args-list)
       (consume-token! 'ID)
+      (when (eq? (peek-token-type) '?)
+	 (consume-any!))
       (consume-token! ':)
       (let ((t (typescript-type)))
 	 (if (eq? (peek-token-type) 'COMMA)
@@ -682,6 +684,8 @@
 	     ty))))
    
    (define (opt-type)
+      (when (and (eq? (peek-token-type) '?) (string=? lang "typescript"))
+	 (consume-any!))
       (cond
 	 ((and (eq? (peek-token-type) ':) (string=? lang "typescript"))
 	  (consume-any!)
