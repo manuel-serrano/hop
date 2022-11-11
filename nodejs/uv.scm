@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Wed Oct 26 17:37:16 2022 (serrano)                */
+;*    Last change :  Fri Nov 11 08:32:55 2022 (serrano)                */
 ;*    Copyright   :  2014-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -137,6 +137,7 @@
 	   (nodejs-write-string ::WorkerHopThread ::JsGlobalObject ::JsObject ::int ::obj ::long ::long ::obj ::obj)
 	   (nodejs-read ::WorkerHopThread ::JsGlobalObject ::JsObject ::int ::obj ::long ::long ::obj ::obj)
 	   (nodejs-fs-close ::WorkerHopThread ::JsGlobalObject ::JsObject ::int ::obj)
+	   (nodejs-fs-copyfile ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::obj ::obj ::obj)
 
 	   (nodejs-getaddrinfo ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::int)
 	   (nodejs-query ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::int ::JsObject)
@@ -1133,6 +1134,21 @@
 			  callback (js-undefined) val)))
 		 (uv-fs-close file)))
 	  (fs-callback-error %worker %this callback "close"))))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-fs-copyfile ...                                           */
+;*---------------------------------------------------------------------*/
+(define (nodejs-fs-copyfile %worker %this process src dest mode callback)
+   (let ((bsrc (js-tostring src %this))
+	 (bdest (js-tostring dest %this))
+	 (bmode (js-tointeger mode %this)))
+      (if (js-procedure? callback)
+	  (uv-fs-copyfile bsrc bdest bmode
+	     :callback
+	     (lambda (val)
+		(!js-callback1 'copyFile %worker %this
+		   callback (js-undefined) val)))
+	  (uv-fs-copyfile bsrc bdest bmode))))
 
 ;*---------------------------------------------------------------------*/
 ;*    stat-date ...                                                    */

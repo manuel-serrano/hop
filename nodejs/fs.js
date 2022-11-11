@@ -1782,3 +1782,72 @@ SyncWriteStream.prototype.destroy = function() {
 };
 
 SyncWriteStream.prototype.destroySoon = SyncWriteStream.prototype.destroy;
+
+/*---------------------------------------------------------------------*/
+/*    Backport (11 Nov 2022)                                           */
+/*---------------------------------------------------------------------*/
+/**
+ * Asynchronously copies `src` to `dest`. By
+ * default, `dest` is overwritten if it already exists.
+ * @param {string | Buffer | URL} src
+ * @param {string | Buffer | URL} dest
+ * @param {number} [mode]
+ * @param {() => any} callback
+ * @returns {void}
+ */
+fs.copyFile = (src, dest, mode, callback) => {
+  if (typeof mode === 'function') {
+    callback = mode;
+    mode = 0;
+  }
+
+/*   src = getValidatedPath(src, 'src');                               */
+/*   dest = getValidatedPath(dest, 'dest');                            */
+/*                                                                     */
+/*   src = pathModule._makeLong(src);                                  */
+/*   dest = pathModule._makeLong(dest);                                */
+  mode = getValidMode(mode, 'copyFile');
+/*   callback = makeCallback(callback);                                */
+
+/*   const req = new FSReqCallback();                                  */
+/*   req.oncomplete = callback;                                        */
+  binding.copyFile(src, dest, mode, callback);
+}
+
+/**
+ * Synchronously copies `src` to `dest`. By
+ * default, `dest` is overwritten if it already exists.
+ * @param {string | Buffer | URL} src
+ * @param {string | Buffer | URL} dest
+ * @param {number} [mode]
+ * @returns {void}
+ */
+fs.copyFileSync = (src, dest, mode) => {
+/*   src = getValidatedPath(src, 'src');                               */
+/*   dest = getValidatedPath(dest, 'dest');                            */
+
+  const ctx = { path: src, dest };  // non-prefixed
+
+/*   src = pathModule._makeLong(src);                                  */
+/*   dest = pathModule._makeLong(dest);                                */
+  mode = getValidMode(mode, 'copyFile');
+  binding.copyFile(src, dest, mode, undefined, ctx);
+/*   handleErrorFromBinding(ctx);                                      */
+}
+
+function getValidMode(mode, lbl) {
+   const n = ~~mode;
+   const m = binding.COPYFILE_EXCL | binding.COPYFILE_FICLONE | binding.COPYFILE_FICLONE_FORCE;
+
+   if (n & m !== m) {
+      throw `lbl: wrong mode ${mode}`;
+   } else {
+      return n;
+   }
+}
+
+fs.constants = {
+   COPYFILE_EXCL: binding.COPYFILE_EXCL,
+   COPYFILE_FICLONE: binding.COPYFILE_FICLONE,
+   COPYFILE_FICLONE_FORCE: binding.COPYFILE_FICLONE_FORCE
+};

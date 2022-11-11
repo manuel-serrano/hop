@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Tue Aug 31 10:13:20 2021 (serrano)                */
-;*    Copyright   :  2013-21 Manuel Serrano                            */
+;*    Last change :  Fri Nov 11 08:39:24 2022 (serrano)                */
+;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
 ;*=====================================================================*/
@@ -801,6 +801,10 @@
 	(O_DIRECTORY . ,O_DIRECTORY)
 	(O_SYNC . ,O_SYNC)
 	(O_NOFOLLOW . ,O_NOFOLLOW)
+
+	(COPYFILE_EXCL . ,(UV_FS_COPYFILE_EXCL))
+	(COPYFILE_FICLONE . ,(UV_FS_COPYFILE_FICLONE))
+	(COPYFILE_FICLONE_FORCE . ,(UV_FS_COPYFILE_FICLONE_FORCE))
 	
 	(S_IFMT . ,S_IFMT)
 	(S_IFDIR . ,S_IFDIR)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Sat Nov  5 11:41:45 2022 (serrano)                */
+;*    Last change :  Thu Nov 10 19:13:12 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -655,6 +655,9 @@
 	 ((LBRACE)
 	  (interface-properties))
 	 ((void)
+	  (consume-any!)
+	  'void)
+	 ((STRING NUMBER true false)
 	  (consume-any!)
 	  'void)
 	 (else

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  2 08:22:25 2007                          */
-;*    Last change :  Thu Aug 18 10:26:52 2022 (serrano)                */
+;*    Last change :  Tue Nov  8 08:30:10 2022 (serrano)                */
 ;*    Copyright   :  2007-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop SVG support.                                                 */
@@ -313,7 +313,7 @@
 ;*    to avoid identifiers collisions when including several svg       */
 ;*    images inside a single xhtml document.                           */
 ;*---------------------------------------------------------------------*/
-(define (read-svg-img-prefix id uattributes p name inl width height class)
+(define (read-svg-img-prefix id uattributes p src title inl width height class)
    
    (define (dimension-value str)
       (let ((len (string-length str)))
@@ -348,7 +348,6 @@
 		       (set! attributes (remq! :width attributes)))))
 		(cond
 		   (height
-		    (tprint "H=..." height " " svgheight)
 		    (if svgheight
 		       (plist-set-first! svgheight height)
 		       (set! attributes (cons* :height height attributes))))
@@ -376,19 +375,29 @@
 	    (when (pair? uattributes)
 	       (set! attributes (append! attributes uattributes))))))
 
-   (define (parse-and-cache-xml-tree port name)
+   (define (set-svg-title! tree title)
+      (when (isa? tree svg-img-markup+)
+	 (with-access::svg-img-markup+ tree (body)
+	    (for-each (lambda (n)
+			 (when (isa? n svg-img-markup+)
+			    (with-access::svg-img-markup+ n (name body)
+			       (when (eq? name 'title)
+				  (set! body (list title))))))
+	       body))))
+
+   (define (parse-and-cache-xml-tree port src)
       (let ((tree (xml-parse port
 			     :content-length 0
 			     :encoding (hop-charset)
 			     :procedure create-svg-img-markup)))
-	 (svg-img-cache-put! name tree)))
+	 (svg-img-cache-put! src tree)))
 
    (init-svg-img-cache!)
 
    (with-output-to-string
       (lambda ()
-	 (let ((tree (or (svg-img-cache-get name)
-			 (parse-and-cache-xml-tree p name))))
+	 (let ((tree (or (svg-img-cache-get src)
+			 (parse-and-cache-xml-tree p src))))
 
 	    ;; patch the svg element
 	    (let loop ((tree tree))
@@ -397,6 +406,7 @@
 			(with-access::svg-img-markup tree (name)
 			   (or (eq? name 'svg) (eq? name 'svg:svg))))
 		   (tune-svg! tree)
+		   (when title (set-svg-title! tree title))
 		   #t)
 		  ((and (pair? tree) (not (symbol? (car tree))))
 		   (any loop tree))
@@ -544,9 +554,9 @@
 ;*      5- it translates the iso-latin encoding into HOP-CHARSET       */
 ;*      6- it rebinds svg identifiers                                  */   
 ;*---------------------------------------------------------------------*/
-(define (read-svg-img id prefix attributes p name inl width height class)
+(define (read-svg-img id prefix attributes p src title inl width height class)
    (if prefix
-       (read-svg-img-prefix id attributes p name inl width height class)
+       (read-svg-img-prefix id attributes p src title inl width height class)
        (read-svg-img-brute id attributes p inl width height class)))
 
 ;*---------------------------------------------------------------------*/
@@ -574,6 +584,7 @@
 		       (width #f)
 		       (height #f)
 		       (style "text-align: center")
+		       (title #f)
 		       (src #unspecified)
 		       (prefix #t boolean)
 		       (display "-moz-inline-box; -moz-box-orient:vertical; display: inline-block")
@@ -581,6 +592,7 @@
 		       (attrs))
    (set! src (xml-primitive-value src %context))
    (set! style (xml-primitive-value style %context))
+   (set! title (or title (basename src)))
    (cond
       ((not (string? src))
        (error "<SVG:IMG>" "Illegal image src" src))
@@ -593,7 +605,7 @@
 			     (string-append "gzip:" src)
 			     src)
 		      (lambda (port)
-			 (read-svg-img id prefix attrs port src inl
+			 (read-svg-img id prefix attrs port src title inl
 			    width height class))))
 	      (style0 (format "display: ~a; position: relative; ~a" display style))
 	      (style1 (cond

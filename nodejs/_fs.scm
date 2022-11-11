@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat May 17 06:10:40 2014                          */
-;*    Last change :  Wed Apr  6 06:39:22 2022 (serrano)                */
+;*    Last change :  Fri Nov 11 08:27:46 2022 (serrano)                */
 ;*    Copyright   :  2014-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    File system bindings                                             */
@@ -238,6 +238,9 @@
 	  (nodejs-fs-close %worker %this process fd callback)
 	  (let ((fd (js-tointeger fd %this)))
 	     (nodejs-fs-close %worker %this process fd callback))))
+
+   (define (copyfile this src dest mode callback ctx)
+      (nodejs-fs-copyfile %worker %this process src dest mode callback))
    
    (define (open this path flags mode callback)
       (unless (integer? flags)
@@ -397,6 +400,9 @@
 	(close . ,(js-make-function %this close
 		     (js-function-arity close)
 		     (js-function-info :name "close" :len 2)))
+	(copyFile . ,(js-make-function %this copyfile
+			(js-function-arity copyfile)
+			(js-function-info :name "copyFile" :len 5)))
 	(utimes . ,(js-make-function %this utimes
 		      (js-function-arity utimes)
 		      (js-function-info :name "utimes" :len 4)))
