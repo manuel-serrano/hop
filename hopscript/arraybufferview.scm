@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jun 18 07:29:16 2014                          */
-;*    Last change :  Mon Aug 22 07:32:14 2022 (serrano)                */
+;*    Last change :  Fri Nov 11 19:19:13 2022 (serrano)                */
 ;*    Copyright   :  2014-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBufferView              */
@@ -35,8 +35,6 @@
    (export (js-init-arraybufferview! ::JsGlobalObject)
 	   (js-typedarray-lengthu32 o::JsTypedArray %this #!optional cache)
 
-	   (js-new-int8array::JsInt8Array ::uint32 ::JsGlobalObject)
-	   (js-new-uint8array::JsUint8Array ::uint32 ::JsGlobalObject)
 	   (js-int8array-index-set! ::JsInt8Array ::uint32 ::int8)
 	   (js-int8array-fixnum-set! ::JsInt8Array ::long ::int8)
 	   (js-uint8array-index-set! ::JsUint8Array ::uint32 ::uint8)
@@ -211,6 +209,61 @@
       (display ", " op)
       (hop->javascript buffer op compile isexpr ctx)
       (display ")" op)))
+
+;*---------------------------------------------------------------------*/
+;*    js-typedarray-dup ...                                            */
+;*---------------------------------------------------------------------*/
+(define-generic (js-typedarray-dup o::JsTypedArray %this::JsGlobalObject))
+
+(define-method (js-typedarray-dup o::JsInt8Array %this::JsGlobalObject)
+   (with-access::JsGlobalObject %this (js-int8array)
+      (with-access::JsInt8Array o (length)
+	 (js-new %this js-int8array (uint32->fixnum length)))))
+
+(define-method (js-typedarray-dup o::JsUint8Array %this::JsGlobalObject)
+   (with-access::JsGlobalObject %this (js-uint8array)
+      (with-access::JsUint8Array o (length)
+	 (js-new %this js-uint8array (uint32->fixnum length)))))
+
+(define-method (js-typedarray-dup o::JsInt16Array %this::JsGlobalObject)
+   (with-access::JsGlobalObject %this (js-int16array)
+      (with-access::JsInt16Array o (length)
+	 (js-new %this js-int16array (uint32->fixnum length)))))
+
+(define-method (js-typedarray-dup o::JsUint16Array %this::JsGlobalObject)
+   (with-access::JsGlobalObject %this (js-uint16array)
+      (with-access::JsUint16Array o (length)
+	 (js-new %this js-uint16array (uint32->fixnum length)))))
+
+(define-method (js-typedarray-dup o::JsInt32Array %this::JsGlobalObject)
+   (with-access::JsGlobalObject %this (js-int32array)
+      (with-access::JsInt32Array o (length)
+	 (js-new %this js-int32array (uint32->fixnum length)))))
+
+(define-method (js-typedarray-dup o::JsUint32Array %this::JsGlobalObject)
+   (with-access::JsGlobalObject %this (js-uint32array)
+      (with-access::JsUint32Array o (length)
+	 (js-new %this js-uint32array (uint32->fixnum length)))))
+
+(define-method (js-typedarray-dup o::JsBigInt64Array %this::JsGlobalObject)
+   (with-access::JsGlobalObject %this (js-bigint64array)
+      (with-access::JsBigInt64Array o (length)
+	 (js-new %this js-bigint64array (uint32->fixnum length)))))
+
+(define-method (js-typedarray-dup o::JsBigUint64Array %this::JsGlobalObject)
+   (with-access::JsGlobalObject %this (js-biguint64array)
+      (with-access::JsBigUint64Array o (length)
+	 (js-new %this js-biguint64array (uint32->fixnum length)))))
+
+(define-method (js-typedarray-dup o::JsFloat32Array %this::JsGlobalObject)
+   (with-access::JsGlobalObject %this (js-float32array)
+      (with-access::JsFloat32Array o (length)
+	 (js-new %this js-float32array (uint32->fixnum length)))))
+
+(define-method (js-typedarray-dup o::JsFloat64Array %this::JsGlobalObject)
+   (with-access::JsGlobalObject %this (js-float64array)
+      (with-access::JsFloat64Array o (length)
+	 (js-new %this js-float64array (uint32->fixnum length)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-typedarray-ref ::JsInt8Array ...                              */
@@ -547,6 +600,25 @@
 				#f))))))))
 	  (js-raise-type-error %this "Object must be a TypedArray" this)))
 
+   (define (js-typedarray-map this::obj proc thisarg)
+      (if (isa? this JsTypedArray)
+	  (with-access::JsTypedArray this (length (source %data))
+	     (let ((v (js-typedarray-dup this %this))
+		   (l (uint32->fixnum length))
+		   (ref (js-typedarray-ref this))
+		   (set (js-typedarray-set! this)))
+		(with-access::JsTypedArray v ((target %data))
+		   (let loop ((i 0))
+		      (if (=fx i l)
+			  v
+			  (let ((val (ref source i)))
+			     (set target i
+				((@ js-call1-3 __hopscript_public)
+				 %this proc thisarg val i this)
+				%this)
+			     (loop (+fx i 1))))))))
+	  (js-raise-type-error %this "Object must be a TypedArray" this)))
+	 
    (define (js-typedarray-tostring this::obj)
       (with-access::JsTypedArray this (vref buffer bpe byteoffset)
 	 (with-access::JsArrayBuffer buffer (data)
@@ -572,6 +644,14 @@
       :value (js-make-function %this js-typedarray-includes
 		(js-function-arity js-typedarray-includes)
 		(js-function-info :name "includes" :len 1))
+      :configurable #t
+      :writable #t
+      :enumerable #f)
+
+   (js-bind! %this proto (& "map")
+      :value (js-make-function %this js-typedarray-map
+		(js-function-arity js-typedarray-map)
+		(js-function-info :name "map" :len 1))
       :configurable #t
       :writable #t
       :enumerable #f)

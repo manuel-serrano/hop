@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Thu Nov 10 19:13:12 2022 (serrano)                */
+;*    Last change :  Sat Nov 12 09:44:31 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -657,9 +657,15 @@
 	 ((void)
 	  (consume-any!)
 	  'void)
-	 ((STRING NUMBER true false)
+	 ((STRING)
 	  (consume-any!)
-	  'void)
+	  'string)
+	 ((NUMBER)
+	  (consume-any!)
+	  'number)
+	 ((true false)
+	  (consume-any!)
+	  (peek-token-type))
 	 (else
 	  (parse-token-error "Illegal type expression" (consume-any!)))))
       
@@ -1145,7 +1151,14 @@
 		(id (cdr id-token))
 		(body (statement))))
 	    ((eq? (token-value id-token) 'async)
-	     (async-declaration id-token))
+	     (cond
+		((eq? next-token-type 'function)
+		 (async-declaration id-token))
+		((eq? next-token-type '=>)
+		 (async-declaration id-token))
+		(else
+		 (token-push-back! id-token)
+		 (expression-statement))))
 	    ((eq? (token-value id-token) 'sealed)
 	     (if (eq? next-token-type 'class)
 		 (record-declaration)
