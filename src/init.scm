@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Tue Oct  4 08:56:56 2022 (serrano)                */
+;*    Last change :  Wed Nov 16 20:21:37 2022 (serrano)                */
 ;*    Copyright   :  2005-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
@@ -119,8 +119,13 @@
 		 (begin
 		    (set! abspath ts)
 		    (http-get req))
-		 ;; an error
-		 (http-get-file-not-found req))))
+		 (let ((js (string-append abspath ".js")))
+		    (if (file-exists? js)
+			(begin
+			   (set! abspath js)
+			   (http-get req))
+			;; an error
+			(http-get-file-not-found req))))))
 	 (query
 	  ;;; a file with query arguments
 	  (http-get-file-query req))
