@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Mar 22 15:03:30 2014                          */
-/*    Last change :  Thu Nov  3 08:09:41 2022 (serrano)                */
+/*    Last change :  Thu Nov 17 19:41:34 2022 (serrano)                */
 /*    Copyright   :  2014-22 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hopscript/Hop binding.                                           */
@@ -25,6 +25,7 @@ exports.debug = hop.debug;
 exports.isServer = hop.isServer;
 exports.isWorker = hop.isWorker;
 exports.hostname = hop.hostname;
+exports.hostip = hop.hostip;
 exports.version = hop.version;
 exports.buildId = hop.buildId;
 exports.buildTag = hop.buildTag;
@@ -84,6 +85,8 @@ exports.HTTPResponseError = function(obj) {
 /*    Requests                                                         */
 /*---------------------------------------------------------------------*/
 exports.isLocalRequest = hop.isLocalRequest;
+exports.requestHostAddress = hop.requestHostAddr;
+exports.requestLocalAddress = hop.requestLocalAddr;
 
 /*---------------------------------------------------------------------*/
 /*    Request Filters                                                  */

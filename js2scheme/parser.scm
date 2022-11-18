@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Sat Nov 12 09:44:31 2022 (serrano)                */
+;*    Last change :  Fri Nov 18 07:45:11 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -624,7 +624,13 @@
    (define (typescript-simple-type)
       (case (peek-token-type)
 	 ((ID)
-	  (type-name (token-value (consume-token! 'ID))))
+	  (let loop ((ty (type-name (token-value (consume-token! 'ID)))))
+	     (if (eq? (peek-token-type) 'DOT)
+		 (begin
+		    (consume-any!)
+		    (loop (string-append ty "."
+			     (type-name (token-value (consume-token! 'ID))))))
+		 ty)))
 	 ((null)
 	  (consume-any!)
 	  "null")

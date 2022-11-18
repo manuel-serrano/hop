@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Thu Nov  3 08:09:53 2022 (serrano)                */
+;*    Last change :  Thu Nov 17 19:41:42 2022 (serrano)                */
 ;*    Copyright   :  2014-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -297,6 +297,7 @@
 	       ;; info
 	       `(version . ,(hop-version))
 	       `(hostname . ,(js-string->jsstring (hostname)))
+	       `(hostip . ,(js-string->jsstring (hop-server-hostip)))
 	       `(arch . ,(js-string->jsstring (hop-arch)))
 	       `(modulesDir . ,(js-string->jsstring (nodejs-modules-directory)))
 	       `(rcDir ,(js-string->jsstring (hop-rc-directory)))
@@ -310,6 +311,7 @@
 	       `(buildArch . ,(hop-build-arch))
 	       `(isWorker . ,(not (js-main-worker? %worker)))
 	       `(loginCookieCryptKey . ,(hop-login-cookie-crypt-key))
+	       `(charset . ,(js-string->jsstring (symbol->string! (hop-charset))))
 
 	       ;; server configuration
 	       (define-js httpAuthenticationMethodGet 0
@@ -402,6 +404,20 @@
 		  (lambda (this req)
 		     (when (isa? req http-request)
 			(http-request-local? req))))
+
+	       (define-js requestLocalAddr 1
+		  (lambda (this req)
+		     (when (isa? req http-request)
+			(with-access::http-request req (socket)
+			   (js-string->jsstring
+			      (socket-local-address socket))))))
+	       
+	       (define-js requestHostAddr 1
+		  (lambda (this req)
+		     (when (isa? req http-request)
+			(with-access::http-request req (socket)
+			   (js-string->jsstring
+			      (socket-host-address socket))))))
 
 	       ;; filters
 	       (define-js addRequestFilter 1
@@ -746,6 +762,7 @@
 	  (backend (get/default req (& "backend") %this (hop-xml-backend)))
 	  (start-line (get/default req (& "startLine") %this "HTTP/1.1 200 Ok"))
 	  (content-type (get/default req (& "contentType") %this "application/x-json-hop"))
+	  (content-length (get/default req (& "contentLength") %this #e-1))
 	  (charset (get/default req (& "charset") %this (hop-charset)))
 	  (header (get/list req (& "header") %this '((Cache-Control: . "no-cache") (Pragma: . "no-cache"))))
 	  (value obj))
@@ -763,6 +780,7 @@
 	  (backend (get/default req (& "backend") %this (hop-xml-backend)))
 	  (start-line (get/default req (& "startLine") %this "HTTP/1.1 200 Ok"))
 	  (content-type (get/default req (& "contentType") %this "application/x-javascript"))
+	  (content-length (get/default req (& "contentLength") %this #e-1))
 	  (charset (get/default req (& "charset") %this (hop-charset)))
 	  (header (get/list req (& "header") %this '((Cache-Control: . "no-cache") (Pragma: . "no-cache"))))
 	  (xml obj))
@@ -783,6 +801,7 @@
 	     (charset (get/default req (& "charset") %this (hop-charset)))
 	     (content-type (get/default req (& "contentType") %this
 			      (mime-type path "text/plain")))
+	     (content-length (get/default req (& "contentLength") %this #e-1))
 	     (header (get/list req (& "header") %this '()))
 	     (file path))
 	  (instantiate::http-response-file
@@ -798,6 +817,7 @@
        (instantiate::http-response-string
 	  (charset (get/default req (& "charset") %this (hop-charset)))
 	  (content-type (get/default req (& "contentType") %this #f))
+	  (content-length (get/default req (& "contentLength") %this #e-1))
 	  (start-line (get/default req (& "startLine") %this "HTTP/1.1 200 Ok"))
 	  (header (get/list req (& "header") %this '()))
 	  (body (js-tostring string %this)))
@@ -853,6 +873,7 @@
 	  (instantiate::http-response-async
 	     (charset (get/default req (& "charset") %this (hop-charset)))
 	     (content-type (get/default req (& "contentType") %this #f))
+	     (content-length (get/default req (& "contentLength") %this #e-1))
 	     (header (get/list req (& "header") %this '()))
 	     (async (async-proc req))))
        (instantiate::http-response-async

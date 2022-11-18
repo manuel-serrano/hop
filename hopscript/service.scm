@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.4.x/hopscript/service.scm             */
+;*    serrano/prgm/project/hop/hop/hopscript/service.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Fri Apr 16 18:35:08 2021 (serrano)                */
-;*    Copyright   :  2013-21 Manuel Serrano                            */
+;*    Last change :  Fri Nov 18 07:59:39 2022 (serrano)                */
+;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
 ;*=====================================================================*/
@@ -398,7 +398,8 @@
 	 (js-bind! %this js-hopframe-prototype (& "toString")
 	    :value (js-make-function %this
 		      (lambda (this::JsHopFrame)
-			 (js-string->jsstring (hopframe->string this %this)))
+			 (js-string->jsstring
+			    (hopframe->string this %this)))
 		      (js-function-arity 0 0)
 		      (js-function-info :name "toString" :len 0))
 	    :hidden-class #t)
@@ -549,9 +550,11 @@
 ;*---------------------------------------------------------------------*/
 (define (hopframe->string::bstring frame::JsHopFrame %this)
    (with-access::JsHopFrame frame (srv path args)
-      (let ((sans-srv (if (pair? args)
-			  (hop-apply-url path args %this)
-			  path)))
+      (let ((sans-srv (cond
+			 ((not (pair? args))
+			  path)
+			 (else
+			  (hop-apply-url path args %this)))))
 	 (if (isa? srv JsServer)
 	     (with-access::JsServer srv (obj)
 		(with-access::server obj (ssl host port authorization)
