@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.5.x/nodejs/repl.scm                   */
+;*    serrano/prgm/project/hop/hop/nodejs/repl.scm                     */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct  6 08:22:43 2013                          */
-;*    Last change :  Wed Jan 12 07:47:36 2022 (serrano)                */
+;*    Last change :  Thu Nov 24 20:58:00 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS like REPL                                                 */
@@ -52,6 +52,7 @@
 			  :driver-name "j2s-plain-driver"
 			  :parser 'repl
 			  :filename "repl.js"
+			  :warning-global #f
 			  :node-modules-directory (nodejs-node-modules-directory))))))
 	 ((eval exp) %this %this %this module))
       ;; enter the read-eval-print loop
@@ -123,6 +124,7 @@
       :driver (j2s-eval-driver)
       :driver-name "j2s-eval-driver"
       :commonjs-export #f
+      :warning-global #f
       :filename "repl.js"))   
 
 ;*---------------------------------------------------------------------*/

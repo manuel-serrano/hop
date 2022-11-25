@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Fri Nov 11 08:32:55 2022 (serrano)                */
+;*    Last change :  Thu Nov 24 21:14:31 2022 (serrano)                */
 ;*    Copyright   :  2014-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -1154,14 +1154,16 @@
 ;*    stat-date ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (stat-date stat %this)
-   (for-each (lambda (k)
-		(let ((c (assq k stat)))
-		   (when (pair? c)
-		      (set-cdr! c (js-date->jsdate
-				     (seconds->date (cdr c))
-				     %this)))))
-      '(mtime atime ctime))
-   stat)
+   (let ((ms (filter-map (lambda (k)
+			    (let ((c (assq k stat)))
+			       (when (pair? c)
+				  (let ((v (cdr c)))
+				     (set-cdr! c
+					(js-date->jsdate
+					   (seconds->date (cdr c)) %this))
+				     (cons (symbol-append k 'Ms) (* v 100))))))
+		'(mtime atime ctime))))
+      (append stat ms)))
 
 ;*---------------------------------------------------------------------*/
 ;*    stat->jsobj ...                                                  */
