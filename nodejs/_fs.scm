@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat May 17 06:10:40 2014                          */
-;*    Last change :  Fri Nov 11 08:27:46 2022 (serrano)                */
+;*    Last change :  Sat Nov 26 10:29:04 2022 (serrano)                */
 ;*    Copyright   :  2014-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    File system bindings                                             */
@@ -220,8 +220,8 @@
    (define (unlink this path callback)
       (nodejs-unlink %worker %this process path callback))
    
-   (define (rmdir this path callback)
-      (nodejs-rmdir %worker %this process path callback))
+   (define (rmdir this path recursive mode callback)
+      (nodejs-rmdir %worker %this process path recursive mode callback))
    
    (define (fdatasync this path callback)
       (nodejs-fdatasync %worker %this process path callback))
@@ -382,7 +382,7 @@
 		      (js-function-info :name "unlink" :len 2)))
 	(rmdir . ,(js-make-function %this rmdir
 		     (js-function-arity rmdir)
-		     (js-function-info :name "rmdir" :len 2)))
+		     (js-function-info :name "rmdir" :len 3)))
 	(fdatasync . ,(js-make-function %this fdatasync
 			 (js-function-arity fdatasync)
 			 (js-function-info :name "fdatasync" :len 2)))

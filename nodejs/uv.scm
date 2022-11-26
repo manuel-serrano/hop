@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Thu Nov 24 21:14:31 2022 (serrano)                */
+;*    Last change :  Sat Nov 26 10:31:38 2022 (serrano)                */
 ;*    Copyright   :  2014-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -18,6 +18,9 @@
    
    (library hop hopscript)
 
+   (extern (macro $ENOTEMPTY::long "-ENOTEMPTY")
+	   (macro $ENOTDIR::long "-ENOTDIR"))
+   
    (cond-expand
       (enable-libuv
        (library libuv)))
@@ -126,7 +129,7 @@
 	   (nodejs-symlink ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::obj ::obj)
 	   (nodejs-readlink ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::obj)
 	   (nodejs-unlink ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::obj)
-	   (nodejs-rmdir ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::obj)
+	   (nodejs-rmdir ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::bool ::bool ::obj)
 	   (nodejs-fdatasync ::WorkerHopThread ::JsGlobalObject ::JsObject ::int ::obj)
 	   (nodejs-mkdir ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::int ::obj ::obj)
 	   (nodejs-open ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::long ::long ::obj)
@@ -1354,24 +1357,95 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-rmdir ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-rmdir %worker %this process src callback)
+(define (nodejs-rmdir %worker %this process src recursive mode callback)
    
-   (define (rmdir-callback res)
+   (define (rmdir-callback name res)
       (fs-callback %worker %this process callback "rmdir"
-	 (format "rmdir: cannot rmdir ~a -- ~~s" (js-jsstring->string src))
+	 (format "rmdir: cannot rmdir ~a -- ~~s" name)
 	 res))
+
+   (define (rmdir-callback-recursive name res)
+      (if (and (fixnum? res) (=fx res $ENOTEMPTY) recursive)
+	  (let loop ((l (directory->path-list name)))
+	     (when (pair? l)
+		(cond
+		   ((null? l)
+		    (fs-callback %worker %this process callback "rmdir"
+		       (format "rmdir: cannot rmdir ~a -- ~~s" (js-jsstring->string src))
+		       #unspecified))
+		   ((directory? (car l))
+		    (uv-fs-rmdir (car l)
+		       :loop (worker-loop %worker)
+		       :callback (lambda (res)
+				    (if (integer? res)
+					(rmdir-callback name res)
+					(loop (cdr l))))))
+		   (mode
+		    (uv-fs-unlink (car l)
+		       :loop (worker-loop %worker)
+		       :callback (lambda (res)
+				    (if (integer? res)
+					(rmdir-callback name res)
+					(loop (cdr l))))))
+		   (else
+		    (rmdir-callback name $ENOTDIR)))))
+	  (rmdir-callback name res)))
+
+   (define (rmdir-or-file path)
+      (if (directory? path)
+	  (let ((r (uv-fs-rmdir path)))
+	     (cond
+		((or (not (fixnum? r)) (>=fx r 0))
+		 #t)
+		((and (=fx r $ENOTEMPTY) recursive)
+		 (for-each rmdir-or-file (directory->path-list path))
+		 (rmdir-or-file path))
+		(else
+		 (js-raise
+		    (fs-errno-exn
+		       (format "rmdir: cannot rmdir ~a" path)
+		       r %this)))))
+	  (let ((r (uv-fs-unlink path)))
+	     (if (and (fixnum? r) (<fx r 0))
+		 (js-raise
+		    (fs-errno-exn
+		       (format "unlink: cannot rmdir ~a" path)
+		       r %this))
+		 r))))
+
+   (define (rmdir path recursive)
+      (let ((r (uv-fs-rmdir path)))
+	 (cond
+	    ((and (=fx r $ENOTEMPTY) recursive)
+	     (for-each (lambda (p)
+			  (if (directory? p)
+			      (rmdir p recursive)
+			      (js-raise
+				 (fs-errno-exn
+				    (format "rmdir: cannot rmdir ~a" path)
+				    r %this))))
+		(directory->path-list path))
+	     (rmdir path #f))
+	    ((and (fixnum? r) (<fx r 0))
+	     (js-raise
+		(fs-errno-exn
+		   (format "rmdir: cannot rmdir ~a" (js-jsstring->string src))
+		   r %this)))
+	    (else
+	     r))))
    
-   (if (js-procedure? callback)
-       (uv-fs-rmdir (js-jsstring->string src)
-	  :loop (worker-loop %worker)
-	  :callback rmdir-callback)
-       (let ((r (uv-fs-rmdir (js-jsstring->string src))))
-	  (if (and (integer? r) (<fx r 0))
-	      (js-raise
-		 (fs-errno-exn
-		    (format "rmdir: cannot rmdir ~a" (js-jsstring->string src))
-		    r %this))
-	      r))))
+   (let ((name (js-jsstring->string src)))
+      (cond
+	 ((js-procedure? callback)
+	  (uv-fs-rmdir name
+	     :loop (worker-loop %worker)
+	     :callback (if (or mode recursive)
+			   (lambda (res) (rmdir-callback-recursive name res))
+			   rmdir-callback)))
+	 (mode
+	  (rmdir-or-file name))
+	 (else
+	  (rmdir name recursive)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-fdatasync ...                                             */

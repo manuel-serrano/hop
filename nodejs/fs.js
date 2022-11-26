@@ -614,15 +614,25 @@ fs.ftruncateSync = function(fd, len) {
   return binding.ftruncate(fd, len);
 };
 
-fs.rmdir = function(path, callback) {
+// ms (26 nov 2022)
+fs.rmdir = function(path, opts, callback) {
   callback = makeCallback(callback);
   if (!nullCheck(path, callback)) return;
-  binding.rmdir(pathModule._makeLong(path), callback);
+  if (callback) {
+     binding.rmdir(pathModule._makeLong(path), opts.recursive === true, opts.force === true, callback);
+  } else {
+     binding.rmdir(pathModule._makeLong(path), false, false, opts);
+  }
 };
 
-fs.rmdirSync = function(path) {
+// ms (26 nov 2022)
+fs.rmdirSync = function(path, opts) {
   nullCheck(path);
-  return binding.rmdir(pathModule._makeLong(path));
+  if (opts) {
+    return binding.rmdir(pathModule._makeLong(path), opts.recursive === true, opts.force === true);
+  } else { 
+    return binding.rmdir(pathModule._makeLong(path), false, false);
+  }
 };
 
 fs.fdatasync = function(fd, callback) {
