@@ -4,10 +4,10 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 22 05:37:50 2007                          */
-#*    Last change :  Thu Apr 23 12:11:26 2020 (serrano)                */
-#*    Copyright   :  2007-20 Manuel Serrano                            */
+#*    Last change :  Sat Nov 26 06:44:31 2022 (serrano)                */
+#*    Copyright   :  2007-22 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
-#*    The Shell script to build the .deb for Hop on Debian/Maemo       */
+#*    The Shell script to build the .deb for Hop on Debian             */
 #*    -------------------------------------------------------------    */
 #*    Debug with "sh -x makedeb.sh"                                    */
 #*=====================================================================*/
@@ -27,11 +27,10 @@ AUTHOR=Manuel.Serrano@inria.fr
 LICENSE=gpl
 BUILDDIR=`pwd`/build.hop
 BASEDIR=`dirname $0`
-MAEMODIR=$BASEDIR/maemo
 HOPPREFIX=`bigloo -eval "(begin (print (dirname (bigloo-config 'ld-library-dir))) (exit 0))"`
 PREFIX=/usr
 HOPUSER=hop
-HOPCONFIGUREOPT=
+HOPCONFIGUREOPT=--disable-doc
 
 debformat="3.0 (quilt)"
 fakeroot=fakeroot
@@ -102,47 +101,19 @@ fi
 #* (cd $BUILDDIR/hop-$VERSION; ./configure --prefix=$HOPPREFIX)        */
 
 #*---------------------------------------------------------------------*/
-#*    The maemo configuration                                          */
+#*    The debian configuration                                         */
 #*---------------------------------------------------------------------*/
-maemo=`pkg-config maemo-version --modversion 2> /dev/null`
+case `cat /etc/issue | awk '{ print $1 }'` in
+  Debian)
+    debian=debian;;
+  Ubuntu)
+    debian=ubuntu;;
+  *)
+    debian=debian;;
+esac
 
-if [ $? = 0 ]; then
-  debian=maemo
-  debianversion=maemo`echo $maemo | sed -e "s/[.].*$//"`
-  extradepend="hildon-desktop, "
-else
-  case `cat /etc/issue | awk '{ print $1 }'` in
-    Debian)
-      debian=debian;;
-    Ubuntu)
-      debian=ubuntu;;
-    *)
-      debian=debian;;
-  esac
-
-  debianversion=$debian
-  extradepend=
-fi
-
-#*---------------------------------------------------------------------*/
-#*    Install the maemo specific files (including hop-launcher)        */
-#*---------------------------------------------------------------------*/
-if [ "$debian " = "maemo " ]; then
-  mkdir -p $BUILDDIR/hop-$VERSION/maemo
-  (cp -r $MAEMODIR/hop-launcher $BUILDDIR/hop-$VERSION/maemo)
-  (cd $BUILDDIR/hop-$VERSION/maemo/hop-launcher && \
-   branch=`echo $VERSION | sed -e "s/[0-9]*$/x/g"` && \
-   cat configure.in | sed -e "s/@HOPBRANCH@/$branch/g" > configure && \
-   cat hop-launcher.rc.in | \
-      sed -e "s|@HOPPREFIX@|$HOPPREFIX|g" | \
-      sed -e "s|@PREFIX@|$PREFIX|g" > hop-launcher.rc && \
-   ./configure)
-
-  mkdir -p $BUILDDIR/hop-$VERSION/icons
-  for p in $ICONS; do 
-    cp $MAEMODIR/$p $BUILDDIR/hop-$VERSION/icons;
-  done
-fi
+debianversion=$debian
+extradepend=
 
 #*---------------------------------------------------------------------*/
 #*    Configure for small devices                                      */
@@ -158,12 +129,10 @@ for p in hop; do
     cat $BASEDIR/init.d/$p.in \
       | sed -e "s/@HOPVERSION@/$VERSION/g" \
             -e "s/@HOPUSER@/$HOPUSER/g" \
-            -e "s/@MAEMO@/$maemo/g" \
             -e "s/@DEBIAN@/$debian/g" \
             -e "s/@EXTRADEPEND@/$extradepend/g" \
             -e "s|@HOPPREFIX@|$HOPPREFIX|g" \
             -e "s|@PREFIX@|$PREFIX|g" \
-            -e "s/@MAEMOHASLOCATION@/$maemohaslocation/g" \
             -e "s/@BIGLOOVERSION@/$BIGLOOVERSION/g" > \
       $BUILDDIR/hop-$VERSION/arch/debian/init.d/$p;
   else
@@ -178,49 +147,6 @@ cp $BUILDDIR/hop-$VERSION/LICENSE $BUILDDIR/hop-$VERSION/arch/debian/copyright
 #*    Create the .tar.gz file used for building the package            */
 #*---------------------------------------------------------------------*/
 tar cfz $BUILDDIR/hop-$VERSION.tar.gz -C $BUILDDIR hop-$VERSION
-
-if [ "$debian " = "maemo " ]; then
-  cat $MAEMODIR/Makefile.maemo | \
-    sed -e "s/@HOPBRANCH@/$branch/g" | \
-    sed -e "s|@HOPPREXI@|$HOPREFIX|g" | \
-    sed -e "s|@PREFIX@|$PREFIX|g" >> \
-    $BUILDDIR/hop-$VERSION/Makefile
-
-  echo 'BUILDSPECIFIC=build-maemo' >> \
-    $BUILDDIR/hop-$VERSION/etc/Makefile.hopconfig.in
-    echo 'INSTALLSPECIFIC=install-maemo' >> \
-    $BUILDDIR/hop-$VERSION/etc/Makefile.hopconfig.in
-fi
-
-#*---------------------------------------------------------------------*/
-#*    The maemo version                                                */
-#*---------------------------------------------------------------------*/
-if [ "$debian " = "maemo " ]; then
-  maemoversion=`echo $maemo | sed -e "s/[^0-9.].*$//"`
-
-  if [ "$maemoversion " = "5.0 " ]; then
-    echo "Configuring for Maemo 5."
-    childonflags="pkg-config gtk+-2.0 hildon-1 --cflags"
-    ldhildonflags="pkg-config gtk+-2.0 hildon-1 libosso --libs"
-    maemo=MAEMO5
-    maemohaslocation=no
-  else
-    pkg-config gtk+-2.0 hildon-1 --cflags > /dev/null 2> /dev/null
-    if [ $? = 0 ]; then
-      echo "Configuring for Maemo 4."
-      childonflags="pkg-config gtk+-2.0 hildon-1 --cflags"
-      ldhildonflags="pkg-config gtk+-2.0 hildon-1 --libs"
-      maemo=MAEMO4
-      maemohaslocation=yes
-    else
-      echo "Configuring for Maemo 3."
-      childonflags="pkg-config gtk+-2.0 hildon-libs --cflags"
-      ldhildonflags="pkg-config gtk+-2.0 hildon-libs --libs"
-      maemo=MAEMO3
-      maemohaslocation=yes
-    fi
-  fi
-fi
 
 #*---------------------------------------------------------------------*/
 #*    Start creating the .deb                                          */
@@ -240,12 +166,10 @@ for p in control rules postinst postrm compat; do
       | sed -e "s/@HOPVERSION@/$VERSION/g" \
             -e "s/@HOPUSER@/$HOPUSER/g" \
             -e "s/@HOPCONFIGUREOPT@/$HOPCONFIGUREOPT/g" \
-            -e "s/@MAEMO@/$maemo/g" \
             -e "s/@DEBIAN@/$debian/g" \
             -e "s/@EXTRADEPEND@/$extradepend/g" \
             -e "s|@HOPPREFIX@|$HOPPREFIX|g" \
             -e "s|@PREFIX@|$PREFIX|g" \
-            -e "s/@MAEMOHASLOCATION@/$maemohaslocation/g" \
             -e "s/@BIGLOOVERSION@/$BIGLOOVERSION/g" \
             -e "s|@NODEMODULESDIR@|$NODEMODULESDIR|g" > \
       $BUILDDIR/hop-$VERSION/debian/$p;
@@ -253,27 +177,6 @@ for p in control rules postinst postrm compat; do
     cp $BASEDIR/$p $BUILDDIR/hop-$VERSION/debian;
   fi
 done
-
-# Maemo specific
-if [ "$debian " = "maemo " ]; then
-  # The desktop file
-  cat $MAEMODIR/hop.desktop.in \
-    | sed -e "s/@HOPVERSION@/$VERSION/g" \
-          -e "s|@HOPPREFIX@|$HOPPREFIX|g" \
-          -e "s|@PREFIX@|$PREFIX|g" > \
-    $BUILDDIR/hop-$VERSION/maemo/hop.desktop && \
-    chmod a-w $BUILDDIR/hop-$VERSION/maemo/hop.desktop
-  cat > $BUILDDIR/hop-$VERSION/debian/hop.links <<EOF
-usr/share/applications/hildon/hop.desktop etc/others-menu/extra_applications/hop.desktop
-EOF
-
-  # The service
-  cat $MAEMODIR/hop.service.in  \
-    | sed -e "s/@HOPVERSION@/$VERSION/g" \
-          -e "s|@HOPPREFIX@|$HOPPREFIX|g" \
-          -e "s|@PREFIX@|$PREFIX|g" > \
-    $BUILDDIR/hop-$VERSION/maemo/hop.service
-fi
 
 mkdir -p debian/source
 echo $debformat > debian/source/format

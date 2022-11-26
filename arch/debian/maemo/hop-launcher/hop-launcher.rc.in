@@ -1,6 +1,0 @@
-;; to be stored in $HOME/.config/hop/hop-launcher
-(
- (port 8080)
- (command "sudo -u serrano @HOPPREFIX@/bin/hop --accept-kill --no-color -v -p %s --script-file hop-launcher.hop")
- (kill "sudo -u serrano @HOPPREFIX@/bin/hop -p %s -k")
-)
