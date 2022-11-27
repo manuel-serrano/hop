@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Mon Aug 22 08:08:02 2022 (serrano)                */
+;*    Last change :  Sun Nov 27 16:34:38 2022 (serrano)                */
 ;*    Copyright   :  2014-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
@@ -292,7 +292,7 @@
       (define (srfi-libuv)
 	 (cond-expand
 	    (enable-libuv (cons* "-srfi" "enable-libuv" (srfi-hopc)))
-	    (else (srfi-hopcs))))
+	    (else (srfi-hopc))))
       
       (define (srfi-tls)
 	 (cond-expand
