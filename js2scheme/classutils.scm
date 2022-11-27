@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 19 16:28:44 2021                          */
-;*    Last change :  Thu Feb  3 09:30:00 2022 (serrano)                */
+;*    Last change :  Sun Nov 27 09:03:56 2022 (serrano)                */
 ;*    Copyright   :  2021-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Class related utility functions                                  */
@@ -49,6 +49,7 @@
 	   
 	   (j2s-class-constructor-might-return?::bool ::J2SClass)
 	   (j2s-class-methods-use-super?::bool ::J2SClass)
+	   (class-method-use-super?::bool ::J2SFun)
 
 	   (class-new-target?::bool ::J2SClass)
 	   

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jul 15 07:09:51 2021                          */
-;*    Last change :  Fri Jun  3 18:42:47 2022 (serrano)                */
+;*    Last change :  Sun Nov 27 08:51:47 2022 (serrano)                */
 ;*    Copyright   :  2021-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Record generation                                                */
@@ -41,7 +41,7 @@
 	   (j2s-record-declaration ::J2SRecord)
 	   (j2s-record-predicate ::J2SRecord)
 	   
-	   (j2s-record-prototype-constructor::pair ::J2SRecord mode return ctx)
+	   (j2s-record-prototype-method::pair ::J2SRecord mode return ctx)
 	   (j2s-scheme-record-super ::J2SCall mode return ctx)))
 
 ;*---------------------------------------------------------------------*/
@@ -590,9 +590,24 @@
 		 ,(j2s-scheme (J2SRef decl) mode return ctx))))))
 
 ;*---------------------------------------------------------------------*/
-;*    j2s-record-prototype-constructor ...                             */
+;*    j2s-record-prototype-method ...                                  */
 ;*---------------------------------------------------------------------*/
-(define (j2s-record-prototype-constructor this::J2SRecord mode return ctx)
+(define (j2s-record-prototype-method this::J2SRecord mode return ctx)
+
+   (define (let-super fun id)
+      (with-access::J2SRecord this (super)
+	 (cond
+	    ((isa? super J2SUndefined)
+	     (j2s-error id "No super class" this id))
+	    ((isa? super J2SNull)
+	     (j2s-error id "No super class" this id))
+	    (else
+	     `(let* ((%super ,(j2s-scheme super mode return ctx))
+		     (%super-prototype (js-function-prototype-get %super %super
+					  ,(& "prototype" (context-program ctx))
+					  %this)))
+		 ,fun)))))
+      
    (with-access::J2SRecord this ((classname name))
       `((define ,(class-prototype-id this)
 	   ,(if (j2s-class-super-val this)
@@ -603,8 +618,13 @@
 	,@(map (lambda (el)
 		  (with-access::J2SClassElement el (prop)
 		     (with-access::J2SMethodPropertyInit prop (val)
-			`(define ,(class-element-id this el)
-			    ,(jsfun->lambda val mode return ctx #f)))))
+			(let ((fun (jsfun->lambda val mode return ctx #f)))
+			   (if (and (not (context-get ctx :optim-record))
+				    (class-method-use-super? val))
+			       `(define ,(class-element-id this el)
+				   ,(let-super fun (class-element-id this el)))
+			       `(define ,(class-element-id this el)
+				   ,fun))))))
 	     (j2s-class-methods this :super #f)))))
        
 ;*---------------------------------------------------------------------*/

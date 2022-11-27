@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Wed Oct 26 07:00:37 2022 (serrano)                */
+;*    Last change :  Sun Nov 27 08:59:19 2022 (serrano)                */
 ;*    Copyright   :  2018-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -237,7 +237,7 @@
 	     (records (j2s-collect-records* this))
 	     (irecords (j2s-collect-irecords* this))
 	     (scmrecords (append-map (lambda (rec)
-					(j2s-record-prototype-constructor rec
+					(j2s-record-prototype-method rec
 					   mode return ctx))
 			    records)))
 	 (cond
@@ -465,7 +465,7 @@
 		      '())
 		,@(map j2s-record-predicate records)
 		,@(append-map (lambda (rec)
-				 (j2s-record-prototype-constructor rec
+				 (j2s-record-prototype-method rec
 				    mode (lambda (x) x) ctx))
 		     records)
 		(define (main args)
