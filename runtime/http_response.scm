@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Tue Mar 31 05:46:42 2020 (serrano)                */
-;*    Copyright   :  2004-20 Manuel Serrano                            */
+;*    Last change :  Fri Dec  2 12:28:27 2022 (serrano)                */
+;*    Copyright   :  2004-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
 ;*=====================================================================*/
@@ -408,7 +408,8 @@
 			       "HTTP/1.0 416 Requested range not satisfiable"
 			       request
 			       socket
-			       '((content-range: . "*"))))
+			       `((Content-Range: .
+				    ,(string-append "bytes */" (elong->string size))))))
 			 (output-timeout-set! p timeout)
 			 ;; the header
 			 (response-header connection beg end size p r file)
