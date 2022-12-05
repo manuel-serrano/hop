@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Mon Dec  5 16:26:45 2022 (serrano)                */
+;*    Last change :  Mon Dec  5 19:13:24 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -629,7 +629,7 @@
 	     (if (eq? (peek-token-type) 'DOT)
 		 (begin
 		    (consume-any!)
-		    (loop (string-append ty "."
+		    (loop (symbol-append ty '|.|
 			     (type-name (token-value (consume-token! 'ID))))))
 		 ty)))
 	 ((null)
