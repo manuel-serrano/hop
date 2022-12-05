@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Fri Nov 18 07:45:11 2022 (serrano)                */
+;*    Last change :  Mon Dec  5 16:26:45 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -42,6 +42,7 @@
    (define source-map (config-get conf :source-map #f))
    (define fun-src (config-get conf :fun-src #t))
    (define interfaces '())
+   (define types '())
 
    (define es-module #f)
    
@@ -551,7 +552,7 @@
       ;; typescript type block, for now simply ignored
       (consume-token! 'type)
       (let loop ()
-	 (consume-token! 'ID)
+	 (set! types (cons (token-value (consume-token! 'ID)) types))
 	 (consume-token! '=)
 	 (typescript-type)
 	 (if (eq? (peek-token-type) 'COMMA)
@@ -3591,7 +3592,7 @@
 		  (main (config-get conf :module-main #f))
 		  (name (config-get conf :module-name #f))
 		  (mode mode)
-		  (types (append interfaces '()))
+		  (types (append types interfaces))
 		  (exports (reverse exports))
 		  (nodes (map! (lambda (n) (dialect n mode conf)) nodes)))
 	       conf))))
