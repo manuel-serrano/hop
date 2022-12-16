@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Fri Feb 11 14:46:21 2022 (serrano)                */
+;*    Last change :  Fri Dec  9 16:02:47 2022 (serrano)                */
 ;*    Copyright   :  2016-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -52,33 +52,34 @@
 ;*    j2s-hint! ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (j2s-hint! prgm conf)
-   (with-access::J2SProgram prgm (decls nodes)
-      ;; reset previously collected hints
-      (for-each j2s-reset-hint decls)
-      (for-each j2s-reset-hint nodes)
-      ;; first collect all possible hints...
-      (for-each (lambda (n) (j2s-hint n '())) decls)
-      (for-each (lambda (n) (j2s-hint n '())) nodes)
-      ;; then, for each function whose parameters are "hinted", generate
-      ;; an ad-hoc typed version
-      (if (config-get conf :optim-hint)
-	  (let ((dups (append-map (lambda (d) (j2s-hint-function* d conf))
+   (with-access::J2SProgram prgm (decls nodes types)
+      (let ((conf (cons* :ignored-types types conf)))
+	 ;; reset previously collected hints
+	 (for-each j2s-reset-hint decls)
+	 (for-each j2s-reset-hint nodes)
+	 ;; first collect all possible hints...
+	 (for-each (lambda (n) (j2s-hint n '())) decls)
+	 (for-each (lambda (n) (j2s-hint n '())) nodes)
+	 ;; then, for each function whose parameters are "hinted", generate
+	 ;; an ad-hoc typed version
+	 (if (config-get conf :optim-hint)
+	     (let ((dups (append-map (lambda (d) (j2s-hint-function* d conf))
+			    decls)))
+		(when (pair? dups)
+		   (set! decls
+		      (append (filter (lambda (dup::J2SDeclFun)
+					 (with-access::J2SDeclFun dup (usecnt scope id)
+					    (and (>fx usecnt 0)
+						 (not (memq scope '(letblock inner))))))
+				 dups)
 			 decls)))
-	     (when (pair? dups)
-		(set! decls
-		   (append (filter (lambda (dup::J2SDeclFun)
-				      (with-access::J2SDeclFun dup (usecnt scope id)
-					 (and (>fx usecnt 0)
-					      (not (memq scope '(letblock inner))))))
-			      dups)
-		      decls)))
-	     (for-each (lambda (n) (j2s-call-hint! n #f conf)) decls)
-	     (for-each (lambda (n) (j2s-call-hint! n #f conf)) nodes)
-	     (when (config-get conf :optim-hintloop #f)
-		(for-each (lambda (n) (j2s-hint-loop! n #f 0)) decls)
-		(for-each (lambda (n) (j2s-hint-loop! n #f 0)) nodes))
-	     dups)
-	  '())))
+		(for-each (lambda (n) (j2s-call-hint! n #f conf)) decls)
+		(for-each (lambda (n) (j2s-call-hint! n #f conf)) nodes)
+		(when (config-get conf :optim-hintloop #f)
+		   (for-each (lambda (n) (j2s-hint-loop! n #f 0)) decls)
+		   (for-each (lambda (n) (j2s-hint-loop! n #f 0)) nodes))
+		dups)
+	     '()))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-known-type ...                                               */
@@ -710,6 +711,10 @@
 ;*    j2s-hint-function* ::J2SDeclFun ...                              */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-hint-function* this::J2SDeclFun conf)
+
+   (define ignored-types
+      ;; the list of types to be ignored because there is no type predicates
+      (config-get conf :ignored-types '()))
    
    (define (call-hinted orig idthis params types)
       (with-access::J2SDeclFun this (loc)
@@ -822,7 +827,8 @@
 	 (when (config-get conf :mode 'hopscript)
 	    (any (lambda (p)
 		    (with-access::J2SDecl p (utype)
-		       (not (eq? utype 'unknown))))
+		       (and (not (eq? utype 'unknown))
+			    (not (memq utype ignored-types)))))
 	       params))))
 
    (define (imprecise-params-type? params)
@@ -974,7 +980,8 @@
 		       (let* ((htypes (map (lambda (p)
 					      (with-access::J2SDecl p (utype vtype)
 						 (cond
-						    ((not (eq? utype 'unknown))
+						    ((and (not (eq? utype 'unknown))
+							  (not (memq utype ignored-types)))
 						     utype)
 						    ((not (eq? vtype 'unknown))
 						     vtype)
@@ -1084,7 +1091,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    hint-type-predicate ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (hint-type-predicate::symbol type)
+(define (hint-type-predicate::symbol type loc)
    (cond
       ((eq? type 'number) 'number?)
       ((eq? type 'integer) 'fixnum?)
@@ -1103,9 +1110,10 @@
       ((isa? type J2SRecord) (class-predicate-id type))
       ((isa? type J2SClass) 'js-object?)
       (else
-       (error "hint-type-predicate"
+       (error/loc "hint-type-predicate"
 	  (format "Unknown hint type predicate (~a)" (typeof type))
-	  (type->sexp type)))))
+	  (type->sexp type)
+	  loc))))
 
 ;*---------------------------------------------------------------------*/
 ;*    test-hint-decls ...                                              */
@@ -1121,7 +1129,7 @@
 		    (loc loc)
 		    (type 'function)
 		    (rtype 'bool)
-		    (id (hint-type-predicate htype))))
+		    (id (hint-type-predicate htype loc))))
 	    (thisargs '())
 	    (args (list (instantiate::J2SRef
 			   (loc loc)
