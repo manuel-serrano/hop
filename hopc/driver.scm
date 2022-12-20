@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Sun Nov 27 16:34:38 2022 (serrano)                */
+;*    Last change :  Tue Dec 20 13:57:12 2022 (serrano)                */
 ;*    Copyright   :  2014-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
@@ -818,13 +818,16 @@
 	 (hop-sofile-compile-policy-set! 'none)
 	 (unless (or nodejs-loaded (hopc-bootstrap-mode))
 	    (set! nodejs-loaded #t)
-	    (when (library-load-init 'nodejs (hop-library-path))
-	       (library-load-init 'hopscript (hop-library-path))
-	       (library-load 'hopscript)
-	       (library-load 'nodejs)
-	       (eval '((@ hopscript-install-expanders! __hopscript_expanders)))
-	       (set! nodejs-plugins-loader
-		  (eval '((@ nodejs-plugins-toplevel-loader __nodejs_require))))))
+	    (let ((lpath (if (hopc-hop-lib-dir)
+			     (cons (hopc-hop-lib-dir) (hop-library-path))
+			     (hop-library-path))))
+	       (when (library-load-init 'nodejs lpath)
+		  (library-load-init 'hopscript lpath)
+		  (apply library-load 'hopscript lpath)
+		  (apply library-load 'nodejs lpath)
+		  (eval '((@ hopscript-install-expanders! __hopscript_expanders)))
+		  (set! nodejs-plugins-loader
+		     (eval '((@ nodejs-plugins-toplevel-loader __nodejs_require)))))))
 	 (let ((res #f))
 	    (for-each (lambda (b) (set! res (eval b))) bindings)
 	    res))))

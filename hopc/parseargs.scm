@@ -181,6 +181,8 @@
 	     (bigloo-override-config! dir)
 	     (hopc-bigloo-options-set!
 		(cons* "-lib-dir" dir (hopc-bigloo-options))))
+	    (("--hop-lib-dir=?dir" (help "Set the Hop library path (for bootstrapping)"))
+	     (hopc-hop-lib-dir-set! dir))
 	    (("--reset-bigloo-options" (help "Reset all Bigloo options"))
 	     (hopc-bigloo-options-set! '()))
 	    ((("-a" "--afile") ?file (help "Set access file"))

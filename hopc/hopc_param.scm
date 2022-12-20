@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Mon Aug 22 08:07:52 2022 (serrano)                */
+;*    Last change :  Tue Dec 20 16:50:13 2022 (serrano)                */
 ;*    Copyright   :  2004-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC global parameters                                           */
@@ -30,7 +30,10 @@
 	    (hopc-bigloo-safe-option-set! ::obj)
 	    (hopc-bigloo-profile-options::pair-nil)
 	    (hopc-bigloo-profile-options-set! ::pair-nil)
-	    
+
+	    (hopc-hop-lib-dir::obj)
+	    (hopc-hop-lib-dir-set!::obj ::obj)
+
 	    (hopc-pass::symbol)
 	    (hopc-pass-set! ::symbol)
 
@@ -187,6 +190,12 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hopc-bigloo-profile-options
    '())
+
+;*---------------------------------------------------------------------*/
+;*    hopc-hop-lib-dir ...                                             */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-hop-lib-dir
+   #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    hopc-pass ...                                                    */
