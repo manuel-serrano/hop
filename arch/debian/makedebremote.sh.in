@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed May 23 05:45:55 2012                          */
-#*    Last change :  Wed Dec 21 06:46:25 2022 (serrano)                */
+#*    Last change :  Wed Dec 21 11:28:13 2022 (serrano)                */
 #*    Copyright   :  2012-22 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Script to build the debian Hop packages on a remote machine      */
@@ -91,5 +91,5 @@ ssh $sshport $host -l $user "bash -c \"export PATH=/opt/hop/bin:$PATH; cd $tmp/d
 mkdir -p $targetdir
 
 for s in deb buildinfo changes; do
-  scp $scpport "$user@$host:$tmp/debhop.remote/hop-$version$minor/arch/debian/buid.hop/*.$s" $targetdir
+  scp $scpport "$user@$host:$tmp/debhop.remote/hop-$version$minor/arch/debian/build.hop/*.$s" $targetdir
 done  
