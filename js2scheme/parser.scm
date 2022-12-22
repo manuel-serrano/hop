@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Mon Dec  5 19:13:24 2022 (serrano)                */
+;*    Last change :  Thu Dec 22 06:36:08 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -634,7 +634,7 @@
 		 ty)))
 	 ((null)
 	  (consume-any!)
-	  "null")
+	  'null)
 	 ((LPAREN)
 	  (consume-any!)
 	  (if (eq? (peek-token-type) 'ID)
@@ -687,15 +687,17 @@
 	    ((BIT_OR)
 	     ;; union type
 	     (consume-any!)
-	     (typescript-type))
+	     (typescript-type)
+	     'any)
 	    ((&)
 	     ;; intersection type
 	     (consume-any!)
-	     (typescript-type))
+	     (typescript-type)
+	     'any)
 	    ((OTAG)
 	     ;; parametric type
 	     (consume-any!)
-	     ty)
+	     'any)
 	    (else
 	     ty))))
    

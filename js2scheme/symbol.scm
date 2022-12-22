@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Fri Oct 14 07:44:42 2022 (serrano)                */
+;*    Last change :  Thu Dec 22 06:30:11 2022 (serrano)                */
 ;*    Copyright   :  2013-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -1317,7 +1317,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (resolve-type this::J2SDecl env conf)
    (call-default-walker)
-   (with-access::J2SDecl this (utype id)
+   (with-access::J2SDecl this (utype id loc)
       (let ((decl (find-decl utype env)))
 	 (when (isa? decl J2SDeclClass)
 	    (with-access::J2SDeclClass decl (val id)
