@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Fri Dec  2 10:17:25 2022 (serrano)                */
+#*    Last change :  Wed Dec 21 06:54:10 2022 (serrano)                */
 #*    Copyright   :  2004-22 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -1773,7 +1773,7 @@ for p in etc/hop.man etc/hopsh.man etc/hopreplay.man; do
 done
 
 #*---------------------------------------------------------------------*/
-#*    Debian script                                                    */
+#*    Debian and Homebrew scripts                                      */
 #*---------------------------------------------------------------------*/
 # debian
 for deb in arch/debian/makedeb.sh arch/debian/makedebremote.sh; do
