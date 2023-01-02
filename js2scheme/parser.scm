@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Thu Dec 22 06:36:08 2022 (serrano)                */
-;*    Copyright   :  2013-22 Manuel Serrano                            */
+;*    Last change :  Sun Jan  1 08:26:57 2023 (serrano)                */
+;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
 ;*=====================================================================*/
@@ -1416,6 +1416,25 @@
 	    (params params)
 	    (body (arrow-body params args))
 	    (vararg (rest-params params)))))
+
+   (define (arrow-typescript-function token expr)
+      (if (isa? expr J2SUnresolvedRef)
+	  (with-access::J2SUnresolvedRef expr (id loc)
+	     (let ((id (make-token 'ID id loc)))
+		(token-push-back! id)
+		(token-push-back! (pop-open-token token))
+		(multiple-value-bind (params args)
+		   (function-params #f)
+		   (consume-token! '=>)
+		   (instantiate::J2SArrow
+		      (idthis '%)
+		      (loc loc)
+		      (name '||)
+		      (mode 'strict)
+		      (params params)
+		      (body (arrow-body params args))
+		      (vararg (rest-params params))))))
+	  (parse-node-error "identifier expected" expr)))
 
    (define (rest-params params)
       (when (pair? params)
@@ -3054,25 +3073,28 @@
 			(arrow-function '() (token-loc token))
 			(parse-token-error "Unexpected token" tok)))
 		 (let ((expr (expression #f #t)))
-		    (pop-open-token (consume-token! 'RPAREN))
-		    (if (eq? (peek-token-type) '=>)
-			(cond
-			   ((isa? expr J2SAssig)
-			    (arrow-function (list expr) (token-loc token)))
-			   ((isa? expr J2SUnresolvedRef)
-			    (arrow-function (list expr) (token-loc token)))
-			   ((isa? expr J2SSequence)
-			    (with-access::J2SSequence expr (exprs)
-			       (arrow-function exprs (token-loc token))))
-			   ((or (isa? expr J2SObjInit) (isa? expr J2SArray))
-			    (arrow-function (list expr) (token-loc token)))
-			   ((isa? expr J2SDecl)
-			    (arrow-function (list expr) (token-loc token)))
-			   (else
-			    (parse-node-error "bad arrow parameter" expr)))
-			(instantiate::J2SParen
-			   (loc (token-loc token))
-			   (expr expr)))))))
+		    (if (eq? (peek-token-type) ':)
+			(arrow-typescript-function token expr)
+			(begin
+			   (pop-open-token (consume-token! 'RPAREN))
+			   (if (eq? (peek-token-type) '=>)
+			       (cond
+				  ((isa? expr J2SAssig)
+				   (arrow-function (list expr) (token-loc token)))
+				  ((isa? expr J2SUnresolvedRef)
+				   (arrow-function (list expr) (token-loc token)))
+				  ((isa? expr J2SSequence)
+				   (with-access::J2SSequence expr (exprs)
+				      (arrow-function exprs (token-loc token))))
+				  ((or (isa? expr J2SObjInit) (isa? expr J2SArray))
+				   (arrow-function (list expr) (token-loc token)))
+				  ((isa? expr J2SDecl)
+				   (arrow-function (list expr) (token-loc token)))
+				  (else
+				   (parse-node-error "bad arrow parameter" expr)))
+			       (instantiate::J2SParen
+				  (loc (token-loc token))
+				  (expr expr)))))))))
 	 ((LBRACKET)
 	  (array-literal destructuring? #t 'array))
 	 ((SHARP)

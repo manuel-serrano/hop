@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Thu Nov 17 19:41:42 2022 (serrano)                */
+;*    Last change :  Mon Dec 26 12:19:31 2022 (serrano)                */
 ;*    Copyright   :  2014-22 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -817,7 +817,7 @@
        (instantiate::http-response-string
 	  (charset (get/default req (& "charset") %this (hop-charset)))
 	  (content-type (get/default req (& "contentType") %this #f))
-	  (content-length (get/default req (& "contentLength") %this #e-1))
+	  (content-length (fixnum->elong (get/default req (& "contentLength") %this -1)))
 	  (start-line (get/default req (& "startLine") %this "HTTP/1.1 200 Ok"))
 	  (header (get/list req (& "header") %this '()))
 	  (body (js-tostring string %this)))
@@ -873,7 +873,7 @@
 	  (instantiate::http-response-async
 	     (charset (get/default req (& "charset") %this (hop-charset)))
 	     (content-type (get/default req (& "contentType") %this #f))
-	     (content-length (get/default req (& "contentLength") %this #e-1))
+	     (content-length (fixnum->elong (get/default req (& "contentLength") %this -1)))
 	     (header (get/list req (& "header") %this '()))
 	     (async (async-proc req))))
        (instantiate::http-response-async
