@@ -34,7 +34,8 @@ An Ubuntu repository is available. To use it, add the following
 to your `apt` path:
 
 ```shell[:@config]
-echo 'deb [trusted=yes] http://hop.inria.fr/linux/Ubuntu focal hop' | sudo tee /etc/apt/sources.list.d/hop
+echo 'deb http://hop.inria.fr/linux/Ubuntu jammy hop' | sudo tee /etc/apt/sources.list.d/hop
+curl http://www-sop.inria.fr/members/Manuel.Serrano/serrano.pkey | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/hop.gpg
 ```
 
 The Ubuntu packages are all installed in the `/opt/hop` directory. See below.

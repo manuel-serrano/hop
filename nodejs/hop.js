@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Mar 22 15:03:30 2014                          */
-/*    Last change :  Thu Nov 17 19:41:34 2022 (serrano)                */
-/*    Copyright   :  2014-22 Manuel Serrano                            */
+/*    Last change :  Tue Jan  3 17:08:06 2023 (serrano)                */
+/*    Copyright   :  2014-23 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hopscript/Hop binding.                                           */
 /*=====================================================================*/
@@ -40,9 +40,13 @@ exports.loginCookieCryptKey = hop.loginCookieCryptKey;
 /*---------------------------------------------------------------------*/
 /*    Server configuration                                             */
 /*---------------------------------------------------------------------*/
+exports.__defineGetter__('loadPath', 
+   hop.loadPathGet,
+   hop.loadPathSet);
+   
 exports.__defineGetter__('httpAuthenticationMethod',
-			  hop.httpAuthenticationMethodGet,
-			  hop.httpAuthenticationMethodSet);
+   hop.httpAuthenticationMethodGet,
+   hop.httpAuthenticationMethodSet);
 
 /*---------------------------------------------------------------------*/
 /*    Services                                                         */

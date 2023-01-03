@@ -83,7 +83,6 @@ download any file readable from the server process, the declaration
 $ mkdir -p $HOME/.config/hop && cat > $HOME/.config/hop/hoprc.js << EOF
 hop = require("hop");
 var user = require(hop.user);
-var config = require(hop.config);
 
 user.add({ name: "hopjs",
            password: user.encryptPassword("hopjs", "inria"),
@@ -91,9 +90,8 @@ user.add({ name: "hopjs",
            directories: "*"
          });
 user.add({ name: "anonymous",
-           password: user.encryptPassword("hopjs", "23^73++_*"),
-           services: "",
-           directories: ""
+           services: ["wizard"],
+           directories: hop.loadPath
          });	  
 EOF
 ```

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Mon Dec 26 12:19:31 2022 (serrano)                */
-;*    Copyright   :  2014-22 Manuel Serrano                            */
+;*    Last change :  Tue Jan  3 17:07:21 2023 (serrano)                */
+;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
 ;*=====================================================================*/
@@ -312,6 +312,21 @@
 	       `(isWorker . ,(not (js-main-worker? %worker)))
 	       `(loginCookieCryptKey . ,(hop-login-cookie-crypt-key))
 	       `(charset . ,(js-string->jsstring (symbol->string! (hop-charset))))
+
+	       ;; loadPath
+	       (define-js loadPathGet 0
+		  (lambda (this)
+		     (js-vector->jsarray
+			(list->vector (map js-string->jsstring (hop-path)))
+			%this)))
+
+	       (define-js loadPathSet 1
+		  (lambda (this path)
+		     (if (not (js-array? (car path)))
+			 (js-raise-type-error %this "not an array" path)
+			 (hop-path-set!
+			    (map (lambda (o) (js-tostring o %this))
+			       (jsarray->list (car path) %this))))))
 
 	       ;; server configuration
 	       (define-js httpAuthenticationMethodGet 0

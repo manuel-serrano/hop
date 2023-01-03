@@ -23,17 +23,22 @@ The `engine` property is used to distinguish Hop from other JavaScript
 engines when an application is compatible with different systems. With
 Hop, its value is always the string `hop`.
 
+### hop.debug ###
+[:@glyphicon glyphicon-tag parameter]
+
 ### hop.isServer ###
 [:@glyphicon glyphicon-tag parameter]
 The `isServer` property is true for code executing on a server and false
 for code executing on a client.
-
 
 ### hop.isWorker ###
 [:@glyphicon glyphicon-tag parameter]
 The `isWorker` property is true if and only if the expression is evaluated
 within a worker context.
 
+### hop.loadPath ###
+[:@glyphicon glyphicon-tag parameter]  
+The Hop load path for weblets
 
 Server Information
 ------------------
@@ -67,6 +72,14 @@ The host name of the running Hop server.
 console.log( "hostname:", hop.hostname );
 ```
 
+### hop.hostip ###
+[:@glyphicon glyphicon-tag parameter] 
+The ip address of the running Hop server.  
+
+```hopscript
+console.log( "hostname:", hop.hostname );
+```
+
 ### hop.version ###
 [:@glyphicon glyphicon-tag parameter]  
 The Hop version. 
@@ -74,6 +87,18 @@ The Hop version.
 ```hopscript
 console.log( "Hop version:", hop.version );
 ```
+
+### hop.buildId ###
+[:@glyphicon glyphicon-tag parameter]  
+The Hop build identifier. 
+
+### hop.buildTag ###
+[:@glyphicon glyphicon-tag parameter]  
+The Hop build tag. 
+
+### hop.buildArch ###
+[:@glyphicon glyphicon-tag parameter]  
+The Hop running architecture. 
 
 ### hop.arch ###
 [:@glyphicon glyphicon-tag parameter]  
