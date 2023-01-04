@@ -3,8 +3,8 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Sep 17 14:27:28 2004                          */
-#*    Last change :  Tue Dec 20 16:57:42 2022 (serrano)                */
-#*    Copyright   :  2004-22 Manuel Serrano                            */
+#*    Last change :  Wed Jan  4 20:00:10 2023 (serrano)                */
+#*    Copyright   :  2004-23 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The autoconf Makefile skeleton for HOP.                          */
 #*=====================================================================*/

@@ -4,8 +4,8 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Wed Dec 21 06:54:10 2022 (serrano)                */
-#*    Copyright   :  2004-22 Manuel Serrano                            */
+#*    Last change :  Wed Jan  4 20:12:12 2023 (serrano)                */
+#*    Copyright   :  2004-23 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
 #*=====================================================================*/
@@ -58,7 +58,7 @@ bcflagsopt="-unsafe -O3 -fstackable"
 bcflagsrts="-unsafe -safee"
 bcflagsmodules="-unsafe"
 bscm2jsflags="-unsafe"
-bhopcflags=""
+bhopcflags="-q"
 
 blflags="-copt \$(CPICFLAGS) -L \$(BUILDLIBDIR) -srfi bigloo-compile"
 
@@ -1121,7 +1121,7 @@ if [ "$threads " = "yes " ]; then
   bigloopthlibs="-lbigloopthread_s-$""(RELEASE)"
   bigloopthlibu="-lbigloopthread_u-$""(RELEASE)"
   bigloogc="-lbigloogc_fth-$""(RELEASE)"
-  bhopcflags="--js-worker-slave"
+  bhopcflags="-q --js-worker-slave"
 else
   bigloopthlibs=""
   bigloopthlibu=""

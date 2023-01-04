@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Tue Dec 20 13:57:12 2022 (serrano)                */
-;*    Copyright   :  2014-22 Manuel Serrano                            */
+;*    Last change :  Wed Jan  4 20:32:17 2023 (serrano)                */
+;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
 ;*=====================================================================*/
@@ -524,7 +524,6 @@
 	       temp)))
 
       (define (compile-language lang in opts file exec temp)
-	 ;;(tprint "compile.lang.1: " (hopc-plugins-loader))
 	 (let* ((comp (hopc-language-loader))
 		(jsmain (if (boolean? (hopc-js-module-main))
 			    (hopc-js-module-main)
@@ -818,16 +817,20 @@
 	 (hop-sofile-compile-policy-set! 'none)
 	 (unless (or nodejs-loaded (hopc-bootstrap-mode))
 	    (set! nodejs-loaded #t)
-	    (let ((lpath (if (hopc-hop-lib-dir)
-			     (cons (hopc-hop-lib-dir) (hop-library-path))
-			     (hop-library-path))))
-	       (when (library-load-init 'nodejs lpath)
-		  (library-load-init 'hopscript lpath)
-		  (apply library-load 'hopscript lpath)
-		  (apply library-load 'nodejs lpath)
-		  (eval '((@ hopscript-install-expanders! __hopscript_expanders)))
-		  (set! nodejs-plugins-loader
-		     (eval '((@ nodejs-plugins-toplevel-loader __nodejs_require)))))))
+	    (let* ((oldbglp (bigloo-library-path))
+		   (lpath (if (hopc-hop-lib-dir)
+			      (cons (hopc-hop-lib-dir) (hop-library-path))
+			      (hop-library-path))))
+	       (bigloo-library-path-set! lpath)
+	       (unwind-protect
+		  (when (library-load-init 'nodejs lpath)
+		     (library-load-init 'hopscript lpath)
+		     (apply library-load 'hopscript lpath)
+		     (apply library-load 'nodejs lpath)
+		     (eval '((@ hopscript-install-expanders! __hopscript_expanders)))
+		     (set! nodejs-plugins-loader
+			(eval '((@ nodejs-plugins-toplevel-loader __nodejs_require)))))
+		  (bigloo-library-path-set! oldbglp))))
 	 (let ((res #f))
 	    (for-each (lambda (b) (set! res (eval b))) bindings)
 	    res))))
