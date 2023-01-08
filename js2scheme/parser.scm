@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Sun Jan  1 08:26:57 2023 (serrano)                */
+;*    Last change :  Sun Jan  8 14:31:48 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -698,6 +698,12 @@
 	     ;; parametric type
 	     (consume-any!)
 	     'any)
+	    ((<)
+	     ;; parametric type
+	     (let* ((tok (consume-any!))
+		    (ty (typescript-type)))
+		(consume-token! '>)
+		'any))
 	    (else
 	     ty))))
    
