@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Mon May  9 09:48:21 2022 (serrano)                */
-;*    Copyright   :  2013-22 Manuel Serrano                            */
+;*    Last change :  Sun Jan  8 09:25:43 2023 (serrano)                */
+;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript regexps                      */
 ;*=====================================================================*/
@@ -444,7 +444,7 @@
 		 (w 0)
 		 (chars '())
 		 (ascii #t))
-	 (let ((j (string-index str "\\]" i)))
+	 (let ((j (string-index str "\\[]" i)))
 	    (if (not j)
 		(err "wrong pattern \"~a\"" (substring str j))
 		(let ((tag (string-ref str j)))
@@ -461,6 +461,23 @@
 				 (format "(?:[~a]|~(|))" r chars) ascii j))))
 		      ((=fx j (-fx len 1))
 		       (err "wrong pattern \"~a\"" str))
+		      ((char=? tag #\[)
+		       (if (and (<fx j len)
+				(char=? (string-ref str (+fx j 1)) #\:))
+			   ;; a character name e.g., [:alnum:]
+			   (let ((k (string-index str #\: (+fx j 2))))
+			      (if (or (not k)
+				      (>=fx k (-fx len 1))
+				      (not (char=? (string-ref str (+fx k 1)) #\])))
+				  (err "wrong-pattern \"~a\"" (substring str j))
+				  (let ((len (+fx 2 (-fx k j))))
+				     (blit-string! str j res w len)
+				     (loop (+fx j len) (+fx w len)
+					chars ascii))))
+			   (begin
+			      (string-set! res w #\\)
+			      (string-set! res (+fx w 1) #\[)
+			      (loop (+fx j 1) (+fx w 2) chars ascii))))
 		      (else
 		       (let ((c (string-ref str (+fx j 1))))
 			  (case c
