@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 19 11:16:33 2015                          */
-/*    Last change :  Tue Apr 28 19:40:08 2020 (serrano)                */
-/*    Copyright   :  2015-20 Manuel Serrano                            */
+/*    Last change :  Sun Jan  8 23:08:54 2023 (serrano)                */
+/*    Copyright   :  2015-23 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ES6 promises.                                            */
 /*=====================================================================*/
@@ -173,9 +173,13 @@ function mdnAll() {
       setTimeout( resolve, 100, "foo" );
    } );
 
+   Promise.all( [] ).then( function( values ) {
+      assert.deepEqual( values, [] );
+   });
+   
    Promise.all( [p1, p2, p3]).then( function( values ) {
       assert.deepEqual( values, [3, 1337, "foo" ] );
-   }) ;
+   });
 
    var p1 = new Promise((resolve, reject) => {
       setTimeout(resolve, 1000, "one");

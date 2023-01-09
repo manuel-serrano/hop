@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 19 08:19:19 2015                          */
-;*    Last change :  Mon Oct 17 13:48:17 2022 (serrano)                */
-;*    Copyright   :  2015-22 Manuel Serrano                            */
+;*    Last change :  Sun Jan  8 19:58:35 2023 (serrano)                */
+;*    Copyright   :  2015-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript promises                     */
 ;*    -------------------------------------------------------------    */
@@ -248,27 +248,30 @@
 	     (it (iterable->vector promise iterable)))
 	 (when (vector? it)
 	    (let ((count (vector-length it)))
-	       (let loop ((i (-fx count 1)))
-		  (when (>=fx i 0)
-		     (js-promise-then-catch %this (vector-ref it i)
-			(js-make-function %this
-			   (lambda (this result)
-			      (vector-set! it i result)
-			      (set! count (-fx count 1))
-			      (if (=fx count 0)
-				  (promise-resolve promise
-				     (js-vector->jsarray it %this))
-				  js-unresolved))
-			   (js-function-arity 1 0)
-			   (js-function-info :name "onfullfilled" :len 1))
-			(js-make-function %this
-			   (lambda (this reason)
-			      (promise-reject promise reason))
-			   (js-function-arity 1 0)
-			   (js-function-info :name "onrejected" :len 1))
-			promise)
-		     (loop (-fx i 1)))
-		  it)))
+	       (if (=fx count 0)
+		   (js-promise-resolve promise
+		      (js-empty-vector->jsarray %this))
+		   (let loop ((i (-fx count 1)))
+		      (when (>=fx i 0)
+			 (js-promise-then-catch %this (vector-ref it i)
+			    (js-make-function %this
+			       (lambda (this result)
+				  (vector-set! it i result)
+				  (set! count (-fx count 1))
+				  (if (=fx count 0)
+				      (promise-resolve promise
+					 (js-vector->jsarray it %this))
+				      js-unresolved))
+			       (js-function-arity 1 0)
+			       (js-function-info :name "onfullfilled" :len 1))
+			    (js-make-function %this
+			       (lambda (this reason)
+				  (promise-reject promise reason))
+			       (js-function-arity 1 0)
+			       (js-function-info :name "onrejected" :len 1))
+			    promise)
+			 (loop (-fx i 1)))
+		      it))))
 	 promise))
 
    (js-bind! %this js-promise (& "all")
