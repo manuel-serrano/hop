@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Mon Sep 26 09:10:10 2022 (serrano)                */
-;*    Copyright   :  2014-22 Manuel Serrano                            */
+;*    Last change :  Tue Jan 10 02:23:50 2023 (serrano)                */
+;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
 ;*=====================================================================*/
@@ -965,6 +965,8 @@
    (define (blit-subbuffer!::long s::bstring buffer::bstring i::long start::long len::long)
       (blit-string! s start buffer i len)
       (+fx i len))
+
+   (define debug #f)
    
    (define (normalize-small! js)
       (with-access::JsStringLiteralUTF8 js (length)
@@ -1042,13 +1044,14 @@
 			 (loop (+fx i len) right stack))))
 		  (else
 		   (if (and (js-jsstring-normalized? right)
-			    (not (js-jsstring-utf8? left)))
+			    (not (js-jsstring-utf8? left))
+			    (null? stack))
 		       (with-access::JsStringLiteral right ((str left))
 			  ;; write the rhs in advance
 			  (with-access::JsStringLiteral left (length)
-			     (let ((ni (blit-utf8-buffer! str buffer
-					  (+fx i (uint32->fixnum length)))))
-				(loop i left stack))))
+			     (blit-utf8-buffer! str buffer
+				(+fx i (uint32->fixnum length)))
+			     (loop i left stack)))
 		       ;; full recursive call with pushed right
 		       (with-access::JsStringLiteral s (left)
 			  (loop i left (cons right stack))))))))))
