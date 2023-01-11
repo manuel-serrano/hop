@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Sun Jan  8 14:31:48 2023 (serrano)                */
+;*    Last change :  Tue Jan 10 23:03:58 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -683,7 +683,7 @@
 	     ;; array type
 	     (consume-any!)
 	     (consume-token! 'RBRACKET)
-	     'vector)
+	     'array)
 	    ((BIT_OR)
 	     ;; union type
 	     (consume-any!)
@@ -2487,6 +2487,10 @@
 		(let* ((typ (peek-token-type))
 		       (new-level (op-level typ)))
 		   (cond
+		      ((and (eq? typ 'as) (string=? lang "typescript"))
+		       (consume-any!)
+		       (typescript-type)
+		       expr)
 		      ((eq? typ '**)
 		       (let ((token (consume-any!)))
 			  (cond

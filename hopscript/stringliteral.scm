@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Tue Jan 10 02:23:50 2023 (serrano)                */
+;*    Last change :  Tue Jan 10 16:15:27 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -966,8 +966,6 @@
       (blit-string! s start buffer i len)
       (+fx i len))
 
-   (define debug #f)
-   
    (define (normalize-small! js)
       (with-access::JsStringLiteralUTF8 js (length)
 	 ;; small strings, no need for tail recursion

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Tue Oct 25 19:33:46 2022 (serrano)                */
-;*    Copyright   :  2013-22 Manuel Serrano                            */
+;*    Last change :  Tue Jan 10 16:14:29 2023 (serrano)                */
+;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
 ;*    deleting).                                                       */
