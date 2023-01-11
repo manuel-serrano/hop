@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Mon May 16 10:40:39 2022 (serrano)                */
-;*    Copyright   :  2013-22 Manuel Serrano                            */
+;*    Last change :  Wed Jan 11 02:02:41 2023 (serrano)                */
+;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
 ;*=====================================================================*/
@@ -2934,7 +2934,7 @@
 	 ((eq? typ (& "regexp")) (isa? eval JsRegExp))
 	 ((eq? typ (& "function")) (js-function? val))
 	 (else #f)))
-   
+
    (with-access::JsArray args ((avec vec) ilen)
       (with-access::JsArray types ((tvec vec))
 	 (let loop ((i 0))
