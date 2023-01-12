@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Tue Jan 10 16:14:29 2023 (serrano)                */
+;*    Last change :  Thu Jan 12 01:56:10 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -2265,7 +2265,7 @@
    ;; https://www.ecma-international.org/ecma-262/#sec-object.getownpropertydescriptor
    (let ((o (js-cast-object o %this "getOwnPropertyDescriptor")))
       (let ((desc (js-get-own-property o p %this)))
-	 (js-from-property-descriptor %this o desc o))))
+	 (js-from-property-descriptor %this p desc o))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-own-property-descriptor ::JsObject ...                    */
@@ -2279,7 +2279,7 @@
 	 (with-access::JsObject owner (cmap)
 	    (let ((el (js-object-ref owner i)))
 	       (if (isa? el JsPropertyDescriptor)
-		   (js-from-property-descriptor %this o el o)
+		   (js-from-property-descriptor %this p el o)
 		   (with-access::JsConstructMap cmap (props)
 		      (let ((name (prop-name (vector-ref props i)))
 			    (flags (prop-flags (vector-ref props i))))
@@ -2292,7 +2292,7 @@
       (lambda (owner e)
 	 (let ((d (cell-ref e)))
 	    (if (isa? d JsPropertyDescriptor)
-		(js-from-property-descriptor %this o d o)
+		(js-from-property-descriptor %this p d o)
 		(with-access::JsConstructMap cmap (props)
 		   (let ((name (js-toname p %this)))
 		      (js-property-descriptor %this #t
@@ -2302,7 +2302,7 @@
 			 :value d))))))
       ;; property search
       (lambda (owner d i)
-	 (js-from-property-descriptor %this o d o))
+	 (js-from-property-descriptor %this p d o))
       ;; not found
       (lambda (o) (js-undefined))))
 

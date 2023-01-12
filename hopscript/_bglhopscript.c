@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Sun Aug 21 08:29:33 2022 (serrano)                */
-/*    Copyright   :  2016-22 Manuel Serrano                            */
+/*    Last change :  Thu Jan 12 13:27:20 2023 (serrano)                */
+/*    Copyright   :  2016-23 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
 /*    JsObject and cache implementations.                              */
@@ -15,6 +15,11 @@
 #include "bglhopscript_types.h"
 #include "bglhopscript_malloc.h"
 #include <pthread.h>
+
+/*---------------------------------------------------------------------*/
+/*    Bmem config                                                      */
+/*---------------------------------------------------------------------*/
+#define BMEM_CONFIG 0
 
 /*---------------------------------------------------------------------*/
 /*    Bigloo backward compatibility                                    */
@@ -143,8 +148,10 @@ typedef struct BgL_jspropertycachez00_bgl pcache_t;
 #  endif
 #endif
 
-/* #undef HOP_ALLOC_POLICY                                             */
-/* #define HOP_ALLOC_POLICY HOP_ALLOC_CLASSIC                          */
+#if BMEM_CONFIG
+#  undef HOP_ALLOC_POLICY
+#  define HOP_ALLOC_POLICY HOP_ALLOC_CLASSIC
+#endif
 
 #define HOP_ALLOC_JSOBJECT_POLICY HOP_ALLOC_POLICY
 #define HOP_ALLOC_JSPROXY_POLICY HOP_ALLOC_POLICY
@@ -582,6 +589,10 @@ jsstringliteralascii_fill_buffer(apool_t *pool, void *arg) {
 /*---------------------------------------------------------------------*/
 void
 bgl_init_jsalloc_locks() {
+#if BMEM_CONFIG
+   fprintf(stderr, "hop alloc using bmem configuration...\n");
+#endif   
+
    pthread_mutex_init(&alloc_pool_mutex, 0L);
    pthread_cond_init(&alloc_pool_cond, 0L);
    

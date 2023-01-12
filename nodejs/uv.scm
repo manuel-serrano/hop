@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Sat Nov 26 10:31:38 2022 (serrano)                */
-;*    Copyright   :  2014-22 Manuel Serrano                            */
+;*    Last change :  Wed Jan 11 17:01:21 2023 (serrano)                */
+;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
 ;*=====================================================================*/
@@ -1164,33 +1164,154 @@
 				     (set-cdr! c
 					(js-date->jsdate
 					   (seconds->date (cdr c)) %this))
-				     (cons (symbol-append k 'Ms) (* v 100))))))
+				     (cons (symbol-append k 'Ms) (* v 1000))))))
 		'(mtime atime ctime))))
       (append stat ms)))
 
 ;*---------------------------------------------------------------------*/
+;*    *stat-cmap* ...                                                  */
+;*---------------------------------------------------------------------*/
+(define *stat-cmap* #f)
+(define *stat-ctime-accessor* #f)
+(define *stat-mtime-accessor* #f)
+(define *stat-atime-accessor* #f)
+(define *stat-birthtime-accessor* #f)
+
+;*---------------------------------------------------------------------*/
+;*    stat-cmap ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (stat-cmap)
+   (if *stat-cmap*
+       *stat-cmap*
+       (let ((cmap (js-names->cmap
+		      (vector-append
+			 (vector-map js-string->name
+			    (uv-fs-stat-cb-vector-props))
+			 (vector
+			    (& "ctimeMs")
+			    (& "mtimeMs")
+			    (& "atimeMs")
+			    (& "birthtimeMs"))))))
+	  (set! *stat-cmap* cmap)
+	  (set! *stat-ctime-accessor*
+	     (instantiate::JsWrapperDescriptor
+		(name (& "ctime"))
+		(%get js-stat-time-get)
+		(%set list)
+		(enumerable #f)
+		(configurable #f)))
+	  (set! *stat-mtime-accessor*
+	     (instantiate::JsWrapperDescriptor
+		(name (& "mtime"))
+		(%get js-stat-time-get)
+		(%set list)
+		(enumerable #f)
+		(configurable #f)))
+	  (set! *stat-atime-accessor*
+	     (instantiate::JsWrapperDescriptor
+		(name (& "atime"))
+		(%get js-stat-time-get)
+		(%set list)
+		(enumerable #f)
+		(configurable #f)))
+	  (set! *stat-birthtime-accessor*
+	     (instantiate::JsWrapperDescriptor
+		(name (& "birthtime"))
+		(%get js-stat-time-get)
+		(%set list)
+		(enumerable #f)
+		(configurable #f)))
+	  cmap)))
+
+;*---------------------------------------------------------------------*/
+;*    js-stat-time-get ...                                             */
+;*    -------------------------------------------------------------    */
+;*    Use property accessor for lazy JS date objects allocation.       */
+;*---------------------------------------------------------------------*/
+(define (js-stat-time-get obj owner::JsObject propname %this)
+   (with-access::JsObject obj (elements)
+      (let* ((base (+fx (vector-length (uv-fs-stat-cb-vector-props)) 4))
+	     (idx (cond
+		     ((eq? propname (& "ctime")) 0)
+		     ((eq? propname (& "mtime")) 1)
+		     ((eq? propname (& "atime")) 2)
+		     (else 3)))
+	     (ref (vector-ref elements (+fx base idx))))
+	 (if (number? ref)
+	     (let ((val (js-date->jsdate
+			   (seconds->date
+			      (if (int64? ref)
+				  (int64->elong ref)
+				  ref))
+			   %this)))
+		(vector-set! elements (+fx base idx) val)
+		val)
+	     ref))))
+
+;*---------------------------------------------------------------------*/
 ;*    stat->jsobj ...                                                  */
 ;*---------------------------------------------------------------------*/
+(define-macro (ms val)
+   (cond-expand
+      ((or bint61 bint64) `(fixnum->flonum ,val))
+      (else `(elong->flonum ,val))))
+
+(define-macro (ms64 val)
+   (cond-expand
+      ((or bint61 bint64) `(fixnum->flonum ,val))
+      (else `(int64->flonum ,val))))
+
 (define (stat->jsobj %this proto res)
-   (let ((stat (js-alist->jsobject (stat-date res %this) %this)))
-      (js-object-proto-set! stat proto)
-      stat))
+   (if (vector? res)
+       (let ((stat (instantiateJsObject
+		      (cmap (stat-cmap))
+		      (__proto__ proto)
+		      (elements res)))
+	     (i (vector-length (uv-fs-stat-cb-vector-props))))
+	  (vector-set! res i
+	     (*fl 1000. (ms (vector-ref res 0))))
+	  (vector-set! res (+fx i 1)
+	     (*fl 1000. (ms (vector-ref res 1))))
+	  (vector-set! res (+fx i 2)
+	     (*fl 1000. (ms (vector-ref res 2))))
+	  (vector-set! res (+fx i 3)
+	     (*fl 1000. (ms64 (vector-ref res 3))))
+	  ;; move the date value at the end of the vector
+	  (vector-copy! res (+fx i 4) res 0 4)
+	  ;; lazy date values
+	  (vector-set! res 0 *stat-ctime-accessor*)
+	  (vector-set! res 1 *stat-mtime-accessor*)
+	  (vector-set! res 2 *stat-atime-accessor*)
+	  (vector-set! res 3 *stat-birthtime-accessor*)
+	  ;; normal values
+	  (cond-expand
+	     ((or bint61 bint64)
+	      #unspecified)
+	     (else
+	      (let loop ((i (-fx i 1)))
+		 (when (>=fx i 4)
+		    (vector-set! res i (js-obj->jsobject (vector-ref res i) %this))
+		    (loop (-fx i 1))))))
+	  stat)
+       (let ((stat (js-alist->jsobject (stat-date res %this) %this)))
+	  (js-object-proto-set! stat proto)
+	  stat)))
    
 ;*---------------------------------------------------------------------*/
 ;*    stat-cb ...                                                      */
 ;*---------------------------------------------------------------------*/
-(define (stat-cb %worker %this process callback name obj proto lbl path)
+(define (stat-cb %worker %this callback name obj proto path)
    (lambda (res)
       (if (integer? res)
 	  (!js-callback2 'stat %worker %this
 	     callback (js-undefined)
 	     (fs-errno-path-exn
-		(format "~a: cannot stat ~a -- ~~s" name obj)
+		(format "~a: cannot stat ~a" name obj)
 		res %this path)
 	     #f)
 	  (let ((jsobj (stat->jsobj %this proto res)))
 	     (!js-callback2 'stat %worker %this
-		callback (js-undefined) #f jsobj)))))
+		callback (js-undefined) '() jsobj)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-fstat ...                                                 */
@@ -1199,11 +1320,10 @@
    (let ((file (int->uvhandle %worker %this fd)))
       (if file
 	  (if (js-procedure? callback)
-	      (let ((lbl (string-append "fstat:" (integer->string fd))))
-		 (uv-fs-fstat file
-		    :loop (worker-loop %worker)
-		    :callback (stat-cb %worker %this process callback
-				 "fstat" fd proto lbl #f)))
+	      (uv-fs-fstat file
+		 :loop (worker-loop %worker)
+		 :callback (stat-cb %worker %this callback
+			      "fstat" fd proto #f))
 	      (let ((res (uv-fs-fstat file)))
 		 (if (integer? res)
 		     (js-raise
@@ -1221,11 +1341,10 @@
       ((not (js-jsstring? path))
        (js-raise-type-error %this "Path not an string" path))
       ((js-procedure? callback)
-       (let ((lbl (string-append "stat:" (js-jsstring->string path))))
-	  (uv-fs-stat (js-jsstring->string path)
-	     :loop (worker-loop %worker)
-	     :callback (stat-cb %worker %this process callback "stat"
-			  (js-jsstring->string path) proto lbl path))))
+       (uv-fs-stat (js-jsstring->string path)
+	  :loop (worker-loop %worker)
+	  :callback (stat-cb %worker %this callback "stat"
+		       (js-jsstring->string path) proto path)))
       (else
        (let ((res (uv-fs-stat (js-jsstring->string path))))
 	  (if (integer? res)
@@ -1244,19 +1363,39 @@
       ((not (js-jsstring? path))
        (js-raise-type-error %this "Path not an string" path))
       ((js-procedure? callback)
-       (let ((lbl (string-append "lstat:" (js-jsstring->string path))))
-	  (uv-fs-lstat (js-jsstring->string path)
-	     :loop (worker-loop %worker)
-	     :callback (stat-cb %worker %this process callback "lstat"
-			  path proto lbl path))))
+       (cond-expand
+	  (libuv-vec
+	   (uv-fs-lstat (js-jsstring->string path)
+	      :loop (worker-loop %worker)
+	      :callback (stat-cb %worker %this callback "lstat"
+			   (js-jsstring->string path) proto path)
+	      :vector ($create-vector
+			 (+fx 8 (vector-length (uv-fs-stat-cb-vector-props))))))
+	  (else
+	   (uv-fs-lstat (js-jsstring->string path)
+	      :loop (worker-loop %worker)
+	      :callback (stat-cb %worker %this callback "lstat"
+			   (js-jsstring->string path) proto path)))))
       (else
-       (let ((res (uv-fs-lstat (js-jsstring->string path))))
-	  (if (integer? res)
-	      (js-raise
-		 (fs-errno-exn (format "lstat: cannot stat ~a -- ~~s"
-				  (js-jsstring->string path))
-		    res %this))
-	      (stat->jsobj %this proto res))))))
+       (cond-expand
+	  (libuv-vec
+	   (let ((res (uv-fs-lstat (js-jsstring->string path)
+			 :vector ($create-vector
+				    (+fx 8 (vector-length (uv-fs-stat-cb-vector-props)))))))
+	      (if (integer? res)
+		  (js-raise
+		     (fs-errno-exn (format "lstat: cannot stat ~a -- ~~s"
+				      (js-jsstring->string path))
+			res %this))
+		  (stat->jsobj %this proto res))))
+	  (else
+	   (let ((res (uv-fs-lstat (js-jsstring->string path))))
+	      (if (integer? res)
+		  (js-raise
+		     (fs-errno-exn (format "lstat: cannot stat ~a -- ~~s"
+				      (js-jsstring->string path))
+			res %this))
+		  (stat->jsobj %this proto res))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-link ...                                                  */

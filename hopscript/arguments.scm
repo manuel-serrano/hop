@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Mon Aug 30 16:51:21 2021 (serrano)                */
-;*    Copyright   :  2013-21 Manuel Serrano                            */
+;*    Last change :  Thu Jan 12 01:58:07 2023 (serrano)                */
+;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
 ;*=====================================================================*/
@@ -471,7 +471,7 @@
 (define-method (js-get-own-property-descriptor o::JsArguments p %this)
    (let ((desc (get-mapped-property o p)))
       (if desc
-	  (js-from-property-descriptor %this o desc o)
+	  (js-from-property-descriptor %this p desc o)
 	  (call-next-method))))
 
 ;*---------------------------------------------------------------------*/
