@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Fri Jan 13 05:34:02 2023 (serrano)                */
+;*    Last change :  Fri Jan 13 13:51:21 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript CPS transformation                                    */
@@ -1743,7 +1743,7 @@
       (let* ((envp (map! mark-def! params))
 	     (enva (if argumentsp (cons (mark-def! argumentsp) envp) envp))
 	     (envt (if thisp (cons (mark-def! thisp) enva) enva))
-	     (nenv (if decl (cons (mark-def! decl) envt) envt)))
+	     (nenv (append (if decl (cons (mark-def! decl) envt) envt) env)))
 	 (mark-free body nenv))))
 
 ;*---------------------------------------------------------------------*/
