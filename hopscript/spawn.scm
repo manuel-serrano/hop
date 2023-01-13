@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct  7 09:04:09 2016                          */
 ;*    Last change :  Sun Feb 23 14:55:44 2020 (serrano)                */
-;*    Copyright   :  2016-20 Manuel Serrano                            */
+;*    Copyright   :  2016-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Spawn implementation as defined in                               */
 ;*                                                                     */

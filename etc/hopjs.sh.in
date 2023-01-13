@@ -4,8 +4,8 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 13 14:06:56 2015                          */
-#*    Last change :  Thu Nov  3 08:07:30 2022 (serrano)                */
-#*    Copyright   :  2015-22 Manuel Serrano                            */
+#*    Last change :  Fri Jan 13 01:54:57 2023 (serrano)                */
+#*    Copyright   :  2015-23 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Nodejs compatible script engine                                  */
 #*=====================================================================*/
@@ -18,7 +18,7 @@ export DYLD_LIBRARY_PATH
 
 # default arguments
 server=--no-server
-debug=
+opt=
 rest=
 
 # command parsing
@@ -40,7 +40,10 @@ while : ; do
       break;;
 
     -g)
-      debug=-g;;
+      opt=-g;;
+
+    -O)
+      opt="--so-policy aot";;
 
     *)
       rest="$rest $1";;
@@ -50,7 +53,7 @@ done
       
 
 if [ "$rest " = " " ]; then
-  exec @HOP@ $server $debug --repljs
+  exec @HOP@ $server $opt --repljs
 else
-  exec @HOP@ $server $debug -- $rest
+  exec @HOP@ $server $opt -- $rest
 fi

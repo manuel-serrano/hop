@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 19 08:19:19 2015                          */
-;*    Last change :  Sun Jan  8 19:58:35 2023 (serrano)                */
+;*    Last change :  Fri Jan 13 13:41:49 2023 (serrano)                */
 ;*    Copyright   :  2015-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript promises                     */
@@ -493,7 +493,7 @@
 ;*    http://www.ecma-international.org/ecma-262/6.0/#25.4.1.7         */
 ;*---------------------------------------------------------------------*/
 (define (js-reject o reason)
-   (with-access::JsPromise o (state val worker thens catches %name)
+   (with-access::JsPromise o (state val worker thens catches %name %this)
       ;; reject .2
       (js-worker-push-thunk! worker "promise"
 	 (lambda ()
@@ -508,8 +508,14 @@
 		   (begin
 		      (when (isa? reason &exception)
 			 (exception-notify reason))
-		      (warning "UnhandledPromiseRejectionWarning: " reason
-			 " -- " %name)
+		      (with-access::JsGlobalObject %this ((gworker worker))
+			 (if (eq? worker gworker)
+			     (error "UnhandledPromiseRejection"
+				(js-tostring reason %this)
+				%name)
+			     (warning "UnhandledPromiseRejectionWarning: "
+				(js-tostring reason %this)
+				" -- " %name)))
 		      reason)
 		   ;; reject .7
 		   (js-promise-trigger-reactions worker reactions reason)))))))

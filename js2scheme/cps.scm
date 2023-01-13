@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Wed Apr 27 11:54:52 2022 (serrano)                */
-;*    Copyright   :  2013-22 Manuel Serrano                            */
+;*    Last change :  Fri Jan 13 05:34:02 2023 (serrano)                */
+;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript CPS transformation                                    */
 ;*    -------------------------------------------------------------    */
@@ -336,11 +336,6 @@
 			     (with-access::J2SDecl d (%info)
 				(set! %info (instantiate::KDeclInfo))))
 		   temps)
-;* 		(tprint name " used: "                                 */
-;* 		   (map (lambda (d)                                    */
-;* 			   (with-access::J2SDecl d (%info id)          */
-;* 			      id))                                     */
-;* 		      temps))                                          */
 		;; cps has introduced new closures, the variable "escape"
 		;; property must be recomputed.
 		(mark-free body '())
@@ -353,11 +348,6 @@
 			  (cons* decl thisp argumentsp params))
 		       ;; retain free variables
 		       (let ((frees (filter is-free? temps)))
-;* 			  (tprint name " free: "                       */
-;* 			     (map (lambda (d)                          */
-;* 				     (with-access::J2SDecl d (%info id) */
-;* 					id))                           */
-;* 				frees))                                */
 			  (let* ((temps (filter (lambda (d)
 						   (or (is-def? d)
 						       (if (decl-usage-has? d '(assig))
@@ -367,11 +357,6 @@
 							   #t)))
 					   frees))
 				 (sz (length temps)))
-;* 			     (tprint name " temps: "                   */
-;* 				(map (lambda (d)                       */
-;* 					(with-access::J2SDecl d (%info id) */
-;* 					   id))                        */
-;* 				   temps))                             */
 			     ;; color the continuation variables
 			     (set! constrsize (kont-color temps ydstar))
 			     ;; allocate temporaries
