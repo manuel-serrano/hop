@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sun Jan  8 09:25:43 2023 (serrano)                */
+;*    Last change :  Fri Jan 13 23:50:16 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript regexps                      */
@@ -446,7 +446,7 @@
 		 (ascii #t))
 	 (let ((j (string-index str "\\[]" i)))
 	    (if (not j)
-		(err "wrong pattern \"~a\"" (substring str j))
+		(err "wrong pattern \"~a\"" (substring str i0))
 		(let ((tag (string-ref str j)))
 		   (when (>fx j i)
 		      (blit-string! str i res w (-fx j i))
