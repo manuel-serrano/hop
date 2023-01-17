@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Tue Jan 10 16:15:27 2023 (serrano)                */
+;*    Last change :  Tue Jan 17 10:50:37 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -4559,9 +4559,10 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.9     */
 ;*---------------------------------------------------------------------*/
 (define (js-jsstring-localecompare this that %this)
-   (let ((s (js-jsstring->string this))
-	 (t (js-tostring that %this)))
-      (utf8-string-locale-compare3 s t)))
+   (let ((s (js-jsstring->string this)))
+      (if (and (js-jsstring-ascii? this) (js-jsstring? that) (js-jsstring-ascii? that))
+	  (string-compare3 s (js-jsstring->string that))
+	  (utf8-string-locale-compare3 s (js-tostring that %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-maybe-localecompare ...                              */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Fri Jan 13 23:50:16 2023 (serrano)                */
+;*    Last change :  Tue Jan 17 21:09:19 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript regexps                      */
@@ -825,8 +825,10 @@
       ((and (=fx end (+fx start 1)) (not utf8))
        (js-jsstring-fromcharcode
 	  (char->integer (string-ref s start)) %this))
+;*       (utf8                                                         */
+;*        (js-utf8->jsstring (utf8-substring s start end)))            */
       (utf8
-       (js-utf8->jsstring (utf8-substring s start end)))
+       (js-utf8->jsstring (substring s start end)))
       (else
        (js-substring->jsstring s start (-fx end start)))))
 
