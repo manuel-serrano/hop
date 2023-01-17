@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Thu Jan 12 15:12:19 2023 (serrano)                */
+;*    Last change :  Mon Jan 16 16:46:22 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -207,7 +207,11 @@
 			    (let* ((ty (js-tostring (js-get obj (& "type") %ctxthis) %ctxthis))
 				   (val (js-get obj (& "value") %ctxthis))
 				   (l (js-get obj (& "language") %ctxthis))
-				   (lang (if (eq? l (js-undefined)) lang (js-tostring l %ctxthis))))
+				   (lang (if (eq? l (js-undefined))
+					     lang
+					     (js-language->string l
+						"nodejs-compile-client-file-lang"
+						%ctxthis))))
 			       (cond
 				  ((string=? ty "filename")
 				   (filename->file val lang %ctxthis))
@@ -575,6 +579,23 @@
       m))
 
 ;*---------------------------------------------------------------------*/
+;*    wrong-language ...                                               */
+;*---------------------------------------------------------------------*/
+(define (wrong-language lang tag this)
+   (js-raise-error this
+      (format "~s: Wrong language object (~s)" tag (typeof lang))
+      lang))
+
+;*---------------------------------------------------------------------*/
+;*    js-language->string ...                                          */
+;*---------------------------------------------------------------------*/
+(define (js-language->string lang tag this)
+   (cond
+      ((string? lang) lang)
+      ((js-jsstring? lang) (js-jsstring->string lang))
+      (else (wrong-language lang tag this))))
+
+;*---------------------------------------------------------------------*/
 ;*    language-compiler ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (language-compiler language lang this %module worker)
@@ -586,7 +607,7 @@
 		    (comp (js-get lang key this)))
 		(if (js-procedure? comp)
 		    comp
-		    (js-raise-error this "Wrong language object" lang)))))
+		    (wrong-language lang "language-compiler" this)))))
 	 ((js-jsstring? lang)
 	  (let ((str (js-jsstring->string lang)))
 	     (unless (builtin-language? str)
@@ -621,7 +642,9 @@
 		    (comp (js-get lang key %this)))
 		(if (js-procedure? comp)
 		    comp
-		    (js-raise-error %this "Wrong language object" lang)))))
+		    (wrong-language lang "language-script" %this)))))
+	 ((eq? lang (& "hopscript"))
+	  #f)
 	 ((js-jsstring? lang)
 	  (let ((str (js-jsstring->string lang)))
 	     (let ((langmod (nodejs-require-module str
@@ -648,7 +671,8 @@
 	       (js-current-worker) this %module
 	       (if (eq? lang (js-undefined))
 		   language
-		   (js-tostring lang this))
+		   (js-language->string lang
+		      (format "nodejs-require (~s)" name)this))
 	       (language-compiler language lang this %module
 		  (js-current-worker))
 	       opt))
@@ -667,7 +691,7 @@
 	      (js-function-info :name "lang" :len 0))
       :set (js-make-function this
 	      (lambda (_ val)
-		 (set! language (js-tostring val this))
+		 (set! language (js-language->string val "lang" this))
 		 val)
 	      (js-function-arity 1 0)
 	      (js-function-info :name "lang" :len 1))
@@ -2246,7 +2270,7 @@
 			  worker %this %module
 			  (if (eq? langc (js-undefined))
 			      lang
-			      (js-tostring langc %this))
+			      (js-language->string langc "load-module" %this))
 			  #f
 			  path))
 		      ((string=? ty "ast")
@@ -2254,7 +2278,7 @@
 			  worker %this %module
 			  (if (eq? langc (js-undefined))
 			      lang
-			      (js-tostring langc %this))
+			      (js-language->string langc "load-module" %this))
 			  #f
 			  path))
 		      ((string=? ty "value")
@@ -2267,8 +2291,11 @@
 			  mod))
 		      (else
 		       val))))))
-	 ((or (eq? lang 'json) (string-suffix? ".json" path))
+	 ((or (eq? lang "json") (string-suffix? ".json" path))
 	  (load-json path))
+	 ((eq? lang 'json)
+	  (error "nodejs-load-module" "internal error, lang should be a string"
+	     lang))
 	 (else
 	  (let ((mod (nodejs-load src path %this %module worker
 			:lang lang :srcalias srcalias
