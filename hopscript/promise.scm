@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 19 08:19:19 2015                          */
-;*    Last change :  Fri Jan 13 13:41:49 2023 (serrano)                */
+;*    Last change :  Wed Jan 18 06:41:11 2023 (serrano)                */
 ;*    Copyright   :  2015-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript promises                     */
@@ -45,6 +45,11 @@
 ;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
 (define __js_strings (&begin!))
+
+;*---------------------------------------------------------------------*/
+;*    reject-name ...                                                  */
+;*---------------------------------------------------------------------*/
+(define reject-name "reject")
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsPromise ...                                */
@@ -321,7 +326,7 @@
 	  (js-raise-type-error %this "This not an object ~a" (typeof this)))
 	 (else
 	  ;; .3
-	  (let ((promise (js-promise-alloc/name %this js-promise "reject")))
+	  (let ((promise (js-promise-alloc/name %this js-promise reject-name)))
 	     (with-handler
 		(lambda (e) e)
 		(js-promise-reject promise val))
@@ -509,13 +514,14 @@
 		      (when (isa? reason &exception)
 			 (exception-notify reason))
 		      (with-access::JsGlobalObject %this ((gworker worker))
-			 (if (eq? worker gworker)
-			     (error "UnhandledPromiseRejection"
-				(js-tostring reason %this)
-				%name)
-			     (warning "UnhandledPromiseRejectionWarning: "
-				(js-tostring reason %this)
-				" -- " %name)))
+			 (unless (eq? %name reject-name)
+			    (if (eq? worker gworker)
+				(error "UnhandledPromiseRejection"
+				   (js-tostring reason %this)
+				   %name)
+				(warning "UnhandledPromiseRejectionWarning: "
+				   (js-tostring reason %this)
+				   " -- " %name))))
 		      reason)
 		   ;; reject .7
 		   (js-promise-trigger-reactions worker reactions reason)))))))

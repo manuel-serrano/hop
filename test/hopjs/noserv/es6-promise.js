@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 19 11:16:33 2015                          */
-/*    Last change :  Sun Jan  8 23:08:54 2023 (serrano)                */
+/*    Last change :  Wed Jan 18 06:34:01 2023 (serrano)                */
 /*    Copyright   :  2015-23 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ES6 promises.                                            */
@@ -20,7 +20,7 @@ assert.check = function( val, name ) {
    try {
       assert.ok( val, name );
    } catch( e ) {
-      #:exception-notify( e );
+      //#:exception-notify( e );
       console.log( "e=", e );
       throw( e );
    }
@@ -162,7 +162,7 @@ function mdnReject() {
    Promise.reject( new Error( "fail" ) ).then( function( error ) {
       assert.check( false, "reject: not called" );
    }, function( error ) {
-      assert.check( error instanceof Error, "instanceof Error" );
+      	 assert.check( error instanceof Error, "instanceof Error" );
    });
 }
 
@@ -200,7 +200,7 @@ function mdnAll() {
    Promise.all([p1, p2, p3, p4, p5]).then(value => {
       assert.ok( false, "should reject" );
    }, reason => {
-      assert.check( reason == "reject" );
+      assert.check( reason == "reject", "Promise.all" );
    });
 }
 
