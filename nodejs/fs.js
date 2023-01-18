@@ -670,15 +670,27 @@ fs.mkdirSync = function(path, mode) {
      		       typeof mode === 'object' ? mode.recursive : false);
 };
 
-fs.readdir = function(path, callback) {
-  callback = makeCallback(callback);
+// ms (18 Jan 2023) to accomodate recent node api 
+fs.readdir = function(path, options, callback) {
+  var callback = maybeCallback(arguments[arguments.length - 1]);
   if (!nullCheck(path, callback)) return;
-  binding.readdir(pathModule._makeLong(path), callback);
+  
+  if (typeof options === 'function' || !options) {
+    options = { encoding: "utf8" };
+  } else if (typeof options === 'string') {
+    options = { encoding: options };
+  } else if (!options) {
+    options = { encoding: "utf8" };
+  } else if (typeof options !== 'object') {
+    throw new TypeError('Bad arguments');
+  }
+  
+  binding.readdir(pathModule._makeLong(path), options, callback);
 };
 
-fs.readdirSync = function(path) {
+fs.readdirSync = function(path, options) {
   nullCheck(path);
-  return binding.readdir(pathModule._makeLong(path));
+  return binding.readdir(pathModule._makeLong(path), options);
 };
 
 fs.fstat = function(fd, callback) {

@@ -261,6 +261,7 @@ Buffer.isEncoding = function(encoding) {
     case 'utf16le':
     case 'utf-16le':
     case 'raw':
+    case 'latin1':
       return true;
 
     default:

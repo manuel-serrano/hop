@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat May 17 06:10:40 2014                          */
-;*    Last change :  Sat Nov 26 10:29:04 2022 (serrano)                */
-;*    Copyright   :  2014-22 Manuel Serrano                            */
+;*    Last change :  Wed Jan 18 19:02:48 2023 (serrano)                */
+;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    File system bindings                                             */
 ;*=====================================================================*/
@@ -137,6 +137,33 @@
       process-fs-fstats))
 
 ;*---------------------------------------------------------------------*/
+;*    8bits-encode-utf8 ...                                            */
+;*---------------------------------------------------------------------*/
+(define (8bits-encode-utf8 str::bstring start end)
+   (let ((s (substring str start end)))
+      (if (utf8-string? str #t)
+	  s
+	  (iso-latin->utf8! s))))
+
+;*---------------------------------------------------------------------*/
+;*    string->ucs2-string ...                                          */
+;*    -------------------------------------------------------------    */
+;*    Convert a LE 8bits strings into an equivalent UCS2 string.       */
+;*---------------------------------------------------------------------*/
+(define (string->ucs2-string string::bstring start end)
+   (let* ((len (*fx (/fx (-fx end start) 2) 2))
+	  (res (make-ucs2-string (/fx len 2))))
+      (let loop ((i 0))
+	 (if (=fx i len)
+	     res
+	     (let* ((j (+fx start i))
+		    (c0 (char->integer (string-ref string j)))
+		    (c1 (char->integer (string-ref string (+fx j 1))))
+		    (ucs2 (+fx (bit-lsh c1 8) c0)))
+		(ucs2-string-set! res (/fx i 2) (integer->ucs2 ucs2))
+		(loop (+fx i 2)))))))
+   
+;*---------------------------------------------------------------------*/
 ;*    process-fs ...                                                   */
 ;*    -------------------------------------------------------------    */
 ;*    http://nodejs.org/api/fs.html                                    */
@@ -170,9 +197,48 @@
    (define (lchmod this path mod cb)
       (nodejs-lchmod %worker %this process path mod cb))
    
-   (define (readdir this jspath cb)
+   (define (readdir this jspath opt cb)
       (let* ((path (js-tostring jspath %this))
 	     (l (directory->list path)))
+	 (when (js-jsobject? opt)
+	    (let ((enc (js-get-jsobject opt opt (& "encoding") %this)))
+	       (cond
+		  ((eq? enc (& "utf8"))
+		   (map! (lambda (data)
+			    (multiple-value-bind (str enc)
+			       (utf8-normalize-utf16 data #t 0 (string-length data))
+			       str))
+		      l))
+		  ((eq? enc (& "binary"))
+		   (map! (lambda (data)
+			    (8bits-encode-utf8 data 0 (string-length data)))
+		      l))
+		  ((eq? enc (& "ascii"))
+		   l)
+		  ((eq? enc (& "hex"))
+		   (map! (lambda (data)
+			    (string-hex-intern data))
+		      l))
+		  ((eq? enc (& "ucs2"))
+		   (map! (lambda (data)
+			    (ucs2-string->utf8-string
+			       (string->ucs2-string data 0 (string-length data))))
+		      l))
+		  ((eq? enc (& "latin1"))
+		   (map! (lambda (data)
+			    (iso-latin->utf8 data))
+		      l))
+		  ((eq? enc (& "base64"))
+		   (map! (lambda (data)
+			    (let ((ip (open-input-string! data 0 (string-length data)))
+				  (op (open-output-string)))
+			       (base64-encode-port ip op 0)
+			       (close-output-port op)))
+		      l))
+		  (else
+		   (js-raise-type-error %this
+		      (format "Bad encoding \"~a\"" enc)
+		      enc)))))
 	 (if (and (null? l) (not (directory? path)))
 	     (let ((exn (with-access::JsGlobalObject %this (js-error)
 			   (let ((obj (js-new %this js-error
