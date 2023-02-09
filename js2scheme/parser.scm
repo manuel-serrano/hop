@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Tue Jan 10 23:03:58 2023 (serrano)                */
+;*    Last change :  Thu Feb  9 18:07:35 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -2226,11 +2226,19 @@
 		      rev-ses)))))))
 
    (define (class-element cname super?)
-      (if (peek-token-id? 'static)
-	  (begin
-	     (consume-token! 'ID)
-	     (class-method #t cname super?))
-	  (class-method #f cname super?)))
+      (cond
+	 ((peek-token-id? 'static)
+	  (consume-token! 'ID)
+	  (if (peek-token-id? 'async)
+	      (begin
+		 (consume-token! 'ID)
+		 (class-method #t #t cname super?))
+	      (class-method #f #t cname super?)))
+	 ((peek-token-id? 'async)
+	  (consume-token! 'ID)
+	  (class-method #t #f cname super?))
+	 (else
+	  (class-method #f #f cname super?))))
 
    (define (method-name name cname loc)
       (let* ((met (if (isa? name J2SString)
@@ -2242,7 +2250,7 @@
 		      met)))
 	 (loc->funname fun loc)))
 
-   (define (class-method static? cname super?)
+   (define (class-method async? static? cname super?)
       (let* ((loc (token-loc (peek-token)))
 	     (gen (when (eq? (peek-token-type) '*)
 		     (consume-any!) '*))
@@ -2290,7 +2298,7 @@
 			   (prop (instantiate::J2SMethodPropertyInit
 				    (loc loc)
 				    (name name-or-get)
-				    (val fun))))
+				    (val (if async? (async->generator fun) fun)))))
 		       (instantiate::J2SClassElement
 			  (loc loc)
 			  (static static?)
@@ -2317,7 +2325,7 @@
 					 (loc (token-loc name-or-get))
 					 (val (symbol->string
 						 (token-value name-or-get)))))
-				(val fun))))
+				(val (if async? (async->generator fun) fun)))))
 		   (instantiate::J2SClassElement
 		      (loc loc)
 		      (static static?)
@@ -2343,11 +2351,11 @@
 				   (loc loc)
 				   (name name)
 				   (get (if (eq? (token-value name-or-get) 'get)
-					    fun
+					    (if async? (async->generator fun) fun)
 					    (instantiate::J2SUndefined
 					       (loc loc))))
 				   (set (if (eq? (token-value name-or-get) 'set)
-					    fun
+					    (if async? (async->generator fun) fun)
 					    (instantiate::J2SUndefined
 					       (loc loc)))))))
 		      (instantiate::J2SClassElement
