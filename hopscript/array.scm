@@ -4511,6 +4511,12 @@
        (js-array-foreach-procedure-slow this proc thisarg %this cache)))
 
 ;*---------------------------------------------------------------------*/
+;*    $dup-procedure ...                                               */
+;*---------------------------------------------------------------------*/
+(define-macro ($dup-procedure proc)
+   proc)
+
+;*---------------------------------------------------------------------*/
 ;*    js-array-foreach-procedure-slow ...                              */
 ;*---------------------------------------------------------------------*/
 (define (js-array-foreach-procedure-slow this proc thisarg %this cache)

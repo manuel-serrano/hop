@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Fri Jun  3 11:42:42 2022 (serrano)                */
-;*    Copyright   :  2004-22 Manuel Serrano                            */
+;*    Last change :  Fri Feb 10 10:20:32 2023 (serrano)                */
+;*    Copyright   :  2004-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
 ;*=====================================================================*/
@@ -368,7 +368,9 @@
 	     (set! commonjs-export #f))
 	    (("--profile" (help "Profiling mode (see HOPTRACE)"))
 	     (hop-profile-set! #t))
-	    
+	    (("--profile-mem" (help "Memory profiling mode"))
+	     (hop-hopc-flags-set!
+		(string-append "--profile-mem2 " (hop-hopc-flags))))
 	    ;; Internals
 	    (section "Internals")
 	    (("--configure" ?config (help "Report HOP configuration"))

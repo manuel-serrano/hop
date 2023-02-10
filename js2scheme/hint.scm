@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Fri Dec  9 16:02:47 2022 (serrano)                */
-;*    Copyright   :  2016-22 Manuel Serrano                            */
+;*    Last change :  Fri Feb 10 09:36:34 2023 (serrano)                */
+;*    Copyright   :  2016-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
 ;*=====================================================================*/
@@ -109,7 +109,7 @@
 (define (j2s-hint-type ty)
    (if (symbol? ty)
        (let ((kty (j2s-known-type ty)))
-	  (or kty (error "js2scheme" "Illegal tyflow/hint type" ty)))
+	  (or kty 'object));(error "js2scheme" "Illegal tyflow/hint type" ty)))
        ty))
 
 ;*---------------------------------------------------------------------*/
@@ -1091,7 +1091,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    hint-type-predicate ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (hint-type-predicate::symbol type loc)
+(define (hint-type-predicate type loc)
    (cond
       ((eq? type 'number) 'number?)
       ((eq? type 'integer) 'fixnum?)
@@ -1109,11 +1109,7 @@
       ((eq? type 'real) 'flonum?)
       ((isa? type J2SRecord) (class-predicate-id type))
       ((isa? type J2SClass) 'js-object?)
-      (else
-       (error/loc "hint-type-predicate"
-	  (format "Unknown hint type predicate (~a)" (typeof type))
-	  (type->sexp type)
-	  loc))))
+      (else #f)))
 
 ;*---------------------------------------------------------------------*/
 ;*    test-hint-decls ...                                              */
@@ -1149,13 +1145,17 @@
 		    (test-hint-decl (car decls) htype)))
 	       ((memq htype '(unknown any))
 		(loop (cdr decls) (cdr htypes)))
+	       ((test-hint-decl (car decls) htype)
+		=>
+		(lambda (lhs)
+		   (instantiate::J2SBinary
+		      (loc loc)
+		      (op '&&)
+		      (type 'bool)
+		      (lhs lhs)
+		      (rhs (loop (cdr decls) (cdr htypes))))))
 	       (else
-		(instantiate::J2SBinary
-		   (loc loc)
-		   (op '&&)
-		   (type 'bool)
-		   (lhs (test-hint-decl (car decls) htype))
-		   (rhs (loop (cdr decls) (cdr htypes))))))))))
+		(loop (cdr decls) (cdr htypes))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    profile-hint! ...                                                */

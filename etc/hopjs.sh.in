@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 13 14:06:56 2015                          */
-#*    Last change :  Fri Jan 13 01:54:57 2023 (serrano)                */
+#*    Last change :  Fri Feb 10 10:15:41 2023 (serrano)                */
 #*    Copyright   :  2015-23 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Nodejs compatible script engine                                  */
@@ -20,6 +20,7 @@ export DYLD_LIBRARY_PATH
 server=--no-server
 opt=
 rest=
+profexec=exec
 
 # command parsing
 while : ; do
@@ -43,7 +44,14 @@ while : ; do
       opt=-g;;
 
     -O)
-      opt="--so-policy aot";;
+      opt="--so-policy aot --hopc-flags \"-Ox\"";;
+
+    --profile-mem)
+      profexec=hopmemrun
+      opt="--profile-mem $opt";;
+
+    --clear-cache)
+      opt="--clear-cache $opt";;
 
     *)
       rest="$rest $1";;
@@ -53,7 +61,7 @@ done
       
 
 if [ "$rest " = " " ]; then
-  exec @HOP@ $server $opt --repljs
+  $profexec @HOP@ $server $opt --repljs
 else
-  exec @HOP@ $server $opt -- $rest
+  $profexec @HOP@ $server $opt -- $rest
 fi
