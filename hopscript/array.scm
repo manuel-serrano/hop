@@ -4511,12 +4511,6 @@
        (js-array-foreach-procedure-slow this proc thisarg %this cache)))
 
 ;*---------------------------------------------------------------------*/
-;*    $dup-procedure ...                                               */
-;*---------------------------------------------------------------------*/
-(define-macro ($dup-procedure proc)
-   proc)
-
-;*---------------------------------------------------------------------*/
 ;*    js-array-foreach-procedure-slow ...                              */
 ;*---------------------------------------------------------------------*/
 (define (js-array-foreach-procedure-slow this proc thisarg %this cache)
@@ -6188,15 +6182,15 @@
 	     (with-access::JsProcedure comparefn (procedure)
 		(let ((proc procedure))
 		   ($sort-vector vec
-			       (lambda (x y)
-				  (cond
-				     ((eq? x (js-undefined)) (eq? y (js-undefined)))
-				     ((eq? y (js-undefined)) #t)
-				     (else
-				      (let ((t (proc (js-undefined) x y)))
-					 (if (fixnum? t)
-					     (<=fx t 0)
-					     (<= (js-tointeger t %this) 0)))))))))
+		      (lambda (x y)
+			 (cond
+			    ((eq? x (js-undefined)) (eq? y (js-undefined)))
+			    ((eq? y (js-undefined)) #t)
+			    (else
+			     (let ((t (proc (js-undefined) x y)))
+				(if (fixnum? t)
+				    (<=fx t 0)
+				    (<= (js-tointeger t %this) 0)))))))))
 	     ($sort-vector vec (get-compare comparefn)))
 	 this))
    
