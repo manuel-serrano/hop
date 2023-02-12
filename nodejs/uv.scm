@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Wed Jan 11 17:01:21 2023 (serrano)                */
+;*    Last change :  Sat Feb 11 06:34:24 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -1172,6 +1172,7 @@
 ;*    *stat-cmap* ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define *stat-cmap* #f)
+(define *stat-cmap-noinline* #f)
 (define *stat-ctime-accessor* #f)
 (define *stat-mtime-accessor* #f)
 (define *stat-atime-accessor* #f)
@@ -1221,7 +1222,20 @@
 		(%set list)
 		(enumerable #f)
 		(configurable #f)))
+	  (set! *stat-cmap-noinline*
+	     (duplicate::JsConstructMap *stat-cmap*
+		(%id (gencmapid))))
 	  cmap)))
+
+;*---------------------------------------------------------------------*/
+;*    stat-cmap-noinline ...                                           */
+;*---------------------------------------------------------------------*/
+(define (stat-cmap-noinline)
+   (if *stat-cmap-noinline*
+       *stat-cmap-noinline*
+       (begin
+	  (stat-cmap)
+	  *stat-cmap-noinline*)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-stat-time-get ...                                             */
@@ -1229,24 +1243,24 @@
 ;*    Use property accessor for lazy JS date objects allocation.       */
 ;*---------------------------------------------------------------------*/
 (define (js-stat-time-get obj owner::JsObject propname %this)
-   (with-access::JsObject obj (elements)
-      (let* ((base (+fx (vector-length (uv-fs-stat-cb-vector-props)) 4))
-	     (idx (cond
-		     ((eq? propname (& "ctime")) 0)
-		     ((eq? propname (& "mtime")) 1)
-		     ((eq? propname (& "atime")) 2)
-		     (else 3)))
-	     (ref (vector-ref elements (+fx base idx))))
-	 (if (number? ref)
-	     (let ((val (js-date->jsdate
-			   (seconds->date
-			      (if (int64? ref)
-				  (int64->elong ref)
-				  ref))
-			   %this)))
-		(vector-set! elements (+fx base idx) val)
-		val)
-	     ref))))
+   (let* ((base (+fx (vector-length (uv-fs-stat-cb-vector-props)) 4))
+	  (idx (cond
+		  ((eq? propname (& "ctime")) 0)
+		  ((eq? propname (& "mtime")) 1)
+		  ((eq? propname (& "atime")) 2)
+		  ((eq? propname (& "birthtime")) 3)
+		  (else 4)))
+	  (ref (js-object-ref obj (+fx base idx))))
+      (if (number? ref)
+	  (let ((val (js-date->jsdate
+			(cond
+			   ((fixnum? ref) (seconds->date (fixnum->elong ref)))
+			   ((int64? ref) (seconds->date (int64->elong ref)))
+			   (else (seconds->date ref)))
+			%this)))
+	     (js-object-set! obj (+fx base idx) val)
+	     val)
+	  ref)))
 
 ;*---------------------------------------------------------------------*/
 ;*    stat->jsobj ...                                                  */
@@ -1261,42 +1275,45 @@
       ((or bint61 bint64) `(fixnum->flonum ,val))
       (else `(int64->flonum ,val))))
 
+(define (stat->jsobj! %this stat::JsObject vec::vector)
+   (let ((i (vector-length (uv-fs-stat-cb-vector-props))))
+      (vector-set! vec i
+	 (*fl 1000. (ms (vector-ref vec 0))))
+      (vector-set! vec (+fx i 1)
+	 (*fl 1000. (ms (vector-ref vec 1))))
+      (vector-set! vec (+fx i 2)
+	 (*fl 1000. (ms (vector-ref vec 2))))
+      (vector-set! vec (+fx i 3)
+	 (*fl 1000. (ms64 (vector-ref vec 3))))
+      ;; move the date value at the end of the vector
+      (vector-copy! vec (+fx i 4) vec 0 4)
+      ;; lazy date values
+      (vector-set! vec 0 *stat-ctime-accessor*)
+      (vector-set! vec 1 *stat-mtime-accessor*)
+      (vector-set! vec 2 *stat-atime-accessor*)
+      (vector-set! vec 3 *stat-birthtime-accessor*)
+      ;; normal values
+      (cond-expand
+	 ((or bint61 bint64)
+	  #unspecified)
+	 (else
+	  (let loop ((i (-fx i 1)))
+	     (when (>=fx i 4)
+		(vector-set! vec i (js-obj->jsobject (vector-ref vec i) %this))
+		(loop (-fx i 1))))))
+      stat))
+
 (define (stat->jsobj %this proto res)
    (if (vector? res)
        (let ((stat (instantiateJsObject
-		      (cmap (stat-cmap))
+		      (cmap (stat-cmap-noinline))
 		      (__proto__ proto)
-		      (elements res)))
-	     (i (vector-length (uv-fs-stat-cb-vector-props))))
-	  (vector-set! res i
-	     (*fl 1000. (ms (vector-ref res 0))))
-	  (vector-set! res (+fx i 1)
-	     (*fl 1000. (ms (vector-ref res 1))))
-	  (vector-set! res (+fx i 2)
-	     (*fl 1000. (ms (vector-ref res 2))))
-	  (vector-set! res (+fx i 3)
-	     (*fl 1000. (ms64 (vector-ref res 3))))
-	  ;; move the date value at the end of the vector
-	  (vector-copy! res (+fx i 4) res 0 4)
-	  ;; lazy date values
-	  (vector-set! res 0 *stat-ctime-accessor*)
-	  (vector-set! res 1 *stat-mtime-accessor*)
-	  (vector-set! res 2 *stat-atime-accessor*)
-	  (vector-set! res 3 *stat-birthtime-accessor*)
-	  ;; normal values
-	  (cond-expand
-	     ((or bint61 bint64)
-	      #unspecified)
-	     (else
-	      (let loop ((i (-fx i 1)))
-		 (when (>=fx i 4)
-		    (vector-set! res i (js-obj->jsobject (vector-ref res i) %this))
-		    (loop (-fx i 1))))))
-	  stat)
+		      (elements res))))
+	  (stat->jsobj! %this stat res))
        (let ((stat (js-alist->jsobject (stat-date res %this) %this)))
 	  (js-object-proto-set! stat proto)
 	  stat)))
-   
+
 ;*---------------------------------------------------------------------*/
 ;*    stat-cb ...                                                      */
 ;*---------------------------------------------------------------------*/
@@ -1378,16 +1395,29 @@
 			   (js-jsstring->string path) proto path)))))
       (else
        (cond-expand
+	  (libuv-vecXXX
+           (let ((res (uv-fs-lstat (js-jsstring->string path)
+                         :vector ($create-vector
+                                    (+fx 8 (vector-length (uv-fs-stat-cb-vector-props)))))))
+              (if (integer? res)
+                  (js-raise
+                     (fs-errno-exn (format "lstat: cannot stat ~a -- ~~s"
+                                      (js-jsstring->string path))
+                        res %this))
+                  (stat->jsobj %this proto res))))
 	  (libuv-vec
-	   (let ((res (uv-fs-lstat (js-jsstring->string path)
-			 :vector ($create-vector
-				    (+fx 8 (vector-length (uv-fs-stat-cb-vector-props)))))))
-	      (if (integer? res)
-		  (js-raise
-		     (fs-errno-exn (format "lstat: cannot stat ~a -- ~~s"
-				      (js-jsstring->string path))
-			res %this))
-		  (stat->jsobj %this proto res))))
+	   (let ((obj (js-make-jsobject
+			 (+fx 8 (vector-length (uv-fs-stat-cb-vector-props)))
+			 (stat-cmap)
+			 proto)))
+	      (let ((res (uv-fs-lstat (js-jsstring->string path)
+			    :vector (js-object-inline-elements obj))))
+		 (if (integer? res)
+		     (js-raise
+			(fs-errno-exn (format "lstat: cannot stat ~a -- ~~s"
+					 (js-jsstring->string path))
+			   res %this))
+		     (stat->jsobj! %this obj (js-object-inline-elements obj))))))
 	  (else
 	   (let ((res (uv-fs-lstat (js-jsstring->string path))))
 	      (if (integer? res)

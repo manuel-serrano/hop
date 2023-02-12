@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat May 17 06:10:40 2014                          */
-;*    Last change :  Wed Jan 18 19:02:48 2023 (serrano)                */
+;*    Last change :  Sat Feb 11 19:37:51 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    File system bindings                                             */
@@ -199,47 +199,47 @@
    
    (define (readdir this jspath opt cb)
       (let* ((path (js-tostring jspath %this))
-	     (l (directory->list path)))
+	     (v (directory->vector path)))
 	 (when (js-jsobject? opt)
 	    (let ((enc (js-get-jsobject opt opt (& "encoding") %this)))
 	       (cond
 		  ((eq? enc (& "utf8"))
-		   (map! (lambda (data)
-			    (multiple-value-bind (str enc)
-			       (utf8-normalize-utf16 data #t 0 (string-length data))
-			       str))
-		      l))
+		   (vector-map! (lambda (data)
+				   (multiple-value-bind (str enc)
+				      (utf8-normalize-utf16 data #t 0 (string-length data))
+				      str))
+		      v))
 		  ((eq? enc (& "binary"))
-		   (map! (lambda (data)
-			    (8bits-encode-utf8 data 0 (string-length data)))
-		      l))
+		   (vector-map! (lambda (data)
+				   (8bits-encode-utf8 data 0 (string-length data)))
+		      v))
 		  ((eq? enc (& "ascii"))
-		   l)
+		   v)
 		  ((eq? enc (& "hex"))
-		   (map! (lambda (data)
-			    (string-hex-intern data))
-		      l))
+		   (vector-map! (lambda (data)
+				   (string-hex-intern data))
+		      v))
 		  ((eq? enc (& "ucs2"))
-		   (map! (lambda (data)
-			    (ucs2-string->utf8-string
-			       (string->ucs2-string data 0 (string-length data))))
-		      l))
+		   (vector-map! (lambda (data)
+				   (ucs2-string->utf8-string
+				      (string->ucs2-string data 0 (string-length data))))
+		      v))
 		  ((eq? enc (& "latin1"))
-		   (map! (lambda (data)
-			    (iso-latin->utf8 data))
-		      l))
+		   (vector-map! (lambda (data)
+				   (iso-latin->utf8 data))
+		      v))
 		  ((eq? enc (& "base64"))
-		   (map! (lambda (data)
-			    (let ((ip (open-input-string! data 0 (string-length data)))
-				  (op (open-output-string)))
-			       (base64-encode-port ip op 0)
-			       (close-output-port op)))
-		      l))
+		   (vector-map! (lambda (data)
+				   (let ((ip (open-input-string! data 0 (string-length data)))
+					 (op (open-output-string)))
+				      (base64-encode-port ip op 0)
+				      (close-output-port op)))
+		      v))
 		  (else
 		   (js-raise-type-error %this
 		      (format "Bad encoding \"~a\"" enc)
 		      enc)))))
-	 (if (and (null? l) (not (directory? path)))
+	 (if (and (=fx (vector-length v) 0) (not (directory? path)))
 	     (let ((exn (with-access::JsGlobalObject %this (js-error)
 			   (let ((obj (js-new %this js-error
 					 (js-string->jsstring
@@ -253,7 +253,7 @@
 		       (lambda ()
 			  (js-call2-jsprocedure %this cb this exn (js-undefined))))
 		    (js-raise exn)))
-	     (let ((r (js-vector->jsarray (list->vector (map! js-string->jsstring l))  %this)))
+	     (let ((r (js-vector->jsarray (vector-map! js-string->jsstring v) %this)))
 		(if (js-procedure? cb)
 		    (js-worker-push-thunk! %worker "readdir"
 		       (lambda ()
