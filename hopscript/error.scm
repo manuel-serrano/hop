@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sat Mar  5 12:57:18 2022 (serrano)                */
-;*    Copyright   :  2013-22 Manuel Serrano                            */
+;*    Last change :  Mon Feb 13 17:22:39 2023 (serrano)                */
+;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
 ;*    -------------------------------------------------------------    */
@@ -150,7 +150,7 @@
 		   (display "The reraise error is:" port)
 		   (newline port)
 		   (exception-notify e)))
-	     (let ((notify (lambda ()
+	     (let ((notify (lambda (%this)
 			      (let* ((name (js-jsstring->string name))
  				     (stk (js-get exc (& "stack") %this))
 				     (port (current-error-port)))
@@ -177,7 +177,7 @@
 		(with-access::JsGlobalObject %this (worker)
 		   (if worker
 		       (js-worker-exec worker "error" #t notify)
-		       (notify))))))))
+		       (notify %this))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    exception-notify ::obj ...                                       */

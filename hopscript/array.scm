@@ -421,9 +421,8 @@
 ;*---------------------------------------------------------------------*/
 (define-method (hop->javascript o::JsArray op compile isexpr ctx)
    (js-with-context ctx "hop->javascript"
-      (lambda ()
-	 (let* ((%this ctx)
-		(len::uint32 (js-array-length o)))
+      (lambda (%this)
+	 (let ((len::uint32 (js-array-length o)))
 	    (if (=u32 len #u32:0)
 		(display "sc_vector2array([])" op)
 		(begin

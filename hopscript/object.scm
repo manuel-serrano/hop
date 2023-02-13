@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Tue Nov 23 08:49:06 2021 (serrano)                */
-;*    Copyright   :  2013-21 Manuel Serrano                            */
+;*    Last change :  Mon Feb 13 17:26:51 2023 (serrano)                */
+;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
 ;*                                                                     */
@@ -212,26 +212,25 @@
 ;*---------------------------------------------------------------------*/
 (define-method (scheme->response obj::JsObject req ctx)
    
-   (define (responder ctx thunk)
-      (js-with-context ctx "response" thunk))
+   (define (responder ctx proc)
+      (js-with-context ctx "response" (lambda (%this) (proc))))
    
    (js-with-context ctx "scheme->response"
-      (lambda ()
-	 (let ((%this ctx))
-	    (with-access::JsGlobalObject %this (js-service-pcache)
-	       (let ((proc (js-get-jsobject-name/cache obj (& "toResponse") #f %this
-			      (js-pcache-ref js-service-pcache 0))))
-		  (if (js-procedure? proc)
-		      (scheme->response (js-call1 %this proc obj req) req ctx)
-		      (let ((rep (call-next-method)))
-			 (if (isa? rep http-response-hop)
-			     (with-access::http-response-hop rep ((rctx ctx))
-				(set! rctx ctx)
-				(instantiate::http-response-responder
-				   (ctx ctx)
-				   (response rep)
-				   (responder responder)))
-			     rep)))))))))
+      (lambda (%this)
+	 (with-access::JsGlobalObject %this (js-service-pcache)
+	    (let ((proc (js-get-jsobject-name/cache obj (& "toResponse") #f %this
+			   (js-pcache-ref js-service-pcache 0))))
+	       (if (js-procedure? proc)
+		   (scheme->response (js-call1 %this proc obj req) req ctx)
+		   (let ((rep (call-next-method)))
+		      (if (isa? rep http-response-hop)
+			  (with-access::http-response-hop rep ((rctx ctx))
+			     (set! rctx ctx)
+			     (instantiate::http-response-responder
+				(ctx ctx)
+				(response rep)
+				(responder responder)))
+			  rep))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    jsobject-fields ...                                              */
@@ -262,7 +261,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (hop->javascript o::JsObject op compile isexpr ctx)
    (js-with-context ctx "hop->javascript"
-      (lambda ()
+      (lambda (%this)
 	 (display "{" op)
 	 (let ((sep ""))
 	    (js-for-in o

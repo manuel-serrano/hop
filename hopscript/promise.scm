@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 19 08:19:19 2015                          */
-;*    Last change :  Wed Jan 18 06:41:11 2023 (serrano)                */
+;*    Last change :  Mon Feb 13 17:12:14 2023 (serrano)                */
 ;*    Copyright   :  2015-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript promises                     */
@@ -79,13 +79,13 @@
    (define (async-proc k)
       (with-access::JsPromise obj (worker %this)
 	 (js-worker-exec worker "async-proc" #t
-	    (lambda ()
+	    (lambda (%this)
 	       (with-access::WorkerHopThread worker (%this)
 		  (js-promise-then-catch %this obj 
 		     (js-make-procedure %this
 			(lambda (this resp)
 			   (js-promise-async obj
-			      (lambda ()
+			      (lambda (%this)
 				 (k (scheme->response resp req %this)))))
 			2)
 		     (js-make-procedure %this
@@ -93,7 +93,7 @@
 			   (let ((errobj (url-path-encode
 					    (obj->string rej 'hop-client))))
 			      (js-promise-async obj
-				 (lambda ()
+				 (lambda (%this)
 				    (k (instantiate::http-response-hop
 					  (start-line "HTTP/1.1 500 Internal Server Error")
 					  (backend (hop-xml-backend))
@@ -129,8 +129,8 @@
       (define (err msg)
 	 (with-access::JsGlobalObject %this (js-type-error)
 	    (with-access::JsPromise this (worker)
-	       (js-worker-push-thunk! worker "promise"
-		  (lambda ()
+	       (js-worker-push! worker "promise"
+		  (lambda (%this)
 		     (with-handler
 			(lambda (e) e)
 			(js-promise-reject this
@@ -403,13 +403,13 @@
 	     (set! catches (cons reject catches)))
 	    ((fullfilled)
 	     ;; .8
-	     (js-worker-push-thunk! worker "promise"
-		(lambda ()
+	     (js-worker-push! worker "promise"
+		(lambda (%this)
 		   (js-promise-reaction-job fullfill val))))
 	    ((rejected)
 	     ;; .9
-	     (js-worker-push-thunk! worker "promise"
-		(lambda ()
+	     (js-worker-push! worker "promise"
+		(lambda (%this)
 		   (js-promise-reaction-job reject val)))))
 	 ;; .10
 	 np)))
@@ -500,8 +500,8 @@
 (define (js-reject o reason)
    (with-access::JsPromise o (state val worker thens catches %name %this)
       ;; reject .2
-      (js-worker-push-thunk! worker "promise"
-	 (lambda ()
+      (js-worker-push! worker "promise"
+	 (lambda (%this)
 	    (let ((reactions (reverse! catches)))
 	       ;; reject .3, 4, 5, 6
 	       (set! val reason) 
@@ -534,8 +534,8 @@
 (define (js-fullfill o::JsPromise result)
    (with-access::JsPromise o (state val worker thens catches)
       ;; fullfill .2
-      (js-worker-push-thunk! worker "promise"
-	 (lambda ()
+      (js-worker-push! worker "promise"
+	 (lambda (%this)
 	    (let ((reactions (reverse! thens)))
 	       ;; fullfill .3, 4, 5, 6
 	       (set! val result)
@@ -631,8 +631,8 @@
 		    ;; resolve .11
 		    (js-fullfill o resolution)
 		    ;; resolve .12
-		    (js-worker-push-thunk! worker "promise"
-		       (lambda ()
+		    (js-worker-push! worker "promise"
+		       (lambda (%this)
 			  (with-handler
 			     exception-notify
 			     (resolve-thenable o resolution then)))))))))))
@@ -640,9 +640,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-promise-async ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (js-promise-async o::JsPromise thunk)
+(define (js-promise-async o::JsPromise proc)
+   [assert (proc) (correct-arity? proc 1)]
    (with-access::JsPromise o (worker)
-      (js-worker-push-thunk! worker "async" thunk)))
+      (js-worker-push! worker "async" proc)))
 
 ;*---------------------------------------------------------------------*/
 ;*    &end!                                                            */

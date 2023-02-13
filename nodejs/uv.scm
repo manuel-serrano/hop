@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Mon Feb 13 07:18:16 2023 (serrano)                */
+;*    Last change :  Mon Feb 13 17:04:44 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -233,7 +233,7 @@
 ;*---------------------------------------------------------------------*/
 (define (!js-callback0 name %worker %this proc obj)
    (with-access::WorkerHopThread %worker (call)
-      (let ((res (call (lambda () (js-call0 %this proc obj)))))
+      (let ((res (call (lambda (%this) (js-call0 %this proc obj)) %this)))
 	 (next-tick %worker %this)
 	 res)))
 
@@ -242,7 +242,7 @@
 ;*---------------------------------------------------------------------*/
 (define (!js-callback1 name %worker %this proc obj arg0)
    (with-access::WorkerHopThread %worker (call)
-      (let ((res (call (lambda () (js-call1 %this proc obj arg0)))))
+      (let ((res (call (lambda (%this) (js-call1 %this proc obj arg0)) %this)))
 	 (next-tick %worker %this)
 	 res)))
 
@@ -251,7 +251,7 @@
 ;*---------------------------------------------------------------------*/
 (define (!js-callback2 name %worker %this proc obj arg0 arg1)
    (with-access::WorkerHopThread %worker (call)
-      (let ((res (call (lambda () (js-call2 %this proc obj arg0 arg1)))))
+      (let ((res (call (lambda (%this) (js-call2 %this proc obj arg0 arg1)) %this)))
 	 (next-tick %worker %this)
 	 res)))
 
@@ -260,7 +260,7 @@
 ;*---------------------------------------------------------------------*/
 (define (!js-callback3 name %worker %this proc obj arg0 arg1 arg2)
    (with-access::WorkerHopThread %worker (call)
-      (let ((res (call (lambda () (js-call3 %this proc obj arg0 arg1 arg2)))))
+      (let ((res (call (lambda (%this) (js-call3 %this proc obj arg0 arg1 arg2)) %this)))
 	 (next-tick %worker %this)
 	 res)))
 
@@ -269,7 +269,7 @@
 ;*---------------------------------------------------------------------*/
 (define (!js-callback4 name %worker %this proc obj arg0 arg1 arg2 arg3)
    (with-access::WorkerHopThread %worker (call)
-      (let ((res (call (lambda () (js-call4 %this proc obj arg0 arg1 arg2 arg3)))))
+      (let ((res (call (lambda (%this) (js-call4 %this proc obj arg0 arg1 arg2 arg3)) %this)))
 	 (next-tick %worker %this)
 	 res)))
 
@@ -278,7 +278,7 @@
 ;*---------------------------------------------------------------------*/
 (define (!js-callback5 name %worker %this proc obj arg0 arg1 arg2 arg3 arg4)
    (with-access::WorkerHopThread %worker (call)
-      (let ((res (call (lambda () (js-call5 %this proc obj arg0 arg1 arg2 arg3 arg4)))))
+      (let ((res (call (lambda (%this) (js-call5 %this proc obj arg0 arg1 arg2 arg3 arg4)) %this)))
 	 (next-tick %worker %this)
 	 res)))
 
@@ -359,7 +359,7 @@
 ;*    js-worker-tick ...                                               */
 ;*---------------------------------------------------------------------*/
 (define-method (js-worker-tick th::WorkerHopThread)
-   (with-access::WorkerHopThread th (%loop %process %retval
+   (with-access::WorkerHopThread th (%loop %process %retval %this
 				       call keep-alive mutex)
       (with-access::JsLoop %loop (async actions exiting)
 	 (let loop ((acts (synchronize mutex
@@ -376,15 +376,12 @@
 			 (begin
 			    (set! %retval r)
 			    (set! keep-alive #f)))))
-	       (let loop ()
-		  (when (pair? acts)
-		     (let* ((action (car acts))
-			    (actname (car action))
-			    (actproc (cdr action)))
-			(set! acts (cdr acts))
-			(with-trace 'nodejs-async actname
-			   (call actproc)))
-		     (loop))))))))
+	       (for-each (lambda (action)
+			    (let ((actname (car action))
+				  (actproc (cdr action)))
+			       (with-trace 'nodejs-async actname
+				  (call actproc %this))))
+		  acts))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-worker-init! ::WorkerHopThread ...                            */
@@ -404,7 +401,7 @@
 (define-method (js-worker-loop th::WorkerHopThread)
    (with-access::WorkerHopThread th (mutex condv tqueue
 				       %process %this keep-alive services
-				       call %retval prerun %loop)
+				       call %retval prerun %loop state)
       (set! __js_strings (&init!))
       (letrec* ((loop %loop)
 		(async (instantiate::UvAsync
@@ -425,7 +422,8 @@
 	       (set! actions tqueue))
 	    (condition-variable-broadcast! condv)
 	    (with-access::JsLoop loop ((lasync async))
-	       (set! lasync async))
+	       (set! lasync async)
+	       (set! state 'running))
 	    (when (pair? tqueue)
 	       (uv-async-send async)))
 	 (unwind-protect
@@ -467,8 +465,8 @@
 			    (with-access::WorkerHopThread w (mutex keep-alive)
 			       (synchronize mutex
 				  (set! keep-alive #f)
-				  (js-worker-push-thunk! w "ping"
-				     (lambda ()
+				  (js-worker-push! w "ping"
+				     (lambda (%this)
 					(uv-async-send async))))))
 		  subworkers))
 	    (with-access::WorkerHopThread th (mutex condv parent state)
@@ -493,12 +491,12 @@
 ;*    js-worker-terminate! ::WorkerHopThread ...                       */
 ;*---------------------------------------------------------------------*/
 (define-method (js-worker-terminate! th::WorkerHopThread pred)
-   (js-worker-push-thunk! th "stop"
-      (lambda ()
+   (js-worker-push! th "stop"
+      (lambda (%this)
 	 (with-access::WorkerHopThread th (keep-alive parent exitlisteners)
 	    (when (pair? exitlisteners)
-	       (js-worker-push-thunk! parent "slave-terminate"
-		  (lambda ()
+	       (js-worker-push! parent "slave-terminate"
+		  (lambda (%this)
 		     (let ((e (instantiate::MessageEvent
 				 (name "exit")
 				 (target (js-undefined))
@@ -508,9 +506,9 @@
 	 (uv-stop (worker-loop th)))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-worker-push-thunk! ::WorkerHopThread ...                      */
+;*    js-worker-push! ::WorkerHopThread ...                            */
 ;*---------------------------------------------------------------------*/
-(define-method (js-worker-push-thunk! th::WorkerHopThread name::bstring thunk::procedure)
+(define-method (js-worker-push! th::WorkerHopThread name::bstring proc::procedure)
    
    (define (worker-started? th)
       (with-access::WorkerHopThread th (%loop mutex tqueue)
@@ -518,12 +516,17 @@
 	    (with-access::JsLoop %loop (async)
 	       async))))
    
+   (define (worker-started-new? th)
+      (with-access::WorkerHopThread th (state)
+	 (not (eq? state 'init))))
+   
+   [assert (proc) (correct-arity? proc 1)]
    (with-trace 'nodejs-async "nodejs-async-push"
       (trace-item "name=" name)
       (trace-item "th=" th)
       (with-access::WorkerHopThread th (%loop mutex tqueue)
 	 (synchronize mutex
-	    (let ((act (cons name thunk)))
+	    (let ((act (cons name proc)))
 	       (if (worker-started? th)
 		   (with-access::JsLoop %loop (actions async exiting)
 		      (unless (pair? actions)
@@ -543,43 +546,45 @@
 (define-method (js-worker-exec th::WorkerHopThread
 		  name::bstring
 		  handleerror::bool
-		  thunk::procedure)
-   (cond
-      ((eq? (current-thread) th)
-       (thunk))
-      (handleerror
-       (let ((response #f)
-	     (mutex (make-mutex))
-	     (condv (make-condition-variable))
-	     (exn (make-cell #f)))
-	  (synchronize mutex
-	     (js-worker-push-thunk! th name
-		(lambda ()
-		   (set! response (thunk))
-		   (synchronize mutex
-		      (condition-variable-signal! condv))))
-	     (condition-variable-wait! condv mutex)
-	     response)))
-      (else
-       (let ((response #f)
-	     (mutex (make-mutex))
-	     (condv (make-condition-variable))
-	     (exn (make-cell #f)))
-	  (synchronize mutex
-	     (js-worker-push-thunk! th name
-		(lambda ()
-		   (set! response
-		      (with-handler
-			 (lambda (e)
-			    (cell-set! exn e)
-			    exn)
-			 (thunk)))
-		   (synchronize mutex
-		      (condition-variable-signal! condv))))
-	     (condition-variable-wait! condv mutex)
-	     (if (eq? response exn)
-		 (raise (cell-ref exn))
-		 response))))))
+		  proc::procedure)
+   [assert (proc name) (correct-arity? proc 1)]
+   (with-access::WorkerHopThread th (%this)
+      (cond
+	 ((eq? (current-thread) th)
+	  (proc %this))
+	 (handleerror
+	  (let ((response #f)
+		(mutex (make-mutex))
+		(condv (make-condition-variable))
+		(exn (make-cell #f)))
+	     (synchronize mutex
+		(js-worker-push! th name
+		   (lambda (%this)
+		      (set! response (proc %this))
+		      (synchronize mutex
+			 (condition-variable-signal! condv))))
+		(condition-variable-wait! condv mutex)
+		response)))
+	 (else
+	  (let ((response #f)
+		(mutex (make-mutex))
+		(condv (make-condition-variable))
+		(exn (make-cell #f)))
+	     (synchronize mutex
+		(js-worker-push! th name
+		   (lambda (%this)
+		      (set! response
+			 (with-handler
+			    (lambda (e)
+			       (cell-set! exn e)
+			       exn)
+			    (proc %this)))
+		      (synchronize mutex
+			 (condition-variable-signal! condv))))
+		(condition-variable-wait! condv mutex)
+		(if (eq? response exn)
+		    (raise (cell-ref exn))
+		    response)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-now ...                                                   */
@@ -639,8 +644,8 @@
 	       " repeat=" repeat)
 	    (let ((proc (js-get obj (& "ontimeout") %this)))
 	       (when (js-procedure? proc)
-		  (js-worker-push-thunk! %worker "tick-spinner"
-                     (lambda ()
+		  (js-worker-push! %worker "tick-spinner"
+                     (lambda (%this)
                         (js-call1-jsprocedure %this proc obj status))))))))
 
    (instantiate::UvTimer
@@ -914,8 +919,8 @@
 	 (js-put! err (& "errno") EBADF #f %this)
 	 (js-put! err (& "code")  (js-string->jsstring "EBADF") #f %this)
 	 (if (js-procedure? callback)
-	     (js-worker-push-thunk! %worker name
-		(lambda ()
+	     (js-worker-push! %worker name
+		(lambda (%this)
 		   (js-apply %this callback (js-undefined) (cons err args))
 		   (next-tick %worker %this)))
 	     (js-raise err)))))
@@ -1351,12 +1356,12 @@
    (define (stat-date stat %this)
       (let ((ms (filter-map (lambda (k)
 			       (let ((c (assq k stat)))
-				  (if (pair? c)
-				      (let ((v (cdr c)))
-					 (set-cdr! c
-					    (js-date->jsdate
-					       (seconds->date (cdr c)) %this))
-					 (cons (symbol-append k 'Ms) (* v 1000))))))
+				  (when (pair? c)
+				     (let ((v (cdr c)))
+					(set-cdr! c
+					   (js-date->jsdate
+					      (seconds->date (cdr c)) %this))
+					(cons (symbol-append k 'Ms) (* v 1000))))))
 		   '(mtime atime ctime birthtime))))
 	 (append stat ms)))
 
@@ -1373,18 +1378,19 @@
 ;*---------------------------------------------------------------------*/
 ;*    stat-cb ...                                                      */
 ;*---------------------------------------------------------------------*/
-(define (stat-cb %worker %this callback name obj proto path)
+(define (stat-cb %this callback name obj proto path)
    (lambda (res)
-      (if (integer? res)
-	  (!js-callback2 'stat %worker %this
-	     callback (js-undefined)
-	     (fs-errno-path-exn
-		(format "~a: cannot stat ~a" name obj)
-		res %this path)
-	     #f)
-	  (let ((jsobj (stat->jsobj %this proto res)))
-	     (!js-callback2 'stat %worker %this
-		callback (js-undefined) '() jsobj)))))
+      (with-access::JsGlobalObject %this (worker)
+	 (if (fixnum? res)
+	     (!js-callback2 'stat worker %this
+		callback (js-undefined)
+		(fs-errno-path-exn
+		   (format "~a: cannot stat ~a" name obj)
+		   res %this path)
+		#f)
+	     (let ((jsobj (stat->jsobj %this proto res)))
+		(!js-callback2 'stat worker %this
+		   callback (js-undefined) '() jsobj))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-fstat ...                                                 */
@@ -1395,8 +1401,8 @@
 	  (if (js-procedure? callback)
 	      (uv-fs-fstat file
 		 :loop (worker-loop %worker)
-		 :callback (stat-cb %worker %this callback
-			      "fstat" fd proto #f))
+		 :callback (stat-cb %this callback "fstat"
+			      fd proto #f))
 	      (let ((res (uv-fs-fstat file)))
 		 (if (integer? res)
 		     (js-raise
@@ -1416,7 +1422,7 @@
       ((js-procedure? callback)
        (uv-fs-stat (js-jsstring->string path)
 	  :loop (worker-loop %worker)
-	  :callback (stat-cb %worker %this callback "stat"
+	  :callback (stat-cb %this callback "stat"
 		       (js-jsstring->string path) proto path)))
       (else
        (let ((res (uv-fs-stat (js-jsstring->string path))))
@@ -1440,14 +1446,14 @@
 	  (libuv-vec
 	   (uv-fs-lstat (js-jsstring->string path)
 	      :loop (worker-loop %worker)
-	      :callback (stat-cb %worker %this callback "lstat"
+	      :callback (stat-cb %this callback "lstat"
 			   (js-jsstring->string path) proto path)
 	      :vector ($create-vector
 			 (+fx 4 (vector-length (uv-fs-stat-cb-vector-props))))))
 	  (else
 	   (uv-fs-lstat (js-jsstring->string path)
 	      :loop (worker-loop %worker)
-	      :callback (stat-cb %worker %this callback "lstat"
+	      :callback (stat-cb %this callback "lstat"
 			   (js-jsstring->string path) proto path)))))
       (else
        (cond-expand
@@ -2008,8 +2014,8 @@
       :loop (worker-loop %worker)
       :callback (lambda (status handle)
 		   ;; (tprint "tcp-connect, AfterConnect status=" status)
-		   (js-worker-push-thunk! %worker "tcp-connect"
-		      (lambda ()
+		   (js-worker-push! %worker "tcp-connect"
+		      (lambda (%this)
 			 (callback status handle))))))
 
 ;*---------------------------------------------------------------------*/
@@ -2457,8 +2463,8 @@
 			 0))
 		     (else
 		      (process-fail %this %process r)
-		      (js-worker-push-thunk! %worker "spawn-failure"
-			 (lambda ()
+		      (js-worker-push! %worker "spawn-failure"
+			 (lambda (%this)
 			    (onexit process (fixnum->int64 r) 0)))
 		      0))))))))
 

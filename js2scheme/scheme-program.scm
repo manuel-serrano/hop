@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Sun Nov 27 08:59:19 2022 (serrano)                */
-;*    Copyright   :  2018-22 Manuel Serrano                            */
+;*    Last change :  Mon Feb 13 17:13:30 2023 (serrano)                */
+;*    Copyright   :  2018-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
 ;*=====================================================================*/
@@ -324,7 +324,7 @@
       (let* ((jsmod (js-module/main this ctx))
 	     (jsthis `(with-access::JsGlobalObject %this (js-object)
 			 (js-new0 %this js-object)))
-	     (thunk `(lambda ()
+	     (thunk `(lambda (%this)
 			(define-tls %this %t)
 			(define-tls %module %m)
 			(let* ((_ (set! __js_strings ,(j2s-jsstring-init this)))
@@ -394,7 +394,7 @@
 	      (multiple-value-bind (%worker %t %m)
 		 (js-main-worker! ,name ,(absolute path) #f
 		    nodejs-new-global-object nodejs-new-module)
-		 (js-worker-push-thunk! %worker "nodejs-toplevel"
+		 (js-worker-push! %worker "nodejs-toplevel"
 		    ,(if (context-get ctx :function-nice-name #f)
 			 (let ((id (string->symbol "#main")))
 			    `(let ((,id ,thunk))

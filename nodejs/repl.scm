@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct  6 08:22:43 2013                          */
-;*    Last change :  Thu Nov 24 20:58:00 2022 (serrano)                */
-;*    Copyright   :  2013-22 Manuel Serrano                            */
+;*    Last change :  Mon Feb 13 17:25:14 2023 (serrano)                */
+;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS like REPL                                                 */
 ;*=====================================================================*/
@@ -83,7 +83,7 @@
 			      (if (null? exp)
 				  (quit)
 				  (let ((v (js-worker-exec %worker "repl" #f
-					      (lambda ()
+					      (lambda (%this)
 						 (with-handler
 						    repl-error-handler
 						    (let ((v ((eval exp) %this %this %this module)))

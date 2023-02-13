@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Wed Jan 11 02:02:41 2023 (serrano)                */
+;*    Last change :  Mon Feb 13 17:23:31 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -179,7 +179,7 @@
 	   (js-apply% ::JsGlobalObject ::JsProcedure ::procedure obj ::pair-nil)
 	   (js-apply ::JsGlobalObject fun::obj this ::pair-nil)
 
-	   (js-service/debug ::obj ::obj ::procedure)
+	   (js-service/debug ::obj ::obj ::procedure ::obj)
 
 	   (js-ordinary-instanceof?::bool ::JsGlobalObject v f)
 	   (js-object-function-instanceof?::bool ::JsGlobalObject ::JsObject ::JsFunction)
@@ -1698,10 +1698,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-service/debug ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (js-service/debug name loc thunk)
+(define (js-service/debug name loc proc %this)
    (let ((env (current-dynamic-env)))
       ($env-push-trace env name loc)
-      (let ((aux (thunk)))
+      (let ((aux (proc %this)))
 	 ($env-pop-trace env)
 	 aux)))
 
@@ -2526,7 +2526,7 @@
 ;*---------------------------------------------------------------------*/
 (define (%js-eval-hss ip::input-port %this %worker scope)
    (js-worker-exec %worker "eval-hss" #t
-      (lambda ()
+      (lambda (%this)
 	 (let ((v (%js-eval ip 'repl %this (js-get scope (& "this") %this) scope)))
 	    (if (js-jsstring? v)
 		(js-jsstring->string v)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat May 17 06:10:40 2014                          */
-;*    Last change :  Mon Feb 13 08:47:09 2023 (serrano)                */
+;*    Last change :  Mon Feb 13 17:21:10 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    File system bindings                                             */
@@ -249,14 +249,14 @@
 			      (js-put! obj (& "code") (js-string->jsstring "ENOTDIR") #f %this)
 			      obj))))
 		(if (js-procedure? cb)
-		    (js-worker-push-thunk! %worker "readdir"
-		       (lambda ()
+		    (js-worker-push! %worker "readdir"
+		       (lambda (%this)
 			  (js-call2-jsprocedure %this cb this exn (js-undefined))))
 		    (js-raise exn)))
 	     (let ((r (js-vector->jsarray (vector-map! js-string->jsstring v) %this)))
 		(if (js-procedure? cb)
-		    (js-worker-push-thunk! %worker "readdir"
-		       (lambda ()
+		    (js-worker-push! %worker "readdir"
+		       (lambda (%this)
 			  (js-call2-jsprocedure %this cb this #f r)))
 		    r)))))
    

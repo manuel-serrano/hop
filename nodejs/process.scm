@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Fri Nov 11 08:39:24 2022 (serrano)                */
-;*    Copyright   :  2013-22 Manuel Serrano                            */
+;*    Last change :  Mon Feb 13 14:11:26 2023 (serrano)                */
+;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
 ;*=====================================================================*/
@@ -143,8 +143,8 @@
 			 (if (eq? (car c) 'SIGTERM)
 			     (hop-sigterm-handler-set!
 				(lambda (n)
-				   (js-worker-push-thunk! %worker "SIGTERM"
-				      (lambda ()
+				   (js-worker-push! %worker "SIGTERM"
+				      (lambda (%this)
 					 (js-call0 %this proc this)))
 				   '(js-worker-tick %worker)))
 			     (signal (cdr c)
@@ -281,7 +281,7 @@
 	    (flush-output-port port))
 
 	 (define (domain-call this)
-	    (lambda (callback)
+	    (lambda (callback %this)
 	       ;; this is a transcription of the C++ nodejs MakeDomainCall
 	       ;; function (see node.cc)
 	       (let ((domainv (js-get this (& "domain") %this)))
@@ -290,11 +290,11 @@
 			 (unless (js-get domainv (& "_disposed") %this)
 			    (let ((enter (js-get domainv (& "enter") %this)))
 			       (js-call0 %this enter domainv)))
-			 (let ((ret (callback)))
+			 (let ((ret (callback %this)))
 			    (let ((exit (js-get domainv (& "exit") %this)))
 			       (js-call0 %this exit domainv)
 			       ret)))
-		      (callback)))))
+		      (callback %this)))))
 
 	 (define need-tick-cb #f)
 	 
@@ -308,10 +308,10 @@
 	       (unless tick-from-spinner
 		  (set! tick-from-spinner
 		     (js-get proc (& "_tickFromSpinner") %this)))
-	       (with-access::WorkerHopThread %worker (call state)
+	       (with-access::WorkerHopThread %worker (state)
 		  (if (eq? state 'error)
-		      (js-worker-push-thunk! %worker "spin"
-			 (lambda ()
+		      (js-worker-push! %worker "spin"
+			 (lambda (%this)
 			    (js-call0 %this tick-from-spinner (js-undefined))))
 		      (js-call0 %this tick-from-spinner (js-undefined))))))
 

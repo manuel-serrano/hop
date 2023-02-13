@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Thu Jan 12 01:58:07 2023 (serrano)                */
+;*    Last change :  Mon Feb 13 17:28:27 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
@@ -89,9 +89,8 @@
 ;*---------------------------------------------------------------------*/
 (define-method (hop->javascript o::JsArguments op compile isexpr ctx)
    (js-with-context ctx "hop->javascript"
-      (lambda ()
-	 (let* ((%this ctx)
-		(len::uint32 (js-touint32 (js-get o (& "length") %this) %this)))
+      (lambda (%this)
+	 (let ((len::uint32 (js-touint32 (js-get o (& "length") %this) %this)))
 	    (if (=u32 len (fixnum->uint32 0))
 		(display "sc_vector2array([])" op)
 		(begin

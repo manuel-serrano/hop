@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Tue Oct 25 20:35:05 2022 (serrano)                */
-;*    Copyright   :  2013-22 Manuel Serrano                            */
+;*    Last change :  Mon Feb 13 17:22:53 2023 (serrano)                */
+;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
 ;*=====================================================================*/
@@ -185,10 +185,11 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-with-context ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (js-with-context ctx::obj ctxname::bstring thunk::procedure)
+(define (js-with-context ctx::obj ctxname::bstring proc::procedure)
+   [assert (proc) (correct-arity? proc 1)]
    (if (isa? ctx JsGlobalObject)
        (with-access::JsGlobalObject ctx (worker name)
-	  (js-worker-exec worker name #t thunk))
+	  (js-worker-exec worker name #t proc))
        (error ctxname "Not a JavaScript context" ctx)))
 
 ;*---------------------------------------------------------------------*/

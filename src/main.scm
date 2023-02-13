@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Wed Oct  5 07:52:22 2022 (serrano)                */
-;*    Copyright   :  2004-22 Manuel Serrano                            */
+;*    Last change :  Mon Feb 13 17:25:57 2023 (serrano)                */
+;*    Copyright   :  2004-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
 ;*=====================================================================*/
@@ -248,23 +248,23 @@
       (hop-loader-add! "js"
 	 (lambda (path . test)
 	    (js-worker-exec %worker "hop-loader" #t
-	       (lambda ()
+	       (lambda (%this)
 		  (nodejs-load path path %global %module %worker :commonjs-export #t)))))
       (hop-loader-add! "mjs"
 	 (lambda (path . test)
 	    (js-worker-exec %worker "hop-loader" #t
-	       (lambda ()
+	       (lambda (%this)
 		  (nodejs-load path path %global %module %worker :commonjs-export #t)))))
       (hop-loader-add! "ast.json"
 	 (lambda (path . test)
 	    (js-worker-exec %worker "hop-loader" #t
-	       (lambda ()
+	       (lambda (%this)
 		  (nodejs-load path path %global %module %worker :commonjs-export #t)))))
       ;; ts loader
       (hop-loader-add! "ts"
 	 (lambda (path . test)
 	    (js-worker-exec %worker "hop-loader" #t
-	       (lambda ()
+	       (lambda (%this)
 		  (nodejs-load path path %global %module %worker :lang "ts" :commonjs-export #t)))))
       ;; profiling
       (when (hop-profile)
@@ -290,8 +290,8 @@
    (javascript-init-hss %worker %global)
    ;; push user expressions
    (when (pair? exprs)
-      (js-worker-push-thunk! %worker "cmdline"
-	 (lambda ()
+      (js-worker-push! %worker "cmdline"
+	 (lambda (%this)
 	    (for-each (lambda (expr)
 			 (call-with-input-string (string-append expr "\n")
 			    (lambda (ip)
@@ -299,15 +299,15 @@
 				  (js-undefined) %global))))
 	       exprs))))
    ;; close user registration
-   (js-worker-push-thunk! %worker "jsinit"
-      (lambda ()
+   (js-worker-push! %worker "jsinit"
+      (lambda (%this)
 	 (synchronize jsmutex
 	    (unless jsinit
 	       (condition-variable-wait! jscondv jsmutex)))))
    ;; start the JS repl loop
    (when (eq? (hop-enable-repl) 'js)
-      (js-worker-push-thunk! %worker "repl"
-	 (lambda ()
+      (js-worker-push! %worker "repl"
+	 (lambda (%this)
 	    (hopscript-repl (hop-scheduler) %global %worker))))
    ;; start the javascript loop
    (with-access::WorkerHopThread %worker (mutex condv module-cache)
@@ -333,8 +333,8 @@
       ;; set the preferred language
       (hop-preferred-language-set! "hopscript")
       ;; force the module initialization
-      (js-worker-push-thunk! %worker "rc"
-	 (lambda ()
+      (js-worker-push! %worker "rc"
+	 (lambda (%this)
 	    (let ((path (if (and (>fx (string-length path) 0)
 				 (char=? (string-ref path 0) (file-separator)))
 			    path
@@ -355,8 +355,8 @@
 	  (let ((path (string-append (prefix (hop-rc-file)) ".js")))
 	     (if (file-exists? path)
 		 (load-rc path)
-		 (js-worker-push-thunk! %worker "init"
-		    (lambda ()
+		 (js-worker-push! %worker "init"
+		    (lambda (%this)
 		       (synchronize rcmutex
 			  (condition-variable-broadcast! rccondv)))))))))
 
@@ -394,8 +394,8 @@
 		       :hopscript-header #f
 		       :filename "javascript-init-hss")))))
       ;; force the module initialization
-      (js-worker-push-thunk! %worker "hss"
-	 (lambda ()
+      (js-worker-push! %worker "hss"
+	 (lambda (%this)
 	    (let ((mod (nodejs-new-module "hss" "hss" %worker %global))
 		  (scope (nodejs-new-scope-object %global)))
 	       (js-put! scope (& "module") mod #f scope)
@@ -405,7 +405,7 @@
 	       (hop-hss-foreign-eval-set!
 		  (lambda (ip)
 		     (js-worker-exec %worker "hss" #t
-			(lambda ()
+			(lambda (%this)
 			   (js-put! mod (& "filename")
 			      (js-string->jsstring (input-port-name ip)) #f
 			      %global)
@@ -498,22 +498,22 @@
 	  ;; javascript
 	  (when %worker
 	     (with-access::WorkerHopThread %worker (%this prerun)
-		(js-worker-push-thunk! %worker "nodejs-load"
-		   (lambda ()
+		(js-worker-push! %worker "nodejs-load"
+		   (lambda (%this)
 		      (nodejs-load path path %global %module %worker :commonjs-export #t))))))
 	 ((string-suffix? ".mjs" path)
 	  ;; javascript
 	  (when %worker
 	     (with-access::WorkerHopThread %worker (%this prerun)
-		(js-worker-push-thunk! %worker "nodejs-load"
-		   (lambda ()
+		(js-worker-push! %worker "nodejs-load"
+		   (lambda (%this)
 		      (nodejs-load path path %global %module %worker :commonjs-export #f))))))
 	 ((string-suffix? ".ts" path)
 	  ;; typescript
 	  (when %worker
 	     (with-access::WorkerHopThread %worker (%this prerun)
-		(js-worker-push-thunk! %worker "nodejs-load"
-		   (lambda ()
+		(js-worker-push! %worker "nodejs-load"
+		   (lambda (%this)
 		      (nodejs-load path path %global %module %worker :lang "ts" :commonjs-export #t))))))
 	 ((string=? (basename path) "package.json")
 	  (load-package path))
@@ -552,7 +552,7 @@
 		     (js-main-worker! "repl" (pwd) #f
 			nodejs-new-global-object nodejs-new-module)
 		     (js-worker-exec %worker "repl" #t
-			(lambda ()
+			(lambda (%this)
 			   (repljs %global %worker))))))
 	   (repljs %global %worker))
        (error "hop-repl"

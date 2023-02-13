@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Mon Sep 26 09:09:49 2022 (serrano)                */
-;*    Copyright   :  2013-22 Manuel Serrano                            */
+;*    Last change :  Mon Feb 13 14:11:52 2023 (serrano)                */
+;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
 ;*    -------------------------------------------------------------    */
@@ -123,7 +123,7 @@
 	      (parent::obj (default #f))
 	      (subworkers::pair-nil (default '()))
 	      (uvhandles::vector (default (make-vector 32)))
-	      (call::procedure (default (lambda (cb) (cb))))
+	      (call::procedure (default (lambda (cb %this) (cb %this))))
 	      (handlers::pair-nil (default '()))
 	      (services::pair-nil (default '()))
 	      (%exn (default #unspecified)))

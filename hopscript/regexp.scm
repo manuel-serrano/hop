@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Tue Jan 17 21:09:19 2023 (serrano)                */
+;*    Last change :  Mon Feb 13 17:26:19 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript regexps                      */
@@ -176,17 +176,16 @@
 ;*---------------------------------------------------------------------*/
 (define-method (hop->javascript o::JsRegExp op compile isexpr ctx)
    (js-with-context ctx "hop->javascript"
-      (lambda ()
-	 (let ((%this ctx))
-	    (display "/" op)
-	    (display (js-get o (& "source") %this) op)
-	    (display "/" op)
-	    (when (js-totest (js-get o (& "global") %this))
-	       (display "g" op))
-	    (when (js-totest (js-get o (& "ignoreCase") %this))
-	       (display "i" op))
-	    (when (js-totest (js-get o (& "multiline") %this))
-	       (display "m" op))))))
+      (lambda (%this)
+	 (display "/" op)
+	 (display (js-get o (& "source") %this) op)
+	 (display "/" op)
+	 (when (js-totest (js-get o (& "global") %this))
+	    (display "g" op))
+	 (when (js-totest (js-get o (& "ignoreCase") %this))
+	    (display "i" op))
+	 (when (js-totest (js-get o (& "multiline") %this))
+	    (display "m" op)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-init-regexp! ...                                              */

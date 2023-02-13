@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Thu Jan 12 17:00:41 2023 (serrano)                */
+;*    Last change :  Mon Feb 13 17:24:45 2023 (serrano)                */
 ;*    Copyright   :  2017-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -863,7 +863,7 @@
 	    (let ((imp `(lambda ,(cons 'this args)
 			   (js-worker-exec @worker ,(symbol->string scmid)
 			      ,(service-debug name loc
-				  `(lambda ()
+				  `(lambda (%this)
 				      ,(service-body this)))))))
 	       (epairify-deep loc
 		  `(lambda (this . args)
@@ -906,7 +906,7 @@
 	       (let ((imp `(lambda (this #!key ,@(map init->formal inits))
 			      (js-worker-exec @worker ,(symbol->string scmid)
 				 ,(service-debug name loc
-				     `(lambda ()
+				     `(lambda (%this)
 					 ,(service-body this)))))))
 		  (epairify-deep loc
 		     `(lambda (this . args)
