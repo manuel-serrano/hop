@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Sat Feb 11 06:34:24 2023 (serrano)                */
+;*    Last change :  Mon Feb 13 07:18:16 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -1154,21 +1154,6 @@
 	  (uv-fs-copyfile bsrc bdest bmode))))
 
 ;*---------------------------------------------------------------------*/
-;*    stat-date ...                                                    */
-;*---------------------------------------------------------------------*/
-(define (stat-date stat %this)
-   (let ((ms (filter-map (lambda (k)
-			    (let ((c (assq k stat)))
-			       (when (pair? c)
-				  (let ((v (cdr c)))
-				     (set-cdr! c
-					(js-date->jsdate
-					   (seconds->date (cdr c)) %this))
-				     (cons (symbol-append k 'Ms) (* v 1000))))))
-		'(mtime atime ctime))))
-      (append stat ms)))
-
-;*---------------------------------------------------------------------*/
 ;*    *stat-cmap* ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define *stat-cmap* #f)
@@ -1178,54 +1163,121 @@
 (define *stat-atime-accessor* #f)
 (define *stat-birthtime-accessor* #f)
 
+(define *libuv-ctime-offset* -1)
+(define *libuv-mtime-offset* -1)
+(define *libuv-atime-offset* -1)
+(define *libuv-birthtime-offset* -1)
+(define *libuv-ctime-ns-offset* -1)
+(define *libuv-mtime-ns-offset* -1)
+(define *libuv-atime-ns-offset* -1)
+(define *libuv-birthtime-ns-offset* -1)
+
+;*---------------------------------------------------------------------*/
+;*    stat-field-name ...                                              */
+;*---------------------------------------------------------------------*/
+(define (stat-field-name s)
+   (cond
+      ((string=? s "ctime") "#ctime")
+      ((string=? s "mtime") "#mtime")
+      ((string=? s "atime") "#atime")
+      ((string=? s "birthtime") "#birthtime")
+      ((string=? s "ctime-ns") "ctimeMs")
+      ((string=? s "mtime-ns") "mtimeMs")
+      ((string=? s "atime-ns") "atimeMs")
+      ((string=? s "birthtime-ns") "birthtimeMs")
+      (else s)))
+
 ;*---------------------------------------------------------------------*/
 ;*    stat-cmap ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (stat-cmap)
+   
+   (define (js-stat-time-getter obj owner::JsObject propname %this)
+      (let* ((idx (cond
+		     ((eq? propname (& "ctime")) *libuv-ctime-offset*)
+		     ((eq? propname (& "mtime")) *libuv-mtime-offset*)
+		     ((eq? propname (& "atime")) *libuv-atime-offset*)
+		     ((eq? propname (& "birthtime")) *libuv-birthtime-offset*)
+		     (else (js-raise-type-error %this
+			      "Illegal property name" propname))))
+	     (ref (js-object-ref obj idx)))
+	 (if (number? ref)
+	     (let ((val (js-date->jsdate
+			   (cond
+			      ((fixnum? ref)
+			       (seconds->date (fixnum->elong ref)))
+			      ((int64? ref)
+			       (seconds->date (int64->elong ref)))
+			      (else
+			       (seconds->date ref)))
+			   %this)))
+		(js-object-set! obj idx val)
+		val)
+	     ref)))
+   
    (if *stat-cmap*
-       *stat-cmap*
-       (let ((cmap (js-names->cmap
-		      (vector-append
-			 (vector-map js-string->name
-			    (uv-fs-stat-cb-vector-props))
-			 (vector
-			    (& "ctimeMs")
-			    (& "mtimeMs")
-			    (& "atimeMs")
-			    (& "birthtimeMs"))))))
-	  (set! *stat-cmap* cmap)
-	  (set! *stat-ctime-accessor*
-	     (instantiate::JsWrapperDescriptor
-		(name (& "ctime"))
-		(%get js-stat-time-get)
-		(%set list)
-		(enumerable #f)
-		(configurable #f)))
-	  (set! *stat-mtime-accessor*
-	     (instantiate::JsWrapperDescriptor
-		(name (& "mtime"))
-		(%get js-stat-time-get)
-		(%set list)
-		(enumerable #f)
-		(configurable #f)))
-	  (set! *stat-atime-accessor*
-	     (instantiate::JsWrapperDescriptor
-		(name (& "atime"))
-		(%get js-stat-time-get)
-		(%set list)
-		(enumerable #f)
-		(configurable #f)))
-	  (set! *stat-birthtime-accessor*
-	     (instantiate::JsWrapperDescriptor
-		(name (& "birthtime"))
-		(%get js-stat-time-get)
-		(%set list)
-		(enumerable #f)
-		(configurable #f)))
-	  (set! *stat-cmap-noinline*
-	     (duplicate::JsConstructMap *stat-cmap*
-		(%id (gencmapid))))
-	  cmap)))
+      *stat-cmap*
+      (let ((cmap (js-strings->cmap
+		     (vector-append
+			(vector-map stat-field-name
+			   (uv-fs-stat-cb-vector-props))
+			'#("ctime" "mtime" "atime""birthtime")))))
+	 (set! *stat-cmap* cmap)
+	 ;; stat offsets
+	 (let loop ((i (-fx (vector-length (uv-fs-stat-cb-vector-props)) 1)))
+	    (when (>=fx i 0)
+	       (let ((s (vector-ref (uv-fs-stat-cb-vector-props) i)))
+		  (cond
+		     ((string=? s "ctime")
+		      (set! *libuv-ctime-offset* i))
+		     ((string=? s "mtime")
+		      (set! *libuv-mtime-offset* i))
+		     ((string=? s "atime")
+		      (set! *libuv-atime-offset* i))
+		     ((string=? s "birthtime")
+		      (set! *libuv-birthtime-offset* i))
+		     ((string=? s "ctime-ns")
+		      (set! *libuv-ctime-ns-offset* i))
+		     ((string=? s "mtime-ns")
+		      (set! *libuv-mtime-ns-offset* i))
+		     ((string=? s "atime-ns")
+		      (set! *libuv-atime-ns-offset* i))
+		     ((string=? s "birthtime-ns")
+		      (set! *libuv-birthtime-ns-offset* i)))
+		  (loop (-fx i 1)))))
+	 ;; virtual getters
+	 (set! *stat-ctime-accessor*
+	    (instantiate::JsWrapperDescriptor
+	       (name (& "ctime"))
+	       (%get js-stat-time-getter)
+	       (%set list)
+	       (enumerable #t)
+	       (configurable #f)))
+	 (set! *stat-mtime-accessor*
+	    (instantiate::JsWrapperDescriptor
+	       (name (& "mtime"))
+	       (%get js-stat-time-getter)
+	       (%set list)
+	       (enumerable #t)
+	       (configurable #f)))
+	 (set! *stat-atime-accessor*
+	    (instantiate::JsWrapperDescriptor
+	       (name (& "atime"))
+	       (%get js-stat-time-getter)
+	       (%set list)
+	       (enumerable #t)
+	       (configurable #f)))
+	 (set! *stat-birthtime-accessor*
+	    (instantiate::JsWrapperDescriptor
+	       (name (& "birthtime"))
+	       (%get js-stat-time-getter)
+	       (%set list)
+	       (enumerable #t)
+	       (configurable #f)))
+	 (set! *stat-cmap-noinline*
+	    (duplicate::JsConstructMap *stat-cmap*
+	       (%id (gencmapid))))
+	 cmap)))
 
 ;*---------------------------------------------------------------------*/
 ;*    stat-cmap-noinline ...                                           */
@@ -1238,60 +1290,48 @@
 	  *stat-cmap-noinline*)))
 
 ;*---------------------------------------------------------------------*/
-;*    js-stat-time-get ...                                             */
-;*    -------------------------------------------------------------    */
-;*    Use property accessor for lazy JS date objects allocation.       */
-;*---------------------------------------------------------------------*/
-(define (js-stat-time-get obj owner::JsObject propname %this)
-   (let* ((base (+fx (vector-length (uv-fs-stat-cb-vector-props)) 4))
-	  (idx (cond
-		  ((eq? propname (& "ctime")) 0)
-		  ((eq? propname (& "mtime")) 1)
-		  ((eq? propname (& "atime")) 2)
-		  ((eq? propname (& "birthtime")) 3)
-		  (else 4)))
-	  (ref (js-object-ref obj (+fx base idx))))
-      (if (number? ref)
-	  (let ((val (js-date->jsdate
-			(cond
-			   ((fixnum? ref) (seconds->date (fixnum->elong ref)))
-			   ((int64? ref) (seconds->date (int64->elong ref)))
-			   (else (seconds->date ref)))
-			%this)))
-	     (js-object-set! obj (+fx base idx) val)
-	     val)
-	  ref)))
-
-;*---------------------------------------------------------------------*/
-;*    stat->jsobj ...                                                  */
+;*    ms ...                                                           */
 ;*---------------------------------------------------------------------*/
 (define-macro (ms val)
    (cond-expand
       ((or bint61 bint64) `(fixnum->flonum ,val))
       (else `(elong->flonum ,val))))
 
-(define-macro (ms64 val)
+;*---------------------------------------------------------------------*/
+;*    ns ...                                                           */
+;*---------------------------------------------------------------------*/
+(define (ns sec nsec)
    (cond-expand
-      ((or bint61 bint64) `(fixnum->flonum ,val))
-      (else `(int64->flonum ,val))))
-
+      ((or bint61 bint64)
+       (+fl (fixnum->flonum (*fx 1000 sec))
+	  (/fl (fixnum->flonum nsec) 1000000.)))
+      (else
+       (+fl (*fl 1000. (elong->flonum sec))
+	  (/fl (elong->flonum nec) 1000000.)))))
+   
+;*---------------------------------------------------------------------*/
+;*    stat->jsobj! ...                                                 */
+;*---------------------------------------------------------------------*/
 (define (stat->jsobj! %this stat::JsObject vec::vector)
-   (let ((i (vector-length (uv-fs-stat-cb-vector-props))))
-      (vector-set! vec i
-	 (*fl 1000. (ms (vector-ref vec 0))))
-      (vector-set! vec (+fx i 1)
-	 (*fl 1000. (ms (vector-ref vec 1))))
-      (vector-set! vec (+fx i 2)
-	 (*fl 1000. (ms (vector-ref vec 2))))
-      (vector-set! vec (+fx i 3)
-	 (*fl 1000. (ms64 (vector-ref vec 3))))
-      ;; move the date value at the end of the vector
-      (vector-copy! vec (+fx i 4) vec 0 4)
+   (let ((l (vector-length (uv-fs-stat-cb-vector-props))))
       ;; lazy date values
-      (vector-set! vec 0 *stat-ctime-accessor*)
-      (vector-set! vec 1 *stat-mtime-accessor*)
-      (vector-set! vec 2 *stat-atime-accessor*)
-      (vector-set! vec 3 *stat-birthtime-accessor*)
+      (vector-set! vec (+fx l 0) *stat-ctime-accessor*)
+      (vector-set! vec (+fx l 1) *stat-mtime-accessor*)
+      (vector-set! vec (+fx l 2) *stat-atime-accessor*)
+      (vector-set! vec (+fx l 3) *stat-birthtime-accessor*)
+      ;; MS dates
+      (vector-set! vec *libuv-ctime-ns-offset*
+	 (ns (vector-ref vec *libuv-ctime-offset*)
+	    (vector-ref vec *libuv-ctime-ns-offset*)))
+      (vector-set! vec *libuv-mtime-ns-offset*
+	 (ns (vector-ref vec *libuv-mtime-offset*)
+	    (vector-ref vec *libuv-mtime-ns-offset*)))
+      (vector-set! vec *libuv-atime-ns-offset*
+	 (ns (vector-ref vec *libuv-atime-offset*)
+	    (vector-ref vec *libuv-atime-ns-offset*)))
+      (vector-set! vec *libuv-birthtime-ns-offset*
+	 (ns (vector-ref vec *libuv-birthtime-offset*)
+	    (vector-ref vec *libuv-birthtime-ns-offset*)))
       ;; normal values
       (cond-expand
 	 ((or bint61 bint64)
@@ -1303,16 +1343,32 @@
 		(loop (-fx i 1))))))
       stat))
 
+;*---------------------------------------------------------------------*/
+;*    stat->jsobj ...                                                  */
+;*---------------------------------------------------------------------*/
 (define (stat->jsobj %this proto res)
+   
+   (define (stat-date stat %this)
+      (let ((ms (filter-map (lambda (k)
+			       (let ((c (assq k stat)))
+				  (if (pair? c)
+				      (let ((v (cdr c)))
+					 (set-cdr! c
+					    (js-date->jsdate
+					       (seconds->date (cdr c)) %this))
+					 (cons (symbol-append k 'Ms) (* v 1000))))))
+		   '(mtime atime ctime birthtime))))
+	 (append stat ms)))
+
    (if (vector? res)
-       (let ((stat (instantiateJsObject
-		      (cmap (stat-cmap-noinline))
-		      (__proto__ proto)
-		      (elements res))))
-	  (stat->jsobj! %this stat res))
-       (let ((stat (js-alist->jsobject (stat-date res %this) %this)))
-	  (js-object-proto-set! stat proto)
-	  stat)))
+      (let ((stat (instantiateJsObject
+		     (cmap (stat-cmap-noinline))
+		     (__proto__ proto)
+		     (elements res))))
+	 (stat->jsobj! %this stat res))
+      (let ((stat (js-alist->jsobject (stat-date res %this) %this)))
+	 (js-object-proto-set! stat proto)
+	 stat)))
 
 ;*---------------------------------------------------------------------*/
 ;*    stat-cb ...                                                      */
@@ -1387,7 +1443,7 @@
 	      :callback (stat-cb %worker %this callback "lstat"
 			   (js-jsstring->string path) proto path)
 	      :vector ($create-vector
-			 (+fx 8 (vector-length (uv-fs-stat-cb-vector-props))))))
+			 (+fx 4 (vector-length (uv-fs-stat-cb-vector-props))))))
 	  (else
 	   (uv-fs-lstat (js-jsstring->string path)
 	      :loop (worker-loop %worker)
@@ -1395,19 +1451,9 @@
 			   (js-jsstring->string path) proto path)))))
       (else
        (cond-expand
-	  (libuv-vecXXX
-           (let ((res (uv-fs-lstat (js-jsstring->string path)
-                         :vector ($create-vector
-                                    (+fx 8 (vector-length (uv-fs-stat-cb-vector-props)))))))
-              (if (integer? res)
-                  (js-raise
-                     (fs-errno-exn (format "lstat: cannot stat ~a -- ~~s"
-                                      (js-jsstring->string path))
-                        res %this))
-                  (stat->jsobj %this proto res))))
 	  (libuv-vec
 	   (let ((obj (js-make-jsobject
-			 (+fx 8 (vector-length (uv-fs-stat-cb-vector-props)))
+			 (+fx 4 (vector-length (uv-fs-stat-cb-vector-props)))
 			 (stat-cmap)
 			 proto)))
 	      (let ((res (uv-fs-lstat (js-jsstring->string path)
