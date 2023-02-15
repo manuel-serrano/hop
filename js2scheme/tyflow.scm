@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Sun Mar  6 16:55:10 2022 (serrano)                */
-;*    Copyright   :  2016-22 Manuel Serrano                            */
+;*    Last change :  Wed Feb 15 12:31:55 2023 (serrano)                */
+;*    Copyright   :  2016-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
 ;*    -------------------------------------------------------------    */
@@ -1492,6 +1492,7 @@
 		((WeakMap) 'weakmap)
 		((Set) 'set)
 		((WeakSet) 'weakset)
+		((Promise) 'promise)
 		(else 'object))))
 	 ((isa? clazz J2SRef)
 	  (with-access::J2SRef clazz (decl)
@@ -1510,6 +1511,7 @@
 			  ((WeakMap) 'weakmap)
 			  ((Set) 'set)
 			  ((WeakSet) 'weakset)
+			  ((Promise) 'promise)
 			  (else 'object)))))
 		((isa? decl J2SDeclClass)
 		 (with-access::J2SDeclClass decl (val)
@@ -1527,7 +1529,32 @@
 	    (node-type clazz env ctx)
 	    (multiple-value-bind (_ env bk)
 	       (node-type-call clazz protocol 'object args env ctx)
-	       (expr-type-add! this env ctx (class-type clazz) bk))))))
+	       (let ((tyz (class-type clazz)))
+		  (when (eq? tyz 'promise)
+		     (node-type-new-promise this env ctx))
+		  (expr-type-add! this env ctx tyz bk)))))))
+
+;*---------------------------------------------------------------------*/
+;*    node-type-new-promise ...                                        */
+;*---------------------------------------------------------------------*/
+(define (node-type-new-promise this::J2SNew env::pair-nil ctx::pair)
+   (with-access::J2SNew this (args loc)
+      (when (and (pair? args) (null? (cdr args)) (isa? (car args) J2SFun))
+	 (with-access::J2SFun (car args) (params)
+	    (when (=fx (length params) 2)
+	       ;; this is a form: 
+	       ;;    new Promise((res, rej) => ...)
+	       ;; res and rej are two special values created by the rts
+	       (let ((res (car params))
+		     (rej (cadr params)))
+		  (unless (decl-usage-has? res '(assig))
+		     (with-access::J2SDecl res (ctype)
+			(set! ctype 'arrow)
+			(decl-vtype-set! res 'arrow ctx)))
+		  (unless (decl-usage-has? rej '(assig))
+		     (with-access::J2SDecl rej (ctype)
+			(set! ctype 'arrow)
+			(decl-vtype-set! rej 'arrow ctx)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SUnary ...                                         */

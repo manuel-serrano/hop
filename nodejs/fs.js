@@ -108,6 +108,20 @@ function makeCallback(cb) {
   };
 }
 
+// MS 15feb2023, from node v16.13.0
+function makeStatsCallback(cb) {
+  if (typeof cb !== 'function') {
+    return rethrow();
+  }
+   
+  return cb;
+}
+
+// MS 15feb2023, from node v16.13.0
+function maybeReaddirCallback(cb) {
+  return cb;
+}
+
 function assertEncoding(encoding) {
   if (encoding && !Buffer.isEncoding(encoding)) {
     throw new Error('Unknown encoding: ' + encoding);
@@ -672,7 +686,7 @@ fs.mkdirSync = function(path, mode) {
 
 // ms (18 Jan 2023) to accomodate recent node api 
 fs.readdir = function(path, options, callback) {
-  var callback = maybeCallback(arguments[arguments.length - 1]);
+  callback = maybeReaddirCallback(typeof options === 'function' ? options : callback);
   if (!nullCheck(path, callback)) return;
   
   if (typeof options === 'function' || !options) {
@@ -694,17 +708,17 @@ fs.readdirSync = function(path, options) {
 };
 
 fs.fstat = function(fd, callback) {
-  binding.fstat(fd, makeCallback(callback));
+  binding.fstat(fd, makeStatsCallback(callback));
 };
 
 fs.lstat = function(path, callback) {
-  callback = makeCallback(callback);
+  callback = makeStatsCallback(callback);
   if (!nullCheck(path, callback)) return;
   binding.lstat(pathModule._makeLong(path), callback);
 };
 
 fs.stat = function(path, callback) {
-  callback = makeCallback(callback);
+  callback = makeStatsCallback(callback);
   if (!nullCheck(path, callback)) return;
   binding.stat(pathModule._makeLong(path), callback);
 };

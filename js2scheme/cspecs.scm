@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Apr  2 19:46:13 2017                          */
-;*    Last change :  Sun Oct 17 10:58:13 2021 (serrano)                */
+;*    Last change :  Wed Feb 15 11:50:08 2023 (serrano)                */
 ;*    Copyright   :  2017-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Annotate property accesses with cache level information          */
@@ -60,7 +60,7 @@
       (let ((csdef (if (config-get conf :optim-size)
 		       ;; small code
 		       (cspecs
-			  '(imap)
+			  '(imap cmap)
 			  '(imap nmap)
 			  '(imap cmap)
 			  '(emap)

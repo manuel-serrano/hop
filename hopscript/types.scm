@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Tue Feb 14 09:15:25 2023 (serrano)                */
+;*    Last change :  Wed Feb 15 08:44:59 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -451,6 +451,7 @@
 	      (js-reference-error::JsFunction (default (class-nil JsFunction)))
 	      (js-worker::JsFunction (default (class-nil JsFunction)))
 	      (js-promise (default (class-nil JsFunction)))
+	      (js-promise-prototype::JsPromise (default (class-nil JsPromise)))
 	      (js-proxy (default (class-nil JsFunction)))
 	      (js-worker-prototype::JsWorker (default (class-nil JsWorker)))
 	      (js-generator-prototype::JsObject (default (class-nil JsObject)))
@@ -496,6 +497,7 @@
 	      (js-json-pcache::vector (default '#()))
 	      (js-proxy-pcache::vector (default '#()))
 	      (js-generator-pcache::vector (default '#()))
+	      (js-promise-pcache::vector (default '#()))
 	      ;; cmaps
 	      (js-initial-cmap (default (class-nil JsConstructMap)))
 	      (js-arguments-cmap (default (class-nil JsConstructMap)))
@@ -514,6 +516,7 @@
 	      (js-regexp-exec-cmap (default (class-nil JsConstructMap)))
 	      (js-scope-cmap (default (class-nil JsConstructMap)))
 	      (js-date-cmap (default (class-nil JsConstructMap)))
+	      (js-promise-cmap (default (class-nil JsConstructMap)))
 	      (js-property-descriptor-value-cmap (default (class-nil JsConstructMap)))
 	      (js-property-descriptor-getter-cmap (default (class-nil JsConstructMap))))
 

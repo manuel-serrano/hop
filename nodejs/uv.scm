@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Tue Feb 14 08:59:13 2023 (serrano)                */
+;*    Last change :  Wed Feb 15 07:14:58 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -389,7 +389,7 @@
 (define-method (js-worker-tick th::WorkerHopThread)
    (with-access::WorkerHopThread th (%loop %process %retval %this
 				       keep-alive mutex)
-      (with-access::JsLoop %loop (async actions exiting)
+      (with-access::JsLoop %loop (actions exiting)
 	 (let loop ((acts (synchronize mutex
 			     (let ((acts actions))
 				(set! actions '())
@@ -456,21 +456,18 @@
 	       (uv-async-send async)))
 	 (unwind-protect
 	    (with-access::WorkerHopThread th (onexit %process parent state)
-	       (let run ()
-		  (with-handler
-		     (lambda (e)
-			(set! state 'error)
-			(with-handler
-			   (lambda (e)
-			      (set! %retval 8))
-			   (set! %retval (js-worker-exception-handler th e 8)))
-			;; run one more for nexttick
-			(with-access::JsLoop loop (exiting)
-			   (set! exiting (not (=fx %retval 0))))
-			(uv-async-send async)
-			;;(run)
-			)
-		     (uv-run loop)))
+	       (with-handler
+		  (lambda (e)
+		     (set! state 'error)
+		     (with-handler
+			(lambda (e)
+			   (set! %retval 8))
+			(set! %retval (js-worker-exception-handler th e 8)))
+		     ;; run one more for nexttick
+		     (with-access::JsLoop loop (exiting)
+			(set! exiting (not (=fx %retval 0))))
+		     (uv-async-send async))
+		  (uv-run loop))
 	       ;; call the cleanup function
 	       (when (=fx %retval 0)
 		  (unless (js-totest (js-get %process (& "_exiting") %this))
@@ -1406,21 +1403,40 @@
 ;*---------------------------------------------------------------------*/
 ;*    stat-cb ...                                                      */
 ;*---------------------------------------------------------------------*/
-(define (stat-cb %this callback str proto path)
+(define (stat-cb %this callback proto obj)
    (lambda (res)
       (with-access::JsGlobalObject %this (worker)
 	 (if (fixnum? res)
 	     (!js-callback2 'stat worker %this
 		callback (js-undefined)
 		(fs-errno-path-exn
-		   (format "cannot stat ~a" str)
-		   res %this path)
+		   (format "cannot stat \"~a\"" (js-tostring obj %this))
+		   res %this obj)
 		#f)
-	     (js-worker-push! worker "stat-cb"
-		(lambda (%this)
-		   (let ((jsobj (stat->jsobj %this proto res)))
-		      (!js-callback2 'stat worker %this
-			 callback (js-undefined) '() jsobj))))))))
+	     (let ((jsobj (stat->jsobj %this proto res)))
+		(!js-callback2 'stat worker %this
+		   callback (js-undefined) '() jsobj))))))
+
+;*---------------------------------------------------------------------*/
+;*    stat-vec-cb ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (stat-vec-cb status vec)
+   (let* ((base (vector-length (uv-fs-stat-cb-vector-props)))
+	  (%this (vector-ref vec base))
+	  (callback (vector-ref vec (+fx base 1))))
+      (with-access::JsGlobalObject %this (worker)
+	 (if (<fx status 0)
+	     (let ((path (vector-ref vec (+fx base 3))))
+		(!js-callback2 'stat worker %this
+		   callback (js-undefined)
+		   (fs-errno-path-exn
+		      (format "cannot stat \"~a\"" (js-tostring path %this))
+		      status %this path)
+		   #f))
+	     (let* ((proto (vector-ref vec (+fx base 2)))
+		    (res (stat->jsobj %this proto vec)))
+		(!js-callback2 'stat worker %this
+		   callback (js-undefined) '() res))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-fstat ...                                                 */
@@ -1431,7 +1447,7 @@
 	  (if (js-procedure? callback)
 	      (uv-fs-fstat file
 		 :loop (worker-loop %worker)
-		 :callback (stat-cb %this callback fd proto #f))
+		 :callback (stat-cb %this callback proto fd))
 	      (let ((res (uv-fs-fstat file)))
 		 (if (integer? res)
 		     (js-raise
@@ -1451,8 +1467,7 @@
       ((js-procedure? callback)
        (uv-fs-stat (js-jsstring->string path)
 	  :loop (worker-loop %worker)
-	  :callback (stat-cb %this callback
-		       (js-jsstring->string path) proto path)))
+	  :callback (stat-cb %this callback proto path)))
       (else
        (let ((res (uv-fs-stat (js-jsstring->string path))))
 	  (if (integer? res)
@@ -1473,17 +1488,22 @@
       ((js-procedure? callback)
        (cond-expand
 	  (libuv-vec
-	   (let ((str (js-jsstring->string path)))
+	   (let* ((str (js-jsstring->string path))
+		  (base (vector-length (uv-fs-stat-cb-vector-props)))
+		  (vec ($create-vector (+fx 4 base))))
+	      (vector-set! vec base %this)
+	      (vector-set! vec (+fx base 1) callback)
+	      (vector-set! vec (+fx base 2) proto)
+	      (vector-set! vec (+fx base 3) path)
 	      (uv-fs-lstat str
 		 :loop (worker-loop %worker)
-		 :callback (stat-cb %this callback str proto path)
-		 :vector ($create-vector
-			    (+fx 4 (vector-length (uv-fs-stat-cb-vector-props)))))))
+		 :callback stat-vec-cb
+		 :vector vec)))
 	  (else
 	   (let ((str (js-jsstring->string path)))
 	      (uv-fs-lstat str
 		 :loop (worker-loop %worker)
-		 :callback (stat-cb %this callback str proto path))))))
+		 :callback (stat-cb %this callback proto path))))))
       (else
        (cond-expand
 	  (libuv-vec

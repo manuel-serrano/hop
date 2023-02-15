@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Tue Feb 14 11:20:30 2023 (serrano)                */
+;*    Last change :  Wed Feb 15 12:33:12 2023 (serrano)                */
 ;*    Copyright   :  2018-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -225,6 +225,7 @@
 		      :weakset (j2s-find-extern-decl headers 'WeakSet)
 		      :object (j2s-find-extern-decl headers 'Object)
 		      :bigint (j2s-find-extern-decl headers 'BigInt)
+		      :promise (j2s-find-extern-decl headers 'Promise)
 		      :program this))
 	     (esimports (j2s-module-imports this nctx))
 	     (esredirects (j2s-module-redirects this nctx))

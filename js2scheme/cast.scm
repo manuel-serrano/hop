@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Wed Feb  9 14:00:59 2022 (serrano)                */
-;*    Copyright   :  2016-22 Manuel Serrano                            */
+;*    Last change :  Wed Feb 15 12:32:43 2023 (serrano)                */
+;*    Copyright   :  2016-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
 ;*    -------------------------------------------------------------    */
@@ -82,7 +82,8 @@
 
 (define *any-types*
    '(undefined null bool integer number object function arrow
-     string real array regexp arguments class record map weakmap set weakset))
+     string real array regexp arguments class record map weakmap set weakset
+     promise))
 
 ;*---------------------------------------------------------------------*/
 ;*    cast-expr ...                                                    */

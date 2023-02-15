@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Copyright   :  2013-22 Manuel Serrano                            */
+;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
 ;*=====================================================================*/
@@ -43,6 +43,7 @@
 	   __js2scheme_scheme-symbol
 	   __js2scheme_scheme-math
 	   __js2scheme_scheme-date
+	   __js2scheme_scheme-promise
 	   __js2scheme_scheme-array
 	   __js2scheme_scheme-arguments
 	   __js2scheme_scheme-spread
@@ -3293,6 +3294,9 @@
    (define (new-typeerror? clazz)
       (new-builtin? clazz 'TypeError))
 
+   (define (new-promise? clazz)
+      (new-builtin? clazz 'Promise))
+
    (define (new-record? clazz)
       (when (isa? clazz J2SRef)
 	 (with-access::J2SRef clazz (decl)
@@ -3429,6 +3433,10 @@
 	  (lambda (sexp)
 	     (epairify loc sexp)))
 	 ((and (new-regexp? clazz) (j2s-new-regexp this mode return ctx))
+	  =>
+	  (lambda (sexp)
+	     (epairify loc sexp)))
+	 ((and (new-promise? clazz) (j2s-new-promise this mode return ctx))
 	  =>
 	  (lambda (sexp)
 	     (epairify loc sexp)))

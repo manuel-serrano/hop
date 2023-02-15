@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Sat Feb 12 12:27:35 2022 (serrano)                */
-;*    Copyright   :  2013-22 Manuel Serrano                            */
+;*    Last change :  Wed Feb 15 15:48:13 2023 (serrano)                */
+;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
 ;*=====================================================================*/
@@ -411,7 +411,7 @@
 	  ((string buffer) 'JsStringLiteral)
 	  ((null) 'nil)
 	  ((String) 'JsString)
-	  ((Promise) 'JsPromise)
+	  ((promise) 'JsPromise)
 	  ((class) 'JsFunction)
 	  ((arguments) 'JsArguments)
 	  ((real) 'double)
