@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Mon Feb 13 17:04:44 2023 (serrano)                */
+;*    Last change :  Tue Feb 14 08:59:13 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -57,6 +57,8 @@
 	  __nodejs__process-wrap
 	  __nodejs__pipe-wrap
 	  __nodejs__buffer)))
+
+   (import __nodejs)
    
    (export (!js-callback0 ::obj ::WorkerHopThread ::JsGlobalObject ::JsFunction ::obj)
 	   (!js-callback1 ::obj ::WorkerHopThread ::JsGlobalObject ::JsFunction ::obj ::obj)
@@ -221,66 +223,92 @@
 ;*---------------------------------------------------------------------*/
 ;*    next-tick ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define (next-tick %worker %this)
-   (with-access::WorkerHopThread %worker (%process async)
-      (with-access::JsProcess %process (tick-callback)
-	 (unless tick-callback
-	    (set! tick-callback (js-get %process (& "_tickCallback") %this)))
-	 (js-call0 %this tick-callback (js-undefined)))))
+(define-inline (next-tick %worker %this::JsGlobalObject)
+   (unless *nodejs-DEP0134*
+      (with-access::WorkerHopThread %worker (%process async)
+	 (with-access::JsProcess %process (tick-callback)
+	    (unless tick-callback
+	       (set! tick-callback (js-get %process (& "_tickCallback") %this)))
+	    (js-call0 %this tick-callback (js-undefined))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-worker-call ...                                               */
+;*---------------------------------------------------------------------*/
+(define-macro (js-worker-call worker proc %this)
+   (match-case proc
+      ((lambda (%this) ?expr)
+       `(with-access::WorkerHopThread ,worker (%call)
+	   (if %call
+	       (%call ,proc ,%this)
+	       ,expr)))
+      (else
+       `(with-access::WorkerHopThread ,worker (%call)
+	   (if %call
+	       (%call ,proc ,%this)
+	       (,proc ,%this))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    !js-callback0 ...                                                */
+;*    -------------------------------------------------------------    */
+;*    All these functions are invoked by libuv so they are all         */
+;*    executed inside the worker loop.                                 */
 ;*---------------------------------------------------------------------*/
 (define (!js-callback0 name %worker %this proc obj)
-   (with-access::WorkerHopThread %worker (call)
-      (let ((res (call (lambda (%this) (js-call0 %this proc obj)) %this)))
-	 (next-tick %worker %this)
-	 res)))
+   (js-worker-call %worker
+      (lambda (%this)
+	 (js-call0-jsprocedure %this proc obj))
+      %this)
+   (next-tick %worker %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    !js-callback1 ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (!js-callback1 name %worker %this proc obj arg0)
-   (with-access::WorkerHopThread %worker (call)
-      (let ((res (call (lambda (%this) (js-call1 %this proc obj arg0)) %this)))
-	 (next-tick %worker %this)
-	 res)))
+   (js-worker-call %worker
+      (lambda (%this)
+	 (js-call1-jsprocedure %this proc obj arg0))
+      %this)
+   (next-tick %worker %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    !js-callback2 ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (!js-callback2 name %worker %this proc obj arg0 arg1)
-   (with-access::WorkerHopThread %worker (call)
-      (let ((res (call (lambda (%this) (js-call2 %this proc obj arg0 arg1)) %this)))
-	 (next-tick %worker %this)
-	 res)))
+   (js-worker-call %worker
+      (lambda (%this)
+	 (js-call2-jsprocedure %this proc obj arg0 arg1))
+      %this)
+   (next-tick %worker %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    !js-callback3 ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (!js-callback3 name %worker %this proc obj arg0 arg1 arg2)
-   (with-access::WorkerHopThread %worker (call)
-      (let ((res (call (lambda (%this) (js-call3 %this proc obj arg0 arg1 arg2)) %this)))
-	 (next-tick %worker %this)
-	 res)))
+   (js-worker-call %worker
+      (lambda (%this)
+	 (js-call3-jsprocedure %this proc obj arg0 arg1 arg2))
+      %this)
+   (next-tick %worker %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    !js-callback4 ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (!js-callback4 name %worker %this proc obj arg0 arg1 arg2 arg3)
-   (with-access::WorkerHopThread %worker (call)
-      (let ((res (call (lambda (%this) (js-call4 %this proc obj arg0 arg1 arg2 arg3)) %this)))
-	 (next-tick %worker %this)
-	 res)))
+   (js-worker-call %worker
+      (lambda (%this)
+	 (js-call4-jsprocedure %this proc obj arg0 arg1 arg2 arg3))
+      %this)
+   (next-tick %worker %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    !js-callback5 ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (!js-callback5 name %worker %this proc obj arg0 arg1 arg2 arg3 arg4)
-   (with-access::WorkerHopThread %worker (call)
-      (let ((res (call (lambda (%this) (js-call5 %this proc obj arg0 arg1 arg2 arg3 arg4)) %this)))
-	 (next-tick %worker %this)
-	 res)))
+   (js-worker-call %worker
+      (lambda (%this)
+	 (js-call5-jsprocedure %this proc obj arg0 arg1 arg2 arg3 arg4))
+      %this)
+   (next-tick %worker %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    to-uint64 ...                                                    */
@@ -360,7 +388,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (js-worker-tick th::WorkerHopThread)
    (with-access::WorkerHopThread th (%loop %process %retval %this
-				       call keep-alive mutex)
+				       keep-alive mutex)
       (with-access::JsLoop %loop (async actions exiting)
 	 (let loop ((acts (synchronize mutex
 			     (let ((acts actions))
@@ -380,7 +408,7 @@
 			    (let ((actname (car action))
 				  (actproc (cdr action)))
 			       (with-trace 'nodejs-async actname
-				  (call actproc %this))))
+				  (js-worker-call th actproc %this))))
 		  acts))))))
 
 ;*---------------------------------------------------------------------*/
@@ -1378,19 +1406,21 @@
 ;*---------------------------------------------------------------------*/
 ;*    stat-cb ...                                                      */
 ;*---------------------------------------------------------------------*/
-(define (stat-cb %this callback name obj proto path)
+(define (stat-cb %this callback str proto path)
    (lambda (res)
       (with-access::JsGlobalObject %this (worker)
 	 (if (fixnum? res)
 	     (!js-callback2 'stat worker %this
 		callback (js-undefined)
 		(fs-errno-path-exn
-		   (format "~a: cannot stat ~a" name obj)
+		   (format "cannot stat ~a" str)
 		   res %this path)
 		#f)
-	     (let ((jsobj (stat->jsobj %this proto res)))
-		(!js-callback2 'stat worker %this
-		   callback (js-undefined) '() jsobj))))))
+	     (js-worker-push! worker "stat-cb"
+		(lambda (%this)
+		   (let ((jsobj (stat->jsobj %this proto res)))
+		      (!js-callback2 'stat worker %this
+			 callback (js-undefined) '() jsobj))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-fstat ...                                                 */
@@ -1401,8 +1431,7 @@
 	  (if (js-procedure? callback)
 	      (uv-fs-fstat file
 		 :loop (worker-loop %worker)
-		 :callback (stat-cb %this callback "fstat"
-			      fd proto #f))
+		 :callback (stat-cb %this callback fd proto #f))
 	      (let ((res (uv-fs-fstat file)))
 		 (if (integer? res)
 		     (js-raise
@@ -1422,7 +1451,7 @@
       ((js-procedure? callback)
        (uv-fs-stat (js-jsstring->string path)
 	  :loop (worker-loop %worker)
-	  :callback (stat-cb %this callback "stat"
+	  :callback (stat-cb %this callback
 		       (js-jsstring->string path) proto path)))
       (else
        (let ((res (uv-fs-stat (js-jsstring->string path))))
@@ -1444,38 +1473,41 @@
       ((js-procedure? callback)
        (cond-expand
 	  (libuv-vec
-	   (uv-fs-lstat (js-jsstring->string path)
-	      :loop (worker-loop %worker)
-	      :callback (stat-cb %this callback "lstat"
-			   (js-jsstring->string path) proto path)
-	      :vector ($create-vector
-			 (+fx 4 (vector-length (uv-fs-stat-cb-vector-props))))))
+	   (let ((str (js-jsstring->string path)))
+	      (uv-fs-lstat str
+		 :loop (worker-loop %worker)
+		 :callback (stat-cb %this callback str proto path)
+		 :vector ($create-vector
+			    (+fx 4 (vector-length (uv-fs-stat-cb-vector-props)))))))
 	  (else
-	   (uv-fs-lstat (js-jsstring->string path)
-	      :loop (worker-loop %worker)
-	      :callback (stat-cb %this callback "lstat"
-			   (js-jsstring->string path) proto path)))))
+	   (let ((str (js-jsstring->string path)))
+	      (uv-fs-lstat str
+		 :loop (worker-loop %worker)
+		 :callback (stat-cb %this callback str proto path))))))
       (else
        (cond-expand
 	  (libuv-vec
 	   (let ((obj (js-make-jsobject
 			 (+fx 4 (vector-length (uv-fs-stat-cb-vector-props)))
 			 (stat-cmap)
-			 proto)))
-	      (let ((res (uv-fs-lstat (js-jsstring->string path)
+			 proto))
+		 (str (js-jsstring->string path)))
+	      (let ((res (uv-fs-lstat str
 			    :vector (js-object-inline-elements obj))))
 		 (if (integer? res)
 		     (js-raise
-			(fs-errno-exn (format "lstat: cannot stat ~a -- ~~s"
-					 (js-jsstring->string path))
+			(fs-errno-exn
+			   (format "lstat: cannot stat ~a -- ~~s" str)
 			   res %this))
-		     (stat->jsobj! %this obj (js-object-inline-elements obj))))))
+		     (stat->jsobj! %this obj
+			(js-object-inline-elements obj))))))
 	  (else
-	   (let ((res (uv-fs-lstat (js-jsstring->string path))))
+	   (let* ((str (js-jsstring->string path))
+		  (res (uv-fs-lstat str)))
 	      (if (integer? res)
 		  (js-raise
-		     (fs-errno-exn (format "lstat: cannot stat ~a -- ~~s"
-				      (js-jsstring->string path))
+		     (fs-errno-exn
+			(format "lstat: cannot stat ~a -- ~~s" str)
 			res %this))
 		  (stat->jsobj %this proto res))))))))
 

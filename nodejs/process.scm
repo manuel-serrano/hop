@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Mon Feb 13 14:11:26 2023 (serrano)                */
+;*    Last change :  Tue Feb 14 09:53:12 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -636,9 +636,9 @@
 		  (with-access::JsProcess proc (using-domains tick-callback)
 		     (unless using-domains
 			(set! using-domains #t)
-			(with-access::WorkerHopThread %worker (call async)
+			(with-access::WorkerHopThread %worker (%call async)
 			   (set! async #t)
-			   (set! call (domain-call this)))
+			   (set! %call (domain-call this)))
 			(let ((tdc (js-get this (& "_tickDomainCallback") %this))
 			      (ndt (js-get this (& "_nextDomainTick") %this)))
 			   (unless (js-procedure? tdc)

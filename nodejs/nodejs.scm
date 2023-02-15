@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/nodejs/nodejs.scm                 */
+;*    serrano/prgm/project/hop/hop/nodejs/nodejs.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 18 16:19:42 2013                          */
-;*    Last change :  Wed Mar 11 15:27:08 2015 (serrano)                */
-;*    Copyright   :  2013-17 Manuel Serrano                            */
+;*    Last change :  Tue Feb 14 09:02:44 2023 (serrano)                */
+;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    nodejs boot                                                      */
 ;*=====================================================================*/
@@ -65,7 +65,9 @@
 	   (__nodejs_node_timers "| echo \"(module __nodejs_node_timers (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
 	   (__nodejs_node_cluster "| echo \"(module __nodejs_node_cluster (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\""))
 
-   (export (core-module-table)))
+   (export (core-module-table)
+	   (nodejs-deprecation-config! #!key (DEP0134 #t))
+	   *nodejs-DEP0134*))
 
 ;*---------------------------------------------------------------------*/
 ;*    make-core-module-table :: ...                                    */
@@ -134,3 +136,18 @@
 ;*---------------------------------------------------------------------*/
 (define (core-module-table)
    module-table)
+
+;*---------------------------------------------------------------------*/
+;*    deprecations ...                                                 */
+;*---------------------------------------------------------------------*/
+;; https://nodejs.org/dist/latest-v18.x/docs/api/deprecations.html#DEP0134   
+(define *nodejs-DEP0134* #t)
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-deprecation-config! ...                                   */
+;*    -------------------------------------------------------------    */
+;*    This function is currently never invoked but it should be        */
+;*    when Hop or an Hop application starts.                           */
+;*---------------------------------------------------------------------*/
+(define (nodejs-deprecation-config! #!key (DEP0134 #t))
+   (set! *nodejs-DEP0134* DEP0134))

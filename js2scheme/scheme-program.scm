@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Mon Feb 13 17:13:30 2023 (serrano)                */
+;*    Last change :  Tue Feb 14 11:20:30 2023 (serrano)                */
 ;*    Copyright   :  2018-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -455,6 +455,9 @@
 		   (nodejs-new-module ,(basename path) ,(absolute path)
 		      %worker %this))
 		(define %cnst-table ,cnsttable)
+		(define !process #f)
+		(define %import-meta #unspecified)
+		(define %filename #unspecified)
 		,esexports
 		,@esimports
 		,@esredirects
