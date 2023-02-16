@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Thu Feb 16 11:44:44 2023 (serrano)                */
+;*    Last change :  Thu Feb 16 15:59:40 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -263,7 +263,7 @@
 	 ((eq? n (& "prototype"))
 	  (js-undefined))
 	 ((eq? n (& "name"))
-	  (js-function-debug-name o %this))
+	  (js-string->jsstring (js-function-debug-name o %this)))
 	 ((eq? n (& "caller"))
 	  (js-undefined))
 	 ((eq? n (& "arguments"))
@@ -285,7 +285,7 @@
 	       (eq? (object-class o) JsProcedure))
 	  (js-undefined))
 	 ((eq? pn (& "name"))
-	  (js-function-debug-name o %this))
+	  (js-string->jsstring (js-function-debug-name o %this)))
 	 (else
 	  (call-next-method)))))
 

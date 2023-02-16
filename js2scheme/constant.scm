@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Wed Oct 26 07:06:24 2022 (serrano)                */
-;*    Copyright   :  2013-22 Manuel Serrano                            */
+;*    Last change :  Thu Feb 16 16:47:54 2023 (serrano)                */
+;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preallocate constant objects (regexps, literal cmaps,            */
 ;*    closed functions, ronly literal objects, ...)                    */
@@ -360,7 +360,9 @@
 	    ((flonum? r)
 	     (J2SNumber/type 'real (op (fixnum->flonum l) r)))
 	    ((and (fixnum? l) (fixnum? l))
-	     (let ((v (op l r)))
+	     (let ((v (if (or (=fx l 0) (=fx r l))
+			  (op (fixnum->flonum l) (fixnum->flonum r))
+			  (op l r))))
 		(cond
 		   ((not (fixnum? v))
 		    (J2SNumber/type 'real v))

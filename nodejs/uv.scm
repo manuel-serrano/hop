@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Thu Feb 16 14:02:01 2023 (serrano)                */
+;*    Last change :  Thu Feb 16 15:47:43 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -462,18 +462,25 @@
 	       (uv-async-send async)))
 	 (unwind-protect
 	    (with-access::WorkerHopThread th (onexit %process parent state)
-	       (with-handler
-		  (lambda (e)
-		     (set! state 'error)
-		     (with-handler
-			(lambda (e)
-			   (set! %retval 8))
-			(set! %retval (js-worker-exception-handler th e 8)))
-		     ;; run one more for nexttick
-		     (with-access::JsLoop loop (exiting)
-			(set! exiting (not (=fx %retval 0))))
-		     (uv-async-send async))
-		  (uv-run loop))
+	       (let run ()
+		  (with-handler
+		     (lambda (e)
+			(set! state 'error)
+			(with-handler
+			   (lambda (e)
+			      (set! %retval 8))
+			   (set! %retval (js-worker-exception-handler th e 8)))
+			;; run one more for nexttick
+			(with-access::JsLoop loop (exiting)
+			   (set! exiting (not (=fx %retval 0))))
+			(uv-async-send async))
+		     (uv-run loop))
+		  (with-access::JsLoop loop (exiting)
+		     (when (and (not exiting) (eq? state 'error))
+			;; we reach that state when the error has been
+			;; caught by a domain
+			(set! state 'running)
+			(run))))
 	       ;; call the cleanup function
 	       (when (=fx %retval 0)
 		  (unless (js-totest (js-get %process (& "_exiting") %this))
@@ -1720,7 +1727,7 @@
 	     :loop (worker-loop %worker)
 	     :callback (if (or mode recursive)
 			   (lambda (res) (rmdir-callback-recursive name res))
-			   rmdir-callback)))
+			   (lambda (res) (rmdir-callback name res)))))
 	 (mode
 	  (rmdir-or-file name))
 	 (else
