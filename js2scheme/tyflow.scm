@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Wed Feb 15 12:31:55 2023 (serrano)                */
+;*    Last change :  Thu Feb 16 07:44:54 2023 (serrano)                */
 ;*    Copyright   :  2016-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -1548,13 +1548,17 @@
 	       (let ((res (car params))
 		     (rej (cadr params)))
 		  (unless (decl-usage-has? res '(assig))
-		     (with-access::J2SDecl res (ctype)
-			(set! ctype 'arrow)
-			(decl-vtype-set! res 'arrow ctx)))
+		     (with-access::J2SDecl res (ctype vtype)
+			(unless (eq? ctype 'arrow)
+			   (set! ctype 'arrow)
+			   (set! vtype 'arrow)
+			   (unfix! ctx "promise.arrow"))))
 		  (unless (decl-usage-has? rej '(assig))
-		     (with-access::J2SDecl rej (ctype)
-			(set! ctype 'arrow)
-			(decl-vtype-set! rej 'arrow ctx)))))))))
+		     (with-access::J2SDecl rej (ctype vtype)
+			(unless (eq? ctype 'arrow)
+			   (set! ctype 'arrow)
+			   (set! vtype 'arrow)
+			   (unfix! ctx "promise.arrow"))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SUnary ...                                         */

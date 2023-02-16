@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/3.4.x/widget/Makefile                   */
+#*    serrano/prgm/project/hop/hop/widget/Makefile                     */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Mon Jul  5 17:08:58 2021 (serrano)                */
+#*    Last change :  Thu Feb 16 07:27:00 2023 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOP library.                           */
 #*=====================================================================*/
@@ -64,7 +64,7 @@ native: o heap-c lib-c
 jvm: heap-jvm lib-jvm
 
 heap-c: .afile
-lib-c: heap-c .afile
+lib-c: o heap-c .afile
 
 #*---------------------------------------------------------------------*/
 #*    ude                                                              */

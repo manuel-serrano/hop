@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Wed Feb 15 07:14:58 2023 (serrano)                */
+;*    Last change :  Thu Feb 16 14:02:01 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -404,12 +404,15 @@
 			 (begin
 			    (set! %retval r)
 			    (set! keep-alive #f)))))
-	       (for-each (lambda (action)
-			    (let ((actname (car action))
-				  (actproc (cdr action)))
-			       (with-trace 'nodejs-async actname
-				  (js-worker-call th actproc %this))))
-		  acts))))))
+	       (let loop ()
+		  (when (pair? acts)
+		     (let* ((action (car acts))
+			    (actname (car action))
+			    (actproc (cdr action)))
+			(set! acts (cdr acts))
+			(with-trace 'nodejs-async actname
+			   (js-worker-call th actproc %this)))
+		     (loop))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-worker-init! ::WorkerHopThread ...                            */
@@ -436,13 +439,16 @@
 			  (loop loop)
 			  (cb (lambda (a)
 				 (js-worker-tick th)
-				 (with-access::JsLoop loop (actions)
-				    (unless (or keep-alive
-						(pair? services)
-						(pair? actions)
-						(active-subworkers? th))
+				 (with-access::JsLoop loop (exiting actions)
+				    (when (and (null? services)
+					       (null? actions)
+					       (not (active-subworkers? th))
+					       (or (not keep-alive)
+						   exiting))
 				       (uv-unref async)
-				       (when (js-totest (js-get %process (& "_exiting") %this))
+				       (when (and (or exiting
+						      (js-totest (js-get %process (& "_exiting") %this)))
+						  (not (uv-loop-alive? loop)))
 					  (uv-stop loop)))))))))
 	 (synchronize mutex
 	    (nodejs-process th %this)

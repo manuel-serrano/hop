@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 30 06:52:06 2014                          */
-;*    Last change :  Wed Jan 18 11:43:44 2023 (serrano)                */
+;*    Last change :  Thu Feb 16 11:40:16 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native native bindings                                           */
@@ -135,7 +135,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (hop->javascript o::JsSlowBuffer op compile isexpr ctx)
    (with-access::JsArrayBuffer o (data)
-      (display "hop_buffer( \"JsSlowBuffer\", \"" op)
+      (display "hop_buffer(\"JsSlowBuffer\", \"" op)
       (display (string-hex-extern data) op)
       (display "\")" op)))
 

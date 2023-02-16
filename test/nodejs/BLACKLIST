@@ -76,6 +76,7 @@ simple/test-crypto-binary-default.js
 #*---------------------------------------------------------------------*/
 # incompatible tests
 simple/test-child-process-silent.js
+simple/test-child-process-set-blocking.js # requires python!
 simple/test-child-process-fork-exec-argv.js
 simple/test-child-process-fork-net2.js # insufficient speed (set count=5)
 simple/test-init.js

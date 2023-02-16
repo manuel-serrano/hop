@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Mon Feb 13 17:22:39 2023 (serrano)                */
+;*    Last change :  Thu Feb 16 13:35:38 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
@@ -138,7 +138,7 @@
 		   (display "The initial error was:" port)
 		   (newline port)
 		   (display "  " port)
-		   (display (js-toname name %this) port)
+		   (display (js-tostring name %this) port)
 		   (display " -- " port)
 		   (display (js-tostring msg %this) port)
 		   (newline port)
@@ -151,7 +151,7 @@
 		   (newline port)
 		   (exception-notify e)))
 	     (let ((notify (lambda (%this)
-			      (let* ((name (js-jsstring->string name))
+			      (let* ((name (js-tostring name %this))
  				     (stk (js-get exc (& "stack") %this))
 				     (port (current-error-port)))
 				 (cond

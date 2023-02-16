@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Fri Oct 14 13:13:12 2022 (serrano)                */
-;*    Copyright   :  2013-22 Manuel Serrano                            */
+;*    Last change :  Thu Feb 16 11:44:44 2023 (serrano)                */
+;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
 ;*    -------------------------------------------------------------    */
@@ -263,7 +263,7 @@
 	 ((eq? n (& "prototype"))
 	  (js-undefined))
 	 ((eq? n (& "name"))
-	  (js-undefined))
+	  (js-function-debug-name o %this))
 	 ((eq? n (& "caller"))
 	  (js-undefined))
 	 ((eq? n (& "arguments"))
@@ -275,16 +275,19 @@
 ;*    js-get ::JsProcedure ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-method (js-get o::JsProcedure p %this)
-   (cond
-      ((eq? (js-toname p %this) (& "length"))
-       (if (js-function? o)
-	   (call-next-method)
-	   (js-get-length-jsprocedure o)))
-      ((and (eq? (js-toname p %this) (& "prototype"))
-	    (eq? (object-class o) JsProcedure))
-       (js-undefined))
-      (else
-       (call-next-method))))
+   (let ((pn (js-toname p %this)))
+      (cond
+	 ((eq? pn (& "length"))
+	  (if (js-function? o)
+	      (call-next-method)
+	      (js-get-length-jsprocedure o)))
+	 ((and (eq? pn (& "prototype"))
+	       (eq? (object-class o) JsProcedure))
+	  (js-undefined))
+	 ((eq? pn (& "name"))
+	  (js-function-debug-name o %this))
+	 (else
+	  (call-next-method)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-length ::JsProcedure ...                                  */

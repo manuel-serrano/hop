@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 24 16:22:25 2018                          */
-;*    Last change :  Sat Feb  5 15:48:50 2022 (serrano)                */
-;*    Copyright   :  2018-22 Manuel Serrano                            */
+;*    Last change :  Thu Feb 16 10:44:54 2023 (serrano)                */
+;*    Copyright   :  2018-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Cache instanceof tests.                                          */
 ;*=====================================================================*/
@@ -63,10 +63,12 @@
    (define (immutable? expr)
       (when (isa? expr J2SRef)
 	 (with-access::J2SRef expr (decl)
-	    (or (decl-ronly? decl)
-		(with-access::J2SProgram prgm (mode)
-		   (and (not (decl-usage-has? decl '(assig)))
-			(memq mode '(strict hopscript))))))))
+	    (with-access::J2SDecl decl (scope)
+	       (when (memq scope '(global %scope))
+		  (or (decl-ronly? decl)
+		      (with-access::J2SProgram prgm (mode)
+			 (and (not (decl-usage-has? decl '(assig)))
+			      (memq mode '(strict hopscript))))))))))
    
    (define (object-instanceof/cache obj rhs be loc)
       (let ((cache (get-cache prgm))

@@ -138,16 +138,20 @@ assert.notEqual = function notEqual(actual, expected, message) {
 // assert.deepEqual(actual, expected, message_opt);
 
 assert.deepEqual = function deepEqual(actual, expected, message) {
-  if (!_deepEqual(actual, expected)) {
+  if (!_deepEqual(actual, expected, [])) {
     fail(actual, expected, message, 'deepEqual', assert.deepEqual);
   }
 };
 
-function _deepEqual(actual, expected) {
+function _deepEqual(actual, expected, memos) {
+  // MS 16feb2023, quick patch to avoid infinite loops
+  if (memos.indexOf(actual) >=0 || memos.indexOf(expected) >= 0) {
+      return false;
+  }
+   
   // 7.1. All identical values are equivalent, as determined by ===.
   if (actual === expected) {
     return true;
-
   } else if (Buffer.isBuffer(actual) && Buffer.isBuffer(expected)) {
     if (actual.length != expected.length) return false;
 
@@ -184,7 +188,7 @@ function _deepEqual(actual, expected) {
   // corresponding key, and an identical 'prototype' property. Note: this
   // accounts for both named and indexed properties on Arrays.
   } else {
-    return objEquiv(actual, expected);
+    return objEquiv(actual, expected, memos);
   }
 }
 
@@ -196,7 +200,9 @@ function isArguments(object) {
   return Object.prototype.toString.call(object) == '[object Arguments]';
 }
 
-function objEquiv(a, b) {
+function objEquiv(a, b, memos) {
+  memos.push(a);
+  memos.push(b);
   if (isUndefinedOrNull(a) || isUndefinedOrNull(b))
     return false;
   // an identical 'prototype' property.
@@ -210,7 +216,7 @@ function objEquiv(a, b) {
   if (aIsArgs) {
     a = pSlice.call(a);
     b = pSlice.call(b);
-    return _deepEqual(a, b);
+    return _deepEqual(a, b, memos);
   }
   try {
     var ka = Object.keys(a),
@@ -235,7 +241,7 @@ function objEquiv(a, b) {
   //~~~possibly expensive deep test
   for (i = ka.length - 1; i >= 0; i--) {
     key = ka[i];
-    if (!_deepEqual(a[key], b[key])) return false;
+    if (!_deepEqual(a[key], b[key], memos)) return false;
   }
   return true;
 }
@@ -244,7 +250,7 @@ function objEquiv(a, b) {
 // assert.notDeepEqual(actual, expected, message_opt);
 
 assert.notDeepEqual = function notDeepEqual(actual, expected, message) {
-  if (_deepEqual(actual, expected)) {
+  if (_deepEqual(actual, expected, [])) {
     fail(actual, expected, message, 'notDeepEqual', assert.notDeepEqual);
   }
 };
@@ -331,13 +337,13 @@ assert.ifError = function(err) { if (err) {throw err;}};
 /*    MS: Minimal v15.8.0 compatibility kit                            */
 /*---------------------------------------------------------------------*/
 assert.deepStrictEqual = function deepStrictEqual(actual, expected, message) {
-  if (!_deepEqual(actual, expected)) {
+  if (!_deepEqual(actual, expected, [])) {
     fail(actual, expected, message, 'deepEqual', assert.deepEqual);
   }
 };
 
 function notDeepStrictEqual(actual, expected, message) {
-  if (_deepEqual(actual, expected)) {
+  if (_deepEqual(actual, expected, [])) {
     fail(actual, expected, message, 'deepEqual', assert.deepEqual);
   }
 }
