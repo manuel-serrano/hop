@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed Feb 15 11:48:04 2023 (serrano)                */
+;*    Last change :  Thu Feb 16 16:57:22 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -363,7 +363,7 @@
    (when js-pmap-valid
       (synchronize js-cache-table-lock
 	 (when #f
-	    (tprint "--- invalidate " reason " [" who "] pcache-table-len=" js-cache-index " ---------------------------")
+	    (tprint "--- invalidate " reason " [" who "] pcache-table-len=" js-cache-index " !!!!!!!!!!!!!!!!!!!!!!!!!!!")
 	    (set! invcount (+fx 1 invcount))
 	    (tprint "invcount=" invcount))
 	 (let loop ((i (-fx js-cache-index 1)))
@@ -3412,7 +3412,8 @@
 			   (writable #t)
 			   (enumerable #t)
 			   (configurable #t))))
-	    (js-invalidate-pmap-pcaches! %this "extend-property" name)
+	    (when (js-object-mode-isprotoof? o)
+	       (js-invalidate-pmap-pcaches! %this "extend-property" name))
 	    (js-define-own-property o name newdesc throw %this)
 	    v)))
 
@@ -4227,8 +4228,9 @@
 	   (define-own-property-extend-unmapped o name desc))))
 
    (define (define-own-property-extend-hashed o name desc)
-      (js-invalidate-pmap-pcaches! %this
-	 "define-own-property-extend-unmapped" name)
+      (when (js-object-mode-isprotoof? o)
+	 (js-invalidate-pmap-pcaches! %this
+	    "define-own-property-extend-hashed" name))
       (let ((ndesc (cond
 		      ((isa? desc JsValueDescriptor)
 		       ;; 4.a
@@ -4279,8 +4281,9 @@
 	 #t))
 
    (define (define-own-property-extend-unmapped o name desc)
-      (js-invalidate-pmap-pcaches! %this
-	  "define-own-property-extend-unmapped" name)
+      (when (js-object-mode-isprotoof? o)
+	 (js-invalidate-pmap-pcaches! %this
+	    "define-own-property-extend-unmapped" name))
       (let ((ndesc (cond
 		      ((isa? desc JsValueDescriptor)
 		       ;; 4.a
