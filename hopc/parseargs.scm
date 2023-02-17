@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Copyright   :  2004-22 Manuel Serrano                            */
+;*    Copyright   :  2004-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
 ;*=====================================================================*/
@@ -556,6 +556,21 @@
 		(lambda (ip)
 		   (hopc-j2s-flags-set!
 		      (cons* :cspecs-put (read ip) (hopc-j2s-flags))))))
+	    (("--js-cspecs-assigop" ?cspecs (help "Use assigop specs"))
+	     (call-with-input-string cspecs
+		(lambda (ip)
+		   (hopc-j2s-flags-set!
+		      (cons* :cspecs-assigop (read ip) (hopc-j2s-flags))))))
+	    (("--js-cspecs-assignew" ?cspecs (help "Use assignew specs"))
+	     (call-with-input-string cspecs
+		(lambda (ip)
+		   (hopc-j2s-flags-set!
+		      (cons* :cspecs-assignew (read ip) (hopc-j2s-flags))))))
+	    (("--js-cspecs-call" ?cspecs (help "Use call specs"))
+	     (call-with-input-string cspecs
+		(lambda (ip)
+		   (hopc-j2s-flags-set!
+		      (cons* :cspecs-call (read ip) (hopc-j2s-flags))))))
 	    (("--tls" (help "Thread local storage"))
 	     (cond-expand
 		(enable-tls

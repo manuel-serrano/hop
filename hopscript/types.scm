@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Wed Feb 15 08:44:59 2023 (serrano)                */
+;*    Last change :  Fri Feb 17 07:52:05 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -457,7 +457,9 @@
 	      (js-generator-prototype::JsObject (default (class-nil JsObject)))
 	      (js-generatorfunction-prototype::JsObject (default (class-nil JsObject)))
 	      (js-buffer-proto (default #f))
+	      (js-buffer-cmap (default #f))
 	      (js-slowbuffer-proto (default #f))
+	      (js-slowbuffer-cmap (default #f))
 	      (js-symbol-ctor::procedure (default list))
 	      (js-symbol-table read-only (default (js-symbol-table)))
 	      (js-symbol-iterator (default (js-undefined)))
@@ -1511,6 +1513,39 @@
 	 configurable
 	 enumerable
 	 writable)))
+
+;*---------------------------------------------------------------------*/
+;*    object-equal? ::JsPropertyDescriptor ...                         */
+;*---------------------------------------------------------------------*/
+(define-method (object-equal?::bool x::JsPropertyDescriptor y::obj)
+   (when (and (object? y) (eq? (object-class x) (object-class y)))
+      (with-access::JsPropertyDescriptor x ((xname name)
+					    (xconfigurable configurable)
+					    (xenumerable enumerable))
+	 (with-access::JsPropertyDescriptor y ((yname name)
+					       (yconfigurable configurable)
+					       (yenumerable enumerable))
+	    (and (eq? xconfigurable yconfigurable)
+		 (eq? xenumerable yenumerable)
+		 (equal? xname yname))))))
+
+;*---------------------------------------------------------------------*/
+;*    object-equal? ::JsDataDescriptor ...                             */
+;*---------------------------------------------------------------------*/
+(define-method (object-equal?::bool x::JsDataDescriptor y::obj)
+   (when (call-next-method)
+      (with-access::JsDataDescriptor x ((xwritable writable))
+	 (with-access::JsDataDescriptor y ((ywritable writable))
+	    (eq? xwritable ywritable)))))
+
+;*---------------------------------------------------------------------*/
+;*    object-equal? ::JsValueDescriptor ...                            */
+;*---------------------------------------------------------------------*/
+(define-method (object-equal?::bool x::JsValueDescriptor y::obj)
+   (when (call-next-method)
+      (with-access::JsValueDescriptor x ((xvalue value))
+	 (with-access::JsValueDescriptor y ((yvalue value))
+	    (equal? xvalue yvalue)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    thread-specific ::WorkerHopThread ...                            */

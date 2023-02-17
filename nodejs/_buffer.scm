@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 30 06:52:06 2014                          */
-;*    Last change :  Thu Feb 16 11:40:16 2023 (serrano)                */
+;*    Last change :  Fri Feb 17 07:50:16 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native native bindings                                           */
@@ -74,8 +74,17 @@
 ;*    js-init-buffer! ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (js-init-buffer! %this)
-   (unless (vector? __js_strings)
-      (set! __js_strings (&init!))))
+   (unless (vector? __js_strings) (set! __js_strings (&init!)))
+   ;; create buffer cmap
+   (js-init-buffer-cmap! %this))
+
+;*---------------------------------------------------------------------*/
+;*    js-init-buffer-cmap! ...                                         */
+;*---------------------------------------------------------------------*/
+(define (js-init-buffer-cmap! %this::JsGlobalObject)
+   (with-access::JsGlobalObject %this (js-buffer-cmap js-slowbuffer-cmap)
+      (set! js-buffer-cmap (js-strings->cmap '#("length" "offset" "parent")))
+      (set! js-slowbuffer-cmap (js-strings->cmap '#("length")))))
 
 ;*---------------------------------------------------------------------*/
 ;*    buffer-parser ...                                                */
@@ -143,32 +152,31 @@
 ;*    js-string->jsslowbuffer ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (js-string->jsslowbuffer str %this)
-   (with-access::JsGlobalObject %this (js-slowbuffer-proto)
-      (let ((buf (instantiateJsSlowBuffer
-		    (__proto__ js-slowbuffer-proto)
-		    (data str))))
-	 (js-put! buf (& "length") (string-length str) #f %this)
-	 buf)))
+   (with-access::JsGlobalObject %this (js-slowbuffer-proto js-slowbuffer-cmap)
+      (instantiateJsSlowBuffer
+	 (cmap js-slowbuffer-cmap)
+	 (__proto__ js-slowbuffer-proto)
+	 (elements (vector (string-length str)))
+	 (data str))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-string->jsfastbuffer ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (js-string->jsfastbuffer str %this)
-   (with-access::JsGlobalObject %this (js-buffer-proto)
-      (let ((slowbuffer (js-string->jsslowbuffer str %this)))
+   (with-access::JsGlobalObject %this (js-buffer-proto js-buffer-cmap)
+      (let ((slowbuffer (js-string->jsslowbuffer str %this))
+	    (len (string-length str)))
 	 (with-access::JsSlowBuffer slowbuffer (data)
-	    (let ((buf (instantiateJsFastBuffer
-			  (__proto__ js-buffer-proto)
-			  (%data data)
-			  (frozen #f)
-			  (buffer slowbuffer)
-			  (byteoffset (fixnum->uint32 0))
-			  (length (fixnum->uint32 (string-length str)))
-			  (bpe 1))))
-	       (js-put! buf (& "length") (string-length str) #f %this)
-	       (js-put! buf (& "offset") 0 #f %this)
-	       (js-put! buf (& "parent") slowbuffer #f %this)
-	       buf)))))
+	    (instantiateJsFastBuffer
+	       (cmap js-buffer-cmap)
+	       (__proto__ js-buffer-proto)
+	       (elements (vector len 0 slowbuffer))
+	       (%data data)
+	       (frozen #f)
+	       (buffer slowbuffer)
+	       (byteoffset (fixnum->uint32 0))
+	       (length (fixnum->uint32 len))
+	       (bpe 1))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring->jsfastbuffer ...                                    */
@@ -224,7 +232,8 @@
 ;*    js-arraybuffer->jsfastbuffer ...                                 */
 ;*---------------------------------------------------------------------*/
 (define (js-arraybuffer->jsfastbuffer arr offset len %this)
-   (with-access::JsGlobalObject %this (js-buffer-proto js-slowbuffer-proto)
+   (with-access::JsGlobalObject %this (js-buffer-proto js-slowbuffer-proto
+					 js-slowbuffer-cmap js-buffer-cmap)
       (with-access::JsArrayBuffer arr (data)
 	 (let* ((len::uint32 (if (eq? len (js-undefined))
 				 (fixnum->uint32 (u8vector-length data))
@@ -234,21 +243,20 @@
 				    (js-touint32 offset %this)))
 		(slowbuffer (instantiateJsSlowBuffer
 			       (__proto__ js-slowbuffer-proto)
+			       (cmap js-slowbuffer-cmap)
+			       (elements (vector (uint32->fixnum len)))
 			       (data data))))
-	    (js-put! slowbuffer (& "length") (uint32->fixnum len) #f %this)
 	    (with-access::JsSlowBuffer slowbuffer (data)
-	       (let ((buf (instantiateJsFastBuffer
-			     (__proto__ js-buffer-proto)
-			     (%data data)
-			     (frozen #f)
-			     (buffer slowbuffer)
-			     (byteoffset offset)
-			     (length len)
-			     (bpe 1))))
-		  (js-put! buf (& "length") (uint32->fixnum len) #f %this)
-		  (js-put! buf (& "offset") 0 #f %this)
-		  (js-put! buf (& "parent") slowbuffer #f %this)
-		  buf))))))
+	       (instantiateJsFastBuffer
+		  (cmap js-buffer-cmap)
+		  (__proto__ js-buffer-proto)
+		  (elements (vector (uint32->fixnum len) 0 slowbuffer))
+		  (%data data)
+		  (frozen #f)
+		  (buffer slowbuffer)
+		  (byteoffset offset)
+		  (length len)
+		  (bpe 1)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-buffer->jsfastbuffer ...                                      */
@@ -261,7 +269,8 @@
 	 (u8vector-copy! n 0 v 0 l)
 	 n))
    
-   (with-access::JsGlobalObject %this (js-buffer-proto js-slowbuffer-proto)
+   (with-access::JsGlobalObject %this (js-buffer-proto js-slowbuffer-proto
+					 js-buffer-cmap js-slowbuffer-cmap)
       (with-access::JsFastBuffer arr (buffer %data)
 	 (with-access::JsSlowBuffer buffer (data)
 	    (let* ((len::uint32 (fixnum->uint32
@@ -272,21 +281,20 @@
 			     (string-copy %data)
 			     (u8vector-copy %data)))
 		   (slowbuffer (instantiateJsSlowBuffer
+				  (cmap js-slowbuffer-cmap)
 				  (__proto__ js-slowbuffer-proto)
+				  (elements (vector (uint32->fixnum len)))
 				  (data data))))
-	       (js-put! slowbuffer (& "length") (uint32->fixnum len) #f %this)
-	       (let ((buf (instantiateJsFastBuffer
-			     (__proto__ js-buffer-proto)
-			     (%data data)
-			     (frozen #f)
-			     (buffer slowbuffer)
-			     (byteoffset #u32:0)
-			     (length len)
-			     (bpe 1))))
-		  (js-put! buf (& "length") (uint32->fixnum len) #f %this)
-		  (js-put! buf (& "offset") 0 #f %this)
-		  (js-put! buf (& "parent") slowbuffer #f %this)
-		  buf))))))
+	       (instantiateJsFastBuffer
+		  (cmap js-buffer-cmap)
+		  (__proto__ js-buffer-proto)
+		  (elements (vector (uint32->fixnum len) 0 slowbuffer))
+		  (%data data)
+		  (frozen #f)
+		  (buffer slowbuffer)
+		  (byteoffset #u32:0)
+		  (length len)
+		  (bpe 1)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object->jsfastbuffer ...                                      */
@@ -424,10 +432,13 @@
 ;*    js-buffer-constr ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (js-buffer-constr proto %this)
-   (instantiateJsFastBuffer
-      (cmap (js-not-a-cmap))
-      (bpe #u32:1)
-      (__proto__ proto)))
+   (with-access::JsGlobalObject %this (js-buffer-proto js-slowbuffer-proto
+					 js-slowbuffer-cmap js-buffer-cmap)
+      (instantiateJsFastBuffer
+	 (cmap js-buffer-cmap)
+	 (__proto__ proto)
+	 (elements (vector 0 0 (js-undefined)))
+	 (bpe #u32:1))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopscript ...                                                    */
@@ -713,7 +724,7 @@
 		    (with-access::JsGlobalObject %this (js-object)
 		       (let ((this (instantiateJsSlowBuffer
 				      (__proto__ slowbuffer-proto)
-				      (data (make-string (->fixnum a0) #a000)))))
+				      (data ($make-string/wo-fill (->fixnum a0))))))
 			  ;; length
 			  (js-bind! %this this (& "length")
 			     :value a0

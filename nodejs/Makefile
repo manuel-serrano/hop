@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Mon Aug 22 08:33:37 2022 (serrano)                */
+#*    Last change :  Fri Feb 17 08:23:12 2023 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the NODEJS library.                        */
 #*=====================================================================*/
@@ -133,6 +133,9 @@ o/http.o: http.js
 
 o/tls.o: tls.js
 	@ $(call compile3,$(HOPC),$(HFLAGS),$(BCFLAGS),$(BLFLAGS),$(BHOPCFLAGS) -c --js-module-name __nodejs_tls --js-module-path tls -Os,$< -o $@)
+
+o/buffer.o: buffer.js
+	@ $(call compile3,$(HOPC),$(HFLAGS),$(BCFLAGS),$(BLFLAGS),$(BHOPCFLAGS) -c --js-module-name __nodejs_buffer --js-module-path buffer -Os --js-cspecs-assignew "(emap cmap)",$< -o $@)
 
 
 #bdepend start (don't edit)
