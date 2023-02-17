@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jun 18 07:29:16 2014                          */
-;*    Last change :  Fri Nov 11 19:19:13 2022 (serrano)                */
-;*    Copyright   :  2014-22 Manuel Serrano                            */
+;*    Last change :  Fri Feb 17 13:24:51 2023 (serrano)                */
+;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBufferView              */
 ;*=====================================================================*/
@@ -1245,7 +1245,7 @@
 			   ;; 6
 			   (js-define-own-property o p newdesc throw %this)))))
 	     v))))
-   
+
    (with-access::JsTypedArray o (buffer length byteoffset bpe conv)
       (let ((i::uint32 (js-toindex p)))
 	 (cond

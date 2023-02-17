@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Fri Feb 17 07:52:05 2023 (serrano)                */
+;*    Last change :  Fri Feb 17 11:14:16 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -1546,6 +1546,17 @@
       (with-access::JsValueDescriptor x ((xvalue value))
 	 (with-access::JsValueDescriptor y ((yvalue value))
 	    (equal? xvalue yvalue)))))
+
+;*---------------------------------------------------------------------*/
+;*    object-equal? ::JsAccessorDescriptor ...                         */
+;*---------------------------------------------------------------------*/
+(define-method (object-equal?::bool x::JsAccessorDescriptor y::obj)
+   (when (call-next-method)
+      (with-access::JsAccessorDescriptor x ((xget get)
+					    (xset set))
+	 (with-access::JsAccessorDescriptor y ((yget get)
+					       (yset set))
+	    (and (eq? xget yget) (eq? xset yset))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    thread-specific ::WorkerHopThread ...                            */

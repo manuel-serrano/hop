@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Thu Feb 16 16:57:22 2023 (serrano)                */
+;*    Last change :  Fri Feb 17 10:49:14 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -4166,11 +4166,18 @@
 	    (and (eq? cname dname)
 		 (or (not (boolean? dconf)) (eq? cconf dconf))
 		 (or (not (boolean? denum)) (eq? cenum denum))))))
+
+   (define (eq-unspecified? a b)
+      (or (eq? a b)
+	  (and (eq? a #f) (eq? b #unspecified))
+	  (and (eq? a #unspecified) (eq? b #f))))
    
    (define (same-accessor-descriptor? current::JsAccessorDescriptor desc::JsAccessorDescriptor)
       (with-access::JsAccessorDescriptor current ((cget get) (cset set))
 	 (with-access::JsAccessorDescriptor desc ((dget get) (dset set))
-	    (and (eq? cget dget) (eq? cset dset)))))
+	    ;; see ch15/15.2/15.2.3/15.2.3.6/15.2.3.6-4-6.js
+	    ;; and ch15/15.2/15.2.3/15.2.3.6/15.2.3.6-4-19.js
+	    (and (eq-unspecified? cget dget) (eq-unspecified? cset dset)))))
    
    (define (same-data-descriptor? current::JsDataDescriptor desc::JsDataDescriptor)
       (with-access::JsDataDescriptor current ((cwritable writable))

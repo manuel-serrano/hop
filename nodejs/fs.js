@@ -109,7 +109,7 @@ function makeCallback(cb) {
 }
 
 // MS 15feb2023, from node v16.13.0
-function makeStatsCallback(cb) {
+function makeHopCallback(cb) {
   if (typeof cb !== 'function') {
     return rethrow();
   }
@@ -194,7 +194,10 @@ fs.existsSync = function(path) {
 };
 
 fs.readFile = function(path, options, callback_) {
-  var callback = maybeCallback(arguments[arguments.length - 1]);
+  // get rid of arguments
+  var callback = makeHopCallback(typeof options === "function" 
+      ? options : callback_);
+  // var callback = maybeCallback(arguments[arguments.length - 1]);
 
   if (typeof options === 'function' || !options) {
     options = { encoding: null, flag: 'r' };
@@ -415,7 +418,7 @@ Object.defineProperty(exports, '_stringToFlags', {
 // list to make the arguments clear.
 
 fs.close = function(fd, callback) {
-  binding.close(fd, makeCallback(callback));
+  binding.close(fd, makeHopCallback(callback));
 };
 
 fs.closeSync = function(fd) {
@@ -437,8 +440,11 @@ function modeNum(m, def) {
   }
 }
 
+// MS 17deb2023, getting rid of arguments
 fs.open = function(path, flags, mode, callback) {
-  callback = makeCallback(arguments[arguments.length - 1]);
+  callback = makeHopCallback(typeof flags === "function" 
+     ? flags
+     : (typeof mode === "function" ? mode : callback));
   mode = modeNum(mode, 438 /*=0666*/);
 
   if (!nullCheck(path, callback)) return;
@@ -447,6 +453,17 @@ fs.open = function(path, flags, mode, callback) {
                mode,
                callback);
 };
+/* fs.open = function(path, flags, mode, callback) {                   */
+/*   callback = makeCallback(arguments[arguments.length - 1]);         */
+/*   mode = modeNum(mode, 438 {*=0666*});                              */
+/*                                                                     */
+/*   if (!nullCheck(path, callback)) return;                           */
+/*   binding.open(pathModule._makeLong(path),                          */
+/*                stringToFlags(flags),                                */
+/*                mode,                                                */
+/*                callback);                                           */
+/* };                                                                  */
+
 
 fs.openSync = function(path, flags, mode) {
   mode = modeNum(mode, 438 /*=0666*/);
@@ -454,16 +471,14 @@ fs.openSync = function(path, flags, mode) {
   return binding.open(pathModule._makeLong(path), stringToFlags(flags), mode);
 };
 
+// MS 17deb2023, getting rid of arguments
 fs.read = function(fd, buffer, offset, length, position, callback) {
   if (!Buffer.isBuffer(buffer)) {
-    // legacy string interface (fd, length, position, encoding, callback)
-    var cb = arguments[4],
-        encoding = arguments[3];
-
+    const cb = position, encoding = length;
     assertEncoding(encoding);
 
-    position = arguments[2];
-    length = arguments[1];
+    position = offset;
+    length = buffer;
     buffer = new Buffer(length);
     offset = 0;
 
@@ -476,25 +491,53 @@ fs.read = function(fd, buffer, offset, length, position, callback) {
     };
   }
 
-  function wrapper(err, bytesRead) {
-    // Retain a reference to buffer so that it can't be GC'ed too soon.
-    callback && callback(err, bytesRead || 0, buffer);
-  }
-
-  binding.read(fd, buffer, offset, length, position, wrapper);
+  binding.read(fd, buffer, offset, length, position, callback);
 };
+/* fs.read = function(fd, buffer, offset, length, position, callback) { */
+/*   if (!Buffer.isBuffer(buffer)) {                                   */
+/*     // legacy string interface (fd, length, position, encoding, callback) */
+/*     var cb = arguments[4],                                          */
+/*         encoding = arguments[3];                                    */
+/*                                                                     */
+/*     assertEncoding(encoding);                                       */
+/*                                                                     */
+/*     position = arguments[2];                                        */
+/*     length = arguments[1];                                          */
+/*     buffer = new Buffer(length);                                    */
+/*     offset = 0;                                                     */
+/*                                                                     */
+/*     callback = function(err, bytesRead) {                           */
+/*       if (!cb) return;                                              */
+/*                                                                     */
+/*       var str = (bytesRead > 0) ? buffer.toString(encoding, 0, bytesRead) : ''; */
+/*                                                                     */
+/*       (cb)(err, str, bytesRead);                                    */
+/*     };                                                              */
+/*   }                                                                 */
+/*                                                                     */
+/*   function wrapper(err, bytesRead) {                                */
+/*     // Retain a reference to buffer so that it can't be GC'ed too soon. */
+/*     callback && callback(err, bytesRead || 0, buffer);              */
+/*   }                                                                 */
+/*                                                                     */
+/*   binding.read(fd, buffer, offset, length, position, wrapper);      */
+/* };                                                                  */
 
+// MS 17feb2023, because of the conservation collector, no need to 
+// use two callbacks as in the genuine code
+
+// MS 17deb2023, getting rid of arguments
 fs.readSync = function(fd, buffer, offset, length, position) {
   var legacy = false;
   if (!Buffer.isBuffer(buffer)) {
     // legacy string interface (fd, length, position, encoding, callback)
     legacy = true;
-    var encoding = arguments[3];
+    var encoding = length;
 
     assertEncoding(encoding);
 
-    position = arguments[2];
-    length = arguments[1];
+    position = offset;
+    length = buffer;
     buffer = new Buffer(length);
 
     offset = 0;
@@ -508,6 +551,31 @@ fs.readSync = function(fd, buffer, offset, length, position) {
   var str = (r > 0) ? buffer.toString(encoding, 0, r) : '';
   return [str, r];
 };
+
+/* fs.readSync = function(fd, buffer, offset, length, position) {      */
+/*   var legacy = false;                                               */
+/*   if (!Buffer.isBuffer(buffer)) {                                   */
+/*     // legacy string interface (fd, length, position, encoding, callback) */
+/*     legacy = true;                                                  */
+/*     var encoding = arguments[3];                                    */
+/*                                                                     */
+/*     assertEncoding(encoding);                                       */
+/*                                                                     */
+/*     position = arguments[2];                                        */
+/*     length = arguments[1];                                          */
+/*     buffer = new Buffer(length);                                    */
+/*                                                                     */
+/*     offset = 0;                                                     */
+/*   }                                                                 */
+/*                                                                     */
+/*   var r = binding.read(fd, buffer, offset, length, position);       */
+/*   if (!legacy) {                                                    */
+/*     return r;                                                       */
+/*   }                                                                 */
+/*                                                                     */
+/*   var str = (r > 0) ? buffer.toString(encoding, 0, r) : '';         */
+/*   return [str, r];                                                  */
+/* };                                                                  */
 
 fs.write = function(fd, buffer, offset, length, position, callback) {
   if (!Buffer.isBuffer(buffer)) {
@@ -630,7 +698,7 @@ fs.ftruncateSync = function(fd, len) {
 
 // ms (26 nov 2022)
 fs.rmdir = function(path, opts, callback) {
-  callback = makeCallback(callback);
+  callback = makeHopCallback(callback);
   if (!nullCheck(path, callback)) return;
   if (callback) {
      binding.rmdir(pathModule._makeLong(path), opts.recursive === true, opts.force === true, callback);
@@ -708,17 +776,17 @@ fs.readdirSync = function(path, options) {
 };
 
 fs.fstat = function(fd, callback) {
-  binding.fstat(fd, makeStatsCallback(callback));
+  binding.fstat(fd, makeHopCallback(callback));
 };
 
 fs.lstat = function(path, callback) {
-  callback = makeStatsCallback(callback);
+  callback = makeHopCallback(callback);
   if (!nullCheck(path, callback)) return;
   binding.lstat(pathModule._makeLong(path), callback);
 };
 
 fs.stat = function(path, callback) {
-  callback = makeStatsCallback(callback);
+  callback = makeHopCallback(callback);
   if (!nullCheck(path, callback)) return;
   binding.stat(pathModule._makeLong(path), callback);
 };

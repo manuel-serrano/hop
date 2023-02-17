@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Thu Feb 16 20:16:32 2023 (serrano)                */
+;*    Last change :  Fri Feb 17 14:57:05 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -1913,20 +1913,36 @@
       (if file
 	  (with-access::JsArrayBufferView buffer (%data byteoffset)
 	     (if (js-procedure? callback)
+		 (cond-expand
+		    (libuv-vec
+		     (uv-fs-read2 file %data length
+			:callback
+			(lambda (obj callback %this)
+			   (with-access::JsGlobalObject %this (worker)
+			      (if (<fx obj 0)
+				  (!js-callback2 'read worker %this
+				     callback (js-undefined) obj #f)
+				  (!js-callback2 'read worker %this
+				     callback (js-undefined) #f obj))))
+			:offset (+fx offset (uint32->fixnum byteoffset))
+			:position (to-int64 %this "read" position #s64:-1)
+			:loop (worker-loop %worker)
+			:arg0 callback :arg1 %this))
+		    (else
+		     (uv-fs-read file %data length
+			:callback
+			(lambda (obj)
+			   (if (<fx obj 0)
+			       (!js-callback2 'read %worker %this
+				  callback (js-undefined) obj #f)
+			       (!js-callback2 'read %worker %this
+				  callback (js-undefined) #f obj)))
+			:offset (+fx offset (uint32->fixnum byteoffset))
+			:position (to-int64 %this "read" position #s64:-1)
+			:loop (worker-loop %worker))))
 		 (uv-fs-read file %data length
-		    :callback
-		    (lambda (obj)
-		       (if (<fx obj 0)
-			   (!js-callback2 'read %worker %this
-			      callback (js-undefined) obj #f)
-			   (!js-callback2 'read %worker %this
-			      callback (js-undefined) #f obj)))
 		    :offset (+fx offset (uint32->fixnum byteoffset))
-		    :position (to-int64 %this "read" position #s64:-1)
-		    :loop (worker-loop %worker))
-		 (uv-fs-read file %data length
-			     :offset (+fx offset (uint32->fixnum byteoffset))
-			     :position (to-int64 %this "read" position #s64:-1))))
+		    :position (to-int64 %this "read" position #s64:-1))))
 	  (fs-callback-error %worker %this "read" callback #f))))
 
 ;*---------------------------------------------------------------------*/

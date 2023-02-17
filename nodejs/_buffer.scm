@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 30 06:52:06 2014                          */
-;*    Last change :  Fri Feb 17 07:50:16 2023 (serrano)                */
+;*    Last change :  Fri Feb 17 12:00:13 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native native bindings                                           */
@@ -421,13 +421,28 @@
    (with-access::JsSlowBuffer o (data)
       (string-in-set-ur! data index val)))
 
-;* {*---------------------------------------------------------------------*} */
-;* {*    js-put-length! ::JsFastBuffer ...                                *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-method (js-put-length! o::JsFastBuffer v::obj throw::bool cache %this::JsGlobalObject) */
-;*    (tprint "ici " v " " (js-get o (& "length") %this))              */
-;*    (js-put! o (& "length") v throw %this))                          */
+;*---------------------------------------------------------------------*/
+;*    js-put-length! ::JsFastBuffer ...                                */
+;*---------------------------------------------------------------------*/
+(define-method (js-put-length! o::JsFastBuffer v::obj throw::bool cache %this::JsGlobalObject)
+   (with-access::JsTypedArray o (length buffer elements)
+      (if (eq? buffer (class-nil JsArrayBuffer))
+	  (begin
+	     (set! length (fixnum->uint32 (->fixnum v)))
+	     (vector-set! elements 0 v))
+	  (call-next-method))))
 
+;*---------------------------------------------------------------------*/
+;*    js-put! ::JsFastBuffer ...                                       */
+;*---------------------------------------------------------------------*/
+(define-method (js-put! o::JsFastBuffer p v throw %this)
+   (with-access::JsTypedArray o (length buffer elements)
+      (if (and (eq? p (& "length")) (eq? buffer (class-nil JsArrayBuffer)))
+	  (begin
+	     (set! length (fixnum->uint32 (->fixnum v)))
+	     (vector-set! elements 0 v))
+	  (call-next-method))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    js-buffer-constr ...                                             */
 ;*---------------------------------------------------------------------*/
@@ -721,9 +736,10 @@
 		   ((>=fl n 1073741823.0) ;; #x3fffffff + 1
 		    (js-raise-range-error %this "length (~s) > kMaxLength" a0))
 		   (else
-		    (with-access::JsGlobalObject %this (js-object)
+		    (with-access::JsGlobalObject %this (js-object js-slowbuffer-proto js-slowbuffer-cmap)
 		       (let ((this (instantiateJsSlowBuffer
-				      (__proto__ slowbuffer-proto)
+				      (cmap js-slowbuffer-cmap)
+				      (__proto__ js-slowbuffer-proto)
 				      (data ($make-string/wo-fill (->fixnum a0))))))
 			  ;; length
 			  (js-bind! %this this (& "length")
@@ -733,10 +749,13 @@
 			     :enumerable #t)
 			  this))))))
 	    ((string? a0)
-	     (with-access::JsGlobalObject %this (js-object)
+	     (with-access::JsGlobalObject %this (js-object
+						   js-slowbuffer-proto
+						   js-slowbuffer-cmap)
 		(let* ((data a0)
 		       (this (instantiateJsSlowBuffer
-				(__proto__ slowbuffer-proto)
+				(cmap js-slowbuffer-cmap)
+				(__proto__ js-slowbuffer-proto)
 				(data data))))
 		   ;; length
 		   (js-bind! %this this (& "length")
@@ -746,10 +765,13 @@
 		      :enumerable #t)
 		   this)))
 	    ((js-jsstring? a0)
-	     (with-access::JsGlobalObject %this (js-object)
+	     (with-access::JsGlobalObject %this (js-object
+						   js-slowbuffer-proto
+						   js-slowbuffer-cmap)
 		(let* ((data (js-jsstring->string a0))
 		       (this (instantiateJsSlowBuffer
-				(__proto__ slowbuffer-proto)
+				(cmap js-slowbuffer-cmap)
+				(__proto__ js-slowbuffer-proto)
 				(data data))))
 		   ;; length
 		   (js-bind! %this this (& "length")
