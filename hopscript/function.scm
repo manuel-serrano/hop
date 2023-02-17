@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Thu Feb 16 15:59:40 2023 (serrano)                */
+;*    Last change :  Fri Feb 17 05:46:42 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -265,9 +265,13 @@
 	 ((eq? n (& "name"))
 	  (js-string->jsstring (js-function-debug-name o %this)))
 	 ((eq? n (& "caller"))
-	  (js-undefined))
+	  (if (isa? o JsFunction)
+	      (call-next-method)
+	      (js-undefined)))
 	 ((eq? n (& "arguments"))
-	  (js-undefined))
+	  (if (isa? o JsFunction)
+	      (call-next-method)
+	      (js-undefined)))
 	 (else
 	  (call-next-method)))))
 
@@ -406,6 +410,7 @@
 			     "[[ThrowTypeError]] ~a" o)))
 	     (thrower (js-make-function %this
 			 (lambda (o v)
+			    (tprint "ICI")
 			    (js-raise-type-error %this
 			       "[[ThrowTypeError]] ~a" o))
 			 (js-function-arity 1 0)

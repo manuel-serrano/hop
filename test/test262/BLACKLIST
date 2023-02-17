@@ -17,6 +17,8 @@
  ;; black listed to support catch without exception declaration
  "S12.14_A16_T4.js" 
  "S13.2.2_A1[78]_T[0-9]+.js"
+ ;; incompatible with new JS semantics
+ "S13_A19_T1.js" 
  "S13.2.2_A19_T7.js"
  "S15.2.2.1_A2_T4.js"
  ;; hop incompatibility with the new (2019-01-05) hop builtin object
