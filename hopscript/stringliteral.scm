@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Mon Feb 20 07:59:28 2023 (serrano)                */
+;*    Last change :  Mon Feb 20 09:17:45 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -4560,12 +4560,16 @@
 ;*---------------------------------------------------------------------*/
 (define (js-jsstring-localecompare this that %this)
    (let ((s (js-jsstring->string this)))
-      (if (and (js-jsstring-ascii? this) (js-jsstring? that) (js-jsstring-ascii? that))
-	  (string-compare3 s (js-jsstring->string that))
-	  (let ((r (utf8-string-locale-compare3 s (js-tostring that %this))))
-	     (if (<fx r 0)
-		 -1
-		 r)))))
+      (cond
+	 ((and (js-jsstring-ascii? this) (js-jsstring? that) (js-jsstring-ascii? that))
+	  (string-compare3 s (js-jsstring->string that)))
+	 ((eq? that (js-undefined))
+	  ;; needed for the overspecified test: 15.5.4.9_3.js
+	  (if (js-jsstring-ascii? this)
+	      (string-compare3 s "undefined")
+	      (utf8-string-locale-compare3 s "undefined")))
+	 (else
+	  (utf8-string-locale-compare3 s (js-tostring that %this))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-maybe-localecompare ...                              */
