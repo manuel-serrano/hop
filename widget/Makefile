@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Thu Feb 16 07:27:00 2023 (serrano)                */
+#*    Last change :  Mon Feb 20 13:54:04 2023 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOP library.                           */
 #*=====================================================================*/
@@ -100,7 +100,7 @@ predistrib-clean:
 #*---------------------------------------------------------------------*/
 #*    Explicit dependencies                                            */
 #*---------------------------------------------------------------------*/
-o/%.o: .afile
+o/%.o: .afile o
 
 colorchooser.o: colorchooser.hop
 colorchooser.scm: colorchooser.hop

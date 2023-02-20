@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Mon Feb 20 07:42:34 2023 (serrano)                */
+#*    Last change :  Mon Feb 20 20:59:21 2023 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the NODEJS library.                        */
 #*=====================================================================*/
@@ -35,21 +35,22 @@ BHOPCFLAGS += --bootstrap-mode
 #*---------------------------------------------------------------------*/
 _OBJECTS = nodejs require process repl _hop uv _fs _http _crypto \
   _buffer _process_wrap _stream_wrap _tcp_wrap _pipe_wrap _udp_wrap \
-  _tty_wrap _timer_wrap _evals _zlib syncg
+  _tty_wrap _timer_wrap _evals _zlib syncg 
 _JS_OBJECTS = console constants util sys path stream events fs \
   punycode assert buffer dgram net timers vm querystring cluster \
   child_process string_decoder _linklist _stream_readable _stream_writable \
   _stream_duplex _stream_transform _stream_passthrough crypto dns domain \
   freelist http https tls tty zlib url os hop hophz \
   node_tick node_stdio node_proc node_timers node_cluster
+_MOD_OBJECTS = fs
 
-OBJECTS = $(_OBJECTS:%=o/%.o) $(_JS_OBJECTS:%=o/%.o)
+OBJECTS = $(_OBJECTS:%=o/%.o) $(_JS_OBJECTS:%=o/%.o) $(_MOD_OBJECTS:%=o/%.mod.o) o/nodejs.mod.o
 EOBJECTS = o/make_lib.o
 
 BGL_CLASSES = $(_OBJECTS:%=$(CLASS_DIR)/%.class)
 BGL_ECLASSES = $(CLASS_EDIR)/make_lib.class
 
-SOURCES = $(_OBJECTS:%=%.scm) $(_JS_OBJECTS:%=%.js)
+SOURCES = $(_OBJECTS:%=%.scm) $(_JS_OBJECTS:%=%.js) $(_MOD_OBJECTS:%=modules/%.mod.js) modules/nodejs.mod.scm
 
 INCLUDES = nodejs_debug.sch uv.sch nodejs_types.sch
 
@@ -91,6 +92,16 @@ uv.sch: uv.scm make_fakeuv.scm
 #*---------------------------------------------------------------------*/
 o/js/%.scm: %.js $(HEAP_FILE)
 	@ $(call compile3,$(HOPC),$(HFLAGS),$(BCFLAGS),$(BLFLAGS) $(EFLAGS) $(BHOPCFLAGS),-s --js-commonjs-export --js-module-name __nodejs_$* --js-module-path $*,$< -o $@)
+
+o/%.mod.o: modules/%.mod.js
+	@ $(call compile3,$(HOPC),$(HFLAGS),$(BCFLAGS),$(BLFLAGS),$(BHOPCFLAGS) -c --js-no-header --js-module-name __hop_$* --js-module-path $*,$< -o $@)
+
+o/%.mod.o: modules/%.mod.scm
+	@ $(call compile2,$(BIGLOO),$(BCFLAGS),$(BLFLAGS),-c,$< -o $@)
+
+modules/%.mod.scm: modules/%.mod.js
+	@ $(call compile3,$(HOPC),$(HFLAGS),$(BCFLAGS),$(BLFLAGS),$(BHOPCFLAGS) --js-driver j2s-export-driver -s,$< -o $@)
+
 
 $(_JS_OBJECTS:%=o/%.o): $(HEAP_FILE)
 
@@ -137,6 +148,7 @@ o/tls.o: tls.js
 o/buffer.o: buffer.js
 	@ $(call compile3,$(HOPC),$(HFLAGS),$(BCFLAGS),$(BLFLAGS),$(BHOPCFLAGS) -c --js-module-name __nodejs_buffer --js-module-path buffer -Os --js-cspecs-get "(imap cmap)" --js-cspecs-assignew "(emap cmap)",$< -o $@)
 
+o/nodejs.mod.o: modules/fs.mod.scm
 
 #bdepend start (don't edit)
 #*---------------------------------------------------------------------*/
