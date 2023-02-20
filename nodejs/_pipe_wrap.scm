@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 19 07:19:20 2014                          */
-;*    Last change :  Wed Apr 28 09:33:54 2021 (serrano)                */
-;*    Copyright   :  2014-21 Manuel Serrano                            */
+;*    Last change :  Mon Feb 20 07:42:41 2023 (serrano)                */
+;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs PIPE bindings                                             */
 ;*=====================================================================*/
@@ -23,7 +23,7 @@
 	    __nodejs__buffer
 	    __nodejs__stream-wrap)
 
-   (include "nodejs_types.sch" "nodejs_async.sch")
+   (include "nodejs_types.sch")
    
    (export (process-pipe-wrap ::WorkerHopThread ::JsGlobalObject ::JsProcess ::obj)))
 

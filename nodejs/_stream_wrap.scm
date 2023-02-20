@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 20 12:31:24 2014                          */
-;*    Last change :  Sat Aug 28 06:29:52 2021 (serrano)                */
-;*    Copyright   :  2014-21 Manuel Serrano                            */
+;*    Last change :  Mon Feb 20 07:42:55 2023 (serrano)                */
+;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Common stream functions                                          */
 ;*=====================================================================*/
@@ -18,8 +18,6 @@
    
    (library hopscript)
 
-   (include "nodejs_async.sch")
-   
    (import  __nodejs_uv
 	    __nodejs_process
 	    __nodejs__buffer)

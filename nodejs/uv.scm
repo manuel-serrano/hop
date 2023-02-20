@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Fri Feb 17 14:57:05 2023 (serrano)                */
+;*    Last change :  Mon Feb 20 07:34:21 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -25,7 +25,7 @@
       (enable-libuv
        (library libuv)))
 
-   (include "nodejs_debug.sch" "nodejs_async.sch" "uv.sch" "nodejs_types.sch")
+   (include "nodejs_debug.sch" "uv.sch" "nodejs_types.sch")
    (include "../hopscript/stringthread.sch")
 
    (cond-expand
@@ -35,7 +35,8 @@
 		  (async-count::int (default 0))
 		  (async-count-debug::pair-nil (default '()))
 		  (actions::pair-nil (default '()))
-		  (exiting::bool (default #f)))
+		  (exiting::bool (default #f))
+		  (mutex::mutex read-only (default (make-spinlock))))
 	  
 	  (class JsChild::UvProcess
 	     (ref (default #t))
@@ -225,7 +226,7 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (next-tick %worker %this::JsGlobalObject)
    (unless *nodejs-DEP0134*
-      (with-access::WorkerHopThread %worker (%process async)
+      (with-access::WorkerHopThread %worker (%process)
 	 (with-access::JsProcess %process (tick-callback)
 	    (unless tick-callback
 	       (set! tick-callback (js-get %process (& "_tickCallback") %this)))
@@ -388,8 +389,8 @@
 ;*---------------------------------------------------------------------*/
 (define-method (js-worker-tick th::WorkerHopThread)
    (with-access::WorkerHopThread th (%loop %process %retval %this
-				       keep-alive mutex)
-      (with-access::JsLoop %loop (actions exiting)
+				       keep-alive)
+      (with-access::JsLoop %loop (actions exiting mutex)
 	 (let loop ((acts (synchronize mutex
 			     (let ((acts actions))
 				(set! actions '())
@@ -452,8 +453,9 @@
 					  (uv-stop loop)))))))))
 	 (synchronize mutex
 	    (nodejs-process th %this)
-	    (with-access::JsLoop loop (actions)
-	       (set! actions tqueue))
+	    (with-access::JsLoop loop (actions mutex)
+	       (synchronize mutex
+		  (set! actions tqueue)))
 	    (condition-variable-broadcast! condv)
 	    (with-access::JsLoop loop ((lasync async))
 	       (set! lasync async)
@@ -557,26 +559,26 @@
    (define (worker-started-new? th)
       (with-access::WorkerHopThread th (state)
 	 (not (eq? state 'init))))
-   
+
    [assert (proc) (correct-arity? proc 1)]
    (with-trace 'nodejs-async "nodejs-async-push"
       (trace-item "name=" name)
       (trace-item "th=" th)
-      (with-access::WorkerHopThread th (%loop mutex tqueue)
-	 (synchronize mutex
-	    (let ((act (cons name proc)))
-	       (if (worker-started? th)
-		   (with-access::JsLoop %loop (actions async exiting)
-		      (unless (pair? actions)
-			 (uv-ref async)
-			 (uv-async-send async))
-		      ;; push the action to be executed (with a debug name)
-		      (set! actions (cons act actions)))
-		   ;; the loop is not started yet (this might happend when
-		   ;; a master send a message (js-worker-post-master-message)
-		   ;; before the slave is fully initialized
-		   (with-access::WorkerHopThread th (tqueue)
-		      (set! tqueue (append (cons act tqueue))))))))))
+      (with-access::WorkerHopThread th (%loop tqueue)
+	 (let ((act (cons name proc)))
+	    (if (worker-started? th)
+		(with-access::JsLoop %loop (actions async exiting mutex)
+		   (unless (pair? actions)
+		      (uv-ref async)
+		      (uv-async-send async))
+		   ;; push the action to be executed (with a debug name)
+		   (synchronize mutex
+		      (set! actions (cons act actions))))
+		;; the loop is not started yet (this might happend when
+		;; a master send a message (js-worker-post-master-message)
+		;; before the slave is fully initialized
+		(with-access::WorkerHopThread th (tqueue)
+		   (set! tqueue (append (cons act tqueue)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-worker-exec ...                                               */

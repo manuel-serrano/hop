@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Tue Feb 14 09:53:12 2023 (serrano)                */
+;*    Last change :  Mon Feb 20 07:42:46 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -25,8 +25,7 @@
 
    (include "nodejs.sch"
 	    "nodejs_types.sch"
-	    "nodejs_debug.sch"
-	    "nodejs_async.sch")
+	    "nodejs_debug.sch")
 
    (import __nodejs__hop
 	   __nodejs__fs

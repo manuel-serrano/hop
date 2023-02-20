@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 19 07:19:20 2014                          */
-;*    Last change :  Wed Apr 28 09:35:37 2021 (serrano)                */
-;*    Copyright   :  2014-21 Manuel Serrano                            */
+;*    Last change :  Mon Feb 20 07:43:31 2023 (serrano)                */
+;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs UDP bindings                                              */
 ;*=====================================================================*/
@@ -18,7 +18,7 @@
    
    (library hopscript)
 
-   (include "nodejs_async.sch" "nodejs_types.sch")
+   (include "nodejs_types.sch")
    
    (import  __nodejs_uv
 	    __nodejs_process

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    /tmp/HOPNEW/hop/nodejs/_zlib.scm                                 */
+;*    serrano/prgm/project/hop/hop/nodejs/_zlib.scm                    */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec 27 19:12:38 2015                          */
-;*    Last change :  Sun Feb 23 15:12:28 2020 (serrano)                */
-;*    Copyright   :  2015-20 Manuel Serrano                            */
+;*    Last change :  Mon Feb 20 07:43:37 2023 (serrano)                */
+;*    Copyright   :  2015-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Zlib bindings                                                    */
 ;*=====================================================================*/
@@ -17,8 +17,6 @@
    (include "../hopscript/stringthread.sch")
    
    (library hopscript)
-
-   (include "nodejs_async.sch")
 
    (static  (class JsZlib::JsObject))
    
