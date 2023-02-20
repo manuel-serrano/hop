@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Tue Jan 17 10:50:37 2023 (serrano)                */
+;*    Last change :  Mon Feb 20 07:59:28 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -4562,7 +4562,10 @@
    (let ((s (js-jsstring->string this)))
       (if (and (js-jsstring-ascii? this) (js-jsstring? that) (js-jsstring-ascii? that))
 	  (string-compare3 s (js-jsstring->string that))
-	  (utf8-string-locale-compare3 s (js-tostring that %this)))))
+	  (let ((r (utf8-string-locale-compare3 s (js-tostring that %this))))
+	     (if (<fx r 0)
+		 -1
+		 r)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-maybe-localecompare ...                              */
