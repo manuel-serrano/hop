@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Mon Feb 20 18:26:15 2023 (serrano)                */
+;*    Last change :  Tue Feb 21 12:00:51 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -1485,7 +1485,7 @@
 			(if (integer? res)
 			    (js-raise
 			       (fs-errno-exn
-				  (format "lstat: cannot stat ~a -- ~~s" fd)
+				  (format "fstat: cannot stat ~a -- ~~s" fd)
 				  res %this))
 			    (stat->jsobj! %this obj
 			       (js-object-inline-elements obj))))))
@@ -1494,7 +1494,7 @@
 		     (if (integer? res)
 			 (js-raise
 			    (fs-errno-exn
-			       (format "stat: cannot stat ~a -- ~~s" fd)
+			       (format "fstat: cannot stat ~a -- ~~s" fd)
 			       res %this))
 			 (stat->jsobj %this proto res))))))
 	  (fs-callback-error %worker %this callback "fstat" #f))))
@@ -1507,18 +1507,50 @@
       ((not (js-jsstring? path))
        (js-raise-type-error %this "Path not an string" path))
       ((js-procedure? callback)
-       (uv-fs-stat (js-jsstring->string path)
-	  :loop (worker-loop %worker)
-	  :callback (stat-cb %this callback proto path)))
+       (cond-expand
+	  (libuv-vec
+	   (let* ((str (js-jsstring->string path))
+		  (base (vector-length (uv-fs-stat-cb-vector-props)))
+		  (vec ($create-vector (+fx 4 base))))
+	      (vector-set! vec base %this)
+	      (vector-set! vec (+fx base 1) callback)
+	      (vector-set! vec (+fx base 2) proto)
+	      (vector-set! vec (+fx base 3) path)
+	      (uv-fs-stat str
+		 :loop (worker-loop %worker)
+		 :callback stat-vec-cb
+		 :vector vec)))
+	  (else
+	   (let ((str (js-jsstring->string path)))
+	      (uv-fs-stat str
+		 :loop (worker-loop %worker)
+		 :callback (stat-cb %this callback proto path))))))
       (else
-       (let ((res (uv-fs-stat (js-jsstring->string path))))
-	  (if (integer? res)
-	      (js-raise
-		 (fs-errno-path-exn
-		    (format "stat: cannot stat ~a -- ~~s"
-		       (js-jsstring->string path))
-		    res %this path))
-	      (stat->jsobj %this proto res))))))
+       (cond-expand
+	  (libuv-vec
+	   (let ((obj (js-make-jsobject
+			 (+fx 4 (vector-length (uv-fs-stat-cb-vector-props)))
+			 (stat-cmap)
+			 proto))
+		 (str (js-jsstring->string path)))
+	      (let ((res (uv-fs-lstat str
+			    :vector (js-object-inline-elements obj))))
+		 (if (integer? res)
+		     (js-raise
+			(fs-errno-exn
+			   (format "lstat: cannot stat ~a -- ~~s" str)
+			   res %this))
+		     (stat->jsobj! %this obj
+			(js-object-inline-elements obj))))))
+	  (else
+	   (let* ((str (js-jsstring->string path))
+		  (res (uv-fs-stat str)))
+	      (if (integer? res)
+		  (js-raise
+		     (fs-errno-exn
+			(format "lstat: cannot stat ~a -- ~~s" str)
+			res %this))
+		  (stat->jsobj %this proto res))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-lstat ...                                                 */
