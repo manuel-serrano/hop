@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 15 15:16:16 2018                          */
-;*    Last change :  Fri Oct  7 07:56:57 2022 (serrano)                */
-;*    Copyright   :  2018-22 Manuel Serrano                            */
+;*    Last change :  Tue Feb 21 08:03:40 2023 (serrano)                */
+;*    Copyright   :  2018-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES6 Module handling                                              */
 ;*=====================================================================*/
@@ -268,7 +268,7 @@
 		      (import import)))))))
    
    (define (import-namespace name import::J2SImport)
-      (with-access::J2SImport import (iprgm loc)
+      (with-access::J2SImport import (loc)
 	 (with-access::J2SImportName name (alias)
 	    (instantiate::J2SDeclInit
 	       (loc loc)
@@ -660,6 +660,12 @@
 ;*    esimport-init-core-modules! ...                                  */
 ;*---------------------------------------------------------------------*/
 (define (esimport-init-core-modules!)
+   
+   (define (read-mo path)
+      (call-with-input-file path
+	 (lambda (ip)
+	    (string->obj (read ip)))))
+   
    (set! core-modules   
       (create-hashtable
 	 :weak 'open-string
@@ -667,7 +673,10 @@
 	 :max-length 4096
 	 :max-bucket-length 10))
    (for-each (lambda (cm)
-		(let ((loc `(at ,(string-append cm ".js") 0)))
+		(let ((loc `(at ,(string-append cm ".js") 0))
+		      (mo (make-file-path (hop-lib-directory)
+			     "hop" (hop-version) "mo"
+			     (string-append cm ".mod.mo"))))
 		   (co-instantiate ((decl (instantiate::J2SDecl
 					     (id 'default)
 					     (loc loc)
@@ -682,13 +691,15 @@
 					     (index 0)
 					     (decl decl))))
 		      (hashtable-put! core-modules cm
-			 (instantiate::J2SProgram
-			    (loc loc)
-			    (endloc loc)
-			    (path cm)
-			    (mode 'core)
-			    (nodes '())
-			    (exports (list expo)))))))
+			 (if (file-exists? mo)
+			     (read-mo mo)
+			     (instantiate::J2SProgram
+				(loc loc)
+				(endloc loc)
+				(path cm)
+				(mode 'core)
+				(nodes '())
+				(exports (list expo))))))))
       core-module-list))
 
 ;*---------------------------------------------------------------------*/

@@ -3,14 +3,15 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Mon Feb 20 20:59:21 2023 (serrano)                */
+#*    Last change :  Tue Feb 21 07:56:52 2023 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the NODEJS library.                        */
 #*=====================================================================*/
 .PHONY: do install
 
 do: build
-install: install-library
+install: install-library install-mo
+uninstall: uninstall-mo
 
 #*---------------------------------------------------------------------*/
 #*    Standard Hop configuration                                       */
@@ -42,15 +43,15 @@ _JS_OBJECTS = console constants util sys path stream events fs \
   _stream_duplex _stream_transform _stream_passthrough crypto dns domain \
   freelist http https tls tty zlib url os hop hophz \
   node_tick node_stdio node_proc node_timers node_cluster
-_MOD_OBJECTS = fs
+_MOD_OBJECTS = fs path
 
-OBJECTS = $(_OBJECTS:%=o/%.o) $(_JS_OBJECTS:%=o/%.o) $(_MOD_OBJECTS:%=o/%.mod.o) o/nodejs.mod.o
+OBJECTS = $(_OBJECTS:%=o/%.o) $(_JS_OBJECTS:%=o/%.o) $(_MOD_OBJECTS:%=o/%.mod.o) 
 EOBJECTS = o/make_lib.o
 
 BGL_CLASSES = $(_OBJECTS:%=$(CLASS_DIR)/%.class)
 BGL_ECLASSES = $(CLASS_EDIR)/make_lib.class
 
-SOURCES = $(_OBJECTS:%=%.scm) $(_JS_OBJECTS:%=%.js) $(_MOD_OBJECTS:%=modules/%.mod.js) modules/nodejs.mod.scm
+SOURCES = $(_OBJECTS:%=%.scm) $(_JS_OBJECTS:%=%.js) $(_MOD_OBJECTS:%=modules/%.mod.js)
 
 INCLUDES = nodejs_debug.sch uv.sch nodejs_types.sch
 
@@ -70,11 +71,39 @@ build: .afile
 	$(MAKE) heap-c
 	$(MAKE) $(BACKEND)
 
-native: o heap-c lib-c
+native: o heap-c lib-c mod-mo
 jvm: heap-jvm lib-jvm
 
 heap-c: .afile
 lib-c: .afile heap-c
+mod-mo: .afile $(_MOD_OBJECTS:%=modules/mo/%.mod.mo)
+
+modules/mo:
+	mkdir -p modules/mo
+
+#*---------------------------------------------------------------------*/
+#*    clean                                                            */
+#*---------------------------------------------------------------------*/
+moclean: 
+	$(RM) -rf modules/mo
+
+clean: moclean
+
+#*---------------------------------------------------------------------*/
+#*    install-mo                                                       */
+#*---------------------------------------------------------------------*/
+install-mo: $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/mo
+	for m in $(_MOD_OBJECTS); do \
+	   $(INSTALL) modules/mo/$$m.mod.mo $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/mo; \
+	done
+	chmod $(MODDIR) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/mo
+	chmod $(MODFILE) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/mo/*.mod.mo
+
+uninstall-mo:
+	rm -rf $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/modules
+
+$(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/mo:
+	mkdir -p $@
 
 #*---------------------------------------------------------------------*/
 #*    uv.sch ...                                                       */
@@ -94,12 +123,12 @@ o/js/%.scm: %.js $(HEAP_FILE)
 	@ $(call compile3,$(HOPC),$(HFLAGS),$(BCFLAGS),$(BLFLAGS) $(EFLAGS) $(BHOPCFLAGS),-s --js-commonjs-export --js-module-name __nodejs_$* --js-module-path $*,$< -o $@)
 
 o/%.mod.o: modules/%.mod.js
-	@ $(call compile3,$(HOPC),$(HFLAGS),$(BCFLAGS),$(BLFLAGS),$(BHOPCFLAGS) -c --js-no-header --js-module-name __hop_$* --js-module-path $*,$< -o $@)
+	@ $(call compile3,$(HOPC),$(HFLAGS),$(BCFLAGS),$(BLFLAGS),$(BHOPCFLAGS) -c --js-module-name __nodejs_mod_$* --js-module-path $*,$< -o $@)
 
 o/%.mod.o: modules/%.mod.scm
 	@ $(call compile2,$(BIGLOO),$(BCFLAGS),$(BLFLAGS),-c,$< -o $@)
 
-modules/%.mod.scm: modules/%.mod.js
+modules/mo/%.mod.mo: modules/%.mod.js modules/mo
 	@ $(call compile3,$(HOPC),$(HFLAGS),$(BCFLAGS),$(BLFLAGS),$(BHOPCFLAGS) --js-driver j2s-export-driver -s,$< -o $@)
 
 

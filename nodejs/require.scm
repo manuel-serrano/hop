@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Mon Feb 13 17:25:32 2023 (serrano)                */
+;*    Last change :  Tue Feb 21 08:37:30 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -35,7 +35,7 @@
 	   (nodejs-module-namespace::JsObject ::JsModule ::WorkerHopThread ::JsGlobalObject)
 	   (nodejs-head ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsObject)
 	   (nodejs-script ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsObject)
-	   (nodejs-core-module ::bstring ::WorkerHopThread ::JsGlobalObject)
+	   (nodejs-core-module ::bstring ::WorkerHopThread ::bool ::JsGlobalObject)
 	   (nodejs-require-core ::bstring ::WorkerHopThread ::JsGlobalObject)
 	   (nodejs-load src ::bstring ::obj ::obj ::WorkerHopThread
 	      #!key lang srcalias (commonjs-export #unspecified))
@@ -750,7 +750,7 @@
 	   path::bstring checksum::long commonjs-export::bool loc)
    (let* ((respath (nodejs-resolve path %this %module 'import))
 	  (mod (nodejs-load-module respath worker %this %module
-		 :commonjs-export commonjs-export :loc loc)))
+		  :commonjs-export commonjs-export :loc loc :es6module #t)))
       (with-access::JsModule mod ((mc checksum))
 	 (if (or (=fx checksum 0) (=fx checksum mc) (=fx mc 0))
 	     mod
@@ -2242,7 +2242,7 @@
 (define (nodejs-load-module path::bstring worker::WorkerHopThread
 	   %this %module
 	   #!key (lang "hopscript") compiler
-	   config (commonjs-export #t) loc)
+	   config (commonjs-export #t) (es6module #f) loc)
    
    (define (load-json path)
       (let ((mod (nodejs-new-module path path worker %this))
@@ -2255,7 +2255,7 @@
    (define (load-module src path worker %this %module lang compiler srcalias)
       (cond
 	 ((core-module? path)
-	  (nodejs-core-module path worker %this))
+	  (nodejs-core-module path worker es6module %this))
 	 ((js-procedure? compiler)
 	  (let ((obj (js-call2-jsprocedure %this compiler (js-undefined)
 			path (if (pair? config) config '()))))
@@ -2351,7 +2351,7 @@
 ;*    Get a core module object. This function is used during bootstrap */
 ;*    by NODEJS-PROCESS to get the console core module.                */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-core-module name::bstring worker %this)
+(define (nodejs-core-module mod::bstring worker es6module %this)
    
    (define (nodejs-init-core name worker %this)
       (with-trace 'require (format "nodejs-init-core ~a" name)
@@ -2369,10 +2369,11 @@
 	       (trace-item "gencmapid=" (gencmapid))
 	       mod))))
 
-   (with-trace 'require (format "nodejs-core-module ~a" name)
+   (with-trace 'require (format "nodejs-core-module ~a" mod)
       (with-access::WorkerHopThread worker (module-cache)
-	 (let ((m (js-get-property-value module-cache module-cache
-		     (js-string->jsstring name) %this)))
+	 (let* ((name (if es6module (string-append mod ".mod") mod))
+		(n (js-string->jsstring name))
+		(m (js-get-property-value module-cache module-cache n %this)))
 	    (if (eq? m (js-absent))
 		(nodejs-init-core name worker %this)
 		m)))))
@@ -2385,7 +2386,7 @@
 ;*---------------------------------------------------------------------*/
 (define (nodejs-require-core name::bstring worker %this)
    (with-trace 'require (format "nodejs-require-core ~a" name)
-      (js-get (nodejs-core-module name worker %this) (& "exports") %this)))
+      (js-get (nodejs-core-module name worker #f %this) (& "exports") %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-resolve ...                                               */

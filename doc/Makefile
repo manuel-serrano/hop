@@ -3,8 +3,8 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Sun Mar 20 18:29:06 2022 (serrano)                */
-#*    Copyright   :  2006-22 Manuel Serrano                            */
+#*    Last change :  Tue Feb 21 08:18:28 2023 (serrano)                */
+#*    Copyright   :  2006-23 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Doc Makefile                                                     */
 #*=====================================================================*/
@@ -167,6 +167,7 @@ install:
 	$(INSTALL) html-idx.json $(DESTDIR)$(HOPDOCDIR)
 	$(INSTALL) mdn-idx.json $(DESTDIR)$(HOPDOCDIR)
 	$(INSTALL) node-idx.json $(DESTDIR)$(HOPDOCDIR)
+	chmod $(MODFILE) $(DESTDIR)$(HOPDOCDIR)/*.json
 
 uninstall:
 
