@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 18 16:19:42 2013                          */
-;*    Last change :  Tue Feb 21 08:42:45 2023 (serrano)                */
+;*    Last change :  Tue Feb 21 09:57:31 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    nodejs boot                                                      */
@@ -67,7 +67,10 @@
 	   (__nodejs_node_cluster "| echo \"(module __nodejs_node_cluster (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
 	   ;; nodejs builtin es6 modules
 	   (__nodejs_mod_path "| echo \"(module __nodejs_mod_path (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
-	   (__nodejs_mod_fs "| echo \"(module __nodejs_mod_fs (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\""))
+	   (__nodejs_mod_fs "| echo \"(module __nodejs_mod_fs (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
+	   (__nodejs_mod_http "| echo \"(module __nodejs_mod_http (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
+	   (__nodejs_mod_https "| echo \"(module __nodejs_mod_https (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\""))
+
 
    (export (core-module-table)
 	   (nodejs-deprecation-config! #!key (DEP0134 #t))
@@ -125,7 +128,9 @@
 	 ("tls" __nodejs_tls)
 	 ("tty" __nodejs_tty)
 	 ("http" __nodejs_http)
+	 ("http.mod" __nodejs_mod_http)
 	 ("https" __nodejs_https)
+	 ("https.mod" __nodejs_mod_https)
 	 ("zlib" __nodejs_zlib)
 	 ("os" __nodejs_os)
 	 ("hop" __nodejs_hop)

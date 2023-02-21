@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Tue Feb 21 09:02:22 2023 (serrano)                */
+;*    Last change :  Tue Feb 21 10:35:33 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -213,7 +213,7 @@
 	 ;; console.exports value is updated
 	 (let* ((stdout (js-get %process (& "stdout") %this))
 		(stderr (js-get %process (& "stderr") %this))
-		(mcon (nodejs-core-module "console" %worker #f %this))
+		(mcon (nodejs-core-module "console" %worker %this))
 		(exports (js-get mcon (& "exports") %this))
 		(ctor (js-get exports (& "Console") %this))
 		(con (js-new2 %this ctor stdout stderr)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Tue Feb 21 08:37:30 2023 (serrano)                */
+;*    Last change :  Tue Feb 21 09:54:06 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -35,7 +35,7 @@
 	   (nodejs-module-namespace::JsObject ::JsModule ::WorkerHopThread ::JsGlobalObject)
 	   (nodejs-head ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsObject)
 	   (nodejs-script ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsObject)
-	   (nodejs-core-module ::bstring ::WorkerHopThread ::bool ::JsGlobalObject)
+	   (nodejs-core-module ::bstring ::WorkerHopThread ::JsGlobalObject)
 	   (nodejs-require-core ::bstring ::WorkerHopThread ::JsGlobalObject)
 	   (nodejs-load src ::bstring ::obj ::obj ::WorkerHopThread
 	      #!key lang srcalias (commonjs-export #unspecified))
@@ -750,7 +750,7 @@
 	   path::bstring checksum::long commonjs-export::bool loc)
    (let* ((respath (nodejs-resolve path %this %module 'import))
 	  (mod (nodejs-load-module respath worker %this %module
-		  :commonjs-export commonjs-export :loc loc :es6module #t)))
+		  :commonjs-export commonjs-export :loc loc)))
       (with-access::JsModule mod ((mc checksum))
 	 (if (or (=fx checksum 0) (=fx checksum mc) (=fx mc 0))
 	     mod
@@ -837,7 +837,7 @@
 		  (with-handler
 		     (lambda (exn)
 			(js-call1 %this reject (js-undefined) exn))
-		     (let* ((path (nodejs-resolve name %this %module 'body))
+		     (let* ((path (nodejs-resolve name %this %module 'import))
 			    (mod (nodejs-import-module worker %this %module
 				    path 0 commonjs-export loc)))
 			(js-call1 %this resolve (js-undefined)
@@ -2242,7 +2242,7 @@
 (define (nodejs-load-module path::bstring worker::WorkerHopThread
 	   %this %module
 	   #!key (lang "hopscript") compiler
-	   config (commonjs-export #t) (es6module #f) loc)
+	   config (commonjs-export #t) loc)
    
    (define (load-json path)
       (let ((mod (nodejs-new-module path path worker %this))
@@ -2255,7 +2255,7 @@
    (define (load-module src path worker %this %module lang compiler srcalias)
       (cond
 	 ((core-module? path)
-	  (nodejs-core-module path worker es6module %this))
+	  (nodejs-core-module path worker %this))
 	 ((js-procedure? compiler)
 	  (let ((obj (js-call2-jsprocedure %this compiler (js-undefined)
 			path (if (pair? config) config '()))))
@@ -2351,16 +2351,21 @@
 ;*    Get a core module object. This function is used during bootstrap */
 ;*    by NODEJS-PROCESS to get the console core module.                */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-core-module mod::bstring worker es6module %this)
+(define (nodejs-core-module name::bstring worker %this)
    
    (define (nodejs-init-core name worker %this)
       (with-trace 'require (format "nodejs-init-core ~a" name)
 	 (trace-item "gencmapid=" (gencmapid))
 	 (with-access::JsGlobalObject %this (js-object)
-	    (let ((init (cdr (assoc name (core-module-table))))
-		  (this (js-new0 %this js-object))
-		  (scope (nodejs-new-scope-object %this))
-		  (mod (nodejs-new-module name name worker %this)))
+	    (let* ((p (assoc name (core-module-table)))
+		   (init (if (pair? p)
+			     (cdr p)
+			     (error "nodejs-code-module"
+				"Cannot find core module"
+				name)))
+		   (this (js-new0 %this js-object))
+		   (scope (nodejs-new-scope-object %this))
+		   (mod (nodejs-new-module name name worker %this)))
 	       ;; initialize the core module
 	       (with-trace 'require (format "nodejs-init-core.init ~a" name)
 		  (init %this this scope mod))
@@ -2369,14 +2374,8 @@
 	       (trace-item "gencmapid=" (gencmapid))
 	       mod))))
 
-   (with-trace 'require (format "nodejs-core-module ~a" mod)
-      (with-access::WorkerHopThread worker (module-cache)
-	 (let* ((name (if es6module (string-append mod ".mod") mod))
-		(n (js-string->jsstring name))
-		(m (js-get-property-value module-cache module-cache n %this)))
-	    (if (eq? m (js-absent))
-		(nodejs-init-core name worker %this)
-		m)))))
+   (with-trace 'require (format "nodejs-core-module ~a" name)
+      (nodejs-init-core name worker %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-require-core ...                                          */
@@ -2386,7 +2385,12 @@
 ;*---------------------------------------------------------------------*/
 (define (nodejs-require-core name::bstring worker %this)
    (with-trace 'require (format "nodejs-require-core ~a" name)
-      (js-get (nodejs-core-module name worker #f %this) (& "exports") %this)))
+      (with-access::WorkerHopThread worker (module-cache)
+	 (let ((mod (js-get-property-value module-cache module-cache
+		       (js-string->jsstring name) %this)))
+	    (when (eq? mod (js-absent))
+	       (set! mod (nodejs-core-module name worker %this)))
+	    (js-get mod (& "exports") %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-resolve ...                                               */
@@ -2395,7 +2399,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://nodejs.org/api/modules.html#modules_all_together          */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-resolve name::bstring %this::JsGlobalObject %module mode)
+(define (nodejs-resolve name::bstring %this::JsGlobalObject %module mode::symbol)
    
    (define (resolve-file x)
       (cond
@@ -2533,7 +2537,14 @@
 				    paths)))
 	 (cond
 	    ((core-module? name)
-	     name)
+	     (if (eq? mode 'import)
+		 (let ((namem (string-append name ".mod")))
+		    ;; MS 21feb23, once all the nodejs core modules are
+		    ;; supporting ES6 module, this test should be removed
+		    (if (core-module? namem)
+			namem
+			name))
+		 name))
 	    ((or (string-prefix? "http://" name)
 		 (string-prefix? "https://" name))
 	     name)

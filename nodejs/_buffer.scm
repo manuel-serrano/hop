@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 30 06:52:06 2014                          */
-;*    Last change :  Fri Feb 17 12:00:13 2023 (serrano)                */
+;*    Last change :  Tue Feb 21 09:45:59 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native native bindings                                           */
@@ -740,6 +740,7 @@
 		       (let ((this (instantiateJsSlowBuffer
 				      (cmap js-slowbuffer-cmap)
 				      (__proto__ js-slowbuffer-proto)
+				      (elements (vector (->fixnum a0)))
 				      (data ($make-string/wo-fill (->fixnum a0))))))
 			  ;; length
 			  (js-bind! %this this (& "length")
@@ -756,6 +757,7 @@
 		       (this (instantiateJsSlowBuffer
 				(cmap js-slowbuffer-cmap)
 				(__proto__ js-slowbuffer-proto)
+				(elements (vector (string-length data)))
 				(data data))))
 		   ;; length
 		   (js-bind! %this this (& "length")
@@ -772,6 +774,7 @@
 		       (this (instantiateJsSlowBuffer
 				(cmap js-slowbuffer-cmap)
 				(__proto__ js-slowbuffer-proto)
+				(elements (vector (string-length data)))
 				(data data))))
 		   ;; length
 		   (js-bind! %this this (& "length")
