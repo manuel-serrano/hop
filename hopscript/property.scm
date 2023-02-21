@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Fri Feb 17 10:49:14 2023 (serrano)                */
+;*    Last change :  Tue Feb 21 15:22:14 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -711,12 +711,17 @@
 ;*---------------------------------------------------------------------*/
 (define (js-object-vtable-push! obj::JsObject idx::long value ncmap)
    (with-access::JsObject obj (elements cmap)
-      (if (>=fx idx (js-object-inline-length obj))
-	  (js-object-cmap-push! obj idx value ncmap)
-	  (begin
-	     (js-object-inline-set! obj idx value)
-	     (set! cmap ncmap)
-	     obj))))
+      (cond
+	 ((<fx idx (js-object-inline-length obj))
+	  (js-object-inline-set! obj idx value)
+	  (set! cmap ncmap)
+	  obj)
+	 ((>=fx idx (vector-length elements))
+	  (js-object-cmap-push! obj idx value ncmap))
+	 (else
+	  (vector-set! elements idx value)
+	  (set! cmap ncmap)
+	  obj))))
 
 ;*---------------------------------------------------------------------*/
 ;*    function0->proc ...                                              */
@@ -2702,7 +2707,13 @@
 	 ;; map search
 	 (lambda (obj i)
 	    (with-access::JsPropertyCache cache (index owner cntmiss)
-	       (let ((el-or-desc (js-object-ref obj i)))
+	       (let ((el-or-desc (with-handler
+				    (lambda (e)
+				       (tprint "ERROR: " e)
+				       (tprint "name=" name " i=" i)
+				       (js-debug-object o)
+				       (raise e))
+				    (js-object-ref obj i))))
 		  (js-assert-object obj "js-get-jsobject-name/cache-miss")
 		  (cond
 		     ((isa? el-or-desc JsPropertyDescriptor)
@@ -3609,7 +3620,7 @@
 	       (when (=fx vindex (js-not-a-index))
 		  (set! vindex (js-get-vindex %this)))
 	       (js-cmap-vtable-add! %omap vindex (cons vtindex omap) cache)))))
-   
+
    (with-access::JsObject o (cmap)
       (let* ((%omap cmap)
 	     (res (js-put-jsobject! o prop v throw %this

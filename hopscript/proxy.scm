@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Mon Feb  7 08:10:11 2022 (serrano)                */
-;*    Copyright   :  2018-22 Manuel Serrano                            */
+;*    Last change :  Tue Feb 21 15:42:57 2023 (serrano)                */
+;*    Copyright   :  2018-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
 ;*    -------------------------------------------------------------    */
