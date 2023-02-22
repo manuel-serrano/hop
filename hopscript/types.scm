@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Fri Feb 17 11:14:16 2023 (serrano)                */
+;*    Last change :  Wed Feb 22 11:49:25 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -460,6 +460,7 @@
 	      (js-buffer-cmap (default #f))
 	      (js-slowbuffer-proto (default #f))
 	      (js-slowbuffer-cmap (default #f))
+	      (js-stats-proto (default #f))
 	      (js-symbol-ctor::procedure (default list))
 	      (js-symbol-table read-only (default (js-symbol-table)))
 	      (js-symbol-iterator (default (js-undefined)))

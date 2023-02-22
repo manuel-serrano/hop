@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.5.x/js2scheme/scheme-call.scm         */
+;*    serrano/prgm/project/hop/hop/js2scheme/scheme-call.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Wed Feb  2 16:34:17 2022 (serrano)                */
-;*    Copyright   :  2018-22 Manuel Serrano                            */
+;*    Last change :  Wed Feb 22 11:09:23 2023 (serrano)                */
+;*    Copyright   :  2018-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
 ;*=====================================================================*/
@@ -50,7 +50,7 @@
 ;*    builtin-method ...                                               */
 ;*---------------------------------------------------------------------*/
 (define-struct builtin-method jsname met ttype args %this cache predicate this)
-(define-struct builtin-function id scmid args %this)
+(define-struct builtin-function id module scmid args %this)
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-builtin-methods ...                                          */
@@ -296,32 +296,35 @@
 (define j2s-builtin-functions
    (map (lambda (e)
 	   (apply builtin-function e))
-      '((parseInt js-parseint-string-uint32 (string uint32) #f)
-	(parseInt js-parseint-string (string) #f)
-	(parseInt js-parseint-any (any) %this)
-	(parseInt js-parseint (any any) %this)
-	(parseFloat js-parsefloat (any) %this)
-	(Number js-bigint->number (bigint) #f)
-	(Number js-tonumber (any) %this)
-	(isNaN nanfl? (real) #f)
-	(isNaN js-number-isnan? (number) #f)
-	(isNaN js-isnan? (any) %this)
-	(encodeURI js-jsstring-encodeuri (string) #t)
-	(encodeURI js-jsstring-maybe-encodeuri (any) #t)
-	(encodeURIComponent js-jsstring-encodeuricomponent (string) #t)
-	(encodeURIComponent js-jsstring-maybe-encodeuricomponent (any) #t)
-	(unescape js-jsstring-unescape (string) #t)
-	(unescape js-jsstring-maybe-unescape (any) #t)
-	(TypeError js-type-error1 (any) #t)
-	(TypeError js-type-error2 (any any) #t)
-	(TypeError js-type-error (any any any) #t)
-	(BigInt (lambda (x) x) (bigint) #f)
-	(BigInt js-integer-tobigint (integer) #f)
-	(BigInt fixnum->bignum (int53) #f)
-	(BigInt js-uint32-tobigint (uint32) #f)
-	(BigInt js-int32-tobigint (int32) #f)
-	(BigInt flonum->bignum (real) #f)
-	(BigInt js-any-tobigint (any) #f)
+      '((parseInt #f js-parseint-string-uint32 (string uint32) #f)
+	(parseInt #f js-parseint-string (string) #f)
+	(parseInt #f js-parseint-any (any) %this)
+	(parseInt #f js-parseint (any any) %this)
+	(parseFloat #f js-parsefloat (any) %this)
+	(Number #f js-bigint->number (bigint) #f)
+	(Number #f js-tonumber (any) %this)
+	(isNaN #f nanfl? (real) #f)
+	(isNaN #f js-number-isnan? (number) #f)
+	(isNaN #f js-isnan? (any) %this)
+	(encodeURI #f js-jsstring-encodeuri (string) #t)
+	(encodeURI #f js-jsstring-maybe-encodeuri (any) #t)
+	(encodeURIComponent #f js-jsstring-encodeuricomponent (string) #t)
+	(encodeURIComponent #f js-jsstring-maybe-encodeuricomponent (any) #t)
+	(unescape #f js-jsstring-unescape (string) #t)
+	(unescape #f js-jsstring-maybe-unescape (any) #t)
+	(TypeError #f js-type-error1 (any) #t)
+	(TypeError #f js-type-error2 (any any) #t)
+	(TypeError #f js-type-error (any any any) #t)
+	(BigInt #f (lambda (x) x) (bigint) #f)
+	(BigInt #f js-integer-tobigint (integer) #f)
+	(BigInt #f fixnum->bignum (int53) #f)
+	(BigInt #f js-uint32-tobigint (uint32) #f)
+	(BigInt #f js-int32-tobigint (int32) #f)
+	(BigInt #f flonum->bignum (real) #f)
+	(BigInt #f js-any-tobigint (any) #f)
+	;; nodejs fs
+	(lstatSync "fs" nodejs-lstat-sync-string (string) #t)
+	(lstatSync "fs" nodejs-lstat-sync-any (any) #t)
 	)))
 
 ;*---------------------------------------------------------------------*/
@@ -705,7 +708,7 @@
 (define (imported-function ref::J2SRef)
    (with-access::J2SRef ref (decl)
       (when (isa? decl J2SDeclImport)
-	 (with-access::J2SDeclImport decl (export)
+	 (with-access::J2SDeclImport decl (id export)
 	    (with-access::J2SExport export (decl)
 	       (when (isa? decl J2SDeclFun)
 		  decl))))))
@@ -716,6 +719,14 @@
 (define (read-only-extern ref::J2SRef)
    (with-access::J2SRef ref (decl)
       (when (and (isa? decl J2SDeclExtern) (decl-ronly? decl))
+	 decl)))
+
+;*---------------------------------------------------------------------*/
+;*    read-only-import ...                                             */
+;*---------------------------------------------------------------------*/
+(define (read-only-import ref::J2SRef)
+   (with-access::J2SRef ref (decl)
+      (when (and (isa? decl J2SDeclImport) (decl-ronly? decl))
 	 decl)))
 
 ;*---------------------------------------------------------------------*/
@@ -885,22 +896,29 @@
 						 (cdr params)))))))))))
 		  j2s-builtin-methods)))))
    
-   (define (find-builtin-function id args)
-      (find (lambda (f)
-	       (when (eq? (builtin-function-id f) id)
-		  (let loop ((args args)
-			     (params (builtin-function-args f)))
-		     (cond
-			((null? args)
-			 (null? params))
-			((null? params)
-			 #f)
-			(else
-			 (let ((tya (j2s-type-sans-cast (car args)))
-			       (tyf (car params)))
-			    (when (or (eq? tyf 'any) (eq? tyf tya))
-			       (loop (cdr args) (cdr params)))))))))
-	 j2s-builtin-functions))
+   (define (find-builtin-function decl::J2SDecl args)
+      (with-access::J2SDecl decl (id)
+	 (find (lambda (f)
+		  (when (and (eq? (builtin-function-id f) id)
+			     (if (builtin-function-module f)
+				 (when (isa? decl J2SDeclImport)
+				    (with-access::J2SDeclImport decl (import)
+				       (with-access::J2SImport import (path)
+					  (string=? path (builtin-function-module f)))))
+				 (not (isa? decl J2SDeclImport))))
+		     (let loop ((args args)
+				(params (builtin-function-args f)))
+			(cond
+			   ((null? args)
+			    (null? params))
+			   ((null? params)
+			    #f)
+			   (else
+			    (let ((tya (j2s-type-sans-cast (car args)))
+				  (tyf (car params)))
+			       (when (or (eq? tyf 'any) (eq? tyf tya))
+				  (loop (cdr args) (cdr params)))))))))
+	    j2s-builtin-functions)))
    
    (define (arity args)
       (let loop ((arity 0)
@@ -1709,11 +1727,11 @@
 		(j2s-scheme (J2SNew* fun args) mode return ctx))
 	       ((isa? fun J2SGlobalRef)
 		(with-access::J2SGlobalRef fun (decl)
-		   (with-access::J2SDecl decl (id scope)
+		   (with-access::J2SDecl decl (scope)
 		      (cond
 			 ((not (decl-ronly? decl))
 			  (call-unresolved-function fun thisargs args))
-			 ((find-builtin-function id args)
+			 ((find-builtin-function decl args)
 			  =>
 			  (lambda (f)
 			     (call-builtin-extern f args)))
@@ -1736,8 +1754,13 @@
 		   (call-known-function protocol profid fun thisargs args)))
 	       ((and (read-only-extern fun)
 		     (with-access::J2SRef fun (decl)
-			(with-access::J2SDecl decl (id)
-			   (find-builtin-function id args))))
+			(find-builtin-function decl args)))
+		=>
+		(lambda (f)
+		   (call-builtin-extern f args)))
+	       ((and (read-only-import fun)
+		     (with-access::J2SRef fun (decl)
+			(find-builtin-function decl args)))
 		=>
 		(lambda (f)
 		   (call-builtin-extern f args)))

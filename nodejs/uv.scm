@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Tue Feb 21 12:00:51 2023 (serrano)                */
+;*    Last change :  Wed Feb 22 11:35:44 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -124,9 +124,11 @@
 	   (nodejs-fchmod ::WorkerHopThread ::JsGlobalObject ::JsObject ::int ::int ::obj)
 	   (nodejs-chmod ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::int ::obj)
 	   (nodejs-lchmod ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::int ::obj)
-	   (nodejs-stat ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::obj ::obj)
-	   (nodejs-fstat ::WorkerHopThread ::JsGlobalObject ::JsObject ::int ::obj ::obj)
-	   (nodejs-lstat ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::obj ::obj)
+	   (nodejs-stat ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::obj)
+	   (nodejs-fstat ::WorkerHopThread ::JsGlobalObject ::JsObject ::int ::obj)
+	   (nodejs-lstat ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::obj)
+	   (nodejs-lstat-sync-string ::JsStringLiteral ::JsGlobalObject)
+	   (inline nodejs-lstat-sync-any ::obj ::JsGlobalObject)
 	   (nodejs-link ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::obj ::obj)
 	   (nodejs-symlink ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::obj ::obj)
 	   (nodejs-readlink ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::obj)
@@ -1454,156 +1456,174 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-fstat ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-fstat %worker %this process fd callback proto)
-   (let ((file (int->uvhandle %worker %this fd)))
-      (if file
-	  (if (js-procedure? callback)
-	      (cond-expand
-		 (libuv-vec
-		  (let* ((base (vector-length (uv-fs-stat-cb-vector-props)))
-			 (vec ($create-vector (+fx 4 base))))
-		     (vector-set! vec base %this)
-		     (vector-set! vec (+fx base 1) callback)
-		     (vector-set! vec (+fx base 2) proto)
-		     (vector-set! vec (+fx base 3) fd)
+(define (nodejs-fstat %worker %this process fd callback)
+   (with-access::JsGlobalObject %this (js-stats-proto)
+      (let ((file (int->uvhandle %worker %this fd)))
+	 (if file
+	     (if (js-procedure? callback)
+		 (cond-expand
+		    (libuv-vec
+		     (let* ((base (vector-length (uv-fs-stat-cb-vector-props)))
+			    (vec ($create-vector (+fx 4 base))))
+			(vector-set! vec base %this)
+			(vector-set! vec (+fx base 1) callback)
+			(vector-set! vec (+fx base 2) js-stats-proto)
+			(vector-set! vec (+fx base 3) fd)
+			(uv-fs-fstat file
+			   :loop (worker-loop %worker)
+			   :callback stat-vec-cb
+			   :vector vec)))
+		    (else
 		     (uv-fs-fstat file
 			:loop (worker-loop %worker)
-			:callback stat-vec-cb
-			:vector vec)))
-		 (else
-		  (uv-fs-fstat file
-		     :loop (worker-loop %worker)
-		     :callback (stat-cb %this callback proto fd))))
-	      (cond-expand
-		 (libuv-vec
-		  (let ((obj (js-make-jsobject
-				(+fx 4 (vector-length (uv-fs-stat-cb-vector-props)))
-				(stat-cmap)
-				proto)))
-		     (let ((res (uv-fs-fstat file
-				   :vector (js-object-inline-elements obj))))
+			:callback (stat-cb %this callback js-stats-proto fd))))
+		 (cond-expand
+		    (libuv-vec
+		     (let ((obj (js-make-jsobject
+				   (+fx 4 (vector-length (uv-fs-stat-cb-vector-props)))
+				   (stat-cmap)
+				   js-stats-proto)))
+			(let ((res (uv-fs-fstat file
+				      :vector (js-object-inline-elements obj))))
+			   (if (integer? res)
+			       (js-raise
+				  (fs-errno-exn
+				     (format "fstat: cannot stat ~a -- ~~s" fd)
+				     res %this))
+			       (stat->jsobj! %this obj
+				  (js-object-inline-elements obj))))))
+		    (else
+		     (let ((res (uv-fs-fstat file)))
 			(if (integer? res)
 			    (js-raise
 			       (fs-errno-exn
 				  (format "fstat: cannot stat ~a -- ~~s" fd)
 				  res %this))
-			    (stat->jsobj! %this obj
-			       (js-object-inline-elements obj))))))
-		 (else
-		  (let ((res (uv-fs-fstat file)))
-		     (if (integer? res)
-			 (js-raise
-			    (fs-errno-exn
-			       (format "fstat: cannot stat ~a -- ~~s" fd)
-			       res %this))
-			 (stat->jsobj %this proto res))))))
-	  (fs-callback-error %worker %this callback "fstat" #f))))
+			    (stat->jsobj %this js-stats-proto res))))))
+	     (fs-callback-error %worker %this callback "fstat" #f)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-stat ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-stat %worker %this process path callback proto)
-   (cond
-      ((not (js-jsstring? path))
-       (js-raise-type-error %this "Path not an string" path))
-      ((js-procedure? callback)
-       (cond-expand
-	  (libuv-vec
-	   (let* ((str (js-jsstring->string path))
-		  (base (vector-length (uv-fs-stat-cb-vector-props)))
-		  (vec ($create-vector (+fx 4 base))))
-	      (vector-set! vec base %this)
-	      (vector-set! vec (+fx base 1) callback)
-	      (vector-set! vec (+fx base 2) proto)
-	      (vector-set! vec (+fx base 3) path)
-	      (uv-fs-stat str
-		 :loop (worker-loop %worker)
-		 :callback stat-vec-cb
-		 :vector vec)))
-	  (else
-	   (let ((str (js-jsstring->string path)))
-	      (uv-fs-stat str
-		 :loop (worker-loop %worker)
-		 :callback (stat-cb %this callback proto path))))))
-      (else
-       (cond-expand
-	  (libuv-vec
-	   (let ((obj (js-make-jsobject
-			 (+fx 4 (vector-length (uv-fs-stat-cb-vector-props)))
-			 (stat-cmap)
-			 proto))
-		 (str (js-jsstring->string path)))
-	      (let ((res (uv-fs-lstat str
-			    :vector (js-object-inline-elements obj))))
+(define (nodejs-stat %worker %this process path callback)
+   (with-access::JsGlobalObject %this (js-stats-proto)
+      (cond
+	 ((not (js-jsstring? path))
+	  (js-raise-type-error %this "Path not an string" path))
+	 ((js-procedure? callback)
+	  (cond-expand
+	     (libuv-vec
+	      (let* ((str (js-jsstring->string path))
+		     (base (vector-length (uv-fs-stat-cb-vector-props)))
+		     (vec ($create-vector (+fx 4 base))))
+		 (vector-set! vec base %this)
+		 (vector-set! vec (+fx base 1) callback)
+		 (vector-set! vec (+fx base 2) js-stats-proto)
+		 (vector-set! vec (+fx base 3) path)
+		 (uv-fs-stat str
+		    :loop (worker-loop %worker)
+		    :callback stat-vec-cb
+		    :vector vec)))
+	     (else
+	      (let ((str (js-jsstring->string path)))
+		 (uv-fs-stat str
+		    :loop (worker-loop %worker)
+		    :callback (stat-cb %this callback js-stats-proto path))))))
+	 (else
+	  (cond-expand
+	     (libuv-vec
+	      (let ((obj (js-make-jsobject
+			    (+fx 4 (vector-length (uv-fs-stat-cb-vector-props)))
+			    (stat-cmap)
+			    js-stats-proto))
+		    (str (js-jsstring->string path)))
+		 (let ((res (uv-fs-lstat str
+			       :vector (js-object-inline-elements obj))))
+		    (if (integer? res)
+			(js-raise
+			   (fs-errno-exn
+			      (format "lstat: cannot stat ~a -- ~~s" str)
+			      res %this))
+			(stat->jsobj! %this obj
+			   (js-object-inline-elements obj))))))
+	     (else
+	      (let* ((str (js-jsstring->string path))
+		     (res (uv-fs-stat str)))
 		 (if (integer? res)
 		     (js-raise
 			(fs-errno-exn
 			   (format "lstat: cannot stat ~a -- ~~s" str)
 			   res %this))
-		     (stat->jsobj! %this obj
-			(js-object-inline-elements obj))))))
-	  (else
-	   (let* ((str (js-jsstring->string path))
-		  (res (uv-fs-stat str)))
-	      (if (integer? res)
-		  (js-raise
-		     (fs-errno-exn
-			(format "lstat: cannot stat ~a -- ~~s" str)
-			res %this))
-		  (stat->jsobj %this proto res))))))))
+		     (stat->jsobj %this js-stats-proto res)))))))))
 
+;*---------------------------------------------------------------------*/
+;*    nodejs-lstat-sync-string ...                                     */
+;*---------------------------------------------------------------------*/
+(define (nodejs-lstat-sync-string path %this)
+   (with-access::JsGlobalObject %this (js-stats-proto)
+      (cond-expand
+	 (libuv-vec
+	  (let ((obj (js-make-jsobject
+			(+fx 4 (vector-length (uv-fs-stat-cb-vector-props)))
+			(stat-cmap)
+			js-stats-proto))
+		(str (js-jsstring->string path)))
+	     (let ((res (uv-fs-lstat str
+			   :vector (js-object-inline-elements obj))))
+		(if (integer? res)
+		    (js-raise
+		       (fs-errno-exn
+			  (format "lstat: cannot stat ~a -- ~~s" str)
+			  res %this))
+		    (stat->jsobj! %this obj
+		       (js-object-inline-elements obj))))))
+	 (else
+	  (let* ((str (js-jsstring->string path))
+		 (res (uv-fs-lstat str)))
+	     (if (integer? res)
+		 (js-raise
+		    (fs-errno-exn
+		       (format "lstat: cannot stat ~a -- ~~s" str)
+		       res %this))
+		 (stat->jsobj %this js-stats-proto res)))))))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-lstat-sync-any ...                                        */
+;*---------------------------------------------------------------------*/
+(define-inline (nodejs-lstat-sync-any path %this)
+   (if (js-jsstring? path)
+       (nodejs-lstat-sync-string path %this)
+       (js-raise-type-error %this "Path not an string" path)))
+   
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-lstat ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-lstat %worker %this process path callback proto)
+(define (nodejs-lstat %worker %this process path callback)
    (cond
       ((not (js-jsstring? path))
        (js-raise-type-error %this "Path not an string" path))
       ((js-procedure? callback)
-       (cond-expand
-	  (libuv-vec
-	   (let* ((str (js-jsstring->string path))
-		  (base (vector-length (uv-fs-stat-cb-vector-props)))
-		  (vec ($create-vector (+fx 4 base))))
-	      (vector-set! vec base %this)
-	      (vector-set! vec (+fx base 1) callback)
-	      (vector-set! vec (+fx base 2) proto)
-	      (vector-set! vec (+fx base 3) path)
-	      (uv-fs-lstat str
-		 :loop (worker-loop %worker)
-		 :callback stat-vec-cb
-		 :vector vec)))
-	  (else
-	   (let ((str (js-jsstring->string path)))
-	      (uv-fs-lstat str
-		 :loop (worker-loop %worker)
-		 :callback (stat-cb %this callback proto path))))))
+       (with-access::JsGlobalObject %this (js-stats-proto)
+	  (cond-expand
+	     (libuv-vec
+	      (let* ((str (js-jsstring->string path))
+		     (base (vector-length (uv-fs-stat-cb-vector-props)))
+		     (vec ($create-vector (+fx 4 base))))
+		 (vector-set! vec base %this)
+		 (vector-set! vec (+fx base 1) callback)
+		 (vector-set! vec (+fx base 2) js-stats-proto)
+		 (vector-set! vec (+fx base 3) path)
+		 (uv-fs-lstat str
+		    :loop (worker-loop %worker)
+		    :callback stat-vec-cb
+		    :vector vec)))
+	     (else
+	      (let ((str (js-jsstring->string path)))
+		 (uv-fs-lstat str
+		    :loop (worker-loop %worker)
+		    :callback (stat-cb %this callback js-stats-proto path)))))))
       (else
-       (cond-expand
-	  (libuv-vec
-	   (let ((obj (js-make-jsobject
-			 (+fx 4 (vector-length (uv-fs-stat-cb-vector-props)))
-			 (stat-cmap)
-			 proto))
-		 (str (js-jsstring->string path)))
-	      (let ((res (uv-fs-lstat str
-			    :vector (js-object-inline-elements obj))))
-		 (if (integer? res)
-		     (js-raise
-			(fs-errno-exn
-			   (format "lstat: cannot stat ~a -- ~~s" str)
-			   res %this))
-		     (stat->jsobj! %this obj
-			(js-object-inline-elements obj))))))
-	  (else
-	   (let* ((str (js-jsstring->string path))
-		  (res (uv-fs-lstat str)))
-	      (if (integer? res)
-		  (js-raise
-		     (fs-errno-exn
-			(format "lstat: cannot stat ~a -- ~~s" str)
-			res %this))
-		  (stat->jsobj %this proto res))))))))
+       (nodejs-lstat-sync-string path %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-link ...                                                  */
