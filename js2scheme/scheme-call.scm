@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Wed Feb 22 11:09:23 2023 (serrano)                */
+;*    Last change :  Wed Feb 22 14:21:58 2023 (serrano)                */
 ;*    Copyright   :  2018-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -44,7 +44,8 @@
 	   __js2scheme_scheme-arguments
 	   __js2scheme_scheme-spread
 	   __js2scheme_scheme-cast
-	   __js2scheme_scheme-constant))
+	   __js2scheme_scheme-constant
+	   __js2scheme_scheme-nodejs))
 
 ;*---------------------------------------------------------------------*/
 ;*    builtin-method ...                                               */
@@ -1155,6 +1156,20 @@
 		  (j2s-process-builtin-method fun args this mode return ctx))
 	     =>
 	     (lambda (expr) expr))
+	    ((stat-call? this)
+	     (with-access::J2SString field (val)
+		(let ((a (j2s-scheme (car args) mode return ctx)))
+		   (cond
+		      ((string=? val "lstatSync")
+		       (if (eq? (j2s-type (car args)) 'string)
+			   `(nodejs-lstat-sync-string ,a %this)
+			   `(nodejs-lstat-sync-any ,a %this)))
+		      ((string=? val "statSync")
+		       (if (eq? (j2s-type (car args)) 'string)
+			   `(nodejs-stat-sync-string ,a %this)
+			   `(nodejs-stat-sync-any ,a %this)))
+		      (else
+		       (error "call-ref-method" "internal error" val))))))
 	    ((and (isa? (j2s-vtype self) J2SRecord)
 		  (isa? field J2SString)
 		  (with-access::J2SString field (val)
@@ -1318,7 +1333,10 @@
 			(j2s-object-builtin-method fun args this mode return ctx))
 		   =>
 		   (lambda (expr) expr))
-		  
+		  ((and (stat-call? obj) (stat-method field))
+		   =>
+		   (lambda (m)
+		      (j2s-stat-call obj m mode return ctx)))
 		  (else
 		   (let ((tmp (gensym 'obj)))
 		      `(let ((,tmp ,(box (j2s-scheme obj mode return ctx)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Wed Feb 22 11:35:44 2023 (serrano)                */
+;*    Last change :  Wed Feb 22 13:27:29 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -125,10 +125,20 @@
 	   (nodejs-chmod ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::int ::obj)
 	   (nodejs-lchmod ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::int ::obj)
 	   (nodejs-stat ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::obj)
+	   (nodejs-stat-sync-string ::JsStringLiteral ::JsGlobalObject)
+	   (inline nodejs-stat-sync-any ::obj ::JsGlobalObject)
+	   (nodejs-stat-sync-get-string ::JsStringLiteral ::int ::JsGlobalObject)
+	   (inline nodejs-stat-sync-get-any ::obj ::int ::JsGlobalObject)
+	   (nodejs-stat-sync-get-is-mode-string ::JsStringLiteral ::int ::JsGlobalObject)
+	   (inline nodejs-stat-sync-get-is-mode-any ::obj ::int ::JsGlobalObject)
 	   (nodejs-fstat ::WorkerHopThread ::JsGlobalObject ::JsObject ::int ::obj)
 	   (nodejs-lstat ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::obj)
 	   (nodejs-lstat-sync-string ::JsStringLiteral ::JsGlobalObject)
 	   (inline nodejs-lstat-sync-any ::obj ::JsGlobalObject)
+	   (nodejs-lstat-sync-get-string ::JsStringLiteral ::int ::JsGlobalObject)
+	   (inline nodejs-lstat-sync-get-any ::obj ::int ::JsGlobalObject)
+	   (nodejs-lstat-sync-get-is-mode-string ::JsStringLiteral ::int ::JsGlobalObject)
+	   (inline nodejs-lstat-sync-get-is-mode-any ::obj ::int ::JsGlobalObject)
 	   (nodejs-link ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::obj ::obj)
 	   (nodejs-symlink ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::obj ::obj)
 	   (nodejs-readlink ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::obj)
@@ -1216,6 +1226,7 @@
 (define *libuv-mtime-ns-offset* -1)
 (define *libuv-atime-ns-offset* -1)
 (define *libuv-birthtime-ns-offset* -1)
+(define *libuv-mode-offset* -1)
 
 ;*---------------------------------------------------------------------*/
 ;*    stat-field-name ...                                              */
@@ -1288,7 +1299,9 @@
 		     ((string=? s "atime-ns")
 		      (set! *libuv-atime-ns-offset* i))
 		     ((string=? s "birthtime-ns")
-		      (set! *libuv-birthtime-ns-offset* i)))
+		      (set! *libuv-birthtime-ns-offset* i))
+		     ((string=? s "mode")
+		      (set! *libuv-mode-offset* i)))
 		  (loop (-fx i 1)))))
 	 ;; virtual getters
 	 (set! *stat-ctime-accessor*
@@ -1357,7 +1370,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    stat->jsobj! ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (stat->jsobj! %this stat::JsObject vec::vector)
+(define (stat->jsobj! %this vec::vector)
    (let ((l (vector-length (uv-fs-stat-cb-vector-props))))
       ;; lazy date values
       (vector-set! vec (+fx l 0) *stat-ctime-accessor*)
@@ -1385,8 +1398,7 @@
 	  (let loop ((i (-fx i 1)))
 	     (when (>=fx i 4)
 		(vector-set! vec i (js-obj->jsobject (vector-ref vec i) %this))
-		(loop (-fx i 1))))))
-      stat))
+		(loop (-fx i 1))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    stat->jsobj ...                                                  */
@@ -1410,7 +1422,8 @@
 		     (cmap (stat-cmap-noinline))
 		     (__proto__ proto)
 		     (elements res))))
-	 (stat->jsobj! %this stat res))
+	 (stat->jsobj! %this res)
+	 stat)
       (let ((stat (js-alist->jsobject (stat-date res %this) %this)))
 	 (js-object-proto-set! stat proto)
 	 stat)))
@@ -1490,8 +1503,9 @@
 				  (fs-errno-exn
 				     (format "fstat: cannot stat ~a -- ~~s" fd)
 				     res %this))
-			       (stat->jsobj! %this obj
-				  (js-object-inline-elements obj))))))
+			       (begin
+				  (stat->jsobj! %this (js-object-inline-elements obj))
+				  obj)))))
 		    (else
 		     (let ((res (uv-fs-fstat file)))
 			(if (integer? res)
@@ -1502,6 +1516,94 @@
 			    (stat->jsobj %this js-stats-proto res))))))
 	     (fs-callback-error %worker %this callback "fstat" #f)))))
 
+;*---------------------------------------------------------------------*/
+;*    nodejs-stat-sync-string ...                                      */
+;*---------------------------------------------------------------------*/
+(define (nodejs-stat-sync-string path %this)
+   (with-access::JsGlobalObject %this (js-stats-proto)
+      (cond-expand
+	 (libuv-vec
+	  (let ((obj (js-make-jsobject
+			(+fx 4 (vector-length (uv-fs-stat-cb-vector-props)))
+			(stat-cmap)
+			js-stats-proto))
+		(str (js-jsstring->string path)))
+	     (let ((res (uv-fs-stat str
+			   :vector (js-object-inline-elements obj))))
+		(if (integer? res)
+		    (js-raise
+		       (fs-errno-exn
+			  (format "stat: cannot stat ~a -- ~~s" str)
+			  res %this))
+		    (begin
+		       (stat->jsobj! %this (js-object-inline-elements obj))
+		       obj)))))
+	 (else
+	  (let* ((str (js-jsstring->string path))
+		 (res (uv-fs-stat str)))
+	     (if (integer? res)
+		 (js-raise
+		    (fs-errno-exn
+		       (format "stat: cannot stat ~a -- ~~s" str)
+		       res %this))
+		 (stat->jsobj %this js-stats-proto res)))))))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-stat-sync-any ...                                         */
+;*---------------------------------------------------------------------*/
+(define-inline (nodejs-stat-sync-any path %this)
+   (if (js-jsstring? path)
+       (nodejs-stat-sync-string path %this)
+       (js-raise-type-error %this "Path not an string" path)))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-stat-sync-get-string ...                                  */
+;*---------------------------------------------------------------------*/
+(define (nodejs-stat-sync-get-string path index %this)
+   (with-access::JsGlobalObject %this (js-stats-proto)
+      (cond-expand
+	 (libuv-vec
+	  (js-call-with-stack-vector
+	     (make-vector (+fx 4 (vector-length (uv-fs-stat-cb-vector-props))))
+	     (lambda (v)
+		(let ((str (js-jsstring->string path)))
+		   (let ((res (uv-fs-stat str :vector v)))
+		      (if (integer? res)
+			  (js-raise
+			     (fs-errno-exn
+				(format "stat: cannot stat ~a -- ~~s" str)
+				res %this))
+			  (begin
+			     (stat-cmap)
+			     (stat->jsobj! %this v)
+			     (vector-ref v index))))))))
+	 (else
+	  (error "nodejs-stat-sync-get-string" "not implemented" path)))))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-stat-sync-get-any ...                                     */
+;*---------------------------------------------------------------------*/
+(define-inline (nodejs-stat-sync-get-any path index %this)
+   (if (js-jsstring? path)
+       (nodejs-stat-sync-get-string path index %this)
+       (js-raise-type-error %this "Path not an string" path)))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-stat-sync-get-is-mode-string ...                          */
+;*---------------------------------------------------------------------*/
+(define (nodejs-stat-sync-get-is-mode-string path mode %this)
+   (stat-cmap)
+   (=fx (bit-and (nodejs-stat-sync-get-string path *libuv-mode-offset* %this) mode)
+      mode))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-stat-sync-get-is-mode-any ...                             */
+;*---------------------------------------------------------------------*/
+(define-inline (nodejs-stat-sync-get-is-mode-any path mode %this)
+   (if (js-jsstring? path)
+       (nodejs-stat-sync-get-is-mode-string path mode %this)
+       (js-raise-type-error %this "Path not an string" path)))
+   
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-stat ...                                                  */
 ;*---------------------------------------------------------------------*/
@@ -1530,31 +1632,7 @@
 		    :loop (worker-loop %worker)
 		    :callback (stat-cb %this callback js-stats-proto path))))))
 	 (else
-	  (cond-expand
-	     (libuv-vec
-	      (let ((obj (js-make-jsobject
-			    (+fx 4 (vector-length (uv-fs-stat-cb-vector-props)))
-			    (stat-cmap)
-			    js-stats-proto))
-		    (str (js-jsstring->string path)))
-		 (let ((res (uv-fs-lstat str
-			       :vector (js-object-inline-elements obj))))
-		    (if (integer? res)
-			(js-raise
-			   (fs-errno-exn
-			      (format "lstat: cannot stat ~a -- ~~s" str)
-			      res %this))
-			(stat->jsobj! %this obj
-			   (js-object-inline-elements obj))))))
-	     (else
-	      (let* ((str (js-jsstring->string path))
-		     (res (uv-fs-stat str)))
-		 (if (integer? res)
-		     (js-raise
-			(fs-errno-exn
-			   (format "lstat: cannot stat ~a -- ~~s" str)
-			   res %this))
-		     (stat->jsobj %this js-stats-proto res)))))))))
+	  (nodejs-stat-sync-string path %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-lstat-sync-string ...                                     */
@@ -1575,8 +1653,9 @@
 		       (fs-errno-exn
 			  (format "lstat: cannot stat ~a -- ~~s" str)
 			  res %this))
-		    (stat->jsobj! %this obj
-		       (js-object-inline-elements obj))))))
+		    (begin
+		       (stat->jsobj! %this (js-object-inline-elements obj))
+		       obj)))))
 	 (else
 	  (let* ((str (js-jsstring->string path))
 		 (res (uv-fs-lstat str)))
@@ -1593,6 +1672,54 @@
 (define-inline (nodejs-lstat-sync-any path %this)
    (if (js-jsstring? path)
        (nodejs-lstat-sync-string path %this)
+       (js-raise-type-error %this "Path not an string" path)))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-lstat-sync-get-string ...                                 */
+;*---------------------------------------------------------------------*/
+(define (nodejs-lstat-sync-get-string path index %this)
+   (with-access::JsGlobalObject %this (js-stats-proto)
+      (cond-expand
+	 (libuv-vec
+	  (js-call-with-stack-vector
+	     (make-vector (+fx 4 (vector-length (uv-fs-stat-cb-vector-props))))
+	     (lambda (v)
+		(let ((str (js-jsstring->string path)))
+		   (let ((res (uv-fs-lstat str :vector v)))
+		      (if (integer? res)
+			  (js-raise
+			     (fs-errno-exn
+				(format "lstat: cannot stat ~a -- ~~s" str)
+				res %this))
+			  (begin
+			     (stat-cmap)
+			     (stat->jsobj! %this v)
+			     (vector-ref v index))))))))
+	 (else
+	  (error "nodejs-lstat-sync-get-string" "not implemented" path)))))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-lstat-sync-get-any ...                                    */
+;*---------------------------------------------------------------------*/
+(define-inline (nodejs-lstat-sync-get-any path index %this)
+   (if (js-jsstring? path)
+       (nodejs-lstat-sync-get-string path index %this)
+       (js-raise-type-error %this "Path not an string" path)))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-lstat-sync-get-is-mode-string ...                         */
+;*---------------------------------------------------------------------*/
+(define (nodejs-lstat-sync-get-is-mode-string path mode %this)
+   (stat-cmap)
+   (=fx (bit-and (nodejs-lstat-sync-get-string path *libuv-mode-offset* %this) mode)
+      mode))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-lstat-sync-get-is-mode-any ...                            */
+;*---------------------------------------------------------------------*/
+(define-inline (nodejs-lstat-sync-get-is-mode-any path mode %this)
+   (if (js-jsstring? path)
+       (nodejs-lstat-sync-get-is-mode-string path mode %this)
        (js-raise-type-error %this "Path not an string" path)))
    
 ;*---------------------------------------------------------------------*/

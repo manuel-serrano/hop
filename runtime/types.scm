@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Sun Jul 14 11:14:14 2019 (serrano)                */
-;*    Copyright   :  2004-19 Manuel Serrano                            */
+;*    Last change :  Wed Feb 22 17:27:31 2023 (serrano)                */
+;*    Copyright   :  2004-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
 ;*=====================================================================*/
@@ -137,7 +137,8 @@
 	   (class http-response-file::%http-response-server
 	      (file::bstring read-only)
 	      (size::elong (default #e-1))
-	      (offset::elong (default #e-1)))
+	      (offset::elong (default #e-1))
+	      (connection (default #f)))
 	   
 	   (class http-response-shoutcast::http-response-file)
 	   

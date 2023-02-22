@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Fri Dec  2 12:28:27 2022 (serrano)                */
-;*    Copyright   :  2004-22 Manuel Serrano                            */
+;*    Last change :  Wed Feb 22 17:28:16 2023 (serrano)                */
+;*    Copyright   :  2004-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
 ;*=====================================================================*/
@@ -436,15 +436,17 @@
 					 content-type charset
 					 server file bodyp
 					 size offset
-					 timeout)
+					 timeout
+					 (respconn connection))
       (let ((size (if (=elong size #e-1)
 		      (let ((fs (file-size file)))
 			 (if (<=elong offset 0)
 			     fs
 			     (-elong fs offset))))))
 	 (if (>=elong size #e0)
-	     (with-access::http-request request (connection)
-		(let ((p (socket-output socket)))
+	     (with-access::http-request request ((reqconn connection))
+		(let ((connection (or respconn reqconn))
+		      (p (socket-output socket)))
 		   (output-timeout-set! p timeout)
 		   (http-write-line-string p start-line)
 		   (http-write-header p header)

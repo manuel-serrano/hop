@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Mon Feb 13 17:12:55 2023 (serrano)                */
+;*    Last change :  Wed Feb 22 17:30:19 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -759,6 +759,17 @@
 	 (else v))))
 
 ;*---------------------------------------------------------------------*/
+;*    get-symbol/default ...                                           */
+;*---------------------------------------------------------------------*/
+(define (get-symbol/default obj key this def)
+   (let ((v (js-get obj key this)))
+      (cond
+	 ((eq? v (js-undefined)) def)
+	 ((js-jsstring? v) (string->symbol (js-jsstring->string v)))
+	 ((js-object? v) (js-jsobject->alist v this))
+	 (else v))))
+
+;*---------------------------------------------------------------------*/
 ;*    get/list ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (get/list::pair-nil obj key this def)
@@ -818,6 +829,7 @@
 			      (mime-type path "text/plain")))
 	     (content-length (get/default req (& "contentLength") %this #e-1))
 	     (header (get/list req (& "header") %this '()))
+	     (connection (get-symbol/default req (& "connection") %this #f))
 	     (file path))
 	  (instantiate::http-response-file
 	     (file path)

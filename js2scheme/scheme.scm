@@ -16,7 +16,7 @@
    (include "ast.sch"
 	    "usage.sch"
 	    "context.sch")
-   
+
    (import __js2scheme_ast
 	   __js2scheme_dump
 	   __js2scheme_utils
@@ -50,7 +50,8 @@
 	   __js2scheme_scheme-bexit
 	   __js2scheme_scheme-try
 	   __js2scheme_scheme-constant
-	   __js2scheme_scheme-record)
+	   __js2scheme_scheme-record
+	   __js2scheme_scheme-nodejs)
    
    (export j2s-scheme-stage
 	   j2s-scheme-eval-stage
@@ -2685,6 +2686,7 @@
 	  (with-access::J2SUnresolvedRef obj (id)
 	     (eq? id 'Symbol)))))
    
+   
    (define (get-builtin-object obj field mode return ctx)
       (when (isa? field J2SString)
 	 (with-access::J2SString field (val)
@@ -2816,6 +2818,11 @@
 		  (j2s-symbol-object-get obj field mode return ctx))
 	     =>
 	     (lambda (sexp) sexp))
+	    ((and (stat-call? obj) (stat-field field))
+	     =>
+	     (lambda (index)
+		(with-access::J2SCall obj (fun args)
+		   (j2s-stat-access obj index mode return ctx))))
 	    (else
 	     (get loc obj (j2s-scheme obj mode return ctx)
 		field cache cspecs
