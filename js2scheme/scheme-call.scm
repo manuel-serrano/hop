@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Wed Feb 22 14:21:58 2023 (serrano)                */
+;*    Last change :  Thu Feb 23 14:50:18 2023 (serrano)                */
 ;*    Copyright   :  2018-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -1170,6 +1170,9 @@
 			   `(nodejs-stat-sync-any ,a %this)))
 		      (else
 		       (error "call-ref-method" "internal error" val))))))
+	    ((hop-call? this)
+	     (with-access::J2SString field (val)
+		(j2s-hop-call this (string->symbol val) mode return ctx)))
 	    ((and (isa? (j2s-vtype self) J2SRecord)
 		  (isa? field J2SString)
 		  (with-access::J2SString field (val)
@@ -1337,6 +1340,10 @@
 		   =>
 		   (lambda (m)
 		      (j2s-stat-call obj m mode return ctx)))
+		  ((and (hop-call? obj) (hop-method field))
+		   =>
+		   (lambda (m)
+		      (j2s-hop-call obj m mode return ctx)))
 		  (else
 		   (let ((tmp (gensym 'obj)))
 		      `(let ((,tmp ,(box (j2s-scheme obj mode return ctx)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 18 16:19:42 2013                          */
-;*    Last change :  Tue Feb 21 09:57:31 2023 (serrano)                */
+;*    Last change :  Thu Feb 23 14:40:43 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    nodejs boot                                                      */
@@ -66,6 +66,7 @@
 	   (__nodejs_node_timers "| echo \"(module __nodejs_node_timers (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
 	   (__nodejs_node_cluster "| echo \"(module __nodejs_node_cluster (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
 	   ;; nodejs builtin es6 modules
+	   (__nodejs_mod_hop "| echo \"(module __nodejs_mod_hop (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
 	   (__nodejs_mod_path "| echo \"(module __nodejs_mod_path (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
 	   (__nodejs_mod_fs "| echo \"(module __nodejs_mod_fs (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
 	   (__nodejs_mod_http "| echo \"(module __nodejs_mod_http (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
@@ -134,6 +135,7 @@
 	 ("zlib" __nodejs_zlib)
 	 ("os" __nodejs_os)
 	 ("hop" __nodejs_hop)
+	 ("hop.mod" __nodejs_mod_hop)
 	 ("hophz" __nodejs_hophz)
 	 ("node_tick" __nodejs_node_tick)
 	 ("node_stdio" __nodejs_node_stdio)

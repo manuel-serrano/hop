@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 22 13:12:15 2023                          */
-;*    Last change :  Wed Feb 22 15:51:16 2023 (serrano)                */
+;*    Last change :  Thu Feb 23 14:48:04 2023 (serrano)                */
 ;*    Copyright   :  2023 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Optimizing nodejs builtins                                       */
@@ -34,8 +34,35 @@
 	   (stat-field ::J2SNode)
 	   (stat-method ::J2SNode)
 	   (j2s-stat-access ::J2SNode ::int mode return ctx)
-	   (j2s-stat-call ::J2SNode ::symbol mode return ctx)))
+	   (j2s-stat-call ::J2SNode ::symbol mode return ctx)
+	   (hop-call? ::J2SNode)
+	   (hop-require? ::J2SNode)
+	   (hop-method ::J2SNode)
+	   (j2s-hop-call ::J2SNode ::symbol mode return ctx)))
 	   
+;*---------------------------------------------------------------------*/
+;*    is-require? ...                                                  */
+;*    -------------------------------------------------------------    */
+;*    Is obj the expression "require('XXX')"?                          */
+;*---------------------------------------------------------------------*/
+(define (is-require? obj::J2SNode module)
+   (when (isa? obj J2SRef)
+      (with-access::J2SRef obj (decl)
+	 (when (and (isa? decl J2SDeclInit) (decl-ronly? decl))
+	    (with-access::J2SDeclInit decl (val)
+	       (when (isa? val J2SCall)
+		  (with-access::J2SCall val (fun args)
+		     (when (and (pair? args)
+				(null? (cdr args))
+				(isa? (car args) J2SString)
+				(isa? fun J2SRef))
+			(with-access::J2SString (car args) (val)
+			   (when (string=? val module)
+			      (with-access::J2SRef fun (decl)
+				 (when (isa? decl J2SDeclExtern)
+				    (with-access::J2SDecl decl (id)
+				       (eq? id '%require))))))))))))))
+
 ;*---------------------------------------------------------------------*/
 ;*    stat-prop-table ...                                              */
 ;*---------------------------------------------------------------------*/
@@ -99,22 +126,7 @@
 ;*    Is obj the expression "require('fs')"?                           */
 ;*---------------------------------------------------------------------*/
 (define (stat-require? obj::J2SNode)
-   (when (isa? obj J2SRef)
-      (with-access::J2SRef obj (decl)
-	 (when (and (isa? decl J2SDeclInit) (decl-ronly? decl))
-	    (with-access::J2SDeclInit decl (val)
-	       (when (isa? val J2SCall)
-		  (with-access::J2SCall val (fun args)
-		     (when (and (pair? args)
-				(null? (cdr args))
-				(isa? (car args) J2SString)
-				(isa? fun J2SRef))
-			(with-access::J2SString (car args) (val)
-			   (when (string=? val "fs")
-			      (with-access::J2SRef fun (decl)
-				 (when (isa? decl J2SDeclExtern)
-				    (with-access::J2SDecl decl (id)
-				       (eq? id '%require))))))))))))))
+   (is-require? obj "fs"))
 
 ;*---------------------------------------------------------------------*/
 ;*    stat-field ...                                                   */
@@ -160,3 +172,68 @@
 	 (if (eq? (j2s-type (car args)) 'string)
 	     `(,(symbol-append id '-is-mode-string) ,expr ,method %this)
 	     `(,(symbol-append id '-is-mode-string) ,expr ,method %this)))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-fun ...                                                      */
+;*---------------------------------------------------------------------*/
+(define (hop-fun fun::J2SNode)
+   (cond
+      ((isa? fun J2SRef)
+       (with-access::J2SRef fun (decl)
+	  (when (isa? decl J2SDeclImport)
+	     (with-access::J2SDeclImport decl (import)
+		(with-access::J2SImport import (path names)
+		   (and (string=? path "fs")
+			(with-access::J2SImportName (car names) (id)
+			   (case id
+			      ((log) 'tprint)
+			      (else #f)))))))))
+      ((isa? fun J2SAccess)
+       (with-access::J2SAccess fun (obj field)
+	  (when (and (hop-require? obj) (isa? field J2SString))
+	     (with-access::J2SString field (val)
+		(cond
+		   ((string=? val "log") 'tprint)
+		   (else #f))))))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-call? ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (hop-call? obj::J2SNode)
+   (when (isa? obj J2SCall)
+      (with-access::J2SCall obj (fun args)
+	 (when (and (pair? args) (null? (cdr args)))
+	    (symbol? (hop-fun fun))))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-require? ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (hop-require? obj::J2SNode)
+   (is-require? obj "hop"))
+
+;*---------------------------------------------------------------------*/
+;*    hop-method ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (hop-method field)
+   (when (isa? field J2SString)
+      (with-access::J2SString field (val)
+	 (cond
+	    ((string=? val "log") 'log)))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-hop-call ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (j2s-hop-call call method mode return ctx)
+   (with-access::J2SCall call (fun args)
+      (let ((id (hop-fun fun)))
+	 (case method
+	    ((log)
+	     `(tprint ,@(map (lambda (a)
+				(j2s-scheme a mode return ctx))
+			   args)))
+	    (else
+	     (error "j2s-hop-call" "wrong call" method))))))
+
+
+
+
