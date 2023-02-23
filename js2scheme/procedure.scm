@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 27 07:35:02 2019                          */
-;*    Last change :  Fri Feb 10 12:42:38 2023 (serrano)                */
+;*    Last change :  Thu Feb 23 09:20:10 2023 (serrano)                */
 ;*    Copyright   :  2019-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Procedure optimization.                                          */
@@ -380,7 +380,8 @@
 	     (begin
 		(set! refinfo %info)
 		(node-procedure-info-vals %info))
-	     (let ((v (node-init-info! decl '() fix)))
+	     (let* ((t (if (isa? decl J2SDeclImport) 'top '()))
+		    (v (node-init-info! decl t fix)))
 		(set! refinfo %info)
 		v)))))
 
