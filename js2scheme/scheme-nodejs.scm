@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 22 13:12:15 2023                          */
-;*    Last change :  Thu Feb 23 14:48:04 2023 (serrano)                */
+;*    Last change :  Fri Feb 24 13:23:54 2023 (serrano)                */
 ;*    Copyright   :  2023 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Optimizing nodejs builtins                                       */
@@ -48,20 +48,32 @@
 (define (is-require? obj::J2SNode module)
    (when (isa? obj J2SRef)
       (with-access::J2SRef obj (decl)
-	 (when (and (isa? decl J2SDeclInit) (decl-ronly? decl))
-	    (with-access::J2SDeclInit decl (val)
-	       (when (isa? val J2SCall)
-		  (with-access::J2SCall val (fun args)
-		     (when (and (pair? args)
-				(null? (cdr args))
-				(isa? (car args) J2SString)
-				(isa? fun J2SRef))
-			(with-access::J2SString (car args) (val)
-			   (when (string=? val module)
-			      (with-access::J2SRef fun (decl)
-				 (when (isa? decl J2SDeclExtern)
-				    (with-access::J2SDecl decl (id)
-				       (eq? id '%require))))))))))))))
+	 (cond
+	    ((not (decl-ronly? decl))
+	     #f)
+	    ((isa? decl J2SDeclExtern)
+	     (with-access::J2SDeclExtern decl (id val)
+		(when (isa? val J2SPragma)
+		   (with-access::J2SPragma val (expr)
+		      (match-case expr
+			 ((nodejs-require-core (and (? string?) ?id) ?- ?-)
+			  (string=? id module))
+			 (else
+			  #f))))))
+	    ((isa? decl J2SDeclInit)
+	     (with-access::J2SDeclInit decl (val)
+		(when (isa? val J2SCall)
+		   (with-access::J2SCall val (fun args)
+		      (when (and (pair? args)
+				 (null? (cdr args))
+				 (isa? (car args) J2SString)
+				 (isa? fun J2SRef))
+			 (with-access::J2SString (car args) (val)
+			    (when (string=? val module)
+			       (with-access::J2SRef fun (decl)
+				  (when (isa? decl J2SDeclExtern)
+				     (with-access::J2SDecl decl (id)
+					(eq? id '%require)))))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    stat-prop-table ...                                              */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug  9 14:00:32 2013                          */
-;*    Last change :  Wed Feb 22 14:39:10 2023 (serrano)                */
+;*    Last change :  Fri Feb 24 16:13:23 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    THe module used to build the nodejs heap file.                   */
@@ -21,6 +21,7 @@
 	   __nodejs_process
 	   __nodejs_repl
 	   __nodejs_uv
+	   __nodejs_napi
 	   __nodejs__hop
 	   __nodejs__buffer
 	   __nodejs__fs)

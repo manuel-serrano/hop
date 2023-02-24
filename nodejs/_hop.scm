@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Thu Feb 23 14:20:35 2023 (serrano)                */
+;*    Last change :  Fri Feb 24 07:13:24 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -420,6 +420,11 @@
 		     (let ((p (current-error-port)))
 			(for-each (lambda (a) (display a p)) args)
 			(newline p))))
+	       
+	       ;; typeof
+	       (define-js typeof 1
+		  (lambda (this arg)
+		     (js-string->jsstring (typeof arg))))
 	       
 	       ;; request
 	       (define-js isLocalRequest 1

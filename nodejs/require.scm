@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Tue Feb 21 09:54:06 2023 (serrano)                */
+;*    Last change :  Fri Feb 24 14:15:39 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -2206,6 +2206,8 @@
 	 ((string-suffix? ".hop" filename)
 	  (load-module-hop))
 	 ((string-suffix? ".so" filename)
+	  (load-module-so))
+	 ((string-suffix? ".node" filename)
 	  (load-module-so))
 	 ((string-suffix? ".dylib" filename)
 	  (load-module-so))

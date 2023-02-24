@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Thu Feb 23 14:27:15 2023 (serrano)                */
+#*    Last change :  Fri Feb 24 14:32:10 2023 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the NODEJS library.                        */
 #*=====================================================================*/
@@ -36,24 +36,35 @@ BHOPCFLAGS += --bootstrap-mode
 #*---------------------------------------------------------------------*/
 _OBJECTS = nodejs require process repl _hop uv _fs _http _crypto \
   _buffer _process_wrap _stream_wrap _tcp_wrap _pipe_wrap _udp_wrap \
-  _tty_wrap _timer_wrap _evals _zlib syncg 
+  _tty_wrap _timer_wrap _evals _zlib syncg napi
 _JS_OBJECTS = console constants util sys path stream events fs \
   punycode assert buffer dgram net timers vm querystring cluster \
   child_process string_decoder _linklist _stream_readable _stream_writable \
   _stream_duplex _stream_transform _stream_passthrough crypto dns domain \
   freelist http https tls tty zlib url os hop hophz \
   node_tick node_stdio node_proc node_timers node_cluster
+
 _MOD_OBJECTS = hop path fs http https 
 
-OBJECTS = $(_OBJECTS:%=o/%.o) $(_JS_OBJECTS:%=o/%.o) $(_MOD_OBJECTS:%=o/%.mod.o) 
+_C_OBJECTS = _napi
+
+OBJECTS = $(_OBJECTS:%=o/%.o) \
+	$(_JS_OBJECTS:%=o/%.o) \
+	$(_MOD_OBJECTS:%=o/%.mod.o) \
+	$(_C_OBJECTS:%=o/%.o)
 EOBJECTS = o/make_lib.o
 
 BGL_CLASSES = $(_OBJECTS:%=$(CLASS_DIR)/%.class)
 BGL_ECLASSES = $(CLASS_EDIR)/make_lib.class
 
-SOURCES = $(_OBJECTS:%=%.scm) $(_JS_OBJECTS:%=%.js) $(_MOD_OBJECTS:%=modules/%.mod.js)
+SOURCES = $(_OBJECTS:%=%.scm) \
+	$(_JS_OBJECTS:%=%.js) \
+	$(_MOD_OBJECTS:%=modules/%.mod.js) \
+	$(_C_OBJECTS:%=%.c)
 
 INCLUDES = nodejs_debug.sch uv.sch nodejs_types.sch
+
+C_INCLUDES = 
 
 #*---------------------------------------------------------------------*/
 #*    Sources                                                          */
@@ -178,6 +189,10 @@ o/buffer.o: buffer.js
 	@ $(call compile3,$(HOPC),$(HFLAGS),$(BCFLAGS),$(BLFLAGS),$(BHOPCFLAGS) -c --js-module-name __nodejs_buffer --js-module-path buffer -Os --js-cspecs-get "(imap cmap)" --js-cspecs-assignew "(emap cmap)",$< -o $@)
 
 o/nodejs.mod.o: modules/fs.mod.scm
+
+o/_napi.o: _napi.c 
+	@ $(call compile2,$(CCOMP),$(CCFLAGS), -c $< -o $@)
+
 
 #bdepend start (don't edit)
 #*---------------------------------------------------------------------*/
