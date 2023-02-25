@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 24 16:10:01 2023                          */
-;*    Last change :  Fri Feb 24 18:46:21 2023 (serrano)                */
+;*    Last change :  Fri Feb 24 19:09:54 2023 (serrano)                */
 ;*    Copyright   :  2023 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The Scheme part of the node_api.                                 */
@@ -18,28 +18,34 @@
    
    (extern (include "node_api.h")
 
-	   (macro $napi_property_descriptor*::$napi_property_descriptor* (::void*) "(napi_property_descriptor *)")
-	   (type $napi_property_descriptor* "napi_property_descriptor *")
-	   (infix macro $napi_property_descriptor->name::obj (::$napi_property_descriptor*) "->name")
-	   (infix macro $napi_property_descriptor->utf8name::string (::$napi_property_descriptor*) "->utf8name")
-	   (infix macro $napi_property_descriptor->method::obj (::$napi_property_descriptor*) "->method")
-	   (infix macro $napi_property_descriptor->getter::obj (::$napi_property_descriptor*) "->getter")
-	   (infix macro $napi_property_descriptor->setter::obj (::$napi_property_descriptor*) "->setter")
-	   (infix macro $napi_property_descriptor->value::obj (::$napi_property_descriptor*) "->value")
-	   (infix macro $napi_property_descriptor->attributes::obj (::$napi_property_descriptor*) "->attributes")
-	   (infix macro $napi_property_descriptor->data::obj (::$napi_property_descriptor*) "->data")
+	   (macro $napi_undefined::int "napi_undefined")
+	   (macro $napi_null::int "napi_null")
+	   (macro $napi_boolean::int "napi_boolean")
+	   (macro $napi_number::int "napi_number")
+	   (macro $napi_string::int "napi_string")
+	   (macro $napi_symbol::int "napi_symbol")
+	   (macro $napi_object::int "napi_object")
+	   (macro $napi_function::int "napi_function")
+	   (macro $napi_external::int "napi_external")
+	   (macro $napi_bigint::int "napi_bigint")
 
 	   (macro $obj-null?::bool (::obj) "0L ==")
 	   
 	   (export napi-create-string-utf8 "bgl_napi_create_string_utf8")
 	   (export napi-get-element "bgl_napi_get_element")
 	   (export napi-get-named-property "bgl_napi_get_named_property")
-	   (export napi-define-property "bgl_napi_define_property"))
+	   (export napi-put-named-property! "bgl_napi_put_named_property")
+	   (export napi-define-property "bgl_napi_define_property")
+	   (export napi-create-function "bgl_napi_create_function")
+	   (export napi-typeof "bgl_napi_typeof"))
    
    (export (napi-create-string-utf8::obj ::obj ::bstring)
 	   (napi-get-named-property::obj ::obj ::obj ::bstring)
+	   (napi-put-named-property!::obj ::obj ::obj ::bstring ::obj)
 	   (napi-get-element::obj ::obj ::obj ::int)
-	   (napi-define-property::obj ::obj ::obj ::bstring ::obj)))
+	   (napi-define-property::obj ::obj ::obj ::bstring ::obj)
+	   (napi-create-function::obj ::obj ::procedure ::bstring)
+	   (napi-typeof::int ::obj ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    napi-create-string-utf8 ...                                      */
@@ -52,6 +58,12 @@
 ;*---------------------------------------------------------------------*/
 (define (napi-get-named-property %this this prop)
    (js-get this (js-string->name prop) %this))
+
+;*---------------------------------------------------------------------*/
+;*    napi-put-named-property! ...                                     */
+;*---------------------------------------------------------------------*/
+(define (napi-put-named-property! %this this prop val)
+   (js-put! this (js-string->name prop) val #f %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    napi-get-element ...                                             */
@@ -70,3 +82,26 @@
       (js-put! this (js-string->name prop) proc #f %this)
       this))
    
+;*---------------------------------------------------------------------*/
+;*    napi-create-function ...                                         */
+;*---------------------------------------------------------------------*/
+(define (napi-create-function %this fun name)
+   (js-make-function %this fun
+      (js-function-arity fun)
+      (js-function-info :name name :len 1)
+      :alloc js-no-alloc))
+
+;*---------------------------------------------------------------------*/
+;*    napi-typeof ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (napi-typeof %this obj)
+   (cond
+      ((js-number? obj) $napi_number)
+      ((null? obj) $napi_null)
+      ((boolean? obj) $napi_boolean)
+      ((js-jsstring? obj) $napi_string)
+      ((js-function? obj) $napi_function)
+      ((bignum? obj) $napi_bigint)
+      ((eq? obj (js-undefined)) $napi_undefined)
+      ((js-symbol? obj) $napi_symbol)
+      (else $napi_object)))

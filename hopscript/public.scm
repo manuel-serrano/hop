@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Mon Feb 13 17:23:31 2023 (serrano)                */
+;*    Last change :  Fri Feb 24 20:48:11 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -274,7 +274,19 @@
 
    (extern (macro $js-totest::bool (::obj) "HOP_JSTOTEST")
 	   (macro $js-eqil?::bool (::long ::obj) "HOP_JSEQIL")
-	   (export js-toboolean-no-boolean "hop_js_toboolean_no_boolean")))
+	   (export js-toboolean-no-boolean "hop_js_toboolean_no_boolean")
+	   (export js-call0 "hop_js_call0")
+	   (export js-call1 "hop_js_call1")
+	   (export js-call2 "hop_js_call2")
+	   (export js-call3 "hop_js_call3")
+	   (export js-call4 "hop_js_call4")
+	   (export js-call5 "hop_js_call5")
+	   (export js-call6 "hop_js_call6")
+	   (export js-call7 "hop_js_call7")
+	   (export js-call8 "hop_js_call8")
+	   (export js-call9 "hop_js_call9")
+	   (export js-call10 "hop_js_call10")
+	   (export js-calln "hop_js_calln")))
 
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */

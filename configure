@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Mon Feb 13 12:29:52 2023 (serrano)                */
+#*    Last change :  Sat Feb 25 06:46:17 2023 (serrano)                */
 #*    Copyright   :  2004-23 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -98,6 +98,7 @@ docurl="http://hop-dev.inria.fr/home/lang.html"
 etcdir=$prefix/etc
 bindir=$prefix/bin
 libdir=$prefix/lib
+incdir=$prefix/include
 sharedir=$prefix/share/hop
 mansec=man1
 mandir=$prefix/man/$mansec
@@ -173,6 +174,7 @@ while : ; do
       prefix="`echo $1 | sed 's/^[^=]*=//'`";
       bindir=$prefix/bin;
       libdir=$prefix/lib;
+      incdir=$prefix/include;
       sharedir=$prefix/share/hop;
       mandir=$prefix/man/$mansec;
       etcdir=$prefix/etc;
@@ -187,6 +189,9 @@ while : ; do
 
     --libdir=*)
       libdir="`echo $1 | sed 's/^[^=]*=//'`";;
+
+    --includedir=*)
+      incdir="`echo $1 | sed 's/^[^=]*=//'`";;
 
     --sharedir=*)
       sharedir="`echo $1 | sed 's/^[^=]*=//'`";;
@@ -464,6 +469,7 @@ while : ; do
       echo "   --etcdir=dir................ Hop etc directory" >&2;
       echo "   --bindir=dir................ alternative Hop bin directory" >&2;
       echo "   --libdir=dir................ alternative Hop lib directory" >&2;
+      echo "   --includedir=dir............ alternative Hop include directory" >&2;
       echo "   --sharedir=dir.............. alternative Hop share directory" >&2;
       echo "   --mandir=dir................ alternative Hop man directory" >&2;
       echo "   --webletsdir=dir............ alternative Hop weblets directory" >&2;
@@ -1162,6 +1168,7 @@ for p in hopc.sh hop.sh hopjs.sh hopaot.sh; do
           -e "s|@INSTALLSPECIFIC@|$installspecific|" \
           -e "s|@BINDIR@|$bindir|" \
           -e "s|@LIBDIR@|$libdir|" \
+          -e "s|@INCDIR@|$incdir|" \
           -e "s|@LIBPATH@|$libdir/hop/$version|" \
   > bin/$p
   chmod a+rx bin/$p
@@ -1232,6 +1239,7 @@ cat $mkmf.in \
         -e "s|@INSTALLSPECIFIC@|$installspecific|" \
         -e "s|@BINDIR@|$bindir|" \
         -e "s|@LIBDIR@|$libdir|" \
+        -e "s|@INCDIR@|$incdir|" \
         -e "s|@LIBPATH@|$libdir/hop/$version|" \
         -e "s|@SHAREDIR@|$sharedir|" \
         -e "s|@MANDIR@|$mandir|" \
@@ -1281,6 +1289,7 @@ for p in configure.scm configure_noarch.sch configure_macosx.sch configure_andro
           -e "s|@URL@|$url|" \
           -e "s|@BINDIR@|$bindir|" \
           -e "s|@LIBDIR@|$libdir|" \
+          -e "s|@INCDIR@|$incdir|" \
           -e "s|@LIBPATH@|$libdir/hop/$version|" \
           -e "s|@SHAREDIR@|$sharedir/$version|" \
           -e "s|@ETCDIR@|$etcdir|" \
@@ -1321,6 +1330,7 @@ for p in nodejs.sch; do
           -e "s|@URL@|$url|" \
           -e "s|@BINDIR@|$bindir|" \
           -e "s|@LIBDIR@|$libdir|" \
+          -e "s|@INCDIR@|$incdir|" \
           -e "s|@LIBPATH@|$libdir/hop/$version|" \
           -e "s|@SHAREDIR@|$sharedir/$version|" \
           -e "s|@ETCDIR@|$etcdir|" \
@@ -1354,6 +1364,7 @@ for script in test/nodejs/TEST test/nodejs/HOP.exe test/hopjs/TEST test/hopts/TE
           -e "s|@URL@|$url|g" \
           -e "s|@BINDIR@|$bindir|g" \
           -e "s|@LIBDIR@|$libdir|g" \
+          -e "s|@INCDIR@|$incdir|g" \
           -e "s|@LIBPATH@|$libdir/hop/$version|g" \
           -e "s|@SHAREDIR@|$sharedir/$version|g" \
           -e "s|@ETCDIR@|$etcdir|g" \
@@ -1393,6 +1404,7 @@ for file in etc/hopjs-config.el; do
           -e "s|@URL@|$url|" \
           -e "s|@BINDIR@|$bindir|" \
           -e "s|@LIBDIR@|$libdir|" \
+          -e "s|@INCDIR@|$incdir|" \
           -e "s|@LIBPATH@|$libdir/hop/$version|" \
           -e "s|@SHAREDIR@|$sharedir/$version|" \
           -e "s|@ETCDIR@|$etcdir|" \
@@ -1418,6 +1430,7 @@ cat etc/hoprc.hop.in \
         -e "s|@BRANCH@|$branch|" \
         -e "s|@BINDIR@|$bindir|" \
         -e "s|@LIBDIR@|$libdir|" \
+        -e "s|@INCDIR@|$incdir|" \
         -e "s|@LIBPATH@|$libdir/hop/$version|" \
         -e "s|@SHAREDIR@|$sharedir/$version|" \
         -e "s|@ETCDIR@|$etcdir|" \
@@ -1437,6 +1450,7 @@ cat etc/hopshrc.hop.in \
         -e "s|@BRANCH@|$branch|" \
         -e "s|@BINDIR@|$bindir|" \
         -e "s|@LIBDIR@|$libdir|" \
+        -e "s|@INCDIR@|$incdir|" \
         -e "s|@LIBPATH@|$libdir/hop/$version|" \
         -e "s|@SHAREDIR@|$sharedir/$version|" \
         -e "s|@ETCDIR@|$etcdir|" \
@@ -1506,6 +1520,7 @@ cat etc/hopc_config.sch.in \
           -e "s|@URL@|$url|" \
           -e "s|@BINDIR@|$bindir|" \
           -e "s|@LIBDIR@|$libdir|" \
+          -e "s|@INCDIR@|$incdir|" \
           -e "s|@LIBRARY-PATH@|$libdir/hop/$version|" \
           -e "s|@SHAREDIR@|$sharedir/$version|" \
           -e "s|@ETCDIR@|$etcdir|" \
@@ -1728,6 +1743,7 @@ for init in hop-autoconf.js hop-boot.js; do
           -e "s|@URL@|$url|" \
           -e "s|@BINDIR@|$bindir|" \
           -e "s|@LIBDIR@|$libdir|" \
+          -e "s|@INCDIR@|$incdir|" \
           -e "s|@LIBPATH@|$libdir/hop/$version|" \
           -e "s|@SHAREDIR@|$sharedir/$version|" \
           -e "s|@ETCDIR@|$etcdir|" \
@@ -1843,6 +1859,7 @@ echo "Directories where Hop will be installed:"
 echo "  etc directory......................... $etcdir"
 echo "  bin directory......................... $bindir"
 echo "  lib directory......................... $libdir"
+echo "  include directory..................... $incdir"
 echo "  share directory....................... $sharedir"
 echo "  man directory......................... $mandir"
 echo "  weblets directory..................... $webletsdir"

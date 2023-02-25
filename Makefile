@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Fri Feb 11 14:53:51 2022 (serrano)                */
+#*    Last change :  Sat Feb 25 06:45:20 2023 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -209,6 +209,9 @@ hop-dirs:
         fi
 	if [ ! -d $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR) ]; then \
 	  $(MAKE) mkdir DIR=$(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR); \
+        fi
+	if [ ! -d $(DESTDIR)$(HOPINCDIR)/$(HOPFILDIR) ]; then \
+	  $(MAKE) mkdir DIR=$(DESTDIR)$(HOPINCDIR)/$(HOPFILDIR); \
         fi
 	if [ ! -d $(DESTDIR)$(HOPWEBLETSDIR) ]; then \
 	  $(MAKE) mkdir DIR=$(DESTDIR)$(HOPWEBLETSDIR); \

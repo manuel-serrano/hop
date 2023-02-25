@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Sep 17 14:27:28 2004                          */
-#*    Last change :  Wed Jan  4 20:00:10 2023 (serrano)                */
+#*    Last change :  Sat Feb 25 06:45:51 2023 (serrano)                */
 #*    Copyright   :  2004-23 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The autoconf Makefile skeleton for HOP.                          */
@@ -113,6 +113,7 @@ HOPPREFIX	= @PREFIX@
 HOPETCDIR	= @ETCDIR@
 HOPBINDIR	= @BINDIR@
 HOPLIBDIR	= @LIBDIR@
+HOPINCDIR	= @INCDIR@
 HOPSHAREDIR	= @SHAREDIR@
 HOPMANDIR	= @MANDIR@
 HOPWEBLETSDIR	= @WEBLETSDIR@

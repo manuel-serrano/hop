@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Fri Feb 24 14:32:10 2023 (serrano)                */
+#*    Last change :  Sat Feb 25 06:40:42 2023 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the NODEJS library.                        */
 #*=====================================================================*/
@@ -64,7 +64,8 @@ SOURCES = $(_OBJECTS:%=%.scm) \
 
 INCLUDES = nodejs_debug.sch uv.sch nodejs_types.sch
 
-C_INCLUDES = 
+C_INCLUDES = hop_api.h js_native_api_types.h node_api_types.h \
+  js_native_api.h node_api.h
 
 #*---------------------------------------------------------------------*/
 #*    Sources                                                          */
