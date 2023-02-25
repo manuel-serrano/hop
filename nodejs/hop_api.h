@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 24 15:38:53 2023                          */
-/*    Last change :  Fri Feb 24 19:06:03 2023 (serrano)                */
+/*    Last change :  Sat Feb 25 10:37:00 2023 (serrano)                */
 /*    Copyright   :  2023 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop Specific macro redefinitions                                 */
@@ -16,16 +16,19 @@
 /*---------------------------------------------------------------------*/
 /*    Imports                                                          */
 /*---------------------------------------------------------------------*/
+extern int bgl_napi_typeof(obj_t, obj_t);
+
 extern obj_t bgl_napi_create_string_utf8(obj_t, obj_t);
+extern obj_t bgl_napi_create_function(obj_t, obj_t, obj_t);
+extern obj_t bgl_napi_create_object(obj_t);
+
 extern obj_t bgl_napi_get_element(obj_t, obj_t, int);
 extern obj_t bgl_napi_get_named_property(obj_t, obj_t, obj_t);
 extern obj_t bgl_napi_put_named_property(obj_t, obj_t, obj_t, obj_t);
-extern obj_t bgl_napi_define_property(obj_t, obj_t, obj_t, obj_t);
 extern napi_status napi_define_properties(napi_env _this, napi_value this, size_t count, const napi_property_descriptor *properties);
+
 extern napi_status napi_get_cb_info(napi_env _this, napi_callback_info info, size_t *argc, napi_value *argv, napi_value *this_arg, void **data);
-extern obj_t bgl_napi_create_function(obj_t, obj_t, obj_t);
 extern obj_t bgl_napi_call_function(napi_env _this, obj_t this, obj_t fun, size_t argc, napi_value *argv);
-extern int bgl_napi_typeof(obj_t, obj_t);
 
 /*---------------------------------------------------------------------*/
 /*    Module init                                                      */
@@ -82,11 +85,17 @@ extern int bgl_napi_typeof(obj_t, obj_t);
 #define napi_create_double(_this, val, res) \
    (*res = DOUBLE_TO_REAL(val), napi_ok)
 
+#define napi_create_object(_this, res) \
+   (*res = bgl_napi_create_object(_this), napi_ok)
+
 #define napi_get_named_property(_this, this, prop, res) \
   (*res = bgl_napi_get_named_property(_this, this, string_to_bstring(prop)), napi_ok)
 
 #define napi_put_named_property(_this, this, prop, val, res) \
   (*res = bgl_napi_put_named_property(_this, this, string_to_bstring(prop), val), napi_ok)
+
+#define napi_set_named_property(_this, this, prop, val) \
+  (bgl_napi_put_named_property(_this, this, string_to_bstring(prop), val), napi_ok)
 
 #define napi_get_element(_this, this, index, res) \
   (*res = bgl_napi_get_element(_this, this, index), napi_ok)

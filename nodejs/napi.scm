@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 24 16:10:01 2023                          */
-;*    Last change :  Fri Feb 24 19:09:54 2023 (serrano)                */
+;*    Last change :  Sat Feb 25 10:38:06 2023 (serrano)                */
 ;*    Copyright   :  2023 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The Scheme part of the node_api.                                 */
@@ -37,6 +37,7 @@
 	   (export napi-put-named-property! "bgl_napi_put_named_property")
 	   (export napi-define-property "bgl_napi_define_property")
 	   (export napi-create-function "bgl_napi_create_function")
+	   (export napi-create-object "bgl_napi_create_object")
 	   (export napi-typeof "bgl_napi_typeof"))
    
    (export (napi-create-string-utf8::obj ::obj ::bstring)
@@ -45,6 +46,7 @@
 	   (napi-get-element::obj ::obj ::obj ::int)
 	   (napi-define-property::obj ::obj ::obj ::bstring ::obj)
 	   (napi-create-function::obj ::obj ::procedure ::bstring)
+	   (napi-create-object::obj ::obj)
 	   (napi-typeof::int ::obj ::obj)))
 
 ;*---------------------------------------------------------------------*/
@@ -90,6 +92,12 @@
       (js-function-arity fun)
       (js-function-info :name name :len 1)
       :alloc js-no-alloc))
+
+;*---------------------------------------------------------------------*/
+;*    napi-create-object ...                                           */
+;*---------------------------------------------------------------------*/
+(define (napi-create-object %this)
+   (js-alist->jsobject '() %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    napi-typeof ...                                                  */
