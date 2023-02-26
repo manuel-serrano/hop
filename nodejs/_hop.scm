@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Fri Feb 24 07:13:24 2023 (serrano)                */
+;*    Last change :  Sun Feb 26 15:27:57 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -421,8 +421,8 @@
 			(for-each (lambda (a) (display a p)) args)
 			(newline p))))
 	       
-	       ;; typeof
-	       (define-js typeof 1
+	       ;; tof
+	       (define-js tof 1
 		  (lambda (this arg)
 		     (js-string->jsstring (typeof arg))))
 	       

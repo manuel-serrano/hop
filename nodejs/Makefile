@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Sat Feb 25 06:40:42 2023 (serrano)                */
+#*    Last change :  Sun Feb 26 18:06:13 2023 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the NODEJS library.                        */
 #*=====================================================================*/
@@ -192,7 +192,7 @@ o/buffer.o: buffer.js
 o/nodejs.mod.o: modules/fs.mod.scm
 
 o/_napi.o: _napi.c 
-	@ $(call compile2,$(CCOMP),$(CCFLAGS), -c $< -o $@)
+	@ $(call compile2,$(CCOMP),$(CCFLAGS), -c -g $< -o $@)
 
 
 #bdepend start (don't edit)

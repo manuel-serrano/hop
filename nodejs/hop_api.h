@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 24 15:38:53 2023                          */
-/*    Last change :  Sat Feb 25 10:37:00 2023 (serrano)                */
+/*    Last change :  Sat Feb 25 18:55:43 2023 (serrano)                */
 /*    Copyright   :  2023 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop Specific macro redefinitions                                 */
@@ -21,15 +21,33 @@ extern int bgl_napi_typeof(obj_t, obj_t);
 extern obj_t bgl_napi_create_string_utf8(obj_t, obj_t);
 extern obj_t bgl_napi_create_function(obj_t, obj_t, obj_t);
 extern obj_t bgl_napi_create_object(obj_t);
+extern obj_t bgl_napi_create_array(obj_t);
+extern obj_t bgl_napi_create_promise(obj_t, obj_t);
 
 extern obj_t bgl_napi_get_element(obj_t, obj_t, int);
+extern obj_t bgl_napi_set_element(obj_t, obj_t, int, obj_t);
 extern obj_t bgl_napi_get_named_property(obj_t, obj_t, obj_t);
 extern obj_t bgl_napi_put_named_property(obj_t, obj_t, obj_t, obj_t);
+extern obj_t bgl_napi_define_property(napi_env _this, obj_t this, obj_t prop, obj_t met);
 extern napi_status napi_define_properties(napi_env _this, napi_value this, size_t count, const napi_property_descriptor *properties);
 
 extern napi_status napi_get_cb_info(napi_env _this, napi_callback_info info, size_t *argc, napi_value *argv, napi_value *this_arg, void **data);
 extern obj_t bgl_napi_call_function(napi_env _this, obj_t this, obj_t fun, size_t argc, napi_value *argv);
 
+extern obj_t bgl_napi_async_work_register(obj_t, obj_t);
+extern obj_t bgl_napi_async_work_complete(obj_t, obj_t);
+
+/*---------------------------------------------------------------------*/
+/*    bgl_napi_async_work                                              */
+/*---------------------------------------------------------------------*/
+struct napi_async_work__ {
+   pthread_t pthread;
+   obj_t env;
+   napi_async_execute_callback execute;
+   void *data;
+   obj_t async;
+};
+   
 /*---------------------------------------------------------------------*/
 /*    Module init                                                      */
 /*---------------------------------------------------------------------*/
@@ -85,9 +103,27 @@ extern obj_t bgl_napi_call_function(napi_env _this, obj_t this, obj_t fun, size_
 #define napi_create_double(_this, val, res) \
    (*res = DOUBLE_TO_REAL(val), napi_ok)
 
+#define napi_create_int32(_this, val, res) \
+   (*res = BINT(val), napi_ok)
+
+#define napi_create_uint32(_this, val, res) \
+   (*res = BINT(val), napi_ok)
+
 #define napi_create_object(_this, res) \
    (*res = bgl_napi_create_object(_this), napi_ok)
 
+#define napi_create_array(_this, res) \
+  (*res = bgl_napi_create_array(_this), napi_ok)
+
+#define napi_create_promise(_this, deferred, res) \
+  (*res = bgl_napi_create_promise(_this, (obj_t)deferred), napi_ok)
+
+#define napi_resolve_deferred(_this, deferred, value) \
+  (bgl_napi_call_function(_this, BUNSPEC, CAR(deferred), 1, &value), napi_ok)
+  
+#define napi_reject_deferred(_this, deferred, value) \
+  (bgl_napi_call_function(_this, BUNSPEC, CDR(deferred), 1, &value), napi_ok)
+  
 #define napi_get_named_property(_this, this, prop, res) \
   (*res = bgl_napi_get_named_property(_this, this, string_to_bstring(prop)), napi_ok)
 
@@ -100,6 +136,9 @@ extern obj_t bgl_napi_call_function(napi_env _this, obj_t this, obj_t fun, size_
 #define napi_get_element(_this, this, index, res) \
   (*res = bgl_napi_get_element(_this, this, index), napi_ok)
 
+#define napi_set_element(_this, this, index, val) \
+  (bgl_napi_set_element(_this, this, index, val), napi_ok)
+
 #define napi_get_global(_this, res) \
   (*res = _this, napi_ok)
 
@@ -110,5 +149,12 @@ extern obj_t bgl_napi_call_function(napi_env _this, obj_t this, obj_t fun, size_
   (*res = (napi_valuetype)bgl_napi_typeof(_this, val), napi_ok)
 
 #define napi_get_value_double(_this, val, res) \
-  (*res = INTEGERP(val) ? (double)CINT(val) : REAL_TO_DOUBLE(val), napi_ok)
+  (INTEGERP(val) \
+   ? (*res = (double)CINT(val), napi_ok) \
+   : REALP(val) \
+   ? (*res = REAL_TO_DOUBLE(val), napi_ok) \
+   : napi_number_expected)
 #endif
+
+#define napi_delete_async_work(env, work) \
+  napi_ok
