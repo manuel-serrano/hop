@@ -9,6 +9,7 @@
 *.o
 **/o/
 **/.libs/
+nodejs/modules/mo
 
 # Env dev
 *.afile
