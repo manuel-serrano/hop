@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 24 15:38:53 2023                          */
-/*    Last change :  Mon Feb 27 07:22:56 2023 (serrano)                */
+/*    Last change :  Mon Feb 27 12:35:13 2023 (serrano)                */
 /*    Copyright   :  2023 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop Specific macro redefinitions                                 */
@@ -33,6 +33,7 @@ extern napi_status napi_define_properties(napi_env _this, napi_value this, size_
 
 extern napi_status napi_get_cb_info(napi_env _this, napi_callback_info info, size_t *argc, napi_value *argv, napi_value *this_arg, void **data);
 extern obj_t bgl_napi_call_function(napi_env _this, obj_t this, obj_t fun, size_t argc, napi_value *argv);
+extern obj_t bgl_napi_call_function_res(napi_env _this, obj_t this, obj_t fun, size_t argc, napi_value *argv, napi_value *res);
 
 extern obj_t bgl_napi_async_work_register(obj_t, obj_t);
 extern obj_t bgl_napi_async_work_complete(obj_t, obj_t);
@@ -134,6 +135,9 @@ struct napi_async_work__ {
 #define napi_set_named_property(_this, this, prop, val) \
   (bgl_napi_put_named_property(_this, this, string_to_bstring(prop), val), napi_ok)
 
+#define napi_get_undefined(env, res) \
+  (*res = BUNSPEC, napi_ok)
+  
 #define napi_get_element(_this, this, index, res) \
   (*res = bgl_napi_get_element(_this, this, index), napi_ok)
 
@@ -144,7 +148,7 @@ struct napi_async_work__ {
   (*res = _this, napi_ok)
 
 #define napi_call_function(_this, global, fun, argc, argv, res) \
-  (*res = bgl_napi_call_function(_this, global, fun, argc, argv), napi_ok)
+  bgl_napi_call_function_res(_this, global, fun, argc, argv, res)
 
 #define napi_typeof(_this, val, res) \
   (*res = (napi_valuetype)bgl_napi_typeof(_this, val), napi_ok)

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 24 14:34:24 2023                          */
-/*    Last change :  Mon Feb 27 06:59:21 2023 (serrano)                */
+/*    Last change :  Mon Feb 27 12:42:47 2023 (serrano)                */
 /*    Copyright   :  2023 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop node_api implementation.                                     */
@@ -111,6 +111,7 @@ napi_create_function(napi_env _this,
 /*---------------------------------------------------------------------*/
 BGL_RUNTIME_DEF napi_status
 napi_define_properties(napi_env _this, napi_value this, size_t count, const napi_property_descriptor *properties) {
+
    while (count-- > 0) {
       obj_t name = properties->name ? properties->name : string_to_bstring((char *)properties->utf8name);
       bgl_napi_define_property(_this, this, name, bgl_napi_method_to_procedure(_this, this, properties->method, properties->data));
@@ -187,6 +188,17 @@ bgl_napi_call_function(napi_env _this, obj_t this, obj_t fun, size_t argc, napi_
       case 10: return hop_js_call10(_this, fun, this, argv[0], argv[1], argv[2], argv[3], argv[4], argv[5], argv[6], argv[7], argv[8], argv[9]);
       default: return hop_js_calln(_this, fun, this, argv_to_list(argc, argv));
    }
+}
+
+/*---------------------------------------------------------------------*/
+/*    obj_t                                                            */
+/*    bgl_napi_call_function ...                                       */
+/*---------------------------------------------------------------------*/
+BGL_RUNTIME_DEF obj_t
+bgl_napi_call_function_res(napi_env _this, obj_t this, obj_t fun, size_t argc, napi_value *argv, napi_value *res) {
+   napi_value r = bgl_napi_call_function(_this, this, fun, argc, argv);
+   if (res) *res = r;
+   return napi_ok;
 }
 
 /*---------------------------------------------------------------------*/
