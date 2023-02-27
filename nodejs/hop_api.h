@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 24 15:38:53 2023                          */
-/*    Last change :  Sat Feb 25 18:55:43 2023 (serrano)                */
+/*    Last change :  Mon Feb 27 07:22:56 2023 (serrano)                */
 /*    Copyright   :  2023 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop Specific macro redefinitions                                 */
@@ -44,8 +44,9 @@ struct napi_async_work__ {
    pthread_t pthread;
    obj_t env;
    napi_async_execute_callback execute;
+   napi_async_complete_callback complete;
    void *data;
-   obj_t async;
+   char started;
 };
    
 /*---------------------------------------------------------------------*/
@@ -157,4 +158,5 @@ struct napi_async_work__ {
 #endif
 
 #define napi_delete_async_work(env, work) \
-  napi_ok
+  (free(work), napi_ok)
+

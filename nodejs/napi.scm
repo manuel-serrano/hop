@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 24 16:10:01 2023                          */
-;*    Last change :  Sun Feb 26 16:28:33 2023 (serrano)                */
+;*    Last change :  Mon Feb 27 08:10:01 2023 (serrano)                */
 ;*    Copyright   :  2023 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The Scheme part of the node_api.                                 */
@@ -43,7 +43,8 @@
 	   (export napi-create-promise "bgl_napi_create_promise")
 	   (export napi-typeof "bgl_napi_typeof")
 	   (export napi-async-work-register "bgl_napi_async_work_register")
-	   (export napi-async-work-complete "bgl_napi_async_work_complete"))
+	   (export napi-async-work-complete "bgl_napi_async_work_complete")
+	   (export napi-uvloop "bgl_napi_uvloop"))
    
    (export (napi-create-string-utf8::obj ::obj ::bstring)
 	   (napi-get-named-property::obj ::obj ::obj ::bstring)
@@ -57,7 +58,8 @@
 	   (napi-create-promise::obj ::obj ::obj)
 	   (napi-typeof::int ::obj ::obj)
 	   (napi-async-work-register ::obj ::procedure)
-	   (napi-async-work-complete ::obj ::obj)))
+	   (napi-async-work-complete ::obj ::obj)
+	   (napi-uvloop::$uv_loop_t ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    napi-create-string-utf8 ...                                      */
@@ -162,3 +164,12 @@
 				   (uv-unref async)
 				   (proc))))))
 	    async))))
+
+;*---------------------------------------------------------------------*/
+;*    napi-uvloop ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (napi-uvloop %this)
+   (with-access::JsGlobalObject %this (worker)
+      (with-access::WorkerHopThread worker (%loop)
+	 (with-access::UvLoop %loop ($builtin)
+	    $builtin))))

@@ -3,13 +3,15 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 24 14:34:24 2023                          */
-/*    Last change :  Sat Feb 25 18:53:23 2023 (serrano)                */
+/*    Last change :  Mon Feb 27 06:59:21 2023 (serrano)                */
 /*    Copyright   :  2023 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop node_api implementation.                                     */
 /*=====================================================================*/
+#include <stdlib.h>
 #include <pthread.h>
 #include <bigloo.h>
+#include <uv.h>
 #include "node_api.h"
 
 /*---------------------------------------------------------------------*/
@@ -29,6 +31,8 @@ extern obj_t hop_js_call10(obj_t, obj_t, obj_t, obj_t, obj_t, obj_t, obj_t, obj_
 extern obj_t hop_js_calln(obj_t, obj_t, obj_t, obj_t);
 
 extern char *bgl_typeof();
+
+extern uv_loop_t *bgl_napi_uvloop(obj_t);
 
 /*---------------------------------------------------------------------*/
 /*    void                                                             */
@@ -185,16 +189,15 @@ bgl_napi_call_function(napi_env _this, obj_t this, obj_t fun, size_t argc, napi_
    }
 }
 
-obj_t TBF;
-
 /*---------------------------------------------------------------------*/
 /*    static void                                                      */
 /*    napi_work_complete ...                                           */
 /*---------------------------------------------------------------------*/
 static void
 napi_work_complete(obj_t env) {
-   PROCEDURE_VA_ENTRY(env)(PROCEDURE_REF(env, 0), PROCEDURE_REF(env, 1), PROCEDURE_REF(env, 2));
+   PROCEDURE_VA_ENTRY(env)(PROCEDURE_REF(env, 0), CINT(PROCEDURE_REF(env, 1)), PROCEDURE_REF(env, 2));
 }
+
 
 /*---------------------------------------------------------------------*/
 /*    napi_status                                                      */
@@ -208,55 +211,56 @@ napi_create_async_work(napi_env _this,
 		       napi_async_complete_callback complete,
 		       void* data,
 		       napi_async_work* result) {
-   napi_async_work work = (napi_async_work)GC_MALLOC(sizeof(struct napi_async_work__));
-   obj_t proc = make_fx_procedure((function_t)napi_work_complete, 0, 2);
-   
-   PROCEDURE(proc).va_entry = (function_t)complete;
-   
-   PROCEDURE_SET(proc, 0, _this);
-   PROCEDURE_SET(proc, 1, napi_ok);
-   PROCEDURE_SET(proc, 2, data);
+   napi_async_work work = (napi_async_work)malloc(sizeof(struct napi_async_work__));
    
    work->env = _this;
    work->execute = execute;
+   work->complete = complete;
    work->data = data;
-   work->async = bgl_napi_async_work_register(_this, proc);
+   work->started = 0;
    
    *result = work;
-   
-   TBF = work;
+
    return napi_ok;
 }
 
 /*---------------------------------------------------------------------*/
-/*    static void *                                                    */
-/*    napi_thread_run ...                                              */
+/*    void                                                             */
+/*    napi_work_cb ...                                                 */
 /*---------------------------------------------------------------------*/
-BGL_RUNTIME_DEF static void *
-napi_thread_run(void *arg) {
-   napi_async_work work = (napi_async_work)arg;
-
+void
+napi_work_cb(uv_work_t *req) {
+   napi_async_work work = req->data;
+	   
+   work->started = 1;
    work->execute(work->env, work->data);
-
-   bgl_napi_async_work_complete(work->env, work->async);
 }
-   
+
+/*---------------------------------------------------------------------*/
+/*    void                                                             */
+/*    napi_after_work_cb ...                                           */
+/*---------------------------------------------------------------------*/
+void
+napi_after_work_cb(uv_work_t *req, int status) {
+   napi_async_work work = req->data;
+
+   work->complete(work->env, napi_ok, work->data);
+   free(req);
+}
+
 /*---------------------------------------------------------------------*/
 /*    napi_status                                                      */
 /*    napi_queue_async_work ...                                        */
 /*---------------------------------------------------------------------*/
 BGL_RUNTIME_DEF napi_status
 napi_queue_async_work(napi_env _this, napi_async_work work) {
-   pthread_attr_t a;
-   int ret;
-   
-   pthread_attr_init(&a);
+   uv_work_t *req = malloc(sizeof(uv_work_t));
+   uv_loop_t *loop = bgl_napi_uvloop(_this);
 
-   if (ret = pthread_create(&(work->pthread), &a, napi_thread_run, work)) {
-      return napi_ok;
-   } else {
-      return napi_ok;
-   }
+   req->data = work;
+   
+   uv_queue_work(loop, req, napi_work_cb, napi_after_work_cb);
+   return napi_ok;
 }
 
 /*---------------------------------------------------------------------*/
@@ -265,4 +269,10 @@ napi_queue_async_work(napi_env _this, napi_async_work work) {
 /*---------------------------------------------------------------------*/
 BGL_RUNTIME_DEF napi_status
 napi_cancel_async_work(napi_env env, napi_async_work work) {
+   if (work->started) {
+      return napi_generic_failure;
+   } else {
+      work->complete(work->env, napi_cancelled, work->data);
+      return napi_ok;
+   }
 }
