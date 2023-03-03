@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Tue Feb 21 10:35:33 2023 (serrano)                */
+;*    Last change :  Fri Mar  3 16:36:48 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -1185,9 +1185,9 @@
       (unless (js-totest (js-get proc (& "_exiting") %this))
 	 (js-put! proc (& "_exiting") #t #f %this)
 	 (let ((emit (js-get proc (& "emit") %this)))
-	    (js-call2 %this emit proc (& "exit") r))
-	 (nodejs-compile-abort-all!)
-	 (exit r))))
+	    (js-call2 %this emit proc (& "exit") r)))
+      (nodejs-compile-abort-all!)
+      (exit r)))
 
 ;*---------------------------------------------------------------------*/
 ;*    &end!                                                            */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Fri Mar  3 13:05:01 2023 (serrano)                */
+;*    Last change :  Fri Mar  3 15:31:09 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -408,52 +408,6 @@
    #f)
 
 ;*---------------------------------------------------------------------*/
-;*    js-worker-tick ...                                               */
-;*---------------------------------------------------------------------*/
-(define-method (js-worker-tick th::WorkerHopThread)
-   (with-access::WorkerHopThread th (%loop %process %retval %this
-				       keep-alive mutex)
-      (with-access::JsLoop %loop (actions-count actions actions-name
-				    %actions %actions-name
-				    exiting mutex)
-	 (let (count acts nms)
-	    (synchronize mutex
-	       (set! count actions-count)
-	       (let ((len (vector-length actions)))
-		  (when (<fx (vector-length %actions) len)
-		     ;; reallocate %actions which has become smaller
-		     (set! %actions (make-vector len))
-		     (set! %actions-name (make-vector len)))
-		  ;; swap actions and %actions
-		  (set! acts actions)
-		  (set! nms actions-name)
-		  (set! actions %actions)
-		  (set! actions-name %actions-name)
-		  (set! %actions acts)
-		  (set! actions-name nms)
-		  (set! actions-count 0)))
-	    ;; execute the actions
-	    (let loop ((i 0))
-	       (with-handler
-		  (lambda (e)
-		     (let ((r (js-worker-exception-handler th e 8)))
-			(if (=fx r 0)
-			    (begin
-			       (loop (+fx i 1))
-			       (set! exiting #t))
-			    (begin
-			       (set! %retval r)
-			       (set! keep-alive #f)))))
-		  (let liip ()
-		     (when (<fx i count)
-			(let ((act (vector-ref acts i))
-			      (nms (vector-ref nms i)))
-			   (with-trace 'nodejs-async nms
-			      (js-worker-call th act %this)))
-			(set! i (+fx i 1))
-			(liip)))))))))
-
-;*---------------------------------------------------------------------*/
 ;*    js-worker-loop ::WorkerHopThread ...                             */
 ;*    -------------------------------------------------------------    */
 ;*    Overrides the generic functions defined in hopscript/worker      */
@@ -469,17 +423,18 @@
 			  (loop loop)
 			  (cb (lambda (a)
 				 (js-worker-tick th)
-				 (with-access::JsLoop loop (exiting actions-count)
-				    (when (and (null? services)
-					       (=fx actions-count 0)
-					       (not (active-subworkers? th))
-					       (or (not keep-alive)
-						   exiting))
-				       (uv-unref async)
-				       (when (and (or exiting
-						      (js-totest (js-get %process (& "_exiting") %this)))
-						  (not (uv-loop-alive? loop)))
-					  (uv-stop loop)))))))))
+				 (with-access::JsLoop loop (exiting actions-count mutex)
+				    (synchronize mutex
+				       (when (and (null? services)
+						  (=fx actions-count 0)
+						  (not (active-subworkers? th))
+						  (or (not keep-alive)
+						      exiting))
+					  (uv-unref async)
+					  (when (and (or exiting
+							 (js-totest (js-get %process (& "_exiting") %this)))
+						     (not (uv-loop-alive? loop)))
+					     (uv-stop loop))))))))))
 	 (synchronize mutex
 	    (nodejs-process th %this)
 	    (condition-variable-broadcast! condv)
@@ -521,6 +476,7 @@
 			   (exception-notify e)
 			   (set! %retval 8))
 			(when (js-procedure? onexit)
+			   (tprint "SET EXITING...")
 			   (js-put! %process (& "_exiting") #t #f %this)
 			   (js-call1-jsprocedure %this onexit %process %retval)))))
 	       ;; when the parent died, kill the application
@@ -545,6 +501,52 @@
 		  (synchronize mutex
 		     (set! state 'end)
 		     (condition-variable-broadcast! condv))))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-worker-tick ...                                               */
+;*---------------------------------------------------------------------*/
+(define-method (js-worker-tick th::WorkerHopThread)
+   (with-access::WorkerHopThread th (%loop %process %retval %this
+				       keep-alive)
+      (with-access::JsLoop %loop (actions-count actions actions-name
+				    %actions %actions-name
+				    exiting mutex async)
+	 (let (count acts nms)
+	    (synchronize mutex
+	       (set! count actions-count)
+	       (let ((len (vector-length actions)))
+		  (when (<fx (vector-length %actions) len)
+		     ;; reallocate %actions which has become smaller
+		     (set! %actions (make-vector len))
+		     (set! %actions-name (make-vector len)))
+		  ;; swap actions and %actions
+		  (set! acts actions)
+		  (set! nms actions-name)
+		  (set! actions %actions)
+		  (set! actions-name %actions-name)
+		  (set! %actions acts)
+		  (set! actions-name nms)
+		  (set! actions-count 0)))
+	    ;; execute the actions
+	    (let loop ((i 0))
+	       (with-handler
+		  (lambda (e)
+		     (let ((r (js-worker-exception-handler th e 8)))
+			(if (=fx r 0)
+			    (begin
+			       (loop (+fx i 1))
+			       (set! exiting #t))
+			    (begin
+			       (set! %retval r)
+			       (set! keep-alive #f)))))
+		  (let liip ()
+		     (when (<fx i count)
+			(let ((act (vector-ref acts i))
+			      (nms (vector-ref nms i)))
+			   (with-trace 'nodejs-async nms
+			      (js-worker-call th act %this)))
+			(set! i (+fx i 1))
+			(liip)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    active-subworkers? ...                                           */
@@ -587,7 +589,7 @@
 	 (let ((cnt actions-count))
 	    (cond
 	       ((=fx cnt 0)
-		(uv-ref async)
+		;; (uv-ref async)
 		(uv-async-send async))
 	       ((=fx cnt (vector-length actions))
 		(set! actions (copy-vector actions (*fx 2 cnt)))
@@ -621,14 +623,17 @@
 	  (proc %this)
 	  (let ((loop %loop))
 	     (with-access::JsLoop loop (mutex condv)
-		(let ((response #f))
+		(let ((response 'unassigned))
 		   (synchronize mutex
 		      (js-worker-push-action! th name
 			 (lambda (%this)
 			    (set! response (proc %this))
 			    (synchronize mutex
-			       (condition-variable-signal! condv))))
-		      (condition-variable-wait! condv mutex))
+			       (condition-variable-broadcast! condv))))
+		      (let loop ()
+			 (condition-variable-wait! condv mutex)
+			 (when (eq? response 'unassigned)
+			    (loop))))
 		   response))))))
 
 ;*---------------------------------------------------------------------*/
@@ -643,7 +648,7 @@
 	  (proc %this)
 	  (let ((loop %loop))
 	     (with-access::JsLoop loop (mutex condv)
-		(let ((response (cons #f #f)))
+		(let ((response (cons 'unassigned #f)))
 		   (synchronize mutex
 		      (js-worker-push-action! th name
 			 (lambda (%this)
@@ -653,8 +658,11 @@
 				  (set-car! response exn))
 			       (set-car! response (proc %this)))
 			    (synchronize mutex
-			       (condition-variable-signal! condv))))
-		      (condition-variable-wait! condv mutex))
+			       (condition-variable-broadcast! condv))))
+		      (let loop ()
+			 (condition-variable-wait! condv mutex)
+			 (when (eq? (car response) 'unassigned)
+			    (loop))))
 		   (if (cdr response)
 		       (raise (car response))
 		       (car response))))))))
