@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Fri Mar  3 08:14:51 2023 (serrano)                */
+;*    Last change :  Fri Mar  3 13:33:02 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -1369,6 +1369,7 @@
 		  :debug (nodejs-hop-debug))))))
    
    (define (compile-ast ast::J2SProgram mod)
+      (tprint "COMPILE-AST...")
       (with-trace 'require "compile-ast"
 	 (with-access::J2SProgram ast (path)
 	    (trace-item "ast=" path)
@@ -2184,7 +2185,7 @@
 			   (cdr ct)))))))))
 
    (define (compiler-available? filename)
-      (js-worker-exec worker "language-loader"
+      (js-worker-exec-throws worker "language-loader"
 	 (lambda (%this)
 	    (with-access::JsGlobalObject %ctxthis (js-object js-symbol)
 	       (let* ((langmode (nodejs-require-module lang worker
@@ -2783,7 +2784,7 @@
 (define (make-plugins-loader %ctxthis %ctxmodule worker)
    (when (and (isa? %ctxthis JsGlobalObject) (isa? %ctxmodule JsObject))
       (lambda (lang file conf)
-	 (js-worker-exec worker "plugins-loader"
+	 (js-worker-exec-throws worker "plugins-loader"
 	    (lambda (%this)
 	       (with-access::JsGlobalObject %ctxthis (js-object js-symbol)
 		  (let* ((filemod (nodejs-new-module-sans-cache file file
@@ -2801,7 +2802,7 @@
 					(if (procedure? (cdr p))
 					    (cons (car p)
 					       (lambda (tok decl conf ctrl)
-						  (js-worker-exec worker
+						  (js-worker-exec-throws worker
 						     "plugins"
 						     (lambda (%this)
 							((cdr p) tok decl conf ctrl)))))
@@ -2816,7 +2817,7 @@
 (define (make-language-loader %ctxthis %ctxmodule worker)
    (when (and (isa? %ctxthis JsGlobalObject) (isa? %ctxmodule JsObject))
       (lambda (lang file conf)
-	 (js-worker-exec worker "language-loader"
+	 (js-worker-exec-throws worker "language-loader"
 	    (lambda (%this)
 	       (with-access::JsGlobalObject %ctxthis (js-object js-symbol)
 		  (let* ((langmod (nodejs-require-module lang worker

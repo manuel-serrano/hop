@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Fri Mar  3 07:40:11 2023 (serrano)                */
+;*    Last change :  Fri Mar  3 13:05:01 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -37,6 +37,8 @@
 		  (actions-name::vector (default (make-vector 10)))
 		  (%actions::vector (default (make-vector 10)))
 		  (%actions-name::vector (default (make-vector 10)))
+		  (mutex::mutex read-only (default (make-mutex)))
+		  (condv::condvar read-only (default (make-condition-variable)))
 		  (exiting::bool (default #f)))
 	  
 	  (class JsChild::UvProcess
@@ -413,7 +415,7 @@
 				       keep-alive mutex)
       (with-access::JsLoop %loop (actions-count actions actions-name
 				    %actions %actions-name
-				    exiting)
+				    exiting mutex)
 	 (let (count acts nms)
 	    (synchronize mutex
 	       (set! count actions-count)
@@ -602,9 +604,10 @@
    (with-trace 'nodejs-async "nodejs-async-push"
       (trace-item "name=" name)
       (trace-item "th=" th)
-      (with-access::WorkerHopThread th (mutex)
-	 (synchronize mutex
-	    (js-worker-push-action! th name proc)))))
+      (with-access::WorkerHopThread th (%loop)
+	 (with-access::JsLoop %loop (mutex)
+	    (synchronize mutex
+	       (js-worker-push-action! th name proc))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-worker-exec ...                                               */
@@ -613,18 +616,48 @@
 		  name::bstring
 		  proc::procedure)
    [assert (proc) (correct-arity? proc 1)]
-   (with-access::WorkerHopThread th (%this mutex condv)
+   (with-access::WorkerHopThread th (%this %loop mutex condv)
       (if (eq? (current-thread) th)
 	  (proc %this)
-	  (let ((response #f))
-	     (synchronize mutex
-		(js-worker-push-action! th name
-		   (lambda (%this)
-		      (set! response (proc %this))
-		      (synchronize mutex
-			 (condition-variable-signal! condv))))
-		(condition-variable-wait! condv mutex)
-		response)))))
+	  (let ((loop %loop))
+	     (with-access::JsLoop loop (mutex condv)
+		(let ((response #f))
+		   (synchronize mutex
+		      (js-worker-push-action! th name
+			 (lambda (%this)
+			    (set! response (proc %this))
+			    (synchronize mutex
+			       (condition-variable-signal! condv))))
+		      (condition-variable-wait! condv mutex))
+		   response))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-worker-exec-throws ...                                        */
+;*---------------------------------------------------------------------*/
+(define-method (js-worker-exec-throws th::WorkerHopThread
+		  name::bstring
+		  proc::procedure)
+   [assert (proc) (correct-arity? proc 1)]
+   (with-access::WorkerHopThread th (%this %loop mutex condv)
+      (if (eq? (current-thread) th)
+	  (proc %this)
+	  (let ((loop %loop))
+	     (with-access::JsLoop loop (mutex condv)
+		(let ((response (cons #f #f)))
+		   (synchronize mutex
+		      (js-worker-push-action! th name
+			 (lambda (%this)
+			    (with-handler
+			       (lambda (exn)
+				  (set-cdr! response #t)
+				  (set-car! response exn))
+			       (set-car! response (proc %this)))
+			    (synchronize mutex
+			       (condition-variable-signal! condv))))
+		      (condition-variable-wait! condv mutex))
+		   (if (cdr response)
+		       (raise (car response))
+		       (car response))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-now ...                                                   */

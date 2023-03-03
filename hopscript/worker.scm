@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Fri Mar  3 08:10:01 2023 (serrano)                */
+;*    Last change :  Fri Mar  3 14:19:05 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -49,6 +49,7 @@
 	   (generic js-worker-tick ::object)
 	   (generic js-worker-exception-handler ::object ::obj ::int)
 	   (generic js-worker-exec ::object ::bstring ::procedure)
+	   (generic js-worker-exec-throws ::object ::bstring ::procedure)
 	   (generic js-worker-push! ::object ::bstring ::procedure)
 	   (generic js-worker-alive? ::object)
 	   
@@ -642,6 +643,11 @@
 ;*    js-worker-exec ...                                               */
 ;*---------------------------------------------------------------------*/
 (define-generic (js-worker-exec th::object name::bstring proc::procedure))
+
+;*---------------------------------------------------------------------*/
+;*    js-worker-exec-throws ...                                        */
+;*---------------------------------------------------------------------*/
+(define-generic (js-worker-exec-throws th::object name::bstring proc::procedure))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-worker-push! ::object ...                                     */
