@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 19 08:19:19 2015                          */
-;*    Last change :  Wed Feb 15 08:40:39 2023 (serrano)                */
+;*    Last change :  Fri Mar  3 08:13:16 2023 (serrano)                */
 ;*    Copyright   :  2015-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript promises                     */
@@ -82,7 +82,7 @@
    
    (define (async-proc k)
       (with-access::JsPromise obj (worker %this)
-	 (js-worker-exec worker "async-proc" #t
+	 (js-worker-exec worker "async-proc"
 	    (lambda (%this)
 	       (with-access::WorkerHopThread worker (%this)
 		  (js-promise-then-catch %this obj 

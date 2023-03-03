@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Fri Feb 24 14:15:39 2023 (serrano)                */
+;*    Last change :  Fri Mar  3 08:14:51 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -194,7 +194,7 @@
 	    (json->file str lang %this))))
 
    (let ((worker (js-current-worker)))
-      (js-worker-exec worker "nodejs-compile-file-lang" #t
+      (js-worker-exec worker "nodejs-compile-file-lang"
 	 (lambda (%this)
 	    (with-access::JsGlobalObject %ctxthis (js-object js-symbol)
 	       (let* ((exp (nodejs-require-module lang worker %ctxthis %ctxmodule))
@@ -438,7 +438,7 @@
 	 ;; see sourcemap generation
 	 (cons offset tree)))
 
-   (js-worker-exec %ctxworker "module->javascript" #t
+   (js-worker-exec %ctxworker "module->javascript"
       (lambda (%this)
 	 (let ((esplainp (memq query '(mjs es ts))))
 	    (init-dummy-module! %ctxthis %ctxworker)
@@ -2184,7 +2184,7 @@
 			   (cdr ct)))))))))
 
    (define (compiler-available? filename)
-      (js-worker-exec worker "language-loader" #f
+      (js-worker-exec worker "language-loader"
 	 (lambda (%this)
 	    (with-access::JsGlobalObject %ctxthis (js-object js-symbol)
 	       (let* ((langmode (nodejs-require-module lang worker
@@ -2783,7 +2783,7 @@
 (define (make-plugins-loader %ctxthis %ctxmodule worker)
    (when (and (isa? %ctxthis JsGlobalObject) (isa? %ctxmodule JsObject))
       (lambda (lang file conf)
-	 (js-worker-exec worker "plugins-loader" #f
+	 (js-worker-exec worker "plugins-loader"
 	    (lambda (%this)
 	       (with-access::JsGlobalObject %ctxthis (js-object js-symbol)
 		  (let* ((filemod (nodejs-new-module-sans-cache file file
@@ -2802,7 +2802,7 @@
 					    (cons (car p)
 					       (lambda (tok decl conf ctrl)
 						  (js-worker-exec worker
-						     "plugins" #f
+						     "plugins"
 						     (lambda (%this)
 							((cdr p) tok decl conf ctrl)))))
 					    p))
@@ -2816,7 +2816,7 @@
 (define (make-language-loader %ctxthis %ctxmodule worker)
    (when (and (isa? %ctxthis JsGlobalObject) (isa? %ctxmodule JsObject))
       (lambda (lang file conf)
-	 (js-worker-exec worker "language-loader" #f
+	 (js-worker-exec worker "language-loader"
 	    (lambda (%this)
 	       (with-access::JsGlobalObject %ctxthis (js-object js-symbol)
 		  (let* ((langmod (nodejs-require-module lang worker

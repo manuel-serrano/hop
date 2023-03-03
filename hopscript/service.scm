@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Mon Feb 13 17:11:22 2023 (serrano)                */
+;*    Last change :  Fri Mar  3 09:01:55 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -600,7 +600,8 @@
 	       (args (map multipart-form-arg args))
 	       (receiver (lambda (ctx thunk)
 			    (with-access::JsGlobalObject ctx (worker)
-			       (js-worker-exec worker path #t (lambda (%this) (thunk)))))))
+			       (js-worker-exec worker path
+				  (lambda (%this) (thunk)))))))
 	    (thread-start!
 	       (instantiate::hopthread
 		  (name name)
@@ -609,7 +610,7 @@
 			      (lambda (e)
 				 (exception-notify e)
 				 (with-access::JsGlobalObject %this (worker)
-				    (js-worker-exec worker path #t
+				    (js-worker-exec worker path
 				       (lambda (%this)
 					  (fail e)))))
 			      (with-hop-remote path callback fail
@@ -662,7 +663,8 @@
       (with-access::JsHopFrame this (path args header options)
 	 (let ((receiver (lambda (ctx thunk)
 			    (with-access::JsGlobalObject ctx (worker)
-			       (js-worker-exec worker path #t (lambda (%this) (thunk)))))))
+			       (js-worker-exec worker path
+				  (lambda (%this) (thunk)))))))
 	    (with-hop-remote path (lambda (x) x) #f
 	       :scheme scheme
 	       :host host :port port 
@@ -847,7 +849,8 @@
       (define (post-request callback)
 	 (let ((receiver (lambda (ctx thunk)
 			    (with-access::JsGlobalObject ctx (worker)
-			       (js-worker-exec worker svc #t (lambda (%this) (thunk)))))))
+			       (js-worker-exec worker svc
+				  (lambda (%this) (thunk)))))))
 	    (with-hop-remote svc callback fail
 	       :scheme scheme
 	       :host host :port port 
@@ -958,7 +961,8 @@
 			    (with-access::JsService svcjs (svc)
 			       (with-access::hop-service svc (path)
 				  (js-make-hopframe %this this path vals)))))
-		   (svcjs (js-make-service %this svcp (symbol->string! id)
+		   (svcn (symbol->string! id))
+		   (svcjs (js-make-service %this svcp svcn
 			     register import
 			     (js-function-arity svcp) worker
 			     (instantiate::hop-service
@@ -969,8 +973,7 @@
 					  (lambda (this . args)
 					     (js-undefined))))
 				(handler (lambda (svc req)
-					    (js-worker-exec worker
-					       (symbol->string! id) #f
+					    (js-worker-exec worker svcn
 					       (service-debug id
 						  (lambda (%this)
 						     (service-invoke svc req

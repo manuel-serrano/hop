@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Thu Feb 16 13:35:38 2023 (serrano)                */
+;*    Last change :  Fri Mar  3 08:11:49 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
@@ -176,7 +176,7 @@
 					(display-trace-stack stack port)))))))
 		(with-access::JsGlobalObject %this (worker)
 		   (if worker
-		       (js-worker-exec worker "error" #t notify)
+		       (js-worker-exec worker "error" notify)
 		       (notify %this))))))))
 
 ;*---------------------------------------------------------------------*/

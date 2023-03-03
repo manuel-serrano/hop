@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Mon Feb 13 14:08:03 2023 (serrano)                */
+;*    Last change :  Fri Mar  3 08:10:01 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -30,7 +30,7 @@
 	   __hopscript_function
 	   __hopscript_error
 	   __hopscript_array)
-
+   
    (static (class WorkerException::&exception
 	      exn))
    
@@ -41,15 +41,14 @@
  	   (js-main-no-worker!::WorkerHopThread ::bstring ::bstring ::bool ::procedure ::procedure)
 	   (js-current-worker::WorkerHopThread)
 	   (js-main-worker?::bool ::WorkerHopThread)
-
+	   
 	   (js-worker-load::procedure)
 	   (js-worker-load-set! ::procedure)
 
-	   (generic js-worker-init! ::object)
-	   (generic js-worker-loop ::object)
+	   (generic js-worker-loop ::object ::procedure)
 	   (generic js-worker-tick ::object)
 	   (generic js-worker-exception-handler ::object ::obj ::int)
-	   (generic js-worker-exec ::object ::bstring ::bool ::procedure)
+	   (generic js-worker-exec ::object ::bstring ::procedure)
 	   (generic js-worker-push! ::object ::bstring ::procedure)
 	   (generic js-worker-alive? ::object)
 	   
@@ -212,10 +211,8 @@
 				   (with-access::WorkerHopThread thread (%this module-cache)
 				      (set! %this this)
 				      (set! module-cache (js-new0 this js-object)))))))
-		   (proc (lambda (%this)
-			    (with-handler
-			       (lambda (e)
-				  (exception-notify e))
+		   (proc (lambda (thread)
+			    (with-access::WorkerHopThread thread (%this)
 			       (loader source thread %this))))
 		   (mutex (make-mutex))
 		   (condv (make-condition-variable))
@@ -227,7 +224,6 @@
 					 (with-access::WorkerHopThread parent (mutex)
 					    mutex)
 					 (make-mutex)))
-			      (tqueue (list (cons "init" proc)))
 			      (onexit (js-make-function %this
 					 (lambda (this process retval)
 					    (onexit thread))
@@ -238,16 +234,14 @@
 				       (setup)
 				       (synchronize mutex
 					  (condition-variable-broadcast! condv))
-				       (js-worker-init! thread)
-				       (js-worker-loop thread)))
+				       (js-worker-loop thread proc)))
 			      (cleanup (lambda (thread)
 					  (when (isa? parent WorkerHopThread)
 					     (remove-subworker! parent thread)))))))
-
 	    ;; add the worker to the parent list
 	    (when (isa? parent WorkerHopThread)
 	       (add-subworker! parent thread))
-	    
+
 	    ;; start the worker thread
 	    (thread-start! thread)
 	    (condition-variable-wait! condv mutex)
@@ -538,7 +532,7 @@
       (with-access::JsGlobalObject %global (js-object worker)
 	 (set! worker %worker)
 	 (set! %module (ctormod (basename path) path %worker %global))
-	 (with-access::WorkerHopThread %worker (%this module-cache)
+	 (with-access::WorkerHopThread %worker (%this module-cache %loop)
 	    ;; module-cache is used in src/main to check
 	    ;; where the worker is running or not
 	    (set! module-cache (js-new0 %this js-object))
@@ -560,8 +554,7 @@
 			   (setup-worker! %worker)
 			   (synchronize mutex
 			      (condition-variable-broadcast! condv))
-			   (js-worker-init! %worker)
-			   (js-worker-loop %worker)))))
+			   (js-worker-loop %worker (lambda (th) th))))))
 	    (thread-start-joinable! %worker)
 	    (condition-variable-wait! condv mutex))))
    
@@ -598,8 +591,7 @@
 		     (error "js-main-no-worker"
 			"Cannot execute main worker in --js-no-worker mode"
 			#f)))))
-      (setup-worker! %worker)
-      (js-worker-init! %worker))
+      (setup-worker! %worker))
    
    (values %worker %global %module))
 
@@ -633,29 +625,23 @@
 	     errval))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-worker-tick ...                                               */
-;*---------------------------------------------------------------------*/
-(define-generic (js-worker-tick th::object))
-
-;*---------------------------------------------------------------------*/
-;*    js-worker-init! ...                                              */
-;*---------------------------------------------------------------------*/
-(define-generic (js-worker-init! th::object)
-   #unspecified)
-
-;*---------------------------------------------------------------------*/
 ;*    js-worker-loop ...                                               */
 ;*    -------------------------------------------------------------    */
 ;*    This code is used only when HopScript is run without LIBUV.      */
 ;*    Otherwise, the LIBUV binding (see nodejs directory),             */
 ;*    overwrites this definition.                                      */
 ;*---------------------------------------------------------------------*/
-(define-generic (js-worker-loop th::object))
+(define-generic (js-worker-loop th::object proc::procedure))
+
+;*---------------------------------------------------------------------*/
+;*    js-worker-tick ...                                               */
+;*---------------------------------------------------------------------*/
+(define-generic (js-worker-tick th::object))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-worker-exec ...                                               */
 ;*---------------------------------------------------------------------*/
-(define-generic (js-worker-exec th::object name::bstring handleerror::bool proc::procedure))
+(define-generic (js-worker-exec th::object name::bstring proc::procedure))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-worker-push! ::object ...                                     */

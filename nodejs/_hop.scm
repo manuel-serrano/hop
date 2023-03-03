@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Sun Feb 26 15:27:57 2023 (serrano)                */
+;*    Last change :  Fri Mar  3 08:16:45 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -451,21 +451,21 @@
 		  (lambda (this proc)
 		     (hop-filter-add!
 			(lambda (req)
-			   (js-worker-exec (js-current-worker) "request" #t
+			   (js-worker-exec (js-current-worker) "request"
 			      (lambda (%this)
 				 (js-call1 %this proc this req)))))))
 	       (define-js addRequestFilterFirst 1
 		  (lambda (this proc)
 		     (hop-filter-add-always-first!
 			(lambda (req)
-			   (js-worker-exec (js-current-worker) "request" #t
+			   (js-worker-exec (js-current-worker) "request"
 			      (lambda (%this)
 				 (js-call1 %this proc this req)))))))
 	       (define-js addRequestFilterLast 1
 		  (lambda (this proc)
 		     (hop-filter-add-always-last!
 			(lambda (req)
-			   (js-worker-exec (js-current-worker) "request" #t
+			   (js-worker-exec (js-current-worker) "request"
 			      (lambda (%this)
 				 (js-call1 %this proc this req)))))))
 	       
@@ -713,13 +713,13 @@
 			 (body (lambda ()
 				  (post
 				     (lambda (x)
-					(js-worker-exec (js-current-worker) "post" #t
+					(js-worker-exec (js-current-worker) "post"
 					   (lambda (%this)
 					      (uv-idle-stop h)
 					      (js-call1-jsprocedure %this success %this
 						 (scheme->js x)))))
 				     (lambda (x)
-					(js-worker-exec (js-current-worker) "post" #t
+					(js-worker-exec (js-current-worker) "post"
 					   (lambda (%this)
 					      (uv-idle-stop h)
 					      (fail x))))))))))))
@@ -741,7 +741,7 @@
 						 (body (lambda ()
 							  (post
 							     (lambda (x)
-								(js-worker-exec (js-current-worker) "post" #t
+								(js-worker-exec (js-current-worker) "post"
 								   (lambda (%this)
 								      (js-promise-async p
 									 (lambda (%this)
@@ -749,7 +749,7 @@
 									    (js-promise-resolve p
 									       (scheme->js x)))))))
 							     (lambda (x)
-								(js-worker-exec (js-current-worker) "post" #t
+								(js-worker-exec (js-current-worker) "post"
 								   (lambda (%this)
 								      (js-promise-async p
 									 (lambda (%this)

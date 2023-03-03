@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Thu Mar  2 19:53:07 2023 (serrano)                */
+;*    Last change :  Fri Mar  3 07:40:11 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -32,9 +32,11 @@
       (enable-libuv
        (static (class JsLoop::UvLoop
 		  (async (default #f))
-		  (async-count::int (default 0))
-		  (async-count-debug::pair-nil (default '()))
-		  (actions::pair-nil (default '()))
+		  (actions-count::long (default 1)) ;; see js-worker-loop
+		  (actions::vector (default (make-vector 10)))
+		  (actions-name::vector (default (make-vector 10)))
+		  (%actions::vector (default (make-vector 10)))
+		  (%actions-name::vector (default (make-vector 10)))
 		  (exiting::bool (default #f)))
 	  
 	  (class JsChild::UvProcess
@@ -379,6 +381,14 @@
    (uv-set-process-title! str))
 
 ;*---------------------------------------------------------------------*/
+;*    thread-initialize! ::WorkerHopThread ...                         */
+;*---------------------------------------------------------------------*/
+(define-method (thread-initialize! th::WorkerHopThread)
+   (call-next-method)
+   (with-access::WorkerHopThread th (%loop)
+      (set! %loop (instantiate::JsLoop))))
+   
+;*---------------------------------------------------------------------*/
 ;*    worker-loop ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (worker-loop th::WorkerHopThread)
@@ -401,59 +411,65 @@
 (define-method (js-worker-tick th::WorkerHopThread)
    (with-access::WorkerHopThread th (%loop %process %retval %this
 				       keep-alive mutex)
-      (with-access::JsLoop %loop (actions exiting)
-	 (let loop ((acts (synchronize mutex
-			     (let ((acts actions))
-				(set! actions '())
-				(reverse! acts)))))
-	    (with-handler
-	       (lambda (e)
-		  (let ((r (js-worker-exception-handler th e 8)))
-		     (if (=fx r 0)
-			 (begin
-			    (loop acts)
-			    (set! exiting #t))
-			 (begin
-			    (set! %retval r)
-			    (set! keep-alive #f)))))
-	       (let loop ()
-		  (when (pair? acts)
-		     (let* ((action (car acts))
-			    (actname (car action))
-			    (actproc (cdr action)))
-			(set! acts (cdr acts))
-			(with-trace 'nodejs-async actname
-			   (js-worker-call th actproc %this)))
-		     (loop))))))))
+      (with-access::JsLoop %loop (actions-count actions actions-name
+				    %actions %actions-name
+				    exiting)
+	 (let (count acts nms)
+	    (synchronize mutex
+	       (set! count actions-count)
+	       (let ((len (vector-length actions)))
+		  (when (<fx (vector-length %actions) len)
+		     ;; reallocate %actions which has become smaller
+		     (set! %actions (make-vector len))
+		     (set! %actions-name (make-vector len)))
+		  ;; swap actions and %actions
+		  (set! acts actions)
+		  (set! nms actions-name)
+		  (set! actions %actions)
+		  (set! actions-name %actions-name)
+		  (set! %actions acts)
+		  (set! actions-name nms)
+		  (set! actions-count 0)))
+	    ;; execute the actions
+	    (let loop ((i 0))
+	       (with-handler
+		  (lambda (e)
+		     (let ((r (js-worker-exception-handler th e 8)))
+			(if (=fx r 0)
+			    (begin
+			       (loop (+fx i 1))
+			       (set! exiting #t))
+			    (begin
+			       (set! %retval r)
+			       (set! keep-alive #f)))))
+		  (let liip ()
+		     (when (<fx i count)
+			(let ((act (vector-ref acts i))
+			      (nms (vector-ref nms i)))
+			   (with-trace 'nodejs-async nms
+			      (js-worker-call th act %this)))
+			(set! i (+fx i 1))
+			(liip)))))))))
 
-;*---------------------------------------------------------------------*/
-;*    js-worker-init! ::WorkerHopThread ...                            */
-;*---------------------------------------------------------------------*/
-(define-method (js-worker-init! th::WorkerHopThread)
-   (with-access::WorkerHopThread th (%loop tqueue)
-      (set! %loop
-	 (instantiate::JsLoop
-	    (actions tqueue)))))
-   
 ;*---------------------------------------------------------------------*/
 ;*    js-worker-loop ::WorkerHopThread ...                             */
 ;*    -------------------------------------------------------------    */
 ;*    Overrides the generic functions defined in hopscript/worker      */
 ;*    to let LIBUV manages the event loop.                             */
 ;*---------------------------------------------------------------------*/
-(define-method (js-worker-loop th::WorkerHopThread)
-   (with-access::WorkerHopThread th (mutex condv tqueue
+(define-method (js-worker-loop th::WorkerHopThread init::procedure)
+   (with-access::WorkerHopThread th (mutex condv %loop
 				       %process %this keep-alive services
-				       call %retval prerun %loop state)
+				       call %retval prerun state)
       (set! __js_strings (&init!))
       (letrec* ((loop %loop)
 		(async (instantiate::UvAsync
 			  (loop loop)
 			  (cb (lambda (a)
 				 (js-worker-tick th)
-				 (with-access::JsLoop loop (exiting actions)
+				 (with-access::JsLoop loop (exiting actions-count)
 				    (when (and (null? services)
-					       (null? actions)
+					       (=fx actions-count 0)
 					       (not (active-subworkers? th))
 					       (or (not keep-alive)
 						   exiting))
@@ -464,13 +480,15 @@
 					  (uv-stop loop)))))))))
 	 (synchronize mutex
 	    (nodejs-process th %this)
-	    (with-access::JsLoop loop (actions)
-	       (set! actions tqueue))
 	    (condition-variable-broadcast! condv)
-	    (with-access::JsLoop loop ((lasync async))
+	    (with-access::JsLoop loop ((lasync async) actions actions-name)
 	       (set! lasync async)
-	       (set! state 'running))
-	    (when (pair? tqueue)
+	       (set! state 'running)
+	       ;; as actions-count is initialize with 1, the first vector
+	       ;; slot is always free for the the initialization
+	       (vector-set! actions 0 (lambda (%this) (init th)))
+	       (vector-set! actions-name 0 "init")
+	       (uv-ref async)
 	       (uv-async-send async)))
 	 (unwind-protect
 	    (with-access::WorkerHopThread th (onexit %process parent state)
@@ -557,58 +575,47 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    js-worker-push-action! ...                                       */
+;*    -------------------------------------------------------------    */
+;*    This function assumes that the workerhopthread mutex is          */
+;*    acquired.                                                        */
 ;*---------------------------------------------------------------------*/
 (define (js-worker-push-action! th::WorkerHopThread name::bstring proc::procedure)
    (with-access::WorkerHopThread th (%loop)
-      (with-access::JsLoop %loop (actions async)
-	 (unless (pair? actions)
-	    (uv-ref async)
-	    (uv-async-send async))
-	 ;; push the action to be executed (with a debug name)
-	 (set! actions (cons (cons name proc) actions)))))
+      (with-access::JsLoop %loop (actions actions-name actions-count async)
+	 (let ((cnt actions-count))
+	    (cond
+	       ((=fx cnt 0)
+		(uv-ref async)
+		(uv-async-send async))
+	       ((=fx cnt (vector-length actions))
+		(set! actions (copy-vector actions (*fx 2 cnt)))
+		(set! actions-name (copy-vector actions-name (*fx 2 cnt)))))
+	    (vector-set! actions cnt proc)
+	    (vector-set! actions-name cnt name)
+	    (set! actions-count (+fx cnt 1))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-worker-push! ::WorkerHopThread ...                            */
 ;*---------------------------------------------------------------------*/
 (define-method (js-worker-push! th::WorkerHopThread name::bstring proc::procedure)
-   
-   (define (worker-started? th)
-      (with-access::WorkerHopThread th (%loop mutex tqueue)
-	 (when %loop
-	    (with-access::JsLoop %loop (async)
-	       async))))
-   
-   (define (worker-started-new? th)
-      (with-access::WorkerHopThread th (state)
-	 (not (eq? state 'init))))
-   
    [assert (proc) (correct-arity? proc 1)]
    (with-trace 'nodejs-async "nodejs-async-push"
       (trace-item "name=" name)
       (trace-item "th=" th)
-      (with-access::WorkerHopThread th (%loop mutex tqueue)
+      (with-access::WorkerHopThread th (mutex)
 	 (synchronize mutex
-	    (if (worker-started? th)
-		(js-worker-push-action! th name proc)
-		;; the loop is not started yet (this might happend when
-		;; a master send a message (js-worker-post-master-message)
-		;; before the slave is fully initialized
-		(with-access::WorkerHopThread th (tqueue)
-		   (set! tqueue (append (cons (cons name proc) tqueue)))))))))
+	    (js-worker-push-action! th name proc)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-worker-exec ...                                               */
 ;*---------------------------------------------------------------------*/
 (define-method (js-worker-exec th::WorkerHopThread
 		  name::bstring
-		  handleerror::bool
 		  proc::procedure)
-   [assert (proc name) (correct-arity? proc 1)]
+   [assert (proc) (correct-arity? proc 1)]
    (with-access::WorkerHopThread th (%this mutex condv)
-      (cond
-	 ((eq? (current-thread) th)
-	  (proc %this))
-	 (handleerror
+      (if (eq? (current-thread) th)
+	  (proc %this)
 	  (let ((response #f))
 	     (synchronize mutex
 		(js-worker-push-action! th name
@@ -617,23 +624,7 @@
 		      (synchronize mutex
 			 (condition-variable-signal! condv))))
 		(condition-variable-wait! condv mutex)
-		response)))
-	 (else
-	  (let ((response (cons #f #f)))
-	     (synchronize mutex
-		(js-worker-push-action! th name
-		   (lambda (%this)
-		      (with-handler
-			 (lambda (exn)
-			    (set-cdr! response #t)
-			    (set-car! response exn))
-			 (set-car! response (proc %this))
-			 (synchronize mutex
-			    (condition-variable-signal! condv)))))
-		(condition-variable-wait! condv mutex)
-		(if (cdr response)
-		    (raise (car response))
-		    (car response))))))))
+		response)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-now ...                                                   */

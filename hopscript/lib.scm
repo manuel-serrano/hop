@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Mon Feb 13 17:22:53 2023 (serrano)                */
+;*    Last change :  Fri Mar  3 08:12:07 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -189,7 +189,7 @@
    [assert (proc) (correct-arity? proc 1)]
    (if (isa? ctx JsGlobalObject)
        (with-access::JsGlobalObject ctx (worker name)
-	  (js-worker-exec worker name #t proc))
+	  (js-worker-exec worker name proc))
        (error ctxname "Not a JavaScript context" ctx)))
 
 ;*---------------------------------------------------------------------*/

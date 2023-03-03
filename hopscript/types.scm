@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Wed Feb 22 11:49:25 2023 (serrano)                */
+;*    Last change :  Fri Mar  3 08:23:41 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -108,7 +108,6 @@
 	      (condv::condvar read-only (default (make-condition-variable)))
 	      (prehook (default #f))
 	      (alivep (default #f))
-	      (tqueue::pair-nil (default '()))
 	      (listeners::pair-nil (default '()))
 	      (exitlisteners::pair-nil (default '()))
 	      (errorlisteners::pair-nil (default '()))
@@ -127,7 +126,7 @@
 	      (handlers::pair-nil (default '()))
 	      (services::pair-nil (default '()))
 	      (%exn (default #unspecified)))
-	   
+
 	   (class MessageEvent::event
 	      data::obj)
 	   
@@ -771,6 +770,11 @@
    (cond-expand
       ((not |bigloo4.3a|)
        (pragma (gencmapid default-inline)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-worker-init! ...                                              */
+;*---------------------------------------------------------------------*/
+(define-generic (js-worker-init! o::WorkerHopThread))
 
 ;*---------------------------------------------------------------------*/
 ;*    cache-mutex ...                                                  */

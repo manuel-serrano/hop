@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 24 16:10:01 2023                          */
-;*    Last change :  Mon Feb 27 08:10:01 2023 (serrano)                */
+;*    Last change :  Fri Mar  3 07:26:12 2023 (serrano)                */
 ;*    Copyright   :  2023 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The Scheme part of the node_api.                                 */
@@ -42,8 +42,6 @@
 	   (export napi-create-array "bgl_napi_create_array")
 	   (export napi-create-promise "bgl_napi_create_promise")
 	   (export napi-typeof "bgl_napi_typeof")
-	   (export napi-async-work-register "bgl_napi_async_work_register")
-	   (export napi-async-work-complete "bgl_napi_async_work_complete")
 	   (export napi-uvloop "bgl_napi_uvloop"))
    
    (export (napi-create-string-utf8::obj ::obj ::bstring)
@@ -57,8 +55,6 @@
 	   (napi-create-array::obj ::obj)
 	   (napi-create-promise::obj ::obj ::obj)
 	   (napi-typeof::int ::obj ::obj)
-	   (napi-async-work-register ::obj ::procedure)
-	   (napi-async-work-complete ::obj ::obj)
 	   (napi-uvloop::$uv_loop_t ::obj)))
 
 ;*---------------------------------------------------------------------*/
@@ -146,25 +142,6 @@
       (lambda (%this resolve reject)
 	 (pragma "*((void **)($1)) = ($2)" deferred (cons resolve reject)))))
 	 
-;*---------------------------------------------------------------------*/
-;*    napi-async-work-complete ...                                     */
-;*---------------------------------------------------------------------*/
-(define (napi-async-work-complete %this async)
-   (uv-async-send async))
-	    
-;*---------------------------------------------------------------------*/
-;*    napi-async-work-register ...                                     */
-;*---------------------------------------------------------------------*/
-(define (napi-async-work-register %this proc)
-   (with-access::JsGlobalObject %this (worker)
-      (with-access::WorkerHopThread worker (%loop)
-	 (letrec ((async (instantiate::UvAsync
-			    (loop %loop)
-			    (cb (lambda (a)
-				   (uv-unref async)
-				   (proc))))))
-	    async))))
-
 ;*---------------------------------------------------------------------*/
 ;*    napi-uvloop ...                                                  */
 ;*---------------------------------------------------------------------*/

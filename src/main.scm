@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Mon Feb 13 17:25:57 2023 (serrano)                */
+;*    Last change :  Fri Mar  3 08:44:08 2023 (serrano)                */
 ;*    Copyright   :  2004-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -247,23 +247,23 @@
       ;; js loader
       (hop-loader-add! "js"
 	 (lambda (path . test)
-	    (js-worker-exec %worker "hop-loader" #t
+	    (js-worker-exec %worker "hop-loader"
 	       (lambda (%this)
 		  (nodejs-load path path %global %module %worker :commonjs-export #t)))))
       (hop-loader-add! "mjs"
 	 (lambda (path . test)
-	    (js-worker-exec %worker "hop-loader" #t
+	    (js-worker-exec %worker "hop-loader"
 	       (lambda (%this)
 		  (nodejs-load path path %global %module %worker :commonjs-export #t)))))
       (hop-loader-add! "ast.json"
 	 (lambda (path . test)
-	    (js-worker-exec %worker "hop-loader" #t
+	    (js-worker-exec %worker "hop-loader"
 	       (lambda (%this)
 		  (nodejs-load path path %global %module %worker :commonjs-export #t)))))
       ;; ts loader
       (hop-loader-add! "ts"
 	 (lambda (path . test)
-	    (js-worker-exec %worker "hop-loader" #t
+	    (js-worker-exec %worker "hop-loader"
 	       (lambda (%this)
 		  (nodejs-load path path %global %module %worker :lang "ts" :commonjs-export #t)))))
       ;; profiling
@@ -404,7 +404,7 @@
 		     (%js-eval in 'repl %global %global scope)))
 	       (hop-hss-foreign-eval-set!
 		  (lambda (ip)
-		     (js-worker-exec %worker "hss" #t
+		     (js-worker-exec %worker "hss"
 			(lambda (%this)
 			   (js-put! mod (& "filename")
 			      (js-string->jsstring (input-port-name ip)) #f
@@ -498,21 +498,21 @@
 	  ;; javascript
 	  (when %worker
 	     (with-access::WorkerHopThread %worker (%this prerun)
-		(js-worker-push! %worker "nodejs-load"
+		(js-worker-push! %worker (format "nodejs-load(~a)" path)
 		   (lambda (%this)
 		      (nodejs-load path path %global %module %worker :commonjs-export #t))))))
 	 ((string-suffix? ".mjs" path)
 	  ;; javascript
 	  (when %worker
 	     (with-access::WorkerHopThread %worker (%this prerun)
-		(js-worker-push! %worker "nodejs-load"
+		(js-worker-push! %worker (format "nodejs-load(~a)" path)
 		   (lambda (%this)
 		      (nodejs-load path path %global %module %worker :commonjs-export #f))))))
 	 ((string-suffix? ".ts" path)
 	  ;; typescript
 	  (when %worker
 	     (with-access::WorkerHopThread %worker (%this prerun)
-		(js-worker-push! %worker "nodejs-load"
+		(js-worker-push! %worker (format "nodejs-load(~a)" path)
 		   (lambda (%this)
 		      (nodejs-load path path %global %module %worker :lang "ts" :commonjs-export #t))))))
 	 ((string=? (basename path) "package.json")
@@ -551,7 +551,7 @@
 		  (multiple-value-bind (%worker %global %module)
 		     (js-main-worker! "repl" (pwd) #f
 			nodejs-new-global-object nodejs-new-module)
-		     (js-worker-exec %worker "repl" #t
+		     (js-worker-exec %worker "repl"
 			(lambda (%this)
 			   (repljs %global %worker))))))
 	   (repljs %global %worker))

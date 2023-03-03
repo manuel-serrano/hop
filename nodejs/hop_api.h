@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 24 15:38:53 2023                          */
-/*    Last change :  Mon Feb 27 12:35:13 2023 (serrano)                */
+/*    Last change :  Fri Mar  3 07:25:59 2023 (serrano)                */
 /*    Copyright   :  2023 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop Specific macro redefinitions                                 */
@@ -34,9 +34,6 @@ extern napi_status napi_define_properties(napi_env _this, napi_value this, size_
 extern napi_status napi_get_cb_info(napi_env _this, napi_callback_info info, size_t *argc, napi_value *argv, napi_value *this_arg, void **data);
 extern obj_t bgl_napi_call_function(napi_env _this, obj_t this, obj_t fun, size_t argc, napi_value *argv);
 extern obj_t bgl_napi_call_function_res(napi_env _this, obj_t this, obj_t fun, size_t argc, napi_value *argv, napi_value *res);
-
-extern obj_t bgl_napi_async_work_register(obj_t, obj_t);
-extern obj_t bgl_napi_async_work_complete(obj_t, obj_t);
 
 /*---------------------------------------------------------------------*/
 /*    bgl_napi_async_work                                              */
