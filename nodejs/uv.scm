@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Wed Feb 22 13:27:29 2023 (serrano)                */
+;*    Last change :  Thu Mar  2 19:53:07 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -556,6 +556,18 @@
 	 (uv-stop (worker-loop th)))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-worker-push-action! ...                                       */
+;*---------------------------------------------------------------------*/
+(define (js-worker-push-action! th::WorkerHopThread name::bstring proc::procedure)
+   (with-access::WorkerHopThread th (%loop)
+      (with-access::JsLoop %loop (actions async)
+	 (unless (pair? actions)
+	    (uv-ref async)
+	    (uv-async-send async))
+	 ;; push the action to be executed (with a debug name)
+	 (set! actions (cons (cons name proc) actions)))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-worker-push! ::WorkerHopThread ...                            */
 ;*---------------------------------------------------------------------*/
 (define-method (js-worker-push! th::WorkerHopThread name::bstring proc::procedure)
@@ -576,19 +588,13 @@
       (trace-item "th=" th)
       (with-access::WorkerHopThread th (%loop mutex tqueue)
 	 (synchronize mutex
-	    (let ((act (cons name proc)))
-	       (if (worker-started? th)
-		   (with-access::JsLoop %loop (actions async exiting)
-		      (unless (pair? actions)
-			 (uv-ref async)
-			 (uv-async-send async))
-		      ;; push the action to be executed (with a debug name)
-		      (set! actions (cons act actions)))
-		   ;; the loop is not started yet (this might happend when
-		   ;; a master send a message (js-worker-post-master-message)
-		   ;; before the slave is fully initialized
-		   (with-access::WorkerHopThread th (tqueue)
-		      (set! tqueue (append (cons act tqueue))))))))))
+	    (if (worker-started? th)
+		(js-worker-push-action! th name proc)
+		;; the loop is not started yet (this might happend when
+		;; a master send a message (js-worker-post-master-message)
+		;; before the slave is fully initialized
+		(with-access::WorkerHopThread th (tqueue)
+		   (set! tqueue (append (cons (cons name proc) tqueue)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-worker-exec ...                                               */
@@ -598,17 +604,14 @@
 		  handleerror::bool
 		  proc::procedure)
    [assert (proc name) (correct-arity? proc 1)]
-   (with-access::WorkerHopThread th (%this)
+   (with-access::WorkerHopThread th (%this mutex condv)
       (cond
 	 ((eq? (current-thread) th)
 	  (proc %this))
 	 (handleerror
-	  (let ((response #f)
-		(mutex (make-mutex))
-		(condv (make-condition-variable))
-		(exn (make-cell #f)))
+	  (let ((response #f))
 	     (synchronize mutex
-		(js-worker-push! th name
+		(js-worker-push-action! th name
 		   (lambda (%this)
 		      (set! response (proc %this))
 		      (synchronize mutex
@@ -616,25 +619,21 @@
 		(condition-variable-wait! condv mutex)
 		response)))
 	 (else
-	  (let ((response #f)
-		(mutex (make-mutex))
-		(condv (make-condition-variable))
-		(exn (make-cell #f)))
+	  (let ((response (cons #f #f)))
 	     (synchronize mutex
-		(js-worker-push! th name
+		(js-worker-push-action! th name
 		   (lambda (%this)
-		      (set! response
-			 (with-handler
-			    (lambda (e)
-			       (cell-set! exn e)
-			       exn)
-			    (proc %this)))
-		      (synchronize mutex
-			 (condition-variable-signal! condv))))
+		      (with-handler
+			 (lambda (exn)
+			    (set-cdr! response #t)
+			    (set-car! response exn))
+			 (set-car! response (proc %this))
+			 (synchronize mutex
+			    (condition-variable-signal! condv)))))
 		(condition-variable-wait! condv mutex)
-		(if (eq? response exn)
-		    (raise (cell-ref exn))
-		    response)))))))
+		(if (cdr response)
+		    (raise (car response))
+		    (car response))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-now ...                                                   */
