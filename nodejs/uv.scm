@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Fri Mar  3 15:31:09 2023 (serrano)                */
+;*    Last change :  Sat Mar  4 09:48:37 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -64,12 +64,12 @@
 
    (import __nodejs)
    
-   (export (!js-callback0 ::obj ::WorkerHopThread ::JsGlobalObject ::JsFunction ::obj)
-	   (!js-callback1 ::obj ::WorkerHopThread ::JsGlobalObject ::JsFunction ::obj ::obj)
-	   (!js-callback2 ::obj ::WorkerHopThread ::JsGlobalObject ::JsFunction ::obj ::obj ::obj)
-	   (!js-callback3 ::obj ::WorkerHopThread ::JsGlobalObject ::JsFunction ::obj ::obj ::obj ::obj)
-	   (!js-callback4 ::obj ::WorkerHopThread ::JsGlobalObject ::JsFunction ::obj ::obj ::obj ::obj ::obj)
-	   (!js-callback5 ::obj ::WorkerHopThread ::JsGlobalObject ::JsFunction ::obj ::obj ::obj ::obj ::obj ::obj)
+   (export (!js-callback0 ::obj ::WorkerHopThread ::JsGlobalObject ::JsProcedure ::obj)
+	   (!js-callback1 ::obj ::WorkerHopThread ::JsGlobalObject ::JsProcedure ::obj ::obj)
+	   (!js-callback2 ::obj ::WorkerHopThread ::JsGlobalObject ::JsProcedure ::obj ::obj ::obj)
+	   (!js-callback3 ::obj ::WorkerHopThread ::JsGlobalObject ::JsProcedure ::obj ::obj ::obj ::obj)
+	   (!js-callback4 ::obj ::WorkerHopThread ::JsGlobalObject ::JsProcedure ::obj ::obj ::obj ::obj ::obj)
+	   (!js-callback5 ::obj ::WorkerHopThread ::JsGlobalObject ::JsProcedure ::obj ::obj ::obj ::obj ::obj ::obj)
 
 	   (nodejs-uv-version::bstring)
 	   (nodejs-err-name ::int)
