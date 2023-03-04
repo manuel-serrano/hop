@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Sat Mar  4 09:48:37 2023 (serrano)                */
+;*    Last change :  Sat Mar  4 09:59:37 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -589,7 +589,7 @@
 	 (let ((cnt actions-count))
 	    (cond
 	       ((=fx cnt 0)
-		;; (uv-ref async)
+		(uv-ref async)
 		(uv-async-send async))
 	       ((=fx cnt (vector-length actions))
 		(set! actions (copy-vector actions (*fx 2 cnt)))
