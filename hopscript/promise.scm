@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 19 08:19:19 2015                          */
-;*    Last change :  Mon Mar  6 07:08:27 2023 (serrano)                */
+;*    Last change :  Mon Mar  6 07:24:14 2023 (serrano)                */
 ;*    Copyright   :  2015-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript promises                     */
@@ -438,7 +438,7 @@
 		     ;; promise .10.a
 		     (when (>=fx (bigloo-debug) 1)
 			(exception-notify e))
-		     (js-call-jsprocedure1 %this reject (js-undefined) e)
+		     (js-call1-jsprocedure %this reject (js-undefined) e)
 		     o)
 		  (begin
 		     (executor (js-undefined) resolve reject)
@@ -672,8 +672,9 @@
 	 (with-access::JsPromise o (%this)
 	    (with-handler
 	       (lambda (e)
+		  (exception-notify e)
 		  (js-call1-jsprocedure %this reject (js-undefined) e))
-	       (js-call2 %this then thenable resolve reject)))))
+	       (js-call2-jsprocedure %this then thenable resolve reject)))))
 
    (with-access::JsPromise o (%this worker)
       (cond
@@ -701,9 +702,7 @@
 		    ;; resolve .12
 		    (js-worker-push! worker "promise"
 		       (lambda (%this)
-			  (with-handler
-			     exception-notify
-			     (resolve-thenable o resolution then)))))))))))
+			  (resolve-thenable o resolution then))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-promise-async ...                                             */
