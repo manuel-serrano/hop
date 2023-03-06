@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 19 08:19:19 2015                          */
-;*    Last change :  Mon Mar  6 07:24:14 2023 (serrano)                */
+;*    Last change :  Mon Mar  6 07:33:22 2023 (serrano)                */
 ;*    Copyright   :  2015-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript promises                     */
@@ -689,20 +689,20 @@
 	  (js-fullfill o resolution))
 	 (else
 	  ;; resolve .8
-	  (with-handler
-	     (lambda (e)
-		;; resolve .9.a
-		(js-reject o e))
-	     (let ((then (with-access::JsGlobalObject %this (js-promise-pcache)
+	  (let ((then (with-handler
+			 (lambda (e)
+			    ;; resolve .9.a
+			    (js-reject o e))
+			 (with-access::JsGlobalObject %this (js-promise-pcache)
 			    (js-get-jsobject-name/cache resolution (& "then") #f %this
-			       (js-pcache-ref js-promise-pcache 0)))))
-		(if (not (js-procedure? then))
-		    ;; resolve .11
-		    (js-fullfill o resolution)
-		    ;; resolve .12
-		    (js-worker-push! worker "promise"
-		       (lambda (%this)
-			  (resolve-thenable o resolution then))))))))))
+			       (js-pcache-ref js-promise-pcache 0))))))
+	     (if (not (js-procedure? then))
+		 ;; resolve .11
+		 (js-fullfill o resolution)
+		 ;; resolve .12
+		 (js-worker-push! worker "promise"
+		    (lambda (%this)
+		       (resolve-thenable o resolution then)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-promise-async ...                                             */
