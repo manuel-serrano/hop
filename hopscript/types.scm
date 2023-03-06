@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Fri Mar  3 08:23:41 2023 (serrano)                */
+;*    Last change :  Mon Mar  6 07:08:43 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -369,6 +369,7 @@
 	      (val::obj (default #unspecified))
 	      (thens::pair-nil (default '()))
 	      (catches::pair-nil (default '()))
+	      (resolved::bool (default #f))
 	      (resolver (default #f))
 	      (rejecter (default #f))
 	      worker

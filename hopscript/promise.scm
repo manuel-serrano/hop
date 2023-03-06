@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 19 08:19:19 2015                          */
-;*    Last change :  Fri Mar  3 08:13:16 2023 (serrano)                */
+;*    Last change :  Mon Mar  6 07:08:27 2023 (serrano)                */
 ;*    Copyright   :  2015-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript promises                     */
@@ -399,10 +399,10 @@
 		   ;; promise .10.a
 		   (when (>=fx (bigloo-debug) 1)
 		      (exception-notify e))
-		   (js-call1 %this reject (js-undefined) e)
+		   (js-call1-jsprocedure %this reject (js-undefined) e)
 		   o)
 		(begin
-		   (js-call2 %this executor (js-undefined) resolve reject)
+		   (js-call2-jsprocedure %this executor (js-undefined) resolve reject)
 		   ;; promise .11
 		   o)))))))
 
@@ -438,7 +438,7 @@
 		     ;; promise .10.a
 		     (when (>=fx (bigloo-debug) 1)
 			(exception-notify e))
-		     (js-call1 %this reject (js-undefined) e)
+		     (js-call-jsprocedure1 %this reject (js-undefined) e)
 		     o)
 		  (begin
 		     (executor (js-undefined) resolve reject)
@@ -537,25 +537,26 @@
 ;*    http://www.ecma-international.org/ecma-262/6.0/#25.4.1.3         */
 ;*---------------------------------------------------------------------*/
 (define (js-create-resolving-functions o::JsPromise)
-   (let ((resolved #f))
-      (with-access::JsPromise o (%this)
-	 (let ((resolve (js-make-procedure %this
-			   (lambda (_ resolution)
+   (with-access::JsPromise o (%this)
+      (let ((resolve (js-make-procedure %this
+			(lambda (_ resolution)
+			   (with-access::JsPromise o (resolved)
 			      (if resolved
 				  (js-undefined)
 				  (begin
 				     (set! resolved #t)
-				     (js-promise-resolve o resolution))))
-			   resolve-arity))
-	       (reject (js-make-procedure %this
-			  (lambda (_ reason)
+				     (js-promise-resolve o resolution)))))
+			resolve-arity))
+	    (reject (js-make-procedure %this
+		       (lambda (_ reason)
+			  (with-access::JsPromise o (resolved)
 			     (if resolved
 				 (js-undefined)
 				 (begin
 				    (set! resolved #t)
-				    (js-promise-reject o reason))))
-			  reject-arity)))
-	    (values resolve reject)))))
+				    (js-promise-reject o reason)))))
+		       reject-arity)))
+	 (values resolve reject))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-reject ...                                                    */
@@ -629,7 +630,7 @@
 (define (js-promise-reaction-job reaction arg)
    (let ((promise (car reaction))
 	 (handler (cdr reaction)))
-      (with-access::JsPromise promise (%this resolver rejecter)
+      (with-access::JsPromise promise (%this resolver)
 	 (cond
 	    ((eq? handler 'identity)
 	     ;; .4
@@ -671,7 +672,7 @@
 	 (with-access::JsPromise o (%this)
 	    (with-handler
 	       (lambda (e)
-		  (js-call1 %this reject (js-undefined) e))
+		  (js-call1-jsprocedure %this reject (js-undefined) e))
 	       (js-call2 %this then thenable resolve reject)))))
 
    (with-access::JsPromise o (%this worker)
