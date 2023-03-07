@@ -577,14 +577,15 @@ fs.readSync = function(fd, buffer, offset, length, position) {
 /*   return [str, r];                                                  */
 /* };                                                                  */
 
+// MS 7mar2023, getting rid of arguments
 fs.write = function(fd, buffer, offset, length, position, callback) {
   if (!Buffer.isBuffer(buffer)) {
     // legacy string interface (fd, data, position, encoding, callback)
-    callback = arguments[4];
-    position = arguments[2];
-    assertEncoding(arguments[3]);
+    callback = position;
+    position = offset;
+    assertEncoding(length);
 
-    buffer = new Buffer('' + arguments[1], arguments[3]);
+    buffer = new Buffer(typeof buffer === "string" ? buffer : '' + buffer, length);
     offset = 0;
     length = buffer.length;
   }
@@ -608,13 +609,45 @@ fs.write = function(fd, buffer, offset, length, position, callback) {
   binding.write(fd, buffer, offset, length, position, wrapper);
 };
 
+/* fs.write = function(fd, buffer, offset, length, position, callback) { */
+/*   if (!Buffer.isBuffer(buffer)) {                                   */
+/*     // legacy string interface (fd, data, position, encoding, callback) */
+/*     callback = arguments[4];                                        */
+/*     position = arguments[2];                                        */
+/*     assertEncoding(arguments[3]);                                   */
+/*                                                                     */
+/*     buffer = new Buffer('' + arguments[1], arguments[3]);           */
+/*     offset = 0;                                                     */
+/*     length = buffer.length;                                         */
+/*   }                                                                 */
+/*                                                                     */
+/*   if (!length) {                                                    */
+/*     if (typeof callback == 'function') {                            */
+/*       process.nextTick(function() {                                 */
+/*         callback(undefined, 0);                                     */
+/*       });                                                           */
+/*     }                                                               */
+/*     return;                                                         */
+/*   }                                                                 */
+/*                                                                     */
+/*   callback = maybeCallback(callback);                               */
+/*                                                                     */
+/*   function wrapper(err, written) {                                  */
+/*     // Retain a reference to buffer so that it can't be GC'ed too soon. */
+/*     callback(err, written || 0, buffer);                            */
+/*   }                                                                 */
+/*                                                                     */
+/*   binding.write(fd, buffer, offset, length, position, wrapper);     */
+/* };                                                                  */
+
+// MS 7mar2023, getting rid of arguments
 fs.writeSync = function(fd, buffer, offset, length, position) {
   if (!Buffer.isBuffer(buffer)) {
     // legacy string interface (fd, data, position, encoding)
-    position = arguments[2];
-    assertEncoding(arguments[3]);
+    position = offset;
+    assertEncoding(length);
 
-    buffer = new Buffer('' + arguments[1], arguments[3]);
+    buffer = new Buffer(typeof buffer === "string" ? buffer : '' + buffer, length);
     offset = 0;
     length = buffer.length;
   }
@@ -622,6 +655,21 @@ fs.writeSync = function(fd, buffer, offset, length, position) {
 
   return binding.write(fd, buffer, offset, length, position);
 };
+
+/* fs.writeSync = function(fd, buffer, offset, length, position) {     */
+/*   if (!Buffer.isBuffer(buffer)) {                                   */
+/*     // legacy string interface (fd, data, position, encoding)       */
+/*     position = arguments[2];                                        */
+/*     assertEncoding(arguments[3]);                                   */
+/*                                                                     */
+/*     buffer = new Buffer('' + arguments[1], arguments[3]);           */
+/*     offset = 0;                                                     */
+/*     length = buffer.length;                                         */
+/*   }                                                                 */
+/*   if (!length) return 0;                                            */
+/*                                                                     */
+/*   return binding.write(fd, buffer, offset, length, position);       */
+/* };                                                                  */
 
 fs.rename = function(oldPath, newPath, callback) {
   callback = makeCallback(callback);
