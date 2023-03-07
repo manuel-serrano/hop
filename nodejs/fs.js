@@ -1093,7 +1093,8 @@ function writeAll(fd, buffer, offset, length, position, callback) {
 }
 
 fs.writeFile = function(path, data, options, callback) {
-  var callback = maybeCallback(arguments[arguments.length - 1]);
+  var callback = makeHopCallback(typeof options === "function" 
+      ? options : callback);
 
   if (typeof options === 'function' || !options) {
     options = { encoding: 'utf8', mode: 438 /*=0666*/, flag: 'w' };
@@ -1112,7 +1113,7 @@ fs.writeFile = function(path, data, options, callback) {
     if (openErr) {
       if (callback) callback(openErr);
     } else {
-      var buffer = Buffer.isBuffer(data) ? data : new Buffer('' + data,
+       var buffer = Buffer.isBuffer(data) ? data : new Buffer(typeof data === "string" ? data : '' + data,
           options.encoding || 'utf8');
       var position = /a/.test(flag) ? null : 0;
       writeAll(fd, buffer, 0, buffer.length, position, callback);
@@ -1134,7 +1135,7 @@ fs.writeFileSync = function(path, data, options) {
   var flag = options.flag || 'w';
   var fd = fs.openSync(path, flag, options.mode);
   if (!Buffer.isBuffer(data)) {
-    data = new Buffer('' + data, options.encoding || 'utf8');
+     data = new Buffer(typeof data === "string" ? data : '' + data, options.encoding || 'utf8');
   }
   var written = 0;
   var length = data.length;
