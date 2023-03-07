@@ -1092,12 +1092,14 @@ function writeAll(fd, buffer, offset, length, position, callback) {
   });
 }
 
+const defaultWriteFileOpts = { encoding: 'utf8', mode: 438 /*=0666*/, flag: 'w' };
+
 fs.writeFile = function(path, data, options, callback) {
   var callback = makeHopCallback(typeof options === "function" 
       ? options : callback);
 
   if (typeof options === 'function' || !options) {
-    options = { encoding: 'utf8', mode: 438 /*=0666*/, flag: 'w' };
+    options = defaultWriteFileOpts;
   } else if (typeof options === 'string') {
     options = { encoding: options, mode: 438, flag: 'w' };
   } else if (!options) {
@@ -1123,7 +1125,7 @@ fs.writeFile = function(path, data, options, callback) {
 
 fs.writeFileSync = function(path, data, options) {
   if (!options) {
-    options = { encoding: 'utf8', mode: 438 /*=0666*/, flag: 'w' };
+    options = defaultWriteFileOpts;
   } else if (typeof options === 'string') {
     options = { encoding: options, mode: 438, flag: 'w' };
   } else if (typeof options !== 'object') {
