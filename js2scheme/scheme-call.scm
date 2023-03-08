@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Thu Feb 23 14:50:18 2023 (serrano)                */
+;*    Last change :  Thu Feb 23 17:37:47 2023 (serrano)                */
 ;*    Copyright   :  2018-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -326,6 +326,7 @@
 	;; nodejs fs
 	(lstatSync "fs" nodejs-lstat-sync-string (string) #t)
 	(lstatSync "fs" nodejs-lstat-sync-any (any) #t)
+	(log "hop" tprint any #f)
 	)))
 
 ;*---------------------------------------------------------------------*/
@@ -907,18 +908,19 @@
 				       (with-access::J2SImport import (path)
 					  (string=? path (builtin-function-module f)))))
 				 (not (isa? decl J2SDeclImport))))
-		     (let loop ((args args)
-				(params (builtin-function-args f)))
-			(cond
-			   ((null? args)
-			    (null? params))
-			   ((null? params)
-			    #f)
-			   (else
-			    (let ((tya (j2s-type-sans-cast (car args)))
-				  (tyf (car params)))
-			       (when (or (eq? tyf 'any) (eq? tyf tya))
-				  (loop (cdr args) (cdr params)))))))))
+		     (or (eq? (builtin-function-args f) 'any)
+			 (let loop ((args args)
+				    (params (builtin-function-args f)))
+			    (cond
+			       ((null? args)
+				(null? params))
+			       ((null? params)
+				#f)
+			       (else
+				(let ((tya (j2s-type-sans-cast (car args)))
+				      (tyf (car params)))
+				   (when (or (eq? tyf 'any) (eq? tyf tya))
+				      (loop (cdr args) (cdr params))))))))))
 	    j2s-builtin-functions)))
    
    (define (arity args)
@@ -930,16 +932,22 @@
 	    (else (negfx (+fx arity 1))))))
    
    (define (call-builtin-extern f args)
-      `(,(builtin-function-scmid f)
-	,@(map (lambda (arg param)
-		  (j2s-as 
-		     (j2s-scheme arg mode return ctx)
-		     arg
-		     (j2s-type arg)
-		     param ctx))
-	     args
-	     (builtin-function-args f))
-	,@(if (builtin-function-%this f) '(%this) '())))
+      (if (eq? (builtin-function-args f) 'any)
+	  `(,(builtin-function-scmid f)
+	    ,@(map (lambda (arg)
+		      (j2s-scheme arg mode return ctx))
+		 args)
+	    ,@(if (builtin-function-%this f) '(%this) '()))
+	  `(,(builtin-function-scmid f)
+	    ,@(map (lambda (arg param)
+		      (j2s-as 
+			 (j2s-scheme arg mode return ctx)
+			 arg
+			 (j2s-type arg)
+			 param ctx))
+		 args
+		 (builtin-function-args f))
+	    ,@(if (builtin-function-%this f) '(%this) '()))))
    
    (define (call-builtin-method obj::J2SExpr field::J2SExpr args cache cspecs)
       (let ((m (find-builtin-method obj field args)))
