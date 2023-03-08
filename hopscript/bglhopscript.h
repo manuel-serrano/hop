@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 11 09:35:38 2022                          */
-/*    Last change :  Sat Aug 20 17:26:39 2022 (serrano)                */
-/*    Copyright   :  2022 Manuel Serrano                               */
+/*    Last change :  Wed Mar  8 11:24:50 2023 (serrano)                */
+/*    Copyright   :  2022-23 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Macros for accelerating C compilation.                           */
 /*=====================================================================*/
@@ -12,6 +12,7 @@
 #define BGLHOPSCRIPT_H
 
 #include <bigloo.h>
+#include "bglhopscript_rewrite.h"
 
 /*---------------------------------------------------------------------*/
 /*    import                                                           */
@@ -95,4 +96,6 @@ extern bool_t hop_js_toboolean_no_boolean(obj_t);
 /*---------------------------------------------------------------------*/
 #define HOP_JSEQIL(x, y) \
    (BINT(x) == y || (REALP(y) && (((double) x) == REAL_TO_DOUBLE(y))))
+
+
 #endif

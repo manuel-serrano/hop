@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Wed Feb 15 12:33:12 2023 (serrano)                */
+;*    Last change :  Wed Mar  8 11:34:25 2023 (serrano)                */
 ;*    Copyright   :  2018-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -82,6 +82,7 @@
 		   (define %cnst-table ,cnsttable)
 		   ,@(js-define-tls this ctx)
 		   ,@(j2s-tls-headers scmheaders)
+		   (pragma "HOP_REWRITE_INIT()")
 		   (letrec* ,(j2s-let-headers scmheaders)
 		      ,@(j2s-expr-headers scmheaders)
 		      ;;,@globals
@@ -139,6 +140,7 @@
 		    (define %cnst-table ,cnsttable)
 		    ,@(js-define-tls this ctx)
 		    ,@(j2s-tls-headers scmheaders)
+		    (pragma "HOP_REWRITE_INIT()")
 		    (letrec* ,(j2s-let-headers scmheaders)
 		       ,@(j2s-expr-headers scmheaders)
 		       ;;,@globals

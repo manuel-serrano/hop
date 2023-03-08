@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Tue Feb 21 15:40:53 2023 (serrano)                */
+;*    Last change :  Wed Mar  8 11:23:35 2023 (serrano)                */
 ;*    Copyright   :  2016-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -73,7 +73,7 @@
       ((?- (and (? integer?) ?num))
        (e `(cond-expand
 	     (bigloo-c
-	      (static-pragma ,(format "static struct BgL_jspropertycachez00_bgl __bgl_pcache[ ~a ];" num))))
+	      (static-pragma ,(format "static struct BgL_jspropertycachez00_bgl __bgl_pcache[ ~a ]; HOP_REWRITE_LOCATIONS(~a);" num num))))
 	  e))
       (else
        (error "%define-pache" "bad syntax" x))))
@@ -238,6 +238,40 @@
 	  `(with-access::JsPropertyCache ,c (nextemap) nextemap))
 	 (else
 	  (error "js-pcache-nextemap" "bad syntax" x)))
+      e))
+
+;*---------------------------------------------------------------------*/
+;*    js-pcache-rewrite-miss-label-expander ...                        */
+;*---------------------------------------------------------------------*/
+(define (js-pcache-rewrite-miss-label-expander x e)
+   (e (match-case x
+	 ((js-pcache-rewrite-miss-label (js-pcache-ref %pcache ?idx))
+	  (cond-expand
+	     ((and bigloo-c (not hop-eval) (not hopjs-worker-slave))
+	      `(free-pragma::obj "HOP_REWRITE_CACHE_MISS($1, BgL_iindexz00)" ,idx))
+	     (else
+	      #unspecified)))
+	 ((js-pcache-rewrite-miss-label ?-)
+	  #unspecified)
+	 (else
+	  (error "js-pcache-rewrite-miss-label" "bad syntax" x)))
+      e))
+
+;*---------------------------------------------------------------------*/
+;*    js-pcache-rewrite-hit-expander ...                               */
+;*---------------------------------------------------------------------*/
+(define (js-pcache-rewrite-hit-expander x e)
+   (e (match-case x
+	 ((js-pcache-rewrite-hit (js-pcache-ref %pcache ?idx))
+	  (cond-expand
+	     ((and bigloo-c (not hop-eval) (not hopjs-worker-slave))
+	      `(free-pragma::obj "HOP_REWRITE_CACHE_HIT($1)" ,idx))
+	     (else
+	      #unspecified)))
+	 ((js-pcache-rewrite-hit ?-)
+	  #unspecified)
+	 (else
+	  (error "js-pcache-rewrite-hit" "bad syntax" x)))
       e))
 
 ;*---------------------------------------------------------------------*/
@@ -543,8 +577,10 @@
 	    (cond
 	       ((null? cs)
 		;; cache miss
-		`((@ js-get-proxy-name/cache-miss __hopscript_proxy)
-		  ,obj ,prop ,throw ,%this ,cache))
+		`(let ((m ((@ js-get-proxy-name/cache-miss __hopscript_proxy)
+			   ,obj ,prop ,throw ,%this ,cache)))
+		    (js-pcache-rewrite-miss-label ,cache)
+		    m))
 	       ((eq? cs 'imap)
 		`(let ((idx (js-pcache-iindex ,cache)))
 		    (js-profile-log-cache ,cache :imap #t)
@@ -587,7 +623,9 @@
 		   ((imap imap+)
 		    ;; direct inlined property get
 		    `(if (eq? %cmap (js-pcache-imap ,cache))
-			 ,(loop 'imap)
+			 (begin
+			    (js-pcache-rewrite-hit ,cache)
+			    ,(loop 'imap))
 			 ,(if (eq? (car cs) 'imap)
 			      (loop (cdr cs))
 			      `((@ js-get-jsobject-name/cache-imap+

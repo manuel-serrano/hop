@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Sat Mar 19 13:19:20 2022 (serrano)                */
+#*    Last change :  Wed Mar  8 11:39:40 2023 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOPSCRIPT library.                     */
 #*=====================================================================*/
@@ -17,6 +17,9 @@ install: install-library
 	cp bglhopscript_malloc.h \
            $(DESTDIR)$(HOPLIBDIR)/hop/$(HOPRELEASE)/bglhopscript_malloc.h
 	chmod $(MODFILE) $(DESTDIR)$(HOPLIBDIR)/hop/$(HOPRELEASE)/bglhopscript_malloc.h
+	cp bglhopscript_rewrite.h \
+           $(DESTDIR)$(HOPLIBDIR)/hop/$(HOPRELEASE)/bglhopscript_rewrite.h
+	chmod $(MODFILE) $(DESTDIR)$(HOPLIBDIR)/hop/$(HOPRELEASE)/bglhopscript_rewrite.h
 
 #*---------------------------------------------------------------------*/
 #*    Standard Hop configuration                                       */
