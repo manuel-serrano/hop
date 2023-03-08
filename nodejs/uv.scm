@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Sat Mar  4 09:59:37 2023 (serrano)                */
+;*    Last change :  Wed Mar  8 05:07:14 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -619,22 +619,20 @@
 		  proc::procedure)
    [assert (proc) (correct-arity? proc 1)]
    (with-access::WorkerHopThread th (%this %loop mutex condv)
-      (if (eq? (current-thread) th)
-	  (proc %this)
-	  (let ((loop %loop))
-	     (with-access::JsLoop loop (mutex condv)
-		(let ((response 'unassigned))
-		   (synchronize mutex
-		      (js-worker-push-action! th name
-			 (lambda (%this)
-			    (set! response (proc %this))
-			    (synchronize mutex
-			       (condition-variable-broadcast! condv))))
-		      (let loop ()
-			 (condition-variable-wait! condv mutex)
-			 (when (eq? response 'unassigned)
-			    (loop))))
-		   response))))))
+      (let ((loop %loop))
+	 (with-access::JsLoop loop (mutex condv)
+	    (let ((response 'unassigned))
+	       (synchronize mutex
+		  (js-worker-push-action! th name
+		     (lambda (%this)
+			(set! response (proc %this))
+			(synchronize mutex
+			   (condition-variable-broadcast! condv))))
+		  (let loop ()
+		     (condition-variable-wait! condv mutex)
+		     (when (eq? response 'unassigned)
+			(loop))))
+	       response)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-worker-exec-throws ...                                        */
@@ -644,28 +642,26 @@
 		  proc::procedure)
    [assert (proc) (correct-arity? proc 1)]
    (with-access::WorkerHopThread th (%this %loop mutex condv)
-      (if (eq? (current-thread) th)
-	  (proc %this)
-	  (let ((loop %loop))
-	     (with-access::JsLoop loop (mutex condv)
-		(let ((response (cons 'unassigned #f)))
-		   (synchronize mutex
-		      (js-worker-push-action! th name
-			 (lambda (%this)
-			    (with-handler
-			       (lambda (exn)
-				  (set-cdr! response #t)
-				  (set-car! response exn))
-			       (set-car! response (proc %this)))
-			    (synchronize mutex
-			       (condition-variable-broadcast! condv))))
-		      (let loop ()
-			 (condition-variable-wait! condv mutex)
-			 (when (eq? (car response) 'unassigned)
-			    (loop))))
-		   (if (cdr response)
-		       (raise (car response))
-		       (car response))))))))
+      (let ((loop %loop))
+	 (with-access::JsLoop loop (mutex condv)
+	    (let ((response (cons 'unassigned #f)))
+	       (synchronize mutex
+		  (js-worker-push-action! th name
+		     (lambda (%this)
+			(with-handler
+			   (lambda (exn)
+			      (set-cdr! response #t)
+			      (set-car! response exn))
+			   (set-car! response (proc %this)))
+			(synchronize mutex
+			   (condition-variable-broadcast! condv))))
+		  (let loop ()
+		     (condition-variable-wait! condv mutex)
+		     (when (eq? (car response) 'unassigned)
+			(loop))))
+	       (if (cdr response)
+		   (raise (car response))
+		   (car response)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-now ...                                                   */
