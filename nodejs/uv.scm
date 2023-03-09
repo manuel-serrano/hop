@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Wed Mar  8 20:11:36 2023 (serrano)                */
+;*    Last change :  Thu Mar  9 18:22:14 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -2569,11 +2569,11 @@
 (define (store-stream-fd! %worker hdl fd::int)
    (with-access::WorkerHopThread %worker (uvhandles)
       (when (>=fx fd (vector-length uvhandles))
-	 (let ((new (make-vector (*fx 2 fd))))
-	    (let loop ((i (-fx (*fx 2 fd) 1)))
-	       (when (>=fx i fd)
+	 (let ((new (copy-vector uvhandles (*fx 2 fd))))
+	    (let loop ((i (vector-length uvhandles)))
+	       (when (<fx i (*fx 2 fd))
 		  (vector-set! new i (cons #unspecified #unspecified))
-		  (loop (-fx i 1))))
+		  (loop (+fx i 1))))
 	    (set! uvhandles new)))
       (if (isa? hdl UvFile)
 	  (vector-set! uvhandles fd (cons hdl hdl))
@@ -2624,7 +2624,7 @@
 ;*---------------------------------------------------------------------*/
 (define (close-uvfile %worker fd::int)
    (with-access::WorkerHopThread %worker (uvhandles)
-      (vector-set! uvhandles fd #f)))
+      (vector-set! uvhandles fd (cons #f #f))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-new-process ...                                           */
