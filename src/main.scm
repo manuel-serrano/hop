@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Fri Mar  3 08:44:08 2023 (serrano)                */
+;*    Last change :  Thu Mar  9 22:12:14 2023 (serrano)                */
 ;*    Copyright   :  2004-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -265,6 +265,7 @@
 	 (lambda (path . test)
 	    (js-worker-exec %worker "hop-loader"
 	       (lambda (%this)
+		  (tprint "LOADER NODEJS-LOAD path=" path)
 		  (nodejs-load path path %global %module %worker :lang "ts" :commonjs-export #t)))))
       ;; profiling
       (when (hop-profile)
@@ -514,6 +515,7 @@
 	     (with-access::WorkerHopThread %worker (%this prerun)
 		(js-worker-push! %worker (format "nodejs-load(~a)" path)
 		   (lambda (%this)
+		      (tprint "LOAD-CMD-LINE " path)
 		      (nodejs-load path path %global %module %worker :lang "ts" :commonjs-export #t))))))
 	 ((string=? (basename path) "package.json")
 	  (load-package path))
