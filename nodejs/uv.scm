@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Wed Mar  8 05:07:14 2023 (serrano)                */
+;*    Last change :  Wed Mar  8 20:11:36 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -1393,7 +1393,7 @@
       (else
        (+fl (*fl 1000. (elong->flonum sec))
 	  (/fl (elong->flonum nec) 1000000.)))))
-   
+
 ;*---------------------------------------------------------------------*/
 ;*    stat->jsobj! ...                                                 */
 ;*---------------------------------------------------------------------*/
@@ -2115,7 +2115,7 @@
 ;*    nodejs-read ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-read %worker %this process fd buffer offset length position callback)
-   (let ((file (int->uvhandle %worker %this fd)))
+   (let ((file (int->uvhandle %worker %this fd :uvfile #t)))
       (if file
 	  (with-access::JsArrayBufferView buffer (%data byteoffset)
 	     (if (js-procedure? callback)
@@ -2146,9 +2146,13 @@
 			:offset (+fx offset (uint32->fixnum byteoffset))
 			:position (to-int64 %this "read" position #s64:-1)
 			:loop (worker-loop %worker))))
-		 (uv-fs-read file %data length
-		    :offset (+fx offset (uint32->fixnum byteoffset))
-		    :position (to-int64 %this "read" position #s64:-1))))
+		 (let ((r (uv-fs-read file %data length
+			     :offset (+fx offset (uint32->fixnum byteoffset))
+			     :position (to-int64 %this "read" position #s64:-1))))
+		    (if (<fx r 0)
+			(js-raise-error %this
+			   (string-append "~a: " (uv-strerror r)) r)
+			r))))
 	  (fs-callback-error %worker %this "read" callback #f))))
 
 ;*---------------------------------------------------------------------*/
@@ -2566,9 +2570,15 @@
    (with-access::WorkerHopThread %worker (uvhandles)
       (when (>=fx fd (vector-length uvhandles))
 	 (let ((new (make-vector (*fx 2 fd))))
-	    (vector-copy! new 0 uvhandles)
+	    (let loop ((i (-fx (*fx 2 fd) 1)))
+	       (when (>=fx i fd)
+		  (vector-set! new i (cons #unspecified #unspecified))
+		  (loop (-fx i 1))))
 	    (set! uvhandles new)))
-      (vector-set! uvhandles fd hdl)))
+      (if (isa? hdl UvFile)
+	  (vector-set! uvhandles fd (cons hdl hdl))
+	  (let ((ref (vector-ref uvhandles fd)))
+	     (set-cdr! ref hdl)))))
    
 ;*---------------------------------------------------------------------*/
 ;*    uvfile->int ...                                                  */
@@ -2581,13 +2591,14 @@
 ;*---------------------------------------------------------------------*/
 ;*    int->uvhandle ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (int->uvhandle %worker %this fd::int)
+(define (int->uvhandle %worker %this fd::int #!key uvfile)
    (with-access::WorkerHopThread %worker (uvhandles)
       (cond
 	 ((<fx fd 0) #f)
 	 ((>fx fd (vector-length uvhandles)) #f)
 	 (else
-	  (let ((hdl (vector-ref uvhandles fd)))
+	  (let* ((ref (vector-ref uvhandles fd))
+		 (hdl (if uvfile (car ref) (cdr ref))))
 	     (cond
 		((and hdl (not (eq? hdl (js-undefined))))
 		 hdl)

@@ -1,0 +1,6 @@
+{
+   "tags": ["system"],
+   "description": "Hop.js readLines",
+   "doc": "Read all the lines from a file descriptor",
+   "level": 1,
+}

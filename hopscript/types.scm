@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Mon Mar  6 07:08:43 2023 (serrano)                */
+;*    Last change :  Thu Mar  9 12:04:32 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -121,7 +121,7 @@
 	      (module-cache::obj (default #f))
 	      (parent::obj (default #f))
 	      (subworkers::pair-nil (default '()))
-	      (uvhandles::vector (default (make-vector 32)))
+	      (uvhandles::vector (default (vector (cons #unspecified #unspecified) (cons #unspecified #unspecified) (cons #unspecified #unspecified)))) 
 	      (%call (default #f))
 	      (handlers::pair-nil (default '()))
 	      (services::pair-nil (default '()))
