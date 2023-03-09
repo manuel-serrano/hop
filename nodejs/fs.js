@@ -1071,26 +1071,54 @@ fs.futimesSync = function(fd, atime, mtime) {
 };
 
 function writeAll(fd, buffer, offset, length, position, callback) {
-  callback = maybeCallback(arguments[arguments.length - 1]);
+  //callback = maybeCallback(arguments[arguments.length - 1]);
 
-  // write(fd, buffer, offset, length, position, callback)
-  fs.write(fd, buffer, offset, length, position, function(writeErr, written) {
-    if (writeErr) {
-      fs.close(fd, function() {
-        if (callback) callback(writeErr);
-      });
-    } else {
-      if (written === length) {
-        fs.close(fd, callback);
+   // write(fd, buffer, offset, length, position, callback)
+   function cb(writeErr, written) {
+      if (writeErr) {
+	 fs.close(fd, function() {
+            if (callback) callback(writeErr);
+	 });
       } else {
-        offset += written;
-        length -= written;
-        position += written;
-        writeAll(fd, buffer, offset, length, position, callback);
+	 if (written === length) {
+            fs.close(fd, callback);
+	 } else {
+            offset += written;
+            length -= written;
+            position += written;
+            writeAll(fd, buffer, offset, length, position, callback);
+	 }
       }
-    }
-  });
+   }
+
+   function loop(fd, buffer, offset, length, position, callback) {
+      fs.write(fd, buffer, offset, length, position, cb);
+   }
+
+   loop(fd, buffer, offset, length, position, callback);
 }
+
+/* function writeAll(fd, buffer, offset, length, position, callback) { */
+/*   //callback = maybeCallback(arguments[arguments.length - 1]);      */
+/*                                                                     */
+/*   // write(fd, buffer, offset, length, position, callback)          */
+/*   fs.write(fd, buffer, offset, length, position, function(writeErr, written) { */
+/*     if (writeErr) {                                                 */
+/*       fs.close(fd, function() {                                     */
+/*         if (callback) callback(writeErr);                           */
+/*       });                                                           */
+/*     } else {                                                        */
+/*       if (written === length) {                                     */
+/*         fs.close(fd, callback);                                     */
+/*       } else {                                                      */
+/*         offset += written;                                          */
+/*         length -= written;                                          */
+/*         position += written;                                        */
+/*         writeAll(fd, buffer, offset, length, position, callback);   */
+/*       }                                                             */
+/*     }                                                               */
+/*   });                                                               */
+/* }                                                                   */
 
 const defaultWriteFileOpts = { encoding: 'utf8', mode: 438 /*=0666*/, flag: 'w' };
 
