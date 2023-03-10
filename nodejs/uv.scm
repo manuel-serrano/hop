@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Thu Mar  9 22:35:39 2023 (serrano)                */
+;*    Last change :  Fri Mar 10 04:59:39 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -512,7 +512,6 @@
 				    %actions %actions-name
 				    exiting mutex async)
 	 (let (count acts nms)
-	    (tprint ">>> js-worker-tick")
 	    (synchronize mutex
 	       (set! count actions-count)
 	       (let ((len (vector-length actions)))
@@ -528,7 +527,6 @@
 		  (set! %actions acts)
 		  (set! actions-name nms)
 		  (set! actions-count 0)))
-	    (tprint "<<< js-worker-tick")
 	    ;; execute the actions
 	    (let loop ((i 0))
 	       (with-handler
@@ -610,9 +608,7 @@
       (trace-item "th=" th)
       (with-access::WorkerHopThread th (%loop)
 	 (with-access::JsLoop %loop (mutex)
-	    (tprint ">>> js-worker-push! name=" name)
 	    (synchronize mutex
-	       (tprint "<<< js-worker-push! name=" name)
 	       (js-worker-push-action! th name proc))))))
 
 ;*---------------------------------------------------------------------*/
@@ -622,28 +618,22 @@
 		  name::bstring
 		  proc::procedure)
    [assert (proc) (correct-arity? proc 1)]
+   [assert (th name) (not (eq? (current-thread) th))]
    (with-access::WorkerHopThread th (%this %loop mutex condv)
-      (if (eq? (current-thread) th)
-	  (proc %this)
-	  (let ((loop %loop))
-	     (with-access::JsLoop loop (mutex condv)
-		(let ((response 'unassigned))
-		   (tprint ">>> js-worker-exec name=" name " " (current-thread))
-		   (synchronize mutex
-		      (js-worker-push-action! th name
-			 (lambda (%this)
-			    (tprint "--- js-worker-exec name=" name)
-			    (set! response (proc %this))
-			    (tprint ">>>>>> js-worker-exec name=" name)
-			    (synchronize mutex
-			       (tprint "<<<<<< js-worker-exec name=" name)
-			       (condition-variable-broadcast! condv))))
-		      (let loop ()
-			 (condition-variable-wait! condv mutex)
-			 (when (eq? response 'unassigned)
-			    (loop))))
-		   (tprint "<<< js-worker-exec name=" name)
-		   response))))))
+      (let ((loop %loop))
+	 (with-access::JsLoop loop (mutex condv)
+	    (let ((response 'unassigned))
+	       (synchronize mutex
+		  (js-worker-push-action! th name
+		     (lambda (%this)
+			(set! response (proc %this))
+			(synchronize mutex
+			   (condition-variable-broadcast! condv))))
+		  (let loop ()
+		     (condition-variable-wait! condv mutex)
+		     (when (eq? response 'unassigned)
+			(loop))))
+	       response)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-worker-exec-throws ...                                        */
@@ -652,35 +642,29 @@
 		  name::bstring
 		  proc::procedure)
    [assert (proc) (correct-arity? proc 1)]
+   [assert (th name) (not (eq? (current-thread) th))]
    (with-access::WorkerHopThread th (%this %loop mutex condv)
-      (if (eq? (current-thread) th)
-	  (proc %this)
-	  (let ((loop %loop))
-	     (with-access::JsLoop loop (mutex condv)
-		(let ((response (cons 'unassigned #f)))
-		   (tprint ">>> js-worker-exec-throws name=" name " " (current-thread))
-		   (synchronize mutex
-		      (js-worker-push-action! th name
-			 (lambda (%this)
-			    (tprint "--- js-worker-exec-throws name=" name)
-			    (with-handler
-			       (lambda (exn)
-				  (exception-notify exn)
-				  (set-cdr! response #t)
-				  (set-car! response exn))
-			       (set-car! response (proc %this)))
-			    (tprint ">>>>>> js-worker-exec-throws name=" name)
-			    (synchronize mutex
-			       (tprint "<<<<<< js-worker-exec-throws name=" name)
-			       (condition-variable-broadcast! condv))))
-		      (let loop ()
-			 (condition-variable-wait! condv mutex)
-			 (when (eq? (car response) 'unassigned)
-			    (loop))))
-		   (tprint "<<<<<< js-worker-exec-throws name=" name)
-		   (if (cdr response)
-		       (raise (car response))
-		       (car response))))))))
+      (let ((loop %loop))
+	 (with-access::JsLoop loop (mutex condv)
+	    (let ((response (cons 'unassigned #f)))
+	       (synchronize mutex
+		  (js-worker-push-action! th name
+		     (lambda (%this)
+			(with-handler
+			   (lambda (exn)
+			      (exception-notify exn)
+			      (set-cdr! response #t)
+			      (set-car! response exn))
+			   (set-car! response (proc %this)))
+			(synchronize mutex
+			   (condition-variable-broadcast! condv))))
+		  (let loop ()
+		     (condition-variable-wait! condv mutex)
+		     (when (eq? (car response) 'unassigned)
+			(loop))))
+	       (if (cdr response)
+		   (raise (car response))
+		   (car response)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-now ...                                                   */

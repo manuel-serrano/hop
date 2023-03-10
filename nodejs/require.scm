@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Fri Mar  3 13:33:02 2023 (serrano)                */
+;*    Last change :  Fri Mar 10 05:13:19 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -37,7 +37,11 @@
 	   (nodejs-script ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsObject)
 	   (nodejs-core-module ::bstring ::WorkerHopThread ::JsGlobalObject)
 	   (nodejs-require-core ::bstring ::WorkerHopThread ::JsGlobalObject)
-	   (nodejs-load src ::bstring ::obj ::obj ::WorkerHopThread
+	   (nodejs-load-module path::bstring worker::WorkerHopThread
+	      %this %module
+	      #!key (lang "hopscript") compiler
+	      config (commonjs-export #t) loc)
+	   (nodejs-load src ::bstring ::WorkerHopThread ::obj ::obj 
 	      #!key lang srcalias (commonjs-export #unspecified))
 	   (nodejs-bind-export!  ::JsGlobalObject ::JsObject ::JsObject . bindings)
 	   (nodejs-compile-abort-all!)
@@ -552,7 +556,7 @@
 	       (js-vector->jsarray (nodejs-filename->paths filename) %this)
 	       #f %this))))
 
-   (with-trace 'require (format "nodejs-module ~a ~a" id filename)
+   (with-trace 'require (format "nodejs-new-module-sans-cache ~a ~a" id filename)
       (with-access::JsGlobalObject %this (js-object js-symbol-tostringtag js-initial-cmap)
 	 (let ((m (instantiateJsModule
 		     (cmap js-initial-cmap)
@@ -570,13 +574,14 @@
 ;*    nodejs-new-module ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-new-module::JsObject id::bstring filename worker::WorkerHopThread %this::JsGlobalObject)
-   (let ((m (nodejs-new-module-sans-cache id filename worker %this)))
-      ;; register the module in the current worker thread
-      (with-access::WorkerHopThread worker (module-cache)
-	 (when (js-object? module-cache)
-	    (js-put! module-cache
-	       (js-string->jsstring filename) m #f %this)))
-      m))
+   (with-trace 'require (format "nodejs-new-module ~a ~a" id filename)
+      (let ((m (nodejs-new-module-sans-cache id filename worker %this)))
+	 ;; register the module in the current worker thread
+	 (with-access::WorkerHopThread worker (module-cache)
+	    (when (js-object? module-cache)
+	       (js-put! module-cache
+		  (js-string->jsstring filename) m #f %this)))
+	 m)))
 
 ;*---------------------------------------------------------------------*/
 ;*    wrong-language ...                                               */
@@ -1970,7 +1975,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-load ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-load src filename %ctxthis %ctxmodule worker::WorkerHopThread
+(define (nodejs-load src filename worker::WorkerHopThread %ctxthis %ctxmodule
 	   #!key lang srcalias (commonjs-export #unspecified))
 
    (define (loadso-or-compile filename lang worker-slave)
@@ -2237,6 +2242,22 @@
       (with-loading-file filename load-module)))
 
 ;*---------------------------------------------------------------------*/
+;*    nodejs-require-module ...                                        */
+;*    -------------------------------------------------------------    */
+;*    Require a nodejs module, load it if necessary or simply          */
+;*    reuse the previously loaded module structure.                    */
+;*---------------------------------------------------------------------*/
+(define (nodejs-require-module name::bstring worker::WorkerHopThread
+	   %this %module #!optional (lang "hopscript") compiler copts)
+   (with-trace 'require (format "nodejs-require-module ~a" name)
+      (let* ((path (nodejs-resolve name %this %module 'body))
+	     (mod (nodejs-load-module path worker %this %module
+		     :lang lang :compiler compiler :config copts))
+	     (exports (js-get mod (& "exports") %this)))
+	 (trace-item "exports=" (typeof exports))
+	 exports)))
+
+;*---------------------------------------------------------------------*/
 ;*    nodejs-load-module ...                                           */
 ;*    -------------------------------------------------------------    */
 ;*    Require a nodejs module, load it if necessary or simply          */
@@ -2300,7 +2321,7 @@
 	  (error "nodejs-load-module" "internal error, lang should be a string"
 	     lang))
 	 (else
-	  (let ((mod (nodejs-load src path %this %module worker
+	  (let ((mod (nodejs-load src path worker %this %module
 			:lang lang :srcalias srcalias
 			:commonjs-export commonjs-export)))
 	     (unless (js-get mod (& "parent") %this)
@@ -2325,22 +2346,6 @@
 			 (%env-pop-trace env)
 			 v)))
 		mod)))))
-
-;*---------------------------------------------------------------------*/
-;*    nodejs-require-module ...                                        */
-;*    -------------------------------------------------------------    */
-;*    Require a nodejs module, load it if necessary or simply          */
-;*    reuse the previously loaded module structure.                    */
-;*---------------------------------------------------------------------*/
-(define (nodejs-require-module name::bstring worker::WorkerHopThread
-	   %this %module #!optional (lang "hopscript") compiler copts)
-   (with-trace 'require (format "nodejs-require-module ~a" name)
-      (let* ((path (nodejs-resolve name %this %module 'body))
-	     (mod (nodejs-load-module path worker %this %module
-		     :lang lang :compiler compiler :config copts))
-	     (exports (js-get mod (& "exports") %this)))
-	 (trace-item "exports=" (typeof exports))
-	 exports)))
 
 ;*---------------------------------------------------------------------*/
 ;*    core-module? ...                                                 */

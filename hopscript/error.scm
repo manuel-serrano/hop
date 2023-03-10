@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Fri Mar  3 08:11:49 2023 (serrano)                */
+;*    Last change :  Fri Mar 10 05:45:46 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
@@ -175,7 +175,7 @@
 					(fprint port name ": " msg "\n")
 					(display-trace-stack stack port)))))))
 		(with-access::JsGlobalObject %this (worker)
-		   (if worker
+		   (if (and worker (not (eq? worker (current-thread))))
 		       (js-worker-exec worker "error" notify)
 		       (notify %this))))))))
 

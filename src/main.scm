@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Thu Mar  9 22:12:14 2023 (serrano)                */
+;*    Last change :  Fri Mar 10 05:14:08 2023 (serrano)                */
 ;*    Copyright   :  2004-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -241,7 +241,7 @@
    (hopscript-install-expanders!)
    (multiple-value-bind (%worker %global %module)
       (js-main-worker! "main"
-	 (make-file-name (pwd) name)
+	 (format "hop-~a~a (~a)" (hop-version) (hop-minor-version) (hop-build-tag))
 	 (or (hop-run-server) (eq? (hop-enable-repl) 'js))
 	 nodejs-new-global-object nodejs-new-module)
       ;; js loader
@@ -249,24 +249,23 @@
 	 (lambda (path . test)
 	    (js-worker-exec %worker "hop-loader"
 	       (lambda (%this)
-		  (nodejs-load path path %global %module %worker :commonjs-export #t)))))
+		  (nodejs-load path path  %worker %global %module :commonjs-export #t)))))
       (hop-loader-add! "mjs"
 	 (lambda (path . test)
 	    (js-worker-exec %worker "hop-loader"
 	       (lambda (%this)
-		  (nodejs-load path path %global %module %worker :commonjs-export #t)))))
+		  (nodejs-load path path %worker %global %module :commonjs-export #t)))))
       (hop-loader-add! "ast.json"
 	 (lambda (path . test)
 	    (js-worker-exec %worker "hop-loader"
 	       (lambda (%this)
-		  (nodejs-load path path %global %module %worker :commonjs-export #t)))))
+		  (nodejs-load path path %worker %global %module :commonjs-export #t)))))
       ;; ts loader
       (hop-loader-add! "ts"
 	 (lambda (path . test)
 	    (js-worker-exec %worker "hop-loader"
 	       (lambda (%this)
-		  (tprint "LOADER NODEJS-LOAD path=" path)
-		  (nodejs-load path path %global %module %worker :lang "ts" :commonjs-export #t)))))
+		  (nodejs-load path path %worker %global %module :lang "ts" :commonjs-export #t)))))
       ;; profiling
       (when (hop-profile)
 	 (js-profile-init `(:server #t) #f #f))
@@ -344,7 +343,8 @@
 	       (let ((oldload (hop-rc-loaded)))
 		  (hop-rc-loaded! #f)
 		  (unwind-protect
-		     (nodejs-load path path %global %module %worker :commonjs-export #t)
+		     ;;(nodejs-load path path %worker %global %module :commonjs-export #t)
+		     (nodejs-load-module path %worker %global %module :commonjs-export #t)
 		     (begin
 			(hop-rc-loaded! oldload)
 			(synchronize rcmutex
@@ -501,22 +501,24 @@
 	     (with-access::WorkerHopThread %worker (%this prerun)
 		(js-worker-push! %worker (format "nodejs-load(~a)" path)
 		   (lambda (%this)
-		      (nodejs-load path path %global %module %worker :commonjs-export #t))))))
+		      ;(nodejs-load path path %worker %global %module :commonjs-export #t)
+		      (nodejs-load-module path %worker %global %module :commonjs-export #t))))))
 	 ((string-suffix? ".mjs" path)
 	  ;; javascript
 	  (when %worker
 	     (with-access::WorkerHopThread %worker (%this prerun)
 		(js-worker-push! %worker (format "nodejs-load(~a)" path)
 		   (lambda (%this)
-		      (nodejs-load path path %global %module %worker :commonjs-export #f))))))
+		      ;(nodejs-load path path %worker %global %module :commonjs-export #f)
+		      (nodejs-load-module path %worker %global %module :commonjs-export #f))))))
 	 ((string-suffix? ".ts" path)
 	  ;; typescript
 	  (when %worker
 	     (with-access::WorkerHopThread %worker (%this prerun)
 		(js-worker-push! %worker (format "nodejs-load(~a)" path)
 		   (lambda (%this)
-		      (tprint "LOAD-CMD-LINE " path)
-		      (nodejs-load path path %global %module %worker :lang "ts" :commonjs-export #t))))))
+		      ;(nodejs-load path path %worker  %global %module :lang "ts" :commonjs-export #t)
+		      (nodejs-load-module path %worker %global %module :lang "ts" :commonjs-export #t))))))
 	 ((string=? (basename path) "package.json")
 	  (load-package path))
 	 (else
