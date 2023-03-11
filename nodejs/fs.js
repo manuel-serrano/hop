@@ -601,12 +601,11 @@ fs.write = function(fd, buffer, offset, length, position, callback) {
 
   callback = maybeCallback(callback);
 
-  function wrapper(err, written) {
-    // Retain a reference to buffer so that it can't be GC'ed too soon.
-    callback(err, written || 0, buffer);
-  }
-
-  binding.write(fd, buffer, offset, length, position, wrapper);
+/*   function wrapper(err, written) {                                  */
+/*     // Retain a reference to buffer so that it can't be GC'ed too soon. */
+/*     callback(err, written || 0, buffer);                            */
+/*   }                                                                 */
+  binding.write(fd, buffer, offset, length, position, callback);
 };
 
 /* fs.write = function(fd, buffer, offset, length, position, callback) { */

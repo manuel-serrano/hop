@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Fri Mar 10 04:59:39 2023 (serrano)                */
+;*    Last change :  Sat Mar 11 08:26:33 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -2066,8 +2066,8 @@
       (if file
 	  (if (js-procedure? callback)
 	      (with-access::JsArrayBufferView buffer (%data byteoffset)
-		 (uv-fs-write (int->uvhandle %worker %this fd) %data length
-		    :callback (lambda (obj)
+		 (uv-fs-write3 (int->uvhandle %worker %this fd) %data length
+		    :callback (lambda (obj callback buffer %this)
 				 (if (<fx obj 0)
 				     (!js-callback3 'write %worker %this
 					callback (js-undefined)
@@ -2077,6 +2077,7 @@
 					#f obj buffer)))
 		    :offset (+fx offset (uint32->fixnum byteoffset))
 		    :position (to-int64 %this "write" position #s64:-1)
+		    :arg0 callback arg1: buffer :arg2 %this
 		    :loop (worker-loop %worker)))
 	      (with-access::JsArrayBufferView buffer (%data byteoffset)
 		 (uv-fs-write (int->uvhandle %worker %this fd) %data length
@@ -2086,18 +2087,18 @@
 	  (fs-callback-error %worker %this "write" callback #f buffer))))
 
 ;*---------------------------------------------------------------------*/
-;*    nodejs-write ...                                                 */
+;*    nodejs-write-string ...                                          */
 ;*    -------------------------------------------------------------    */
 ;*    MS addition on 30apr2019 to avoid allocating buffers when        */
-;*    display JS strings.                                              */
+;*    displaying JS strings.                                           */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-write-string %worker %this process fd string offset length position callback)
    (let ((file (int->uvhandle %worker %this fd))
 	 (str (js-jsstring->string string)))
       (if file
 	  (if (js-procedure? callback)
-	      (uv-fs-write (int->uvhandle %worker %this fd) str (string-length str)
-		 :callback (lambda (obj)
+	      (uv-fs-write3 (int->uvhandle %worker %this fd) str (string-length str)
+		 :callback (lambda (obj callback buffer %this)
 			      (if (<fx obj 0)
 				  (!js-callback3 'write %worker %this
 				     callback (js-undefined)
@@ -2107,6 +2108,7 @@
 				     #f obj string)))
 		 :offset offset
 		 :position (to-int64 %this "write" position #s64:-1)
+		 :arg0 callback arg1: string arg2: %this
 		 :loop (worker-loop %worker))
 	      (uv-fs-write (int->uvhandle %worker %this fd) str (string-length str)
 		 :offset offset
