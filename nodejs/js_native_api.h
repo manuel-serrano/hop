@@ -1,5 +1,10 @@
+#ifndef SRC_NODE_API_H_
+#include <node_api.h>
+#endif
+
 #ifndef SRC_JS_NATIVE_API_H_
 #define SRC_JS_NATIVE_API_H_
+extern int PAS_GLOP;
 
 // This file needs to be compatible with C compilers.
 #include <stddef.h>   // NOLINT(modernize-deprecated-headers)
