@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 24 14:34:24 2023                          */
-/*    Last change :  Mon Feb 27 12:42:47 2023 (serrano)                */
+/*    Last change :  Sun Mar 12 12:29:41 2023 (serrano)                */
 /*    Copyright   :  2023 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop node_api implementation.                                     */
@@ -102,6 +102,32 @@ napi_create_function(napi_env _this,
    obj_t proc = bgl_napi_method_to_procedure(_this, BNIL, cb, data);
 
    *result = bgl_napi_create_function(_this, proc, string_to_bstring((char *)utf8name));
+   return napi_ok;
+}
+
+/*---------------------------------------------------------------------*/
+/*    napi_status                                                      */
+/*    napi_create_double ...                                           */
+/*---------------------------------------------------------------------*/
+BGL_RUNTIME_DEF napi_status
+napi_create_double(napi_env _this, double val, napi_value *result) {
+   if (trunc(val) == val) {
+      long lval = (long)val;
+
+#if (BGL_LONG_MAX > (1L << 53))
+#  define MAX_JS_INT (1L << 53)
+#else      
+#  define MAX_JS_INT BGL_LONG_MAX
+#endif
+      
+      if ((unsigned long)val < (unsigned long)(MAX_JS_INT)) {
+	 *result = BINT((long)val);
+      } else {
+	 *result = DOUBLE_TO_REAL(val);
+      }
+   } else {
+      *result = DOUBLE_TO_REAL(val);
+   }
    return napi_ok;
 }
 

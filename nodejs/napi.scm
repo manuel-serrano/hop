@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 24 16:10:01 2023                          */
-;*    Last change :  Fri Mar  3 07:26:12 2023 (serrano)                */
+;*    Last change :  Sun Mar 12 12:57:23 2023 (serrano)                */
 ;*    Copyright   :  2023 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The Scheme part of the node_api.                                 */
@@ -30,7 +30,9 @@
 	   (macro $napi_bigint::int "napi_bigint")
 
 	   (macro $obj-null?::bool (::obj) "0L ==")
-	   
+
+	   (export napi-throw "bgl_napi_throw")
+	   (export napi-throw-error "bgl_napi_throw_error")
 	   (export napi-create-string-utf8 "bgl_napi_create_string_utf8")
 	   (export napi-get-element "bgl_napi_get_element")
 	   (export napi-set-element! "bgl_napi_set_element")
@@ -44,7 +46,9 @@
 	   (export napi-typeof "bgl_napi_typeof")
 	   (export napi-uvloop "bgl_napi_uvloop"))
    
-   (export (napi-create-string-utf8::obj ::obj ::bstring)
+   (export (napi-throw ::obj ::obj)
+	   (napi-throw-error ::obj ::string ::string)
+	   (napi-create-string-utf8::obj ::obj ::bstring)
 	   (napi-get-named-property::obj ::obj ::obj ::bstring)
 	   (napi-put-named-property!::obj ::obj ::obj ::bstring ::obj)
 	   (napi-get-element::obj ::obj ::obj ::int)
@@ -56,6 +60,23 @@
 	   (napi-create-promise::obj ::obj ::obj)
 	   (napi-typeof::int ::obj ::obj)
 	   (napi-uvloop::$uv_loop_t ::obj)))
+
+;*---------------------------------------------------------------------*/
+;*    napi-throw-error ...                                             */
+;*---------------------------------------------------------------------*/
+(define (napi-throw %this obj)
+   (raise obj))
+
+;*---------------------------------------------------------------------*/
+;*    napi-throw-error ...                                             */
+;*---------------------------------------------------------------------*/
+(define (napi-throw-error %this code msg)
+   (raise
+      (instantiate::JsError
+	 (name code)
+	 (msg msg)
+	 (stack (get-trace-stack))
+	 (%this %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    napi-create-string-utf8 ...                                      */

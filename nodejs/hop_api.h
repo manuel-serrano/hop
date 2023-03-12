@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 24 15:38:53 2023                          */
-/*    Last change :  Fri Mar  3 07:25:59 2023 (serrano)                */
+/*    Last change :  Sun Mar 12 12:28:01 2023 (serrano)                */
 /*    Copyright   :  2023 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop Specific macro redefinitions                                 */
@@ -17,7 +17,10 @@
 /*    Imports                                                          */
 /*---------------------------------------------------------------------*/
 extern int bgl_napi_typeof(obj_t, obj_t);
+extern obj_t bgl_napi_throw(obj_t, obj_t);
+extern obj_t bgl_napi_throw_error(obj_t, char *, char *);
 
+extern obj_t bgl_napi_create_double(obj_t, obj_t, napi_value *result);
 extern obj_t bgl_napi_create_string_utf8(obj_t, obj_t);
 extern obj_t bgl_napi_create_function(obj_t, obj_t, obj_t);
 extern obj_t bgl_napi_create_object(obj_t);
@@ -96,11 +99,14 @@ struct napi_async_work__ {
 /*---------------------------------------------------------------------*/
 /*    Wrappers                                                         */
 /*---------------------------------------------------------------------*/
-#define napi_create_string_utf8(_this, string, sz, res) \
-  (*res = bgl_napi_create_string_utf8(_this, string_to_bstring(string)), napi_ok)
+#define napi_throw(_this, obj) \
+  bgl_napi_throw(_this, obj)
 
-#define napi_create_double(_this, val, res) \
-   (*res = DOUBLE_TO_REAL(val), napi_ok)
+#define napi_throw_error(_this, code, msg) \
+  bgl_napi_throw_error(_this, (char *)code, (char *)msg)
+
+#define napi_create_string_utf8(_this, string, sz, res) \
+  (*res = bgl_napi_create_string_utf8(_this, string_to_bstring((char *)string)), napi_ok)
 
 #define napi_create_int32(_this, val, res) \
    (*res = BINT(val), napi_ok)
