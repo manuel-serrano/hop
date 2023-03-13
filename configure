@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Sat Feb 25 06:46:17 2023 (serrano)                */
+#*    Last change :  Mon Mar 13 07:18:38 2023 (serrano)                */
 #*    Copyright   :  2004-23 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -972,14 +972,17 @@ fi
 #*---------------------------------------------------------------------*/
 #*    libbacktrace                                                     */
 #*---------------------------------------------------------------------*/
+if [ -f $bigloolibdir/libbacktrace.heap ]; then
+   libraries="$libraries libbacktrace"
+   bglcloselibs="$bglcloselibs libbacktrace"
+fi
+
 if [ "$devmode " = "debug " -o "$devmode " = "debug-inline " ]; then
-  if [ -f $bigloolibdir/libbacktrace.heap ]; then
-    bcflagsrts="$bcflagsrts -gtrace0"
-    bcflagsmodules="$bcflagsmodules -gtrace0"
-    bhopcflags="$bhopcflags -gtrace0"
-    hflags="$hflags -gtrace0"
-    bhflags=""
-  fi
+  bcflagsrts="$bcflagsrts -gtrace0"
+  bcflagsmodules="$bcflagsmodules -gtrace0"
+  bhopcflags="$bhopcflags -gtrace0"
+  hflags="$hflags -gtrace0"
+  bhflags=""
 fi
 
 #*---------------------------------------------------------------------*/
@@ -1673,6 +1676,7 @@ cat etc/hopscript.init.in \
           -e "s|@BRANCH@|$branch|" \
           -e "s|@LIBPATH@|$libdir/hop/$version|" \
           -e "s|@BUILDDIR@|$PWD|" \
+          -e "s|@BIGLOOCLOSELIBS@|$bglcloselibs|" \
     >> $init
 echo "" >> $init
 
@@ -1726,6 +1730,7 @@ echo ";* Automatically generated file (don't edit) */" > $init
 cat etc/nodejs.init.in \
     | sed -e "s|@VERSION@|$version|" \
           -e "s|@BRANCH@|$branch|" \
+          -e "s|@BIGLOOCLOSELIBS@|$bglcloselibs|" \
     >> $init
 echo "" >> $init
 chmod a-w $init

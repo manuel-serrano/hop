@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Sat Mar 11 08:26:33 2023 (serrano)                */
+;*    Last change :  Mon Mar 13 06:52:07 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -2738,10 +2738,11 @@
 	    ;; options.args
 	    (let ((args (js-get options (& "args") %this)))
 	       (when (js-array? args)
-		  (trace-item "args=" args)
-		  (set! oargs
-		     (vector-map! (lambda (o) (js-tostring o %this))
-			(jsarray->vector args %this)))))
+		  (let ((vec (jsarray->vector args %this)))
+		     (trace-item "args=" vec)
+		     (set! oargs
+			(vector-map! (lambda (o) (js-tostring o %this))
+			   vec)))))
 	    
 	    ;; options.cwd
 	    (let ((cwd (js-get options (& "cwd") %this)))
