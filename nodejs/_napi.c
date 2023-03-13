@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 24 14:34:24 2023                          */
-/*    Last change :  Sun Mar 12 12:29:41 2023 (serrano)                */
+/*    Last change :  Mon Mar 13 08:20:04 2023 (serrano)                */
 /*    Copyright   :  2023 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop node_api implementation.                                     */
@@ -141,6 +141,7 @@ napi_define_properties(napi_env _this, napi_value this, size_t count, const napi
    while (count-- > 0) {
       obj_t name = properties->name ? properties->name : string_to_bstring((char *)properties->utf8name);
       bgl_napi_define_property(_this, this, name, bgl_napi_method_to_procedure(_this, this, properties->method, properties->data));
+      properties++;
    }
    return napi_ok;
 }
@@ -160,13 +161,19 @@ napi_get_cb_info(napi_env _this, napi_callback_info info, size_t *argc, napi_val
 	    argv[i] = info[i + 2];
 	    i++;
 	 }
+	 if (i < max) {
+	    *argc = i;
+	    while (i < max) {
+	       argv[i++] = BUNSPEC;
+	    }
+	 }
       } else {
 	 while(info[i + 2] != 0) {
 	    argv[i] = info[i + 2];
 	    i++;
 	 }
+	 *argc = i;
       }
-      *argc = i;
    }
 
    if (this_arg) {
