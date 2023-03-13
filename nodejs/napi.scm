@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 24 16:10:01 2023                          */
-;*    Last change :  Sun Mar 12 12:57:23 2023 (serrano)                */
+;*    Last change :  Mon Mar 13 17:26:56 2023 (serrano)                */
 ;*    Copyright   :  2023 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The Scheme part of the node_api.                                 */
@@ -129,10 +129,19 @@
       :alloc js-no-alloc))
 
 ;*---------------------------------------------------------------------*/
+;*    empty-cmap ...                                                   */
+;*---------------------------------------------------------------------*/
+(define empty-cmap
+   (js-make-jsconstructmap :props '#() :methods '#()))
+
+;*---------------------------------------------------------------------*/
 ;*    napi-create-object ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (napi-create-object %this)
-   (js-alist->jsobject '() %this))
+   (instantiateJsObject
+      (cmap empty-cmap)
+      (__proto__ (js-object-proto %this))
+      (elements (make-vector 0))))
 
 ;*---------------------------------------------------------------------*/
 ;*    napi-create-array ...                                            */
