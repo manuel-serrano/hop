@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 24 16:10:01 2023                          */
-;*    Last change :  Mon Mar 13 17:26:56 2023 (serrano)                */
+;*    Last change :  Tue Mar 14 14:28:22 2023 (serrano)                */
 ;*    Copyright   :  2023 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The Scheme part of the node_api.                                 */
@@ -38,11 +38,16 @@
 	   (export napi-set-element! "bgl_napi_set_element")
 	   (export napi-get-named-property "bgl_napi_get_named_property")
 	   (export napi-put-named-property! "bgl_napi_put_named_property")
+	   (export napi-get-array-length "bgl_napi_get_array_length")
+	   (export napi-has-element "bgl_napi_has_element")
+	   (export napi-delete-element! "bgl_napi_delete_element")
 	   (export napi-define-property "bgl_napi_define_property")
 	   (export napi-create-function "bgl_napi_create_function")
 	   (export napi-create-object "bgl_napi_create_object")
 	   (export napi-create-array "bgl_napi_create_array")
+	   (export napi-create-array-with-length "bgl_napi_create_array_with_length")
 	   (export napi-create-promise "bgl_napi_create_promise")
+	   (export napi-is-array? "bgl_napi_is_array")
 	   (export napi-typeof "bgl_napi_typeof")
 	   (export napi-uvloop "bgl_napi_uvloop"))
    
@@ -51,13 +56,18 @@
 	   (napi-create-string-utf8::obj ::obj ::bstring)
 	   (napi-get-named-property::obj ::obj ::obj ::bstring)
 	   (napi-put-named-property!::obj ::obj ::obj ::bstring ::obj)
+	   (napi-get-array-length::uint32 ::obj ::obj)
+	   (napi-has-element::bool ::obj ::obj ::int)
+	   (napi-delete-element!::obj ::obj ::obj ::int)
 	   (napi-get-element::obj ::obj ::obj ::int)
 	   (napi-set-element!::obj ::obj ::obj ::int ::obj)
 	   (napi-define-property::obj ::obj ::obj ::bstring ::obj)
 	   (napi-create-function::obj ::obj ::procedure ::bstring)
 	   (napi-create-object::obj ::obj)
 	   (napi-create-array::obj ::obj)
+	   (napi-create-array-with-length::obj ::obj ::long)
 	   (napi-create-promise::obj ::obj ::obj)
+	   (napi-is-array?::bool ::obj) 
 	   (napi-typeof::int ::obj ::obj)
 	   (napi-uvloop::$uv_loop_t ::obj)))
 
@@ -97,10 +107,28 @@
    (js-put! this (js-string->name prop) val #f %this))
 
 ;*---------------------------------------------------------------------*/
+;*    napi-get-array-length ...                                        */
+;*---------------------------------------------------------------------*/
+(define (napi-get-array-length %this this)
+   (js-array-length this))
+
+;*---------------------------------------------------------------------*/
 ;*    napi-get-element ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (napi-get-element %this this index)
    (js-array-ref this index %this))
+
+;*---------------------------------------------------------------------*/
+;*    napi-has-element ...                                             */
+;*---------------------------------------------------------------------*/
+(define (napi-has-element %this this index)
+   (js-has-property this index %this))
+
+;*---------------------------------------------------------------------*/
+;*    napi-delete-element! ...                                         */
+;*---------------------------------------------------------------------*/
+(define (napi-delete-element! %this this index)
+   (js-delete! this index #f %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    napi-set-element! ...                                            */
@@ -149,6 +177,18 @@
 (define (napi-create-array %this)
    (js-vector->jsarray (vector 4) %this))
 
+;*---------------------------------------------------------------------*/
+;*    napi-create-array-with-length ...                                */
+;*---------------------------------------------------------------------*/
+(define (napi-create-array-with-length %this len)
+   (js-vector->jsarray (vector len) %this))
+
+;*---------------------------------------------------------------------*/
+;*    napi-is-array? ...                                               */
+;*---------------------------------------------------------------------*/
+(define (napi-is-array? obj)
+   (js-array? obj))
+   
 ;*---------------------------------------------------------------------*/
 ;*    napi-typeof ...                                                  */
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 24 15:38:53 2023                          */
-/*    Last change :  Sun Mar 12 12:28:01 2023 (serrano)                */
+/*    Last change :  Tue Mar 14 14:25:53 2023 (serrano)                */
 /*    Copyright   :  2023 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop Specific macro redefinitions                                 */
@@ -16,6 +16,7 @@
 /*---------------------------------------------------------------------*/
 /*    Imports                                                          */
 /*---------------------------------------------------------------------*/
+extern int bgl_napi_is_array(obj_t);
 extern int bgl_napi_typeof(obj_t, obj_t);
 extern obj_t bgl_napi_throw(obj_t, obj_t);
 extern obj_t bgl_napi_throw_error(obj_t, char *, char *);
@@ -25,12 +26,16 @@ extern obj_t bgl_napi_create_string_utf8(obj_t, obj_t);
 extern obj_t bgl_napi_create_function(obj_t, obj_t, obj_t);
 extern obj_t bgl_napi_create_object(obj_t);
 extern obj_t bgl_napi_create_array(obj_t);
+extern obj_t bgl_napi_create_array_with_length(obj_t, long);
 extern obj_t bgl_napi_create_promise(obj_t, obj_t);
 
+extern bool_t bgl_napi_has_element(obj_t, obj_t, int);
+extern obj_t bgl_napi_delete_element(obj_t, obj_t, int);
 extern obj_t bgl_napi_get_element(obj_t, obj_t, int);
 extern obj_t bgl_napi_set_element(obj_t, obj_t, int, obj_t);
 extern obj_t bgl_napi_get_named_property(obj_t, obj_t, obj_t);
 extern obj_t bgl_napi_put_named_property(obj_t, obj_t, obj_t, obj_t);
+extern uint32_t bgl_napi_get_array_length(obj_t, obj_t);
 extern obj_t bgl_napi_define_property(napi_env _this, obj_t this, obj_t prop, obj_t met);
 extern napi_status napi_define_properties(napi_env _this, napi_value this, size_t count, const napi_property_descriptor *properties);
 
@@ -120,6 +125,9 @@ struct napi_async_work__ {
 #define napi_create_array(_this, res) \
   (*res = bgl_napi_create_array(_this), napi_ok)
 
+#define napi_create_array_with_length(_this, len, res)	\
+   (*res = bgl_napi_create_array_with_length(_this, len), napi_ok)
+
 #define napi_create_promise(_this, deferred, res) \
   (*res = bgl_napi_create_promise(_this, (obj_t)deferred), napi_ok)
 
@@ -140,7 +148,16 @@ struct napi_async_work__ {
 
 #define napi_get_undefined(env, res) \
   (*res = BUNSPEC, napi_ok)
-  
+
+#define napi_get_boolean(env, val, res) \
+   (*res = BBOOL(val), napi_ok)
+
+#define napi_has_element(_this, this, index, res) \
+  (*res = bgl_napi_has_element(_this, this, index), napi_ok)
+
+#define napi_delete_element(_this, this, index, res) \
+   (*res = CBOOL(bgl_napi_delete_element(_this, this, index)), napi_ok)
+
 #define napi_get_element(_this, this, index, res) \
   (*res = bgl_napi_get_element(_this, this, index), napi_ok)
 
@@ -153,8 +170,14 @@ struct napi_async_work__ {
 #define napi_call_function(_this, global, fun, argc, argv, res) \
   bgl_napi_call_function_res(_this, global, fun, argc, argv, res)
 
+#define napi_is_array(_this, val, res) \
+   (*res = bgl_napi_is_array(val), napi_ok)
+
 #define napi_typeof(_this, val, res) \
   (*res = (napi_valuetype)bgl_napi_typeof(_this, val), napi_ok)
+
+#define napi_get_array_length(_this, val, res) \
+  (*res = bgl_napi_get_array_length(_this, val), napi_ok)
 
 #define napi_get_value_double(_this, val, res) \
   (INTEGERP(val) \
@@ -162,8 +185,20 @@ struct napi_async_work__ {
    : REALP(val) \
    ? (*res = REAL_TO_DOUBLE(val), napi_ok) \
    : napi_number_expected)
-#endif
 
+#define napi_get_value_int32(_this, val, res) \
+  (INTEGERP(val) \
+   ? (*res = CINT(val), napi_ok) \
+   : REALP(val) \
+   ? (*res = REAL_TO_DOUBLE(val), napi_ok) \
+   : napi_number_expected)
+   
 #define napi_delete_async_work(env, work) \
   (free(work), napi_ok)
+
+/*---------------------------------------------------------------------*/
+/*    endif                                                            */
+/*---------------------------------------------------------------------*/
+#endif
+
 

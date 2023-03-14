@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 24 14:34:24 2023                          */
-/*    Last change :  Mon Mar 13 08:20:04 2023 (serrano)                */
+/*    Last change :  Tue Mar 14 14:33:27 2023 (serrano)                */
 /*    Copyright   :  2023 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop node_api implementation.                                     */
@@ -57,7 +57,7 @@ static obj_t napi_method_stub(obj_t proc, ...) {
    while ((runner = va_arg(argl, obj_t)) != BEOA) cnt++;
    va_end(argl);
 
-   args = alloca((2 + cnt) * sizeof(obj_t));
+   args = alloca((2 + 1 + cnt) * sizeof(obj_t));
    args[cnt] = 0;
    args[0] = PROCEDURE_LENGTH(proc) == 1 ? PROCEDURE_REF(proc, 0) : 0L;
    cnt = 1;
@@ -67,6 +67,7 @@ static obj_t napi_method_stub(obj_t proc, ...) {
    while ((runner = va_arg(argl, obj_t)) != BEOA) {
       args[cnt++] = runner;
    }
+   args[cnt] = BEOA;
 
    va_end(argl);
 
@@ -157,7 +158,7 @@ napi_get_cb_info(napi_env _this, napi_callback_info info, size_t *argc, napi_val
    if (argv) {
       if (argc) {
 	 int max = *argc;
-	 while(info[i + 2] != 0 && i < max) {
+	 while(info[i + 2] != BEOA && i < max) {
 	    argv[i] = info[i + 2];
 	    i++;
 	 }
@@ -166,9 +167,11 @@ napi_get_cb_info(napi_env _this, napi_callback_info info, size_t *argc, napi_val
 	    while (i < max) {
 	       argv[i++] = BUNSPEC;
 	    }
+	 } else {
+	    *argc = i;
 	 }
       } else {
-	 while(info[i + 2] != 0) {
+	 while(info[i + 2] != BEOA) {
 	    argv[i] = info[i + 2];
 	    i++;
 	 }
