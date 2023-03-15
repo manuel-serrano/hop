@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 24 14:34:24 2023                          */
-/*    Last change :  Wed Mar 15 08:39:59 2023 (serrano)                */
+/*    Last change :  Wed Mar 15 09:29:53 2023 (serrano)                */
 /*    Copyright   :  2023 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop node_api implementation.                                     */
@@ -338,7 +338,7 @@ napi_get_value_bigint_words(napi_env env,
    if (BIGNUMP(value)) {
 #if (BGL_HAVE_GMP)
       if (BXPOSITIVE(value)) *sign_bit = 1;
-      mpz_import(&(BIGNUM(value).mpz), *word_count, 1, sizeof(int64_t), 0, 0, words);
+      mpz_export((void *)words, word_count, 1, sizeof(int64_t), 0, 0, &(BIGNUM(value).mpz));
       return napi_ok;
 #else
       return napi_invalid_arg;
@@ -346,6 +346,24 @@ napi_get_value_bigint_words(napi_env env,
    } else {
       return napi_bigint_expected;
    }
+}
+
+/*---------------------------------------------------------------------*/
+/*    static obj_t                                                     */
+/*    make_bignum ...                                                  */
+/*---------------------------------------------------------------------*/
+static obj_t
+make_bignum(size_t sz) {
+#define BIGNUM_ALLOC_SIZE(sz) \
+   (BIGNUM_SIZE + ((sz) * sizeof(mp_limb_t)))
+
+   obj_t o = GC_MALLOC_ATOMIC(BIGNUM_ALLOC_SIZE(sz));
+   
+   o->bignum.header = MAKE_HEADER(BIGNUM_TYPE, 0);
+   o->bignum.mpz._mp_d = (mp_limb_t *)&(o->bignum.mp_d);
+   o->bignum.mpz._mp_alloc = sz;
+
+   return BREF(o);
 }
 
 /*---------------------------------------------------------------------*/
@@ -359,6 +377,11 @@ napi_create_bigint_words(napi_env env,
 			 const uint64_t* words,
 			 napi_value* result) {
 #if (BGL_HAVE_GMP)
+   obj_t x = make_bignum(sizeof(uint64_t) * word_count);
+   mpz_import(&(BIGNUM(x).mpz), word_count, 1, sizeof(int64_t), 0, 0, words);
+
+   *result = x;
+   return napi_ok;
 #else
    return napi_bigint_expected;
 #endif
