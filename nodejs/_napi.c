@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 24 14:34:24 2023                          */
-/*    Last change :  Tue Mar 14 14:33:27 2023 (serrano)                */
+/*    Last change :  Wed Mar 15 07:23:46 2023 (serrano)                */
 /*    Copyright   :  2023 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop node_api implementation.                                     */
@@ -323,4 +323,45 @@ napi_cancel_async_work(napi_env env, napi_async_work work) {
       work->complete(work->env, napi_cancelled, work->data);
       return napi_ok;
    }
+}
+
+/*---------------------------------------------------------------------*/
+/*    BGL_RUNTIME_DEF napi_status                                      */
+/*    napi_get_value_bigint_words ...                                  */
+/*---------------------------------------------------------------------*/
+BGL_RUNTIME_DEF napi_status
+napi_get_value_bigint_words(napi_env env,
+			    napi_value value,
+			    int* sign_bit,
+			    size_t* word_count,
+			    uint64_t* words) {
+   if (BIGNUMP(value)) {
+#if (BGL_HAVE_GMP)
+      mpz_t rop = &(BIGNUM(x).mpz);
+
+      if (mpz->_mp_size > 0) sign_bit = 1;
+      mpz_import (rop, *word_count, 1, sizeof(int64), 0, 0, words);
+      return napi_ok;
+#else
+      return napi_invalid_arg;
+#endif
+   } else {
+      return napi_bigint_expected;
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    BGL_RUNTIME_DEF napi_status                                      */
+/*    napi_create_bigint_words ...                                     */
+/*---------------------------------------------------------------------*/
+BGL_RUNTIME_DEF napi_status
+napi_status napi_create_bigint_words(napi_env env,
+                                     int sign_bit,
+                                     size_t word_count,
+                                     const uint64_t* words,
+                                     napi_value* result) {
+#if (BGL_HAVE_GMP)
+#else
+   return napi_bigint_expected;
+#endif
 }
