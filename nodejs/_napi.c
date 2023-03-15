@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 24 14:34:24 2023                          */
-/*    Last change :  Wed Mar 15 07:23:46 2023 (serrano)                */
+/*    Last change :  Wed Mar 15 08:39:59 2023 (serrano)                */
 /*    Copyright   :  2023 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop node_api implementation.                                     */
@@ -337,10 +337,8 @@ napi_get_value_bigint_words(napi_env env,
 			    uint64_t* words) {
    if (BIGNUMP(value)) {
 #if (BGL_HAVE_GMP)
-      mpz_t rop = &(BIGNUM(x).mpz);
-
-      if (mpz->_mp_size > 0) sign_bit = 1;
-      mpz_import (rop, *word_count, 1, sizeof(int64), 0, 0, words);
+      if (BXPOSITIVE(value)) *sign_bit = 1;
+      mpz_import(&(BIGNUM(value).mpz), *word_count, 1, sizeof(int64_t), 0, 0, words);
       return napi_ok;
 #else
       return napi_invalid_arg;
@@ -355,11 +353,11 @@ napi_get_value_bigint_words(napi_env env,
 /*    napi_create_bigint_words ...                                     */
 /*---------------------------------------------------------------------*/
 BGL_RUNTIME_DEF napi_status
-napi_status napi_create_bigint_words(napi_env env,
-                                     int sign_bit,
-                                     size_t word_count,
-                                     const uint64_t* words,
-                                     napi_value* result) {
+napi_create_bigint_words(napi_env env,
+			 int sign_bit,
+			 size_t word_count,
+			 const uint64_t* words,
+			 napi_value* result) {
 #if (BGL_HAVE_GMP)
 #else
    return napi_bigint_expected;
