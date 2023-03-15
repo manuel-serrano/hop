@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 24 16:10:01 2023                          */
-;*    Last change :  Tue Mar 14 14:28:22 2023 (serrano)                */
+;*    Last change :  Wed Mar 15 17:29:06 2023 (serrano)                */
 ;*    Copyright   :  2023 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The Scheme part of the node_api.                                 */
@@ -33,6 +33,7 @@
 
 	   (export napi-throw "bgl_napi_throw")
 	   (export napi-throw-error "bgl_napi_throw_error")
+	   (export napi-throw-range-error "bgl_napi_throw_range_error")
 	   (export napi-create-string-utf8 "bgl_napi_create_string_utf8")
 	   (export napi-get-element "bgl_napi_get_element")
 	   (export napi-set-element! "bgl_napi_set_element")
@@ -53,6 +54,7 @@
    
    (export (napi-throw ::obj ::obj)
 	   (napi-throw-error ::obj ::string ::string)
+	   (napi-throw-range-error ::obj ::string ::string)
 	   (napi-create-string-utf8::obj ::obj ::bstring)
 	   (napi-get-named-property::obj ::obj ::obj ::bstring)
 	   (napi-put-named-property!::obj ::obj ::obj ::bstring ::obj)
@@ -81,6 +83,17 @@
 ;*    napi-throw-error ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (napi-throw-error %this code msg)
+   (raise
+      (instantiate::JsError
+	 (name code)
+	 (msg msg)
+	 (stack (get-trace-stack))
+	 (%this %this))))
+
+;*---------------------------------------------------------------------*/
+;*    napi-throw-range-error ...                                       */
+;*---------------------------------------------------------------------*/
+(define (napi-throw-range-error %this code msg)
    (raise
       (instantiate::JsError
 	 (name code)

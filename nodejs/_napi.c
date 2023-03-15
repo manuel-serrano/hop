@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 24 14:34:24 2023                          */
-/*    Last change :  Wed Mar 15 09:29:53 2023 (serrano)                */
+/*    Last change :  Wed Mar 15 16:46:59 2023 (serrano)                */
 /*    Copyright   :  2023 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop node_api implementation.                                     */
@@ -332,12 +332,12 @@ napi_cancel_async_work(napi_env env, napi_async_work work) {
 BGL_RUNTIME_DEF napi_status
 napi_get_value_bigint_words(napi_env env,
 			    napi_value value,
-			    int* sign_bit,
-			    size_t* word_count,
-			    uint64_t* words) {
+			    int *sign_bit,
+			    size_t *word_count,
+			    uint64_t *words) {
    if (BIGNUMP(value)) {
 #if (BGL_HAVE_GMP)
-      if (BXPOSITIVE(value)) *sign_bit = 1;
+      if (sign_bit) *sign_bit = BXNEGATIVE(value);
       mpz_export((void *)words, word_count, 1, sizeof(int64_t), 0, 0, &(BIGNUM(value).mpz));
       return napi_ok;
 #else
@@ -377,10 +377,20 @@ napi_create_bigint_words(napi_env env,
 			 const uint64_t* words,
 			 napi_value* result) {
 #if (BGL_HAVE_GMP)
-   obj_t x = make_bignum(sizeof(uint64_t) * word_count);
-   mpz_import(&(BIGNUM(x).mpz), word_count, 1, sizeof(int64_t), 0, 0, words);
+   if (!word_count) {
+      *result = bgl_int64_to_bignum((int64_t)0);
+   } else if (word_count > 100) {
+      bgl_napi_throw_range_error(env, "napi_create_bigint_words", "size too large");
+      return napi_invalid_arg;
+   } else {
+      obj_t x = make_bignum(sizeof(uint64_t) * word_count);
+      mpz_import(&(BIGNUM(x).mpz), word_count, 1, sizeof(int64_t), 0, 0, words);
 
-   *result = x;
+      if (sign_bit) {
+	 mpz_neg(&(BIGNUM(x).mpz), &(BIGNUM(x).mpz));
+      }
+      *result = x;
+   }
    return napi_ok;
 #else
    return napi_bigint_expected;

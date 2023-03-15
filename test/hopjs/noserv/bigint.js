@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Jun 30 17:54:33 2015                          */
-/*    Last change :  Wed Jul  7 08:06:32 2021 (serrano)                */
-/*    Copyright   :  2015-21 Manuel Serrano                            */
+/*    Last change :  Wed Mar 15 21:34:20 2023 (serrano)                */
+/*    Copyright   :  2015-23 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript bigint                                        */
 /*=====================================================================*/
@@ -21,6 +21,7 @@ assert.equal(0n.toString(), "0", "toString");
 assert.ok(0n == 0, "==");
 assert.ok(1n == 1, "==");
 assert.ok(0xfn == 15, "==");
+assert.ok(-(-(2n ** 63n)) === (2n ** 63n), "-n");
 
 /*---------------------------------------------------------------------*/
 /*    mdn                                                              */

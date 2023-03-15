@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    /tmp/HOP/hop/hopscript/arithmetic.scm                            */
+;*    serrano/prgm/project/hop/hop/hopscript/arithmetic.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 07:42:21 2017                          */
-;*    Last change :  Sat Jun 25 16:57:01 2022 (serrano)                */
-;*    Copyright   :  2017-22 Manuel Serrano                            */
+;*    Last change :  Wed Mar 15 21:35:57 2023 (serrano)                */
+;*    Copyright   :  2017-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JS arithmetic operations (see 32 and 64 implementations).        */
 ;*=====================================================================*/
@@ -415,13 +415,19 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.4.7       */
 ;*---------------------------------------------------------------------*/
 (define (negjs expr)
-   (if (fixnum? expr)
+   (cond
+      ((fixnum? expr)
        (if (=fx expr 0)
 	   -0.0
-	   (negfx expr))
+	   (negfx expr)))
+      ((flonum? expr)
        (if (=fl expr 0.0)
 	   (if (=fx (signbitfl expr) 0) -0.0 +0.0)
-	   (negfl expr))))
+	   (negfl expr)))
+      ((bignum? expr)
+       (negbx expr))
+      (else
+       (error "-" "not a number" expr))))
 
 ;*---------------------------------------------------------------------*/
 ;*    oplr!fl ...                                                      */

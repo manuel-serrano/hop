@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 24 15:38:53 2023                          */
-/*    Last change :  Wed Mar 15 06:07:13 2023 (serrano)                */
+/*    Last change :  Wed Mar 15 17:18:40 2023 (serrano)                */
 /*    Copyright   :  2023 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop Specific macro redefinitions                                 */
@@ -18,13 +18,14 @@
 /*---------------------------------------------------------------------*/
 extern int64_t bgl_bignum_to_int64(obj_t x);
 extern uint64_t bgl_bignum_to_uint64(obj_t x);
-extern obj_t bgl_int64_to_bignum(obj_t, int64_t);
-extern obj_t bgl_uint64_to_bignum(obj_t, uint64_t);
+extern obj_t bgl_int64_to_bignum(int64_t);
+extern obj_t bgl_uint64_to_bignum(uint64_t);
 
 extern int bgl_napi_is_array(obj_t);
 extern int bgl_napi_typeof(obj_t, obj_t);
 extern obj_t bgl_napi_throw(obj_t, obj_t);
 extern obj_t bgl_napi_throw_error(obj_t, char *, char *);
+extern obj_t bgl_napi_throw_range_error(obj_t, char *, char *);
 
 extern obj_t bgl_napi_create_double(obj_t, obj_t, napi_value *result);
 extern obj_t bgl_napi_create_string_utf8(obj_t, obj_t);
@@ -137,10 +138,10 @@ struct napi_async_work__ {
    (*res = bgl_napi_create_promise(_this, (obj_t)deferred), napi_ok)
 
 #define napi_create_bigint_int64(_this, int64, res) \
-   (*res = bgl_int64_to_bignum(_this, int64), napi_ok)
+   (*res = bgl_int64_to_bignum(int64), napi_ok)
 
 #define napi_create_bigint_uint64(_this, uint64, res) \
-   (*res = bgl_uint64_to_bignum(_this, uint64), napi_ok)
+   (*res = bgl_uint64_to_bignum(uint64), napi_ok)
 
 #define napi_resolve_deferred(_this, deferred, value) \
   (bgl_napi_call_function(_this, BUNSPEC, CAR(deferred), 1, &value), napi_ok)
@@ -208,15 +209,16 @@ struct napi_async_work__ {
    : REALP(val) \
    ? (*res = REAL_TO_DOUBLE(val), napi_ok) \
    : napi_number_expected)
+#define BXALLOC(x) (BIGNUM(x).mpz._mp_alloc)
 
-#define napi_get_value_bigint_int64(_this, val, res, lossles) \
+#define napi_get_value_bigint_int64(_this, val, res, lossless) \
    (BIGNUMP(val) \
-   ? (*res = bgl_bignum_to_int64(val), napi_ok) \
+    ? (*res = bgl_bignum_to_int64(val), *lossless = BXALLOC(val) < 4, napi_ok) \
    : napi_bigint_expected)
 
-#define napi_get_value_bigint_uint64(_this, val, res, lossles) \
+#define napi_get_value_bigint_uint64(_this, val, res, lossless) \
    (BIGNUMP(val) \
-   ? (*res = bgl_bignum_to_uint64(val), napi_ok) \
+    ? (*res = bgl_bignum_to_uint64(val), *lossless = (!BXNEGATIVE(val) && BXALLOC(val) < 4), napi_ok) \
    : napi_bigint_expected)
 
 #define napi_delete_async_work(env, work) \
