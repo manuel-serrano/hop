@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 24 14:34:24 2023                          */
-/*    Last change :  Thu Mar 16 05:40:03 2023 (serrano)                */
+/*    Last change :  Thu Mar 16 06:17:33 2023 (serrano)                */
 /*    Copyright   :  2023 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop node_api implementation.                                     */
@@ -44,7 +44,8 @@ napi_module_register(napi_module *mod) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    Local functions                                                  */
+/*    static obj_t                                                     */
+/*    napi_method_stub ...                                             */
 /*---------------------------------------------------------------------*/
 static obj_t napi_method_stub(obj_t proc, ...) {
    va_list argl;
@@ -75,6 +76,54 @@ static obj_t napi_method_stub(obj_t proc, ...) {
 }
 
 /*---------------------------------------------------------------------*/
+/*    static obj_t                                                     */
+/*    napi_ctor_stub ...                                               */
+/*---------------------------------------------------------------------*/
+static obj_t napi_ctor_stub(obj_t proc, ...) {
+   va_list argl;
+   obj_t optional;
+   obj_t runner;
+   long cnt = 0;
+   obj_t *args;
+   obj_t this;
+   obj_t _this = PROCEDURE_ATTR(proc);
+   long prop_count = (long)PROCEDURE_REF(proc, 1);
+   napi_property_descriptor *props = (napi_property_descriptor *)PROCEDURE_REF(proc, 2);
+   fprintf(stderr, "<<< props=%p\n", props);
+
+   va_start(argl, proc);
+   while ((runner = va_arg(argl, obj_t)) != BEOA) cnt++;
+   va_end(argl);
+
+   args = alloca((2 + 1 + cnt) * sizeof(obj_t));
+   args[cnt] = 0;
+   args[0] = PROCEDURE_REF(proc, 0);
+   cnt = 1;
+
+   va_start(argl, proc);
+
+   while ((runner = va_arg(argl, obj_t)) != BEOA) {
+      args[cnt++] = runner;
+   }
+   args[cnt] = BEOA;
+
+   va_end(argl);
+
+   this = PROCEDURE_VA_ENTRY(proc)(_this, args);
+
+   // bind the instance properties
+   for (long i = 0; i < prop_count; i++) {
+      napi_property_descriptor prop = props[i];
+      fprintf(stderr, "<<< i=%d name=%s\n", i, prop.utf8name);
+      if (prop.attributes & napi_static == napi_static) {
+	 bgl_napi_put_named_property(_this, this, string_to_bstring((char *)prop.utf8name), prop.value);
+      }
+   }
+   
+   return this;
+}
+
+/*---------------------------------------------------------------------*/
 /*    obj_t                                                            */
 /*    bgl_napi_method_to_procedure ...                                 */
 /*---------------------------------------------------------------------*/
@@ -83,9 +132,32 @@ bgl_napi_method_to_procedure(napi_env _this, napi_value this, napi_callback met,
    obj_t proc = make_va_procedure((function_t)met, -1, data ? 1 : 0);
    PROCEDURE(proc).entry = (function_t)napi_method_stub;
    PROCEDURE_ATTR_SET(proc, _this);
+
    if (data) {
       PROCEDURE_SET(proc, 0, data);
    }
+   return proc;
+}
+
+/*---------------------------------------------------------------------*/
+/*    obj_t                                                            */
+/*    bgl_napi_method_to_procedure ...                                 */
+/*---------------------------------------------------------------------*/
+static obj_t
+bgl_napi_method_to_ctor(napi_env _this, napi_value this, napi_callback met, void *data, size_t property_count, const napi_property_descriptor* properties) {
+   obj_t proc = make_va_procedure((function_t)met, -1, 3);
+
+   PROCEDURE(proc).entry = (function_t)napi_ctor_stub;
+   PROCEDURE_ATTR_SET(proc, _this);
+
+   fprintf(stderr, ">>> props=%p %d\n", properties, property_count);
+   for (long i = 0; i < property_count; i++) {
+      fprintf(stderr, "N=%s\n", properties[i].utf8name);
+   }
+   PROCEDURE_SET(proc, 0, data);
+   PROCEDURE_SET(proc, 1, (void *)property_count);
+   PROCEDURE_SET(proc, 2, (void *)properties);
+   
    return proc;
 }
 
@@ -101,6 +173,25 @@ napi_create_function(napi_env _this,
 		     void* data,
 		     napi_value* result) {
    obj_t proc = bgl_napi_method_to_procedure(_this, BNIL, cb, data);
+
+   *result = bgl_napi_create_function(_this, proc, string_to_bstring((char *)utf8name));
+   return napi_ok;
+}
+
+/*---------------------------------------------------------------------*/
+/*    BGL_RUNTIME_DEF napi_status                                      */
+/*    napi_define_class ...                                            */
+/*---------------------------------------------------------------------*/
+BGL_RUNTIME_DEF napi_status
+napi_define_class(napi_env _this,
+		  const char* utf8name,
+		  size_t length,
+		  napi_callback ctor,
+		  void* data,
+		  size_t property_count,
+		  const napi_property_descriptor* properties,
+		  napi_value* result) {
+   obj_t proc = bgl_napi_method_to_ctor(_this, BNIL, ctor, data, property_count, properties);
 
    *result = bgl_napi_create_function(_this, proc, string_to_bstring((char *)utf8name));
    return napi_ok;
