@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 24 14:34:24 2023                          */
-/*    Last change :  Thu Mar 16 05:07:27 2023 (serrano)                */
+/*    Last change :  Thu Mar 16 05:40:03 2023 (serrano)                */
 /*    Copyright   :  2023 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop node_api implementation.                                     */
@@ -402,7 +402,7 @@ BGL_RUNTIME_DEF napi_status
 napi_get_value_bigint_uint64(napi_env _this, napi_value value, uint64_t *res, bool *lossless) {
    if (BIGNUMP(value)) {
       *res = bgl_bignum_to_uint64(value);
-      *lossless = BXALLOC(value) < 4;
+      *lossless = !BXNEGATIVE(value) && BXALLOC(value) < 4;
       return napi_ok;;
    } else {
       return napi_bigint_expected;

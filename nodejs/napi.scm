@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 24 16:10:01 2023                          */
-;*    Last change :  Thu Mar 16 05:24:05 2023 (serrano)                */
+;*    Last change :  Thu Mar 16 05:44:10 2023 (serrano)                */
 ;*    Copyright   :  2023 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The Scheme part of the node_api.                                 */
@@ -86,7 +86,7 @@
 ;*    napi-get-trace-stack ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-inline (napi-get-trace-stack)
-   (when env-debug (get-trace-stack)))
+   (when (>fx env-debug 0) (get-trace-stack)))
 
 ;*---------------------------------------------------------------------*/
 ;*    napi-throw-error ...                                             */
