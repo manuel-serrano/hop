@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Mon Mar 13 07:18:38 2023 (serrano)                */
+#*    Last change :  Thu Mar 16 06:01:37 2023 (serrano)                */
 #*    Copyright   :  2004-23 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -1593,6 +1593,7 @@ echo ";* Automatically generated file (don't edit) */" > $init
 cat etc/scheme2js.init.in \
     | sed -e "s|@VERSION@|$version|" \
           -e "s|@BRANCH@|$branch|" \
+          -e "s|@BIGLOOCLOSELIBS@|$bglcloselibs|" \
     >> $init
 echo "" >> $init
 chmod a-w $init
@@ -1608,6 +1609,7 @@ echo ";* Automatically generated file (don't edit) */" > $init
 cat etc/hopscheme.init.in \
     | sed -e "s|@VERSION@|$version|" \
           -e "s|@BRANCH@|$branch|" \
+          -e "s|@BIGLOOCLOSELIBS@|$bglcloselibs|" \
     >> $init
 echo "" >> $init
 chmod a-w $init
@@ -1624,6 +1626,7 @@ if [ "$arch " = "android " ]; then
   cat etc/hopdroid.init.in \
       | sed -e "s|@VERSION@|$version|" \
             -e "s|@BRANCH@|$branch|" \
+            -e "s|@BIGLOOCLOSELIBS@|$bglcloselibs|" \
       >> $init
   echo "" >> $init
   chmod a-w $init
@@ -1659,6 +1662,7 @@ echo ";* Automatically generated file (don't edit) */" > $init
 cat etc/js2scheme.init.in \
     | sed -e "s|@VERSION@|$version|" \
           -e "s|@BRANCH@|$branch|" \
+          -e "s|@BIGLOOCLOSELIBS@|$bglcloselibs|" \
     >> $init
 echo "" >> $init
 chmod a-w $init
@@ -1762,6 +1766,7 @@ for init in hop-autoconf.js hop-boot.js; do
           -e "s|@BUILDID@|$buildid|" \
           -e "s|@BUILDTAG@|$buildtag|" \
           -e 's|//[^\"]*$||g' \
+          -e "s|@BIGLOOCLOSELIBS@|$bglcloselibs|" \
 	  >> share/$init
   echo "" >> share/$init
   chmod a-w share/$init
