@@ -23,6 +23,8 @@
 ;*---------------------------------------------------------------------*/
 (cond-expand
    (bigloo-compile
+    ;; required libraries for HOP
+    (for-each use-library! '(@BIGLOOCLOSELIBS@))
     (set! *additional-bigloo-libraries* *additional-bigloo-libraries*))
    (bigloo-eval
     #unspecified))
