@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 24 15:38:53 2023                          */
-/*    Last change :  Thu Mar 16 05:07:39 2023 (serrano)                */
+/*    Last change :  Thu Mar 16 17:24:44 2023 (serrano)                */
 /*    Copyright   :  2023 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop Specific macro redefinitions                                 */
@@ -35,12 +35,17 @@ extern obj_t bgl_napi_create_array(obj_t);
 extern obj_t bgl_napi_create_array_with_length(obj_t, long);
 extern obj_t bgl_napi_create_promise(obj_t, obj_t);
 
+extern napi_status napi_define_class(napi_env _this, const char* utf8name, size_t length, napi_callback ctor, void *data, size_t property_count, const napi_property_descriptor *properties, napi_value *result);
+
 extern bool_t bgl_napi_has_element(obj_t, obj_t, int);
 extern obj_t bgl_napi_delete_element(obj_t, obj_t, int);
 extern obj_t bgl_napi_get_element(obj_t, obj_t, int);
 extern obj_t bgl_napi_set_element(obj_t, obj_t, int, obj_t);
 extern obj_t bgl_napi_get_named_property(obj_t, obj_t, obj_t);
 extern obj_t bgl_napi_put_named_property(obj_t, obj_t, obj_t, obj_t);
+extern obj_t bgl_napi_define_named_property(obj_t, obj_t, obj_t, obj_t,
+					     bool_t, bool_t, bool_t,
+					     obj_t, obj_t);
 extern uint32_t bgl_napi_get_array_length(obj_t, obj_t);
 extern obj_t bgl_napi_define_property(napi_env _this, obj_t this, obj_t prop, obj_t met);
 extern napi_status napi_define_properties(napi_env _this, napi_value this, size_t count, const napi_property_descriptor *properties);

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 24 16:10:01 2023                          */
-;*    Last change :  Thu Mar 16 15:18:01 2023 (serrano)                */
+;*    Last change :  Thu Mar 16 18:14:04 2023 (serrano)                */
 ;*    Copyright   :  2023 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The Scheme part of the node_api.                                 */
@@ -39,6 +39,7 @@
 	   (export napi-set-element! "bgl_napi_set_element")
 	   (export napi-get-named-property "bgl_napi_get_named_property")
 	   (export napi-put-named-property! "bgl_napi_put_named_property")
+	   (export napi-define-named-property! "bgl_napi_define_named_property")
 	   (export napi-get-array-length "bgl_napi_get_array_length")
 	   (export napi-has-element "bgl_napi_has_element")
 	   (export napi-delete-element! "bgl_napi_delete_element")
@@ -58,6 +59,7 @@
 	   (napi-create-string-utf8::obj ::obj ::bstring)
 	   (napi-get-named-property::obj ::obj ::obj ::bstring)
 	   (napi-put-named-property!::obj ::obj ::obj ::bstring ::obj)
+	   (napi-define-named-property! ::obj ::obj ::bstring ::obj ::bool ::bool ::bool ::obj ::obj)
 	   (napi-get-array-length::uint32 ::obj ::obj)
 	   (napi-has-element::bool ::obj ::obj ::int)
 	   (napi-delete-element!::obj ::obj ::obj ::int)
@@ -135,6 +137,38 @@
    (js-put! this (js-string->name prop) val #f %this))
 
 ;*---------------------------------------------------------------------*/
+;*    napi-define-named-property! ...                                  */
+;*---------------------------------------------------------------------*/
+(define (napi-define-named-property! %this this prop val writable enumerable configurable get set)
+   (tprint "DEFINE-NAMED-PROP prop=" prop " " writable)
+   (let ((name (js-string->name prop)))
+      
+      (js-define-own-property this name
+	 (cond
+	    ((and (not get) (not set))
+	     (instantiate::JsValueDescriptor
+		(name name)
+		(configurable configurable)
+		(enumerable enumerable)
+		(writable writable)
+		(value val)))
+	    (else
+	     (instantiate::JsAccessorDescriptor
+		(name name)
+		(configurable configurable)
+		(enumerable enumerable)
+		(get get)
+		(set set)
+		(%get (if get
+			  (with-access::JsProcedure get (procedure) procedure)
+			  (lambda (this) (js-undefined))))
+		(%set (if set
+			  (with-access::JsProcedure set (procedure) procedure)
+			  (lambda (this v) (js-undefined)))))))
+	 #t
+	 %this)))
+
+;*---------------------------------------------------------------------*/
 ;*    napi-get-array-length ...                                        */
 ;*---------------------------------------------------------------------*/
 (define (napi-get-array-length %this this)
@@ -179,7 +213,7 @@
 ;*    napi-create-function ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (napi-create-function %this fun name)
-   (tprint "napi-create-function fun=" fun " name=" name " %THIS=" (typeof %this))
+   (tprint "CREATE-FUNCTION name=" name " " (typeof name))
    (js-make-function %this fun
       (js-function-arity fun)
       (js-function-info :name name :len 1)
