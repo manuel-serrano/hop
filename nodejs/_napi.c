@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 24 14:34:24 2023                          */
-/*    Last change :  Thu Mar 16 06:17:33 2023 (serrano)                */
+/*    Last change :  Thu Mar 16 13:53:43 2023 (serrano)                */
 /*    Copyright   :  2023 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop node_api implementation.                                     */
@@ -33,6 +33,8 @@ extern obj_t hop_js_calln(obj_t, obj_t, obj_t, obj_t);
 extern char *bgl_typeof();
 
 extern uv_loop_t *bgl_napi_uvloop(obj_t);
+
+static obj_t bgl_napi_method_to_procedure(napi_env _this, napi_value this, napi_callback met, void *data);
 
 /*---------------------------------------------------------------------*/
 /*    void                                                             */
@@ -87,9 +89,6 @@ static obj_t napi_ctor_stub(obj_t proc, ...) {
    obj_t *args;
    obj_t this;
    obj_t _this = PROCEDURE_ATTR(proc);
-   long prop_count = (long)PROCEDURE_REF(proc, 1);
-   napi_property_descriptor *props = (napi_property_descriptor *)PROCEDURE_REF(proc, 2);
-   fprintf(stderr, "<<< props=%p\n", props);
 
    va_start(argl, proc);
    while ((runner = va_arg(argl, obj_t)) != BEOA) cnt++;
@@ -112,11 +111,11 @@ static obj_t napi_ctor_stub(obj_t proc, ...) {
    this = PROCEDURE_VA_ENTRY(proc)(_this, args);
 
    // bind the instance properties
-   for (long i = 0; i < prop_count; i++) {
-      napi_property_descriptor prop = props[i];
-      fprintf(stderr, "<<< i=%d name=%s\n", i, prop.utf8name);
-      if (prop.attributes & napi_static == napi_static) {
-	 bgl_napi_put_named_property(_this, this, string_to_bstring((char *)prop.utf8name), prop.value);
+   for (long i = 1; i < PROCEDURE_LENGTH(proc); i++) {
+      napi_property_descriptor *prop = (napi_property_descriptor *)PROCEDURE_REF(proc, i);
+      fprintf(stderr, "<<< i=%d name=%s m=%p attrs=%d stat=%d\n", i, prop->utf8name, prop->method, prop->attributes, napi_static);
+      if ((prop->attributes & napi_static) != napi_static) {
+	 bgl_napi_put_named_property(_this, this, string_to_bstring((char *)prop->utf8name), prop->value);
       }
    }
    
@@ -144,19 +143,27 @@ bgl_napi_method_to_procedure(napi_env _this, napi_value this, napi_callback met,
 /*    bgl_napi_method_to_procedure ...                                 */
 /*---------------------------------------------------------------------*/
 static obj_t
-bgl_napi_method_to_ctor(napi_env _this, napi_value this, napi_callback met, void *data, size_t property_count, const napi_property_descriptor* properties) {
-   obj_t proc = make_va_procedure((function_t)met, -1, 3);
+bgl_napi_method_to_ctor(napi_env _this, napi_value this, napi_callback met, void *data, size_t property_count, const napi_property_descriptor *properties) {
+   obj_t proc = make_va_procedure((function_t)met, -1, 1 + property_count);
 
    PROCEDURE(proc).entry = (function_t)napi_ctor_stub;
    PROCEDURE_ATTR_SET(proc, _this);
-
-   fprintf(stderr, ">>> props=%p %d\n", properties, property_count);
-   for (long i = 0; i < property_count; i++) {
-      fprintf(stderr, "N=%s\n", properties[i].utf8name);
-   }
+   
    PROCEDURE_SET(proc, 0, data);
-   PROCEDURE_SET(proc, 1, (void *)property_count);
-   PROCEDURE_SET(proc, 2, (void *)properties);
+
+   for (long i = 0; i < property_count; i++) {
+      napi_property_descriptor *prop = (napi_property_descriptor *)GC_MALLOC(sizeof(napi_property_descriptor));
+      *prop = properties[i];
+      prop->name = string_to_bstring((char *)prop->utf8name);
+      if (prop->method) {
+	 fprintf(stderr, "N=%s\n", prop->utf8name);
+	 obj_t proc = bgl_napi_method_to_procedure(_this, this, prop->method, 0L);
+	 obj_t obj = bgl_napi_create_function(_this, proc, prop->name);
+	 prop->value = obj;
+      }
+
+      PROCEDURE_SET(proc, i + 1, (obj_t)prop);
+   }
    
    return proc;
 }
@@ -187,13 +194,22 @@ napi_define_class(napi_env _this,
 		  const char* utf8name,
 		  size_t length,
 		  napi_callback ctor,
-		  void* data,
+		  void *data,
 		  size_t property_count,
-		  const napi_property_descriptor* properties,
-		  napi_value* result) {
+		  const napi_property_descriptor *properties,
+		  napi_value *result) {
    obj_t proc = bgl_napi_method_to_ctor(_this, BNIL, ctor, data, property_count, properties);
-
+   
    *result = bgl_napi_create_function(_this, proc, string_to_bstring((char *)utf8name));
+
+   for (long i = 0; i < property_count; i++) {
+      // static properties
+      if ((properties[i].attributes & napi_static) == napi_static) {
+	 napi_property_descriptor *val = (napi_property_descriptor *)PROCEDURE_REF(proc, i + 1);
+	 bgl_napi_put_named_property(_this, *result, val->name, val->value);
+      }
+   }
+   
    return napi_ok;
 }
 

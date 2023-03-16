@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 24 16:10:01 2023                          */
-;*    Last change :  Thu Mar 16 07:24:13 2023 (serrano)                */
+;*    Last change :  Thu Mar 16 15:18:01 2023 (serrano)                */
 ;*    Copyright   :  2023 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The Scheme part of the node_api.                                 */
@@ -179,6 +179,7 @@
 ;*    napi-create-function ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (napi-create-function %this fun name)
+   (tprint "napi-create-function fun=" fun " name=" name " %THIS=" (typeof %this))
    (js-make-function %this fun
       (js-function-arity fun)
       (js-function-info :name name :len 1)
