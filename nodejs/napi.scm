@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 24 16:10:01 2023                          */
-;*    Last change :  Wed Mar 15 17:29:06 2023 (serrano)                */
+;*    Last change :  Thu Mar 16 05:24:05 2023 (serrano)                */
 ;*    Copyright   :  2023 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The Scheme part of the node_api.                                 */
@@ -74,6 +74,21 @@
 	   (napi-uvloop::$uv_loop_t ::obj)))
 
 ;*---------------------------------------------------------------------*/
+;*    env-debug ...                                                    */
+;*---------------------------------------------------------------------*/
+(define env-debug
+   (let ((env (getenv "HOP_DEBUG")))
+      (if (string? env)
+	  (string->integer env)
+	  0)))
+
+;*---------------------------------------------------------------------*/
+;*    napi-get-trace-stack ...                                         */
+;*---------------------------------------------------------------------*/
+(define-inline (napi-get-trace-stack)
+   (when env-debug (get-trace-stack)))
+
+;*---------------------------------------------------------------------*/
 ;*    napi-throw-error ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (napi-throw %this obj)
@@ -87,7 +102,7 @@
       (instantiate::JsError
 	 (name code)
 	 (msg msg)
-	 (stack (get-trace-stack))
+	 (stack (napi-get-trace-stack))
 	 (%this %this))))
 
 ;*---------------------------------------------------------------------*/
@@ -98,7 +113,7 @@
       (instantiate::JsError
 	 (name code)
 	 (msg msg)
-	 (stack (get-trace-stack))
+	 (stack (napi-get-trace-stack))
 	 (%this %this))))
 
 ;*---------------------------------------------------------------------*/

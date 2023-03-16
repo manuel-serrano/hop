@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 24 14:34:24 2023                          */
-/*    Last change :  Wed Mar 15 16:46:59 2023 (serrano)                */
+/*    Last change :  Thu Mar 16 05:07:27 2023 (serrano)                */
 /*    Copyright   :  2023 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop node_api implementation.                                     */
@@ -322,6 +322,90 @@ napi_cancel_async_work(napi_env env, napi_async_work work) {
    } else {
       work->complete(work->env, napi_cancelled, work->data);
       return napi_ok;
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    BGL_RUNTIME_DEF napi_status                                      */
+/*    napi_get_value_bool ...                                          */
+/*---------------------------------------------------------------------*/
+BGL_RUNTIME_DEF napi_status
+napi_get_value_bool(napi_env _this, napi_value value, bool *res) {
+   if (BOOLEANP(value)) {
+      *res = (double)CBOOL(value);
+      return napi_ok;
+   } else {
+      return napi_boolean_expected;
+   }
+}
+   
+/*---------------------------------------------------------------------*/
+/*    BGL_RUNTIME_DEF napi_status                                      */
+/*    napi_get_value_int32 ...                                         */
+/*---------------------------------------------------------------------*/
+BGL_RUNTIME_DEF napi_status
+napi_get_value_int32(napi_env _this, napi_value value, int32_t *res) {
+   if (INTEGERP(value)) {
+      *res = CINT(value);
+      return napi_ok;
+   } else if (REALP(value)) {
+      *res = REAL_TO_DOUBLE(value);
+      return napi_ok;
+   } else {
+      return napi_number_expected;
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    BGL_RUNTIME_DEF napi_status                                      */
+/*    napi_get_value_double ...                                        */
+/*---------------------------------------------------------------------*/
+BGL_RUNTIME_DEF napi_status
+napi_get_value_double(napi_env _this, napi_value value, double *res) {
+   if (INTEGERP(value)) {
+      *res = (double)CINT(value);
+      return napi_ok;
+   } else if (REALP(value)) {		   
+      *res = REAL_TO_DOUBLE(value);
+      return napi_ok;
+   } else {
+      return napi_number_expected;
+   }
+}
+   
+/*---------------------------------------------------------------------*/
+/*    bool                                                             */
+/*    BXALLOC ...                                                      */
+/*---------------------------------------------------------------------*/
+#define BXALLOC(x) (BIGNUM(x).mpz._mp_alloc)
+
+/*---------------------------------------------------------------------*/
+/*    BGL_RUNTIME_DEF napi_status                                      */
+/*    napi_get_value_bigint_int64 ...                                  */
+/*---------------------------------------------------------------------*/
+BGL_RUNTIME_DEF napi_status
+napi_get_value_bigint_int64(napi_env _this, napi_value value, int64_t *res, bool *lossless) {
+   if (BIGNUMP(value)) {
+      *res = bgl_bignum_to_int64(value);
+      *lossless = BXALLOC(value) < 4;
+      return napi_ok;;
+   } else {
+      return napi_bigint_expected;
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    BGL_RUNTIME_DEF napi_status                                      */
+/*    napi_get_value_bigint_int64 ...                                  */
+/*---------------------------------------------------------------------*/
+BGL_RUNTIME_DEF napi_status
+napi_get_value_bigint_uint64(napi_env _this, napi_value value, uint64_t *res, bool *lossless) {
+   if (BIGNUMP(value)) {
+      *res = bgl_bignum_to_uint64(value);
+      *lossless = BXALLOC(value) < 4;
+      return napi_ok;;
+   } else {
+      return napi_bigint_expected;
    }
 }
 

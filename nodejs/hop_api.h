@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 24 15:38:53 2023                          */
-/*    Last change :  Wed Mar 15 17:18:40 2023 (serrano)                */
+/*    Last change :  Thu Mar 16 05:07:39 2023 (serrano)                */
 /*    Copyright   :  2023 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop Specific macro redefinitions                                 */
@@ -49,6 +49,12 @@ extern napi_status napi_get_cb_info(napi_env _this, napi_callback_info info, siz
 extern obj_t bgl_napi_call_function(napi_env _this, obj_t this, obj_t fun, size_t argc, napi_value *argv);
 extern obj_t bgl_napi_call_function_res(napi_env _this, obj_t this, obj_t fun, size_t argc, napi_value *argv, napi_value *res);
 
+extern napi_status napi_get_value_bool(napi_env _this, napi_value value, bool *res);
+extern napi_status napi_get_value_int32(napi_env _this, napi_value value, int32_t *res);
+extern napi_status napi_get_value_double(napi_env _this, napi_value value, double *res);
+extern napi_status napi_get_value_bigint_int64(napi_env _this, napi_value value, int64_t *res, bool *loosless);
+extern napi_status napi_get_value_bigint_uint64(napi_env _this, napi_value value, uint64_t *res, bool *loosless);
+   
 /*---------------------------------------------------------------------*/
 /*    bgl_napi_async_work                                              */
 /*---------------------------------------------------------------------*/
@@ -190,36 +196,6 @@ struct napi_async_work__ {
 
 #define napi_get_array_length(_this, val, res) \
   (*res = bgl_napi_get_array_length(_this, val), napi_ok)
-
-#define napi_get_value_bool(_this, val, res) \
-  (BOOLEANP(val) \
-   ? (*res = (double)CBOOL(val), napi_ok) \
-   : napi_boolean_expected)
-
-#define napi_get_value_double(_this, val, res) \
-  (INTEGERP(val) \
-   ? (*res = (double)CINT(val), napi_ok) \
-   : REALP(val) \
-   ? (*res = REAL_TO_DOUBLE(val), napi_ok) \
-   : napi_number_expected)
-
-#define napi_get_value_int32(_this, val, res) \
-  (INTEGERP(val) \
-   ? (*res = CINT(val), napi_ok) \
-   : REALP(val) \
-   ? (*res = REAL_TO_DOUBLE(val), napi_ok) \
-   : napi_number_expected)
-#define BXALLOC(x) (BIGNUM(x).mpz._mp_alloc)
-
-#define napi_get_value_bigint_int64(_this, val, res, lossless) \
-   (BIGNUMP(val) \
-    ? (*res = bgl_bignum_to_int64(val), *lossless = BXALLOC(val) < 4, napi_ok) \
-   : napi_bigint_expected)
-
-#define napi_get_value_bigint_uint64(_this, val, res, lossless) \
-   (BIGNUMP(val) \
-    ? (*res = bgl_bignum_to_uint64(val), *lossless = (!BXNEGATIVE(val) && BXALLOC(val) < 4), napi_ok) \
-   : napi_bigint_expected)
 
 #define napi_delete_async_work(env, work) \
   (free(work), napi_ok)
