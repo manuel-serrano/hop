@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Thu Mar 16 06:01:37 2023 (serrano)                */
+#*    Last change :  Thu Mar 16 06:05:56 2023 (serrano)                */
 #*    Copyright   :  2004-23 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -975,6 +975,7 @@ fi
 if [ -f $bigloolibdir/libbacktrace.heap ]; then
    libraries="$libraries libbacktrace"
    bglcloselibs="$bglcloselibs libbacktrace"
+   bglextralibs="$bglextralibs bigloolibbacktrace"
 fi
 
 if [ "$devmode " = "debug " -o "$devmode " = "debug-inline " ]; then
