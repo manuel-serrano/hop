@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Wed Mar  8 11:23:35 2023 (serrano)                */
+;*    Last change :  Fri Mar 17 10:32:49 2023 (serrano)                */
 ;*    Copyright   :  2016-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -248,7 +248,7 @@
 	 ((js-pcache-rewrite-miss-label (js-pcache-ref %pcache ?idx))
 	  (cond-expand
 	     ((and bigloo-c (not hop-eval) (not hopjs-worker-slave))
-	      `(free-pragma::obj "HOP_REWRITE_CACHE_MISS($1, BgL_iindexz00)" ,idx))
+	      `(pragma::obj "HOP_REWRITE_CACHE_MISS($1, BgL_iindexz00)" ,idx))
 	     (else
 	      #unspecified)))
 	 ((js-pcache-rewrite-miss-label ?-)
@@ -265,7 +265,7 @@
 	 ((js-pcache-rewrite-hit (js-pcache-ref %pcache ?idx))
 	  (cond-expand
 	     ((and bigloo-c (not hop-eval) (not hopjs-worker-slave))
-	      `(free-pragma::obj "HOP_REWRITE_CACHE_HIT($1)" ,idx))
+	      `(pragma::obj "HOP_REWRITE_CACHE_HIT($1)" ,idx))
 	     (else
 	      #unspecified)))
 	 ((js-pcache-rewrite-hit ?-)
