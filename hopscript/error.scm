@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Fri Mar 10 05:45:46 2023 (serrano)                */
+;*    Last change :  Fri Mar 17 09:53:43 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
@@ -348,7 +348,7 @@
 	 
       (define (capture-stack-trace err start-fun)
 	 (when (fixnum? js-stacktracelimit)
-	    (let ((stk (get-trace-stack js-stacktracelimit)))
+	    (let ((stk (js-get-trace-stack js-stacktracelimit)))
 	       (if (isa? err JsError)
 		   (with-access::JsError err (stack)
 		      (set! stack stk))

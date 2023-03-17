@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 24 14:34:24 2023                          */
-/*    Last change :  Thu Mar 16 17:18:20 2023 (serrano)                */
+/*    Last change :  Fri Mar 17 08:14:50 2023 (serrano)                */
 /*    Copyright   :  2023 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop node_api implementation.                                     */
@@ -41,6 +41,7 @@ static obj_t bgl_napi_method_to_procedure(napi_env _this, napi_value this, napi_
 /*    napi_last_error_code ...                                         */
 /*---------------------------------------------------------------------*/
 static napi_status napi_last_error_code;
+static char *napi_last_error_message;
 
 /*---------------------------------------------------------------------*/
 /*    void                                                             */
@@ -95,27 +96,18 @@ napi_callback_to_jsproc(obj_t _this, obj_t this, napi_callback cb, void *data, o
 
 /*---------------------------------------------------------------------*/
 /*    static void                                                      */
-/*    napi_bind_prop ...                                               */
+/*    napi_make_prop_desc ...                                          */
 /*---------------------------------------------------------------------*/
-static void
-napi_bind_prop(obj_t _this, obj_t this, const napi_property_descriptor *prop) {
-   fprintf(stderr, "bind_prop %p\n", prop->name);
+static obj_t
+napi_make_prop_desc(obj_t _this, obj_t this, const napi_property_descriptor *prop) {
    if (prop->attributes & napi_default == napi_default && !prop->getter && !prop->setter) {
-      bgl_napi_put_named_property(_this, this, prop->name, prop->value);
-   } else if (prop->getter || prop->setter) {
-      bgl_napi_define_named_property(_this, this, prop->name, prop->value,
-				     prop->attributes & napi_writable,
-				     prop->attributes & napi_enumerable,
-				     prop->attributes & napi_configurable,
-				     prop->getter ? napi_callback_to_jsproc(_this, this, prop->getter, 0L, prop->name) : BFALSE,
-				     prop->setter ? napi_callback_to_jsproc(_this, this, prop->setter, 0L, prop->name) : BFALSE);
+      return BFALSE;
    } else {
-      bgl_napi_define_named_property(_this, this, prop->name, prop->value,
-				     prop->attributes & napi_writable,
-				     prop->attributes & napi_enumerable,
-				     prop->attributes & napi_configurable,
-				     BFALSE,
-				     BFALSE);
+      return bgl_napi_make_property_descriptor(_this, this, prop->name, prop->value,
+					       prop->attributes & napi_writable,
+					       prop->attributes & napi_enumerable,
+					       prop->attributes & napi_configurable,
+					       (obj_t)prop->getter, (obj_t)prop->setter);
    }
 }
 	 
@@ -154,8 +146,17 @@ static obj_t napi_ctor_stub(obj_t proc, ...) {
 
    // bind the instance properties
    for (long i = 1; i < PROCEDURE_LENGTH(proc); i++) {
-      napi_property_descriptor *prop = (napi_property_descriptor *)PROCEDURE_REF(proc, i);
-      napi_bind_prop(_this, this, prop);
+      obj_t p = PROCEDURE_REF(proc, i);
+
+      if (p != BUNSPEC) {
+	 napi_property_descriptor *prop = (napi_property_descriptor *)CAR(p);
+      
+	 if (PAIRP(p) && CDR(p) == BFALSE) {
+	    bgl_napi_put_named_property(_this, this, prop->name, prop->value);
+	 } else {
+	    bgl_napi_define_named_property(_this, this, prop->name, CDR(p));
+	 }
+      }
    }
    
    return this;
@@ -190,19 +191,6 @@ bgl_napi_method_to_ctor(napi_env _this, napi_value this, napi_callback met, void
    
    PROCEDURE_SET(proc, 0, data);
 
-   for (long i = 0; i < property_count; i++) {
-      napi_property_descriptor *prop = (napi_property_descriptor *)GC_MALLOC(sizeof(napi_property_descriptor));
-      *prop = properties[i];
-      prop->name = string_to_bstring((char *)prop->utf8name);
-      if (prop->method) {
-/* 	 obj_t proc = bgl_napi_method_to_procedure(_this, this, prop->method, 0L); */
-/* 	 obj_t obj = bgl_napi_create_function(_this, proc, prop->name); */
-	 prop->value = napi_callback_to_jsproc(_this, this, prop->method, 0L, prop->name);
-      }
-
-      PROCEDURE_SET(proc, i + 1, (obj_t)prop);
-   }
-   
    return proc;
 }
 
@@ -217,9 +205,6 @@ napi_create_function(napi_env _this,
 		     napi_callback cb,
 		     void* data,
 		     napi_value* result) {
-/*    obj_t proc = bgl_napi_method_to_procedure(_this, BNIL, cb, data); */
-/*                                                                     */
-/*    *result = bgl_napi_create_function(_this, proc, string_to_bstring((char *)utf8name)); */
    *result = napi_callback_to_jsproc(_this, *result, cb, data, string_to_bstring((char *)utf8name));
    return napi_ok;
 }
@@ -238,23 +223,64 @@ napi_define_class(napi_env _this,
 		  const napi_property_descriptor *properties,
 		  napi_value *result) {
    if (!_this) {
+      napi_last_error_message = "Invalid argument";
+      return napi_last_error_code = napi_invalid_arg;
+   } else if (!utf8name) {
+      napi_last_error_message = "Invalid argument";
+      return napi_last_error_code = napi_invalid_arg;
+   } else if (!ctor) {
+      napi_last_error_message = "Invalid argument";
       return napi_last_error_code = napi_invalid_arg;
    } else if (property_count && !properties) {
+      napi_last_error_message = "Invalid argument";
       return napi_last_error_code = napi_invalid_arg;
    } else if (!result) {
+      napi_last_error_message = "Invalid argument";
       return napi_last_error_code = napi_invalid_arg;
    } else {
       obj_t proc = bgl_napi_method_to_ctor(_this, BNIL, ctor, data, property_count, properties);
-      *result = bgl_napi_create_function(_this, proc, string_to_bstring((char *)utf8name));
+      obj_t this = bgl_napi_create_function(_this, proc, string_to_bstring((char *)utf8name));
 
+      // prepare the class and instance properties
       for (long i = 0; i < property_count; i++) {
-	 if ((properties[i].attributes & napi_static) == napi_static) {
-	    fprintf(stderr, "STATIC %s\n", properties[i].utf8name);
-	    napi_bind_prop(_this, *result, (napi_property_descriptor *)PROCEDURE_REF(proc, i + 1));
+	 napi_property_descriptor *prop = (napi_property_descriptor *)GC_MALLOC(sizeof(napi_property_descriptor));
+	 
+	 *prop = properties[i];
+	 prop->name = string_to_bstring((char *)prop->utf8name);
+	 
+	 if (prop->method) {
+	    prop->value = napi_callback_to_jsproc(_this, this, prop->method, 0L, prop->name);
+	 }
+	 if (prop->getter) {
+	    prop->getter = (napi_callback)napi_callback_to_jsproc(_this, this, prop->getter, 0L, prop->name);
+	 } else {
+	    prop->getter = (napi_callback)BFALSE;
+	 }
+	 if (prop->setter) {
+	    prop->setter = (napi_callback)napi_callback_to_jsproc(_this, this, prop->setter, 0L, prop->name);
+	 } else {
+	    prop->setter = (napi_callback)BFALSE;
+	 }
+
+	 if (prop->attributes & napi_static) {
+	    // class property
+	    obj_t desc = napi_make_prop_desc(_this, this, prop);
+
+	    if (desc) {
+	       bgl_napi_define_named_property(_this, this, prop->name, desc);
+	    } else {
+	       bgl_napi_put_named_property(_this, this, prop->name, prop->value);
+	    }
+	    PROCEDURE_SET(proc, i + 1, BUNSPEC);
+	 } else {
+	    // instance property
+	    PROCEDURE_SET(proc, i + 1, MAKE_PAIR((obj_t)prop, napi_make_prop_desc(_this, this, prop)));
 	 }
       }
-   
-      return napi_ok;
+      
+      *result = this;
+      napi_last_error_message = 0L;
+      return napi_last_error_code = napi_ok;
    }
 }
 
@@ -643,5 +669,6 @@ napi_get_last_error_info(napi_env env, const napi_extended_error_info **result) 
    napi_extended_error_info *ei = (napi_extended_error_info *)GC_MALLOC(sizeof(napi_extended_error_info));
    *result = ei;
    ei->error_code = napi_last_error_code;
+   ei->error_message = napi_last_error_message;
    return napi_ok;
 }

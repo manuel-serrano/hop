@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Fri Mar 10 05:05:15 2023 (serrano)                */
+;*    Last change :  Fri Mar 17 09:50:41 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -53,6 +53,7 @@
 	   (generic js-jsobject->jsarray ::obj ::JsGlobalObject)
 	   (inline fixnums?::bool ::obj ::obj)
 	   (js-tls-gc-mark! ::obj)))
+
 
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */

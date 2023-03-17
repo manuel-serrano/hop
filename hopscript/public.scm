@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Fri Mar  3 08:12:16 2023 (serrano)                */
+;*    Last change :  Fri Mar 17 09:53:37 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -42,6 +42,7 @@
            __hopscript_expanders)
 
    (export (js-init-public! %this::JsGlobalObject)
+	   (js-get-trace-stack #!optional depth)
 	   (js-new ::JsGlobalObject f . args)
 	   (js-new/debug ::JsGlobalObject loc f . args)
 	   (js-new0 ::JsGlobalObject f)
@@ -297,7 +298,25 @@
 ;*    js-init-public! ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (js-init-public! %this::JsGlobalObject)
-   (unless (vector? __js_strings) (set! __js_strings (&init!))))
+   (unless (vector? __js_strings)
+      (let ((hdbg (getenv "HOP_DEBUG")))
+	 (set! *js-debug*
+	    (if hdbg (string->integer hdbg) (bigloo-debug))))
+      (set! __js_strings (&init!))))
+
+;*---------------------------------------------------------------------*/
+;*    js-debug ...                                                     */
+;*---------------------------------------------------------------------*/
+(define *js-debug* 0)
+(define (js-debug) *js-debug*)
+
+;*---------------------------------------------------------------------*/
+;*    js-get-trace-stack ...                                           */
+;*---------------------------------------------------------------------*/
+(define (js-get-trace-stack #!optional depth)
+   (if (>fx *js-debug* 0)
+       (get-trace-stack depth)
+       '()))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-rest-args ...                                                 */
@@ -2773,7 +2792,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-raise err)
    (with-access::JsError err (stack)
-      (set! stack (get-trace-stack))
+      (set! stack (js-get-trace-stack))
       (raise err)))
 
 ;*---------------------------------------------------------------------*/
@@ -2784,7 +2803,7 @@
 (define (js-throw err f l)
    (when (isa? err JsError)
       (with-access::JsError err (stack fname location)
-	 (set! stack (get-trace-stack))
+	 (set! stack (js-get-trace-stack))
 	 (unless (js-jsstring? fname)
 	    (set! fname f)
 	    (set! location l))))
@@ -2798,7 +2817,7 @@
 (define (js-throw/debug err f l %worker)
    (when (isa? err JsError)
       (with-access::JsError err (stack fname location)
-	 (set! stack (get-trace-stack))
+	 (set! stack (js-get-trace-stack))
 	 (unless (js-jsstring? fname)
 	    (set! fname f)
 	    (set! location l))))
@@ -2806,7 +2825,7 @@
       (set! %exn
 	 (instantiate::&error
 	    (proc "throw")
-	    (stack (get-trace-stack))
+	    (stack (js-get-trace-stack))
 	    (fname f)
 	    (location l)
 	    (msg "Uncaught exception")

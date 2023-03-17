@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 24 16:10:01 2023                          */
-;*    Last change :  Thu Mar 16 18:14:04 2023 (serrano)                */
+;*    Last change :  Fri Mar 17 08:24:55 2023 (serrano)                */
 ;*    Copyright   :  2023 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The Scheme part of the node_api.                                 */
@@ -40,6 +40,7 @@
 	   (export napi-get-named-property "bgl_napi_get_named_property")
 	   (export napi-put-named-property! "bgl_napi_put_named_property")
 	   (export napi-define-named-property! "bgl_napi_define_named_property")
+	   (export napi-make-property-descriptor "bgl_napi_make_property_descriptor")
 	   (export napi-get-array-length "bgl_napi_get_array_length")
 	   (export napi-has-element "bgl_napi_has_element")
 	   (export napi-delete-element! "bgl_napi_delete_element")
@@ -59,7 +60,8 @@
 	   (napi-create-string-utf8::obj ::obj ::bstring)
 	   (napi-get-named-property::obj ::obj ::obj ::bstring)
 	   (napi-put-named-property!::obj ::obj ::obj ::bstring ::obj)
-	   (napi-define-named-property! ::obj ::obj ::bstring ::obj ::bool ::bool ::bool ::obj ::obj)
+	   (napi-define-named-property!::obj ::obj ::obj ::bstring ::obj)
+	   (napi-make-property-descriptor ::obj ::obj ::bstring ::obj ::bool ::bool ::bool ::obj ::obj)
 	   (napi-get-array-length::uint32 ::obj ::obj)
 	   (napi-has-element::bool ::obj ::obj ::int)
 	   (napi-delete-element!::obj ::obj ::obj ::int)
@@ -76,21 +78,6 @@
 	   (napi-uvloop::$uv_loop_t ::obj)))
 
 ;*---------------------------------------------------------------------*/
-;*    env-debug ...                                                    */
-;*---------------------------------------------------------------------*/
-(define env-debug
-   (let ((env (getenv "HOP_DEBUG")))
-      (if (string? env)
-	  (string->integer env)
-	  0)))
-
-;*---------------------------------------------------------------------*/
-;*    napi-get-trace-stack ...                                         */
-;*---------------------------------------------------------------------*/
-(define-inline (napi-get-trace-stack)
-   (when (>fx env-debug 0) (get-trace-stack)))
-
-;*---------------------------------------------------------------------*/
 ;*    napi-throw-error ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (napi-throw %this obj)
@@ -104,7 +91,7 @@
       (instantiate::JsError
 	 (name code)
 	 (msg msg)
-	 (stack (napi-get-trace-stack))
+	 (stack (js-get-trace-stack))
 	 (%this %this))))
 
 ;*---------------------------------------------------------------------*/
@@ -115,7 +102,7 @@
       (instantiate::JsError
 	 (name code)
 	 (msg msg)
-	 (stack (napi-get-trace-stack))
+	 (stack (js-get-trace-stack))
 	 (%this %this))))
 
 ;*---------------------------------------------------------------------*/
@@ -139,34 +126,35 @@
 ;*---------------------------------------------------------------------*/
 ;*    napi-define-named-property! ...                                  */
 ;*---------------------------------------------------------------------*/
-(define (napi-define-named-property! %this this prop val writable enumerable configurable get set)
-   (tprint "DEFINE-NAMED-PROP prop=" prop " " writable)
+(define (napi-define-named-property! %this this prop desc)
+   (js-define-own-property this (js-string->name prop) desc #t %this))
+
+;*---------------------------------------------------------------------*/
+;*    napi-make-property-descriptor ...                                */
+;*---------------------------------------------------------------------*/
+(define (napi-make-property-descriptor %this this prop val writable enumerable configurable get set)
    (let ((name (js-string->name prop)))
-      
-      (js-define-own-property this name
-	 (cond
-	    ((and (not get) (not set))
-	     (instantiate::JsValueDescriptor
-		(name name)
-		(configurable configurable)
-		(enumerable enumerable)
-		(writable writable)
-		(value val)))
-	    (else
-	     (instantiate::JsAccessorDescriptor
-		(name name)
-		(configurable configurable)
-		(enumerable enumerable)
-		(get get)
-		(set set)
-		(%get (if get
-			  (with-access::JsProcedure get (procedure) procedure)
-			  (lambda (this) (js-undefined))))
-		(%set (if set
-			  (with-access::JsProcedure set (procedure) procedure)
-			  (lambda (this v) (js-undefined)))))))
-	 #t
-	 %this)))
+      (cond
+	 ((and (not get) (not set))
+	  (instantiate::JsValueDescriptor
+	     (name name)
+	     (configurable configurable)
+	     (enumerable enumerable)
+	     (writable writable)
+	     (value val)))
+	 (else
+	  (instantiate::JsAccessorDescriptor
+	     (name name)
+	     (configurable configurable)
+	     (enumerable enumerable)
+	     (get get)
+	     (set set)
+	     (%get (if get
+		       (with-access::JsProcedure get (procedure) procedure)
+		       (lambda (this) (js-undefined))))
+	     (%set (if set
+		       (with-access::JsProcedure set (procedure) procedure)
+		       (lambda (this v) (js-undefined)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    napi-get-array-length ...                                        */
@@ -213,7 +201,6 @@
 ;*    napi-create-function ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (napi-create-function %this fun name)
-   (tprint "CREATE-FUNCTION name=" name " " (typeof name))
    (js-make-function %this fun
       (js-function-arity fun)
       (js-function-info :name name :len 1)
