@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 24 14:34:24 2023                          */
-/*    Last change :  Fri Mar 17 08:14:50 2023 (serrano)                */
+/*    Last change :  Sat Mar 18 05:40:19 2023 (serrano)                */
 /*    Copyright   :  2023 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop node_api implementation.                                     */
@@ -536,6 +536,57 @@ napi_get_value_int32(napi_env _this, napi_value value, int32_t *res) {
 
 /*---------------------------------------------------------------------*/
 /*    BGL_RUNTIME_DEF napi_status                                      */
+/*    napi_get_value_uint32 ...                                        */
+/*---------------------------------------------------------------------*/
+BGL_RUNTIME_DEF napi_status
+napi_get_value_uint32(napi_env _this, napi_value value, uint32_t *res) {
+   if (INTEGERP(value)) {
+      *res = CINT(value);
+      return napi_ok;
+   } else if (REALP(value)) {
+      *res = REAL_TO_DOUBLE(value);
+      return napi_ok;
+   } else {
+      return napi_number_expected;
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    BGL_RUNTIME_DEF napi_status                                      */
+/*    napi_get_value_int64 ...                                         */
+/*---------------------------------------------------------------------*/
+BGL_RUNTIME_DEF napi_status
+napi_get_value_int64(napi_env _this, napi_value value, int64_t *res) {
+   if (INTEGERP(value)) {
+      *res = CINT(value);
+      return napi_ok;
+   } else if (REALP(value)) {
+      *res = REAL_TO_DOUBLE(value);
+      return napi_ok;
+   } else {
+      return napi_number_expected;
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    BGL_RUNTIME_DEF napi_status                                      */
+/*    napi_get_value_uint64 ...                                        */
+/*---------------------------------------------------------------------*/
+BGL_RUNTIME_DEF napi_status
+napi_get_value_uint64(napi_env _this, napi_value value, uint64_t *res) {
+   if (INTEGERP(value)) {
+      *res = CINT(value);
+      return napi_ok;
+   } else if (REALP(value)) {
+      *res = REAL_TO_DOUBLE(value);
+      return napi_ok;
+   } else {
+      return napi_number_expected;
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    BGL_RUNTIME_DEF napi_status                                      */
 /*    napi_get_value_double ...                                        */
 /*---------------------------------------------------------------------*/
 BGL_RUNTIME_DEF napi_status
@@ -611,6 +662,29 @@ napi_get_value_bigint_words(napi_env env,
 }
 
 /*---------------------------------------------------------------------*/
+/*    BG:_RUNTIME_DEF napi_status                                      */
+/*    napi_get_value_string_utf8 ...                                   */
+/*---------------------------------------------------------------------*/
+BGL_RUNTIME_DEF napi_status
+napi_get_value_string_utf8(napi_env env, napi_value value, char *buf, size_t bufsize, size_t *result) {
+   if (!bgl_napi_jsstringp(value)) {
+      return napi_string_expected;
+   } else {
+      obj_t str = bgl_napi_jsstring_to_string(value);
+
+      if (STRING_LENGTH(str) < bufsize) {
+	 *result = STRING_LENGTH(str);
+	 strcpy(buf, BSTRING_TO_STRING(value));
+      } else {
+	 *result = bufsize;
+	 strncpy(buf, BSTRING_TO_STRING(value), bufsize);
+      }
+      
+      return napi_ok;
+   }
+}
+
+/*---------------------------------------------------------------------*/
 /*    static obj_t                                                     */
 /*    make_bignum ...                                                  */
 /*---------------------------------------------------------------------*/
@@ -670,5 +744,15 @@ napi_get_last_error_info(napi_env env, const napi_extended_error_info **result) 
    *result = ei;
    ei->error_code = napi_last_error_code;
    ei->error_message = napi_last_error_message;
+   return napi_ok;
+}
+
+/*---------------------------------------------------------------------*/
+/*    BGL_RUNTIME_DEF napi_status                                      */
+/*    napi_is_exception_pending ...                                    */
+/*---------------------------------------------------------------------*/
+BGL_RUNTIME_DEF napi_status
+napi_is_exception_pending(napi_env env, bool *result) {
+   *result = 0;
    return napi_ok;
 }

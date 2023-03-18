@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 24 15:38:53 2023                          */
-/*    Last change :  Fri Mar 17 08:53:12 2023 (serrano)                */
+/*    Last change :  Sat Mar 18 05:41:58 2023 (serrano)                */
 /*    Copyright   :  2023 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop Specific macro redefinitions                                 */
@@ -47,6 +47,9 @@ extern obj_t bgl_napi_define_named_property(obj_t, obj_t, obj_t, obj_t);
 extern obj_t bgl_napi_make_property_descriptor(obj_t, obj_t, obj_t, obj_t,
 					       bool_t, bool_t, bool_t,
 					       obj_t, obj_t);
+extern bool_t bgl_napi_jsstringp(obj_t);
+extern obj_t bgl_napi_jsstring_to_string(obj_t);
+
 extern uint32_t bgl_napi_get_array_length(obj_t, obj_t);
 extern obj_t bgl_napi_define_property(napi_env _this, obj_t this, obj_t prop, obj_t met);
 extern napi_status napi_define_properties(napi_env _this, napi_value this, size_t count, const napi_property_descriptor *properties);
@@ -135,6 +138,12 @@ struct napi_async_work__ {
    (*res = BINT(val), napi_ok)
 
 #define napi_create_uint32(_this, val, res) \
+   (*res = BINT(val), napi_ok)
+
+#define napi_create_int64(_this, val, res) \
+   (*res = BINT(val), napi_ok)
+
+#define napi_create_uint64(_this, val, res) \
    (*res = BINT(val), napi_ok)
 
 #define napi_create_object(_this, res) \

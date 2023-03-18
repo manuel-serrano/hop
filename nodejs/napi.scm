@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 24 16:10:01 2023                          */
-;*    Last change :  Fri Mar 17 08:24:55 2023 (serrano)                */
+;*    Last change :  Sat Mar 18 05:48:53 2023 (serrano)                */
 ;*    Copyright   :  2023 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The Scheme part of the node_api.                                 */
@@ -52,7 +52,9 @@
 	   (export napi-create-promise "bgl_napi_create_promise")
 	   (export napi-is-array? "bgl_napi_is_array")
 	   (export napi-typeof "bgl_napi_typeof")
-	   (export napi-uvloop "bgl_napi_uvloop"))
+	   (export napi-uvloop "bgl_napi_uvloop")
+	   (export napi-jsstring? "bgl_napi_jsstringp")
+	   (export napi-jsstring->string "bgl_napi_jsstring_to_string"))
    
    (export (napi-throw ::obj ::obj)
 	   (napi-throw-error ::obj ::string ::string)
@@ -75,7 +77,9 @@
 	   (napi-create-promise::obj ::obj ::obj)
 	   (napi-is-array?::bool ::obj) 
 	   (napi-typeof::int ::obj ::obj)
-	   (napi-uvloop::$uv_loop_t ::obj)))
+	   (napi-uvloop::$uv_loop_t ::obj)
+	   (napi-jsstring?::bool ::obj)
+	   (napi-jsstring->string::bstring ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    napi-throw-error ...                                             */
@@ -270,3 +274,15 @@
       (with-access::WorkerHopThread worker (%loop)
 	 (with-access::UvLoop %loop ($builtin)
 	    $builtin))))
+
+;*---------------------------------------------------------------------*/
+;*    napi-jsstring? ...                                               */
+;*---------------------------------------------------------------------*/
+(define (napi-jsstring? obj)
+   (js-jsstring? obj))
+
+;*---------------------------------------------------------------------*/
+;*    napi-jsstring->string ...                                        */
+;*---------------------------------------------------------------------*/
+(define (napi-jsstring->string obj)
+   (js-jsstring->string obj))
