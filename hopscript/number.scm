@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sat Mar 18 05:44:54 2023 (serrano)                */
+;*    Last change :  Sat Mar 18 19:25:31 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -175,7 +175,9 @@
 	 :writable #f :configurable #f :enumerable #f :hidden-class #f)
       (js-bind! %this js-number (& "isNaN")
 	 :value (js-make-function %this
-		   (lambda (this val) (js-isnan? val %this))
+		   (lambda (this val)
+		      (when (number? val)
+			 (js-isnan? val %this)))
 		   (js-function-arity 1 0)
 		   (js-function-info :name "isNaN" :len 1)
 		   :prototype (js-undefined))

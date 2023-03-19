@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 24 14:34:24 2023                          */
-/*    Last change :  Sat Mar 18 05:40:19 2023 (serrano)                */
+/*    Last change :  Sat Mar 18 15:19:46 2023 (serrano)                */
 /*    Copyright   :  2023 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop node_api implementation.                                     */
@@ -35,6 +35,11 @@ extern char *bgl_typeof();
 extern uv_loop_t *bgl_napi_uvloop(obj_t);
 
 static obj_t bgl_napi_method_to_procedure(napi_env _this, napi_value this, napi_callback met, void *data);
+
+extern obj_t bgl_napi_coerce_to_bool(obj_t _this, obj_t value);
+extern obj_t bgl_napi_coerce_to_number(obj_t _this, obj_t value);
+extern obj_t bgl_napi_coerce_to_object(obj_t _this, obj_t value);
+extern obj_t bgl_napi_coerce_to_string(obj_t _this, obj_t value);
 
 /*---------------------------------------------------------------------*/
 /*    static napi_status                                               */
@@ -210,6 +215,30 @@ napi_create_function(napi_env _this,
 }
 
 /*---------------------------------------------------------------------*/
+/*    static void                                                      */
+/*    napi_prepare_property ...                                        */
+/*---------------------------------------------------------------------*/
+static void
+napi_prepare_property(napi_env _this, napi_value this, napi_property_descriptor *prop) {
+   prop->name = string_to_bstring((char *)prop->utf8name);
+	 
+   if (prop->method) {
+      prop->value = napi_callback_to_jsproc(_this, this, prop->method, 0L, prop->name);
+   }
+   if (prop->getter) {
+      prop->getter = (napi_callback)napi_callback_to_jsproc(_this, this, prop->getter, 0L, prop->name);
+   } else {
+      prop->getter = (napi_callback)BFALSE;
+   }
+   if (prop->setter) {
+      prop->setter = (napi_callback)napi_callback_to_jsproc(_this, this, prop->setter, 0L, prop->name);
+   } else {
+      prop->setter = (napi_callback)BFALSE;
+   }
+}
+
+
+/*---------------------------------------------------------------------*/
 /*    BGL_RUNTIME_DEF napi_status                                      */
 /*    napi_define_class ...                                            */
 /*---------------------------------------------------------------------*/
@@ -246,21 +275,7 @@ napi_define_class(napi_env _this,
 	 napi_property_descriptor *prop = (napi_property_descriptor *)GC_MALLOC(sizeof(napi_property_descriptor));
 	 
 	 *prop = properties[i];
-	 prop->name = string_to_bstring((char *)prop->utf8name);
-	 
-	 if (prop->method) {
-	    prop->value = napi_callback_to_jsproc(_this, this, prop->method, 0L, prop->name);
-	 }
-	 if (prop->getter) {
-	    prop->getter = (napi_callback)napi_callback_to_jsproc(_this, this, prop->getter, 0L, prop->name);
-	 } else {
-	    prop->getter = (napi_callback)BFALSE;
-	 }
-	 if (prop->setter) {
-	    prop->setter = (napi_callback)napi_callback_to_jsproc(_this, this, prop->setter, 0L, prop->name);
-	 } else {
-	    prop->setter = (napi_callback)BFALSE;
-	 }
+	 napi_prepare_property(_this, this, prop);
 
 	 if (prop->attributes & napi_static) {
 	    // class property
@@ -318,8 +333,21 @@ BGL_RUNTIME_DEF napi_status
 napi_define_properties(napi_env _this, napi_value this, size_t count, const napi_property_descriptor *properties) {
 
    while (count-- > 0) {
-      obj_t name = properties->name ? properties->name : string_to_bstring((char *)properties->utf8name);
-      bgl_napi_define_property(_this, this, name, bgl_napi_method_to_procedure(_this, this, properties->method, properties->data));
+      napi_property_descriptor *prop = (napi_property_descriptor *)properties;
+
+      napi_prepare_property(_this, this, prop);
+
+      obj_t desc = napi_make_prop_desc(_this, this, prop);
+
+      if (desc) {
+	 bgl_napi_define_named_property(_this, this, prop->name, desc);
+      } else {
+	 bgl_napi_put_named_property(_this, this, prop->name, prop->value);
+      }
+      
+/*       obj_t name = properties->name ? properties->name : string_to_bstring((char *)properties->utf8name); */
+/*                                                                     */
+/*       bgl_napi_define_property(_this, this, name, bgl_napi_method_to_procedure(_this, this, properties->method || properties->value, properties->data)); */
       properties++;
    }
    return napi_ok;
@@ -509,10 +537,14 @@ napi_cancel_async_work(napi_env env, napi_async_work work) {
 /*---------------------------------------------------------------------*/
 BGL_RUNTIME_DEF napi_status
 napi_get_value_bool(napi_env _this, napi_value value, bool *res) {
-   if (BOOLEANP(value)) {
-      *res = (double)CBOOL(value);
+   if (!_this || !value || !res) {      
+      napi_last_error_message = "Invalid argument";
+      return napi_last_error_code = napi_invalid_arg;
+   } else if (BOOLEANP(value)) {
+      *res = CBOOL(value);
       return napi_ok;
    } else {
+      napi_last_error_message = "A boolean was expected";
       return napi_boolean_expected;
    }
 }
@@ -523,13 +555,22 @@ napi_get_value_bool(napi_env _this, napi_value value, bool *res) {
 /*---------------------------------------------------------------------*/
 BGL_RUNTIME_DEF napi_status
 napi_get_value_int32(napi_env _this, napi_value value, int32_t *res) {
-   if (INTEGERP(value)) {
+   if (!_this || !res) {      
+      napi_last_error_message = "Invalid argument";
+      return napi_last_error_code = napi_invalid_arg;
+   } else if (INTEGERP(value)) {
       *res = CINT(value);
       return napi_ok;
    } else if (REALP(value)) {
-      *res = REAL_TO_DOUBLE(value);
+      double v = REAL_TO_DOUBLE(value);
+      if (isnan(v)) {
+	 *res = 0;
+      } else {
+	 *res = (int32_t)v;
+      }
       return napi_ok;
    } else {
+      napi_last_error_message = "A number was expected";
       return napi_number_expected;
    }
 }
@@ -540,13 +581,22 @@ napi_get_value_int32(napi_env _this, napi_value value, int32_t *res) {
 /*---------------------------------------------------------------------*/
 BGL_RUNTIME_DEF napi_status
 napi_get_value_uint32(napi_env _this, napi_value value, uint32_t *res) {
-   if (INTEGERP(value)) {
+   if (!_this || !res) {      
+      napi_last_error_message = "Invalid argument";
+      return napi_last_error_code = napi_invalid_arg;
+   } else if (INTEGERP(value)) {
       *res = CINT(value);
       return napi_ok;
    } else if (REALP(value)) {
-      *res = REAL_TO_DOUBLE(value);
+      double v = REAL_TO_DOUBLE(value);
+      if (isnan(v)) {
+	 *res = 0;
+      } else {
+	 *res = (uint32_t)v;
+      }
       return napi_ok;
    } else {
+      napi_last_error_message = "A number was expected";
       return napi_number_expected;
    }
 }
@@ -557,13 +607,17 @@ napi_get_value_uint32(napi_env _this, napi_value value, uint32_t *res) {
 /*---------------------------------------------------------------------*/
 BGL_RUNTIME_DEF napi_status
 napi_get_value_int64(napi_env _this, napi_value value, int64_t *res) {
-   if (INTEGERP(value)) {
+   if (!_this || !res) {      
+      napi_last_error_message = "Invalid argument";
+      return napi_last_error_code = napi_invalid_arg;
+   } else if (INTEGERP(value)) {
       *res = CINT(value);
       return napi_ok;
    } else if (REALP(value)) {
       *res = REAL_TO_DOUBLE(value);
       return napi_ok;
    } else {
+      napi_last_error_message = "A number was expected";
       return napi_number_expected;
    }
 }
@@ -574,13 +628,17 @@ napi_get_value_int64(napi_env _this, napi_value value, int64_t *res) {
 /*---------------------------------------------------------------------*/
 BGL_RUNTIME_DEF napi_status
 napi_get_value_uint64(napi_env _this, napi_value value, uint64_t *res) {
-   if (INTEGERP(value)) {
+   if (!_this || !res) {      
+      napi_last_error_message = "Invalid argument";
+      return napi_last_error_code = napi_invalid_arg;
+   } else if (INTEGERP(value)) {
       *res = CINT(value);
       return napi_ok;
    } else if (REALP(value)) {
       *res = REAL_TO_DOUBLE(value);
       return napi_ok;
    } else {
+      napi_last_error_message = "A number was expected";
       return napi_number_expected;
    }
 }
@@ -591,13 +649,17 @@ napi_get_value_uint64(napi_env _this, napi_value value, uint64_t *res) {
 /*---------------------------------------------------------------------*/
 BGL_RUNTIME_DEF napi_status
 napi_get_value_double(napi_env _this, napi_value value, double *res) {
-   if (INTEGERP(value)) {
+   if (!_this || !res) {      
+      napi_last_error_message = "Invalid argument";
+      return napi_last_error_code = napi_invalid_arg;
+   } else if (INTEGERP(value)) {
       *res = (double)CINT(value);
       return napi_ok;
    } else if (REALP(value)) {		   
       *res = REAL_TO_DOUBLE(value);
       return napi_ok;
    } else {
+      napi_last_error_message = "A number was expected";
       return napi_number_expected;
    }
 }
@@ -667,19 +729,91 @@ napi_get_value_bigint_words(napi_env env,
 /*---------------------------------------------------------------------*/
 BGL_RUNTIME_DEF napi_status
 napi_get_value_string_utf8(napi_env env, napi_value value, char *buf, size_t bufsize, size_t *result) {
-   if (!bgl_napi_jsstringp(value)) {
-      return napi_string_expected;
+   if (!env || !value) {
+      napi_last_error_message = "Invalid argument";
+      return napi_last_error_code = napi_invalid_arg;
+   } else if (!bgl_napi_jsstringp(value)) {
+      napi_last_error_message = "A string was expected";
+      return napi_last_error_code = napi_string_expected;
+   } else if (!buf && bufsize > 0) {
+      napi_last_error_message = "Invalid argument";
+      return napi_last_error_code = napi_invalid_arg;
    } else {
       obj_t str = bgl_napi_jsstring_to_string(value);
 
+      if (STRING_LENGTH(str) < (bufsize - 1)) {
+	 if (result) *result = STRING_LENGTH(str);
+	 strcpy(buf, BSTRING_TO_STRING(str));
+	 buf[STRING_LENGTH(str)] = 0;
+      } else {
+	 if (result) *result = bufsize;
+	 strncpy(buf, BSTRING_TO_STRING(value), bufsize);
+      }
+      napi_last_error_message = 0L;
+      return napi_last_error_code = napi_ok;
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    BG:_RUNTIME_DEF napi_status                                      */
+/*    napi_get_value_string_latin1 ...                                 */
+/*---------------------------------------------------------------------*/
+BGL_RUNTIME_DEF napi_status
+napi_get_value_string_latin1(napi_env env, napi_value value, char *buf, size_t bufsize, size_t *result) {
+   if (!env || !value) {
+      napi_last_error_message = "Invalid argument";
+      return napi_last_error_code = napi_invalid_arg;
+   } else if (!bgl_napi_jsstringp(value)) {
+      napi_last_error_message = "A string was expected";
+      return napi_last_error_code = napi_string_expected;
+   } else if (!buf && bufsize > 0) {
+      napi_last_error_message = "Invalid argument";
+      return napi_last_error_code = napi_invalid_arg;
+   } else {
+      obj_t str = bgl_napi_jsstring_to_string_latin1(value);
+
       if (STRING_LENGTH(str) < bufsize) {
-	 *result = STRING_LENGTH(str);
+	 if (result) *result = STRING_LENGTH(str);
 	 strcpy(buf, BSTRING_TO_STRING(value));
       } else {
-	 *result = bufsize;
+	 if (result) *result = bufsize;
 	 strncpy(buf, BSTRING_TO_STRING(value), bufsize);
       }
       
+      napi_last_error_message = 0L;
+      return napi_ok;
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    BG:_RUNTIME_DEF napi_status                                      */
+/*    napi_get_value_string_latin1 ...                                 */
+/*---------------------------------------------------------------------*/
+BGL_RUNTIME_DEF napi_status
+napi_get_value_string_utf16(napi_env env, napi_value value, char16_t *buf, size_t bufsize, size_t *result) {
+   if (!env || !value) {
+      napi_last_error_message = "Invalid argument";
+      return napi_last_error_code = napi_invalid_arg;
+   } else if (!bgl_napi_jsstringp(value)) {
+      napi_last_error_message = "A string was expected";
+      return napi_last_error_code = napi_string_expected;
+   } else if (!buf && bufsize > 0) {
+      napi_last_error_message = "Invalid argument";
+      return napi_last_error_code = napi_invalid_arg;
+   } else {
+      obj_t str = bgl_napi_jsstring_to_string_utf16(value);
+      char16_t *ptr = &UCS2_STRING_REF(str, 0);
+      long len = UCS2_STRING_LENGTH(str);
+
+      if (len < bufsize) {
+	 if (result) *result = len;
+	 memcpy(buf, ptr, sizeof(char16_t) * len);
+      } else {
+	 if (result) *result = bufsize;
+	 memcpy(buf, ptr, sizeof(char16_t) * bufsize);
+      }
+      
+      napi_last_error_message = 0L;
       return napi_ok;
    }
 }
@@ -755,4 +889,72 @@ BGL_RUNTIME_DEF napi_status
 napi_is_exception_pending(napi_env env, bool *result) {
    *result = 0;
    return napi_ok;
+}
+
+/*---------------------------------------------------------------------*/
+/*    BGL_RUNTIME_DEF napi_status                                      */
+/*    napi_coerce_to_bool ...                                          */
+/*---------------------------------------------------------------------*/
+BGL_RUNTIME_DEF napi_status
+napi_coerce_to_bool(napi_env env, napi_value value, napi_value *result) {
+   if (!env || !result) {
+      napi_last_error_message = "Invalid argument";
+      return napi_last_error_code = napi_invalid_arg;
+   } else {
+      const obj_t v = (napi_value)bgl_napi_coerce_to_bool(env, value);
+      *result = v;
+      napi_last_error_message = 0L;
+      return napi_last_error_code = napi_ok;
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    BGL_RUNTIME_DEF napi_status                                      */
+/*    napi_coerce_to_number ...                                        */
+/*---------------------------------------------------------------------*/
+BGL_RUNTIME_DEF napi_status
+napi_coerce_to_number(napi_env env, napi_value value, napi_value *result) {
+   if (!env || !result) {
+      napi_last_error_message = "Invalid argument";
+      return napi_last_error_code = napi_invalid_arg;
+   } else {
+      const obj_t v = (napi_value)bgl_napi_coerce_to_number(env, value);
+      *result = v;
+      napi_last_error_message = 0L;
+      return napi_last_error_code = napi_ok;
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    BGL_RUNTIME_DEF napi_status                                      */
+/*    napi_coerce_to_object ...                                        */
+/*---------------------------------------------------------------------*/
+BGL_RUNTIME_DEF napi_status
+napi_coerce_to_object(napi_env env, napi_value value, napi_value *result) {
+   if (!env || !result) {
+      napi_last_error_message = "Invalid argument";
+      return napi_last_error_code = napi_invalid_arg;
+   } else {
+      const obj_t v = (napi_value)bgl_napi_coerce_to_object(env, value);
+      *result = v;
+      napi_last_error_message = 0L;
+      return napi_last_error_code = napi_ok;
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    BGL_RUNTIME_DEF napi_status                                      */
+/*    napi_coerce_to_string ...                                        */
+/*---------------------------------------------------------------------*/
+BGL_RUNTIME_DEF napi_status
+napi_coerce_to_string(napi_env env, napi_value value, napi_value *result) {
+   if (!env || !result) {
+      napi_last_error_message = "Invalid argument";
+      return napi_last_error_code = napi_invalid_arg;
+   } else {
+      const obj_t v = (napi_value)bgl_napi_coerce_to_string(env, value);
+      *result = v;
+      napi_last_error_message = 0L;
+      return napi_last_error_code = napi_ok;
+   }
 }

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 24 15:38:53 2023                          */
-/*    Last change :  Sat Mar 18 05:41:58 2023 (serrano)                */
+/*    Last change :  Sat Mar 18 15:24:04 2023 (serrano)                */
 /*    Copyright   :  2023 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop Specific macro redefinitions                                 */
@@ -49,9 +49,10 @@ extern obj_t bgl_napi_make_property_descriptor(obj_t, obj_t, obj_t, obj_t,
 					       obj_t, obj_t);
 extern bool_t bgl_napi_jsstringp(obj_t);
 extern obj_t bgl_napi_jsstring_to_string(obj_t);
+extern obj_t bgl_napi_jsstring_to_string_latin1(obj_t);
+extern obj_t bgl_napi_jsstring_to_string_utf16(obj_t);
 
 extern uint32_t bgl_napi_get_array_length(obj_t, obj_t);
-extern obj_t bgl_napi_define_property(napi_env _this, obj_t this, obj_t prop, obj_t met);
 extern napi_status napi_define_properties(napi_env _this, napi_value this, size_t count, const napi_property_descriptor *properties);
 
 extern napi_status napi_get_cb_info(napi_env _this, napi_callback_info info, size_t *argc, napi_value *argv, napi_value *this_arg, void **data);
@@ -63,7 +64,7 @@ extern napi_status napi_get_value_int32(napi_env _this, napi_value value, int32_
 extern napi_status napi_get_value_double(napi_env _this, napi_value value, double *res);
 extern napi_status napi_get_value_bigint_int64(napi_env _this, napi_value value, int64_t *res, bool *loosless);
 extern napi_status napi_get_value_bigint_uint64(napi_env _this, napi_value value, uint64_t *res, bool *loosless);
-   
+
 /*---------------------------------------------------------------------*/
 /*    bgl_napi_async_work                                              */
 /*---------------------------------------------------------------------*/

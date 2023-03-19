@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 24 16:10:01 2023                          */
-;*    Last change :  Sat Mar 18 05:48:53 2023 (serrano)                */
+;*    Last change :  Sat Mar 18 15:21:45 2023 (serrano)                */
 ;*    Copyright   :  2023 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The Scheme part of the node_api.                                 */
@@ -34,6 +34,7 @@
 	   (export napi-throw "bgl_napi_throw")
 	   (export napi-throw-error "bgl_napi_throw_error")
 	   (export napi-throw-range-error "bgl_napi_throw_range_error")
+	   (export napi-throw-type-error "bgl_napi_throw_type_error")
 	   (export napi-create-string-utf8 "bgl_napi_create_string_utf8")
 	   (export napi-get-element "bgl_napi_get_element")
 	   (export napi-set-element! "bgl_napi_set_element")
@@ -44,7 +45,6 @@
 	   (export napi-get-array-length "bgl_napi_get_array_length")
 	   (export napi-has-element "bgl_napi_has_element")
 	   (export napi-delete-element! "bgl_napi_delete_element")
-	   (export napi-define-property "bgl_napi_define_property")
 	   (export napi-create-function "bgl_napi_create_function")
 	   (export napi-create-object "bgl_napi_create_object")
 	   (export napi-create-array "bgl_napi_create_array")
@@ -54,11 +54,18 @@
 	   (export napi-typeof "bgl_napi_typeof")
 	   (export napi-uvloop "bgl_napi_uvloop")
 	   (export napi-jsstring? "bgl_napi_jsstringp")
-	   (export napi-jsstring->string "bgl_napi_jsstring_to_string"))
+	   (export napi-jsstring->string "bgl_napi_jsstring_to_string")
+	   (export napi-jsstring->string-latin1 "bgl_napi_jsstring_to_string_latin1")
+	   (export napi-jsstring->string-utf16 "bgl_napi_jsstring_to_string_utf16")
+	   (export napi-coerce-to-bool "bgl_napi_coerce_to_bool")
+	   (export napi-coerce-to-number "bgl_napi_coerce_to_number")
+	   (export napi-coerce-to-object "bgl_napi_coerce_to_object")
+	   (export napi-coerce-to-string "bgl_napi_coerce_to_string"))
    
    (export (napi-throw ::obj ::obj)
 	   (napi-throw-error ::obj ::string ::string)
 	   (napi-throw-range-error ::obj ::string ::string)
+	   (napi-throw-type-error ::obj ::string ::string)
 	   (napi-create-string-utf8::obj ::obj ::bstring)
 	   (napi-get-named-property::obj ::obj ::obj ::bstring)
 	   (napi-put-named-property!::obj ::obj ::obj ::bstring ::obj)
@@ -69,7 +76,6 @@
 	   (napi-delete-element!::obj ::obj ::obj ::int)
 	   (napi-get-element::obj ::obj ::obj ::int)
 	   (napi-set-element!::obj ::obj ::obj ::int ::obj)
-	   (napi-define-property::obj ::obj ::obj ::bstring ::obj)
 	   (napi-create-function::obj ::obj ::procedure ::bstring)
 	   (napi-create-object::obj ::obj)
 	   (napi-create-array::obj ::obj)
@@ -79,7 +85,13 @@
 	   (napi-typeof::int ::obj ::obj)
 	   (napi-uvloop::$uv_loop_t ::obj)
 	   (napi-jsstring?::bool ::obj)
-	   (napi-jsstring->string::bstring ::obj)))
+	   (napi-jsstring->string::bstring ::obj)
+	   (napi-jsstring->string-latin1::bstring ::obj)
+	   (napi-jsstring->string-utf16::ucs2string ::obj)
+	   (napi-coerce-to-bool::obj ::obj ::obj)
+	   (napi-coerce-to-number::obj ::obj ::obj)
+	   (napi-coerce-to-object::obj ::obj ::obj)
+	   (napi-coerce-to-string::obj ::obj ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    napi-throw-error ...                                             */
@@ -98,16 +110,28 @@
 	 (stack (js-get-trace-stack))
 	 (%this %this))))
 
+;* {*---------------------------------------------------------------------*} */
+;* {*    napi-throw-range-error ...                                       *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define (napi-throw-range-error %this code msg)                     */
+;*    (raise                                                           */
+;*       (instantiate::JsError                                         */
+;* 	 (name code)                                                   */
+;* 	 (msg msg)                                                     */
+;* 	 (stack (js-get-trace-stack))                                  */
+;* 	 (%this %this))))                                              */
+
 ;*---------------------------------------------------------------------*/
 ;*    napi-throw-range-error ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (napi-throw-range-error %this code msg)
-   (raise
-      (instantiate::JsError
-	 (name code)
-	 (msg msg)
-	 (stack (js-get-trace-stack))
-	 (%this %this))))
+   (js-raise-range-error %this (format "~a: ~~~a" code) msg))
+
+;*---------------------------------------------------------------------*/
+;*    napi-throw-type-error ...                                       */
+;*---------------------------------------------------------------------*/
+(define (napi-throw-type-error %this code msg)
+   (js-raise-type-error %this (format "~a: ~~~a" code) msg))
 
 ;*---------------------------------------------------------------------*/
 ;*    napi-create-string-utf8 ...                                      */
@@ -190,17 +214,6 @@
 (define (napi-set-element! %this this index val)
    (js-array-set! this index val #f %this))
 
-;*---------------------------------------------------------------------*/
-;*    napi-define-property ...                                         */
-;*---------------------------------------------------------------------*/
-(define (napi-define-property %this this prop met)
-   (let ((proc (js-make-function %this met
-		  (js-function-arity met)
-		  (js-function-info :name prop :len 1)
-		  :alloc js-no-alloc)))
-      (js-put! this (js-string->name prop) proc #f %this)
-      this))
-   
 ;*---------------------------------------------------------------------*/
 ;*    napi-create-function ...                                         */
 ;*---------------------------------------------------------------------*/
@@ -286,3 +299,45 @@
 ;*---------------------------------------------------------------------*/
 (define (napi-jsstring->string obj)
    (js-jsstring->string obj))
+
+;*---------------------------------------------------------------------*/
+;*    napi-jsstring->string-latin1 ...                                 */
+;*---------------------------------------------------------------------*/
+(define (napi-jsstring->string-latin1 obj)
+   (charset-convert (js-jsstring->string obj) 'utf8 'latin1))
+
+;*---------------------------------------------------------------------*/
+;*    napi-jsstring->string-utf16 ...                                  */
+;*---------------------------------------------------------------------*/
+(define (napi-jsstring->string-utf16 obj)
+   (utf8-string->ucs2-string (js-jsstring->string obj)))
+
+;*---------------------------------------------------------------------*/
+;*    napi-coerce-to-bool ...                                          */
+;*---------------------------------------------------------------------*/
+(define (napi-coerce-to-bool %this val)
+   (js-toboolean val))
+
+;*---------------------------------------------------------------------*/
+;*    napi-coerce-to-number ...                                        */
+;*---------------------------------------------------------------------*/
+(define (napi-coerce-to-number %this val)
+   (js-tonumber val %this))
+
+;*---------------------------------------------------------------------*/
+;*    napi-coerce-to-object ...                                        */
+;*---------------------------------------------------------------------*/
+(define (napi-coerce-to-object %this val)
+   (js-toobject %this val))
+
+;*---------------------------------------------------------------------*/
+;*    napi-coerce-to-string ...                                        */
+;*---------------------------------------------------------------------*/
+(define (napi-coerce-to-string %this val)
+   (cond
+      ((string? val)
+       (js-string->jsstring val))
+      ((isa? val JsSymbolLiteral)
+       (napi-throw-type-error %this "napi-coerce-to-string" "invalid argument"))
+      (else
+       (js-string->jsstring (js-tostring val %this)))))
