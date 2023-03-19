@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 24 14:34:24 2023                          */
-/*    Last change :  Sat Mar 18 15:19:46 2023 (serrano)                */
+/*    Last change :  Sun Mar 19 06:40:45 2023 (serrano)                */
 /*    Copyright   :  2023 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop node_api implementation.                                     */
@@ -305,6 +305,8 @@ napi_define_class(napi_env _this,
 /*---------------------------------------------------------------------*/
 BGL_RUNTIME_DEF napi_status
 napi_create_double(napi_env _this, double val, napi_value *result) {
+   const unsigned long uv = (unsigned long)val;
+   fprintf(stderr,"create_double %g truc=%d i=%ld u =%ld\n", val, trunc(val) == val, (long)val, uv);
    if (trunc(val) == val) {
       long lval = (long)val;
 
@@ -313,8 +315,9 @@ napi_create_double(napi_env _this, double val, napi_value *result) {
 #else      
 #  define MAX_JS_INT BGL_LONG_MAX
 #endif
+#  define MIN_JS_INT -MAX_JS_INT
       
-      if ((unsigned long)val < (unsigned long)(MAX_JS_INT)) {
+      if (lval < MAX_JS_INT && lval > (MIN_JS_INT)) {
 	 *result = BINT((long)val);
       } else {
 	 *result = DOUBLE_TO_REAL(val);
