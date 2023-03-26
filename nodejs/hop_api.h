@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 24 15:38:53 2023                          */
-/*    Last change :  Sat Mar 18 15:24:04 2023 (serrano)                */
+/*    Last change :  Mon Mar 20 04:11:53 2023 (serrano)                */
 /*    Copyright   :  2023 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop Specific macro redefinitions                                 */
@@ -142,10 +142,10 @@ struct napi_async_work__ {
    (*res = BINT(val), napi_ok)
 
 #define napi_create_int64(_this, val, res) \
-   (*res = BINT(val), napi_ok)
+  (*res = DOUBLE_TO_REAL((double)val), napi_ok)
 
 #define napi_create_uint64(_this, val, res) \
-   (*res = BINT(val), napi_ok)
+  (*res = DOUBLE_TO_REAL((double)val), napi_ok)
 
 #define napi_create_object(_this, res) \
    (*res = bgl_napi_create_object(_this), napi_ok)

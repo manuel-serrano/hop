@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 24 14:34:24 2023                          */
-/*    Last change :  Sun Mar 19 06:40:45 2023 (serrano)                */
+/*    Last change :  Mon Mar 20 03:44:03 2023 (serrano)                */
 /*    Copyright   :  2023 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop node_api implementation.                                     */
@@ -306,7 +306,6 @@ napi_define_class(napi_env _this,
 BGL_RUNTIME_DEF napi_status
 napi_create_double(napi_env _this, double val, napi_value *result) {
    const unsigned long uv = (unsigned long)val;
-   fprintf(stderr,"create_double %g truc=%d i=%ld u =%ld\n", val, trunc(val) == val, (long)val, uv);
    if (trunc(val) == val) {
       long lval = (long)val;
 
@@ -562,14 +561,15 @@ napi_get_value_int32(napi_env _this, napi_value value, int32_t *res) {
       napi_last_error_message = "Invalid argument";
       return napi_last_error_code = napi_invalid_arg;
    } else if (INTEGERP(value)) {
-      *res = CINT(value);
+      *res = (int32_t)CINT(value);
       return napi_ok;
    } else if (REALP(value)) {
       double v = REAL_TO_DOUBLE(value);
       if (isnan(v)) {
 	 *res = 0;
       } else {
-	 *res = (int32_t)v;
+	 long l = (((long) v) & ((1L << 32) - 1));
+	 *res = (int32_t)l;
       }
       return napi_ok;
    } else {
@@ -595,7 +595,8 @@ napi_get_value_uint32(napi_env _this, napi_value value, uint32_t *res) {
       if (isnan(v)) {
 	 *res = 0;
       } else {
-	 *res = (uint32_t)v;
+	 long l = (((long) v) & ((1L << 32) - 1));
+	 *res = (uint32_t)l;
       }
       return napi_ok;
    } else {
@@ -603,6 +604,12 @@ napi_get_value_uint32(napi_env _this, napi_value value, uint32_t *res) {
       return napi_number_expected;
    }
 }
+
+/*---------------------------------------------------------------------*/
+/*    Limits                                                           */
+/*---------------------------------------------------------------------*/
+#define INT64_MAX_D ((double)INT64_MAX)
+#define INT64_MIN_D ((double)INT64_MIN)
 
 /*---------------------------------------------------------------------*/
 /*    BGL_RUNTIME_DEF napi_status                                      */
@@ -617,7 +624,16 @@ napi_get_value_int64(napi_env _this, napi_value value, int64_t *res) {
       *res = CINT(value);
       return napi_ok;
    } else if (REALP(value)) {
-      *res = REAL_TO_DOUBLE(value);
+      double d = REAL_TO_DOUBLE(value);
+
+      if (d > INT64_MAX_D) {
+	 *res = INT64_MAX;
+      } else if (d < INT64_MIN_D) {
+	 *res = INT64_MIN;
+      } else {
+	 *res = (int64_t)d;
+      }
+      
       return napi_ok;
    } else {
       napi_last_error_message = "A number was expected";
