@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Tue Feb 21 15:22:14 2023 (serrano)                */
+;*    Last change :  Mon Mar 27 07:15:09 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -4778,7 +4778,8 @@
 	      ,(let ((call (symbol-append 'js-call
 			      (string->symbol (integer->string largs)))))
 		  `(,call ,%this ,obj ,this ,@args)))
-	     ((and (js-object-function-tag? ,obj)
+	     ((and (or (js-object-function-tag? ,obj)
+		       (js-object-procedure-tag? ,obj))
 		   (=fx (js-procedure-arity ,obj) ,(+fx largs 1)))
 	      (with-access::JsFunction ,obj (procedure)
 		 (set! owner ,obj)
@@ -4788,7 +4789,8 @@
 	      ,(let ((call (symbol-append 'js-call-proxy/cache-miss
 			      (string->symbol (integer->string largs)))))
 		  `(,call ,%this ,obj ,this ,@args)))
-	     ((and (js-object-function-tag? ,obj)
+	     ((and (or (js-object-function-tag? ,obj)
+		       (js-object-procedure-tag? ,obj))
 		   (with-access::JsFunction ,obj (procedure arity)
 		      (and (>=fx arity 0)
 			   (correct-arity? procedure ,(+fx largs 1)))))
@@ -4800,7 +4802,7 @@
 	      ,(let ((call (symbol-append 'js-call
 			      (string->symbol (integer->string largs)))))
 		  `(,call ,%this ,obj ,this ,@args))))))
-   
+      
    (let ((largs (length args)))
       (if (>=fx largs 4)
 	  (gen-call/cache-miss-generic largs)

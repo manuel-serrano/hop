@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Thu Mar  9 12:04:32 2023 (serrano)                */
+;*    Last change :  Mon Mar 27 07:42:17 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -742,6 +742,7 @@
 	   (inline js-object-mode::uint32 ::object)
 	   (inline js-object-mode-set! ::object ::uint32)
 
+	   (inline js-object-procedure-tag?::bool ::obj)
 	   (inline js-object-function-tag?::bool ::obj)
 	   
 	   (inline js-procedure-arity::int ::JsProcedure)
@@ -2107,6 +2108,13 @@
 (define-inline (js-object-function-tag? o)
    (=u32 (JS-OBJECT-MODE-JSFUNCTIONTAG)
       (bit-andu32 (js-object-mode o) (JS-OBJECT-MODE-JSFUNCTIONTAG))))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-procedure-tag? ...                                     */
+;*---------------------------------------------------------------------*/
+(define-inline (js-object-procedure-tag? o)
+   (=u32 (JS-OBJECT-MODE-JSPROCEDURETAG)
+      (bit-andu32 (js-object-mode o) (JS-OBJECT-MODE-JSPROCEDURETAG))))
 
 ;*---------------------------------------------------------------------*/
 ;*    jsindex12-max ...                                                */

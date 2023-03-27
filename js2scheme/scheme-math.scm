@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Sun Sep 26 18:54:10 2021 (serrano)                */
-;*    Copyright   :  2017-21 Manuel Serrano                            */
+;*    Last change :  Mon Mar 27 05:32:02 2023 (serrano)                */
+;*    Copyright   :  2017-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Math functions.             */
 ;*=====================================================================*/
@@ -122,6 +122,10 @@
 		(when (=fx (length args) 1)
 		   (j2s-math-sign
 		      (car args) mode return conf)))
+	       ((string=? val "pow")
+		(when (=fx (length args) 2)
+		   (j2s-math-inline-pow
+		      (car args) (cadr args) mode return conf)))
 	       (else
 		#f))))))
 
@@ -301,6 +305,26 @@
 	   ,(j2s-scheme y mode return conf))
        `(js-math-atan2 ,(j2s-scheme x mode return conf)
 	   ,(j2s-scheme y mode return conf))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-math-inline-pow ...                                          */
+;*---------------------------------------------------------------------*/
+(define (j2s-math-inline-pow x y mode return conf)
+   (let ((tyx (j2s-type x))
+	 (tyy (j2s-type y)))
+      (cond
+	 ((and (eq? tyx 'real) (eq? tyy 'real))
+	  `(js-math-powfl ,(j2s-scheme x mode return conf)
+	      ,(j2s-scheme y mode return conf)))
+	 ((eq? tyx 'uint32)
+	  (if (eq? tyy 'uint32)
+	      `(js-math-powfl (uint32->flonum ,(j2s-scheme x mode return conf))
+		  (uint32->flonum ,(j2s-scheme y mode return conf)))
+	      `(js-math-pow ,(j2s-scheme x mode return conf)
+		  ,(j2s-scheme y mode return conf) %this)))
+	 (else
+	  `(js-math-pow ,(j2s-scheme x mode return conf)
+	      ,(j2s-scheme y mode return conf) %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-math-sign ...                                                */

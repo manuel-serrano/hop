@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 24 14:34:24 2023                          */
-/*    Last change :  Mon Mar 20 03:44:03 2023 (serrano)                */
+/*    Last change :  Sun Mar 26 21:27:40 2023 (serrano)                */
 /*    Copyright   :  2023 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop node_api implementation.                                     */
@@ -12,6 +12,7 @@
 #include <pthread.h>
 #include <bigloo.h>
 #include <uv.h>
+#include <math.h>
 #include "node_api.h"
 
 /*---------------------------------------------------------------------*/
@@ -62,30 +63,66 @@ napi_module_register(napi_module *mod) {
 /*    napi_method_stub ...                                             */
 /*---------------------------------------------------------------------*/
 static obj_t napi_method_stub(obj_t proc, ...) {
+#define DEFAULT_ARGS_CNT 4
+   va_list argl;
+   obj_t runner;
+   long argslen = DEFAULT_ARGS_CNT;
+   obj_t argsdefault[2 + 1 + DEFAULT_ARGS_CNT];
+   obj_t *args = argsdefault;
+   long cnt = 1;
+
+   // count the number of arguments
+/*    va_start(argl, proc);                                            */
+/*    while ((runner = va_arg(argl, obj_t)) != BEOA) cnt++;            */
+/*    va_end(argl);                                                    */
+
+   // stack allocate the napi arguments array
+/*    args = alloca((2 + 1 + cnt) * sizeof(obj_t));                    */
+   args[0] = PROCEDURE_LENGTH(proc) == 1 ? PROCEDURE_REF(proc, 0) : 0L;
+
+   // collect the arguments
+   va_start(argl, proc);
+   while ((runner = va_arg(argl, obj_t)) != BEOA) {
+      args[cnt++] = runner;
+      if (cnt == argslen) {
+	 obj_t *nargs = alloca((2 + 1 + (argslen * 2)) * sizeof(obj_t));
+	 memcpy(nargs, args, ((2 + 1 + argslen) * sizeof(obj_t)));
+	 args = nargs;
+	 argslen *= 2;
+      }
+   }
+   args[cnt] = BEOA;
+   va_end(argl);
+
+   // call the C function
+   return PROCEDURE_VA_ENTRY(proc)(PROCEDURE_ATTR(proc), args);
+}
+
+static obj_t napi_method_stubXXX(obj_t proc, ...) {
    va_list argl;
    obj_t optional;
    obj_t runner;
    long cnt = 0;
    obj_t *args;
 
+   // count the number of arguments
    va_start(argl, proc);
    while ((runner = va_arg(argl, obj_t)) != BEOA) cnt++;
    va_end(argl);
 
+   // stack allocate the napi arguments array
    args = alloca((2 + 1 + cnt) * sizeof(obj_t));
    args[cnt] = 0;
    args[0] = PROCEDURE_LENGTH(proc) == 1 ? PROCEDURE_REF(proc, 0) : 0L;
    cnt = 1;
 
+   // collect the arguments
    va_start(argl, proc);
-
-   while ((runner = va_arg(argl, obj_t)) != BEOA) {
-      args[cnt++] = runner;
-   }
+   while ((runner = va_arg(argl, obj_t)) != BEOA) args[cnt++] = runner;
    args[cnt] = BEOA;
-
    va_end(argl);
 
+   // call the C function
    return PROCEDURE_VA_ENTRY(proc)(PROCEDURE_ATTR(proc), args);
 }
 
@@ -316,7 +353,7 @@ napi_create_double(napi_env _this, double val, napi_value *result) {
 #endif
 #  define MIN_JS_INT -MAX_JS_INT
       
-      if (lval < MAX_JS_INT && lval > (MIN_JS_INT)) {
+      if (lval <= MAX_JS_INT && lval >= (MIN_JS_INT)) {
 	 *result = BINT((long)val);
       } else {
 	 *result = DOUBLE_TO_REAL(val);
@@ -626,9 +663,11 @@ napi_get_value_int64(napi_env _this, napi_value value, int64_t *res) {
    } else if (REALP(value)) {
       double d = REAL_TO_DOUBLE(value);
 
-      if (d > INT64_MAX_D) {
+      if (!isnormal(d)) {
+	 *res = 0;
+      } else if (d >= INT64_MAX_D) {
 	 *res = INT64_MAX;
-      } else if (d < INT64_MIN_D) {
+      } else if (d <= INT64_MIN_D) {
 	 *res = INT64_MIN;
       } else {
 	 *res = (int64_t)d;

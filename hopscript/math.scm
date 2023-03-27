@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Fri Oct 14 14:59:10 2022 (serrano)                */
-;*    Copyright   :  2013-22 Manuel Serrano                            */
+;*    Last change :  Mon Mar 27 04:38:47 2023 (serrano)                */
+;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Math                         */
 ;*    -------------------------------------------------------------    */
@@ -30,6 +30,8 @@
 	   __hopscript_error
 	   __hopscript_stringliteral)
    
+   (import __hopscript_arithmetic32 __hopscript_arithmetic64)
+
    (export (js-init-math! ::JsObject)
 	   (js-math-ceil ::obj)
 	   (js-math-ceil-as-integer ::obj)
@@ -43,6 +45,8 @@
 	   (js-math-roundfl ::double)
 	   (js-math-atan2fl::double ::double ::double)
 	   (js-math-atan2::double ::obj ::obj)
+	   (inline js-math-powfl::double ::double ::double)
+	   (js-math-pow ::obj ::obj ::obj)
 	   (js-math-signfl::obj ::double)
 	   (js-math-sign::obj ::obj ::JsGlobalObject)))
 
@@ -289,14 +293,14 @@
       ;; max
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.8.2.11
       (define (js-math-max this . l)
-	 (let loop ((l l)
-		    (r -inf.0))
+	 (let loopmax ((l l)
+		       (r -inf.0))
 	    (if (null? l)
 		r
 		(let ((n (js-tonumber (car l) %this)))
 		   (if (not (= n n))
 		       n
-		       (loop (cdr l) (if (> n r) n r)))))))
+		       (loopmax (cdr l) (if (> n r) n r)))))))
       
       (js-bind! %this js-math (& "max")
 	 :value (js-make-function %this js-math-max
@@ -310,14 +314,14 @@
       ;; min
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.8.2.12
       (define (js-math-min this . l)
-	 (let loop ((l l)
-		    (r +inf.0))
+	 (let loopmin ((l l)
+		       (r +inf.0))
 	    (if (null? l)
 		r
 		(let ((n (js-tonumber (car l) %this)))
 		   (if (not (= n n))
 		       n
-		       (loop (cdr l) (if (< n r) n r)))))))
+		       (loopmin (cdr l) (if (< n r) n r)))))))
       
       (js-bind! %this js-math (& "min")
 	 :value (js-make-function %this js-math-min
@@ -330,7 +334,7 @@
       
       ;; pow
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.8.2.13
-      (define (js-math-pow this x y)
+      (define (js-math-pow-tbr-27mar203 this x y)
 	 
 	 (define (bignum->js-number o)
 	    (if (bignum? o)
@@ -366,8 +370,8 @@
 		       (bignum->js-number (* x (loop x (- y 1)))))))))))
       
       (js-bind! %this js-math (& "pow")
-	 :value (js-make-function %this js-math-pow
-		   (js-function-arity js-math-pow)
+	 :value (js-make-function %this (lambda (this x y) (js-math-pow x y %this))
+		   (js-function-arity 2 0)
 		   (js-function-info :name "pow" :len 1))
 	 :writable #t
 	 :configurable #t
@@ -493,11 +497,11 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.8.2.17    */
 ;*---------------------------------------------------------------------*/
 (define (js-math-sqrt x %this)
-   (let loop ((x x))
+   (let loopsqrt ((x x))
       (cond
 	 ((flonum? x) (js-math-sqrtfl x))
 	 ((fixnum? x) (js-math-sqrtfl (fixnum->flonum x)))
-	 (else (loop (js-tonumber x %this))))))
+	 (else (loopsqrt (js-tonumber x %this))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-math-sqrtfl ...                                               */
@@ -511,10 +515,10 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.8.2.9     */
 ;*---------------------------------------------------------------------*/
 (define (js-math-floor x %this)
-   (let loop ((x x))
+   (let loopfloor ((x x))
       (cond
 	 ((fixnum? x) x)
-	 ((not (flonum? x)) (loop (js-tonumber x %this)))
+	 ((not (flonum? x)) (loopfloor (js-tonumber x %this)))
 	 (else (js-math-floorfl x)))))
 
 ;*---------------------------------------------------------------------*/
@@ -632,10 +636,40 @@
        (atan y x)))
 
 ;*---------------------------------------------------------------------*/
+;*    js-math-powfl ...                                                */
+;*---------------------------------------------------------------------*/
+(define-inline (js-math-powfl x y)
+   (exptfl x y))
+
+;*---------------------------------------------------------------------*/
+;*    js-math-pow ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (js-math-pow x y %this)
+   (let ((n1 (js-tonumber x %this))
+	 (n2 (js-tonumber y %this)))
+      (cond
+	 ((fixnums? n1 n2)
+	  (overflowfx (exptfx n1 n2)))
+	 ((flonum? n1)
+	  (expt n1 n2))
+	 ((fixnum? n2)
+	  (exptfl (fixnum->flonum n1) (fixnum->flonum n2)))
+	 ((and (<fl n2 0.0) (exact? n2))
+	  (expt n1 (exact->inexact n2)))
+	 ((or (=fl n2 +inf.0) (nanfl? n2))
+	  +nan.0)
+	 (else
+	  (if (=fl n2 -inf.0)
+	      (if (= (abs n1) 1)
+		  +nan.0
+		  0)
+	      (exptfl (fixnum->flonum n1) n2))))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-math-sign ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (js-math-sign x %this)
-   (let loop ((x x))
+   (let loopsign ((x x))
       (cond
 	 ((flonum? x)
 	  (js-math-signfl x))
@@ -645,7 +679,7 @@
 	     ((<fx x 0) -1)
 	     (else 0)))
 	 (else
-	  (loop (js-tonumber x %this))))))
+	  (loopsign (js-tonumber x %this))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-math-signfl ...                                               */
