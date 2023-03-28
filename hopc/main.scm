@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Mon Mar 13 07:24:08 2023 (serrano)                */
+;*    Last change :  Mon Mar 27 15:01:41 2023 (serrano)                */
 ;*    Copyright   :  2004-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOPC entry point                                             */
@@ -47,16 +47,18 @@
    (hop-install-expanders!)
    ;; disable caching
    (hop-cache-enable-set! #f)
+   ;; pre-setup the client-side compiler before parsing the command line
+   (setup-client-compiler!)
    ;; parse the command line
    (let ((exprs (parse-args args)))
+      ;; re-setup the client-side compiler after parsing the command line
+      (setup-client-compiler!)
       ;; access file
       (cond
 	 ((string? (hopc-access-file))
 	  (module-load-access-file (hopc-access-file)))
 	 ((file-exists? ".afile")
 	  (module-load-access-file ".afile")))
-      ;; setup the client-side compiler
-      (setup-client-compiler!)
       ;; setup the hop module resolvers
       (bigloo-module-resolver-set!
 	 (make-hop-module-resolver (bigloo-module-resolver)))

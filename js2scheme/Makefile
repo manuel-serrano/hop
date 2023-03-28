@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Wed Feb 22 13:12:55 2023 (serrano)                */
+#*    Last change :  Tue Mar 28 11:19:54 2023 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the JS2SCHEME library.                     */
 #*=====================================================================*/
@@ -25,7 +25,7 @@ install: install-library
 # the library name
 TARGETNAME = js2scheme
 BIGLOOEXTRALIBS = biglooweb
-HOPAPPLIBS = hop
+HOPAPPLIBS = hop hopscript
 
 BLIBFLAGS = $(BCFLAGSRTS)
 

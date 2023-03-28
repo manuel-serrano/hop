@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Wed Feb 15 15:48:13 2023 (serrano)                */
+;*    Last change :  Tue Mar 28 10:55:49 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -843,7 +843,7 @@
 	("log" . (real undefined real))
 	("max" . (anumber undefined number))
 	("min" . (anumber undefined number))
-	("pow" . (number undefined number))
+	("pow" . (number undefined real))
 	("random" . (ureal1 undefined))
 	("round" . (number undefined real))
 	("sin" . (real1 undefined real))

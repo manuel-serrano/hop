@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Mon Mar 27 07:42:17 2023 (serrano)                */
+;*    Last change :  Mon Mar 27 14:23:16 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -1264,7 +1264,7 @@
       ((and bigloo-c (not disable-inline))
        ($js-object-inline-elements o))
       (else
-       (js-object-elements o))))
+       (js-object-noinline-elements o))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-inline-length ...                                      */

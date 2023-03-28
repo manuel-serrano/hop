@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Mon Mar 27 04:38:47 2023 (serrano)                */
+;*    Last change :  Tue Mar 28 08:05:29 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Math                         */
@@ -46,7 +46,7 @@
 	   (js-math-atan2fl::double ::double ::double)
 	   (js-math-atan2::double ::obj ::obj)
 	   (inline js-math-powfl::double ::double ::double)
-	   (js-math-pow ::obj ::obj ::obj)
+	   (js-math-pow::double ::obj ::obj ::obj)
 	   (js-math-signfl::obj ::double)
 	   (js-math-sign::obj ::obj ::JsGlobalObject)))
 
@@ -645,25 +645,41 @@
 ;*    js-math-pow ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (js-math-pow x y %this)
+   
+   (define (bignum->js-number o)
+      (if (bignum? o)
+	  (bignum->flonum o)
+	  o))
+   
    (let ((n1 (js-tonumber x %this))
 	 (n2 (js-tonumber y %this)))
       (cond
-	 ((fixnums? n1 n2)
-	  (overflowfx (exptfx n1 n2)))
 	 ((flonum? n1)
-	  (expt n1 n2))
-	 ((fixnum? n2)
-	  (exptfl (fixnum->flonum n1) (fixnum->flonum n2)))
-	 ((and (<fl n2 0.0) (exact? n2))
+	  (if (flonum? n2)
+	      (exptfl n1 n2)
+	      (expt n1 n2)))
+	 ((and (< n2 0) (exact? n2))
 	  (expt n1 (exact->inexact n2)))
-	 ((or (=fl n2 +inf.0) (nanfl? n2))
+	 ((and (flonum? n2) (or (=fl n2 +inf.0) (nanfl? n2)))
 	  +nan.0)
+	 ((= n2 -inf.0)
+	  (if (= (abs n1) 1)
+	      +nan.0
+	      0.))
+	 ((flonum? n2)
+	  (exptfl (fixnum->flonum n1) n2))
 	 (else
-	  (if (=fl n2 -inf.0)
-	      (if (= (abs n1) 1)
-		  +nan.0
-		  0)
-	      (exptfl (fixnum->flonum n1) n2))))))
+	  (let loop ((x n1)
+		     (y (inexact->exact n2)))
+	     (cond
+		((= y 0)
+		 1.)
+		((even? y)
+		 (bignum->js-number (loop (* x x) (quotient y 2))))
+		((< y 0)
+		 (bignum->js-number (* x (loop x (+ y 1)))))
+		(else
+		 (bignum->js-number (* x (loop x (- y 1)))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-math-sign ...                                                 */

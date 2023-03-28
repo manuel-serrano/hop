@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May  1 16:06:44 2018                          */
-;*    Last change :  Sun Nov 21 10:02:50 2021 (serrano)                */
-;*    Copyright   :  2018-21 Manuel Serrano                            */
+;*    Last change :  Tue Mar 28 10:53:39 2023 (serrano)                */
+;*    Copyright   :  2018-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    hint typing of numerical values.                                 */
 ;*    -------------------------------------------------------------    */
@@ -388,7 +388,7 @@
 	 (with-access::J2SAccess fun (obj field)
 	    (when (and (is-builtin-ref? obj 'Math) (isa? field J2SString))
 	       (with-access::J2SString field (val)
-		  (member val '("asin" "sin" "acos" "cos" "sqrt" "log")))))))
+		  (member val '("asin" "sin" "acos" "cos" "sqrt" "log" "pow")))))))
    
    (call-default-walker)
    (with-access::J2SCall this (fun args)

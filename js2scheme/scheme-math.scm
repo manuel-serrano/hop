@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Mon Mar 27 05:32:02 2023 (serrano)                */
+;*    Last change :  Tue Mar 28 10:56:51 2023 (serrano)                */
 ;*    Copyright   :  2017-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Math functions.             */
@@ -14,6 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_scheme-math
 
+   (library hop hopscript)
+   
    (include "ast.sch")
    
    (import __js2scheme_ast
@@ -310,21 +312,54 @@
 ;*    j2s-math-inline-pow ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (j2s-math-inline-pow x y mode return conf)
-   (let ((tyx (j2s-type x))
-	 (tyy (j2s-type y)))
+   
+   (define (number->flonum v)
       (cond
-	 ((and (eq? tyx 'real) (eq? tyy 'real))
-	  `(js-math-powfl ,(j2s-scheme x mode return conf)
-	      ,(j2s-scheme y mode return conf)))
+	 ((flonum? v) v)
+	 ((fixnum? v) (fixnum->flonum v))
+	 ((uint32? v) (uint32->flonum v))
+	 ((int32? v) (int32->flonum v))
+	 (else (error "Math.pow" "illegal number" v))))
+   
+   (let ((tyx (j2s-type x))
+	 (tyy (j2s-type y))
+	 (sx (j2s-scheme x mode return conf))
+	 (sy (j2s-scheme y mode return conf)))
+      (cond
+	 ((and (number? sx) (not (bignum? sx)) (number? sy) (not (bignum? sy)))
+	  (js-math-powfl (number->flonum sx) (number->flonum sy)))
+	 ((eq? tyx 'real)
+	  (case tyy
+	     ((uint32)
+	      `(js-math-powfl ,sx (uint32->flonum ,sy)))
+	     ((int32)
+	      `(js-math-powfl ,sx (int32->flonum ,sy)))
+	     ((real)
+	      `(js-math-powfl ,sx ,sy))
+	     (else
+	      `(js-math-pow ,sx ,sy %this))))
 	 ((eq? tyx 'uint32)
-	  (if (eq? tyy 'uint32)
-	      `(js-math-powfl (uint32->flonum ,(j2s-scheme x mode return conf))
-		  (uint32->flonum ,(j2s-scheme y mode return conf)))
-	      `(js-math-pow ,(j2s-scheme x mode return conf)
-		  ,(j2s-scheme y mode return conf) %this)))
+	  (case tyy
+	     ((uint32)
+	      `(js-math-powfl (uint32->flonum ,sx) (uint32->flonum ,sy)))
+	     ((int32)
+	      `(js-math-powfl (uint32->flonum ,sx) (int32->flonum ,sy)))
+	     ((real)
+	      `(js-math-powfl (uint32->flonum ,sx) ,sy))
+	     (else
+	      `(js-math-pow ,sx ,sy %this))))
+	 ((eq? tyx 'int32)
+	  (case tyy
+	     ((uint32)
+	      `(js-math-powfl (int32->flonum ,sx) (uint32->flonum ,sy)))
+	     ((int32)
+	      `(js-math-powfl (int32->flonum ,sx) (int32->flonum ,sy)))
+	     ((real)
+	      `(js-math-powfl (int32->flonum ,sx) ,sy))
+	     (else
+	      `(js-math-pow ,sx ,sy %this))))
 	 (else
-	  `(js-math-pow ,(j2s-scheme x mode return conf)
-	      ,(j2s-scheme y mode return conf) %this)))))
+	  `(js-math-pow ,sx ,sy %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-math-sign ...                                                */
