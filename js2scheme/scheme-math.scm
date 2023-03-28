@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Tue Mar 28 10:56:51 2023 (serrano)                */
+;*    Last change :  Tue Mar 28 15:55:07 2023 (serrano)                */
 ;*    Copyright   :  2017-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Math functions.             */
@@ -327,7 +327,7 @@
 	 (sy (j2s-scheme y mode return conf)))
       (cond
 	 ((and (number? sx) (not (bignum? sx)) (number? sy) (not (bignum? sy)))
-	  (js-math-powfl (number->flonum sx) (number->flonum sy)))
+	  (exptfl (number->flonum sx) (number->flonum sy)))
 	 ((eq? tyx 'real)
 	  (case tyy
 	     ((uint32)
