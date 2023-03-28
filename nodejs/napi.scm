@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 24 16:10:01 2023                          */
-;*    Last change :  Sat Mar 18 15:21:45 2023 (serrano)                */
+;*    Last change :  Tue Mar 28 13:02:04 2023 (serrano)                */
 ;*    Copyright   :  2023 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The Scheme part of the node_api.                                 */
@@ -50,7 +50,9 @@
 	   (export napi-create-array "bgl_napi_create_array")
 	   (export napi-create-array-with-length "bgl_napi_create_array_with_length")
 	   (export napi-create-promise "bgl_napi_create_promise")
+	   (export napi-create-date "bgl_napi_create_date")
 	   (export napi-is-array? "bgl_napi_is_array")
+	   (export napi-is-date? "bgl_napi_is_date")
 	   (export napi-typeof "bgl_napi_typeof")
 	   (export napi-uvloop "bgl_napi_uvloop")
 	   (export napi-jsstring? "bgl_napi_jsstringp")
@@ -60,7 +62,8 @@
 	   (export napi-coerce-to-bool "bgl_napi_coerce_to_bool")
 	   (export napi-coerce-to-number "bgl_napi_coerce_to_number")
 	   (export napi-coerce-to-object "bgl_napi_coerce_to_object")
-	   (export napi-coerce-to-string "bgl_napi_coerce_to_string"))
+	   (export napi-coerce-to-string "bgl_napi_coerce_to_string")
+	   (export napi-get-date-value "bgl_napi_get_date_value"))
    
    (export (napi-throw ::obj ::obj)
 	   (napi-throw-error ::obj ::string ::string)
@@ -81,7 +84,9 @@
 	   (napi-create-array::obj ::obj)
 	   (napi-create-array-with-length::obj ::obj ::long)
 	   (napi-create-promise::obj ::obj ::obj)
+	   (napi-create-date::obj ::obj ::double)
 	   (napi-is-array?::bool ::obj) 
+	   (napi-is-date?::bool ::obj) 
 	   (napi-typeof::int ::obj ::obj)
 	   (napi-uvloop::$uv_loop_t ::obj)
 	   (napi-jsstring?::bool ::obj)
@@ -91,7 +96,8 @@
 	   (napi-coerce-to-bool::obj ::obj ::obj)
 	   (napi-coerce-to-number::obj ::obj ::obj)
 	   (napi-coerce-to-object::obj ::obj ::obj)
-	   (napi-coerce-to-string::obj ::obj ::obj)))
+	   (napi-coerce-to-string::obj ::obj ::obj)
+	   (napi-get-date-value::double ::JsDate)))
 
 ;*---------------------------------------------------------------------*/
 ;*    napi-throw-error ...                                             */
@@ -257,6 +263,12 @@
    (js-array? obj))
    
 ;*---------------------------------------------------------------------*/
+;*    napi-is-date? ...                                                */
+;*---------------------------------------------------------------------*/
+(define (napi-is-date? obj)
+   (isa? obj JsDate))
+   
+;*---------------------------------------------------------------------*/
 ;*    napi-typeof ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (napi-typeof %this obj)
@@ -278,7 +290,16 @@
    (js-new-promise/procedure %this
       (lambda (%this resolve reject)
 	 (pragma "*((void **)($1)) = ($2)" deferred (cons resolve reject)))))
-	 
+
+;*---------------------------------------------------------------------*/
+;*    napi-create-date ...                                             */
+;*---------------------------------------------------------------------*/
+(define (napi-create-date %this time)
+   (let ((this (js-date-alloc %this)))
+      (with-access::JsDate this (val)
+	 (set! val (milliseconds->date (flonum->llong time))))
+      this))
+
 ;*---------------------------------------------------------------------*/
 ;*    napi-uvloop ...                                                  */
 ;*---------------------------------------------------------------------*/
@@ -341,3 +362,12 @@
        (napi-throw-type-error %this "napi-coerce-to-string" "invalid argument"))
       (else
        (js-string->jsstring (js-tostring val %this)))))
+
+;*---------------------------------------------------------------------*/
+;*    napi-get-date-value ...                                          */
+;*---------------------------------------------------------------------*/
+(define (napi-get-date-value dt)
+   (let ((v (js-date-gettime dt)))
+      (if (fixnum? v)
+	  (fixnum->flonum v)
+	  v)))

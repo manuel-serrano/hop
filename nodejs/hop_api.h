@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 24 15:38:53 2023                          */
-/*    Last change :  Mon Mar 20 04:11:53 2023 (serrano)                */
+/*    Last change :  Tue Mar 28 13:02:51 2023 (serrano)                */
 /*    Copyright   :  2023 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop Specific macro redefinitions                                 */
@@ -22,6 +22,7 @@ extern obj_t bgl_int64_to_bignum(int64_t);
 extern obj_t bgl_uint64_to_bignum(uint64_t);
 
 extern int bgl_napi_is_array(obj_t);
+extern int bgl_napi_is_date(obj_t);
 extern int bgl_napi_typeof(obj_t, obj_t);
 extern obj_t bgl_napi_throw(obj_t, obj_t);
 extern obj_t bgl_napi_throw_error(obj_t, char *, char *);
@@ -34,6 +35,7 @@ extern obj_t bgl_napi_create_object(obj_t);
 extern obj_t bgl_napi_create_array(obj_t);
 extern obj_t bgl_napi_create_array_with_length(obj_t, long);
 extern obj_t bgl_napi_create_promise(obj_t, obj_t);
+extern obj_t bgl_napi_create_date(obj_t, double);
 
 extern napi_status napi_define_class(napi_env _this, const char* utf8name, size_t length, napi_callback ctor, void *data, size_t property_count, const napi_property_descriptor *properties, napi_value *result);
 
@@ -64,6 +66,7 @@ extern napi_status napi_get_value_int32(napi_env _this, napi_value value, int32_
 extern napi_status napi_get_value_double(napi_env _this, napi_value value, double *res);
 extern napi_status napi_get_value_bigint_int64(napi_env _this, napi_value value, int64_t *res, bool *loosless);
 extern napi_status napi_get_value_bigint_uint64(napi_env _this, napi_value value, uint64_t *res, bool *loosless);
+extern napi_status napi_get_date_value(napi_env _this, napi_value value, double *res);
 
 /*---------------------------------------------------------------------*/
 /*    bgl_napi_async_work                                              */
@@ -159,6 +162,9 @@ struct napi_async_work__ {
 #define napi_create_promise(_this, deferred, res) \
    (*res = bgl_napi_create_promise(_this, (obj_t)deferred), napi_ok)
 
+#define napi_create_date(_this, time, res) \
+  (*res = bgl_napi_create_date(_this, time), napi_ok)
+
 #define napi_create_bigint_int64(_this, int64, res) \
    (*res = bgl_int64_to_bignum(int64), napi_ok)
 
@@ -216,9 +222,11 @@ struct napi_async_work__ {
 #define napi_delete_async_work(env, work) \
   (free(work), napi_ok)
 
+#define napi_is_date(_this, val, res) \
+   (*res = bgl_napi_is_date(val), napi_ok)
+
+
 /*---------------------------------------------------------------------*/
 /*    endif                                                            */
 /*---------------------------------------------------------------------*/
 #endif
-
-

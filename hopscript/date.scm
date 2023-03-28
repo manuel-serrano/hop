@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Thu Aug 26 15:10:42 2021 (serrano)                */
-;*    Copyright   :  2013-21 Manuel Serrano                            */
+;*    Last change :  Tue Mar 28 13:06:40 2023 (serrano)                */
+;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript dates                        */
 ;*    -------------------------------------------------------------    */
@@ -38,6 +38,7 @@
        (import __hopscript_arithmetic64)))
    
    (export (js-init-date! ::JsObject)
+	   (js-date-alloc ::JsGlobalObject)
 	   (js-date->jsdate::JsDate ::date ::JsGlobalObject)
 	   (js-new-date0 ::JsGlobalObject)
 	   (js-new-date1 ::JsGlobalObject ::obj)

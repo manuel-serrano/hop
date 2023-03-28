@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 24 14:34:24 2023                          */
-/*    Last change :  Tue Mar 28 06:48:22 2023 (serrano)                */
+/*    Last change :  Tue Mar 28 13:14:41 2023 (serrano)                */
 /*    Copyright   :  2023 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop node_api implementation.                                     */
@@ -71,44 +71,7 @@ napi_module_register(napi_module *mod) {
 /*    napi_method_stub ...                                             */
 /*---------------------------------------------------------------------*/
 static obj_t napi_method_stub(obj_t proc, ...) {
-#define DEFAULT_ARGS_CNT 4
    va_list argl;
-   obj_t runner;
-   long argslen = DEFAULT_ARGS_CNT;
-   obj_t argsdefault[2 + 1 + DEFAULT_ARGS_CNT];
-   obj_t *args = argsdefault;
-   long cnt = 1;
-
-   // count the number of arguments
-/*    va_start(argl, proc);                                            */
-/*    while ((runner = va_arg(argl, obj_t)) != BEOA) cnt++;            */
-/*    va_end(argl);                                                    */
-
-   // stack allocate the napi arguments array
-/*    args = alloca((2 + 1 + cnt) * sizeof(obj_t));                    */
-   args[0] = PROCEDURE_LENGTH(proc) == 1 ? PROCEDURE_REF(proc, 0) : 0L;
-
-   // collect the arguments
-   va_start(argl, proc);
-   while ((runner = va_arg(argl, obj_t)) != BEOA) {
-      args[cnt++] = runner;
-      if (cnt == argslen) {
-	 obj_t *nargs = alloca((2 + 1 + (argslen * 2)) * sizeof(obj_t));
-	 memcpy(nargs, args, ((2 + 1 + argslen) * sizeof(obj_t)));
-	 args = nargs;
-	 argslen *= 2;
-      }
-   }
-   args[cnt] = BEOA;
-   va_end(argl);
-
-   // call the C function
-   return PROCEDURE_VA_ENTRY(proc)(PROCEDURE_ATTR(proc), args);
-}
-
-static obj_t napi_method_stubXXX(obj_t proc, ...) {
-   va_list argl;
-   obj_t optional;
    obj_t runner;
    long cnt = 0;
    obj_t *args;
@@ -120,7 +83,6 @@ static obj_t napi_method_stubXXX(obj_t proc, ...) {
 
    // stack allocate the napi arguments array
    args = alloca((2 + 1 + cnt) * sizeof(obj_t));
-   args[cnt] = 0;
    args[0] = PROCEDURE_LENGTH(proc) == 1 ? PROCEDURE_REF(proc, 0) : 0L;
    cnt = 1;
 
@@ -592,6 +554,24 @@ napi_get_value_bool(napi_env _this, napi_value value, bool *res) {
       return napi_ok;
    } else {
       napi_last_error_message = "A boolean was expected";
+      return napi_boolean_expected;
+   }
+}
+   
+/*---------------------------------------------------------------------*/
+/*    BGL_RUNTIME_DEF napi_status                                      */
+/*    napi_get_date_value ...                                          */
+/*---------------------------------------------------------------------*/
+BGL_RUNTIME_DEF napi_status
+napi_get_date_value(napi_env _this, napi_value value, double *res) {
+   if (!_this || !value || !res) {      
+      napi_last_error_message = "Invalid argument";
+      return napi_last_error_code = napi_invalid_arg;
+   } else if (bgl_napi_is_date(value)) {
+      *res = bgl_napi_get_date_value(value);
+      return napi_ok;
+   } else {
+      napi_last_error_message = "A date was expected";
       return napi_boolean_expected;
    }
 }
