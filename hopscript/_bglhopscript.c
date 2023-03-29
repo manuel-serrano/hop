@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Wed Mar 29 18:05:16 2023 (serrano)                */
+/*    Last change :  Wed Mar 29 20:05:03 2023 (serrano)                */
 /*    Copyright   :  2016-23 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -231,7 +231,7 @@ static obj_t bgl_make_jsdate_sans(BgL_jsconstructmapz00_bglt cmap, obj_t __proto
 #define JSMETHOD_POOLSZ POOLSZ(4)
 #define JSPROCEDURE_POOLSZ POOLSZ(4)
 #define JSSTRINGLITERALASCII_POOLSZ POOLSZ(3)
-#define JSDATE_POOLSZ POOLSZ(3)
+#define JSDATE_POOLSZ POOLSZ(2)
 #define WORK_NUMBER 1
 
 /*---------------------------------------------------------------------*/

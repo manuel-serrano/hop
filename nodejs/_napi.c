@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 24 14:34:24 2023                          */
-/*    Last change :  Tue Mar 28 13:14:41 2023 (serrano)                */
+/*    Last change :  Wed Mar 29 19:29:19 2023 (serrano)                */
 /*    Copyright   :  2023 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop node_api implementation.                                     */
@@ -73,7 +73,7 @@ napi_module_register(napi_module *mod) {
 static obj_t napi_method_stub(obj_t proc, ...) {
    va_list argl;
    obj_t runner;
-   long cnt = 0;
+   int cnt = 1, i;
    obj_t *args;
 
    // count the number of arguments
@@ -82,15 +82,16 @@ static obj_t napi_method_stub(obj_t proc, ...) {
    va_end(argl);
 
    // stack allocate the napi arguments array
-   args = alloca((2 + 1 + cnt) * sizeof(obj_t));
+   args = alloca((1 + cnt) * sizeof(obj_t));
    args[0] = PROCEDURE_LENGTH(proc) == 1 ? PROCEDURE_REF(proc, 0) : 0L;
-   cnt = 1;
 
    // collect the arguments
    va_start(argl, proc);
-   while ((runner = va_arg(argl, obj_t)) != BEOA) args[cnt++] = runner;
-   args[cnt] = BEOA;
+   for (i = 1; i < cnt; i++) {
+      args[i] = va_arg(argl, obj_t);
+   }
    va_end(argl);
+   args[cnt] = BEOA;
 
    // call the C function
    return PROCEDURE_VA_ENTRY(proc)(PROCEDURE_ATTR(proc), args);
@@ -382,8 +383,8 @@ napi_get_cb_info(napi_env _this, napi_callback_info info, size_t *argc, napi_val
 	    while (i < max) {
 	       argv[i++] = BUNSPEC;
 	    }
-	 } else {
-	    *argc = i;
+/* 	 } else {                                                      */
+/* 	    *argc = i;                                                 */
 	 }
       } else {
 	 while(info[i + 2] != BEOA) {
