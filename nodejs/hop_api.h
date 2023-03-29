@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 24 15:38:53 2023                          */
-/*    Last change :  Tue Mar 28 13:02:51 2023 (serrano)                */
+/*    Last change :  Wed Mar 29 09:02:51 2023 (serrano)                */
 /*    Copyright   :  2023 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop Specific macro redefinitions                                 */
@@ -67,6 +67,7 @@ extern napi_status napi_get_value_double(napi_env _this, napi_value value, doubl
 extern napi_status napi_get_value_bigint_int64(napi_env _this, napi_value value, int64_t *res, bool *loosless);
 extern napi_status napi_get_value_bigint_uint64(napi_env _this, napi_value value, uint64_t *res, bool *loosless);
 extern napi_status napi_get_date_value(napi_env _this, napi_value value, double *res);
+extern double bgl_napi_get_date_value(obj_t);
 
 /*---------------------------------------------------------------------*/
 /*    bgl_napi_async_work                                              */

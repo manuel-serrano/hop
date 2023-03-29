@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Mon Mar 27 14:23:16 2023 (serrano)                */
+;*    Last change :  Wed Mar 29 07:35:08 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -340,7 +340,8 @@
 	      (location (default #f)))
 	   
 	   (class JsDate::JsObject
-	      (val (default #f)))
+	      (time (default #f))
+	      (%val (default #f)))
 	   
 	   (class JsJSON::JsObject)
 	   

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 24 16:10:01 2023                          */
-;*    Last change :  Tue Mar 28 13:02:04 2023 (serrano)                */
+;*    Last change :  Wed Mar 29 08:23:47 2023 (serrano)                */
 ;*    Copyright   :  2023 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The Scheme part of the node_api.                                 */
@@ -97,7 +97,7 @@
 	   (napi-coerce-to-number::obj ::obj ::obj)
 	   (napi-coerce-to-object::obj ::obj ::obj)
 	   (napi-coerce-to-string::obj ::obj ::obj)
-	   (napi-get-date-value::double ::JsDate)))
+	   (napi-get-date-value::double ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    napi-throw-error ...                                             */
@@ -294,10 +294,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    napi-create-date ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (napi-create-date %this time)
+(define (napi-create-date %this tm)
    (let ((this (js-date-alloc %this)))
-      (with-access::JsDate this (val)
-	 (set! val (milliseconds->date (flonum->llong time))))
+      (with-access::JsDate this (time)
+	 (set! time (flonum->llong tm)))
       this))
 
 ;*---------------------------------------------------------------------*/
