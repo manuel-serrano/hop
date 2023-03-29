@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Wed Mar 29 07:35:08 2023 (serrano)                */
+;*    Last change :  Wed Mar 29 18:13:46 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -57,6 +57,8 @@
 	      "bgl_init_jsalloc_procedure")
 	   ($js-init-jsalloc-stringliteralascii::int (::uint32 ::uint32 ::obj ::uint32)
 	      "bgl_init_jsalloc_stringliteralascii")
+	   ($js-init-jsalloc-date::int (::uint32)
+	      "bgl_init_jsalloc_date")
 	   ($js-make-jsobject::JsObject (::int ::JsConstructMap ::obj ::uint32)
 	      "bgl_make_jsobject")
 	   ($js-make-jsproxy::JsProxy (::obj ::obj ::obj ::obj ::obj ::uint32)
@@ -75,6 +77,8 @@
 	      "bgl_make_jsstringliteralascii")
 	   ($js-make-jsgenerator::JsGenerator (::obj ::obj ::long ::obj ::uint32)
 	      "bgl_make_jsgenerator")
+	   ($js-make-jsdate::JsDate (::obj ::obj)
+	      "bgl_make_jsdate")
 	   (macro $js-object-inline-elements::vector (::JsObject)
 		  "HOP_JSOBJECT_INLINE_ELEMENTS")
 	   (macro $js-object-inline-elements-length::long (::JsObject)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Mar 29 07:35:54 2023 (serrano)                */
+;*    Last change :  Wed Mar 29 18:15:25 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript dates                        */
@@ -38,7 +38,7 @@
        (import __hopscript_arithmetic64)))
    
    (export (js-init-date! ::JsObject)
-	   (js-date-alloc ::JsGlobalObject)
+	   (inline js-date-alloc ::JsGlobalObject)
 	   (js-date->jsdate::JsDate ::date ::JsGlobalObject)
 	   (js-new-date0 ::JsGlobalObject)
 	   (js-new-date1 ::JsGlobalObject ::obj)
@@ -207,12 +207,16 @@
 (define (js-init-date! %this)
    ;; local constant strings
    (unless (vector? __js_strings) (set! __js_strings (&init!)))
+
+   ($js-init-jsalloc-date
+      (bit-andu32 (js-object-default-mode)
+	 (bit-notu32 (JS-OBJECT-MODE-INLINE))))
    
    ;; first, bind the builtin date prototype
-   (with-access::JsGlobalObject %this (js-date js-function js-date-prototype js-date-cmap)
+   (with-access::JsGlobalObject %this (js-date js-date-cmap
+					 js-function js-date-prototype)
 
-      (set! js-date-cmap
-	 (js-make-jsconstructmap))
+      (set! js-date-cmap (js-make-jsconstructmap))
       
       (set! js-date-prototype
 	 (let ((dt (current-date)))
@@ -220,11 +224,11 @@
 	       (%val dt)
 	       (time (date->milliseconds dt))
 	       (cmap (js-make-jsconstructmap))
-	       (elements ($create-vector 47))
-	       (__proto__ (js-object-proto %this)))))
+	       (__proto__ (js-object-proto %this))
+	       (elements ($create-vector 47)))))
       
       (define (js-date-ctor-alloc %this constructor::JsFunction)
-	 (with-access::JsGlobalObject %this (js-date js-date-cmap)
+	 (with-access::JsGlobalObject %this (js-date)
 	    (js-new-target-push! %this constructor)
 	    (instantiateJsDate
 	       (cmap js-date-cmap)
@@ -323,11 +327,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-date-alloc ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (js-date-alloc %this)
+(define-inline (js-date-alloc %this)
    (with-access::JsGlobalObject %this (js-date-prototype js-date-cmap)
-      (instantiateJsDate
-	 (cmap js-date-cmap)
-	 (__proto__ js-date-prototype))))
+      ($js-make-jsdate js-date-cmap js-date-prototype)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-date-value0 ...                                               */

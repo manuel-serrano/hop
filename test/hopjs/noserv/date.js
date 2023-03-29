@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Mon Jul 26 09:51:41 2021 (serrano)                */
-/*    Copyright   :  2014-21 Manuel Serrano                            */
+/*    Last change :  Wed Mar 29 19:07:45 2023 (serrano)                */
+/*    Copyright   :  2014-23 Manuel Serrano                            */
 /*    Copyright   :  2014-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing Date                                                     */
@@ -187,9 +187,9 @@ assert.ok( d.getUTCFullYear() == 2015, "getUTCFullYear" );
 // UTCMilliSeconds
 d = new Date( s );
 assert.ok( d.setUTCMilliseconds( 0 ) == 1445367545000, "setUTCMilliseconds" );
-assert.ok( d.getUTCMilliseconds() == 0, "getUTCMilliseconds" );
+assert.ok( d.getUTCMilliseconds() == 0, "getUTCMilliseconds.2" );
 assert.ok( d.setUTCMilliseconds( 1000 ) == 1445367546000, "setUTCMilliseconds" );
-assert.ok( d.getUTCMilliseconds() == 0, "getUTCMilliseconds" );
+assert.ok( d.getUTCMilliseconds() == 0, "getUTCMilliseconds.3" );
 
 // UTCSeconds
 d = new Date( s );
@@ -287,7 +287,7 @@ assert.ok( d.toString(), "Invalid date", "toString" );
 
 d = new Date( Date.parse( "2015-10-20T18:59:05+02:00" ) );
 assert.ok( isNaN( d.setUTCMilliseconds() ), 'setUTCMilliseconds');
-assert.ok( isNaN( d.getUTCMilliseconds() ), 'getUTCMilliseconds');
+assert.ok( isNaN( d.getUTCMilliseconds() ), 'getUTCMilliseconds.4');
 assert.ok( d.toString(), "Invalid date", "toString" );
 
 d = new Date( Date.parse( "2015-10-20T18:59:05+02:00" ) );
