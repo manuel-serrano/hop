@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Mon Mar 27 07:15:09 2023 (serrano)                */
+;*    Last change :  Thu Mar 30 11:17:47 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -2707,13 +2707,7 @@
 	 ;; map search
 	 (lambda (obj i)
 	    (with-access::JsPropertyCache cache (index owner cntmiss)
-	       (let ((el-or-desc (with-handler
-				    (lambda (e)
-				       (tprint "ERROR: " e)
-				       (tprint "name=" name " i=" i)
-				       (js-debug-object o)
-				       (raise e))
-				    (js-object-ref obj i))))
+	       (let ((el-or-desc (js-object-ref obj i)))
 		  (js-assert-object obj "js-get-jsobject-name/cache-miss")
 		  (cond
 		     ((isa? el-or-desc JsPropertyDescriptor)
