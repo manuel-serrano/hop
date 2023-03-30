@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Fri Mar 17 09:53:43 2023 (serrano)                */
+;*    Last change :  Thu Mar 30 06:47:27 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
@@ -344,7 +344,11 @@
 		       (js-call2 %this prepare js-error
 			  o frames))
 		    (hop-stack->jsstring o stack)))
-	     stack))
+	     ;; always pretend a non-empty stack
+	     (js-get-stack o
+		'(("captureStackTrace" (at "." 0))
+		  ("hop" (at "." 0))
+		  ("main" (at "." 0))))))
 	 
       (define (capture-stack-trace err start-fun)
 	 (when (fixnum? js-stacktracelimit)
@@ -394,6 +398,14 @@
 		      (cadr loc) (caddr loc) 0)))
 	       ((eq? (car frame) 'hopscript)
 		(make-stack-frame "hopscript" "" "" 0 0))
+	       ((pair? (cadr frame))
+		(let ((fun (car frame))
+		      (loc (cadr frame)))
+		   (make-stack-frame (if (symbol? fun)
+					 (symbol->string! fun)
+					 fun)
+		      (apply format "~a:~a" (cdr loc))
+		      (cadr loc) (caddr loc) 0)))
 	       (else
 		#f))))
 	 
