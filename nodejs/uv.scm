@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Mon Mar 13 06:52:07 2023 (serrano)                */
+;*    Last change :  Thu Mar 30 07:37:20 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -2402,7 +2402,6 @@
 ;*    nodejs-tcp-listen ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-tcp-listen %worker %this process this handle backlog tcp-wrap)
-   ;; (tprint "tcp-listen")
    (let ((r (uv-listen handle backlog
 	       :loop (worker-loop %worker)
 	       :callback

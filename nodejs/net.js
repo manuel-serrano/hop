@@ -1052,7 +1052,7 @@ Server.prototype._listen2 = function(address, port, addressType, backlog, fd) {
   // the kernel does: backlogsize = roundup_pow_of_two(backlogsize + 1);
    // which will thus give us a backlog of 512 entries.
    r = self._handle.listen(backlog || 511);
-   
+
    if (r) {
     var ex = errnoException(process._errno, 'listen');
     self._handle.close();
@@ -1095,7 +1095,7 @@ function listen(self, address, port, addressType, backlog, fd) {
         // actual port matches what we requested and if not, raise an error.
         // The exception is when port == 0 because that means "any random
         // port".
-        if (port && handle.getsockname && port != handle.getsockname().port) {
+     if (port && handle.getsockname && port != handle.getsockname().port) {
           self.emit('error', errnoException('EADDRINUSE', 'bind'));
           return;
         }
@@ -1149,7 +1149,7 @@ Server.prototype.listen = function() {
   } else if (typeof arguments[1] == 'undefined' ||
              typeof arguments[1] == 'function' ||
              typeof arguments[1] == 'number') {
-    // The first argument is the port, no IP given.
+     // The first argument is the port, no IP given.
     listen(self, '0.0.0.0', port, 4, backlog);
 
   } else {

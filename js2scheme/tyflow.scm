@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Thu Feb 16 07:44:54 2023 (serrano)                */
+;*    Last change :  Thu Mar 30 08:56:48 2023 (serrano)                */
 ;*    Copyright   :  2016-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -2329,6 +2329,8 @@
 			(call-default-walker))
 		       ((and (eq? type 'number) (memq typ '(integer index)))
 			(call-default-walker))
+		       ((or (type-subtype? type typ) (type-subtype? typ type))
+			(call-default-walker))
 		       (else
 			(unfix! ctx "resolve.J2SBinary")
 			(J2SBool #f)))))
@@ -2341,6 +2343,8 @@
 		       ((memq type '(unknown any))
 			(call-default-walker))
 		       ((and (eq? type 'number) (memq typ '(integer index)))
+			(call-default-walker))
+		       ((or (type-subtype? type typ) (type-subtype? typ type))
 			(call-default-walker))
 		       (else
 			(unfix! ctx "resolve.J2SBinary")

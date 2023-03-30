@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Fri Feb 10 10:20:32 2023 (serrano)                */
+;*    Last change :  Thu Mar 30 08:22:07 2023 (serrano)                */
 ;*    Copyright   :  2004-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -90,6 +90,8 @@
 	     (exit 0))
 	    (("--default-so-dir" (help "Display default so dir"))
 	     (print (dirname (hop-sofile-path "dummy.hop"))))
+	    (("-O" (help "Optimization mode (eq. to \"--so-policy aot\")"))
+	     (hop-sofile-compile-policy-set! 'aot))
 	    
 	    ;; RC
 	    (section "RC & Autoload")

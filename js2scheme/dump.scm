@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Sat Jun 11 07:39:22 2022 (serrano)                */
-;*    Copyright   :  2013-22 Manuel Serrano                            */
+;*    Last change :  Thu Mar 30 08:36:53 2023 (serrano)                */
+;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
 ;*=====================================================================*/
@@ -813,10 +813,11 @@
 				   idthis generator loc vararg constrsize)
 	 (cond
 	    ((isa? decl J2SDeclFun)
-	     (with-access::J2SDeclFun decl (key usage scope val key)
+	     (with-access::J2SDeclFun decl (key usage scope val key id)
 		(unless (eq? val this)
 		   (error/loc "j2s->list"
-		      (format "inconsistent J2SFun (key=~s)" key)
+		      (format "inconsistent ~a (key=~s) -> ~a"
+			 (typeof this) key (typeof val))
 		      name loc))
 		`(,@(call-next-method) ,@(if generator '(*) '())
 		    :name ,name :mode ,mode :idgen ,idgen :constrsize ,constrsize
