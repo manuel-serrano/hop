@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Wed Mar  8 11:49:58 2023 (serrano)                */
+;*    Last change :  Thu Mar 30 13:26:17 2023 (serrano)                */
 ;*    Copyright   :  2016-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -77,6 +77,9 @@
    js-pcache-owner-expander)
 (define-expander js-pcache-method
    js-pcache-method-expander)
+
+(define-expander js-pcache-point-set!
+   js-pcache-point-set-expander)
 
 (define-expander js-record-cache-check-proto-method
    js-record-cache-check-proto-method-expander)

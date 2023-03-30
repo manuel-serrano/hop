@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Fri Mar 17 10:32:49 2023 (serrano)                */
+;*    Last change :  Thu Mar 30 13:25:14 2023 (serrano)                */
 ;*    Copyright   :  2016-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -445,6 +445,23 @@
       e))
 
 ;*---------------------------------------------------------------------*/
+;*    js-pcache-point-set-expander ...                                 */
+;*---------------------------------------------------------------------*/
+(define (js-pcache-point-set-expander x e)
+   (e (match-case x
+	 ((js-pcache-point-set! (and ?c (js-pcache-ref %pcache ?idx)) ?p)
+	  (cond-expand
+	     ((and bigloo-c (not hop-eval) (not hopjs-worker-slave))
+	      `(free-pragma::obj "(__bgl_pcache[ $1 ].BgL_pointz00 = ($2)) " ,idx ,p))
+	     (else
+	      `(with-access::JsPropertyCache ,c (point) (set! point ,p)))))
+	 ((js-pcache-point-set! ?c ?p)
+	  `(with-access::JsPropertyCache ,c (point) (set! point ,p)))
+	 (else
+	  (error "js-pcache-point-set!" "bad syntax" x)))
+      e))
+
+;*---------------------------------------------------------------------*/
 ;*    js-pcache-method-expander ...                                    */
 ;*---------------------------------------------------------------------*/
 (define (js-pcache-method-expander x e)
@@ -579,6 +596,7 @@
 		;; cache miss
 		`(let ((m ((@ js-get-proxy-name/cache-miss __hopscript_proxy)
 			   ,obj ,prop ,throw ,%this ,cache)))
+		    (js-pcache-point-set! ,cache ,loc)
 		    (js-pcache-rewrite-miss-label ,cache)
 		    m))
 	       ((eq? cs 'imap)
