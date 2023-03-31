@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Thu Mar 30 11:34:55 2023 (serrano)                */
+;*    Last change :  Thu Mar 30 14:13:39 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -471,6 +471,18 @@
 ;*---------------------------------------------------------------------*/
 (define-generic (js-debug-object obj #!optional (msg ""))
    (fprint (current-error-port) msg (typeof obj)))
+
+;*---------------------------------------------------------------------*/
+;*    js-debug-cmap-chain ...                                          */
+;*---------------------------------------------------------------------*/
+(define (js-debug-cmap-chain o::JsConstructMap)
+   (let loop ((o o))
+      (if (or (not o) (eq? o (js-not-a-pmap)))
+	  '()
+	  (with-access::JsConstructMap o (%id parent)
+	     (if (eq? parent o)
+		 '()
+		 (cons %id (loop parent)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-debug-object ::JsObject ...                                   */
@@ -2711,11 +2723,16 @@
    (with-access::JsPropertyCache cache (cntmiss (cname name) (cpoint point))
       (set! cntmiss (+u32 #u32:1 cntmiss)))
 
-   (when (eq? name (& "_idleTimeout"))
-      (tprint "ICI cache miss name=" name " " (typeof o))
-      (js-debug-object o)
-      (js-debug-pcache cache)
-      )
+;*    (when (and (eq? name (& "_idleTimeout")) (js-object-mode-inline? o)) */
+;*       (with-access::JsObject o (cmap)                               */
+;* 	 (with-access::JsConstructMap cmap (%id)                       */
+;* 	    (when (isa? cache JsPropertyCache)                         */
+;* 	       (with-access::JsPropertyCache cache (imap)              */
+;* 		  (unless (eq? imap (js-not-a-pmap))                   */
+;* 		     (with-access::JsConstructMap imap ((%aid %id))    */
+;* 			(tprint "CACHE MISS " name " " (typeof o) " id=" %id " imap=" %aid */
+;* 			   " " (js-debug-cmap-chain cmap)))))))))      */
+
    (let loop ((obj o))
       (jsobject-find obj o name
 	 ;; map search
@@ -2736,8 +2753,8 @@
 			 ((<u32 cntmiss (vtable-threshold))
 			  (js-pcache-update-get-direct! cache i obj name))
 			 ((not (eq? prop (& "__proto__")))
+			  (js-pcache-update-get-direct! cache i obj name)			  
 			  (with-access::JsObject o (cmap)
-			     (tprint "VTABLE...")
 			     (js-pcache-vtable! cache cmap i %this))))
 		      el-or-desc)
 		     (else
@@ -4236,6 +4253,10 @@
 	 (with-access::JsConstructMap cmap (props lock)
 	    (with-access::JsAccessorDescriptor desc
 		  (value enumerable configurable)
+	       (unless (boolean? enumerable)
+		  (set! enumerable #f))
+	       (unless (boolean? configurable)
+		  (set! configurable #f))
 	       (let* ((index (vector-length props))
 		      (flags (property-flags
 				#t enumerable configurable #t

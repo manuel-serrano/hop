@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Wed Mar 29 18:13:46 2023 (serrano)                */
+;*    Last change :  Thu Mar 30 14:41:41 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -1624,6 +1624,7 @@
        obj
        (with-access::JsConstructMap obj (props)
 	  (duplicate::JsConstructMap obj
+	     (%id (gencmapid))
 	     (props (vector-copy props))))))
 
 ;*---------------------------------------------------------------------*/

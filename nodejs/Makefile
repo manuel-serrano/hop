@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Thu Mar 30 11:40:10 2023 (serrano)                */
+#*    Last change :  Thu Mar 30 14:14:04 2023 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the NODEJS library.                        */
 #*=====================================================================*/
@@ -193,7 +193,7 @@ o/buffer.o: buffer.js
 #* 	@ $(call compile3,$(HOPC),$(HFLAGS),$(BCFLAGS),$(BLFLAGS),$(BHOPCFLAGS) -c --js-module-name __nodejs_timers --js-module-path timers -Os --js-cspecs-get "(imap cmap)" --js-cspecs-assignew "(emap cmap vtable)",$< -o $@) */
 
 o/timers.o: timers.js
-	@ $(call compile3,$(HOPC),$(HFLAGS),$(BCFLAGS),$(BLFLAGS),$(BHOPCFLAGS) -c --js-module-name __nodejs_timers --js-module-path timers -Ox,$< -o $@)
+	@ $(call compile3,$(HOPC),$(HFLAGS),$(BCFLAGS),$(BLFLAGS),$(BHOPCFLAGS) -c --js-module-name __nodejs_timers --js-module-path timers -Os --js-cspecs-get "(imap cmap)" --js-cspecs-assignew "(emap cmap)",$< -o $@)
 
 o/nodejs.mod.o: modules/fs.mod.scm
 
