@@ -458,15 +458,14 @@ exports._unrefActive = function(item) {
   var msecs = item._idleTimeout;
   if (!msecs || msecs < 0) return;
   assert(msecs >= 0);
-
   L.remove(item);
 
   if (!unrefList) {
-    debug('unrefList initialized');
+    // debug('unrefList initialized');
     unrefList = {};
     L.init(unrefList);
 
-    debug('unrefTimer initialized');
+    // debug('unrefTimer initialized');
     unrefTimer = new Timer();
     unrefTimer.unref();
     unrefTimer.when = -1;
@@ -480,31 +479,31 @@ exports._unrefActive = function(item) {
   item._monotonicStartTime = nowMonotonicTimestamp;
 
   if (L.isEmpty(unrefList)) {
-    debug('unrefList empty');
+    // debug('unrefList empty');
     L.append(unrefList, item);
 
     unrefTimer.start(msecs, 0);
     unrefTimer.when = nowMonotonicTimestamp + msecs;
-    debug('unrefTimer scheduled');
+    // debug('unrefTimer scheduled');
     return;
   }
 
   var when = nowMonotonicTimestamp + msecs;
 
-  debug('unrefList find where we can insert');
+  // debug('unrefList find where we can insert');
 
   var cur, them;
 
-  for (cur = unrefList._idlePrev; cur != unrefList; cur = cur._idlePrev) {
+  for (cur = unrefList._idlePrev; cur !== unrefList; cur = cur._idlePrev) {
     them = cur._monotonicStartTime + cur._idleTimeout;
 
     if (when < them) {
-      debug('unrefList inserting into middle of list');
+      // debug('unrefList inserting into middle of list');
 
       L.append(cur, item);
 
       if (unrefTimer.when > when) {
-        debug('unrefTimer is scheduled to fire too late, reschedule');
+        // debug('unrefTimer is scheduled to fire too late, reschedule');
         unrefTimer.start(msecs, 0);
         unrefTimer.when = when;
       }
@@ -513,6 +512,6 @@ exports._unrefActive = function(item) {
     }
   }
 
-  debug('unrefList append to end');
+  // debug('unrefList append to end');
   L.append(unrefList, item);
 };

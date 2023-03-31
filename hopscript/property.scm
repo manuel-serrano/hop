@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Thu Mar 30 14:13:39 2023 (serrano)                */
+;*    Last change :  Fri Mar 31 06:07:55 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -258,6 +258,16 @@
 	  (js-for-of (args-noescape))))))
 
 ;*---------------------------------------------------------------------*/
+;*    debug-pmap ...                                                   */
+;*---------------------------------------------------------------------*/
+(define debug-pmap
+   (let ((env (getenv "HOPTRACE")))
+      (cond
+	 ((not (string? env)) #f)
+	 ((string-contains env "hopscript:pmap") #t)
+	 (else #f))))
+
+;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
 (define __js_strings (&begin!))
@@ -350,8 +360,8 @@
    
    (define (invalidate-pcache-pmap! pcache)
       (with-access::JsPropertyCache pcache (pmap emap amap nmap xmap)
-	 (when (object? pmap) (reset-cmap-vtable! pmap))
-	 (when (object? xmap) (reset-cmap-vtable! xmap))
+	 (when (object? pmap) (reset-cmap-vtable! pmap reason who))
+	 (when (object? xmap) (reset-cmap-vtable! xmap reason who))
 	 (set! pmap (js-not-a-pmap))
 	 (set! nmap (js-not-a-pmap))
 	 (set! xmap (js-not-a-pmap))
@@ -362,7 +372,7 @@
 
    (when js-pmap-valid
       (synchronize js-cache-table-lock
-	 (when #f
+	 (when debug-pmap
 	    (tprint "--- invalidate " reason " [" who "] pcache-table-len=" js-cache-index " !!!!!!!!!!!!!!!!!!!!!!!!!!!")
 	    (set! invcount (+fx 1 invcount))
 	    (tprint "invcount=" invcount))
@@ -383,18 +393,21 @@
 ;*---------------------------------------------------------------------*/
 (define (js-invalidate-cache-method! cmap::JsConstructMap idx::long reason who)
    (with-access::JsConstructMap cmap (methods transitions %id)
-      (when (vector-ref methods idx)
-	 (vector-set! methods idx #f)
-	 (for-each (lambda (tr)
-		      (let ((ncmap (transition-nextmap tr)))
-			 (js-invalidate-cache-method! ncmap idx reason who)))
-	    transitions)
-	 #t)))
+      (let ((m (vector-ref methods idx)))
+	 (when m
+	    (let ((r (not (eq? m #unspecified))))
+	       (vector-set! methods idx #f)
+	       (for-each (lambda (tr)
+			    (let ((ncmap (transition-nextmap tr)))
+			       (when (js-invalidate-cache-method! ncmap idx reason who)
+				  (set! r #t))))
+		  transitions)
+	       r)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-invalidate-cache-pmap-method! ...                             */
 ;*    -------------------------------------------------------------    */
-;*    Method invalidation must be proppagated to all the sub hidden    */
+;*    Method invalidation must be propagated to all the sub hidden     */
 ;*    classes (see bug nodejs/simple/test-stream2-readable-wrap.js).   */
 ;*---------------------------------------------------------------------*/
 (define (js-invalidate-cache-pmap-method! %this::JsGlobalObject
@@ -1179,10 +1192,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    reset-cmap-vtable! ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (reset-cmap-vtable! omap::JsConstructMap)
+(define (reset-cmap-vtable! cmap::JsConstructMap reason who)
    (synchronize js-cache-vtable-lock
-      (with-access::JsConstructMap omap (vtable)
-	 ;;(tprint "RESET-VTABLE...")
+      (with-access::JsConstructMap cmap (%id vtable)
+	 ;;(tprint "RESET-VTABLE..." %id " " reason " " who)
 	 (set! vtable '#()))))
    
 ;*---------------------------------------------------------------------*/
@@ -3090,17 +3103,27 @@
 		    (js-object-set! obj i v)
 		    v)
 		   (else
-		    ;; invalidate cache method and cache
-		    (js-invalidate-cache-pmap-method! %this cmap i "update-mapped with new function" name)
-		    (reset-cmap-vtable! cmap)
+		    ;; invalidate cache method and re-cache
+		    (cond
+		       ((js-object-mode-isprotoof? obj)
+			;; MS: 31mar2023, I'm not totally sure about this one as pmap
+			;; cache entries are used to search the prototype chain and also
+			;; to implement cached fast method calls.
+			(js-invalidate-cache-pmap-method! %this cmap i
+			   "update-mapped with new function" name))
+		       (cache
+			(with-access::JsPropertyCache cache (pmap)
+			   (set! pmap (js-not-a-pmap)))))
+		    (reset-cmap-vtable! cmap "update-mapped" name)
 		    (when cache
 		       (js-pcache-update-put-direct! cache i obj))
 		    (js-object-set! obj i v)
 		    v)))
 	       ((js-function? (vector-ref methods i))
 		;; invalidate cache method and cache
-		(js-invalidate-cache-pmap-method! %this cmap i "update-mapped with non function" name)
-		(reset-cmap-vtable! cmap)
+		(js-invalidate-cache-pmap-method! %this cmap i
+		   "update-mapped with non function" name)
+		(reset-cmap-vtable! cmap "update-mapped:function" name)
 		(when cache
 		   (js-pcache-update-put-direct! cache i obj))
 		(js-object-set! obj i v)
@@ -3204,9 +3227,15 @@
 		     ((or (not cachefun) (not (js-function? v)))
 		      (when (js-function? (vector-ref methods index))
 			 ;; invalidate cache method and cache
-			 (js-invalidate-cache-pmap-method! %this nextmap index
-			    "extend-mapped with non-function" v)
-			 (reset-cmap-vtable! nextmap))
+			 (cond
+			    ((js-object-mode-isprotoof? o)
+			    (js-invalidate-cache-pmap-method! %this nextmap index
+			     "extend-mapped with non-function" v))
+			    (cache
+			     ;; see update-mapped-object-value
+			     (with-access::JsPropertyCache cache (pmap)
+				(set! pmap (js-not-a-pmap)))))
+			 (reset-cmap-vtable! nextmap "extend-mapped" v))
 		      (when cache
 			 (js-pcache-update-next-direct! cache o nextmap index
 			    (flags-inline? flags))))
@@ -3232,7 +3261,7 @@
 		      ;; invalidate cache method and cache
 		      (js-invalidate-cache-pmap-method! %this nextmap index
 			 "extend-mapped polymorphic threshold" name)
-		      (reset-cmap-vtable! nextmap)
+		      (reset-cmap-vtable! nextmap "extend-mapped" name)
 		      (when cache
 			 (js-pcache-update-next-direct! cache o nextmap index
 			    (flags-inline? flags))))
@@ -3308,7 +3337,7 @@
 					     ;; invalidate cache method and cache
 					     (begin
 						(js-invalidate-cache-pmap-method! %this nextmap index
-						   "exptend-mapped non-function" name)
+						   "extend-mapped non-function" name)
 						(when cache
 						   (js-pcache-update-next-direct! cache o nextmap index
 						      (flags-inline? flags)))))

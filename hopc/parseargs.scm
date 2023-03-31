@@ -47,7 +47,7 @@
    (print "      j2s:profid, nodejs:compile,")
    (print "      hopscript:cache[num] (*), hopscript:uncache,")
    (print "      hopscript:alloc[num], hopscript:call, hopscript:hint[num] (*)")
-   (print "      hopscript:function[num] hopscript:symtable")
+   (print "      hopscript:function[num] hopscript:symtable hopscript:pmap")
    (print "      hopscript:fprofile (alias of \"hopscript:cache hopscript:call format:fprofile\")")
    (print "      format:json, format:fprofile, format:memviz, srcfile=path, logfile=path")
    (print "   - HOPCFLAGS: hopc compilation flags")

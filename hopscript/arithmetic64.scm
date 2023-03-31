@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Sat Aug 27 11:11:14 2022 (serrano)                */
-;*    Copyright   :  2017-22 Manuel Serrano                            */
+;*    Last change :  Fri Mar 31 07:41:02 2023 (serrano)                */
+;*    Copyright   :  2017-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on 64 bit platforms                        */
 ;*=====================================================================*/
@@ -41,6 +41,7 @@
 	  
 	  (inline overflowfx ::long)
 	  (inline overflow53::obj ::long)
+	  (inline overflowu64::obj ::uint64)
 	  
 	  (inline js-toint32::int32 ::obj ::JsGlobalObject)
 	  (js-toint32-slow::int32 ::obj ::JsGlobalObject)
@@ -185,6 +186,14 @@
    (if (pragma::bool "(uint64_t)($1 - -9007199254740992) <= (uint64_t)18014398509481983" v)
        v
        (fixnum->flonum v)))
+
+;*---------------------------------------------------------------------*/
+;*    overflowu64 ...                                                  */
+;*---------------------------------------------------------------------*/
+(define-inline (overflowu64 v::uint64)
+   (if (pragma::bool "$1 < ((uint64_t)(1L << 53))" v)
+       (uint64->fixnum v)
+       (uint64->flonum v)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-toint32 ::obj ...                                             */
@@ -500,6 +509,7 @@
 ;*    be called.                                                       */
 ;*---------------------------------------------------------------------*/
 (define (+/overflow x::obj y::obj)
+   ;; (tprint "+/over x=" x " " (typeof x) " y=" y " " (typeof y))
    (let ((ll (tolong x)))
       (if ll
 	  (let ((rl (tolong y)))

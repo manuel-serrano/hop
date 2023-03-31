@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Thu Mar 30 07:37:20 2023 (serrano)                */
+;*    Last change :  Fri Mar 31 07:57:06 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -671,7 +671,7 @@
 ;*---------------------------------------------------------------------*/
 (define (nodejs-now %worker)
    (uv-update-time (worker-loop %worker))
-   (uint64->flonum (uv-now (worker-loop %worker))))
+   (overflowu64 (uv-now (worker-loop %worker))))
 
 (define close-stack '())
 
