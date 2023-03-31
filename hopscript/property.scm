@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Fri Mar 31 06:07:55 2023 (serrano)                */
+;*    Last change :  Fri Mar 31 14:43:07 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -3517,6 +3517,7 @@
 		;; 8.12.5, step 6
 		(extend-properties-object!))))))
 
+   ;;(tprint "JS-PUT-JSOBJECT " name)
    (check-unplain! o name)
    (let loop ((obj o))
       (jsobject-find obj o name
