@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Thu Mar 30 14:41:41 2023 (serrano)                */
+;*    Last change :  Sat Apr  1 18:22:23 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -668,6 +668,8 @@
 	   (inline js-object-noinline-set! ::JsObject ::long ::obj)
 	   (inline js-object-ref ::JsObject ::long)
 	   (inline js-object-set! ::JsObject ::long ::obj)
+
+	   (js-object-for-each ::JsObject ::procedure)
 
 	   (inline js-vector-inline-ref ::JsArray ::long)
 	   (inline js-vector-inline-set! ::JsArray ::long ::obj)
@@ -1382,6 +1384,19 @@
 	      (js-object-noinline-relative-set! o (-fx idx ilen) val)))
        (js-object-noinline-relative-set! o idx val)))
 
+;*---------------------------------------------------------------------*/
+;*    js-object-for-each ...                                           */
+;*---------------------------------------------------------------------*/
+(define (js-object-for-each o::JsObject proc)
+   (when (js-object-mode-inline? o)
+      (let ((ilen (js-object-inline-elements-length o)))
+	 (let loop ((i 0))
+	    (when (<fx i ilen)
+	       (proc (js-object-inline-ref o i))
+	       (loop (+fx i 1))))))
+   (with-access::JsObject o (elements)
+      (vector-for-each proc elements)))
+   
 ;*---------------------------------------------------------------------*/
 ;*    js-vector-inline-ref ...                                         */
 ;*---------------------------------------------------------------------*/

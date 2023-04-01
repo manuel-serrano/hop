@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Thu Mar 30 14:41:58 2023 (serrano)                */
+;*    Last change :  Sat Apr  1 18:21:50 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -1305,6 +1305,10 @@
 	     (let ((ncmap (duplicate::JsConstructMap cmap
 			     (%id (gencmapid))
 			     (props (vector-map prop-seal props)))))
+		(js-object-for-each o
+		   (lambda (v)
+		      (when (isa? v JsPropertyDescriptor)
+			 (js-seal-property! v))))
 		(set! cmap ncmap)))))
       ((js-object-hashed? o)
        (with-access::JsObject o (elements)
@@ -1351,6 +1355,10 @@
 	     (let ((ncmap (duplicate::JsConstructMap cmap
 			     (%id (gencmapid))
 			     (props (vector-map prop-freeze props)))))
+		(js-object-for-each o
+		   (lambda (v)
+		      (when (isa? v JsPropertyDescriptor)
+			 (js-freeze-property! v))))
 		(set! cmap ncmap))))
 	 ((js-object-hashed? o)
 	  (with-access::JsObject o (elements)
