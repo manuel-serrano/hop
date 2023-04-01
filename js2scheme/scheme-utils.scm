@@ -72,7 +72,7 @@
 	   (vtype-ident ident vtype ::pair-nil #!optional compound)
 	   (type-ident ident type ::pair-nil)
 	   (j2s-number val conf)
-	   (j2s-scheme-error proc msg obj)
+	   (j2s-scheme-error proc msg obj #!optional (js-error 'js-type-error))
 	   (j2s-error proc msg obj #!optional str)
 	   (is-fixnum? expr::J2SExpr ::struct)
 	   (is-number? expr::J2SExpr)
@@ -564,20 +564,22 @@
 ;*    Trigger a compile-time error and return a Scheme code that       */
 ;*    will raises an error at runtime.                                 */
 ;*---------------------------------------------------------------------*/
-(define (j2s-scheme-error proc msg obj)
+(define (j2s-scheme-error proc msg obj #!optional (js-error 'js-type-error))
    (with-access::J2SNode obj (loc)
       (match-case loc
 	 ((at ?fname ?loc)
 	  (with-handler
 	     (lambda (e)
 		(exception-notify e)
-		`(js-type-error (js-string->jsstring ,msg) ,fname ,loc %this))
+		`(raise
+		    (,js-error (js-string->jsstring ,msg) ,fname ,loc %this)))
 	     (error/location proc msg (j2s->sexp obj) fname loc)))
 	 (else
 	  (with-handler
 	     (lambda (e)
 		(exception-notify e)
-		`(js-type-error1 (js-string->jsstring ,msg) %this))
+		`(raise
+		    (js-type-error1 (js-string->jsstring ,msg) %this)))
 	     (error proc msg (j2s->sexp obj)))))))
    
 ;*---------------------------------------------------------------------*/

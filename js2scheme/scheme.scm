@@ -1598,7 +1598,7 @@
 	     (with-access::J2SKontRef lhs (index gen loc)
 		'#unspecified))
 	    (else
-	     (j2s-scheme-error "js2scheme" "Illegal lhs" this)))))
+	     (j2s-scheme-error "js2scheme" "Illegal lhs" this 'js-reference-error)))))
    
    (with-access::J2SForIn this (loc lhs obj body op
 				  need-bind-exit-break need-bind-exit-continue)
@@ -1824,7 +1824,7 @@
 		    ,(j2s-scheme rhs mode return ctx)
 		    ,(symbol->string! id))))
 	    (else
-	     (j2s-scheme-error "assignment" "Illegal assignment" this))))))
+	     (j2s-scheme-error "assignment" "Illegal assignment" this 'js-reference-error))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme-postpref ...                                          */
@@ -2553,7 +2553,7 @@
 	       ((isa? lhs J2SKontRef)
 		(kontref-assigop op lhs rhs))
 	       (else
-		(j2s-scheme-error "j2sscheme" "Illegal assignment" this)))))))
+		(j2s-scheme-error "j2sscheme" "Illegal assignment" this 'js-reference-error)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SAccess ...                                       */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Thu Mar 30 06:47:27 2023 (serrano)                */
+;*    Last change :  Sat Apr  1 05:50:09 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
@@ -40,6 +40,7 @@
    
    (export (js-init-error! ::JsGlobalObject)
 	   (js-type-error msg fname loc ::JsGlobalObject)
+	   (js-reference-error msg fname loc ::JsGlobalObject)
 	   (js-type-error2 msg fname ::JsGlobalObject)
 	   (js-type-error1 msg ::JsGlobalObject)))
 
@@ -790,6 +791,13 @@
 (define (js-type-error msg fname loc %this)
    (with-access::JsGlobalObject %this (js-type-error)
       (js-new3 %this js-type-error msg fname loc)))
+
+;*---------------------------------------------------------------------*/
+;*    js-reference-error ...                                           */
+;*---------------------------------------------------------------------*/
+(define (js-reference-error msg fname loc %this)
+   (with-access::JsGlobalObject %this (js-reference-error)
+      (js-new3 %this js-reference-error msg fname loc)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-type-error2 ...                                               */
