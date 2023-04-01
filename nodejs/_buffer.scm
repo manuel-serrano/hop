@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 30 06:52:06 2014                          */
-;*    Last change :  Tue Feb 21 09:45:59 2023 (serrano)                */
+;*    Last change :  Fri Mar 31 16:27:06 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native native bindings                                           */
@@ -714,7 +714,11 @@
    
    (define __js_strings_execute_first
       (js-init-buffer! %this))
-   
+
+   (define js-nodejs-pcache
+      (with-access::JsGlobalObject %this ((pcache js-nodejs-pcache))
+	 pcache))
+
    (define slowbuffer-proto
       (with-access::JsGlobalObject %this (js-slowbuffer-proto js-object)
 	 (unless js-slowbuffer-proto
@@ -1055,7 +1059,10 @@
 						 (js-jsstring->string string) 0 data offset n)
 					      (blit-string-binary-decode!
 						 (js-jsstring->string string) 0 data offset n))))
-				    (js-put! js-slowbuffer (& "_charsWritten") l #t %this)
+				    (js-put-jsobject-name/cache! js-slowbuffer
+				       (& "_charsWritten") l #t %this
+				       (js-pcache-ref js-nodejs-pcache 11))
+;* 				    (js-put! js-slowbuffer (& "_charsWritten") l #t %this) */
 				    l)
 				 n)))
 		       (js-raise-type-error %this "not a string" string)))
@@ -1076,10 +1083,16 @@
 				 (multiple-value-bind (m c)
 				    (blit-string-utf8!
 				       (js-jsstring->string string) 0 data offset n)
-				    (js-put! js-slowbuffer (& "_charsWritten") c #t %this)
+				    (js-put-jsobject-name/cache! js-slowbuffer
+				       (& "_charsWritten") c #t %this
+				       (js-pcache-ref js-nodejs-pcache 12))
+				    ;(js-put! js-slowbuffer (& "_charsWritten") c #t %this)
 				    m)
 				 (begin
-				    (js-put! js-slowbuffer (& "_charsWritten") n #t %this)
+				    (js-put-jsobject-name/cache! js-slowbuffer
+				       (& "_charsWritten") n #t %this
+				       (js-pcache-ref js-nodejs-pcache 13))
+				    ;;(js-put! js-slowbuffer (& "_charsWritten") n #t %this)
 				    n))))
 		       (js-raise-type-error %this "not a string" string)))
 		(js-function-arity 3 0)
@@ -1098,7 +1111,10 @@
 			     (if (>fx n 0)
 				 (let ((l (blit-string-ascii-decode!
 					     (js-jsstring->string string) 0 data offset n)))
-				    (js-put! js-slowbuffer (& "_charsWritten") l #t %this)
+				    (js-put-jsobject-name/cache! js-slowbuffer
+				       (& "_charsWritten") l #t %this
+				       (js-pcache-ref js-nodejs-pcache 14))
+				    ;;(js-put! js-slowbuffer (& "_charsWritten") l #t %this)
 				    l)
 				 n)))
 		       (js-raise-type-error %this "not a string" string)))
@@ -1122,7 +1138,10 @@
 						(-fx (string-length data) offset))))))
 				(when (>fx n 0)
 				   (blit-string! s 0 data offset n))
-				(js-put! js-slowbuffer (& "_charsWritten") n #t %this)
+				(js-put-jsobject-name/cache! js-slowbuffer
+				   (& "_charsWritten") n #t %this
+				   (js-pcache-ref js-nodejs-pcache 15))
+				;;(js-put! js-slowbuffer (& "_charsWritten") n #t %this)
 				n)))
 		       (js-raise-type-error %this "not a string" string)))
 		(js-function-arity 3 0)
@@ -1141,8 +1160,11 @@
 					     (-fx (string-length data) offset))))))
 			     (if (>fx n 0)
 				 (let ((l (blit-string-ucs2! s 0 data offset n)))
-				    (js-put! js-slowbuffer (& "_charsWritten") (/fx l 2)
-				       #t %this)
+				    (js-put-jsobject-name/cache! js-slowbuffer
+				       (& "_charsWritten") (/fx l 2) #t %this
+				       (js-pcache-ref js-nodejs-pcache 16))
+;* 				    (js-put! js-slowbuffer (& "_charsWritten") (/fx l 2) */
+;* 				       #t %this)                       */
 				    l)
 				 0)))
 		       (js-raise-type-error %this "not a string" string)))
@@ -1163,7 +1185,10 @@
 			     (if (>fx n 0)
 				 (begin
 				    (blit-string! s 0 data offset n)
-				    (js-put! js-slowbuffer (& "_charsWritten") (*fx n 2) #t %this)
+				    (js-put-jsobject-name/cache! js-slowbuffer
+				       (& "_charsWritten") (*fx n 2) #t %this
+				       (js-pcache-ref js-nodejs-pcache 17))
+				    ;;(js-put! js-slowbuffer (& "_charsWritten") (*fx n 2) #t %this)
 				    n)
 				 0)))
 		       (js-raise-type-error %this "not a string" string)))
@@ -1184,7 +1209,10 @@
 			     (if (>fx n 0)
 				 (begin
 				    (blit-string! s 0 data offset n)
-				    (js-put! js-slowbuffer (& "_charsWritten") n #t %this)
+				    (js-put-jsobject-name/cache! js-slowbuffer
+				       (& "_charsWritten") n #t %this
+				       (js-pcache-ref js-nodejs-pcache 18))
+				    ;;(js-put! js-slowbuffer (& "_charsWritten") n #t %this)
 				    n)
 				 0)))
 		       (js-raise-type-error %this "not a string" string)))
