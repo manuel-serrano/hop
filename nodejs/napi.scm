@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 24 16:10:01 2023                          */
-;*    Last change :  Sat Apr  1 09:58:54 2023 (serrano)                */
+;*    Last change :  Sat Apr  1 18:58:01 2023 (serrano)                */
 ;*    Copyright   :  2023 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The Scheme part of the node_api.                                 */
@@ -33,8 +33,9 @@
 
 	   (export napi-throw "bgl_napi_throw")
 	   (export napi-throw-error "bgl_napi_throw_error")
-	   (export napi-throw-range-error "bgl_napi_throw_range_error")
 	   (export napi-throw-type-error "bgl_napi_throw_type_error")
+	   (export napi-throw-range-error "bgl_napi_throw_range_error")
+	   (export napi-throw-syntax-error "bgl_napi_throw_syntax_error")
 	   (export napi-create-string-utf8 "bgl_napi_create_string_utf8")
 	   (export napi-get-element "bgl_napi_get_element")
 	   (export napi-set-element! "bgl_napi_set_element")
@@ -51,6 +52,10 @@
 	   (export napi-create-array-with-length "bgl_napi_create_array_with_length")
 	   (export napi-create-promise "bgl_napi_create_promise")
 	   (export napi-create-date "bgl_napi_create_date")
+	   (export napi-create-error "bgl_napi_create_error")
+	   (export napi-create-type-error "bgl_napi_create_type_error")
+	   (export napi-create-range-error "bgl_napi_create_range_error")
+	   (export napi-create-syntax-error "bgl_napi_create_syntax_error")
 	   (export napi-is-array? "bgl_napi_is_array")
 	   (export napi-is-date? "bgl_napi_is_date")
 	   (export napi-is-error? "bgl_napi_is_error")
@@ -68,8 +73,9 @@
    
    (export (napi-throw ::obj ::obj)
 	   (napi-throw-error ::obj ::string ::string)
-	   (napi-throw-range-error ::obj ::string ::string)
 	   (napi-throw-type-error ::obj ::string ::string)
+	   (napi-throw-range-error ::obj ::string ::string)
+	   (napi-throw-syntax-error ::obj ::string ::string)
 	   (napi-create-string-utf8::obj ::obj ::bstring)
 	   (napi-get-named-property::obj ::obj ::obj ::bstring)
 	   (napi-put-named-property!::obj ::obj ::obj ::bstring ::obj)
@@ -86,6 +92,10 @@
 	   (napi-create-array-with-length::obj ::obj ::long)
 	   (napi-create-promise::obj ::obj ::obj)
 	   (napi-create-date::obj ::obj ::double)
+	   (napi-create-error::obj ::obj ::obj ::obj)
+	   (napi-create-type-error::obj ::obj ::obj ::obj)
+	   (napi-create-range-error::obj ::obj ::obj ::obj)
+	   (napi-create-syntax-error::obj ::obj ::obj ::obj)
 	   (napi-is-array?::bool ::obj) 
 	   (napi-is-date?::bool ::obj) 
 	   (napi-is-error?::bool ::obj) 
@@ -130,16 +140,22 @@
 ;* 	 (%this %this))))                                              */
 
 ;*---------------------------------------------------------------------*/
+;*    napi-throw-type-error ...                                        */
+;*---------------------------------------------------------------------*/
+(define (napi-throw-type-error %this code msg)
+   (js-raise-type-error %this (format "~a: ~~~a" code) msg))
+
+;*---------------------------------------------------------------------*/
 ;*    napi-throw-range-error ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (napi-throw-range-error %this code msg)
    (js-raise-range-error %this (format "~a: ~~~a" code) msg))
 
 ;*---------------------------------------------------------------------*/
-;*    napi-throw-type-error ...                                       */
+;*    napi-throw-syntax-error ...                                      */
 ;*---------------------------------------------------------------------*/
-(define (napi-throw-type-error %this code msg)
-   (js-raise-type-error %this (format "~a: ~~~a" code) msg))
+(define (napi-throw-syntax-error %this code msg)
+   (js-raise-syntax-error %this (format "~a: ~~~a" code) msg))
 
 ;*---------------------------------------------------------------------*/
 ;*    napi-create-string-utf8 ...                                      */
@@ -307,6 +323,34 @@
       (with-access::JsDate this (time)
 	 (set! time (flonum->llong tm)))
       this))
+
+;*---------------------------------------------------------------------*/
+;*    napi-create-error ...                                            */
+;*---------------------------------------------------------------------*/
+(define (napi-create-error %this code msg)
+   (with-access::JsGlobalObject %this (js-error)
+      (js-new1 %this js-error msg)))
+
+;*---------------------------------------------------------------------*/
+;*    napi-create-type-error ...                                       */
+;*---------------------------------------------------------------------*/
+(define (napi-create-type-error %this code msg)
+   (with-access::JsGlobalObject %this (js-type-error)
+      (js-new1 %this js-type-error msg)))
+
+;*---------------------------------------------------------------------*/
+;*    napi-create-range-error ...                                      */
+;*---------------------------------------------------------------------*/
+(define (napi-create-range-error %this code msg)
+   (with-access::JsGlobalObject %this (js-range-error)
+      (js-new1 %this js-range-error msg)))
+
+;*---------------------------------------------------------------------*/
+;*    napi-create-syntax-error ...                                     */
+;*---------------------------------------------------------------------*/
+(define (napi-create-syntax-error %this code msg)
+   (with-access::JsGlobalObject %this (js-syntax-error)
+      (js-new1 %this js-syntax-error msg)))
 
 ;*---------------------------------------------------------------------*/
 ;*    napi-uvloop ...                                                  */

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 24 15:38:53 2023                          */
-/*    Last change :  Sat Apr  1 09:58:06 2023 (serrano)                */
+/*    Last change :  Sat Apr  1 19:03:24 2023 (serrano)                */
 /*    Copyright   :  2023 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop Specific macro redefinitions                                 */
@@ -27,7 +27,9 @@ extern int bgl_napi_is_error(obj_t);
 extern int bgl_napi_typeof(obj_t, obj_t);
 extern obj_t bgl_napi_throw(obj_t, obj_t);
 extern obj_t bgl_napi_throw_error(obj_t, char *, char *);
+extern obj_t bgl_napi_throw_type_error(obj_t, char *, char *);
 extern obj_t bgl_napi_throw_range_error(obj_t, char *, char *);
+extern obj_t bgl_napi_throw_syntax_error(obj_t, char *, char *);
 
 extern obj_t bgl_napi_create_double(obj_t, obj_t, napi_value *result);
 extern obj_t bgl_napi_create_string_utf8(obj_t, obj_t);
@@ -37,6 +39,10 @@ extern obj_t bgl_napi_create_array(obj_t);
 extern obj_t bgl_napi_create_array_with_length(obj_t, long);
 extern obj_t bgl_napi_create_promise(obj_t, obj_t);
 extern obj_t bgl_napi_create_date(obj_t, double);
+extern obj_t bgl_napi_create_error(obj_t, obj_t, obj_t);
+extern obj_t bgl_napi_create_type_error(obj_t, obj_t, obj_t);
+extern obj_t bgl_napi_create_range_error(obj_t, obj_t, obj_t);
+extern obj_t bgl_napi_create_syntax_error(obj_t, obj_t, obj_t);
 
 extern napi_status napi_define_class(napi_env _this, const char* utf8name, size_t length, napi_callback ctor, void *data, size_t property_count, const napi_property_descriptor *properties, napi_value *result);
 
@@ -137,6 +143,15 @@ struct napi_async_work__ {
 #define napi_throw_error(_this, code, msg) \
   bgl_napi_throw_error(_this, (char *)code, (char *)msg)
 
+#define napi_throw_type_error(_this, code, msg) \
+  bgl_napi_throw_type_error(_this, (char *)code, (char *)msg)
+
+#define napi_throw_range_error(_this, code, msg) \
+  bgl_napi_throw_range_error(_this, (char *)code, (char *)msg)
+
+#define napi_throw_syntax_error(_this, code, msg) \
+  bgl_napi_throw_syntax_error(_this, (char *)code, (char *)msg)
+
 #define napi_create_string_utf8(_this, string, sz, res) \
   (*res = bgl_napi_create_string_utf8(_this, string_to_bstring((char *)string)), napi_ok)
 
@@ -166,6 +181,18 @@ struct napi_async_work__ {
 
 #define napi_create_date(_this, time, res) \
   (*res = bgl_napi_create_date(_this, time), napi_ok)
+
+#define napi_create_error(_this, code, msg, res) \
+  (*res = bgl_napi_create_error(_this, code, msg), napi_ok)
+
+#define napi_create_type_error(_this, code, msg, res) \
+  (*res = bgl_napi_create_type_error(_this, code, msg), napi_ok)
+
+#define napi_create_range_error(_this, code, msg, res) \
+  (*res = bgl_napi_create_range_error(_this, code, msg), napi_ok)
+
+#define napi_create_syntax_error(_this, code, msg, res) \
+  (*res = bgl_napi_create_syntax_error(_this, code, msg), napi_ok)
 
 #define napi_create_bigint_int64(_this, int64, res) \
    (*res = bgl_int64_to_bignum(int64), napi_ok)
