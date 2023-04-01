@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Fri Mar 31 14:43:07 2023 (serrano)                */
+;*    Last change :  Sat Apr  1 09:20:34 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -4533,11 +4533,14 @@
 		     ;; 11
 		     (if (eq? (configurable current) #f)
 			 (cond
-			    ((and (set desc) (not (equal? (set current) (set desc))))
+			    ((and (set desc)
+				  (not (eq? (set desc) #unspecified))
+				  (not (equal? (set current) (set desc))))
 			     (reject
 				(format "\"~a.~a\" setter mismatch"
 				   (js-typeof o %this) name)))
 			    ((and (get desc)
+				  (not (eq? (get desc) #unspecified))
 				  (not (equal? (get current) (get desc))))
 			     (reject
 				(format "\"~a.~a\" getter mismatch"
