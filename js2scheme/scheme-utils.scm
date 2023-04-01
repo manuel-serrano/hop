@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Copyright   :  2017-22 Manuel Serrano                            */
+;*    Copyright   :  2017-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
 ;*=====================================================================*/
@@ -72,6 +72,7 @@
 	   (vtype-ident ident vtype ::pair-nil #!optional compound)
 	   (type-ident ident type ::pair-nil)
 	   (j2s-number val conf)
+	   (j2s-scheme-error proc msg obj)
 	   (j2s-error proc msg obj #!optional str)
 	   (is-fixnum? expr::J2SExpr ::struct)
 	   (is-number? expr::J2SExpr)
@@ -83,6 +84,8 @@
 	   (is-uint53? expr::J2SExpr)
 	   (is-string? expr::J2SExpr)
 	   (is-buffer-cast? ::J2SExpr)
+
+	   (j2s-scheme-box ::obj ::symbol ::procedure ::struct)
 
 	   (j2s-jsstring val loc ::struct)
 	   
@@ -556,6 +559,28 @@
       (else val)))
 
 ;*---------------------------------------------------------------------*/
+;*    j2s-scheme-error ...                                             */
+;*    -------------------------------------------------------------    */
+;*    Trigger a compile-time error and return a Scheme code that       */
+;*    will raises an error at runtime.                                 */
+;*---------------------------------------------------------------------*/
+(define (j2s-scheme-error proc msg obj)
+   (with-access::J2SNode obj (loc)
+      (match-case loc
+	 ((at ?fname ?loc)
+	  (with-handler
+	     (lambda (e)
+		(exception-notify e)
+		`(js-type-error (js-string->jsstring ,msg) ,fname ,loc %this))
+	     (error/location proc msg (j2s->sexp obj) fname loc)))
+	 (else
+	  (with-handler
+	     (lambda (e)
+		(exception-notify e)
+		`(js-type-error1 (js-string->jsstring ,msg) %this))
+	     (error proc msg (j2s->sexp obj)))))))
+   
+;*---------------------------------------------------------------------*/
 ;*    j2s-error ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (j2s-error proc msg obj #!optional str)
@@ -564,7 +589,7 @@
 	 ((at ?fname ?loc)
 	  (error/location proc msg (or str (j2s->sexp obj)) fname loc))
 	 (else
-	  (error proc msg obj)))))
+	  (error proc msg (or str (j2s->sexp obj)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    is-number? ...                                                   */
@@ -632,6 +657,13 @@
    (and (isa? this J2SCast)
 	(with-access::J2SCast this (expr)
 	   (eq? (j2s-type expr) 'buffer))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-scheme-box ...                                               */
+;*---------------------------------------------------------------------*/
+(define (j2s-scheme-box this mode return::procedure ctx)
+   (j2s-as (j2s-scheme this mode return ctx)
+      this (j2s-type this) 'any ctx))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-jsstring ...                                                 */

@@ -55,7 +55,6 @@
    
    (export j2s-scheme-stage
 	   j2s-scheme-eval-stage
-	   (j2s-scheme-box ::obj ::symbol ::procedure ::struct)
 	   (generic j2s-scheme ::obj ::symbol ::procedure ::struct)))
 
 ;*---------------------------------------------------------------------*/
@@ -134,13 +133,6 @@
 		(else
 		 (epairify loc
 		    (cons sexp (loop (cdr nodes)))))))))))
-
-;*---------------------------------------------------------------------*/
-;*    j2s-scheme-box ...                                               */
-;*---------------------------------------------------------------------*/
-(define (j2s-scheme-box this mode return::procedure ctx)
-   (j2s-as (j2s-scheme this mode return ctx)
-      this (j2s-type this) 'any ctx))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::obj ...                                             */
@@ -494,7 +486,7 @@
 	  (let ((super (j2s-class-super-val (j2s-vtype this))))
 	     (if (isa? super J2SRecord)
 		 (class-prototype-id super)
-		 (j2s-error "super" "Illegal context" this))))
+		 (j2s-scheme-error "super" "Illegal context" this))))
 	  (else
 	   '%super-prototype))))
 
@@ -1606,7 +1598,7 @@
 	     (with-access::J2SKontRef lhs (index gen loc)
 		'#unspecified))
 	    (else
-	     (j2s-error "js2scheme" "Illegal lhs" this)))))
+	     (j2s-scheme-error "js2scheme" "Illegal lhs" this)))))
    
    (with-access::J2SForIn this (loc lhs obj body op
 				  need-bind-exit-break need-bind-exit-continue)
@@ -1832,7 +1824,7 @@
 		    ,(j2s-scheme rhs mode return ctx)
 		    ,(symbol->string! id))))
 	    (else
-	     (j2s-error "assignment" "Illegal assignment" this))))))
+	     (j2s-scheme-error "assignment" "Illegal assignment" this))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme-postpref ...                                          */
@@ -2356,7 +2348,7 @@
 	       ((isa? lhs J2SKontRef)
 		(kontref-inc op lhs (if (eq? op '++) 1 -1)))
 	       (else
-		(j2s-error "j2sscheme"
+		(j2s-scheme-error "j2sscheme"
 		   (format "Illegal expression \"~a\"" op)
 		   this)))))))
 	   
@@ -2561,8 +2553,7 @@
 	       ((isa? lhs J2SKontRef)
 		(kontref-assigop op lhs rhs))
 	       (else
-		(j2s-error "j2sscheme" "Illegal assignment"
-		   (j2s->sexp this))))))))
+		(j2s-scheme-error "j2sscheme" "Illegal assignment" this)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SAccess ...                                       */
