@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 24 16:10:01 2023                          */
-;*    Last change :  Wed Mar 29 08:23:47 2023 (serrano)                */
+;*    Last change :  Sat Apr  1 09:58:54 2023 (serrano)                */
 ;*    Copyright   :  2023 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The Scheme part of the node_api.                                 */
@@ -53,6 +53,7 @@
 	   (export napi-create-date "bgl_napi_create_date")
 	   (export napi-is-array? "bgl_napi_is_array")
 	   (export napi-is-date? "bgl_napi_is_date")
+	   (export napi-is-error? "bgl_napi_is_error")
 	   (export napi-typeof "bgl_napi_typeof")
 	   (export napi-uvloop "bgl_napi_uvloop")
 	   (export napi-jsstring? "bgl_napi_jsstringp")
@@ -87,6 +88,7 @@
 	   (napi-create-date::obj ::obj ::double)
 	   (napi-is-array?::bool ::obj) 
 	   (napi-is-date?::bool ::obj) 
+	   (napi-is-error?::bool ::obj) 
 	   (napi-typeof::int ::obj ::obj)
 	   (napi-uvloop::$uv_loop_t ::obj)
 	   (napi-jsstring?::bool ::obj)
@@ -267,6 +269,12 @@
 ;*---------------------------------------------------------------------*/
 (define (napi-is-date? obj)
    (isa? obj JsDate))
+   
+;*---------------------------------------------------------------------*/
+;*    napi-is-error? ...                                               */
+;*---------------------------------------------------------------------*/
+(define (napi-is-error? obj)
+   (isa? obj JsError))
    
 ;*---------------------------------------------------------------------*/
 ;*    napi-typeof ...                                                  */

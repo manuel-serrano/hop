@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sat Apr  1 09:40:24 2023 (serrano)                */
+;*    Last change :  Sat Apr  1 10:05:15 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -4198,6 +4198,9 @@
 	    (when dget (set! get dget) (set! %get %dget))
 	    (when dset (set! set dset) (set! %set %dset))))
       #t)
+
+   (define (equal-undef? v1 v2)
+      (or (equal? v1 v2) (and (eq? v1 #f) (eq? v2 #unspecified))))
    
    (define (same-value v1 v2)
       (cond
@@ -4534,13 +4537,13 @@
 		     (if (eq? (configurable current) #f)
 			 (cond
 			    ((and (set desc)
-				  (not (eq? (set desc) #unspecified))
-				  (not (equal? (set current) (set desc))))
+				  (not (equal-undef? (set current) (set desc))))
 			     (reject
 				(format "\"~a.~a\" setter mismatch"
 				   (js-typeof o %this) name)))
 			    ((and (get desc)
-				  (not (equal? (get current) (get desc))))
+				  (not (equal-undef? (get current) (get desc))))
+			     (tprint "CU=" (get current) " NW=" (get desc))
 			     (reject
 				(format "\"~a.~a\" getter mismatch"
 				   (js-typeof o %this) name)))

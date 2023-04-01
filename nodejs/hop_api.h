@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 24 15:38:53 2023                          */
-/*    Last change :  Wed Mar 29 09:02:51 2023 (serrano)                */
+/*    Last change :  Sat Apr  1 09:58:06 2023 (serrano)                */
 /*    Copyright   :  2023 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop Specific macro redefinitions                                 */
@@ -23,6 +23,7 @@ extern obj_t bgl_uint64_to_bignum(uint64_t);
 
 extern int bgl_napi_is_array(obj_t);
 extern int bgl_napi_is_date(obj_t);
+extern int bgl_napi_is_error(obj_t);
 extern int bgl_napi_typeof(obj_t, obj_t);
 extern obj_t bgl_napi_throw(obj_t, obj_t);
 extern obj_t bgl_napi_throw_error(obj_t, char *, char *);
@@ -225,6 +226,9 @@ struct napi_async_work__ {
 
 #define napi_is_date(_this, val, res) \
    (*res = bgl_napi_is_date(val), napi_ok)
+
+#define napi_is_error(_this, val, res) \
+   (*res = bgl_napi_is_error(val), napi_ok)
 
 
 /*---------------------------------------------------------------------*/
