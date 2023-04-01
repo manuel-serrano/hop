@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sat Apr  1 09:20:34 2023 (serrano)                */
+;*    Last change :  Sat Apr  1 09:40:24 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -4540,7 +4540,6 @@
 				(format "\"~a.~a\" setter mismatch"
 				   (js-typeof o %this) name)))
 			    ((and (get desc)
-				  (not (eq? (get desc) #unspecified))
 				  (not (equal? (get current) (get desc))))
 			     (reject
 				(format "\"~a.~a\" getter mismatch"
