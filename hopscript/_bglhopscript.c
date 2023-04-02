@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Wed Mar 29 20:05:03 2023 (serrano)                */
+/*    Last change :  Sun Apr  2 07:32:13 2023 (serrano)                */
 /*    Copyright   :  2016-23 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -29,15 +29,6 @@
 #  define FILLER_COMMA 
 #else
 #  define FILLER_COMMA ,
-#endif
-
-/*---------------------------------------------------------------------*/
-/*    BHOPOBJECT                                                       */
-/*---------------------------------------------------------------------*/
-#if (defined(TAG_RESERVED))
-#  define BHOPOBJECT(o) BRESERVEDOBJECT(o)
-#else
-#  define BHOPOBJECT(o) BNANOBJECT(o)
 #endif
 
 /*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 24 16:10:01 2023                          */
-;*    Last change :  Sun Apr  2 06:36:07 2023 (serrano)                */
+;*    Last change :  Sun Apr  2 07:25:57 2023 (serrano)                */
 ;*    Copyright   :  2023 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The Scheme part of the node_api.                                 */
@@ -17,7 +17,7 @@
    (library hop hopscript)
    
    (extern (include "node_api.h")
-
+	   
 	   (macro $napi_undefined::int "napi_undefined")
 	   (macro $napi_null::int "napi_null")
 	   (macro $napi_boolean::int "napi_boolean")
@@ -28,9 +28,9 @@
 	   (macro $napi_function::int "napi_function")
 	   (macro $napi_external::int "napi_external")
 	   (macro $napi_bigint::int "napi_bigint")
-
+	   
 	   (macro $obj-null?::bool (::obj) "0L ==")
-
+	   
 	   (export napi-throw "bgl_napi_throw")
 	   (export napi-throw-error "bgl_napi_throw_error")
 	   (export napi-throw-type-error "bgl_napi_throw_type_error")
@@ -59,6 +59,7 @@
 	   (export napi-is-array? "bgl_napi_is_array")
 	   (export napi-is-date? "bgl_napi_is_date")
 	   (export napi-is-error? "bgl_napi_is_error")
+	   (export napi-strict-equals? "bgl_napi_strict_equals")
 	   (export napi-typeof "bgl_napi_typeof")
 	   (export napi-uvloop "bgl_napi_uvloop")
 	   (export napi-jsstring? "bgl_napi_jsstringp")
@@ -69,7 +70,10 @@
 	   (export napi-coerce-to-number "bgl_napi_coerce_to_number")
 	   (export napi-coerce-to-object "bgl_napi_coerce_to_object")
 	   (export napi-coerce-to-string "bgl_napi_coerce_to_string")
-	   (export napi-get-date-value "bgl_napi_get_date_value"))
+	   (export napi-get-date-value "bgl_napi_get_date_value")
+	   (export napi-wrap "bgl_napi_wrap")
+	   (export napi-unwrap "bgl_napi_unwrap")
+	   (export napi-remove-wrap "bgl_napi_remove_wrap"))
    
    (export (napi-throw ::obj ::obj)
 	   (napi-throw-error ::obj ::string ::string)
@@ -98,7 +102,8 @@
 	   (napi-create-syntax-error::obj ::obj ::obj ::obj)
 	   (napi-is-array?::bool ::obj) 
 	   (napi-is-date?::bool ::obj) 
-	   (napi-is-error?::bool ::obj) 
+	   (napi-is-error?::bool ::obj)
+	   (napi-strict-equals?::bool ::obj ::obj)
 	   (napi-typeof::int ::obj ::obj)
 	   (napi-uvloop::$uv_loop_t ::obj)
 	   (napi-jsstring?::bool ::obj)
@@ -109,7 +114,10 @@
 	   (napi-coerce-to-number::obj ::obj ::obj)
 	   (napi-coerce-to-object::obj ::obj ::obj)
 	   (napi-coerce-to-string::obj ::obj ::obj)
-	   (napi-get-date-value::double ::obj)))
+	   (napi-get-date-value::double ::obj)
+	   (napi-wrap::obj ::obj ::obj ::obj)
+	   (napi-unwrap::obj ::obj ::obj)
+	   (napi-remove-wrap::obj ::obj ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    napi-throw-error ...                                             */
@@ -143,19 +151,19 @@
 ;*    napi-throw-type-error ...                                        */
 ;*---------------------------------------------------------------------*/
 (define (napi-throw-type-error %this code msg)
-   (js-raise-type-error %this (format "~a: ~~~a" code) msg))
+   (js-raise-type-error %this (format "~a: ~~a" code) msg))
 
 ;*---------------------------------------------------------------------*/
 ;*    napi-throw-range-error ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (napi-throw-range-error %this code msg)
-   (js-raise-range-error %this (format "~a: ~~~a" code) msg))
+   (js-raise-range-error %this (format "~a: ~~a" code) msg))
 
 ;*---------------------------------------------------------------------*/
 ;*    napi-throw-syntax-error ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (napi-throw-syntax-error %this code msg)
-   (js-raise-syntax-error %this (format "~a: ~~~a" code) msg))
+   (js-raise-syntax-error %this (format "~a: ~~a" code) msg))
 
 ;*---------------------------------------------------------------------*/
 ;*    napi-create-string-utf8 ...                                      */
@@ -291,7 +299,13 @@
 ;*---------------------------------------------------------------------*/
 (define (napi-is-error? obj)
    (isa? obj JsError))
-   
+
+;*---------------------------------------------------------------------*/
+;*    napi-strict-equals? ...                                          */
+;*---------------------------------------------------------------------*/
+(define (napi-strict-equals? x y)
+   (js-strict-equal? x y))
+
 ;*---------------------------------------------------------------------*/
 ;*    napi-typeof ...                                                  */
 ;*---------------------------------------------------------------------*/
@@ -431,3 +445,29 @@
       (if (fixnum? v)
 	  (fixnum->flonum v)
 	  v)))
+
+;*---------------------------------------------------------------------*/
+;*    napi-wrap ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (napi-wrap %this js-object native-object)
+   (if (js-has-own-property js-object (& "%wrap") %this)
+       (napi-throw-type-error %this "napi-wrap" "invalid argument")
+       (js-bind! %this js-object (& "%wrap")
+	  :value native-object
+	  :writable #f :enumerable #f :configurable #t)))
+
+;*---------------------------------------------------------------------*/
+;*    napi-unwrap ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (napi-unwrap %this js-object)
+   (js-get js-object (& "%wrap") %this))
+
+;*---------------------------------------------------------------------*/
+;*    napi-remove-wrap ...                                             */
+;*---------------------------------------------------------------------*/
+(define (napi-remove-wrap %this js-object)
+   (if (js-has-own-property js-object (& "%wrap") %this)
+       (let ((o (napi-unwrap %this js-object)))
+	  (js-delete! js-object (& "%wrap") #f %this)
+	  o)
+       (napi-throw-type-error %this "napi-wrap" "invalid argument")))

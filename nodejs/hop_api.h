@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 24 15:38:53 2023                          */
-/*    Last change :  Sat Apr  1 19:03:24 2023 (serrano)                */
+/*    Last change :  Sun Apr  2 07:24:38 2023 (serrano)                */
 /*    Copyright   :  2023 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop Specific macro redefinitions                                 */
@@ -24,6 +24,8 @@ extern obj_t bgl_uint64_to_bignum(uint64_t);
 extern int bgl_napi_is_array(obj_t);
 extern int bgl_napi_is_date(obj_t);
 extern int bgl_napi_is_error(obj_t);
+extern int bgl_napi_strict_equals(obj_t, obj_t);
+
 extern int bgl_napi_typeof(obj_t, obj_t);
 extern obj_t bgl_napi_throw(obj_t, obj_t);
 extern obj_t bgl_napi_throw_error(obj_t, char *, char *);
@@ -76,6 +78,10 @@ extern napi_status napi_get_value_bigint_uint64(napi_env _this, napi_value value
 extern napi_status napi_get_date_value(napi_env _this, napi_value value, double *res);
 extern double bgl_napi_get_date_value(obj_t);
 
+extern obj_t bgl_napi_wrap(obj_t, obj_t, obj_t);
+extern obj_t bgl_napi_unwrap(obj_t, obj_t);
+extern obj_t bgl_napi_remove_wrap(obj_t, obj_t);
+
 /*---------------------------------------------------------------------*/
 /*    bgl_napi_async_work                                              */
 /*---------------------------------------------------------------------*/
@@ -87,7 +93,13 @@ struct napi_async_work__ {
    void *data;
    char started;
 };
-   
+
+/*---------------------------------------------------------------------*/
+/*    napi_get_version                                                 */
+/*---------------------------------------------------------------------*/
+#define napi_get_version(env, result) \
+   (*result = 8, napi_ok)
+
 /*---------------------------------------------------------------------*/
 /*    Module init                                                      */
 /*---------------------------------------------------------------------*/
@@ -257,6 +269,11 @@ struct napi_async_work__ {
 #define napi_is_error(_this, val, res) \
    (*res = bgl_napi_is_error(val), napi_ok)
 
+#define napi_strict_equals(_this, x, y, res) \
+  (*res = bgl_napi_strict_equals(x, y), napi_ok)
+
+#define napi_adjust_external_memory(env, change_in_bytes, result) \
+  (*result = 1, napi_ok)
 
 /*---------------------------------------------------------------------*/
 /*    endif                                                            */

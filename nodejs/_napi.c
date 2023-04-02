@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 24 14:34:24 2023                          */
-/*    Last change :  Wed Mar 29 19:29:19 2023 (serrano)                */
+/*    Last change :  Sun Apr  2 07:11:34 2023 (serrano)                */
 /*    Copyright   :  2023 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop node_api implementation.                                     */
@@ -218,8 +218,16 @@ napi_create_function(napi_env _this,
 		     napi_callback cb,
 		     void* data,
 		     napi_value* result) {
-   *result = napi_callback_to_jsproc(_this, *result, cb, data, string_to_bstring((char *)utf8name));
-   return napi_ok;
+   if (!_this) {
+      napi_last_error_message = "Invalid argument";
+      return napi_last_error_code = napi_invalid_arg;
+   } else if (!result) {
+      napi_last_error_message = "Invalid argument";
+      return napi_last_error_code = napi_invalid_arg;
+   } else {
+      *result = napi_callback_to_jsproc(_this, *result, cb, data, string_to_bstring((char *)utf8name));
+      return napi_ok;
+   }
 }
 
 /*---------------------------------------------------------------------*/
@@ -403,6 +411,16 @@ napi_get_cb_info(napi_env _this, napi_callback_info info, size_t *argc, napi_val
       *data = info[0];
    }
       
+   return napi_ok;
+}
+
+/*---------------------------------------------------------------------*/
+/*    napi_status                                                      */
+/*    napi_get_prototype ...                                           */
+/*---------------------------------------------------------------------*/
+napi_status
+napi_get_prototype(napi_env env, napi_value object, napi_value* result) {
+   *result = BGL_OBJECT_WIDENING(object);
    return napi_ok;
 }
 
@@ -1006,4 +1024,47 @@ napi_coerce_to_string(napi_env env, napi_value value, napi_value *result) {
       napi_last_error_message = 0L;
       return napi_last_error_code = napi_ok;
    }
+}
+
+/*---------------------------------------------------------------------*/
+/*    BGL_RUNTIME_DEF napi_status                                      */
+/*    napi_wrap ...                                                    */
+/*---------------------------------------------------------------------*/
+BGL_RUNTIME_DEF napi_status
+napi_wrap(napi_env env,
+	  napi_value js_object,
+	  void *native_object,
+	  napi_finalize finalize_cb,
+	  void *finalize_hint,
+	  napi_ref *result) {
+   if (result) {
+      *result = (napi_ref)bgl_napi_wrap(env, js_object, native_object);
+   } else {
+      bgl_napi_wrap(env, js_object, (obj_t)native_object);
+   }
+   return napi_ok;
+}
+
+/*---------------------------------------------------------------------*/
+/*    BGL_RUNTIME_DEF napi_status                                      */
+/*    napi_unwrap ...                                                  */
+/*---------------------------------------------------------------------*/
+BGL_RUNTIME_DEF napi_status
+napi_unwrap(napi_env env,
+	    napi_value js_object,
+	    void **result) {
+   *result = (void *)bgl_napi_unwrap(env, js_object);
+   return napi_ok;
+}
+
+/*---------------------------------------------------------------------*/
+/*    BGL_RUNTIME_DEF napi_status                                      */
+/*    napi_remove_wrap ...                                             */
+/*---------------------------------------------------------------------*/
+BGL_RUNTIME_DEF napi_status
+napi_remove_wrap(napi_env env,
+		 napi_value js_object,
+		 void **result) {
+   *result = (void *)bgl_napi_remove_wrap(env, js_object);
+   return napi_ok;
 }

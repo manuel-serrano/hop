@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 11 09:35:38 2022                          */
-/*    Last change :  Wed Mar  8 11:24:50 2023 (serrano)                */
+/*    Last change :  Sun Apr  2 07:31:52 2023 (serrano)                */
 /*    Copyright   :  2022-23 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Macros for accelerating C compilation.                           */
@@ -18,6 +18,15 @@
 /*    import                                                           */
 /*---------------------------------------------------------------------*/
 extern bool_t hop_js_toboolean_no_boolean(obj_t);
+
+/*---------------------------------------------------------------------*/
+/*    BHOPOBJECT                                                       */
+/*---------------------------------------------------------------------*/
+#if (defined(TAG_RESERVED))
+#  define BHOPOBJECT(o) BRESERVEDOBJECT(o)
+#else
+#  define BHOPOBJECT(o) BNANOBJECT(o)
+#endif
 
 /*---------------------------------------------------------------------*/
 /*    Type predicates                                                  */
