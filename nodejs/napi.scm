@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 24 16:10:01 2023                          */
-;*    Last change :  Sat Apr  1 18:58:01 2023 (serrano)                */
+;*    Last change :  Sun Apr  2 06:36:07 2023 (serrano)                */
 ;*    Copyright   :  2023 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The Scheme part of the node_api.                                 */
@@ -329,28 +329,36 @@
 ;*---------------------------------------------------------------------*/
 (define (napi-create-error %this code msg)
    (with-access::JsGlobalObject %this (js-error)
-      (js-new1 %this js-error msg)))
+      (let ((o (js-new1 %this js-error msg)))
+	 (js-put! o (& "code") code #f %this)
+	 o)))
 
 ;*---------------------------------------------------------------------*/
 ;*    napi-create-type-error ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (napi-create-type-error %this code msg)
    (with-access::JsGlobalObject %this (js-type-error)
-      (js-new1 %this js-type-error msg)))
+      (let ((o (js-new1 %this js-type-error msg)))
+	 (js-put! o (& "code") code #f %this)
+	 o)))
 
 ;*---------------------------------------------------------------------*/
 ;*    napi-create-range-error ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (napi-create-range-error %this code msg)
    (with-access::JsGlobalObject %this (js-range-error)
-      (js-new1 %this js-range-error msg)))
+      (let ((o (js-new1 %this js-range-error msg)))
+	 (js-put! o (& "code") code #f %this)
+	 o)))
 
 ;*---------------------------------------------------------------------*/
 ;*    napi-create-syntax-error ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (napi-create-syntax-error %this code msg)
    (with-access::JsGlobalObject %this (js-syntax-error)
-      (js-new1 %this js-syntax-error msg)))
+      (let ((o (js-new1 %this js-syntax-error msg)))
+	 (js-put! o (& "code") code #f %this)
+	 o)))
 
 ;*---------------------------------------------------------------------*/
 ;*    napi-uvloop ...                                                  */

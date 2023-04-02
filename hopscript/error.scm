@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sat Apr  1 05:50:09 2023 (serrano)                */
+;*    Last change :  Sun Apr  2 06:40:14 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
@@ -497,6 +497,7 @@
 	    :prototype js-error-prototype
 	    :size 5
 	    :alloc js-error-error-alloc))
+      
       
       (init-builtin-error-prototype! %this js-error js-error-prototype)
       (set! js-syntax-error
