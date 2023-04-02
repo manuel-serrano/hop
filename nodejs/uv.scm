@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Fri Mar 31 07:57:06 2023 (serrano)                */
+;*    Last change :  Sun Apr  2 12:16:50 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -2126,19 +2126,19 @@
 	     (if (js-procedure? callback)
 		 (cond-expand
 		    (libuv-vec
-		     (uv-fs-read2 file %data length
+		     (uv-fs-read3 file %data length
 			:callback
-			(lambda (obj callback %this)
+			(lambda (obj callback buffer %this)
 			   (with-access::JsGlobalObject %this (worker)
 			      (if (<fx obj 0)
-				  (!js-callback2 'read worker %this
-				     callback (js-undefined) obj #f)
-				  (!js-callback2 'read worker %this
-				     callback (js-undefined) #f obj))))
+				  (!js-callback3 'read worker %this
+				     callback (js-undefined) obj #f buffer)
+				  (!js-callback3 'read worker %this
+				     callback (js-undefined) #f obj buffer))))
 			:offset (+fx offset (uint32->fixnum byteoffset))
 			:position (to-int64 %this "read" position #s64:-1)
 			:loop (worker-loop %worker)
-			:arg0 callback :arg1 %this))
+			:arg0 callback :arg1 buffer :arg2 %this))
 		    (else
 		     (uv-fs-read file %data length
 			:callback
