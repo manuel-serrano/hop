@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Sat Apr  1 18:21:50 2023 (serrano)                */
+;*    Last change :  Sun Apr  2 06:14:04 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -925,7 +925,8 @@
       ;; isFrozen
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.12
       (js-bind! %this js-object (& "isFrozen")
-	 :value (js-make-function %this (lambda (this o) (js-object-isfrozen o %this))
+	 :value (js-make-function %this
+		   (lambda (this o) (js-object-isfrozen o %this))
 		   (js-function-arity 1 0)
 		   (js-function-info :name "isFrozen" :len 1))
 	 :writable #t
@@ -1395,7 +1396,8 @@
 	      (with-access::JsConstructMap cmap (props)
 		 (vector-every (lambda (p)
 				  (let ((flags (prop-flags p)))
-				     (and (not (flags-writable? flags))
+				     (and (or (not (flags-writable? flags))
+					      (flags-accessor? flags))
 					  (not (flags-configurable? flags)))))
 		    props)))
 	     ((js-object-hashed? o)
