@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Sun Apr  2 12:16:50 2023 (serrano)                */
+;*    Last change :  Sun Apr  2 13:30:45 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -476,7 +476,6 @@
 			   (exception-notify e)
 			   (set! %retval 8))
 			(when (js-procedure? onexit)
-			   (tprint "SET EXITING...")
 			   (js-put! %process (& "_exiting") #t #f %this)
 			   (js-call1-jsprocedure %this onexit %process %retval)))))
 	       ;; when the parent died, kill the application

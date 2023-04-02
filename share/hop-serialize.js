@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:55:51 2007                          */
-/*    Last change :  Sat Sep 24 11:59:49 2022 (serrano)                */
-/*    Copyright   :  2007-22 Manuel Serrano                            */
+/*    Last change :  Sun Apr  2 16:34:14 2023 (serrano)                */
+/*    Copyright   :  2007-23 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP serialization (Bigloo compatible).                           */
 /*=====================================================================*/
@@ -1582,7 +1582,7 @@ function hop_find_class_unserializer(hash) {
 	       return sc_error("string->obj",
 				"Cannot find custom class ("
 				+ hash
-				+ ") unserializer", o);
+				+ ") unserializer (need to rerun mkserializer.hop?)", o);
 	    }
 	 } else {
 	    if (sc_isPair(o) && sc_car(o) == sc__class__) {
@@ -1593,7 +1593,7 @@ function hop_find_class_unserializer(hash) {
 	       return sc_error("string->obj",
 				"Cannot find custom class ("
 				+ hash
-				+ ") unserializer", o);
+				+ ") unserializer (need to rerun mkserializer.hop?)", o);
 	    }
 	 }
       }
