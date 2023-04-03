@@ -1,4 +1,4 @@
-FROM debian:bulleye
+FROM debian:bullseye
 
 RUN apt update && apt dist-upgrade && apt install -y \
     bash \
@@ -37,7 +37,7 @@ RUN rm -rf /tmp/*
 
 RUN mkdir -p /home/hop/.config/hop && \
     echo "(add-user! \"anonymous\" :directories '* :services '*)" \
-      > /home/hop/.config/hop/hoprc.hop && \
+    > /home/hop/.config/hop/hoprc.hop && \
     chown -R hop /home/hop
 
 USER hop
