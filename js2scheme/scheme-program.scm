@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Wed Mar  8 12:54:33 2023 (serrano)                */
+;*    Last change :  Mon Apr  3 15:46:00 2023 (serrano)                */
 ;*    Copyright   :  2018-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -396,6 +396,8 @@
 	      (hop-port-set! -1)
 	      (hop-ssl-port-set! -1)
 	      (hopscript-install-expanders!)
+	      (cond-expand
+		 ((not bigloo-eval) (pragma "HOP_REWRITE_INIT()")))
 	      (multiple-value-bind (%worker %t %m)
 		 (js-main-worker! ,name ,(absolute path) #f
 		    nodejs-new-global-object nodejs-new-module)
@@ -483,8 +485,10 @@
 		   (hop-port-set! -1)
 		   (hop-ssl-port-set! -1)
 		   (bigloo-library-path-set! ',(bigloo-library-path))
+		   (cond-expand
+		      ((not bigloo-eval) (pragma "HOP_REWRITE_INIT()")))
 		   (set! !process (nodejs-process %worker %this))
-		   ,@(exit-body ctx (filter nofundef? body))))))))
+		      ,@(exit-body ctx (filter nofundef? body))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-module-imports ...                                           */
