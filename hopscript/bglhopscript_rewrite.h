@@ -25,10 +25,10 @@
 #  define HOP_REWRITE_LOCATIONS(n) \
    static char *hop_rewrite_locations[n] = { NULL }
 #  define HOP_REWRITE_INIT() \
-     init_rewrite_lib()
-#  define HOP_CACHE_HIT(n) \
-     BINREWRITELIB_EXPAND_LABEL(n)
-#  define HOP_CACHE_MISS(n, entry) \
+     init_rewrite_lib();
+#  define HOP_REWRITE_CACHE_HIT(n) \
+     BINREWRITELIB_EXPAND_LABEL(n):
+#  define HOP_REWRITE_CACHE_MISS(n, entry) \
      BINREWRITELIB_CACHE_MISS_32(n, &(__bgl_pcache[((long) n)].entry), &hop_rewrite_locations[n])
 #endif
 
