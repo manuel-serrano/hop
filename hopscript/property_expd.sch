@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Mon Apr  3 15:31:05 2023 (serrano)                */
+;*    Last change :  Fri Apr  7 10:27:49 2023 (serrano)                */
 ;*    Copyright   :  2016-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -608,9 +608,7 @@
 		`(let ((idx (js-pcache-cindex ,cache)))
 		    (js-profile-log-cache ,cache :cmap #t)
 		    (js-profile-log-index idx)
-		    ;;(js-object-noinline-relative-ref ,obj idx)
-		    (js-object-noinline-relative-ref ,obj idx)
-		    ))
+		    (js-object-noinline-relative-ref ,obj idx)))
 	       ((eq? cs 'pmap)
 		`(let ((idx (js-pcache-pindex ,cache))
 		       (own (js-pcache-owner ,cache)))
