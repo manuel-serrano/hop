@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 24 14:34:24 2023                          */
-/*    Last change :  Wed Apr  5 06:35:49 2023 (serrano)                */
+/*    Last change :  Fri Apr  7 10:31:26 2023 (serrano)                */
 /*    Copyright   :  2023 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop node_api implementation.                                     */
@@ -432,17 +432,18 @@ napi_get_cb_info(napi_env _this, napi_callback_info info, size_t *argc, napi_val
    if (argv) {
       if (argc) {
 	 int max = *argc;
-	 while(info[i + 2] != BEOA && i < max) {
-	    argv[i] = info[i + 2];
-	    i++;
-	 }
+      loop:
 	 if (i < max) {
-	    *argc = i;
-	    while (i < max) {
-	       argv[i++] = BUNSPEC;
+	    if (info[i + 2] != BEOA) {
+	       argv[i] = info[i + 2];
+	       i++;
+	       goto loop;
+	    } else {
+	       *argc = i;
+	       while (i < max) {
+		  argv[i++] = BUNSPEC;
+	       }
 	    }
-/* 	 } else {                                                      */
-/* 	    *argc = i;                                                 */
 	 }
       } else {
 	 while(info[i + 2] != BEOA) {
