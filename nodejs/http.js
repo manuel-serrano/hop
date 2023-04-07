@@ -590,8 +590,12 @@ OutgoingMessage.prototype._storeHeader = function(firstLine, headers) {
   }
 
   // Date header
-  if (this.sendDate == true && state.sentDateHeader == false) {
-    state.messageHeader += 'Date: ' + utcDate() + CRLF;
+   if (this.sendDate == true && state.sentDateHeader == false) {
+     // MS 7apr2023: utcDate is responsible for 10% of the run time of an 
+     // HTTP server so it is replaced with a faster Scheme implementation
+     const ud = #:js-string->jsstring(#:date->rfc2822-date(#:current-date()));
+     //state.messageHeader += 'Date: ' + utcDate() + CRLF;
+     state.messageHeader += 'Date: ' + ud + CRLF;
   }
 
   // Force the connection to close when the response is a 204 No Content or
