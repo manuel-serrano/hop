@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 24 14:34:24 2023                          */
-/*    Last change :  Sun Apr  2 07:11:34 2023 (serrano)                */
+/*    Last change :  Wed Apr  5 06:35:49 2023 (serrano)                */
 /*    Copyright   :  2023 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop node_api implementation.                                     */
@@ -71,6 +71,56 @@ napi_module_register(napi_module *mod) {
 /*    napi_method_stub ...                                             */
 /*---------------------------------------------------------------------*/
 static obj_t napi_method_stub(obj_t proc, ...) {
+   va_list argl;
+   obj_t runner;
+   int cnt = 1, i;
+   obj_t args[17], *aargs;
+
+   // count the number of arguments
+   va_start(argl, proc);
+   while ((runner = va_arg(argl, obj_t)) != BEOA) {
+      args[cnt] = runner;
+      cnt++;
+      if (cnt > 16) {
+	 va_end(argl);
+	 goto _slow;
+      }
+   }
+   va_end(argl);
+   
+   args[0] = PROCEDURE_LENGTH(proc) == 1 ? PROCEDURE_REF(proc, 0) : 0L;
+   args[cnt] = BEOA;
+
+   // call the C function
+   return PROCEDURE_VA_ENTRY(proc)(PROCEDURE_ATTR(proc), args);
+
+_slow:
+   // count the number of arguments
+   va_start(argl, proc);
+   while ((runner = va_arg(argl, obj_t)) != BEOA) cnt++;
+   va_end(argl);
+
+   // stack allocate the napi arguments array
+   aargs = alloca((1 + cnt) * sizeof(obj_t));
+   aargs[0] = PROCEDURE_LENGTH(proc) == 1 ? PROCEDURE_REF(proc, 0) : 0L;
+
+   // collect the arguments
+   va_start(argl, proc);
+   for (i = 1; i < cnt; i++) {
+      aargs[i] = va_arg(argl, obj_t);
+   }
+   va_end(argl);
+   aargs[cnt] = BEOA;
+
+   // call the C function
+   return PROCEDURE_VA_ENTRY(proc)(PROCEDURE_ATTR(proc), aargs);
+}
+
+/*---------------------------------------------------------------------*/
+/*    static obj_t                                                     */
+/*    napi_method_stub ...                                             */
+/*---------------------------------------------------------------------*/
+static obj_t napi_method_stub_XXX(obj_t proc, ...) {
    va_list argl;
    obj_t runner;
    int cnt = 1, i;
