@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Sun Apr  2 13:30:45 2023 (serrano)                */
+;*    Last change :  Sun Apr  9 09:17:47 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -251,6 +251,15 @@
 ;*    js-worker-call ...                                               */
 ;*---------------------------------------------------------------------*/
 (define-macro (js-worker-call worker proc %this)
+   (match-case proc
+      ((lambda (%this) ?expr)
+       `(with-access::WorkerHopThread ,worker (%call)
+	   ,expr))
+      (else
+       `(with-access::WorkerHopThread ,worker (%call)
+	   (,proc ,%this)))))
+
+(define-macro (js-worker-call-deprecated-9apr2023 worker proc %this)
    (match-case proc
       ((lambda (%this) ?expr)
        `(with-access::WorkerHopThread ,worker (%call)
@@ -2143,10 +2152,10 @@
 			:callback
 			(lambda (obj)
 			   (if (<fx obj 0)
-			       (!js-callback2 'read %worker %this
-				  callback (js-undefined) obj #f)
-			       (!js-callback2 'read %worker %this
-				  callback (js-undefined) #f obj)))
+			       (!js-callback3 'read %worker %this
+				  callback (js-undefined) obj #f buffer)
+			       (!js-callback3 'read %worker %this
+				  callback (js-undefined) #f obj buffer)))
 			:offset (+fx offset (uint32->fixnum byteoffset))
 			:position (to-int64 %this "read" position #s64:-1)
 			:loop (worker-loop %worker))))
