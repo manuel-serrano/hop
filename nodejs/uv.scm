@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Sun Apr  9 09:17:47 2023 (serrano)                */
+;*    Last change :  Mon Apr 10 05:40:49 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -239,13 +239,14 @@
 ;*---------------------------------------------------------------------*/
 ;*    next-tick ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define-inline (next-tick %worker %this::JsGlobalObject)
+(define-inline (next-tick %this::JsGlobalObject)
    (unless *nodejs-DEP0134*
-      (with-access::WorkerHopThread %worker (%process)
-	 (with-access::JsProcess %process (tick-callback)
-	    (unless tick-callback
-	       (set! tick-callback (js-get %process (& "_tickCallback") %this)))
-	    (js-call0 %this tick-callback (js-undefined))))))
+      (with-access::JsGlobalObject %this (worker)
+	 (with-access::WorkerHopThread worker (%process)
+	    (with-access::JsProcess %process (tick-callback)
+	       (unless tick-callback
+		  (set! tick-callback (js-get %process (& "_tickCallback") %this)))
+	       (js-call0 %this tick-callback (js-undefined)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-worker-call ...                                               */
@@ -253,11 +254,9 @@
 (define-macro (js-worker-call worker proc %this)
    (match-case proc
       ((lambda (%this) ?expr)
-       `(with-access::WorkerHopThread ,worker (%call)
-	   ,expr))
+       expr)
       (else
-       `(with-access::WorkerHopThread ,worker (%call)
-	   (,proc ,%this)))))
+       `(,proc ,%this))))
 
 (define-macro (js-worker-call-deprecated-9apr2023 worker proc %this)
    (match-case proc
@@ -283,7 +282,7 @@
       (lambda (%this)
 	 (js-call0-jsprocedure %this proc obj))
       %this)
-   (next-tick %worker %this))
+   (next-tick %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    !js-callback1 ...                                                */
@@ -293,7 +292,7 @@
       (lambda (%this)
 	 (js-call1-jsprocedure %this proc obj arg0))
       %this)
-   (next-tick %worker %this))
+   (next-tick %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    !js-callback2 ...                                                */
@@ -303,7 +302,7 @@
       (lambda (%this)
 	 (js-call2-jsprocedure %this proc obj arg0 arg1))
       %this)
-   (next-tick %worker %this))
+   (next-tick %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    !js-callback3 ...                                                */
@@ -313,7 +312,7 @@
       (lambda (%this)
 	 (js-call3-jsprocedure %this proc obj arg0 arg1 arg2))
       %this)
-   (next-tick %worker %this))
+   (next-tick %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    !js-callback4 ...                                                */
@@ -323,7 +322,7 @@
       (lambda (%this)
 	 (js-call4-jsprocedure %this proc obj arg0 arg1 arg2 arg3))
       %this)
-   (next-tick %worker %this))
+   (next-tick %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    !js-callback5 ...                                                */
@@ -333,7 +332,7 @@
       (lambda (%this)
 	 (js-call5-jsprocedure %this proc obj arg0 arg1 arg2 arg3 arg4))
       %this)
-   (next-tick %worker %this))
+   (next-tick %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    to-uint64 ...                                                    */
@@ -681,7 +680,7 @@
    (uv-update-time (worker-loop %worker))
    (overflowu64 (uv-now (worker-loop %worker))))
 
-(define close-stack '())
+;; (define close-stack '())
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-close ...                                                 */
@@ -692,11 +691,11 @@
 	 ((or (not (isa? handle JsPipe))
 	      (with-access::JsPipe handle (econnreset)
 		 (not econnreset)))
-	  (set! close-stack (cons this close-stack))
+	  ;;(set! close-stack (cons this close-stack))
 	  (with-access::UvHandle handle (onclose)
 	     (uv-close handle
 		(lambda ()
-		   (set! close-stack (remq! this close-stack))
+		   ;; (set! close-stack (remq! this close-stack))
 		   (when (and (=fx (bit-and flags 1) 1)
 			      (js-procedure? callback))
 		      (!js-callback0 "close" %worker %this
@@ -1010,7 +1009,7 @@
 	     (js-worker-push! %worker name
 		(lambda (%this)
 		   (js-apply %this callback (js-undefined) (cons err args))
-		   (next-tick %worker %this)))
+		   (next-tick %this)))
 	     (js-raise err)))))
        
 ;*---------------------------------------------------------------------*/
@@ -1198,12 +1197,30 @@
 	     (js-put! exn (& "path") path #f %this)
 	     (!js-callback2 'open %worker %this
 		callback (js-undefined) exn #f))))
+
+   (define (open-callback4 res callback path %worker %this)
+      (if (isa? res UvFile)
+	  (!js-callback2 'open %worker %this callback (js-undefined) #f
+	     (uvfile->int %worker res))
+	  (let ((exn (fs-errno-exn
+			(format "open '~a'" (js-jsstring->string path))
+			res %this)))
+	     (js-put! exn (& "path") path #f %this)
+	     (!js-callback2 'open %worker %this
+		callback (js-undefined) exn #f))))
    
    (let ((name (js-tostring path %this)))
       (if (js-procedure? callback)
-	  (uv-fs-open name flags :mode mode
-	     :loop (worker-loop %worker)
-	     :callback open-callback)
+	  (cond-expand
+	     (libuv-vec
+	      (uv-fs-open4 name flags :mode mode
+		 :loop (worker-loop %worker)
+		 :callback open-callback4
+		 :arg0 callback :arg1 path :arg2 %worker :arg3 %this))
+	     (else
+	      (uv-fs-open name flags :mode mode
+		 :loop (worker-loop %worker)
+		 :callback open-callback)))
 	  (let ((res (uv-fs-open name flags :mode mode)))
 	     (if (isa? res UvFile)
 		 (uvfile->int %worker res)
@@ -1220,14 +1237,24 @@
    (let ((file (int->uvhandle %worker %this fd)))
       (if file
 	  (begin
-	     (close-uvfile %worker fd)
+	     (unstore-stream-fd! %worker file fd)
 	     (if (js-procedure? callback)
-		 (uv-fs-close file
-		    :loop (worker-loop %worker)
-		    :callback
-		    (lambda (val)
-		       (!js-callback1 'close %worker %this
-			  callback (js-undefined) val)))
+		 (cond-expand
+		    (libuv-vec
+		     (uv-fs-close2 file
+			:loop (worker-loop %worker)
+			:callback
+			(lambda (val callback %this)
+			   (!js-callback1 'close %worker %this
+			      callback (js-undefined) val))
+			:arg0 callback :arg1 %this))
+		    (else
+		     (uv-fs-close file
+			:loop (worker-loop %worker)
+			:callback
+			(lambda (val)
+			   (!js-callback1 'close %worker %this
+			      callback (js-undefined) val)))))
 		 (uv-fs-close file)))
 	  (fs-callback-error %worker %this callback "close"))))
 
@@ -2106,7 +2133,7 @@
       (if file
 	  (if (js-procedure? callback)
 	      (uv-fs-write3 (int->uvhandle %worker %this fd) str (string-length str)
-		 :callback (lambda (obj callback buffer %this)
+		 :callback (lambda (obj callback string %this)
 			      (if (<fx obj 0)
 				  (!js-callback3 'write %worker %this
 				     callback (js-undefined)
@@ -2591,6 +2618,15 @@
 	  (vector-set! uvhandles fd (cons hdl hdl))
 	  (let ((ref (vector-ref uvhandles fd)))
 	     (set-cdr! ref hdl)))))
+
+;*---------------------------------------------------------------------*/
+;*    unstore-stream-fd! ...                                           */
+;*---------------------------------------------------------------------*/
+(define (unstore-stream-fd! %worker hdl fd::int)
+   (with-access::WorkerHopThread %worker (uvhandles)
+      (let ((p (vector-ref uvhandles fd)))
+	 (set-car! p #unspecified)
+	 (set-cdr! p #unspecified))))
    
 ;*---------------------------------------------------------------------*/
 ;*    uvfile->int ...                                                  */
@@ -2630,13 +2666,6 @@
 				(path ""))))
 		    (store-stream-fd! %worker file fd)
 		    file))))))))
-
-;*---------------------------------------------------------------------*/
-;*    close-uvfile ...                                                 */
-;*---------------------------------------------------------------------*/
-(define (close-uvfile %worker fd::int)
-   (with-access::WorkerHopThread %worker (uvhandles)
-      (vector-set! uvhandles fd (cons #f #f))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-new-process ...                                           */
