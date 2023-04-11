@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Mon Apr 10 05:40:49 2023 (serrano)                */
+;*    Last change :  Tue Apr 11 08:58:27 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -199,9 +199,9 @@
 	   
 	   (nodejs-stream-write ::WorkerHopThread ::JsGlobalObject ::obj ::bstring ::long ::long ::procedure)
 	   (nodejs-stream-write2 ::WorkerHopThread ::JsGlobalObject ::obj ::bstring ::long ::long ::obj ::procedure)
-	   (nodejs-stream-read-start ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::procedure ::obj)
-	   (nodejs-stream-read-stop ::WorkerHopThread ::JsGlobalObject ::obj)
-	   (nodejs-stream-shutdown ::WorkerHopThread ::JsGlobalObject ::obj ::procedure)
+	   (inline nodejs-stream-read-start ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::procedure ::obj)
+	   (inline nodejs-stream-read-stop ::WorkerHopThread ::JsGlobalObject ::obj)
+	   (inline nodejs-stream-shutdown ::WorkerHopThread ::JsGlobalObject ::obj ::procedure)
 
 	   (nodejs-new-process)
 	   (nodejs-process-spawn ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::obj)
@@ -1240,7 +1240,7 @@
 	     (unstore-stream-fd! %worker file fd)
 	     (if (js-procedure? callback)
 		 (cond-expand
-		    (libuv-vec
+ 		    (libuv-vec
 		     (uv-fs-close2 file
 			:loop (worker-loop %worker)
 			:callback
@@ -2582,24 +2582,22 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-stream-read-start ...                                     */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-stream-read-start %worker %this process handle onalloc callback)
+(define-inline (nodejs-stream-read-start %worker %this process handle onalloc callback)
    (uv-stream-read-start handle
       :onalloc onalloc
-      :loop (worker-loop %worker)
       :callback callback))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-stream-read-stop ...                                      */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-stream-read-stop %worker %this handle)
+(define-inline (nodejs-stream-read-stop %worker %this handle)
    (uv-stream-read-stop handle))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-stream-shutdown ...                                       */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-stream-shutdown %worker %this handle callback)
+(define-inline (nodejs-stream-shutdown %worker %this handle callback)
    (uv-stream-shutdown handle
-      :loop (worker-loop %worker)
       :callback callback))
 
 ;*---------------------------------------------------------------------*/

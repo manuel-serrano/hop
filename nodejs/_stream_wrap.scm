@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 20 12:31:24 2014                          */
-;*    Last change :  Tue Apr 11 08:41:14 2023 (serrano)                */
+;*    Last change :  Tue Apr 11 08:54:39 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Common stream functions                                          */
@@ -157,7 +157,8 @@
       (js-init-stream-wrap! %this)
       (with-access::JsHandle this (handle)
 	 (nodejs-stream-read-start %worker %this process handle
-	    (lambda (obj size) (slab-allocate slab obj size))
+	    (lambda (obj size)
+	       (slab-allocate slab obj size))
 	    (lambda (status buf offset len pending-type)
 	       (with-trace 'nodejs-buffer "read-start-cb"
 		  (trace-item "status=" status " buf=" (typeof buf)
