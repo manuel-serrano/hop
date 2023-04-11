@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 20 12:31:24 2014                          */
-;*    Last change :  Tue Apr 11 13:43:43 2023 (serrano)                */
+;*    Last change :  Tue Apr 11 15:32:19 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Common stream functions                                          */
@@ -148,6 +148,12 @@
 		(string-set! buf i2 (integer->char (bit-rsh n 8)))
 		(string-set! buf (+fx 1 i2) (integer->char (bit-and n #x255)))
 		(loop (+fx i 1)))))))
+
+(define (mark! p)
+   (set! *marks* (cons p *marks*))
+   p)
+
+(define *marks* '())
 
 ;*---------------------------------------------------------------------*/
 ;*    stream-read-start ...                                            */

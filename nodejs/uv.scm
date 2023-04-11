@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Tue Apr 11 08:58:27 2023 (serrano)                */
+;*    Last change :  Tue Apr 11 14:29:56 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -188,8 +188,8 @@
 	   (nodejs-udp-handle ::WorkerHopThread)
 	   (nodejs-udp-bind ::JsGlobalObject ::JsObject ::obj ::obj ::int ::int ::int)
 	   (nodejs-udp-send ::WorkerHopThread ::JsGlobalObject ::obj ::bstring ::long ::long ::long ::bstring ::int ::procedure)
-	   (nodejs-udp-recv-start ::WorkerHopThread ::JsGlobalObject ::obj ::procedure ::obj)
-	   (nodejs-udp-recv-stop ::obj)
+	   (inline nodejs-udp-recv-start ::WorkerHopThread ::JsGlobalObject ::obj ::procedure ::obj)
+	   (inline nodejs-udp-recv-stop ::obj)
 	   (nodejs-udp-getsockname ::JsGlobalObject ::obj)
 	   (nodejs-udp-set-ttl ::obj ::int)
 	   (nodejs-udp-set-multicast-ttl ::obj ::int)
@@ -2438,7 +2438,6 @@
 ;*---------------------------------------------------------------------*/
 (define (nodejs-tcp-listen %worker %this process this handle backlog tcp-wrap)
    (let ((r (uv-listen handle backlog
-	       :loop (worker-loop %worker)
 	       :callback
 	       (lambda (server status)
 		  ;; (tprint "tcp-listen, OnConnection status=" status)
@@ -2511,16 +2510,15 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-udp-recv-start ...                                        */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-udp-recv-start %worker %this handle onalloc callback)
+(define-inline (nodejs-udp-recv-start %worker %this handle onalloc callback)
    (uv-udp-recv-start handle
       :onalloc onalloc
-      :loop (worker-loop %worker)
       :callback callback))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-udp-recv-stop ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-udp-recv-stop handle)
+(define-inline (nodejs-udp-recv-stop handle)
    (uv-udp-recv-stop handle))
 
 ;*---------------------------------------------------------------------*/
@@ -2931,7 +2929,6 @@
 (define (nodejs-pipe-listen %worker %this process this handle backlog)
    ;; rint "pipe-listen...")
    (let ((r (uv-listen handle backlog
-	       :loop (worker-loop %worker)
 	       :callback
 	       (lambda (server status)
 		  ;; (tprint "pipe-listen listen status=" status)
