@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 20 12:31:24 2014                          */
-;*    Last change :  Mon Feb 20 07:42:55 2023 (serrano)                */
+;*    Last change :  Tue Apr 11 08:41:14 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Common stream functions                                          */
@@ -162,35 +162,42 @@
 	       (with-trace 'nodejs-buffer "read-start-cb"
 		  (trace-item "status=" status " buf=" (typeof buf)
 		     " offset=" offset " len=" len)
-		  (cond
-		     ((eof-object? status)
-		      ;; eof
-		      (js-put! process (& "_errno") (js-string->jsstring "EOF")
-			 #f %this)
-		      (let ((onread (js-get this (& "onread") %this)))
-			 (!js-callback3 "read-start" %worker %this onread this
-			    (js-undefined) (js-undefined) (js-undefined))))
-		     ((not status)
-		      ;; read error
-		      (slab-shrink! slab buf offset 0)
-		      (js-put! process (& "_errno") (nodejs-err-name len) #f %this)
-		      (let ((onread (js-get this (& "onread") %this)))
-			 (!js-callback0 "read-start" %worker %this onread this)))
-		     ((=fx len 0)
-		      ;; nothing read
-		      (slab-shrink! slab buf offset 0))
-		     (else
-		      ;; characters read
-		      (let* ((b (slab-shrink! slab buf offset len))
-			     (onread (js-get this (& "onread") %this)))
-			 (if (and (nodejs-pipe-ipc? handle) pending-type)
-			     (!js-callback4 "read-start" %worker %this
-				onread this b offset len
-				(nodejs-pipe-accept %worker %this this
-				   pending-type))
-			     (!js-callback3 "read-start" %worker %this
-				onread this b offset len))
-			 (js-undefined))))))))))
+		  (with-access::JsGlobalObject %this (js-nodejs-pcache)
+		     (cond
+			((eof-object? status)
+			 ;; eof
+			 (js-put-jsobject-name/cache! process (& "_errno") (& "EOF")
+			    #f %this
+			    (js-pcache-ref js-nodejs-pcache 19))
+			 (let ((onread (js-get-jsobject-name/cache this (& "onread") #f %this
+					  (js-pcache-ref js-nodejs-pcache 20))))
+			    (!js-callback3 "read-start" %worker %this onread this
+			       (js-undefined) (js-undefined) (js-undefined))))
+			((not status)
+			 ;; read error
+			 (slab-shrink! slab buf offset 0)
+			 (js-put-jsobject-name/cache! process (& "_errno") (nodejs-err-name len)
+			    #f %this
+			    (js-pcache-ref js-nodejs-pcache 19))
+			 (let ((onread (js-get-jsobject-name/cache this (& "onread") #f %this
+					  (js-pcache-ref js-nodejs-pcache 20))))
+			    (!js-callback0 "read-start" %worker %this onread this)))
+			((=fx len 0)
+			 ;; nothing read
+			 (slab-shrink! slab buf offset 0))
+			(else
+			 ;; characters read
+			 (let* ((b (slab-shrink! slab buf offset len))
+				(onread (js-get-jsobject-name/cache this (& "onread") #f %this
+					   (js-pcache-ref js-nodejs-pcache 20))))
+			    (if (and (nodejs-pipe-ipc? handle) pending-type)
+				(!js-callback4 "read-start" %worker %this
+				   onread this b offset len
+				   (nodejs-pipe-accept %worker %this this
+				      pending-type))
+				(!js-callback3 "read-start" %worker %this
+				   onread this b offset len))
+			    (js-undefined)))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    stream-read-stop ...                                             */
