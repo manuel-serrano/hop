@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Tue Apr 11 08:42:29 2023 (serrano)                */
+;*    Last change :  Wed Apr 12 19:50:12 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -1092,7 +1092,7 @@
       (with-access::JsGlobalObject %this (js-object js-nodejs-pcache)
 	 ;; allocate the pcache for the nodejs modules
 	 (set! js-nodejs-pcache
-	    ((@ js-make-pcache-table __hopscript_property) 21 "nodejs"))
+	    ((@ js-make-pcache-table __hopscript_property) 24 "nodejs"))
 	 ;; mark object non-enumerable (i.e., it contains no enumerable
 	 ;; property) in order to optimize for..in
 	 (js-object-mode-enumerable-set! (js-object-proto %this) #f)

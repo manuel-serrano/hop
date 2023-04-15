@@ -3,18 +3,24 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Fri Apr  7 16:22:51 2023 (serrano)                */
+/*    Last change :  Thu Apr 13 08:04:43 2023 (serrano)                */
 /*    Copyright   :  2016-23 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
 /*    JsObject and cache implementations.                              */
 /*=====================================================================*/
-#include <stdio.h>
+#define _GNU_SOURCE
+#include <pthread.h>
 #include <bigloo.h>
 #include "bglhopscript.h"
 #include "bglhopscript_types.h"
 #include "bglhopscript_malloc.h"
-#include <pthread.h>
+#if BGL_HAS_THREAD_SETNAME
+#  define _PTHREAD_SETNAME(t, n) pthread_setname_np(t, n)
+#else
+#  define _PTHREAD_SETNAME(t, n)
+#endif
+#include <stdio.h>
 
 /*---------------------------------------------------------------------*/
 /*    Bmem config                                                      */
@@ -689,6 +695,7 @@ int bgl_init_jsalloc(uint32_t md) {
       pthread_attr_init(&thattr);
       pthread_attr_setdetachstate(&thattr, PTHREAD_CREATE_DETACHED);
       GC_pthread_create(&th, &thattr, thread_alloc_worker, (void *)(long)md);
+      _PTHREAD_SETNAME(th, "hopjs-alloc");
    }
 
    return 0;

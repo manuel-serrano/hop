@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Tue Apr 11 14:29:56 2023 (serrano)                */
+;*    Last change :  Wed Apr 12 09:51:35 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -197,8 +197,8 @@
 	   (nodejs-udp-set-broadcast ::obj ::obj)
 	   (nodejs-udp-set-membership ::obj ::bstring ::obj ::symbol)
 	   
-	   (nodejs-stream-write ::WorkerHopThread ::JsGlobalObject ::obj ::bstring ::long ::long ::procedure)
-	   (nodejs-stream-write2 ::WorkerHopThread ::JsGlobalObject ::obj ::bstring ::long ::long ::obj ::procedure)
+	   (inline nodejs-stream-write ::WorkerHopThread ::JsGlobalObject ::obj ::bstring ::long ::long ::procedure)
+	   (inline nodejs-stream-write2 ::WorkerHopThread ::JsGlobalObject ::obj ::bstring ::long ::long ::obj ::procedure)
 	   (inline nodejs-stream-read-start ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::procedure ::obj)
 	   (inline nodejs-stream-read-stop ::WorkerHopThread ::JsGlobalObject ::obj)
 	   (inline nodejs-stream-shutdown ::WorkerHopThread ::JsGlobalObject ::obj ::procedure)
@@ -425,6 +425,7 @@
    (with-access::WorkerHopThread th (mutex condv %loop
 				       %process %this keep-alive services
 				       call %retval prerun state)
+      (thread-name-set! (current-thread) "hopjs")
       (set! __js_strings (&init!))
       (letrec* ((loop %loop)
 		(async (instantiate::UvAsync
@@ -2563,18 +2564,16 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-stream-write ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-stream-write %worker %this handle buffer offset length callback)
+(define-inline (nodejs-stream-write %worker %this handle buffer offset length callback)
 ;*    (tprint "WriteBuffer offset=" offset " length=" length)          */
    (uv-stream-write handle buffer offset length
-      :loop (worker-loop %worker)
       :callback callback))
    
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-stream-write2 ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-stream-write2 %worker %this handle buffer offset length sendhandle callback)
+(define-inline (nodejs-stream-write2 %worker %this handle buffer offset length sendhandle callback)
    (uv-stream-write2 handle buffer offset length sendhandle
-      :loop (worker-loop %worker)
       :callback callback))
    
 ;*---------------------------------------------------------------------*/

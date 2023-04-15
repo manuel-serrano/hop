@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 20 12:31:24 2014                          */
-;*    Last change :  Tue Apr 11 15:32:19 2023 (serrano)                */
+;*    Last change :  Tue Apr 11 17:43:25 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Common stream functions                                          */
@@ -150,7 +150,7 @@
 		(loop (+fx i 1)))))))
 
 (define (mark! p)
-   (set! *marks* (cons p *marks*))
+   ;; (set! *marks* (cons p *marks*))
    p)
 
 (define *marks* '())
@@ -184,9 +184,9 @@
 			 (slab-shrink! slab buf offset 0)
 			 (js-put-jsobject-name/cache! process (& "_errno") (nodejs-err-name len)
 			    #f %this
-			    (js-pcache-ref js-nodejs-pcache 19))
+			    (js-pcache-ref js-nodejs-pcache 23))
 			 (let ((onread (js-get-jsobject-name/cache this (& "onread") #f %this
-					  (js-pcache-ref js-nodejs-pcache 20))))
+					  (js-pcache-ref js-nodejs-pcache 21))))
 			    (!js-callback0 "read-start" %worker %this onread this)))
 			((=fx len 0)
 			 ;; nothing read
@@ -195,7 +195,8 @@
 			 ;; characters read
 			 (let* ((b (slab-shrink! slab buf offset len))
 				(onread (js-get-jsobject-name/cache this (& "onread") #f %this
-					   (js-pcache-ref js-nodejs-pcache 20))))
+					   (js-pcache-ref js-nodejs-pcache 22))))
+			    (set! offset 0)
 			    (if (and (nodejs-pipe-ipc? handle) pending-type)
 				(!js-callback4 "read-start" %worker %this
 				   onread this b offset len

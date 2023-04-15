@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Fri Mar 10 05:14:08 2023 (serrano)                */
+;*    Last change :  Thu Apr 13 08:35:48 2023 (serrano)                */
 ;*    Copyright   :  2004-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -119,7 +119,7 @@
 	 ;; start zeroconf
 	 (when (hop-enable-zeroconf) (init-zeroconf!))
 	 ;; create the scheduler (unless the rc file has already created one)
-	 (unless (isa? (hop-scheduler) scheduler)
+	 (unless (or (isa? (hop-scheduler) scheduler) (not (hop-run-server)))
 	    (hop-scheduler-set! (make-hop-scheduler)))
 	 ;; start the hop scheduler loop (i.e. the hop main loop)
 	 (with-handler
@@ -530,38 +530,47 @@
 ;*    hop-repl ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (hop-repl scd)
-   (if (>fx (hop-max-threads) 1)
+   (cond
+      ((<=fx (hop-max-threads) 1)
+       (error "hop-repl"
+	  "not enough threads to start a REPL (see --threads-max option)"
+	  (hop-max-threads)))
+      ((isa? scd scheduler)
        (with-access::scheduler scd (size)
 	  (if (<=fx size 1)
 	      (error "hop-repl"
 		 "HOP REPL cannot be spawned without multi-threading"
 		 scd)
-	      (spawn0 scd (stage-repl repl))))
-       (error "hop-repl"
-	  "not enough threads to start a REPL (see --threads-max option)"
-	  (hop-max-threads))))
+	      (spawn0 scd (stage-repl repl)))))
+      (else
+       (thread-start!
+	  (instantiate::hopthread
+	     (body (lambda ()
+		      (stage-repl repl))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopscript-repl ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (hopscript-repl scd %global %worker)
-   (if (>fx (hop-max-threads) 1)
-       (if (isa? scd scheduler)
-	   (with-access::scheduler scd (size)
-	      (if (<=fx size 1)
-		  (error "hop-repl"
-		     "HOP REPL cannot be spawned without multi-threading"
-		     scd)
-		  (multiple-value-bind (%worker %global %module)
-		     (js-main-worker! "repl" (pwd) #f
-			nodejs-new-global-object nodejs-new-module)
-		     (js-worker-exec %worker "repl"
-			(lambda (%this)
-			   (repljs %global %worker))))))
-	   (repljs %global %worker))
+   (cond
+      ((<=fx (hop-max-threads) 1)
        (error "hop-repl"
 	  "not enough threads to start a REPL (see --threads-max option)"
-	  (hop-max-threads))))
+	  (hop-max-threads)))
+      ((isa? scd scheduler)
+       (with-access::scheduler scd (size)
+	  (if (<=fx size 1)
+	      (error "hop-repl"
+		 "HOP REPL cannot be spawned without multi-threading"
+		 scd)
+	      (multiple-value-bind (%worker %global %module)
+		 (js-main-worker! "repl" (pwd) #f
+		    nodejs-new-global-object nodejs-new-module)
+		 (js-worker-exec %worker "repl"
+		    (lambda (%this)
+		       (repljs %global %worker)))))))
+      (else
+       (repljs %global %worker))))
 
 ;*---------------------------------------------------------------------*/
 ;*    stage-repl ...                                                   */
