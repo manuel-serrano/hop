@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 20 12:31:24 2014                          */
-;*    Last change :  Tue Apr 11 17:43:25 2023 (serrano)                */
+;*    Last change :  Sat Apr 15 08:58:16 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Common stream functions                                          */
@@ -150,15 +150,27 @@
 		(loop (+fx i 1)))))))
 
 (define (mark! p)
-   ;; (set! *marks* (cons p *marks*))
+   (set! *marks* (cons p *marks*))
    p)
 
 (define *marks* '())
 
+(define (proto-chain-typeof o)
+   (let loop ((this o))
+      (let ((__proto__ (js-object-proto this)))
+	 (cond
+	    ((eq? __proto__ this)
+	     '())
+	    ((not (isa? __proto__ JsObject))
+	     (list (typeof __proto__)))
+	    (else
+	     (cons (typeof __proto__) (loop __proto__)))))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    stream-read-start ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (stream-read-start %worker %this process slab this)
+   (mark! this)
    (with-trace 'nodejs-buffer "read-start"
       (js-init-stream-wrap! %this)
       (with-access::JsHandle this (handle)
@@ -196,7 +208,6 @@
 			 (let* ((b (slab-shrink! slab buf offset len))
 				(onread (js-get-jsobject-name/cache this (& "onread") #f %this
 					   (js-pcache-ref js-nodejs-pcache 22))))
-			    (set! offset 0)
 			    (if (and (nodejs-pipe-ipc? handle) pending-type)
 				(!js-callback4 "read-start" %worker %this
 				   onread this b offset len
