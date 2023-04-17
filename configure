@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Thu Mar 16 06:05:56 2023 (serrano)                */
+#*    Last change :  Sun Apr 16 06:48:28 2023 (serrano)                */
 #*    Copyright   :  2004-23 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -357,6 +357,9 @@ while : ; do
       bhopcflags=-g;
       hflags=-g;
       bcflags="$bcflags $bcflagsdbg2 -Wall -Wno-slot -srfi devel -srfi debug -srfi disable-inline";;
+
+    --debug-c)
+      bcflags="$bcflags -cg";;
 
     --pmem)
       devmode="pmem";

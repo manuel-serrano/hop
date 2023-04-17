@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 19 07:19:20 2014                          */
-;*    Last change :  Wed Apr 28 09:35:31 2021 (serrano)                */
-;*    Copyright   :  2014-21 Manuel Serrano                            */
+;*    Last change :  Sun Apr 16 09:12:31 2023 (serrano)                */
+;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs TTY bindings                                              */
 ;*=====================================================================*/
@@ -25,8 +25,7 @@
 	    __nodejs__buffer
 	    __nodejs__stream-wrap)
 
-   (export (process-tty-wrap ::WorkerHopThread ::JsGlobalObject ::JsProcess
-	      ::obj ::JsObject)))
+   (export (process-tty-wrap ::WorkerHopThread ::JsGlobalObject ::JsProcess)))
 
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
@@ -36,7 +35,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    process-tty-wrap ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (process-tty-wrap %worker %this process::JsProcess slab slowbuffer::JsObject)
+(define (process-tty-wrap %worker %this process::JsProcess)
    
    (define (create-tty-proto)
       (with-access::JsGlobalObject %this (js-object)
@@ -61,7 +60,7 @@
 	    (js-put! obj (& "readStart")
 	       (js-make-function %this
 		  (lambda (this)
-		     (stream-read-start %worker %this process slab this))
+		     (stream-read-start %worker %this process this))
 		  (js-function-arity 0 0)
 		  (js-function-info :name "readStart" :len 0))
 	       #f %this)

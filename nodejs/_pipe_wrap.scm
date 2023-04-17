@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 19 07:19:20 2014                          */
-;*    Last change :  Mon Feb 20 07:42:41 2023 (serrano)                */
+;*    Last change :  Sun Apr 16 09:11:40 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs PIPE bindings                                             */
@@ -25,7 +25,7 @@
 
    (include "nodejs_types.sch")
    
-   (export (process-pipe-wrap ::WorkerHopThread ::JsGlobalObject ::JsProcess ::obj)))
+   (export (process-pipe-wrap ::WorkerHopThread ::JsGlobalObject ::JsProcess)))
 
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
@@ -35,7 +35,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    process-pipe-wrap ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (process-pipe-wrap %worker %this process slab)
+(define (process-pipe-wrap %worker %this process)
 
    (define (->fixnum n)
       (cond
@@ -82,7 +82,7 @@
    (js-put! pipe-prototype (& "readStart")
       (js-make-function %this
 	 (lambda (this)
-	    (stream-read-start %worker %this process slab this))
+	    (stream-read-start %worker %this process this))
 	 (js-function-arity 0 0)
 	 (js-function-info :name "readStart" :len 0))
       #f %this)

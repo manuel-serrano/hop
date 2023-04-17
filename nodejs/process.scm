@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Sun Apr  9 09:18:45 2023 (serrano)                */
+;*    Last change :  Sun Apr 16 09:04:00 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -56,12 +56,15 @@
 	      (buffer-binding (default #f))
 	      (using-domains::bool (default #f))
 	      (exiting::bool (default #f))
-	      (tick-callback (default #f)))
+	      (tick-callback (default #f))
+	      (slab read-only)
+	      (alloc::procedure read-only))
 
 	   (class JsHandle::JsObject
 	      (handle (default #f))
 	      (reqs::pair-nil (default '()))
-	      (flags::int (default 0))))
+	      (flags::int (default 0))
+	      (reader::obj (default #f))))
 
    (export (nodejs-compiler-options-add! ::keyword ::obj)
 	   (nodejs-process ::WorkerHopThread ::JsGlobalObject)
@@ -247,10 +250,14 @@
 ;*---------------------------------------------------------------------*/
 (define (new-process-object %worker::WorkerHopThread %this)
    (with-access::JsGlobalObject %this (js-object)
-      (let ((proc (instantiateJsProcess
-		     (cmap (js-make-jsconstructmap))
-		     (__proto__ (js-new %this js-object))
-		     (elements ($create-vector 64)))))
+      (let* ((slowbuffer (make-slowbuffer %this))
+	     (slab (make-slab-allocator %this slowbuffer))
+	     (proc (instantiateJsProcess
+		      (cmap (js-make-jsconstructmap))
+		      (__proto__ (js-new %this js-object))
+		      (alloc (lambda (obj size) (slab-allocate slab obj size)))
+		      (slab slab)
+		      (elements ($create-vector 64)))))
 
 	 (define (not-implemented name)
 	    (js-put! proc (js-ascii-name->jsstring name)
@@ -262,12 +269,6 @@
 	       #f %this))
 
 	 (define prog-start-time::uint64 (nodejs-uptime %worker))
-
-	 (define slowbuffer
-	    (make-slowbuffer %this))
-
-	 (define slab
-	    (make-slab-allocator %this slowbuffer))
 
 	 (define (display-value o port)
 	    (if (isa? o JsTypedArray)
@@ -485,13 +486,13 @@
 			    (process-buffer %this slowbuffer)))
 			((string=? mod "tcp_wrap")
 			 (binding tcp-binding
-			    (process-tcp-wrap %worker %this proc slab slowbuffer)))
+			    (process-tcp-wrap %worker %this proc)))
 			((string=? mod "udp_wrap")
 			 (binding udp-binding
-			    (process-udp-wrap %worker %this proc slab slowbuffer)))
+			    (process-udp-wrap %worker %this proc)))
 			((string=? mod "pipe_wrap")
 			 (binding pipe-binding
-			    (process-pipe-wrap %worker %this proc slab)))
+			    (process-pipe-wrap %worker %this proc)))
 			((string=? mod "evals")
 			 (binding eval-binding
 			    (process-evals %worker %this)))
@@ -518,7 +519,7 @@
 			    (process-os %this)))
 			((string=? mod "tty_wrap")
 			 (binding tty-binding
-			    (process-tty-wrap %worker %this proc slab slowbuffer)))
+			    (process-tty-wrap %worker %this proc)))
 			((string=? mod "fs_event_wrap")
 			 (binding fs-event-binding
 			    (process-fs-event-wrap %worker %this proc)))

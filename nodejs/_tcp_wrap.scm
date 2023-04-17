@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 19 07:19:20 2014                          */
-;*    Last change :  Mon Feb 20 07:43:02 2023 (serrano)                */
+;*    Last change :  Sun Apr 16 09:11:18 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs TCP bindings                                              */
@@ -25,8 +25,7 @@
 
    (include "nodejs_types.sch")
    
-   (export (process-tcp-wrap ::WorkerHopThread ::JsGlobalObject 
-	      ::JsProcess ::obj ::JsObject)))
+   (export (process-tcp-wrap ::WorkerHopThread ::JsGlobalObject ::JsProcess)))
 
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
@@ -36,7 +35,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    process-tcp-wrap ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (process-tcp-wrap %worker %this process::JsProcess slab slowbuffer::JsObject)
+(define (process-tcp-wrap %worker %this process::JsProcess)
    
    (define (->fixnum n)
       (cond
@@ -152,7 +151,7 @@
 	    (js-put! obj (& "readStart")
 	       (js-make-function %this
 		  (lambda (this)
-		     (stream-read-start %worker %this process slab this))
+		     (stream-read-start %worker %this process this))
 		  (js-function-arity 0 0)
 		  (js-function-info :name "readStart" :len 0))
 	       #f %this)

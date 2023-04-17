@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 20 12:31:24 2014                          */
-;*    Last change :  Sat Apr 15 08:58:16 2023 (serrano)                */
+;*    Last change :  Sun Apr 16 09:08:33 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Common stream functions                                          */
@@ -28,10 +28,8 @@
 	      ::JsObject ::obj)
 	   (stream-write-string ::WorkerHopThread ::JsGlobalObject ::JsProcess
 	      ::JsHandle ::bstring ::long ::long ::obj ::obj ::obj)
-	   (stream-read-start ::WorkerHopThread ::JsGlobalObject ::JsProcess
-	      ::obj ::JsHandle)
-	   (stream-read-stop ::WorkerHopThread ::JsGlobalObject
-	      ::JsHandle)
+	   (stream-read-start ::WorkerHopThread ::JsGlobalObject ::JsProcess ::JsHandle)
+	   (stream-read-stop ::WorkerHopThread ::JsGlobalObject ::JsHandle)
 	   (ucs2-string->buffer ::ucs2string)))
 
 ;*---------------------------------------------------------------------*/
@@ -149,34 +147,14 @@
 		(string-set! buf (+fx 1 i2) (integer->char (bit-and n #x255)))
 		(loop (+fx i 1)))))))
 
-(define (mark! p)
-   (set! *marks* (cons p *marks*))
-   p)
-
-(define *marks* '())
-
-(define (proto-chain-typeof o)
-   (let loop ((this o))
-      (let ((__proto__ (js-object-proto this)))
-	 (cond
-	    ((eq? __proto__ this)
-	     '())
-	    ((not (isa? __proto__ JsObject))
-	     (list (typeof __proto__)))
-	    (else
-	     (cons (typeof __proto__) (loop __proto__)))))))
-   
 ;*---------------------------------------------------------------------*/
 ;*    stream-read-start ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (stream-read-start %worker %this process slab this)
-   (mark! this)
-   (with-trace 'nodejs-buffer "read-start"
-      (js-init-stream-wrap! %this)
-      (with-access::JsHandle this (handle)
-	 (nodejs-stream-read-start %worker %this process handle
-	    (lambda (obj size)
-	       (slab-allocate slab obj size))
+(define (stream-read-start %worker %this process this)
+
+   (define (make-reader %worker %this process this)
+      (with-access::JsProcess process (alloc slab)
+	 (with-access::JsHandle this (handle)
 	    (lambda (status buf offset len pending-type)
 	       (with-trace 'nodejs-buffer "read-start-cb"
 		  (trace-item "status=" status " buf=" (typeof buf)
@@ -215,7 +193,18 @@
 				      pending-type))
 				(!js-callback3 "read-start" %worker %this
 				   onread this b offset len))
-			    (js-undefined)))))))))))
+			    (js-undefined))))))))))
+   
+   (with-trace 'nodejs-buffer "read-start"
+      (js-init-stream-wrap! %this)
+      (with-access::JsProcess process (alloc slab)
+	 (with-access::JsHandle this (handle reader)
+	    (unless (procedure? reader)
+	       (with-access::UvHandle handle (%gcmark)
+		  (set! %gcmark this))
+	       (set! reader (make-reader %worker %this process this)))
+	    (nodejs-stream-read-start %worker %this process handle
+	       alloc reader)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    stream-read-stop ...                                             */
