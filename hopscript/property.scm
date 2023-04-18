@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Tue Apr 18 05:42:42 2023 (serrano)                */
+;*    Last change :  Tue Apr 18 08:23:54 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -2736,8 +2736,13 @@
    (with-access::JsPropertyCache cache (cntmiss (cname name) (cpoint point))
       (set! cntmiss (+u32 #u32:1 cntmiss)))
 
-   (with-access::JsPropertyCache cache (src point)
-      (tprint "MISS name=" name " " point ":" src))
+;*    (with-access::JsPropertyCache cache (src point)                  */
+;*       (let ((s (getenv "DEBUG")))                                   */
+;* 	 (when (and (string? s)                                        */
+;* 		    (string-contains s (js-tostring name %this)))      */
+;* 	     (tprint "MISS name=" name " " point ":" src)              */
+;* 	     (js-debug-object o)                                       */
+;* 	     (js-debug-pcache cache))))                                */
    
    (let loop ((obj o))
       (jsobject-find obj o name

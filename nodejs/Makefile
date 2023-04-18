@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Fri Mar 31 16:46:00 2023 (serrano)                */
+#*    Last change :  Tue Apr 18 08:28:43 2023 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the NODEJS library.                        */
 #*=====================================================================*/
@@ -197,6 +197,9 @@ o/timers.o: timers.js
 
 o/_linklist.o: _linklist.js
 	@ $(call compile3,$(HOPC),$(HFLAGS),$(BCFLAGS),$(BLFLAGS),$(BHOPCFLAGS) -c --js-module-name __nodejs__linklist --js-module-path _linklist -Os --js-cspecs-get "(imap cmap)" --js-cspecs-assignew "(emap cmap)" --js-cspecs-put "(imap cmap)",$< -o $@)
+
+o/events.o: events.js
+	@ $(call compile3,$(HOPC),$(HFLAGS),$(BCFLAGS),$(BLFLAGS),$(BHOPCFLAGS) -c --js-module-name __nodejs_events --js-module-path events -Ox --js-cspecs-get "(imap cmap vtable)",$< -o $@)
 
 o/nodejs.mod.o: modules/fs.mod.scm
 
