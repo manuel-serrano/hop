@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Tue Apr 18 08:00:52 2023 (serrano)                */
+;*    Last change :  Tue Apr 18 08:43:48 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -736,11 +736,11 @@
 	       (let ((proc (js-get-jsobject-name/cache obj (& "ontimeout")
 			      #f %this (js-pcache-ref js-nodejs-pcache 24))))
 		  (when (js-procedure? proc)
-		     (!js-callback1 "tick-spinner" worker %this
-			proc obj status)))))))
-;* 		     (js-worker-push! worker "tick-spinner"            */
-;* 			(lambda (%this)                                */
-;* 			   (js-call1-jsprocedure %this proc obj status))))))))) */
+;* 		     (!js-callback1 "tick-spinner" worker %this        */
+;* 			proc obj status)))))))                         */
+		     (js-worker-push! worker "tick-spinner"
+			(lambda (%this)
+			   (js-call1-jsprocedure %this proc obj status)))))))))
 
    (instantiate::UvTimer
       (loop (worker-loop %worker))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Tue Apr 18 13:18:37 2023 (serrano)                */
+;*    Last change :  Tue Apr 18 13:25:24 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -3780,7 +3780,7 @@
 		   this)
 		  ((1)
 		   (let ((fill (js-ascii->jsstring
-				  ($make-string/wo-fill filllen (string-ref left 0)))))
+				  (make-string filllen (string-ref left 0)))))
 		      (if place
 			  (js-jsstring-append fill this)
 			  (js-jsstring-append this fill))))
