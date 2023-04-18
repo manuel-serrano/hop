@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sat Apr  1 10:05:15 2023 (serrano)                */
+;*    Last change :  Tue Apr 18 05:42:42 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -2736,16 +2736,9 @@
    (with-access::JsPropertyCache cache (cntmiss (cname name) (cpoint point))
       (set! cntmiss (+u32 #u32:1 cntmiss)))
 
-;*    (when (and (eq? name (& "_idleTimeout")) (js-object-mode-inline? o)) */
-;*       (with-access::JsObject o (cmap)                               */
-;* 	 (with-access::JsConstructMap cmap (%id)                       */
-;* 	    (when (isa? cache JsPropertyCache)                         */
-;* 	       (with-access::JsPropertyCache cache (imap)              */
-;* 		  (unless (eq? imap (js-not-a-pmap))                   */
-;* 		     (with-access::JsConstructMap imap ((%aid %id))    */
-;* 			(tprint "CACHE MISS " name " " (typeof o) " id=" %id " imap=" %aid */
-;* 			   " " (js-debug-cmap-chain cmap)))))))))      */
-
+   (with-access::JsPropertyCache cache (src point)
+      (tprint "MISS name=" name " " point ":" src))
+   
    (let loop ((obj o))
       (jsobject-find obj o name
 	 ;; map search

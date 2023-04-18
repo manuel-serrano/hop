@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Wed Apr 12 09:51:35 2023 (serrano)                */
+;*    Last change :  Mon Apr 17 12:02:22 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -197,8 +197,10 @@
 	   (nodejs-udp-set-broadcast ::obj ::obj)
 	   (nodejs-udp-set-membership ::obj ::bstring ::obj ::symbol)
 	   
-	   (inline nodejs-stream-write ::WorkerHopThread ::JsGlobalObject ::obj ::bstring ::long ::long ::procedure)
-	   (inline nodejs-stream-write2 ::WorkerHopThread ::JsGlobalObject ::obj ::bstring ::long ::long ::obj ::procedure)
+	   (inline nodejs-stream-write ::WorkerHopThread ::JsGlobalObject ::obj ::bstring ::long ::long
+	      #!key callback arg0 arg1 arg2 arg3 arg4)
+	   (inline nodejs-stream-write2 ::WorkerHopThread ::JsGlobalObject ::obj ::bstring ::long ::long ::obj
+	      #!key callback arg0 arg1 arg2 arg3 arg4)
 	   (inline nodejs-stream-read-start ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::procedure ::obj)
 	   (inline nodejs-stream-read-stop ::WorkerHopThread ::JsGlobalObject ::obj)
 	   (inline nodejs-stream-shutdown ::WorkerHopThread ::JsGlobalObject ::obj ::procedure)
@@ -2564,17 +2566,34 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-stream-write ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-inline (nodejs-stream-write %worker %this handle buffer offset length callback)
-;*    (tprint "WriteBuffer offset=" offset " length=" length)          */
-   (uv-stream-write handle buffer offset length
-      :callback callback))
+(define-inline (nodejs-stream-write %worker %this handle buffer offset length 
+		  #!key callback arg0 arg1 arg2 arg3 arg4)
+   (uv-stream-write handle buffer offset length 
+      :callback callback
+      :arg0 arg0 :arg1 arg1 :arg2 arg2 :arg3 arg3 :arg4 arg4))
    
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-stream-write2 ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-inline (nodejs-stream-write2 %worker %this handle buffer offset length sendhandle callback)
+(define-inline (nodejs-stream-write2 %worker %this handle buffer offset length sendhandle 
+		  #!key callback arg0 arg1 arg2 arg3 arg4)
    (uv-stream-write2 handle buffer offset length sendhandle
-      :callback callback))
+      :callback callback
+      :arg0 arg0 :arg1 arg1 :arg2 arg2 :arg3 arg3 :arg4 arg4))
+   
+;* {*---------------------------------------------------------------------*} */
+;* {*    nodejs-stream-write ...                                          *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define-inline (nodejs-stream-write %worker %this handle buffer offset length callback) */
+;*    (uv-stream-write handle buffer offset length                     */
+;*       :callback callback))                                          */
+;*                                                                     */
+;* {*---------------------------------------------------------------------*} */
+;* {*    nodejs-stream-write2 ...                                         *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define-inline (nodejs-stream-write2 %worker %this handle buffer offset length sendhandle callback) */
+;*    (uv-stream-write2 handle buffer offset length sendhandle         */
+;*       :callback callback))                                          */
    
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-stream-read-start ...                                     */
