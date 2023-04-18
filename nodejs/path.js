@@ -350,7 +350,7 @@ if (isWindows) {
 	    return _path;
 	 } else {
 	    let path = narr.join('/');
-	    console.log("PAS BON: ", _path, arr.length, narr.length);
+
 	    if (!path && !isAbsolute) {
 	       path = '.';
 	    }

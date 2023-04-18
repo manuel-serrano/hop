@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Mon Feb 20 09:17:45 2023 (serrano)                */
+;*    Last change :  Tue Apr 18 13:18:37 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -798,7 +798,7 @@
    (define (normalize-small! js::JsStringLiteral)
       ;; small strings, no need for tail recursion
       (let ((buffer (with-access::JsStringLiteral js (length)
-		       (make-string (uint32->fixnum length)))))
+		       ($make-string/wo-fill (uint32->fixnum length)))))
 	 (let loop ((i 0)
 		    (s js))
 	    (with-access::JsStringLiteral s (left right)
@@ -852,7 +852,7 @@
    (define (normalize-big! js::JsStringLiteral)
       ;; tail recursive with heap allocated stack
       (let ((buffer (with-access::JsStringLiteral js (length)
-		       (make-string (uint32->fixnum length)))))
+		       ($make-string/wo-fill (uint32->fixnum length)))))
 	 (let loop ((i 0)
 		    (s js)
 		    (stack '()))
@@ -970,7 +970,7 @@
       (with-access::JsStringLiteralUTF8 js (length)
 	 ;; small strings, no need for tail recursion
 	 (let* ((len length)
-		(buffer (make-string (uint32->fixnum len))))
+		(buffer ($make-string/wo-fill (uint32->fixnum len))))
 	    (let ((ni (let loop ((i 0)
 				 (s js))
 			 (with-access::JsStringLiteral s (left right (llen length))
@@ -989,7 +989,7 @@
    (define (normalize-big! js::JsStringLiteral)
       ;; tail recursive with heap allocated stack
       (let ((buffer (with-access::JsStringLiteral js (length)
-		       (make-string (uint32->fixnum length)))))
+		       ($make-string/wo-fill (uint32->fixnum length)))))
 	 (let loop ((i 0)
 		    (s js)
 		    (stack '()))
@@ -1529,7 +1529,7 @@
 					   (rstart right))
 	 (let ((len (+u32 llen rlen)))
 	    (if (<u32 len (string-append-auto-normalize-threshold))
-		(let* ((buffer (make-string (uint32->fixnum len)))
+		(let* ((buffer ($make-string/wo-fill (uint32->fixnum len)))
 		       (s (instantiate::JsStringLiteralASCII
 			     (length len)
 			     (left buffer)
@@ -1702,7 +1702,7 @@
 			  (uint32->fixnum rlen))
 		       (set! llen nlen)
 		       left)
-		    (let ((nbuf (make-string (*fx (uint32->fixnum nlen) 2))))
+		    (let ((nbuf ($make-string/wo-fill (*fx (uint32->fixnum nlen) 2))))
 		       ;; enlarge the buffer
 		       (blit-string! buffer 0 nbuf 0 (uint32->fixnum llen))
 		       (blit-string! rright 0 nbuf (uint32->fixnum llen)
@@ -1726,7 +1726,7 @@
 			  (uint32->fixnum rlen))
 		       (set! llen nlen)
 		       left)
-		    (let ((nbuf (make-string (*fx (uint32->fixnum nlen) 2))))
+		    (let ((nbuf ($make-string/wo-fill (*fx (uint32->fixnum nlen) 2))))
 		       ;; enlarge the buffer
 		       (blit-string! buffer 0 nbuf 0 (uint32->fixnum llen))
 		       (blit-string! rright rstart nbuf (uint32->fixnum llen)
@@ -1754,7 +1754,7 @@
 	    (let ((len (+u32 llen (+u32 mlen rlen))))
 	       (cond
 		  ((<u32 len (string-append-auto-normalize-threshold))
-		   (let* ((buffer (make-string (uint32->fixnum len)))
+		   (let* ((buffer ($make-string/wo-fill (uint32->fixnum len)))
 			  (s (instantiate::JsStringLiteralASCII
 				(length len)
 				(left buffer)
@@ -3780,7 +3780,7 @@
 		   this)
 		  ((1)
 		   (let ((fill (js-ascii->jsstring
-				  (make-string filllen (string-ref left 0)))))
+				  ($make-string/wo-fill filllen (string-ref left 0)))))
 		      (if place
 			  (js-jsstring-append fill this)
 			  (js-jsstring-append this fill))))
