@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Fri Jan 13 13:51:21 2023 (serrano)                */
+;*    Last change :  Wed Apr 19 07:05:40 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript CPS transformation                                    */
@@ -414,6 +414,16 @@
       (with-access::J2SAssig n (lhs rhs)
 	 (set! lhs l)
 	 (set! rhs r)
+	 n)))
+
+;*---------------------------------------------------------------------*/
+;*    dup-access ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (dup-access this o f)
+   (let ((n (dup this)))
+      (with-access::J2SAccess n (obj field)
+	 (set! obj o)
+	 (set! field f)
 	 n)))
 
 ;*---------------------------------------------------------------------*/
@@ -1140,6 +1150,22 @@
 		(J2SReturn #t (J2SKontCall kont) fun))))
 	 (else
 	  (kcall k this)))))
+
+;*---------------------------------------------------------------------*/
+;*    cps ::J2SAccess ...                                              */
+;*---------------------------------------------------------------------*/
+(define-method (cps this::J2SAccess k r kbreaks kcontinues fun conf)
+   (assert-kont k KontExpr this)
+   (with-access::J2SAccess this (obj field)
+      (cps obj
+	 (KontExpr (lambda (kobj::J2SExpr)
+		       (cps field
+			  (KontExpr (lambda (kfield::J2SExpr)
+				       (kcall k (dup-access this kobj kfield)))
+			     this k)
+			  r kbreaks kcontinues fun conf))
+	    this k)
+	 r kbreaks kcontinues fun conf)))
 
 ;*---------------------------------------------------------------------*/
 ;*    cps ::J2SAssig ...                                               */
