@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Thu Feb 23 17:37:47 2023 (serrano)                */
+;*    Last change :  Wed Apr 19 07:45:55 2023 (serrano)                */
 ;*    Copyright   :  2018-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -304,6 +304,7 @@
 	(parseFloat #f js-parsefloat (any) %this)
 	(Number #f js-bigint->number (bigint) #f)
 	(Number #f js-tonumber (any) %this)
+	(Boolean #f js-toboolean (any) #f)
 	(isNaN #f nanfl? (real) #f)
 	(isNaN #f js-number-isnan? (number) #f)
 	(isNaN #f js-isnan? (any) %this)
@@ -1249,6 +1250,7 @@
    
    (define (call-globalref-method self ccache ocache fun::J2SAccess obj::J2SExpr args)
       (with-access::J2SGlobalRef self (id decl)
+	 (tprint "id=" id " " (decl-usage-has? decl '(assig)))
 	 (unless (decl-usage-has? decl '(assig))
 	    (case id
 	       ((Math)
