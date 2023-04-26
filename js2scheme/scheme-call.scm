@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Wed Apr 19 07:45:55 2023 (serrano)                */
+;*    Last change :  Thu Apr 20 13:47:00 2023 (serrano)                */
 ;*    Copyright   :  2018-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -1250,7 +1250,6 @@
    
    (define (call-globalref-method self ccache ocache fun::J2SAccess obj::J2SExpr args)
       (with-access::J2SGlobalRef self (id decl)
-	 (tprint "id=" id " " (decl-usage-has? decl '(assig)))
 	 (unless (decl-usage-has? decl '(assig))
 	    (case id
 	       ((Math)

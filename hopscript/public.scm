@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Fri Mar 17 09:53:37 2023 (serrano)                */
+;*    Last change :  Wed Apr 19 14:22:35 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -1097,7 +1097,7 @@
 (define-macro (gen-call-obj %this fun this . args)
    `(cond
        ((js-procedure? ,fun)
-	(with-access::JsProcedure ,fun (procedure)
+	(with-access::JsProcedure ,fun (procedure arity)
 	   (gen-calln fun procedure this ,@args)))
        ((js-procedure-proxy? ,fun)
 	(,(string->symbol (format "js-call-proxy/cache-miss~a" (length args)))

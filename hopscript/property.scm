@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Tue Apr 18 08:23:54 2023 (serrano)                */
+;*    Last change :  Thu Apr 20 05:35:26 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -2736,14 +2736,6 @@
    (with-access::JsPropertyCache cache (cntmiss (cname name) (cpoint point))
       (set! cntmiss (+u32 #u32:1 cntmiss)))
 
-;*    (with-access::JsPropertyCache cache (src point)                  */
-;*       (let ((s (getenv "DEBUG")))                                   */
-;* 	 (when (and (string? s)                                        */
-;* 		    (string-contains s (js-tostring name %this)))      */
-;* 	     (tprint "MISS name=" name " " point ":" src)              */
-;* 	     (js-debug-object o)                                       */
-;* 	     (js-debug-pcache cache))))                                */
-   
    (let loop ((obj o))
       (jsobject-find obj o name
 	 ;; map search
@@ -3947,7 +3939,9 @@
 ;*---------------------------------------------------------------------*/
 (define (js-define %this obj id::JsStringLiteral
 	   get set src pos #!key (hidden-class #t))
-   (let ((name (string-append src ":" (integer->string pos))))
+   (let ((name (if (string? src)
+		   (string-append src ":" (integer->string pos))
+		   (js-jsstring->string id))))
       (js-bind! %this obj id
 	 :configurable #f
 	 :hidden-class hidden-class

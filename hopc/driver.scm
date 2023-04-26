@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Mon Feb 20 20:01:21 2023 (serrano)                */
+;*    Last change :  Wed Apr 26 19:12:15 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
@@ -139,10 +139,11 @@
    
    (define (input-file->module-name path)
       (let* ((dir (dirname path))
-	     (mod (prefix (basename path))))
+	     (mod (prefix (basename path)))
+	     (sum (substring (md5sum path) 0 8)))
 	 (if (string=? dir ".")
-	     mod
-	     (format "%%~a_~a" dir mod))))
+	     (string-append mod "~" sum)
+	     (format "%%~a_~a~~~a" dir mod sum))))
    
    (define (compile-javascript p)
       (if (or (string-suffix? ".js" p) (string-suffix? ".mjs" p))

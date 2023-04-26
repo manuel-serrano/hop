@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Tue Apr 18 08:00:24 2023 (serrano)                */
+;*    Last change :  Wed Apr 26 12:41:39 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -1858,7 +1858,9 @@
 		(with-handler
 		   (lambda (e)
 		      (exception-notify e)
-		      (fprintf (current-error-port) "sofile ~s not generated."
+		      (fprintf (current-error-port) "sofile ~s (~s) not generated."
+			 (hop-sofile-path filename
+			    :suffix (if worker-slave "_w" ""))
 			 filename))
 		   (let* ((sopath (hop-sofile-path filename
 				     :suffix (if worker-slave "_w" "")))

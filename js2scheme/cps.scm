@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Wed Apr 19 07:05:40 2023 (serrano)                */
+;*    Last change :  Wed Apr 26 09:12:20 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript CPS transformation                                    */
@@ -458,6 +458,14 @@
 		   kbreaks::pair-nil kcontinues::pair-nil fun::J2SFun conf)
    (warning "cps: should not be here " (typeof this))
    (kcall k this))
+
+;*---------------------------------------------------------------------*/
+;*    cps ::J2SMeta ...                                                */
+;*---------------------------------------------------------------------*/
+(define-method (cps this::J2SMeta k r kbreaks kcontinues fun conf)
+   (with-access::J2SMeta this (stmt)
+      (duplicate::J2SMeta this
+	 (stmt (cps stmt k r kbreaks kcontinues fun conf)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    cps ::J2SYield ...                                               */

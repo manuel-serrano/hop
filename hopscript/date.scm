@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Mar 29 18:15:25 2023 (serrano)                */
+;*    Last change :  Wed Apr 19 14:00:07 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript dates                        */
@@ -1581,8 +1581,10 @@
 ;*    js-date->jsdate ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (js-date->jsdate val::date %this::JsGlobalObject)
-   (with-access::JsGlobalObject %this (js-date)
-      (let ((dt (js-new0 %this js-date)))
+   (with-access::JsGlobalObject %this (js-date js-date-cmap js-date-prototype)
+      (let ((dt (instantiateJsDate
+		   (cmap js-date-cmap)
+		   (__proto__ js-date-prototype))))
 	 (with-access::JsDate dt (time %val)
 	    (set! %val val)
 	    (set! time (date->milliseconds val))

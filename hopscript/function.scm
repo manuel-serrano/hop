@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Fri Apr  7 12:37:34 2023 (serrano)                */
+;*    Last change :  Wed Apr 19 14:34:11 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -233,9 +233,9 @@
 ;*---------------------------------------------------------------------*/
 (define-method (js-debug-object obj::JsFunction #!optional (msg ""))
    (call-next-method)
-   (with-access::JsFunction obj (info arity)
+   (with-access::JsFunction obj (info arity procedure)
       (fprint (current-error-port) "   src=" (js-function-src obj))
-      (fprint (current-error-port) "   arity=" arity)
+      (fprint (current-error-port) "   arity=" arity " (" (procedure-arity procedure) ")")
       (fprint (current-error-port) "   path=" (js-function-path obj))))
       
 ;*---------------------------------------------------------------------*/
