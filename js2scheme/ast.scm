@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Wed Oct 26 07:00:23 2022 (serrano)                */
-;*    Copyright   :  2013-22 Manuel Serrano                            */
+;*    Last change :  Sat Apr 29 08:38:30 2023 (serrano)                */
+;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
 ;*=====================================================================*/
@@ -102,7 +102,8 @@
 	   
 	   (class J2SDeclArguments::J2SDeclRest
 	      (argid::symbol read-only (info '("notraverse")))
-	      (mode::symbol read-only (info '("notraverse"))))
+	      (mode::symbol read-only (info '("notraverse")))
+	      (fun::J2SFun read-only (info '("notraverse"))))
 	   
 	   (class J2SDeclInit::J2SDecl
 	      (val::J2SExpr (info '("ast"))))

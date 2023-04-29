@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Wed Apr 19 14:22:35 2023 (serrano)                */
+;*    Last change :  Sat Apr 29 09:21:21 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -421,6 +421,7 @@
    (define n (+fx 1 (length args)))
    (define arity (gensym 'arity))
    (define parity (gensym 'parity))
+   (define larity (gensym 'larity))
    (define required (gensym 'required))
    
    (define (call-missing-rest i offset vec)
@@ -530,6 +531,20 @@
 	    (js-raise-arity-error %this ,fun ,(-fx n 1))
 	    (,procedure ,this ,@args ,@(make-list (-fx i n) '(js-undefined))))))
    
+   (define (call-lonly-too-many i)
+      ;; too many lonly arguments
+      `((,(-fx -8192 i))
+	(if (js-procedure-hopscript-mode? ,fun)
+	    (js-raise-arity-error %this ,fun ,(-fx n 1))
+	    (,procedure ,this ,@(take args i) ,(-fx n 1)))))
+   
+   (define (call-lonly-missing i)
+      ;; missing lonly arguments
+      `((,(-fx -8192 i))
+	(if (js-procedure-hopscript-mode? ,fun)
+	    (js-raise-arity-error %this ,fun ,(-fx n 2))
+	    (,procedure ,this ,@args ,@(make-list (-fx (+fx i 1) n) '(js-undefined)) ,(-fx n 1)))))
+   
    (define (call-many-arguments-opt-norest)
       ;; many argument + optional arguments
       `(let ((,required ,arity))
@@ -629,6 +644,21 @@
 		      (make-args-list (-fx ,arity ,n)))
 		   ;; too many arguments
 		   (apply ,procedure ,this (take (list ,@args) ,arity)))))
+	  ((<=fx ,arity 8192)
+	   ;; length only arguments
+	   (if (js-procedure-hopscript-mode? ,fun)
+	       (js-raise-arity-error %this ,fun ,(-fx n 1))
+	       ;; fixed number of arguments
+	       (let ((,larity (-fx (negfx ,arity) 8192)))
+		  (if (>fx ,larity ,n)
+		      ;; missing arguments
+		      (apply ,procedure ,this ,@args 
+			 (append! (make-args-list (-fx ,larity ,(-fx n 1)))
+			    (list ,(-fx n 1))))
+		      ;; too many arguments
+		      (apply ,procedure ,this
+			 (append! (take (list ,@args) ,larity)
+			    (list ,(-fx n 1))))))))
 	  (else
 	   ;; optional arguments
 	   (let ((,parity (procedure-arity ,procedure)))
@@ -647,6 +677,12 @@
    `(with-access::JsProcedure ,fun (arity)
        (let ((,arity arity))
 	  (case ,arity
+	     ;; missing lonly call (arguments used only for accessing length)
+	     ,@(map call-lonly-missing (reverse (iota (-fx 10 n) n)))
+	     ;; direct lonly call
+	     ((,(-fx -8192 (-fx n 1))) (,procedure ,this ,@args ,(length args)))
+	     ;; too many lonly call
+	     ,@(map call-lonly-too-many (reverse (iota (-fx n 1) 0)))
 	     ;; missing rest call (rest allocated in an array)
 	     ,@(map call-missing-rest-array (reverse (iota (-fx 10 n) n)))
 	     ;; ok rest call (rest allocated in an array)

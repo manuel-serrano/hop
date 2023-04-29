@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Wed Apr 19 14:34:11 2023 (serrano)                */
+;*    Last change :  Sat Apr 29 09:43:50 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -1276,7 +1276,7 @@
    (with-access::JsProcedure this (arity procedure)
       (let ((n (uint32->fixnum ilen)))
 	 (cond
-	    ((>fx arity -2047)
+	    ((or (>fx arity -2047) (<=fx arity -8192))
 	     (case n
 		((0)
 		 (js-call0-jsprocedure %this this thisarg))

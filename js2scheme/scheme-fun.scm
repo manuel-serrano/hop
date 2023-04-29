@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Mon Feb 13 17:24:45 2023 (serrano)                */
+;*    Last change :  Sat Apr 29 08:28:06 2023 (serrano)                */
 ;*    Copyright   :  2017-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -211,10 +211,14 @@
 	 (cond
 	    ((eq? vararg 'arguments)
 	     (if (context-get ctx :optim-arguments)
-		 (with-access::J2SDeclArguments argumentsp (alloc-policy)
-		    (if (eq? alloc-policy 'lazy)
-			`(js-function-arity ,req ,opt 'arguments-lazy)
-			`(js-function-arity ,req ,opt 'arguments-eager)))
+		 (with-access::J2SDeclArguments argumentsp (alloc-policy usage)
+		    (cond
+		       ((usage-strict? usage '(length))
+			`(js-function-arity ,req ,opt 'arguments-lonly))
+		       ((eq? alloc-policy 'lazy)
+			`(js-function-arity ,req ,opt 'arguments-lazy))
+		       (else
+			`(js-function-arity ,req ,opt 'arguments-eager))))
 		 `(js-function-arity ,req ,opt 'arguments)))
 	    ((eq? vararg 'rest)
 	     (with-access::J2SDeclRest (car (last-pair params)) (alloc-policy)
@@ -455,6 +459,17 @@
 	    (lambda-or-labels rtype idgen
 	       (type-this idthis thisp)
 	       (unless (isa? fun J2SArrow) id) args body loc))))
+
+   (define (lonly-vararg-lambda fun id body)
+      ;; this function uses arguments but only to access the number of
+      ;; arguments
+      (with-access::J2SFun fun (idgen idthis thisp params rtype loc)
+	 ;; see scheme-arguments.scm
+	 (let ((args (append (map j2s-type-scheme params)
+			(list (symbol-append (j2s-lonly-id) '::long)))))
+	    (lambda-or-labels rtype idgen
+	       (type-this idthis thisp)
+	       (unless (isa? fun J2SArrow) id) args body loc))))
    
    (define (normal-vararg-lambda fun id body)
       ;; normal mode: arguments is an alias
@@ -499,6 +514,8 @@
 		      (fixarg-lambda this id body))
 		     ((eq? vararg 'rest)
 		      (rest-lambda this id body))
+		     ((fun-lonly-vararg? this)
+		      (lonly-vararg-lambda this id body))
 		     ((eq? mode 'normal)
 		      (normal-vararg-lambda this id body))
 		     (else

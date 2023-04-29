@@ -52,6 +52,7 @@
 	   (j2s-decl-scm-id ::J2SDecl conf)
 	   (j2s-class-id clazz::J2SClass ctx)
 	   (j2s-escape-id ::symbol ::obj)
+	   (j2s-lonly-id::symbol)
 	   (js-need-global? ::J2SDecl scope mode)
 	   (flatten-stmt stmt)
 	   (flatten-nodes nodes)
@@ -297,6 +298,12 @@
    (if (symbol? id)
        (symbol-append escape '- id)
        escape))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-lonly-id ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (j2s-lonly-id)
+   '&len)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-need-global? ...                                              */

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    .../prgm/project/hop/3.4.x/js2scheme/scheme-arguments.scm        */
+;*    serrano/prgm/project/hop/hop/js2scheme/scheme-arguments.scm      */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Sun May 16 07:18:14 2021 (serrano)                */
-;*    Copyright   :  2017-21 Manuel Serrano                            */
+;*    Last change :  Sat Apr 29 08:41:51 2023 (serrano)                */
+;*    Copyright   :  2017-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript arguments functions.        */
 ;*=====================================================================*/
@@ -24,6 +24,7 @@
 	   __js2scheme_compile
 	   __js2scheme_stage
 	   __js2scheme_array
+	   __js2scheme_usage
 	   __js2scheme_scheme
 	   __js2scheme_scheme-cast
 	   __js2scheme_scheme-utils
@@ -71,6 +72,14 @@
 ;*    j2s-arguments-ref ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (j2s-arguments-ref this::J2SAccess mode return ctx)
+
+   (define (argument-lonly? this::J2SExpr)
+      (when (isa? this J2SRef)
+	 (with-access::J2SRef this (decl)
+	    (when (isa? decl J2SDeclArguments)
+	       (with-access::J2SDeclArguments decl (fun)
+		  (fun-lonly-vararg? fun))))))
+   
    (with-access::J2SAccess this (obj field type)
       (cond
 	 ((maybe-number? field)
@@ -102,14 +111,19 @@
 		  ,(j2s-scheme field mode return ctx)
 		  %this))))
 	 ((j2s-field-length? field)
-	  (if (and (isa? obj J2SRef) (j2s-ref-arguments-lazy? obj))
+	  (cond
+	     ((argument-lonly? obj)
+	      ;; see scheme-fun.scm
+	      (j2s-lonly-id))
+	     ((and (isa? obj J2SRef) (j2s-ref-arguments-lazy? obj))
 	      `(if (js-object? ,(j2s-scheme obj mode return ctx))
 		   (js-arguments-length
 		      ,(j2s-scheme obj mode return ctx) %this)
 		   ,(j2s-arguments-length-id
-		      (j2s-ref-arguments-argid obj)))
+		       (j2s-ref-arguments-argid obj))))
+	     (else
 	      `(js-arguments-length
-		  ,(j2s-scheme obj mode return ctx) %this)))
+		  ,(j2s-scheme obj mode return ctx) %this))))
 	 (else
 	  #f))))
 

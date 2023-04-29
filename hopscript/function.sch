@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Dec  7 06:32:41 2019                          */
-;*    Last change :  Tue May 10 13:13:42 2022 (serrano)                */
-;*    Copyright   :  2019-22 Manuel Serrano                            */
+;*    Last change :  Sat Apr 29 09:04:37 2023 (serrano)                */
+;*    Copyright   :  2019-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function macros for js2scheme                                    */
 ;*=====================================================================*/
@@ -140,9 +140,9 @@
 		     (((kwote quote) arguments-lazy)
 		      -2047)
 		     (((kwote quote) arguments-eager)
-		      -2047)
-		     (((kwote quote) arguments-eager)
 		      -2048)
+		     (((kwote quote) arguments-lonly)
+		      (-fx -8192 req))
 		     (((kwote quote) arguments)
 		      0)
 		     (((kwote quote) rest-lazy)

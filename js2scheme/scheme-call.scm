@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Thu Apr 20 13:47:00 2023 (serrano)                */
+;*    Last change :  Sat Apr 29 08:53:08 2023 (serrano)                */
 ;*    Copyright   :  2018-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -1430,7 +1430,7 @@
 		   (cons (j2s-scheme (car args) mode return ctx)
 		      actuals)))))))
    
-   (define (call-fix-function fun::J2SFun thisargs::pair-nil f %gen args)
+   (define (call-fix-function fun::J2SFun thisargs::pair-nil f %gen args . &args)
       ;; call a function that accepts a fix number of arguments
       (with-access::J2SFun fun (params vararg thisp id)
 	 (let ((lenf (length params))
@@ -1443,7 +1443,8 @@
 		    ,@(map (lambda (a p)
 			      (with-access::J2SDecl p (utype)
 				 (j2s-scheme a mode return ctx)))
-			 args params)))
+			 args params)
+		    ,@&args))
 	       ((>fx lena lenf)
 		;; too many arguments ignore the extra values,
 		;; but still evaluate extra expressions
@@ -1456,12 +1457,14 @@
 				   `(,t ,(j2s-scheme a mode return ctx)))
 			      temps args)
 		       (,f ,@%gen ,@(j2s-self thisargs)
-			  ,@(take temps lenf)))))
+			  ,@(take temps lenf)
+			  ,@&args))))
 	       (else
 		;; argument missing
 		`(,f ,@(j2s-self thisargs)
 		    ,@(j2s-scheme args mode return ctx)
-		    ,@(make-list (-fx lenf lena) '(js-undefined))))))))
+		    ,@(make-list (-fx lenf lena) '(js-undefined))
+		    ,@&args))))))
    
    (define (check-hopscript-fun-arity val::J2SFun id args)
       (with-access::J2SFun val (params vararg loc name mode)
@@ -1491,8 +1494,14 @@
       (with-access::J2SFun fun (params vararg idthis loc argumentsp name)
 	 (case (if (eq? protocol 'bounce) 'bounce vararg)
 	    ((arguments)
-	     (call-profile profid
-		(call-arguments-function fun thisargs f %gen args)))
+	     (cond
+		((fun-lonly-vararg? fun)
+		 (call-profile profid
+		    (call-fix-function fun (if idthis thisargs '()) f %gen args
+		       (length args))))
+		(else
+		 (call-profile profid
+		    (call-arguments-function fun thisargs f %gen args)))))
 	    ((rest)
 	     (call-profile profid
 		(call-rest-function fun (if idthis thisargs '()) f %gen args)))

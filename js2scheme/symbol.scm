@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Thu Dec 22 06:30:11 2022 (serrano)                */
-;*    Copyright   :  2013-22 Manuel Serrano                            */
+;*    Last change :  Sat Apr 29 08:39:21 2023 (serrano)                */
+;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
 ;*    -------------------------------------------------------------    */
@@ -354,7 +354,8 @@
 				 (argid (gensym 'arguments))
 				 (vtype (if (eq? fmode 'normal) 'any 'arguments))
 				 (mode mode)
-				 (loc loc)))
+				 (loc loc)
+				 (fun this)))
 		   (envl (append decls params))
 		   (env1 (append envl env0))
 		   (ldecls (with-access::J2SBlock body (nodes)

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 17 07:59:14 2020                          */
-;*    Last change :  Sat Apr 18 08:21:59 2020 (serrano)                */
-;*    Copyright   :  2020 Manuel Serrano                               */
+;*    Last change :  Sat Apr 29 09:04:56 2023 (serrano)                */
+;*    Copyright   :  2020-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript function arity.                                       */
 ;*    -------------------------------------------------------------    */
@@ -23,6 +23,8 @@
 	   -2047)
 	  ((arguments-eager)
 	   -2048)
+	  ((arguments-lonly)
+	   (-fx -8192 req))
 	  ((arguments)
 	   0)
 	  ((rest-lazy)

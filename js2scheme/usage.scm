@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Dec 14 07:04:23 2019                          */
-;*    Last change :  Fri Sep 17 08:10:08 2021 (serrano)                */
-;*    Copyright   :  2019-21 Manuel Serrano                            */
+;*    Last change :  Fri Apr 28 08:29:42 2023 (serrano)                */
+;*    Copyright   :  2019-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Ast node usage API                                               */
 ;*=====================================================================*/
@@ -36,7 +36,9 @@
 	   (usage-rem ::uint32 ::symbol)
 	   (decl-usage-rem! ::J2SDecl ::symbol)
 	   
-	   (decl-ronly?::bool ::J2SDecl)))
+	   (decl-ronly?::bool ::J2SDecl)
+
+	   (fun-lonly-vararg?::bool ::J2SFun)))
 
 ;*---------------------------------------------------------------------*/
 ;*    usage ...                                                        */
@@ -62,7 +64,7 @@
 (define (usage->keys usage)
    (let loop ((i #u32:1))
       (cond
-	 ((>u32 i#u32:4096)
+	 ((>u32 i#u32:131072)
 	  '())
 	 ((=u32 (bit-andu32 i usage) i)
 	  (cons (usage-bit->key i) (loop (bit-lshu32 i 1))))
@@ -142,3 +144,11 @@
 (define (decl-ronly? decl)
    (not (decl-usage-has? decl '(assig eval))))
 
+;*---------------------------------------------------------------------*/
+;*    fun-lonly-vararg? ...                                            */
+;*---------------------------------------------------------------------*/
+(define (fun-lonly-vararg? this::J2SFun)
+   (with-access::J2SFun this (idgen idthis thisp rtype vararg argumentsp loc)
+      (when (isa? argumentsp J2SDeclArguments)
+	 (with-access::J2SDeclArguments argumentsp (usage)
+	    (usage-strict? usage '(length))))))

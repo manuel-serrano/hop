@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec  5 09:14:00 2019                          */
-;*    Last change :  Mon Feb  7 15:59:37 2022 (serrano)                */
-;*    Copyright   :  2019-22 Manuel Serrano                            */
+;*    Last change :  Fri Apr 28 07:32:14 2023 (serrano)                */
+;*    Copyright   :  2019-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arguments optimization                                           */
 ;*    -------------------------------------------------------------    */
@@ -20,7 +20,7 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_arguments
-
+   
    (include "ast.sch"
 	    "usage.sch")
    
@@ -51,8 +51,111 @@
 (define (j2s-arguments this conf)
    (when (isa? this J2SProgram)
       (unless (> (config-get conf :debug 0) 0)
+	 (ause this)
 	 (annotate-arguments this this #f #f)))
    this)
+
+;*---------------------------------------------------------------------*/
+;*    ause ...                                                         */
+;*---------------------------------------------------------------------*/
+(define-walk-method (ause this::J2SNode)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    ause ::J2SFun ...                                                */
+;*---------------------------------------------------------------------*/
+(define-walk-method (ause this::J2SFun)
+   (with-access::J2SFun this (argumentsp)
+      (when argumentsp
+	 ;; will be restored if used in a "true" ref
+	 (decl-usage-rem! argumentsp 'ref)
+	 (decl-usage-rem! argumentsp 'get)))
+   (call-default-walker))
+				
+;*---------------------------------------------------------------------*/
+;*    ause ::J2SRef ...                                                */
+;*---------------------------------------------------------------------*/
+(define-walk-method (ause this::J2SRef)
+   (with-access::J2SRef this (decl)
+      (when (isa? decl J2SDeclArguments)
+	 (decl-usage-add! decl 'ref))))
+
+;*---------------------------------------------------------------------*/
+;*    ause ::J2SAccess ...                                             */
+;*---------------------------------------------------------------------*/
+(define-walk-method (ause this::J2SAccess)
+
+   (define (field-length? field)
+      (and (isa? field J2SString)
+	   (with-access::J2SString field (val)
+	      (string=? val "length"))))
+
+   (define (field-index? field)
+      (type-fixnum? (j2s-type field)))
+
+   (with-access::J2SAccess this (obj field)
+      (ause field)
+      (if (isa? obj J2SRef)
+	  (with-access::J2SRef obj (decl)
+	     (if (isa? decl J2SDeclArguments)
+		 (decl-usage-add! decl
+		    (cond
+		       ((field-length? field) 'length)
+		       ((field-index? field) 'aref)
+		       (else 'get)))
+		 (call-default-walker)))
+	  (call-default-walker))))
+
+;*---------------------------------------------------------------------*/
+;*    ause ::J2SCall ...                                               */
+;*---------------------------------------------------------------------*/
+(define-walk-method (ause this::J2SCall)
+   
+   (define (apply? fun args)
+      (when (and (isa? fun J2SAccess) (=fx (length args) 2))
+	 (with-access::J2SAccess fun (field)
+	    (when (isa? field J2SString)
+	       (with-access::J2SString field (val)
+		  (string=? val "apply"))))))
+   
+   (define (maybe-slice? fun args)
+      (when (and (isa? fun J2SAccess) (>=fx (length args) 2))
+	 (with-access::J2SAccess fun (field)
+	    (when (isa? field J2SString)
+	       (with-access::J2SString field (val)
+		  (string=? val "call"))))))
+   
+   (with-access::J2SCall this (fun args)
+      (cond
+	 ((apply? fun args)
+	  (let ((arg1 (cadr args)))
+	     (if (isa? arg1 J2SRef)
+		 (with-access::J2SRef arg1 (decl)
+		    (if (isa? decl J2SDeclArguments)
+			(begin
+			   (ause fun)
+			   (ause (car args))
+			   (decl-usage-add! decl 'apply))
+			(call-default-walker)))
+		 (call-default-walker))))
+	 ((maybe-slice? fun args)
+	  (let ((arg0 (car args)))
+	     (if (isa? arg0 J2SRef)
+		 (with-access::J2SRef arg0 (decl)
+		    (if (isa? decl J2SDeclArguments)
+			(begin
+			   (ause fun)
+			   (for-each ause (cdr args))
+			   (decl-usage-add! decl 'slice))
+			(call-default-walker)))
+		 (call-default-walker))))
+	 (else
+	  (call-default-walker)))))
+
+;*---------------------------------------------------------------------*/
+;*    arguments-alias ...                                              */
+;*---------------------------------------------------------------------*/
+(define-struct arguments-alias arguments)
 
 ;*---------------------------------------------------------------------*/
 ;*    annotate-arguments ::obj ...                                     */
@@ -91,11 +194,6 @@
 	       (with-access::J2SDeclRest decl (alloc-policy)
 		  (set! alloc-policy 'lazy)))))
       (annotate-arguments body parent #f arguments)))
-
-;*---------------------------------------------------------------------*/
-;*    arguments-alias ...                                              */
-;*---------------------------------------------------------------------*/
-(define-struct arguments-alias arguments)
 
 ;*---------------------------------------------------------------------*/
 ;*    annotate-arguments ...                                           */

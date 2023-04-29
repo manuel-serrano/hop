@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Dec 14 17:16:48 2019                          */
-;*    Last change :  Sun Oct 24 10:19:17 2021 (serrano)                */
-;*    Copyright   :  2019-21 Manuel Serrano                            */
+;*    Last change :  Fri Apr 28 07:45:26 2023 (serrano)                */
+;*    Copyright   :  2019-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Usage bit names                                                  */
 ;*    -------------------------------------------------------------    */
@@ -22,6 +22,13 @@
 ;*      rest: is a rest argument                                       */
 ;*      method: a method of the object is called (e.g. o.f())          */
 ;*      &ref: a variable whose stack address is used                   */
+;*                                                                     */
+;*    The following bit are used for optimizing "arguments" values     */
+;*    (see arguments.scm):                                             */
+;*      slice: variable used in a slice call (apply or call)           */
+;*      length: variable used in a VAR.length expression               */
+;*      aref: variable used in a integer array indexed access          */
+;*      apply: variable used in the second position of an apply call   */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
@@ -51,6 +58,10 @@
       ((rest) #u32:2048)
       ((method) #u32:4096)
       ((&ref) #u32:8192)
+      ((slice) #u32:16384)
+      ((length) #u32:32768)
+      ((aref) #u32:65536)
+      ((apply) #u32:131072)
       (else (error "usage-key->bit" "Illegal key" key))))
 
 ;*---------------------------------------------------------------------*/
@@ -72,5 +83,9 @@
       ((#u32:2048) 'rest)
       ((#u32:4096) 'method)
       ((#u32:8192) '&ref)
+      ((#u32:16384) 'slice)
+      ((#u32:32768) 'length)
+      ((#u32:65536) 'aref)
+      ((#u32:131072) 'apply)
       (else (error "usage-bit->key" "Illegal key" bit))))
    
