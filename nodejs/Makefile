@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Tue Apr 18 08:28:43 2023 (serrano)                */
+#*    Last change :  Sun Apr 30 16:46:25 2023 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the NODEJS library.                        */
 #*=====================================================================*/
@@ -181,25 +181,25 @@ _crypto.sch: $(BUILDETCDIR)/node_crypto_groups.h \
 o/require.o: ../share/hop-boot.js
 
 o/http.o: http.js
-	@ $(call compile3,$(HOPC),$(HFLAGS),$(BCFLAGS),$(BLFLAGS),$(BHOPCFLAGS) -c --js-module-name __nodejs_http --js-module-path http -Ox --js-cspecs-assignew "(emap cmap)" --js-cspecs-put "(imap cmap)",$< -o $@)
+	@ $(call compile3,$(HOPC),$(HFLAGS) -Ox,$(BCFLAGS),$(BLFLAGS),$(BHOPCFLAGS) -c --js-module-name __nodejs_http --js-module-path http --js-cspecs-assignew "(emap cmap)" --js-cspecs-put "(imap cmap)",$< -o $@)
 
 o/net.o: net.js
-	@ $(call compile3,$(HOPC),$(HFLAGS),$(BCFLAGS),$(BLFLAGS),$(BHOPCFLAGS) -c --js-module-name __nodejs_net --js-module-path net -Ox --js-cspecs-assignew "(emap cmap)" --js-cspecs-put "(imap cmap)",$< -o $@)
+	@ $(call compile3,$(HOPC),$(HFLAGS) -Ox ,$(BCFLAGS),$(BLFLAGS),$(BHOPCFLAGS) -c --js-module-name __nodejs_net --js-module-path net --js-cspecs-assignew "(emap cmap)" --js-cspecs-put "(imap cmap)",$< -o $@)
 
 o/tls.o: tls.js
-	@ $(call compile3,$(HOPC),$(HFLAGS),$(BCFLAGS),$(BLFLAGS),$(BHOPCFLAGS) -c --js-module-name __nodejs_tls --js-module-path tls -Os,$< -o $@)
+	@ $(call compile3,$(HOPC),$(HFLAGS),$(BCFLAGS),$(BLFLAGS),$(BHOPCFLAGS) -c --js-module-name __nodejs_tls --js-module-path tls,$< -o $@)
 
 o/buffer.o: buffer.js
-	@ $(call compile3,$(HOPC),$(HFLAGS),$(BCFLAGS),$(BLFLAGS),$(BHOPCFLAGS) -c --js-module-name __nodejs_buffer --js-module-path buffer -Os --js-cspecs-get "(imap cmap)" --js-cspecs-assignew "(emap cmap)" --js-cspecs-put "(imap cmap)",$< -o $@)
+	@ $(call compile3,$(HOPC),$(HFLAGS),$(BCFLAGS),$(BLFLAGS),$(BHOPCFLAGS) -c --js-module-name __nodejs_buffer --js-module-path buffer --js-cspecs-get "(imap cmap)" --js-cspecs-assignew "(emap cmap)" --js-cspecs-put "(imap cmap)",$< -o $@)
 
 o/timers.o: timers.js
-	@ $(call compile3,$(HOPC),$(HFLAGS),$(BCFLAGS),$(BLFLAGS),$(BHOPCFLAGS) -c --js-module-name __nodejs_timers --js-module-path timers -Os --js-cspecs-get "(imap cmap)" --js-cspecs-assignew "(emap cmap)" --js-cspecs-put "(imap cmap)",$< -o $@)
+	@ $(call compile3,$(HOPC),$(HFLAGS),$(BCFLAGS),$(BLFLAGS),$(BHOPCFLAGS) -c --js-module-name __nodejs_timers --js-module-path timers --js-cspecs-get "(imap cmap)" --js-cspecs-assignew "(emap cmap)" --js-cspecs-put "(imap cmap)",$< -o $@)
 
 o/_linklist.o: _linklist.js
-	@ $(call compile3,$(HOPC),$(HFLAGS),$(BCFLAGS),$(BLFLAGS),$(BHOPCFLAGS) -c --js-module-name __nodejs__linklist --js-module-path _linklist -Os --js-cspecs-get "(imap cmap)" --js-cspecs-assignew "(emap cmap)" --js-cspecs-put "(imap cmap)",$< -o $@)
+	@ $(call compile3,$(HOPC),$(HFLAGS),$(BCFLAGS),$(BLFLAGS),$(BHOPCFLAGS) -c --js-module-name __nodejs__linklist --js-module-path _linklist --js-cspecs-get "(imap cmap)" --js-cspecs-assignew "(emap cmap)" --js-cspecs-put "(imap cmap)",$< -o $@)
 
 o/events.o: events.js
-	@ $(call compile3,$(HOPC),$(HFLAGS),$(BCFLAGS),$(BLFLAGS),$(BHOPCFLAGS) -c --js-module-name __nodejs_events --js-module-path events -Ox --js-cspecs-get "(imap cmap vtable)",$< -o $@)
+	@ $(call compile3,$(HOPC),-farguments $(HFLAGS),$(BCFLAGS),$(BLFLAGS),$(BHOPCFLAGS) -c --js-module-name __nodejs_events --js-module-path events --js-cspecs-get "(imap cmap vtable)",$< -o $@)
 
 o/nodejs.mod.o: modules/fs.mod.scm
 

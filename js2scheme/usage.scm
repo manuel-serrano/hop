@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Dec 14 07:04:23 2019                          */
-;*    Last change :  Sun Apr 30 09:21:41 2023 (serrano)                */
+;*    Last change :  Sun Apr 30 16:44:42 2023 (serrano)                */
 ;*    Copyright   :  2019-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Ast node usage API                                               */
@@ -165,7 +165,7 @@
 (define (decl-stack-vararg? this)
    (when (isa? this J2SDeclArguments)
       (with-access::J2SDeclArguments this (usage)
-	 (usage-strict? usage '(slice aref apply length)))))
+	 (usage-strict? usage '(slice aref length)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    ref-lonly-vararg? ...                                            */
