@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Dec 14 07:04:23 2019                          */
-;*    Last change :  Fri Apr 28 08:29:42 2023 (serrano)                */
+;*    Last change :  Sun Apr 30 09:21:41 2023 (serrano)                */
 ;*    Copyright   :  2019-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Ast node usage API                                               */
@@ -38,7 +38,14 @@
 	   
 	   (decl-ronly?::bool ::J2SDecl)
 
-	   (fun-lonly-vararg?::bool ::J2SFun)))
+	   (decl-lonly-vararg?::bool ::obj)
+	   (decl-stack-vararg?::bool ::obj)
+	   
+	   (ref-lonly-vararg?::bool ::obj)
+	   (ref-stack-vararg?::bool ::obj)
+	   
+	   (fun-lonly-vararg?::bool ::J2SFun)
+	   (fun-stack-vararg?::bool ::J2SFun)))
 
 ;*---------------------------------------------------------------------*/
 ;*    usage ...                                                        */
@@ -93,7 +100,7 @@
 ;*    usage-strict? ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (usage-strict? _usage keys)
-   (=u32 (bit-andu32 _usage (usage keys)) _usage))
+   (=u32 (bit-andu32 _usage (bit-notu32 (usage keys))) #u32:0))
 
 ;*---------------------------------------------------------------------*/
 ;*    decl-usage-strict? ...                                           */
@@ -145,10 +152,51 @@
    (not (decl-usage-has? decl '(assig eval))))
 
 ;*---------------------------------------------------------------------*/
+;*    decl-lonly-vararg? ...                                           */
+;*---------------------------------------------------------------------*/
+(define (decl-lonly-vararg? this)
+   (when (isa? this J2SDeclArguments)
+      (with-access::J2SDeclArguments this (usage)
+	 (usage-strict? usage '(length)))))
+
+;*---------------------------------------------------------------------*/
+;*    decl-stack-vararg? ...                                           */
+;*---------------------------------------------------------------------*/
+(define (decl-stack-vararg? this)
+   (when (isa? this J2SDeclArguments)
+      (with-access::J2SDeclArguments this (usage)
+	 (usage-strict? usage '(slice aref apply length)))))
+
+;*---------------------------------------------------------------------*/
+;*    ref-lonly-vararg? ...                                            */
+;*---------------------------------------------------------------------*/
+(define (ref-lonly-vararg? this)
+   (when (isa? this J2SRef)
+      (with-access::J2SRef this (decl)
+	 (decl-lonly-vararg? decl))))
+
+;*---------------------------------------------------------------------*/
+;*    ref-stack-vararg? ...                                            */
+;*---------------------------------------------------------------------*/
+(define (ref-stack-vararg? this)
+   (when (isa? this J2SRef)
+      (with-access::J2SRef this (decl)
+	 (decl-stack-vararg? decl))))
+
+;*---------------------------------------------------------------------*/
 ;*    fun-lonly-vararg? ...                                            */
+;*    -------------------------------------------------------------    */
+;*    Fun uses ARGUMENTS but only for getting its length.              */
 ;*---------------------------------------------------------------------*/
 (define (fun-lonly-vararg? this::J2SFun)
-   (with-access::J2SFun this (idgen idthis thisp rtype vararg argumentsp loc)
-      (when (isa? argumentsp J2SDeclArguments)
-	 (with-access::J2SDeclArguments argumentsp (usage)
-	    (usage-strict? usage '(length))))))
+   (with-access::J2SFun this (argumentsp)
+      (decl-lonly-vararg? argumentsp)))
+
+;*---------------------------------------------------------------------*/
+;*    fun-stack-vararg? ...                                            */
+;*    -------------------------------------------------------------    */
+;*    Fun uses ARGUMENTS that can be a stack allocated vector          */
+;*---------------------------------------------------------------------*/
+(define (fun-stack-vararg? this::J2SFun)
+   (with-access::J2SFun this (argumentsp)
+      (decl-stack-vararg? argumentsp)))

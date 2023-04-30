@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Sat Apr 29 08:28:06 2023 (serrano)                */
+;*    Last change :  Sun Apr 30 09:24:24 2023 (serrano)                */
 ;*    Copyright   :  2017-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -213,8 +213,10 @@
 	     (if (context-get ctx :optim-arguments)
 		 (with-access::J2SDeclArguments argumentsp (alloc-policy usage)
 		    (cond
-		       ((usage-strict? usage '(length))
+		       ((fun-lonly-vararg? this)
 			`(js-function-arity ,req ,opt 'arguments-lonly))
+		       ((fun-stack-vararg? this)
+			`(js-function-arity ,req ,opt 'arguments-lazy))
 		       ((eq? alloc-policy 'lazy)
 			`(js-function-arity ,req ,opt 'arguments-lazy))
 		       (else
@@ -466,7 +468,25 @@
       (with-access::J2SFun fun (idgen idthis thisp params rtype loc)
 	 ;; see scheme-arguments.scm
 	 (let ((args (append (map j2s-type-scheme params)
-			(list (symbol-append (j2s-lonly-id) '::long)))))
+			(list (symbol-append (j2s-arguments-lonly-id) '::long)))))
+	    (lambda-or-labels rtype idgen
+	       (type-this idthis thisp)
+	       (unless (isa? fun J2SArrow) id) args body loc))))
+   
+   (define (stack-vararg-lambda fun id body)
+      ;; this function uses a stack allocated vector arguments
+      (with-access::J2SFun fun (idgen idthis thisp params rtype loc)
+	 ;; see scheme-arguments.scm
+	 (let ((args (list (symbol-append (j2s-arguments-stack-id) '::vector)))
+	       (body `(let* ((,(j2s-arguments-lonly-id) (vector-length ,(j2s-arguments-stack-id)))
+			     ,@(map (lambda (a i)
+				       `(,(j2s-scheme a mode return ctx)
+					 (if (<fx ,i ,(j2s-arguments-lonly-id))
+					     (vector-ref ,(j2s-arguments-stack-id) ,i)
+					     (js-undefined))))
+				  params
+				  (iota (length params))))
+			 ,body)))
 	    (lambda-or-labels rtype idgen
 	       (type-this idthis thisp)
 	       (unless (isa? fun J2SArrow) id) args body loc))))
@@ -516,6 +536,8 @@
 		      (rest-lambda this id body))
 		     ((fun-lonly-vararg? this)
 		      (lonly-vararg-lambda this id body))
+		     ((fun-stack-vararg? this)
+		      (stack-vararg-lambda this id body))
 		     ((eq? mode 'normal)
 		      (normal-vararg-lambda this id body))
 		     (else

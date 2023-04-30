@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Mon Feb 13 17:28:27 2023 (serrano)                */
+;*    Last change :  Sun Apr 30 09:49:16 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
@@ -42,11 +42,14 @@
 	   (js-arguments->vector ::JsArguments ::JsGlobalObject)
 	   (js-arguments->jsarray ::JsArguments ::JsGlobalObject)
 	   (js-arguments-ref ::JsArguments ::obj ::JsGlobalObject)
+	   (inline js-arguments-stack-ref ::vector ::obj)
+	   (inline js-arguments-stack-index-ref ::vector ::uint32)
 	   (js-arguments-index-ref ::JsArguments ::uint32 ::JsGlobalObject)
 	   (js-arguments-set! ::JsArguments ::obj ::JsGlobalObject ::obj)
 	   (js-arguments-index-set! ::JsArguments ::uint32 ::obj ::JsGlobalObject)
 	   (js-arguments-length::obj ::JsArguments ::JsGlobalObject)
-	   (js-arguments-slice ::JsArguments start end ::JsGlobalObject)))
+	   (js-arguments-slice ::JsArguments start end ::JsGlobalObject)
+	   (js-arguments-stack-slice ::vector start end ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
@@ -231,6 +234,22 @@
 		    value)
 		 v))
 	  (js-get arr (js-uint32-tointeger idx) %this))))
+
+;*---------------------------------------------------------------------*/
+;*    js-arguments-stack-ref ...                                       */
+;*---------------------------------------------------------------------*/
+(define-inline (js-arguments-stack-ref vec::vector idx)
+   (if (<fx idx (vector-length vec))
+       (vector-ref vec idx)
+       (js-undefined)))
+
+;*---------------------------------------------------------------------*/
+;*    js-arguments-stack-index-ref ...                                 */
+;*---------------------------------------------------------------------*/
+(define-inline (js-arguments-stack-index-ref vec::vector idx::uint32)
+   (if (<u32 idx (fixnum->uint32 (vector-length vec)))
+       (vector-ref vec (uint32->fixnum idx))
+       (js-undefined)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-arguments-set! ...                                            */
@@ -687,6 +706,18 @@
 			 (loop (+fx i 1))))))))))
 
 ;*---------------------------------------------------------------------*/
+;*    vector-slice! ...                                                */
+;*---------------------------------------------------------------------*/
+(define (vector-slice! o val::vector k::long final::long %this)
+   (let* ((len (fixnum->uint32 (-fx final k)))
+	  (arr (js-array-construct-alloc/lengthu32 %this len)))
+      (with-access::JsArray arr (vec ilen length)
+	 (vector-copy! vec 0 val k final)
+	 (set! ilen len)
+	 (set! length len)
+	 arr)))
+
+;*---------------------------------------------------------------------*/
 ;*    js-arguments-slice ...                                           */
 ;*    -------------------------------------------------------------    */
 ;*    Arguments slicing is optimized because the pattern               */
@@ -694,15 +725,6 @@
 ;*    frequent to extract optional arguments.                          */
 ;*---------------------------------------------------------------------*/
 (define (js-arguments-slice this::JsArguments start end %this)
-   
-   (define (vector-slice! o val::vector k::long final::long)
-      (let* ((len (fixnum->uint32 (-fx final k)))
-	     (arr (js-array-construct-alloc/lengthu32 %this len)))
-	 (with-access::JsArray arr (vec ilen length)
-	    (vector-copy! vec 0 val k final)
-	    (set! ilen len)
-	    (set! length len)
-	    arr)))
    
    (define (array-copy! o len::long arr k::obj final::obj)
       (let loop ((i len))
@@ -738,9 +760,9 @@
 		       ((<=fx final k)
 			(js-empty-vector->jsarray %this))
 		       ((<=fx final len)
-			(vector-slice! this vec k final))
+			(vector-slice! this vec k final %this))
 		       ((>fx len 0)
-			(let* ((arr (vector-slice! this vec k len))
+			(let* ((arr (vector-slice! this vec k len %this))
 			       (vlen (-fx len k)))
 			   (array-copy! this vlen arr (-fx len vlen) final)))
 		       (else
@@ -756,9 +778,9 @@
 		       ((<= final k)
 			(js-empty-vector->jsarray %this))
 		       ((<= final len)
-			(vector-slice! this vec (->fixnum k) (->fixnum final)))
+			(vector-slice! this vec (->fixnum k) (->fixnum final) %this))
 		       ((>fx len 0)
-			(let* ((arr (vector-slice! this vec (->fixnum k) len))
+			(let* ((arr (vector-slice! this vec (->fixnum k) len %this))
 			       (vlen (->fixnum (js-get-length arr %this))))
 			   (array-copy! this vlen arr (- len vlen) final)))
 		       (else
@@ -771,6 +793,46 @@
 	      (final (if (< relend 0) (max (+ len relend) 0) (min relend len))))
 	  (array-slice! this k final))))
 
+;*---------------------------------------------------------------------*/
+;*    js-arguments-stack-slice ...                                     */
+;*---------------------------------------------------------------------*/
+(define (js-arguments-stack-slice this::vector start end %this)
+   (let* ((vec this)
+	  (len (vector-length vec))
+	  (end (if (eq? end (js-undefined)) len end)))
+      (cond
+	 ((=fx len 0)
+	  (js-empty-vector->jsarray %this))
+	 ((and (fixnum? start) (fixnum? end))
+	  ;; optimal case, arguments is inlined
+	  ;; and indexes are all small integers
+	  (let* ((relstart start)
+		 (k (if (<fx relstart 0) (maxfx (+fx len relstart) 0) (minfx relstart len)))
+		 (relend end)
+		 (final (if (<fx relend 0) (maxfx (+fx len relend) 0) (minfx relend len))))
+	     (cond
+		((<=fx final k)
+		 (js-empty-vector->jsarray %this))
+		((<=fx final len)
+		 (vector-slice! this vec k final %this))
+		(else
+		 (vector-slice! this vec k len %this)))))
+	 (else
+	  ;; less optimized case, there is something
+	  ;; weird with the indexes that are not
+	  ;; small integers
+	  (let* ((relstart (if (fixnum? start) start (js-tointeger start %this)))
+		 (k (if (< relstart 0) (max (+ len relstart) 0) (min relstart len)))
+		 (relend (if (fixnum? end) end (js-tointeger end %this)))
+		 (final (if (< relend 0) (max (+ len relend) 0) (min relend len))))
+	     (cond
+		((<= final k)
+		 (js-empty-vector->jsarray %this))
+		((<= final len)
+		 (vector-slice! this vec (->fixnum k) (->fixnum final) %this))
+		(else
+		 (vector-slice! this vec (->fixnum k) len %this))))))))
+  
 ;*---------------------------------------------------------------------*/
 ;*    &end!                                                            */
 ;*---------------------------------------------------------------------*/

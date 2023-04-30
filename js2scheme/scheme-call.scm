@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Sat Apr 29 08:53:08 2023 (serrano)                */
+;*    Last change :  Sun Apr 30 10:12:19 2023 (serrano)                */
 ;*    Copyright   :  2018-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -387,19 +387,27 @@
 			       (and (isa? val J2SFun) (decl-ronly? decl)))))
 		   (decl-only-call? decl)
 		   (and (pair? args) (=fx (length args) 4)))
-	      (if (and (isa? (cadr args) J2SRef)
+	      (cond
+		 ((ref-stack-vararg? (cadr args))
+		  `(js-function-apply-vec ,(caddr args)
+		      ,(j2s-scheme obj mode return conf)
+		      ,(j2s-scheme (car args) mode return conf)
+		      ,(j2s-scheme (cadr args) mode return conf)
+		      (fixnum->uint32 ,(j2s-arguments-lonly-id))))
+		 ((and (isa? (cadr args) J2SRef)
 		       (j2s-ref-arguments-lazy? (cadr args)))
 		  `(js-function-apply-arguments ,(caddr args)
 		      ,(j2s-scheme obj mode return conf)
 		      ,(j2s-scheme (car args) mode return conf)
 		      ,(j2s-ref-arguments-argid (cadr args))
 		      ,(j2s-scheme (cadr args) mode return conf)
-		      ,(cadddr args))
+		      ,(cadddr args)))
+		 (else
 		  `(js-function-apply ,(caddr args)
 		      ,(j2s-scheme obj mode return conf)
 		      ,(j2s-scheme (car args) mode return conf)
 		      ,(j2s-scheme (cadr args) mode return conf)
-		      ,(cadddr args)))
+		      ,(cadddr args))))
 	      (if (and (isa? (cadr args) J2SRef)
 		       (j2s-ref-arguments-lazy? (cadr args)))
 		  (def-arguments obj args mode return conf)
@@ -514,16 +522,44 @@
 		     (when (string=? val "hasOwnProperty")
 			(is-object-prototype? obj))))))))
 
+   (define (array-prototype? obj)
+      (when (isa? obj J2SAccess)
+	 (with-access::J2SAccess obj (obj field)
+	    (when (isa? obj J2SRef)
+	       (with-access::J2SRef obj (decl)
+		  (when (isa? decl J2SDeclExtern)
+		     (with-access::J2SDeclExtern decl (id)
+			(when (and (eq? id 'Array) (decl-ronly? decl))
+			   (when (isa? field J2SString)
+			      (with-access::J2SString field (val)
+				 (string=? val "prototype")))))))))))
+
+   (define (builtin-array-prototype-slice? obj)
+      (when (isa? obj J2SRef)
+	 (with-access::J2SRef obj (decl)
+	    (when (and (isa? decl J2SDeclInit) (decl-ronly? decl))
+	       (with-access::J2SDeclInit decl (val)
+		  (array-prototype-slice? val))))))
+	 
+   (define (array-prototype-slice? obj)
+      ;; see ause::J2SCall@argument.scm
+      (cond
+	 ((isa? obj J2SAccess)
+	  (with-access::J2SAccess obj (obj field)
+	     (when (isa? field J2SString)
+		(with-access::J2SString field (val)
+		   (when (string=? val "slice")
+		      (array-prototype? obj))))))
+	 ((isa? obj J2SRef)
+	  (builtin-array-prototype-slice? obj))
+	 (else
+	  #f)))
+      
    (define (is-array-prototype-slice? obj args)
       (when (=fx (length args) 4)
 	 ;; a method called with exactly two arguments
 	 ;; (%this and cache have been added)
-	 (when (isa? obj J2SAccess)
-	    (with-access::J2SAccess obj (obj field)
-	       (when (isa? field J2SString)
-		  (with-access::J2SString field (val)
-		     (when (string=? val "slice")
-			(is-array-prototype? obj))))))))
+	 (array-prototype-slice? obj)))
    
    (cond
       ((is-object-prototype-has-own-property? obj args)
@@ -541,12 +577,17 @@
 		     (js-jsstring-lengthfx ,o)
 		     ,(caddr args)))))
 	  ((arguments)
-	   (let ((a (gensym '%a)))
-	      `(let ((,a ,(j2s-scheme (car args) mode return conf)))
-		  (js-arguments-slice ,a
-		     ,(j2s-scheme (cadr args) mode return conf)
-		     (js-arguments-length ,a %this)
-		     ,(caddr args)))))
+	   (if (ref-stack-vararg? (car args))
+	       `(js-arguments-stack-slice ,(j2s-scheme (car args) mode return conf)
+		   ,(j2s-scheme (cadr args) mode return conf)
+		   ,(j2s-arguments-lonly-id)
+		   ,(caddr args))
+	       (let ((a (gensym '%a)))
+		  `(let ((,a ,(j2s-scheme (car args) mode return conf)))
+		      (js-arguments-slice ,a
+			 ,(j2s-scheme (cadr args) mode return conf)
+			 (js-arguments-length ,a %this)
+			 ,(caddr args))))))
 	  (else
 	   `(js-array-prototype-maybe-slice1
 	       ,(j2s-scheme (car args) mode return conf)
@@ -610,11 +651,13 @@
 	       ,(j2s-scheme (caddr args) mode return conf)
 	       ,(cadddr args)))
 	  ((arguments)
-	   `(js-arguments-slice
-	       ,(j2s-scheme (car args) mode return conf)
-	       ,(j2s-scheme (cadr args) mode return conf)
-	       ,(j2s-scheme (caddr args) mode return conf)
-	       ,(cadddr args)))
+	   `(,(if (ref-stack-vararg? (car args))
+		  'js-arguments-stack-slice
+		  'js-arguments-slice)
+	     ,(j2s-scheme (car args) mode return conf)
+	     ,(j2s-scheme (cadr args) mode return conf)
+	     ,(j2s-scheme (caddr args) mode return conf)
+	     ,(cadddr args)))
 	  (else
 	   `(js-array-maybe-slice2
 	       ,(j2s-scheme (car args) mode return conf)

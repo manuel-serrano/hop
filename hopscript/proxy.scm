@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Tue Feb 21 15:42:57 2023 (serrano)                */
+;*    Last change :  Sun Apr 30 15:06:48 2023 (serrano)                */
 ;*    Copyright   :  2018-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -714,12 +714,12 @@
 		    ((isa? prop JsAccessorDescriptor)
 		     (with-access::JsAccessorDescriptor prop (get set)
 			(cond
-			   ((and (eq? get (js-undefined))
+			   ((and (or (eq? get (js-undefined)) (not get))
 				 (eq? get-or-set (& "get")))
 			    (js-raise-type-error %this
 			       "Proxy \"get\" inconsistency"
 			       owner))
-			   ((and (eq? set (js-undefined))
+			   ((and (or (eq? set (js-undefined)) (not set))
 				 (eq? get-or-set (& "set")))
 			    (js-raise-type-error %this
 			       "Proxy \"set\" inconsistency"

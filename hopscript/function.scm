@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Sat Apr 29 09:43:50 2023 (serrano)                */
+;*    Last change :  Sun Apr 30 09:12:46 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -1323,8 +1323,11 @@
 	    ((=fx arity -2048)
 	     (procedure thisarg (vector-copy vec 0 n)))
 	    ((=fx arity -2047)
-	     (vector-shrink! vec n)
-	     (procedure thisarg vec))
+	     (js-call-with-stack-vector
+		(make-vector n)
+		(lambda (tgt)
+		   (vector-copy! tgt 0 vec 0 n)
+		   (procedure thisarg tgt))))
 	    (else
 	     (js-apply %this this thisarg (vector->sublist vec n)))))))
 

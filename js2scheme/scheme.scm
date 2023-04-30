@@ -451,6 +451,8 @@
 	    ((and export (or (not (decl-ronly? decl)) (not (j2s-let-opt? decl))))
 	     (with-access::J2SExport export (index decl)
 		`(vector-ref %evars ,index)))
+	    ((decl-stack-vararg? decl)
+	     (j2s-arguments-stack-id))
 	    ((j2s-let-opt? decl)
 	     (j2s-decl-scm-id decl ctx))
 	    ((j2s-let? decl)

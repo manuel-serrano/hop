@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sat Apr 29 09:21:21 2023 (serrano)                */
+;*    Last change :  Sun Apr 30 12:43:41 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -644,7 +644,7 @@
 		      (make-args-list (-fx ,arity ,n)))
 		   ;; too many arguments
 		   (apply ,procedure ,this (take (list ,@args) ,arity)))))
-	  ((<=fx ,arity 8192)
+	  ((<=fx ,arity -8192)
 	   ;; length only arguments
 	   (if (js-procedure-hopscript-mode? ,fun)
 	       (js-raise-arity-error %this ,fun ,(-fx n 1))

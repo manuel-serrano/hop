@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Sat Apr 29 08:41:51 2023 (serrano)                */
+;*    Last change :  Sun Apr 30 09:26:30 2023 (serrano)                */
 ;*    Copyright   :  2017-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript arguments functions.        */
@@ -80,26 +80,47 @@
 	       (with-access::J2SDeclArguments decl (fun)
 		  (fun-lonly-vararg? fun))))))
    
+   (define (argument-stack? this::J2SExpr)
+      (when (isa? this J2SRef)
+	 (with-access::J2SRef this (decl)
+	    (when (isa? decl J2SDeclArguments)
+	       (with-access::J2SDeclArguments decl (fun)
+		  (fun-stack-vararg? fun))))))
+   
    (with-access::J2SAccess this (obj field type)
       (cond
 	 ((maybe-number? field)
 	  (cond
 	     ((eq? (j2s-type field) 'uint32)
-	      (if (and (isa? obj J2SRef) (j2s-ref-arguments-lazy? obj))
+	      (cond
+		 ((and (isa? obj J2SRef) (j2s-ref-arguments-lazy? obj))
 		  (let ((argid (j2s-ref-arguments-argid obj)))
 		     `(js-arguments-vector-index-ref ,argid
 		       ,(j2s-scheme obj mode return ctx)
 		       ,(j2s-scheme field mode return ctx)
-		       %this))
+		       %this)))
+		 ((argument-stack? obj)
+		  `(js-arguments-stack-index-ref
+		      ,(j2s-scheme obj mode return ctx)
+		      ,(j2s-scheme field mode return ctx)))
+		 (else
 		  `(js-arguments-index-ref ,(j2s-scheme obj mode return ctx)
 		      ,(j2s-scheme field mode return ctx)
-		      %this)))
+		      %this))))
 	     ((eq? (j2s-type field) 'int32)
-	      (let ((argid (j2s-ref-arguments-argid obj)))
-		 `(js-arguments-vector-ref ,argid
-		   ,(j2s-scheme obj mode return ctx)
-		   (int32->fixnum ,(j2s-scheme field mode return ctx))
-		   %this)))
+	      (if (argument-stack? obj)
+		  `(js-arguments-stack-ref
+		      ,(j2s-scheme obj mode return ctx)
+		      ,(int32->fixnum (j2s-scheme field mode return ctx)))
+		  (let ((argid (j2s-ref-arguments-argid obj)))
+		     `(js-arguments-vector-ref ,argid
+			 ,(j2s-scheme obj mode return ctx)
+			 (int32->fixnum ,(j2s-scheme field mode return ctx))
+			 %this))))
+	     ((argument-stack? obj)
+	      `(js-arguments-stack-ref
+		  ,(j2s-scheme obj mode return ctx)
+		  ,(j2s-scheme field mode return ctx)))
 	     ((and (isa? obj J2SRef) (j2s-ref-arguments-lazy? obj))
 	      (let ((argid (j2s-ref-arguments-argid obj)))
 		 `(js-arguments-vector-ref ,argid
@@ -114,7 +135,10 @@
 	  (cond
 	     ((argument-lonly? obj)
 	      ;; see scheme-fun.scm
-	      (j2s-lonly-id))
+	      (j2s-arguments-lonly-id))
+	     ((argument-stack? obj)
+	      ;; see scheme-fun.scm
+	      (j2s-arguments-lonly-id))
 	     ((and (isa? obj J2SRef) (j2s-ref-arguments-lazy? obj))
 	      `(if (js-object? ,(j2s-scheme obj mode return ctx))
 		   (js-arguments-length

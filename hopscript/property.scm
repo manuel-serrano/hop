@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Thu Apr 20 05:35:26 2023 (serrano)                */
+;*    Last change :  Sun Apr 30 14:53:33 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -4296,6 +4296,10 @@
 		  #t)))))
    
    (define (define-own-property-extend-mapped o name desc)
+      ;; MS 30apr2023, fix ctor3@property.scm test
+      (when (js-object-mode-isprotoof? o)
+	 (js-invalidate-pmap-pcaches! %this
+	    "define-own-property-extend-unmapped" name))
       (cond
 	 ((isa? desc JsValueDescriptor)
 	  ;; 4.a

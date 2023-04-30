@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Sun Feb 27 12:34:18 2022 (serrano)                */
-;*    Copyright   :  2015-22 Manuel Serrano                            */
+;*    Last change :  Sun Apr 30 12:14:33 2023 (serrano)                */
+;*    Copyright   :  2015-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Let optimisation                                                 */
 ;*    -------------------------------------------------------------    */
@@ -1010,6 +1010,27 @@
 	 ((isa? node J2SRef)
 	  (with-access::J2SRef node (decl)
 	     (memq decl env)))))
+
+   (define (builtin-prototype? obj clazz)
+      (when (isa? obj J2SAccess)
+	 (with-access::J2SAccess obj (obj field)
+	    (when (isa? obj J2SRef)
+	       (with-access::J2SRef obj (decl)
+		  (when (isa? decl J2SDeclExtern)
+		     (with-access::J2SDeclExtern decl (id)
+			(when (and (eq? id clazz) (decl-ronly? decl))
+			   (when (isa? field J2SString)
+			      (with-access::J2SString field (val)
+				 (string=? val "prototype")))))))))))
+	 
+   (define (builtin-prototype-method? node env::pair-nil)
+      (when (isa? node J2SAccess)
+	 (with-access::J2SAccess node (obj field)
+	    (when (isa? field J2SString)
+	       (with-access::J2SString field (val)
+		  (when (string=? val "slice")
+		     ;; needed for the argument optimization (see arguments.scm)
+		     (builtin-prototype? obj 'Array)))))))
    
    (define (letopt-literals literals)
       (when (pair? literals)
@@ -1054,7 +1075,8 @@
 			  (with-access::J2SDecl decl (binder scope %info)
 			     (if (and (eq? binder 'var)
 				      (memq scope '(%scope tls)))
-				 (if (literal? rhs env)
+				 (if (or (literal? rhs env)
+					 (builtin-prototype-method? rhs env))
 				     (let ((init expr))
 					(set! expr (J2SUndefined))
 					(loop (cdr n)

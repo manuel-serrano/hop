@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec  5 09:14:00 2019                          */
-;*    Last change :  Fri Apr 28 07:32:14 2023 (serrano)                */
+;*    Last change :  Sun Apr 30 11:31:41 2023 (serrano)                */
 ;*    Copyright   :  2019-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arguments optimization                                           */
@@ -117,13 +117,46 @@
 	    (when (isa? field J2SString)
 	       (with-access::J2SString field (val)
 		  (string=? val "apply"))))))
-   
-   (define (maybe-slice? fun args)
+
+   (define (array-prototype? obj)
+      (when (isa? obj J2SAccess)
+	 (with-access::J2SAccess obj (obj field)
+	    (when (isa? obj J2SRef)
+	       (with-access::J2SRef obj (decl)
+		  (when (isa? decl J2SDeclExtern)
+		     (with-access::J2SDeclExtern decl (id)
+			(when (and (eq? id 'Array) (decl-ronly? decl))
+			   (when (isa? field J2SString)
+			      (with-access::J2SString field (val)
+				 (string=? val "prototype")))))))))))
+
+   (define (builtin-array-prototype-slice? obj)
+      (when (isa? obj J2SRef)
+	 (with-access::J2SRef obj (decl)
+	    (when (and (isa? decl J2SDeclInit) (decl-ronly? decl))
+	       (with-access::J2SDeclInit decl (val)
+		  (array-prototype-slice? val))))))
+	 
+   (define (array-prototype-slice? obj)
+      (cond
+	 ((isa? obj J2SAccess)
+	  (with-access::J2SAccess obj (obj field)
+	     (when (isa? field J2SString)
+		(with-access::J2SString field (val)
+		   (when (string=? val "slice")
+		      (array-prototype? obj))))))
+	 ((isa? obj J2SRef)
+	  (builtin-array-prototype-slice? obj))
+	 (else
+	  #f)))
+      
+   (define (slice? fun args)
       (when (and (isa? fun J2SAccess) (>=fx (length args) 2))
-	 (with-access::J2SAccess fun (field)
+	 (with-access::J2SAccess fun (obj field)
 	    (when (isa? field J2SString)
 	       (with-access::J2SString field (val)
-		  (string=? val "call"))))))
+		  (when (string=? val "call")
+		     (array-prototype-slice? obj)))))))
    
    (with-access::J2SCall this (fun args)
       (cond
@@ -138,7 +171,7 @@
 			   (decl-usage-add! decl 'apply))
 			(call-default-walker)))
 		 (call-default-walker))))
-	 ((maybe-slice? fun args)
+	 ((slice? fun args)
 	  (let ((arg0 (car args)))
 	     (if (isa? arg0 J2SRef)
 		 (with-access::J2SRef arg0 (decl)
