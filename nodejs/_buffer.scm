@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 30 06:52:06 2014                          */
-;*    Last change :  Fri Mar 31 16:27:06 2023 (serrano)                */
+;*    Last change :  Mon May  1 09:41:45 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native native bindings                                           */
@@ -1509,6 +1509,7 @@
 			  (trace-item
 			     "NEW size=" size " size_=" rsize
 			     " -> next offset=" offset)
+			  (set! lastoffset 0)
 			  (with-access::JsSlowBuffer buf (data)
 			     (values buf data 0)))
 		       (let ((loff offset))
@@ -1527,11 +1528,13 @@
 	 (trace-item "off=" off " size=" size
 	    " old-offset=" offset " last-offset=" lastoffset)
 	 (when (and (eq? slowbuffer buf) (=fx off lastoffset))
-	    (set! offset (+fx lastoffset (roundup size 16))))
+	    ;;(set! offset (+fx lastoffset (roundup size 16)))
+	    (set! offset (+fx lastoffset size)))
 	 (trace-item "->offset=" offset)
 	 (if (>fx size 0)
-	     (with-access::Slab slab (js-slowbuffer)
-		(js-new %this js-slowbuffer buf))
+	     buf
+;* 	     (with-access::Slab slab (js-slowbuffer)                   */
+;* 		(js-new %this js-slowbuffer buf))                      */
 	     (js-undefined)))))
 
 ;*---------------------------------------------------------------------*/

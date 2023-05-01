@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    /tmp/HOP/hop/hopscript/array.sch                                 */
+;*    serrano/prgm/project/hop/hop/hopscript/array.sch                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec 18 08:02:30 2016                          */
-;*    Last change :  Sat Jun 25 16:40:34 2022 (serrano)                */
-;*    Copyright   :  2016-22 Manuel Serrano                            */
+;*    Last change :  Sun Apr 30 21:17:30 2023 (serrano)                */
+;*    Copyright   :  2016-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Array macros for js2scheme                                       */
 ;*=====================================================================*/
@@ -218,6 +218,26 @@
 ;*    js-call-with-with-stack-vector ...                               */
 ;*---------------------------------------------------------------------*/
 (define-macro (js-call-with-stack-vector vec proc)
+   
+   (define (decl-vector p len)
+      (if (fixnum? len)
+	  `(pragma
+	      ,(format "extern obj_t bgl_init_vector_sans_fill(); char ~a[VECTOR_SIZE + ((~a - 1) * OBJ_SIZE)]"
+		  p len))
+	  `(pragma
+	      ,(format "extern obj_t bgl_init_vector_sans_fill(); char ~a[VECTOR_SIZE + ((($1) - 1) * OBJ_SIZE)]" p) ,len)))
+
+   (define (init-vector p len)
+      (cond-expand
+	 (bigloo-compile
+	  (if (fixnum? len)
+	      `(pragma::vector ,(format "BGL_INIT_VECTOR_SANS_FILL(&(~a), ~a)" p len))
+	      `(pragma::vector ,(format "BGL_INIT_VECTOR_SANS_FILL(&(~a), $1)" p) ,len)))
+	 (else
+	  (if (fixnum? len)
+	      `(pragma::vector ,(format "bgl_init_vector_sans_fill(&(~a), ~a)" p len))
+	      `(pragma::vector ,(format "bgl_init_vector_sans_fill(&(~a), $1)" p) ,len)))))
+   
    (match-case vec
       ((vector)
        (match-case proc
@@ -234,13 +254,26 @@
 	       (let ((p (gensym 'p))
 		     (len (length args)))
 		  `(let ()
-		      (pragma
-			 ,(format "extern obj_t bgl_init_vector_sans_fill(); extern long bgl_vector_bytesize(); char ~a[ bgl_vector_bytesize( ~a ) ]"
-			     p (length args)))
-		      (let ((,v (pragma::vector ,(format "bgl_init_vector_sans_fill( &(~a), ~a )" p (length args)))))
+		      ,(decl-vector p (length args))
+		      (let ((,v ,(init-vector p (length args))))
 			 ,@(map (lambda (i o)
 				   `(vector-set! ,v ,i ,o))
 			      (iota len) args)
+			 ,@body))))
+	      (else
+	       `((@ js-call-with-stack-vector __hopscript_array) ,vec ,proc))))
+	  (else
+	   (error "js-call-with-stack-vector" "bad form"
+	      `(js-call-with-stack-vector ,vec ,proc)))))
+      ((make-vector (and ?len (? fixnum?)))
+       (match-case proc
+	  ((lambda (?v) . ?body)
+	   (cond-expand
+	      ((and bigloo-c (not bigloo-saw) (config have-c99-stack-alloc #t) (not devel) (not debug))
+	       (let ((p (gensym 'p)))
+		  `(let ()
+		      ,(decl-vector p len)
+		      (let ((,v ,(init-vector p len)))
 			 ,@body))))
 	      (else
 	       `((@ js-call-with-stack-vector __hopscript_array) ,vec ,proc))))
@@ -255,9 +288,8 @@
 	       (let ((p (gensym 'p))
 		     (l (gensym 'l)))
 		  `(let ((,l ,len))
-		      (pragma
-			 ,(format "extern obj_t bgl_init_vector_sans_fill(); extern long bgl_vector_bytesize(); char ~a[ bgl_vector_bytesize( $1 ) ]" p) ,l)
-		      (let ((,v (pragma::vector ,(format "bgl_init_vector_sans_fill( &(~a), $1 )" p) ,l)))
+		      ,(decl-vector p l)
+		      (let ((,v ,(init-vector p l)))
 			 ,@body))))
 	      (else
 	       `((@ js-call-with-stack-vector __hopscript_array) ,vec ,proc))))
@@ -276,10 +308,8 @@
 		      (len (gensym 'l))
 		      (tlen (symbol-append len '|::long|)))
 		  `(let ((,tlen (-fx ,end ,start)))
-		      (pragma
-			 ,(format "extern obj_t bgl_init_vector_sans_fill(); extern long bgl_vector_bytesize(); char ~a[ bgl_vector_bytesize( $1 ) ]"
-			     p) ,len)
-		      (let ((,v (pragma::vector ,(format "bgl_init_vector_sans_fill( &(~a), $1 )" p) ,len)))
+		      ,(decl-vector p len)
+		      (let ((,v ,(init-vector p len)))
 			 (let loop ((,i ,start))
 			    (when (<fx ,i ,end)
 			       (vector-set! ,v (-fx ,i ,start) (vector-ref ,vec ,i))

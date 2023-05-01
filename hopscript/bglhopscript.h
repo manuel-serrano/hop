@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 11 09:35:38 2022                          */
-/*    Last change :  Sun Apr  2 07:31:52 2023 (serrano)                */
+/*    Last change :  Mon May  1 06:56:22 2023 (serrano)                */
 /*    Copyright   :  2022-23 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Macros for accelerating C compilation.                           */
@@ -106,5 +106,31 @@ extern bool_t hop_js_toboolean_no_boolean(obj_t);
 #define HOP_JSEQIL(x, y) \
    (BINT(x) == y || (REALP(y) && (((double) x) == REAL_TO_DOUBLE(y))))
 
+/*---------------------------------------------------------------------*/
+/*    Vector manipulations                                             */
+/*---------------------------------------------------------------------*/
+#if (!defined(TAG_VECTOR))
+#  define BGL_TAG_VECTOR(_vec) \
+     _vec->vector.header = MAKE_HEADER(VECTOR_TYPE, 0)
+#else
+#  define BGL_TAG_VECTOR(_vec) \
+     0
+#endif
 
+#define BGL_INIT_VECTOR_SANS_FILL_SANS_CHECK(_vector, _len) \
+   ((BGL_TAG_VECTOR(_vector), ((obj_t)_vector)->vector.length = _len, BVECTOR(_vector)))
+
+#if (VECTOR_SIZE_TAG_NB_BIT != 0)
+#  define BGL_INIT_VECTOR_SANS_FILL(_vector, _len) \
+   ((_len & ~(VECTOR_LENGTH_MASK))				   \
+       ? C_FAILURE("create_vector", "vector too large", BINT(_len)) \
+   : BGL_INIT_VECTOR_SANS_FILL_SANS_CHECK(_vector, _len))
+#else
+#  define BGL_INIT_VECTOR_SANS_FILL(vector, len) \
+     BGL_INIT_VECTOR_SANS_FILL_SANS_CHECK(vector, len)
+#endif
+
+/*---------------------------------------------------------------------*/
+/*    endif                                                            */
+/*---------------------------------------------------------------------*/
 #endif

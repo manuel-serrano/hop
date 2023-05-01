@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Thu Apr 13 08:04:43 2023 (serrano)                */
+/*    Last change :  Mon May  1 06:56:45 2023 (serrano)                */
 /*    Copyright   :  2016-23 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -1774,15 +1774,6 @@ static obj_t empty_vector = BVECTOR(&(_empty_vector.length));
 /*---------------------------------------------------------------------*/
 /*    BGL_MAKE_JSARRAY_SANS_INIT                                       */
 /*---------------------------------------------------------------------*/
-#if (!defined(TAG_VECTOR))
-#define BGL_TAG_VECTOR(_vec) \
-   _vec->vector.header = MAKE_HEADER(VECTOR_TYPE, 0)
-#else
-#define BGL_TAG_VECTOR(_vec) \
-   0
-#endif
-
-
 #define BGL_MAKE_JSARRAY_SANS_INIT(o, size, len, ilen, constrmap, __proto___, mode) \
    long bsize = JSARRAY_SIZE + VECTOR_SIZE + ((size-1) * OBJ_SIZE); \
    BgL_jsarrayz00_bglt o = (BgL_jsarrayz00_bglt)HOP_MALLOC(bsize);  \
@@ -1901,18 +1892,8 @@ bgl_init_vector(obj_t vector, long len, obj_t init) {
 /*---------------------------------------------------------------------*/
 obj_t
 bgl_init_vector_sans_fill(obj_t vector, long len) {
-#if ( VECTOR_SIZE_TAG_NB_BIT != 0)
-   if (len & ~(VECTOR_LENGTH_MASK)) {
-      C_FAILURE("create_vector", "vector too large", BINT(len));
-      return BUNSPEC;
-   } else
-#endif
-   {
-      BGL_TAG_VECTOR(vector);
-      vector->vector.length = len;
-
-      return BVECTOR(vector);
-   }
+   // see bglhopscript.h
+   return BGL_INIT_VECTOR_SANS_FILL(vector, len);
 }
 
 /*---------------------------------------------------------------------*/
