@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Thu Mar 30 08:22:07 2023 (serrano)                */
+;*    Last change :  Tue May  2 10:26:56 2023 (serrano)                */
 ;*    Copyright   :  2004-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -214,6 +214,8 @@
 		    (set! clientc-type-check #t)
 		    (bigloo-debug-set! l)
 		    (hop-clientc-debug-unbound-set! l)))))
+	    (("-cg" (help "C debug compilation"))
+	     (hop-hopc-flags-set! (string-append "-cg " (hop-hopc-flags))))
 	    (("--client-output" ?file (help "Client output port [stderr]"))
 	     (if (string=? file "-")
 		 (hop-client-output-port-set! (current-output-port))

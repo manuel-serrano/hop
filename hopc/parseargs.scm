@@ -136,6 +136,8 @@
 		 (hopc-bigloo-options-set!
 		    (cons (format "-g~a" level)
 		       (hopc-bigloo-options))))))
+	    (("-cg" (help "C debug compilation"))
+	     (hopc-bigloo-options-set! (cons "-cg" (hopc-bigloo-options))))
 	    (("-w?level" (help "Increase or set warning level (-w0 no warning)"))
 	     (if (string=? level "")
 		 (bigloo-warning-set! (+fx 1 (bigloo-warning)))
