@@ -468,7 +468,6 @@ function emitReadable_(stream) {
 // However, if we're not ended, or reading, and the length < hwm,
 // then go ahead and try to read some more preemptively.
 function maybeReadMore(stream, state) {
-   console_error( "maybeReadMore state.readingMore=", state.readingMore );
   if (!state.readingMore) {
     state.readingMore = true;
     process.nextTick(function() {
@@ -479,7 +478,6 @@ function maybeReadMore(stream, state) {
 }
 
 function maybeReadMore_(stream, state) {
-   console_error( "maybeReadMore_ state.readingMore state=", state.buffer.length );
   var len = state.length;
   while (!state.reading && !state.flowing && !state.ended &&
          state.length < state.highWaterMark) {
@@ -988,13 +986,53 @@ function endReadable(stream) {
 
   if (!state.endEmitted && state.calledRead) {
     state.ended = true;
-    process.nextTick(function() {
+
+    // MS 2may2023
+    if (endReadableNextTickIndex === 0) {
+       process.nextTick(endReadableNextTick);
+    } else if (endReadableNextTickIndex === endReadableNextTickArray.length) {
+       endReadableNextTickArray = doubleArray(endReadableNextTickArray);
+    }
+
+    endReadableNextTickArray[endReadableNextTickIndex++] = stream;
+
+/*     process.nextTick(function() {                                   */
+/*       // Check that we didn't get one last unshift.                 */
+/*       if (!state.endEmitted && state.length === 0) {                */
+/*         state.endEmitted = true;                                    */
+/*          stream.readable = false;                                   */
+/*         stream.emit('end');                                         */
+/*       }                                                             */
+/*     });                                                             */
+  }
+}
+
+// MS 2may2023
+let endReadableNextTickIndex = 0;
+let endReadableNextTickArray = new Array(64);
+
+function endReadableNextTick() {
+   for (let i = 0; i < endReadableNextTickIndex; i++) {
+      const stream = endReadableNextTickArray[i];
+      const state = stream._readableState;
       // Check that we didn't get one last unshift.
       if (!state.endEmitted && state.length === 0) {
         state.endEmitted = true;
-         stream.readable = false;
+        stream.readable = false;
         stream.emit('end');
       }
-    });
-  }
+   }
+   endReadableNextTickIndex = 0;
 }
+
+function doubleArray(o) {
+   const n = new Array(o.length * 2);
+
+   for (let i = o.length - 1; i >= 0; i--) {
+      n[i] = o[i];
+   }
+
+   return n;
+}
+
+
