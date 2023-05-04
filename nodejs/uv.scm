@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Tue Apr 18 08:43:48 2023 (serrano)                */
+;*    Last change :  Thu May  4 10:05:10 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -427,7 +427,15 @@
    (with-access::WorkerHopThread th (mutex condv %loop
 				       %process %this keep-alive services
 				       call %retval prerun state)
+      ;; set thread name for better debugging
       (thread-name-set! (current-thread) "hopjs")
+      ;; mimic nodejs file descriptor limit
+      (cond-expand
+	 (rlimit
+	  (multiple-value-bind (soft hard)
+	     (getrlimit 'NOFILE)
+	     (when (> hard 0)
+		(setrlimit! 'NOFILE hard hard)))))
       (set! __js_strings (&init!))
       (letrec* ((loop %loop)
 		(async (instantiate::UvAsync
