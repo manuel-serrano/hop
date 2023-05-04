@@ -56,8 +56,6 @@ var isWindows = process.platform === 'win32';
 
 var DEBUG = process.env.NODE_DEBUG && /fs/.test(process.env.NODE_DEBUG);
 
-let K = 0;
-
 function rethrow() {
   // Only enable in debug mode. A backtrace uses ~1000 bytes of heap space and
   // is fairly slow to generate.
@@ -1684,7 +1682,7 @@ function ReadStream(path, options) {
   if (typeof this.fd !== 'number')
     this.open();
 
-   this.on('end', function() {
+  this.on('end', function() {
     if (this.autoClose) {
       this.destroy();
     }
@@ -1695,8 +1693,7 @@ fs.FileReadStream = fs.ReadStream; // support the legacy name
 
 ReadStream.prototype.open = function() {
   var self = this;
-   fs.open(this.path, this.flags, this.mode, function(er, fd) {
-      hop.log("ReadStream.open fd=", fd, " er=", er, " K=", ++K);
+  fs.open(this.path, this.flags, this.mode, function(er, fd) {
     if (er) {
       if (self.autoClose) {
         self.destroy();
@@ -1779,7 +1776,6 @@ ReadStream.prototype.destroy = function() {
 
 
 ReadStream.prototype.close = function(cb) {
-   hop.log("close.1 K=", K);
   var self = this;
   if (cb)
     this.once('close', cb);
@@ -1794,9 +1790,7 @@ ReadStream.prototype.close = function(cb) {
   close();
 
   function close(fd) {
-     hop.log("close.2 fd=", fd, " K=", K);
     fs.close(fd || self.fd, function(er) {
-       hop.log("close.err er=", er, " fd=", fd, " K=", --K);
       if (er)
         self.emit('error', er);
       else
@@ -1856,8 +1850,7 @@ fs.FileWriteStream = fs.WriteStream; // support the legacy name
 
 
 WriteStream.prototype.open = function() {
-   fs.open(this.path, this.flags, this.mode, function(er, fd) {
-      hop.log("WriteStream.open fd=", fd, " err=", er, " K=", ++K);      
+  fs.open(this.path, this.flags, this.mode, function(er, fd) {
     if (er) {
       this.destroy();
       this.emit('error', er);
