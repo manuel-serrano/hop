@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 20 12:31:24 2014                          */
-;*    Last change :  Mon Apr 17 12:10:14 2023 (serrano)                */
+;*    Last change :  Wed May  3 18:36:00 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Common stream functions                                          */
@@ -168,6 +168,7 @@
 		     (cond
 			((eof-object? status)
 			 ;; eof
+			 (slab-shrink! slab buf offset 0)
 			 (js-put-jsobject-name/cache! process (& "_errno") (& "EOF") #f %this
 			    (js-pcache-ref js-nodejs-pcache 19))
 			 (let ((onread (js-get-jsobject-name/cache this (& "onread") #f %this

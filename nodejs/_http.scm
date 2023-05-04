@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug  7 06:23:37 2014                          */
-;*    Last change :  Fri Mar 31 14:44:51 2023 (serrano)                */
+;*    Last change :  Wed May  3 18:00:41 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HTTP bindings                                                    */
@@ -258,6 +258,7 @@
 			     "")
 			 "}")
 		      ""))))
+;* 	 (tprint "str=" (string-length str) " stroff=" stroff " strend=" strend " off=" off " len=" len) */
 	 (let ((ip (open-input-string! str stroff strend)))
 	    (let loop ((count 0)
 		       (avail (-fx strend stroff)))

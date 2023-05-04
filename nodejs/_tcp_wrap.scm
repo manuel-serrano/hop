@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 19 07:19:20 2014                          */
-;*    Last change :  Sun Apr 16 09:11:18 2023 (serrano)                */
+;*    Last change :  Wed May  3 15:34:14 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs TCP bindings                                              */
@@ -46,7 +46,7 @@
    (define reqs '())
    
    (define (connect family)
-      (with-access::JsGlobalObject %this (js-object)
+      (with-access::JsGlobalObject %this (js-object js-tcp-cmap)
 	 (lambda (this host port callback)
 	    (with-access::JsHandle this (handle)
 	       (let ((req (js-new %this js-object)))
@@ -268,10 +268,12 @@
 	 tcp-proto))
 
    (define (tcp-wrap hdl)
-      (with-access::JsGlobalObject %this (js-object)
+      (with-access::JsGlobalObject %this (js-object js-tcp-cmap)
+	 (unless js-tcp-cmap
+	    (set! js-tcp-cmap (js-make-jsconstructmap)))
 	 (let ((obj (instantiateJsHandle
 		       (handle hdl)
-		       (cmap (js-make-jsconstructmap))
+		       (cmap js-tcp-cmap)
 		       (__proto__ (get-tcp-proto))
 		       (elements ($create-vector 2)))))
 	    (js-bind! %this obj (& "fd")

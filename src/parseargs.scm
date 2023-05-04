@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Thu Mar 30 08:22:07 2023 (serrano)                */
+;*    Last change :  Wed May  3 20:10:55 2023 (serrano)                */
 ;*    Copyright   :  2004-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -675,7 +675,7 @@
    (print "   - HOPTRACE: hop internal trace [HOPTRACE=\"key1, key2, ...\"]")
    (print "      j2s:info, j2s:type, j2s:utype, j2s:hint, j2s:usage, j2s:key")
    (print "      j2s:dump, nodejs:compile, hopscript:cache, hopscript:hint")
-   (print "      j2s:scope")
+   (print "      j2s:scope hopscript:gc")
    (print "   - HOPVERBOSE: an integer")
    (print "   - HOPCFLAGS: hopc compilation flags")
    (print "   - NODE_DEBUG: nodejs internal debugging [NODE_DEBUG=key]")

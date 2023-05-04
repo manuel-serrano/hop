@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Mon Oct  3 22:03:09 2022 (serrano)                */
-;*    Copyright   :  2013-22 Manuel Serrano                            */
+;*    Last change :  Thu May  4 07:00:03 2023 (serrano)                */
+;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
 ;*=====================================================================*/
@@ -529,8 +529,6 @@
 	    (set! o (cons* :optim-loopspec #t o)))
 	 (unless (memq :optim-loopcnst o)
 	    (set! o (cons* :optim-loopcnst #t o)))
-	 (unless (memq :optim-arguments o)
-	    (set! o (cons* :optim-arguments #t o)))
 	 (unless (memq :optim-stack-alloc o)
 	    (set! o (cons* :optim-stack-alloc #t o)))
 	 (unless (memq :optim-procedure o)
@@ -614,7 +612,9 @@
 	 (unless (memq :optim-propcache o)
 	    (set! o (cons* :optim-propcache #t o)))
  	 (unless (memq :optim-sweep o)
-	    (set! o (cons* :optim-sweep #t o))))
+	    (set! o (cons* :optim-sweep #t o)))
+	 (unless (memq :optim-arguments o)
+	    (set! o (cons* :optim-arguments #t o))))
       (when (>=fx l 1)
 	 (unless (memq :optim-tyflow o)
 	    (set! o (cons* :optim-tyflow #t o))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 19 07:19:20 2014                          */
-;*    Last change :  Sun Apr 16 09:12:31 2023 (serrano)                */
+;*    Last change :  Wed May  3 15:45:24 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs TTY bindings                                              */
@@ -140,11 +140,13 @@
 	 tty-proto))
    
    (define (tty-wrap hdl)
-      (with-access::JsGlobalObject %this (js-object)
+      (with-access::JsGlobalObject %this (js-object js-tty-cmap)
+	 (unless js-tty-cmap
+	    (set! js-tty-cmap (js-make-jsconstructmap)))
 	 (let ((obj (instantiateJsHandle
 		       (handle hdl)
 		       (__proto__ (get-tty-proto))
-		       (cmap (js-make-jsconstructmap))
+		       (cmap js-tty-cmap)
 		       (elements ($create-vector 1)))))
 	    (js-bind! %this obj (& "fd")
 	       :get (js-make-function %this

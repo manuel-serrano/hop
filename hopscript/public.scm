@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sun Apr 30 12:43:41 2023 (serrano)                */
+;*    Last change :  Wed May  3 09:02:53 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -968,7 +968,7 @@
 (define (js-call1-3-jsprocedure %this fun this a0 a1 a2)
    ;; this is used to implement array functions such map or find
    ;; it is needed to handle array function in hopscript mode
-   (with-access::JsProcedure fun (arity procedure info)
+   (with-access::JsProcedure fun (arity procedure)
       (case arity
 	 ((2) (procedure this a0))
 	 ((3) (procedure this a0 a1))
@@ -1621,7 +1621,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-new-return f r o)
    [assert (r o) (or (js-object? r) (js-object? o))]
-   (with-access::JsFunction f (constrsize info)
+   (with-access::JsFunction f (constrsize)
       (if (js-object? r)
 	  r
 	  (begin
@@ -1680,7 +1680,7 @@
 (define-macro (gen-new %this ctor . args)
    `(cond
        ((js-function? ,ctor)
-	(with-access::JsFunction ,ctor (procedure alloc info arity)
+	(with-access::JsFunction ,ctor (procedure alloc arity)
 	   (let ((o (alloc %this ,ctor)))
 	      (let ((r (gen-calln ,ctor procedure o ,@args)))
 		 (js-new-return ,ctor r o)))))

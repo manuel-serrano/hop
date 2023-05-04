@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Sun Apr 30 09:26:30 2023 (serrano)                */
+;*    Last change :  Thu May  4 07:19:41 2023 (serrano)                */
 ;*    Copyright   :  2017-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript arguments functions.        */
@@ -93,16 +93,16 @@
 	  (cond
 	     ((eq? (j2s-type field) 'uint32)
 	      (cond
+		 ((argument-stack? obj)
+		  `(js-arguments-stack-index-ref
+		      ,(j2s-scheme obj mode return ctx)
+		      ,(j2s-scheme field mode return ctx)))
 		 ((and (isa? obj J2SRef) (j2s-ref-arguments-lazy? obj))
 		  (let ((argid (j2s-ref-arguments-argid obj)))
 		     `(js-arguments-vector-index-ref ,argid
 		       ,(j2s-scheme obj mode return ctx)
 		       ,(j2s-scheme field mode return ctx)
 		       %this)))
-		 ((argument-stack? obj)
-		  `(js-arguments-stack-index-ref
-		      ,(j2s-scheme obj mode return ctx)
-		      ,(j2s-scheme field mode return ctx)))
 		 (else
 		  `(js-arguments-index-ref ,(j2s-scheme obj mode return ctx)
 		      ,(j2s-scheme field mode return ctx)

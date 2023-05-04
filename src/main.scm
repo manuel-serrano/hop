@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Thu Apr 13 08:35:48 2023 (serrano)                */
+;*    Last change :  Wed May  3 20:10:28 2023 (serrano)                */
 ;*    Copyright   :  2004-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -70,6 +70,10 @@
 ;*    main ...                                                         */
 ;*---------------------------------------------------------------------*/
 (define (main args)
+   ;; gc traces
+   (let ((env (getenv "HOPTRACE")))
+      (when (and (string? env) (>=fx (string-contains env "hopscript:gc") 0))
+	 ($bgl-gc-verbose-set! #t)))
    ;; catch critical signals
    (signal-init!)
    ;; set the Hop cond-expand identification

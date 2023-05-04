@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 11 09:35:38 2022                          */
-/*    Last change :  Mon May  1 06:56:22 2023 (serrano)                */
+/*    Last change :  Wed May  3 08:15:04 2023 (serrano)                */
 /*    Copyright   :  2022-23 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Macros for accelerating C compilation.                           */
@@ -72,10 +72,23 @@ extern bool_t hop_js_toboolean_no_boolean(obj_t);
 #define HOP_JSOBJECT_INLINE_ELEMENTS_LENGTH(_o) \
    VECTOR_LENGTH(HOP_JSOBJECT_INLINE_ELEMENTS(_o))
 
-#define HOP_JSOBJECT_INLINE_ELEMENTS_REF(_o, _i) \
-   VECTOR_REF(BVECTOR((obj_t)(&(((BgL_jsobjectz00_bglt)COBJECT(_o))->BgL_elementsz00) + 1)), _i)
-#define HOP_JSOBJECT_INLINE_ELEMENTS_SET(_o, _i, _v) \
-   VECTOR_SET(BVECTOR((obj_t)(&(((BgL_jsobjectz00_bglt)COBJECT(_o))->BgL_elementsz00) + 1)), _i, _v)
+//#define HOP_DEBUG_INLINE_ELEMENTS
+
+#if !defined(HOP_DEBUG_INLINE_ELEMENTS)
+#  define HOP_JSOBJECT_INLINE_ELEMENTS_REF(_o, _i) \
+     VECTOR_REF(HOP_JSOBJECT_INLINE_ELEMENTS(_o), _i)
+#  define HOP_JSOBJECT_INLINE_ELEMENTS_SET(_o, _i, _v) \
+     VECTOR_SET(HOP_JSOBJECT_INLINE_ELEMENTS(_o), _i, _v)
+#else
+#  define HOP_JSOBJECT_INLINE_ELEMENTS_REF(_o, _i) \
+     (_i < HOP_JSOBJECT_INLINE_ELEMENTS_LENGTH(_o) \
+      ? VECTOR_REF(HOP_JSOBJECT_INLINE_ELEMENTS(_o), _i) \
+      : fprintf(stderr, "WRONG index %d\n", 1/0))
+#  define HOP_JSOBJECT_INLINE_ELEMENTS_SET(_o, _i, _v) \
+     (_i < HOP_JSOBJECT_INLINE_ELEMENTS_LENGTH(_o) \
+      ? VECTOR_SET(HOP_JSOBJECT_INLINE_ELEMENTS(_o), _i, _v) \
+      : fprintf(stderr, "WRONG index %d\n", 1/0))
+#endif
 
 /*---------------------------------------------------------------------*/
 /*    HOP_JSARRAY_VECTOR_INLINEP                                       */

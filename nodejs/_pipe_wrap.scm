@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 19 07:19:20 2014                          */
-;*    Last change :  Sun Apr 16 09:11:40 2023 (serrano)                */
+;*    Last change :  Wed May  3 15:31:50 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs PIPE bindings                                             */
@@ -203,7 +203,9 @@
 
    ;; pipe
    (define (pipe this #!optional val)
-      (with-access::JsGlobalObject %this (js-object js-new-target)
+      (with-access::JsGlobalObject %this (js-object js-new-target js-pipe-cmap)
+	 (unless js-pipe-cmap
+	    (set! js-pipe-cmap (js-make-jsconstructmap)))
 	 (if (eq? js-new-target (js-undefined))
 	     (js-raise-type-error %this
 		"Pipe can only be used as a constructor" this)
@@ -212,7 +214,7 @@
 		(obj (instantiateJsHandle
 			(handle hdl)
 			(__proto__ pipe-prototype)
-			(cmap (js-make-jsconstructmap))
+			(cmap js-pipe-cmap)
 			(elements ($create-vector 1)))))
 	    ;; fd
 	    (js-bind! %this obj (& "fd")
@@ -239,6 +241,7 @@
 		  :alloc js-no-alloc/new-target))
 	    (js-put! obj (& "Pipe") js-pipe #t %this)
 	    obj))))
+
 ;*---------------------------------------------------------------------*/
 ;*    &end!                                                            */
 ;*---------------------------------------------------------------------*/

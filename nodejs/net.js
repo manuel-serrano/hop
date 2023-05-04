@@ -51,21 +51,6 @@ function createHandle(fd) {
 }
 
 
-var debug;
-if (process.env.NODE_DEBUG && /net/.test(process.env.NODE_DEBUG)) {
-  var pid = process.pid;
-  debug = function(x) {
-    // if console is not set up yet, then skip this.
-    if (!console.error)
-      return;
-    console.error('NET: %d', pid,
-                  util.format.apply(util, arguments).slice(0, 500));
-  };
-} else {
-   debug = function(a,b,c,d,e,f,g,h,i,j,k,l,m,n) { };
-}
-
-
 function isPipeName(s) {
   return typeof s === 'string' && toNumber(s) === false;
 }
@@ -192,19 +177,14 @@ util.inherits(Socket, stream.Duplex);
 // If allowHalfOpen is true, then we need to do a shutdown,
 // so that only the writable side will be cleaned up.
 function onSocketFinish() {
-  debug('>>> onSocketFinish');
   // If still connecting - defer handling 'finish' until 'connect' will happen
   if (this._connecting) {
-    debug('osF: not yet connected');
     return this.once('connect', onSocketFinish);
   }
 
   if (!this.readable || this._readableState.ended) {
-    debug('oSF: ended, destroy', this._readableState);
     return this.destroy();
   }
-
-  debug('oSF: not ended, call shutdown()');
 
   // otherwise, just shutdown, or destroy() if not possible
   if (!this._handle || !this._handle.shutdown)
@@ -212,27 +192,21 @@ function onSocketFinish() {
 
   var shutdownReq = this._handle.shutdown();
 
-   debug( "oSF: shutdownReq=" + shutdownReq );
   if (!shutdownReq)
     return this._destroy(errnoException(process._errno, 'shutdown'));
 
   shutdownReq.oncomplete = afterShutdown;
-  debug('<<< onSocketFinish');
 }
 
 
 function afterShutdown(status, handle, req) {
   var self = handle.owner;
 
-  debug('afterShutdown destroyed=%j', self.destroyed,
-        self._readableState);
-
   // callback may come after call to destroy.
   if (self.destroyed)
     return;
 
   if (self._readableState.ended) {
-    debug('readableState ended, destroying');
     self.destroy();
   } else {
     self.once('_socketEnd', self.destroy);
@@ -246,7 +220,6 @@ function onSocketEnd() {
   // XXX Should not have to do as much crap in this function.
   // ended should already be true, since this is called *after*
   // the EOF errno and onread has eof'ed
-  debug('onSocketEnd', this._readableState);
   this._readableState.ended = true;
   if (this._readableState.endEmitted) {
     this.readable = false;
@@ -300,7 +273,6 @@ Socket.prototype.read = function(n) {
 
 
 Socket.prototype.listen = function() {
-  debug('socket.listen');
   var self = this;
   self.on('connection', arguments[0]);
   listen(self, null, null, null);
@@ -324,7 +296,6 @@ Socket.prototype.setTimeout = function(msecs, callback) {
 
 
 Socket.prototype._onTimeout = function() {
-  debug('_onTimeout');
   this.emit('timeout');
 };
 
@@ -378,14 +349,10 @@ Object.defineProperty(Socket.prototype, 'bufferSize', {
 
 // Just call handle.readStart until we have enough in the buffer
 Socket.prototype._read = function(n) {
-  debug('_read');
-
   if (this._connecting || !this._handle) {
-    debug('_read wait for connection');
     this.once('connect', this._read.bind(this, n));
   } else if (!this._handle.reading) {
     // not already reading, start the flow
-    debug('Socket._read readStart');
     this._handle.reading = true;
     var r = this._handle.readStart();
     if (r)
@@ -424,25 +391,19 @@ function maybeDestroy(socket) {
 
 
 Socket.prototype.destroySoon = function() {
-   debug( ">>> Socket.prototype.destroySoon" );
    if (this.writable) {
-      debug( "--- Socket.prototype.destroySoon this.writable" );
       this.end();
    }
 
    if (this._writableState.finished) {
-      debug( "--- Socket.prototype.destroySoon this._writableState.finished" );
     this.destroy();
    } else {
       this.once('finish', this.destroy);
    }
-   debug( "<<< Socket.prototype.destroySoon" );
 };
 
 
 Socket.prototype._destroy = function(exception, cb) {
-   debug('_destroy ', exception);
-
   var self = this;
 
   function fireErrorCallbacks() {
@@ -456,7 +417,6 @@ Socket.prototype._destroy = function(exception, cb) {
   };
 
   if (this.destroyed) {
-    debug('already destroyed, fire error callbacks');
     fireErrorCallbacks();
     return;
   }
@@ -467,13 +427,9 @@ Socket.prototype._destroy = function(exception, cb) {
 
   timers.unenroll(this);
 
-  debug('close');
   if (this._handle) {
-    if (this !== process.stderr)
-      debug('close handle');
     var isException = exception ? true : false;
     this._handle.close(function() {
-       debug('emit close.1 ', isException );
       self.emit('close', isException);
     });
     this._handle.onread = noop;
@@ -488,7 +444,6 @@ Socket.prototype._destroy = function(exception, cb) {
 
   if (this.server) {
     COUNTER_NET_SERVER_CONNECTION_CLOSE(this);
-    debug('has server');
     this.server._connections--;
     if (this.server._emitCloseIfDrained) {
       this.server._emitCloseIfDrained();
@@ -498,7 +453,6 @@ Socket.prototype._destroy = function(exception, cb) {
 
 
 Socket.prototype.destroy = function(exception) {
-  debug('destroy', exception);
   this._destroy(exception);
 };
 
@@ -507,17 +461,15 @@ Socket.prototype.destroy = function(exception) {
 // buffer, or when there's an error reading.
 function onread(buffer, offset, length) {
   var handle = this;
+//#:js-debug-object(handle, "O2")
   var self = handle.owner;
   assert(handle === self._handle, 'handle != self._handle');
 
   timers._unrefActive(self);
 
   var end = offset + length;
-   debug('onread', process._errno, offset, length, end);
 
   if (buffer) {
-    debug('got data');
-
     // read success.
     // In theory (and in practice) calling readStop right now
     // will prevent this from being called again until _read() gets
@@ -526,7 +478,6 @@ function onread(buffer, offset, length) {
     // if we didn't get any bytes, that doesn't necessarily mean EOF.
     // wait for the next one.
     if (offset === end) {
-      debug('not any data, keep waiting');
       return;
     }
 
@@ -543,15 +494,12 @@ function onread(buffer, offset, length) {
 
     if (handle.reading && !ret) {
       handle.reading = false;
-      debug('readStop');
       var r = handle.readStop();
       if (r)
         self._destroy(errnoException(process._errno, 'read'));
     }
 
   } else if (process._errno == 'EOF') {
-    debug('EOF');
-
     if (self._readableState.length === 0) {
       self.readable = false;
       maybeDestroy(self);
@@ -567,7 +515,6 @@ function onread(buffer, offset, length) {
     // procedure. No need to wait for all the data to be consumed.
     self.emit('_socketEnd');
   } else {
-    debug('error', process._errno);
     // Error
     self._destroy(errnoException(process._errno, 'read'));
   }
@@ -720,25 +667,18 @@ Socket.prototype.__defineGetter__('bytesWritten', function() {
 function afterWrite(status, handle, req) {
   var self = handle.owner;
   var state = self._writableState;
-  if (self !== process.stderr && self !== process.stdout)
-     debug('afterWrite', status, req );
 
   // callback may come after call to destroy.
   if (self.destroyed) {
-    debug('afterWrite destroyed');
     return;
   }
 
   if (status) {
-    debug('write failure', errnoException(process._errno, 'write'));
     self._destroy(errnoException(process._errno, 'write'), req.cb);
     return;
   }
 
   timers._unrefActive(self);
-
-  if (self !== process.stderr && self !== process.stdout)
-    debug('afterWrite call cb');
 
   if (req.cb)
     req.cb.call(self);
@@ -825,12 +765,10 @@ Socket.prototype.connect = function(options, cb) {
     connect(self, options.path);
 
   } else if (!options.host) {
-    debug('connect: missing host');
     connect(self, '127.0.0.1', options.port, 4);
 
   } else {
     var host = options.host;
-     debug('connect: find host ' + host );
     require('dns').lookup(host, function(err, ip, addressType) {
       // It's possible we were destroyed while looking this up.
       // XXX it would be great if we could cancel the promise returned by
@@ -885,8 +823,6 @@ function afterConnect(status, handle, req, readable, writable) {
   }
 
   assert(handle === self._handle, 'handle != self._handle');
-
-  debug('afterConnect');
 
   assert.ok(self._connecting);
   self._connecting = false;
@@ -983,7 +919,6 @@ var createServerHandle = exports._createServerHandle =
     }
     catch (e) {
       // Not a fd we can listen on.  This will trigger an error.
-      debug('listen invalid fd=' + fd + ': ' + e.message);
       process._errno = 'EINVAL'; // hack, callers expect that errno is set
       return null;
     }
@@ -1005,7 +940,6 @@ var createServerHandle = exports._createServerHandle =
   }
 
   if (address || port) {
-    debug('bind to ' + address);
     if (addressType == 6) {
       r = handle.bind6(address, port);
     } else {
@@ -1023,16 +957,11 @@ var createServerHandle = exports._createServerHandle =
 
 
 Server.prototype._listen2 = function(address, port, addressType, backlog, fd) {
-/*    debug('listen2 addr=', address, " port=", port,                  */
-/* 	 " addrType=", addressType, " backlog=", backlog, " fd=", fd); */
-   debug('listen2 addr=', address, " port=", port,
-	 " addrType=", addressType, " backlog=", backlog, " fd=", fd );
   var self = this;
   var r = 0;
   // If there is not yet a handle, we need to create one and bind.
   // In the case of a server sent via IPC, we don't need to do this.
   if (!self._handle) {
-    debug('_listen2: create a handle');
      self._handle = createServerHandle(address, port, addressType, fd);
     if (!self._handle) {
       var error = errnoException(process._errno, 'listen');
@@ -1041,8 +970,6 @@ Server.prototype._listen2 = function(address, port, addressType, backlog, fd) {
       });
       return;
     }
-  } else {
-    debug('_listen2: have a handle already');
   }
 
   self._handle.onconnection = onconnection;
@@ -1075,7 +1002,6 @@ Server.prototype._listen2 = function(address, port, addressType, backlog, fd) {
 function listen(self, address, port, addressType, backlog, fd) {
   if (!cluster) cluster = require('cluster');
 
-   debug( "listen addr=", address );
   if (cluster.isMaster) {
     self._listen2(address, port, addressType, backlog, fd);
     return;
@@ -1179,8 +1105,6 @@ function onconnection(clientHandle) {
   var handle = this;
   var self = handle.owner;
 
-  debug('onconnection');
-
   if (!clientHandle) {
     self.emit('error', errnoException(process._errno, 'accept'));
     return;
@@ -1277,17 +1201,13 @@ Server.prototype.close = function(cb) {
 };
 
 Server.prototype._emitCloseIfDrained = function() {
-  debug('SERVER _emitCloseIfDrained');
   var self = this;
 
   if (self._handle || self._connections) {
-    debug('SERVER handle? %j   connections? %d',
-          !!self._handle, self._connections);
     return;
   }
 
   process.nextTick(function() {
-    debug('SERVER: emit close');
     self.emit('close');
   });
 };

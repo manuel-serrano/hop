@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 30 06:52:06 2014                          */
-;*    Last change :  Mon May  1 09:41:45 2023 (serrano)                */
+;*    Last change :  Wed May  3 13:53:53 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native native bindings                                           */
@@ -26,11 +26,10 @@
 
    (static  (class Slab
 	       (%this::JsGlobalObject read-only)
-	       (js-slowbuffer::JsObject read-only)
-	       (slowbuffer (default #f))
 	       (offset::long (default 0))
 	       (lastoffset::long (default 0))
-	       (slice (default #f))))
+	       (len::long (default 0))
+	       (buf (default #f))))
    
    (export  (class JsSlowBuffer::JsArrayBuffer)
 
@@ -1457,24 +1456,17 @@
 ;*---------------------------------------------------------------------*/
 ;*    SLAB-SIZE ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define (SLAB-SIZE) (*fx 1024 1024))
+(define (SLAB-SIZE) (*fx 128 1024))
 
 ;*---------------------------------------------------------------------*/
 ;*    make-slab-allocator ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (make-slab-allocator %this::JsGlobalObject js-slowbuffer)
    (instantiate::Slab
-      (%this %this)
-      (js-slowbuffer js-slowbuffer)))
+      (%this %this)))
+;*       (js-slowbuffer js-slowbuffer)))                               */
 
-;*---------------------------------------------------------------------*/
-;*    roundup ...                                                      */
-;*---------------------------------------------------------------------*/
-(define (roundup a b)
-   (let ((r (remainderfx a b)))
-      (if (=fx r 0)
-	  a
-	  (-fx (+fx a b) r))))
+(define K 0)
 
 ;*---------------------------------------------------------------------*/
 ;*    slab-allocate ...                                                */
@@ -1482,59 +1474,50 @@
 ;*    See src/slab_allocator.cc in nodejs                              */
 ;*---------------------------------------------------------------------*/
 (define (slab-allocate slab obj size)
+   
+   (define (allocate slab)
+      (with-access::Slab slab (%this len buf offset lastoffset)
+;* 	 (set! K (+fx K 1))                                            */
+;* 	 (tprint "===================================== allocate..." K */
+;* 	    " len=" len " offset=" offset " size=" size)               */
+	 (let* ((l (maxfx size (SLAB-SIZE)))
+		(data (make-string l)))
+	    (set! buf (js-string->jsslowbuffer data %this))
+	    (set! len l)
+	    (set! offset size)
+	    (set! lastoffset 0)
+	    (values buf data 0))))
+   
    (with-trace 'nodejs-slab "slab-allocate"
       (trace-item "obj=" (typeof obj) " size=" size)
-      (with-access::Slab slab (%this js-slowbuffer slowbuffer slice
-				 offset lastoffset)
-	 (if (not slowbuffer)
-	     (let* ((rsize (roundup (max size (SLAB-SIZE)) 8192))
-		    (buf (js-new1 %this js-slowbuffer rsize)))
-		(set! slowbuffer buf)
-		(set! slice (js-get buf (& "slice") %this))
-		(set! offset size)
+      (with-access::Slab slab (%this buf len offset lastoffset)
+	 (cond
+	    ((not buf)
+	     (allocate slab))
+	    ((>fx (+fx offset size) len)
+	     ;; not enough space, new buffer required
+	     (allocate slab))
+	    (else
+	     ;; enough space
+	     (let ((loff offset))
+		(set! offset (+fx loff size))
+		(set! lastoffset loff)
 		(with-access::JsSlowBuffer buf (data)
-		   (trace-item "INIT size=" size " rsize=" rsize
-		      " -> free offset=" offset " lastoffset=" lastoffset
-		      " data=" (string-length data))
-		   (values buf data 0)))
-	     (with-access::JsSlowBuffer slowbuffer (data)
-		;; slowbuffer data are implemented as strings
-		(let* ((sz (string-length data)))
-		   (if (>fx (+ offset size) sz)
-		       ;; not enough space, new buffer required
-		       (let* ((rsize (roundup (max size sz) 16))
-			      (buf::JsSlowBuffer (js-new1 %this js-slowbuffer rsize)))
-			  (set! slowbuffer buf)
-			  (set! offset size)
-			  (trace-item
-			     "NEW size=" size " size_=" rsize
-			     " -> next offset=" offset)
-			  (set! lastoffset 0)
-			  (with-access::JsSlowBuffer buf (data)
-			     (values buf data 0)))
-		       (let ((loff offset))
-			  (set! offset (+fx offset size))
-			  (set! lastoffset loff)
-			  (trace-item "FILL size=" size " sz=" sz
-			     " -> next offset=" offset)
-			  (values slowbuffer data loff)))))))))
+		   (values buf data loff))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    slab-shrink! ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (slab-shrink! slab buf off size)
    (with-trace 'nodejs-slab "slab-shrink!"
-      (with-access::Slab slab (lastoffset slowbuffer %this offset)
-	 (trace-item "off=" off " size=" size
-	    " old-offset=" offset " last-offset=" lastoffset)
-	 (when (and (eq? slowbuffer buf) (=fx off lastoffset))
-	    ;;(set! offset (+fx lastoffset (roundup size 16)))
+      (with-access::Slab slab (%this offset lastoffset len)
+	 (when (=fx lastoffset off)
+	    ;;(tprint "shift offset=" offset "(" size ") -> " (+fx lastoffset size))
 	    (set! offset (+fx lastoffset size)))
-	 (trace-item "->offset=" offset)
+;* 	 (tprint "lastoffset=" lastoffset " offset=" offset            */
+;* 	    " off=" off " size=" size " len=" len)                     */
 	 (if (>fx size 0)
 	     buf
-;* 	     (with-access::Slab slab (js-slowbuffer)                   */
-;* 		(js-new %this js-slowbuffer buf))                      */
 	     (js-undefined)))))
 
 ;*---------------------------------------------------------------------*/

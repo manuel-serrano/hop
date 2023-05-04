@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Sat Apr  1 18:22:23 2023 (serrano)                */
+;*    Last change :  Wed May  3 15:41:09 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -462,9 +462,7 @@
 	      (js-generator-prototype::JsObject (default (class-nil JsObject)))
 	      (js-generatorfunction-prototype::JsObject (default (class-nil JsObject)))
 	      (js-buffer-proto (default #f))
-	      (js-buffer-cmap (default #f))
 	      (js-slowbuffer-proto (default #f))
-	      (js-slowbuffer-cmap (default #f))
 	      (js-stats-proto (default #f))
 	      (js-symbol-ctor::procedure (default list))
 	      (js-symbol-table read-only (default (js-symbol-table)))
@@ -507,6 +505,12 @@
 	      (js-generator-pcache::vector (default '#()))
 	      (js-promise-pcache::vector (default '#()))
 	      ;; cmaps
+	      (js-tcp-cmap (default #f))
+	      (js-udp-cmap (default #f))
+	      (js-pipe-cmap (default #f))
+	      (js-tty-cmap (default #f))
+	      (js-buffer-cmap (default #f))
+	      (js-slowbuffer-cmap (default #f))
 	      (js-initial-cmap (default (class-nil JsConstructMap)))
 	      (js-arguments-cmap (default (class-nil JsConstructMap)))
 	      (js-strict-arguments-cmap (default (class-nil JsConstructMap)))
