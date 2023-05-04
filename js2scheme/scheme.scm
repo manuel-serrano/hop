@@ -3297,6 +3297,9 @@
    (define (new-promise? clazz)
       (new-builtin? clazz 'Promise))
 
+   (define (new-buffer? clazz)
+      (new-builtin? clazz 'Buffer))
+
    (define (new-record? clazz)
       (when (isa? clazz J2SRef)
 	 (with-access::J2SRef clazz (decl)
@@ -3437,6 +3440,10 @@
 	  (lambda (sexp)
 	     (epairify loc sexp)))
 	 ((and (new-promise? clazz) (j2s-new-promise this mode return ctx))
+	  =>
+	  (lambda (sexp)
+	     (epairify loc sexp)))
+	 ((and (new-buffer? clazz) (j2s-new-buffer this mode return ctx))
 	  =>
 	  (lambda (sexp)
 	     (epairify loc sexp)))

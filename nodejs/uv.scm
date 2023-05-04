@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Thu May  4 10:05:10 2023 (serrano)                */
+;*    Last change :  Thu May  4 14:10:39 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -436,6 +436,10 @@
 	     (getrlimit 'NOFILE)
 	     (when (> hard 0)
 		(setrlimit! 'NOFILE hard hard)))))
+      ;; gc traces
+      (let ((env (getenv "HOPTRACE")))
+	 (when (and (string? env) (>=fx (string-contains env "hopscript:gc") 0))
+	    ($bgl-gc-verbose-set! #t)))
       (set! __js_strings (&init!))
       (letrec* ((loop %loop)
 		(async (instantiate::UvAsync

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 30 06:52:06 2014                          */
-;*    Last change :  Wed May  3 13:53:53 2023 (serrano)                */
+;*    Last change :  Thu May  4 15:03:43 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native native bindings                                           */
@@ -40,6 +40,7 @@
 	    (string->ucs2-string ::bstring ::long ::long)
 	    (string-utf8-normalize-utf16 ::bstring ::long ::long)
 	    (8bits-encode-utf8 ::bstring ::long ::long)
+	    (js-new-buffer ::JsGlobalObject ::obj)
 	    (js-string->jsslowbuffer ::bstring ::JsGlobalObject)
 	    (js-string->jsfastbuffer ::bstring ::JsGlobalObject)
 	    (js-jsslowbuffer->string::bstring ::JsSlowBuffer)
@@ -147,6 +148,32 @@
       (display (string-hex-extern data) op)
       (display "\")" op)))
 
+;*---------------------------------------------------------------------*/
+;*    js-new-buffer ...                                                */
+;*---------------------------------------------------------------------*/
+(define (js-new-buffer %this arg)
+   (with-access::JsGlobalObject %this (js-slowbuffer-proto js-slowbuffer-cmap)
+      (let loop ((arg arg))
+	 (cond
+	    ((fixnum? arg)
+	     (instantiateJsSlowBuffer
+		(cmap js-slowbuffer-cmap)
+		(__proto__ js-slowbuffer-proto)
+		(elements (vector arg))
+		(data ($make-string/wo-fill arg))))
+	    ((js-jsstring? arg)
+	     (let ((data (js-jsstring->string arg)))
+		(instantiateJsSlowBuffer
+		   (cmap js-slowbuffer-cmap)
+		   (__proto__ js-slowbuffer-proto)
+		   (elements (vector (string-length data)))
+		   (data data))))
+	    ((isa? arg JsSlowBuffer)
+	     (with-access::JsSlowBuffer arg (data)
+		(loop data)))
+	    (else
+	     (js-raise-type-error %this "Buffer: Illegal constructor call" arg))))))
+       
 ;*---------------------------------------------------------------------*/
 ;*    js-string->jsslowbuffer ...                                      */
 ;*---------------------------------------------------------------------*/
