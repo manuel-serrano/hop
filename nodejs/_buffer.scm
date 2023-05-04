@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 30 06:52:06 2014                          */
-;*    Last change :  Thu May  4 15:03:43 2023 (serrano)                */
+;*    Last change :  Thu May  4 15:22:12 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native native bindings                                           */
@@ -40,7 +40,6 @@
 	    (string->ucs2-string ::bstring ::long ::long)
 	    (string-utf8-normalize-utf16 ::bstring ::long ::long)
 	    (8bits-encode-utf8 ::bstring ::long ::long)
-	    (js-new-buffer ::JsGlobalObject ::obj)
 	    (js-string->jsslowbuffer ::bstring ::JsGlobalObject)
 	    (js-string->jsfastbuffer ::bstring ::JsGlobalObject)
 	    (js-jsslowbuffer->string::bstring ::JsSlowBuffer)
@@ -148,32 +147,6 @@
       (display (string-hex-extern data) op)
       (display "\")" op)))
 
-;*---------------------------------------------------------------------*/
-;*    js-new-buffer ...                                                */
-;*---------------------------------------------------------------------*/
-(define (js-new-buffer %this arg)
-   (with-access::JsGlobalObject %this (js-slowbuffer-proto js-slowbuffer-cmap)
-      (let loop ((arg arg))
-	 (cond
-	    ((fixnum? arg)
-	     (instantiateJsSlowBuffer
-		(cmap js-slowbuffer-cmap)
-		(__proto__ js-slowbuffer-proto)
-		(elements (vector arg))
-		(data ($make-string/wo-fill arg))))
-	    ((js-jsstring? arg)
-	     (let ((data (js-jsstring->string arg)))
-		(instantiateJsSlowBuffer
-		   (cmap js-slowbuffer-cmap)
-		   (__proto__ js-slowbuffer-proto)
-		   (elements (vector (string-length data)))
-		   (data data))))
-	    ((isa? arg JsSlowBuffer)
-	     (with-access::JsSlowBuffer arg (data)
-		(loop data)))
-	    (else
-	     (js-raise-type-error %this "Buffer: Illegal constructor call" arg))))))
-       
 ;*---------------------------------------------------------------------*/
 ;*    js-string->jsslowbuffer ...                                      */
 ;*---------------------------------------------------------------------*/
@@ -772,12 +745,12 @@
 				      (__proto__ js-slowbuffer-proto)
 				      (elements (vector (->fixnum a0)))
 				      (data ($make-string/wo-fill (->fixnum a0))))))
-			  ;; length
-			  (js-bind! %this this (& "length")
-			     :value a0
-			     :configurable #f
-			     :writable #f
-			     :enumerable #t)
+;* 			  ;; length                                    */
+;* 			  (js-bind! %this this (& "length")            */
+;* 			     :value a0                                 */
+;* 			     :configurable #f                          */
+;* 			     :writable #f                              */
+;* 			     :enumerable #t)                           */
 			  this))))))
 	    ((string? a0)
 	     (with-access::JsGlobalObject %this (js-object
@@ -789,12 +762,12 @@
 				(__proto__ js-slowbuffer-proto)
 				(elements (vector (string-length data)))
 				(data data))))
-		   ;; length
-		   (js-bind! %this this (& "length")
-		      :value (string-length data)
-		      :configurable #f
-		      :writable #f
-		      :enumerable #t)
+;* 		   ;; length                                           */
+;* 		   (js-bind! %this this (& "length")                   */
+;* 		      :value (string-length data)                      */
+;* 		      :configurable #f                                 */
+;* 		      :writable #f                                     */
+;* 		      :enumerable #t)                                  */
 		   this)))
 	    ((js-jsstring? a0)
 	     (with-access::JsGlobalObject %this (js-object
@@ -806,12 +779,12 @@
 				(__proto__ js-slowbuffer-proto)
 				(elements (vector (string-length data)))
 				(data data))))
-		   ;; length
-		   (js-bind! %this this (& "length")
-		      :value (string-length data)
-		      :configurable #f
-		      :writable #f
-		      :enumerable #t)
+;* 		   ;; length                                           */
+;* 		   (js-bind! %this this (& "length")                   */
+;* 		      :value (string-length data)                      */
+;* 		      :configurable #f                                 */
+;* 		      :writable #f                                     */
+;* 		      :enumerable #t)                                  */
 		   this)))
 	    ((isa? a0 JsSlowBuffer)
 	     (with-access::JsSlowBuffer a0 (data)
@@ -1491,9 +1464,6 @@
 (define (make-slab-allocator %this::JsGlobalObject js-slowbuffer)
    (instantiate::Slab
       (%this %this)))
-;*       (js-slowbuffer js-slowbuffer)))                               */
-
-(define K 0)
 
 ;*---------------------------------------------------------------------*/
 ;*    slab-allocate ...                                                */
@@ -1504,9 +1474,6 @@
    
    (define (allocate slab)
       (with-access::Slab slab (%this len buf offset lastoffset)
-;* 	 (set! K (+fx K 1))                                            */
-;* 	 (tprint "===================================== allocate..." K */
-;* 	    " len=" len " offset=" offset " size=" size)               */
 	 (let* ((l (maxfx size (SLAB-SIZE)))
 		(data (make-string l)))
 	    (set! buf (js-string->jsslowbuffer data %this))
@@ -1539,10 +1506,7 @@
    (with-trace 'nodejs-slab "slab-shrink!"
       (with-access::Slab slab (%this offset lastoffset len)
 	 (when (=fx lastoffset off)
-	    ;;(tprint "shift offset=" offset "(" size ") -> " (+fx lastoffset size))
 	    (set! offset (+fx lastoffset size)))
-;* 	 (tprint "lastoffset=" lastoffset " offset=" offset            */
-;* 	    " off=" off " size=" size " len=" len)                     */
 	 (if (>fx size 0)
 	     buf
 	     (js-undefined)))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 22 13:12:15 2023                          */
-;*    Last change :  Thu May  4 15:02:04 2023 (serrano)                */
+;*    Last change :  Thu May  4 15:30:32 2023 (serrano)                */
 ;*    Copyright   :  2023 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Optimizing nodejs builtins                                       */
@@ -13,11 +13,11 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_scheme-nodejs
-
+   
    (include "ast.sch"
 	    "usage.sch"
 	    "context.sch")
-
+   
    (library libuv)
    
    (import __js2scheme_ast
@@ -39,8 +39,7 @@
 	   (hop-call? ::J2SNode)
 	   (hop-require? ::J2SNode)
 	   (hop-method ::J2SNode)
-	   (j2s-hop-call ::J2SNode ::symbol mode return ctx)
-	   (j2s-new-buffer ::J2SNew mode return::procedure ctx)))
+	   (j2s-hop-call ::J2SNode ::symbol mode return ctx)))
 	   
 ;*---------------------------------------------------------------------*/
 ;*    is-require? ...                                                  */
@@ -247,21 +246,6 @@
 			   args)))
 	    (else
 	     (error "j2s-hop-call" "wrong call" method))))))
-
-;*---------------------------------------------------------------------*/
-;*    j2s-new-buffer ...                                               */
-;*---------------------------------------------------------------------*/
-(define (j2s-new-buffer this::J2SNew mode return::procedure ctx)
-   
-   (define (j2s-scheme-box o mode return ctx)
-      (let ((t (j2s-type o)))
-	 (box (j2s-scheme o mode return ctx) t ctx)))
-   
-   (with-access::J2SNew this (args)
-      (when (and (pair? args) (null? (cdr args)))
-	 `(js-new-buffer %this
-	     ,(j2s-scheme-box (car args) mode return ctx)))))
-
 
 
 
