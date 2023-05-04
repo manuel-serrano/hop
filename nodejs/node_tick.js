@@ -25,6 +25,8 @@
 // bootstrapping the node.js core. Special caution is given to the performance
 // of the startup process, so many dependencies are invoked lazily.
 
+var GCroots = [];
+
 // This is an excerpt an node.js that initialize tick counters.
 function initNodeTick() {
   var processNextTick = function() {
@@ -43,6 +45,7 @@ function initNodeTick() {
     var index = 1;
     var depth = 2;
 
+    GCroots.push(() => { return nextTickQueue });
     process.nextTick = function nextTick(cb) {
       process._currentTickHandler(cb);
     };
@@ -110,7 +113,7 @@ function initNodeTick() {
     // using domains will cause this to be overridden
     function _tickCallback() {
       var callback, nextTickLength, threw;
-//#:tprint( ">>> _tickCallback ", process.pid );
+       //#:tprint( ">>> _tickCallback ", process.pid );
       if (inTick) return;
       if (infoBox[length] === 0) {
         infoBox[index] = 0;
@@ -186,11 +189,13 @@ function initNodeTick() {
         }
       }
 
-      tickDone(0);
+       tickDone(0);
+       //GCroots = [];
 //#:tprint( "<<< _tickDomainCallback ", process.pid );
     }
 
-    function _nextTick(callback) {
+     function _nextTick(callback) {
+	//GCroots.push(callback);
        // on the way out, don't bother. it won't get fired anyway.
       if (process._exiting)
         return;

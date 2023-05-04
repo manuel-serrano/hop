@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Sun Apr 30 09:49:16 2023 (serrano)                */
+;*    Last change :  Thu May  4 11:31:13 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
@@ -49,6 +49,7 @@
 	   (js-arguments-index-set! ::JsArguments ::uint32 ::obj ::JsGlobalObject)
 	   (js-arguments-length::obj ::JsArguments ::JsGlobalObject)
 	   (js-arguments-slice ::JsArguments start end ::JsGlobalObject)
+	   (js-arguments-slice1 ::JsArguments start ::JsGlobalObject)
 	   (js-arguments-stack-slice ::vector start end ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
@@ -716,6 +717,12 @@
 	 (set! ilen len)
 	 (set! length len)
 	 arr)))
+
+;*---------------------------------------------------------------------*/
+;*    js-arguments-slice1 ...                                          */
+;*---------------------------------------------------------------------*/
+(define (js-arguments-slice1 this::JsArguments start %this)
+   (js-arguments-slice this start (js-arguments-length this %this) %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-arguments-slice ...                                           */

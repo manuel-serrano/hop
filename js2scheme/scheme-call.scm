@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Sun Apr 30 10:12:19 2023 (serrano)                */
+;*    Last change :  Thu May  4 11:29:42 2023 (serrano)                */
 ;*    Copyright   :  2018-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -223,6 +223,8 @@
 	("slice" ,j2s-jsstring-slice1 string (any) %this #t)
 	("slice" js-jsstring-maybe-slice1 (:hint string) (any) %this #t)
 	("slice" js-jsstring-maybe-slice2 (:hint string) (any any) %this #t)
+	("slice" js-arguments-slice1 arguments (any) %this #f)
+	("slice" js-arguments-slice arguments (any any) %this #f)
 	("slice" js-array-maybe-slice0 any () %this #t)
 	("slice" js-array-maybe-slice1 any (any) %this #t)
 	("slice" js-array-maybe-slice2 any (any any) %this #t)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 22 13:12:15 2023                          */
-;*    Last change :  Fri Feb 24 13:23:54 2023 (serrano)                */
+;*    Last change :  Thu May  4 11:42:02 2023 (serrano)                */
 ;*    Copyright   :  2023 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Optimizing nodejs builtins                                       */
@@ -214,7 +214,7 @@
 (define (hop-call? obj::J2SNode)
    (when (isa? obj J2SCall)
       (with-access::J2SCall obj (fun args)
-	 (when (and (pair? args) (null? (cdr args)))
+	 (when (pair? args)
 	    (symbol? (hop-fun fun))))))
 
 ;*---------------------------------------------------------------------*/

@@ -1017,9 +1017,10 @@ function endReadableNextTick() {
       const state = stream._readableState;
       // Check that we didn't get one last unshift.
       if (!state.endEmitted && state.length === 0) {
-        state.endEmitted = true;
-        stream.readable = false;
-        stream.emit('end');
+         state.endEmitted = true;
+         stream.readable = false;
+         stream.emit('end');
+	 endReadableNextTickArray[i] = undefined;
       }
    }
    endReadableNextTickIndex = 0;
