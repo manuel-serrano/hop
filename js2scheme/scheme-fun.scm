@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Sun Apr 30 09:24:24 2023 (serrano)                */
+;*    Last change :  Sat May  6 06:51:23 2023 (serrano)                */
 ;*    Copyright   :  2017-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -345,10 +345,12 @@
       (let ((fun (make-function-sans-alloc this)))
 	 (if (decl-usage-has? this '(new ref))
 	     (with-access::J2SFun (declfun-fun this) (body loc)
-		(if (cancall? this #f)
-		    fun
-		    (epairify loc
-		       `(js-function-set-constrmap! ,fun))))
+		;; MS 6may2023, see jsfun->ctor
+		fun)
+;* 		(if (cancall? this #f)                                 */
+;* 		    fun                                                */
+;* 		    (epairify loc                                      */
+;* 		       `(js-function-set-constrmap! ,fun))))           */
 	     fun))))
 
 ;*---------------------------------------------------------------------*/
@@ -641,11 +643,16 @@
    (define (object-alloc this::J2SFun)
       (with-access::J2SFun this (body expr new-target)
 	 (let ((f (j2s-decl-scm-id decl ctx)))
-	    (cond
-	       ((cancall? body #f)
-		`(js-object-alloc %this ,f))
-	       (else
-		`(js-object-alloc-fast %this ,f))))))
+	    ;; MS 6may2023, see j2s-make-function, changed because
+	    ;; of the express benchmarks which creates many closures
+	    ;; that call no function and that yield to the construction
+	    ;; of tons of useless cmaps
+	    `(js-object-alloc %this ,f))))
+;* 	    (cond                                                      */
+;* 	       ((cancall? body #f)                                     */
+;* 		`(js-object-alloc %this ,f))                           */
+;* 	       (else                                                   */
+;* 		`(js-object-alloc-fast %this ,f))))))                  */
 
    (define (let-newtarget this::J2SFun expr)
       (with-access::J2SFun this (new-target)
