@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Sun Apr 16 09:04:00 2023 (serrano)                */
+;*    Last change :  Sat May  6 09:24:08 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -300,7 +300,7 @@
 	 
 	 (define tick-from-spinner #f)
 
-	 (define (spinner status)
+	 (define (spinner tick-spinner)
 	    ;; see Spin, node.cc:184
 	    (when need-tick-cb
 	       (set! need-tick-cb #f)
