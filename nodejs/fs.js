@@ -481,7 +481,6 @@ fs.read = function(fd, buffer, offset, length, position, callback) {
     length = buffer;
     buffer = new Buffer(length);
     offset = 0;
-
     callback = function(err, bytesRead) {
       if (!cb) return;
 
@@ -1719,8 +1718,6 @@ ReadStream.prototype._read = function(n) {
     return;
 
   if (!pool || pool.length - pool.used < kMinPoolSpace) {
-    // discard the old pool.
-    pool = null;
     allocNewPool(this._readableState.highWaterMark);
   }
 
@@ -1757,9 +1754,13 @@ ReadStream.prototype._read = function(n) {
     } else {
       var b = null;
       if (bytesRead > 0)
-        b = thisPool.slice(start, start + bytesRead);
-
-      self.push(b);
+        // MS 7may2023
+        if (start > 0 || bytesRead < thisPool.length) {
+          b = thisPool.slice(start, start + bytesRead);
+	} else { 
+	  b = thisPool;
+	}
+        self.push(b);
     }
   }
 };

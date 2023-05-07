@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sun Apr 30 14:53:33 2023 (serrano)                */
+;*    Last change :  Sun May  7 08:31:26 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -623,6 +623,7 @@
 		       %id)))
 	    transitions))))
 
+(define K 0)
 ;*---------------------------------------------------------------------*/
 ;*    js-ctor-constrsize-extend! ...                                   */
 ;*---------------------------------------------------------------------*/
@@ -631,40 +632,31 @@
       ((js-function? ctor)
        (with-access::JsFunction ctor (constrsize info constrmap)
 	  (cond
-	     ((>fx constrsize sz)
+	     ((>=fx constrsize sz)
 	      #unspecified)
 	     ((>=fx constrsize (js-function-info-maxconstrsize info))
 	      #unspecified)
-	     ((<fx sz (js-function-info-maxconstrsize info))
-	      (set! constrmap (clone-cmap constrmap))
-	      (set! constrsize sz))
 	     (else
 	      (set! constrmap (clone-cmap constrmap))
-	      (set! constrsize (+fx constrsize 1))))))
+	      (set! constrsize sz)))))
       ((cell? ctor)
-       (tprint "SHOULD NOT BE HERE...")
+       ;; only used for functions (see function.scm)
        (cond
-	  (#t #f)
-	  ((>fx (cell-ref ctor) sz)
+	  ((>=fx (cell-ref ctor) sz)
 	   #unspecified)
 	  ((>=fx (cell-ref ctor) (ctor-max-constrsize))
 	   #unspecified)
-	  ((<fx sz (ctor-max-constrsize))
-	   (cell-set! ctor (+fx sz 1)))
 	  (else
-	   (cell-set! ctor (+fx (cell-ref ctor) 1)))))
+	   (cell-set! ctor sz))))
       ((pair? ctor)
        (cond
-	  ((>fx (cdr ctor) sz)
+	  ((>=fx (cdr ctor) sz)
 	   #unspecified)
 	  ((>=fx (cdr ctor) (ctor-max-constrsize))
 	   #unspecified)
-	  ((<fx sz (ctor-max-constrsize))
-	   (set-car! ctor (clone-cmap (car ctor)))
-	   (set-cdr! ctor (+fx sz 1)))
 	  (else
 	   (set-car! ctor (clone-cmap (car ctor)))
-	   (set-cdr! ctor (+fx (cdr ctor) 1)))))))
+	   (set-cdr! ctor sz))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-extend! ...                                            */
@@ -1008,10 +1000,10 @@
 ;*    js-pcache-vtable! ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (js-pcache-vtable! cache::JsPropertyCache omap i %this::JsGlobalObject)
-      (with-access::JsPropertyCache cache (cntmiss vindex point)
-	 (when (=fx vindex (js-not-a-index))
-	    (set! vindex (js-get-vindex %this)))
-	 (js-cmap-vtable-add! omap vindex i cache)))
+   (with-access::JsPropertyCache cache (cntmiss vindex point)
+      (when (=fx vindex (js-not-a-index))
+	 (set! vindex (js-get-vindex %this)))
+      (js-cmap-vtable-add! omap vindex i cache)))
 
 ;*---------------------------------------------------------------------*/
 ;*    cmap-size ...                                                    */

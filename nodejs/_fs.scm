@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat May 17 06:10:40 2014                          */
-;*    Last change :  Wed Feb 22 11:41:18 2023 (serrano)                */
+;*    Last change :  Sun May  7 14:08:40 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    File system bindings                                             */
@@ -361,12 +361,25 @@
 	 (unless fs-watcher-proto
 	    (set! fs-watcher-proto (create-fs-watcher-proto)))
 	 fs-watcher-proto))
+
+   (define fs-watcher-cmap #f)
    
-   (define (fs-watcher this)
-      (instantiateJsHandle
-	 (handle (nodejs-make-fs-poll %worker))
-	 (cmap (js-make-jsconstructmap))
-	 (__proto__ (get-fs-watcher-proto process))))
+   (define (fs-watcher-ctor this)
+      (unless fs-watcher-cmap
+	 (set! fs-watcher-cmap
+	    (js-make-jsconstructmap :ctor fs-watcher)))
+      (with-access::JsFunction fs-watcher (constrsize)
+	 (instantiateJsHandle
+	    (handle (nodejs-make-fs-poll %worker))
+	    (cmap fs-watcher-cmap)
+	    (__proto__ (get-fs-watcher-proto process))
+	    (elements ($create-vector constrsize)))))
+   
+   (define fs-watcher
+      (js-make-function %this fs-watcher-ctor
+	 (js-function-arity fs-watcher-ctor)
+	 (js-function-info :name "StatWatcher" :len 0)
+	 :alloc (lambda (%this o) #unspecified)))
 
    (set! __js_strings (&init!))
 
@@ -465,10 +478,7 @@
 			(read . ,(js-make-function %this read
 				    (js-function-arity read)
 				    (js-function-info :name "read" :len 6)))
-			(StatWatcher . ,(js-make-function %this fs-watcher
-					   (js-function-arity fs-watcher)
-					   (js-function-info :name "StatWatcher" :len 0)
-					   :alloc (lambda (%this o) #unspecified))))
+			(StatWatcher . ,fs-watcher))
 		      %this)))
 	 ;; Nodejs is compiled in -Os mode and in this optimization mode
 	 ;; function are only cached if found in the prototype object

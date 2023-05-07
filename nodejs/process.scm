@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Sat May  6 09:24:08 2023 (serrano)                */
+;*    Last change :  Sun May  7 14:31:25 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -885,19 +885,26 @@
 	 (unless fs-event-proto
 	    (set! fs-event-proto (create-fs-event-proto)))
 	 fs-event-proto))
+
+   (define fs-event-cmap #f)
    
-   (define (fs-event this)
+   (define (fs-event-ctor this)
+      (unless fs-event-cmap
+	 (set! fs-event-cmap (js-make-jsconstructmap :ctor fs-event)))
       (instantiateJsHandle
 	 (handle (nodejs-make-fs-event %worker))
 	 (__proto__ (get-fs-event-proto process))
-	 (cmap (js-make-jsconstructmap))))
+	 (cmap fs-event-cmap)))
+
+   (define fs-event
+      (js-make-function %this fs-event
+	 (js-function-arity 0 0)
+	 (js-function-info :name "FSEvent" :len 0)
+	 :alloc (lambda (%this o) #unspecified)))
    
    (with-access::JsGlobalObject %this (js-object)
       (js-alist->jsobject
-	 `((FSEvent . ,(js-make-function %this fs-event
-			  (js-function-arity 0 0)
-			  (js-function-info :name "FSEvent" :len 0)
-			  :alloc (lambda (%this o) #unspecified))))
+	 `((FSEvent . ,fs-event))
 	 %this)))
 
 ;*---------------------------------------------------------------------*/

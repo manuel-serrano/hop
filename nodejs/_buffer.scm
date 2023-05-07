@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 30 06:52:06 2014                          */
-;*    Last change :  Thu May  4 15:22:12 2023 (serrano)                */
+;*    Last change :  Sun May  7 06:55:47 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native native bindings                                           */
@@ -740,52 +740,31 @@
 		    (js-raise-range-error %this "length (~s) > kMaxLength" a0))
 		   (else
 		    (with-access::JsGlobalObject %this (js-object js-slowbuffer-proto js-slowbuffer-cmap)
-		       (let ((this (instantiateJsSlowBuffer
-				      (cmap js-slowbuffer-cmap)
-				      (__proto__ js-slowbuffer-proto)
-				      (elements (vector (->fixnum a0)))
-				      (data ($make-string/wo-fill (->fixnum a0))))))
-;* 			  ;; length                                    */
-;* 			  (js-bind! %this this (& "length")            */
-;* 			     :value a0                                 */
-;* 			     :configurable #f                          */
-;* 			     :writable #f                              */
-;* 			     :enumerable #t)                           */
-			  this))))))
+		       (instantiateJsSlowBuffer
+			  (cmap js-slowbuffer-cmap)
+			  (__proto__ js-slowbuffer-proto)
+			  (elements (vector (->fixnum a0)))
+			  (data ($make-string/wo-fill (->fixnum a0)))))))))
 	    ((string? a0)
 	     (with-access::JsGlobalObject %this (js-object
 						   js-slowbuffer-proto
 						   js-slowbuffer-cmap)
-		(let* ((data a0)
-		       (this (instantiateJsSlowBuffer
-				(cmap js-slowbuffer-cmap)
-				(__proto__ js-slowbuffer-proto)
-				(elements (vector (string-length data)))
-				(data data))))
-;* 		   ;; length                                           */
-;* 		   (js-bind! %this this (& "length")                   */
-;* 		      :value (string-length data)                      */
-;* 		      :configurable #f                                 */
-;* 		      :writable #f                                     */
-;* 		      :enumerable #t)                                  */
-		   this)))
+		(let ((data a0))
+		   (instantiateJsSlowBuffer
+		      (cmap js-slowbuffer-cmap)
+		      (__proto__ js-slowbuffer-proto)
+		      (elements (vector (string-length data)))
+		      (data data)))))
 	    ((js-jsstring? a0)
 	     (with-access::JsGlobalObject %this (js-object
 						   js-slowbuffer-proto
 						   js-slowbuffer-cmap)
-		(let* ((data (js-jsstring->string a0))
-		       (this (instantiateJsSlowBuffer
-				(cmap js-slowbuffer-cmap)
-				(__proto__ js-slowbuffer-proto)
-				(elements (vector (string-length data)))
-				(data data))))
-;* 		   ;; length                                           */
-;* 		   (js-bind! %this this (& "length")                   */
-;* 		      :value (string-length data)                      */
-;* 		      :configurable #f                                 */
-;* 		      :writable #f                                     */
-;* 		      :enumerable #t)                                  */
-		   this)))
+		(let ((data (js-jsstring->string a0)))
+		   (instantiateJsSlowBuffer
+		      (cmap js-slowbuffer-cmap)
+		      (__proto__ js-slowbuffer-proto)
+		      (elements (vector (string-length data)))
+		      (data data)))))
 	    ((isa? a0 JsSlowBuffer)
 	     (with-access::JsSlowBuffer a0 (data)
 		;; MS: 25 nov 2014, should the length be set to
@@ -1472,10 +1451,10 @@
 ;*---------------------------------------------------------------------*/
 (define (slab-allocate slab obj size)
    
-   (define (allocate slab)
+   (define (allocate slab size)
       (with-access::Slab slab (%this len buf offset lastoffset)
 	 (let* ((l (maxfx size (SLAB-SIZE)))
-		(data (make-string l)))
+		(data ($make-string/wo-fill l)))
 	    (set! buf (js-string->jsslowbuffer data %this))
 	    (set! len l)
 	    (set! offset size)
@@ -1487,10 +1466,10 @@
       (with-access::Slab slab (%this buf len offset lastoffset)
 	 (cond
 	    ((not buf)
-	     (allocate slab))
+	     (allocate slab size))
 	    ((>fx (+fx offset size) len)
 	     ;; not enough space, new buffer required
-	     (allocate slab))
+	     (allocate slab size))
 	    (else
 	     ;; enough space
 	     (let ((loff offset))

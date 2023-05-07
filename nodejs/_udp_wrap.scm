@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 19 07:19:20 2014                          */
-;*    Last change :  Wed May  3 15:44:29 2023 (serrano)                */
+;*    Last change :  Sun May  7 14:11:41 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs UDP bindings                                              */
@@ -215,21 +215,23 @@
    
    (define (udp-wrap hdl)
       (with-access::JsGlobalObject %this (js-object js-udp-cmap)
-	 (unless js-udp-cmap
-	    (set! js-udp-cmap (js-make-jsconstructmap)))
-	 (let ((obj (instantiateJsHandle
-		       (handle hdl)
-		       (__proto__ (get-udp-proto))
-		       (cmap js-udp-cmap)
-		       (elements ($create-vector 1)))))
-	    (js-bind! %this obj (& "fd")
-	       :get (js-make-function %this
-		       (lambda (this)
-			  (nodejs-stream-fd %worker hdl))
-		       (js-function-arity 0 0)
-		       (js-function-info :name "GetFD" :len 0))
-	       :writable #f :configurable #f)
-	    obj)))
+	 (with-access::JsProcess process (js-udp)
+	    (unless js-udp-cmap
+	       (set! js-udp-cmap (js-make-jsconstructmap :ctor js-udp)))
+	    (with-access::JsFunction js-udp (constrsize)
+	       (let ((obj (instantiateJsHandle
+			     (handle hdl)
+			     (__proto__ (get-udp-proto))
+			     (cmap js-udp-cmap)
+			     (elements ($create-vector constrsize)))))
+		  (js-bind! %this obj (& "fd")
+		     :get (js-make-function %this
+			     (lambda (this)
+				(nodejs-stream-fd %worker hdl))
+			     (js-function-arity 0 0)
+			     (js-function-info :name "GetFD" :len 0))
+		     :writable #f :configurable #f)
+		  obj)))))
    
    (define (UDP this)
       (udp-wrap (nodejs-udp-handle %worker)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 19 07:19:20 2014                          */
-;*    Last change :  Wed May  3 15:45:24 2023 (serrano)                */
+;*    Last change :  Sun May  7 14:11:21 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs TTY bindings                                              */
@@ -141,21 +141,23 @@
    
    (define (tty-wrap hdl)
       (with-access::JsGlobalObject %this (js-object js-tty-cmap)
-	 (unless js-tty-cmap
-	    (set! js-tty-cmap (js-make-jsconstructmap)))
-	 (let ((obj (instantiateJsHandle
-		       (handle hdl)
-		       (__proto__ (get-tty-proto))
-		       (cmap js-tty-cmap)
-		       (elements ($create-vector 1)))))
-	    (js-bind! %this obj (& "fd")
-	       :get (js-make-function %this
-		       (lambda (this)
-			  (nodejs-stream-fd %worker hdl))
-		       (js-function-arity 0 0)
-		       (js-function-info :name "GetFD" :len 0))
-	       :writable #f :configurable #f)
-	    obj)))
+	 (with-access::JsProcess process (js-tty)
+	    (unless js-tty-cmap
+	       (set! js-tty-cmap (js-make-jsconstructmap :ctor js-tty)))
+	    (with-access::JsFunction js-tty (constrsize)
+	       (let ((obj (instantiateJsHandle
+			     (handle hdl)
+			     (__proto__ (get-tty-proto))
+			     (cmap js-tty-cmap)
+			     (elements ($create-vector constrsize)))))
+		  (js-bind! %this obj (& "fd")
+		     :get (js-make-function %this
+			     (lambda (this)
+				(nodejs-stream-fd %worker hdl))
+			     (js-function-arity 0 0)
+			     (js-function-info :name "GetFD" :len 0))
+		     :writable #f :configurable #f)
+		  obj)))))
    
    (define (TTY this fd readable)
       (tty-wrap (nodejs-tty-handle %worker fd readable)))

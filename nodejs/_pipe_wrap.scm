@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 19 07:19:20 2014                          */
-;*    Last change :  Wed May  3 15:31:50 2023 (serrano)                */
+;*    Last change :  Sun May  7 14:10:13 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs PIPE bindings                                             */
@@ -204,31 +204,33 @@
    ;; pipe
    (define (pipe this #!optional val)
       (with-access::JsGlobalObject %this (js-object js-new-target js-pipe-cmap)
-	 (unless js-pipe-cmap
-	    (set! js-pipe-cmap (js-make-jsconstructmap)))
-	 (if (eq? js-new-target (js-undefined))
-	     (js-raise-type-error %this
-		"Pipe can only be used as a constructor" this)
-	     (set! js-new-target (js-undefined)))
-	 (let* ((hdl (nodejs-new-pipe %worker val))
-		(obj (instantiateJsHandle
-			(handle hdl)
-			(__proto__ pipe-prototype)
-			(cmap js-pipe-cmap)
-			(elements ($create-vector 1)))))
-	    ;; fd
-	    (js-bind! %this obj (& "fd")
-	       :get (js-make-function %this
-		       (lambda (this)
-			  (with-access::JsHandle this (handle)
-			     (nodejs-stream-fd %worker handle)))
-		       (js-function-arity 0 0)
-		       (js-function-info :name "getGD" :len 0))
-	       :writable #f :configurable #f)
-	    ;; writeQueueSize
-	    (js-put! obj (& "writeQueueSize")
-	       (nodejs-stream-write-queue-size hdl) #f %this)
-	    obj)))
+	 (with-access::JsProcess process (js-pipe)
+	    (unless js-pipe-cmap
+	       (set! js-pipe-cmap (js-make-jsconstructmap :ctor js-pipe)))
+	    (if (eq? js-new-target (js-undefined))
+		(js-raise-type-error %this
+		   "Pipe can only be used as a constructor" this)
+		(set! js-new-target (js-undefined)))
+	    (with-access::JsFunction js-pipe (constrsize)
+	       (let* ((hdl (nodejs-new-pipe %worker val))
+		      (obj (instantiateJsHandle
+			      (handle hdl)
+			      (__proto__ pipe-prototype)
+			      (cmap js-pipe-cmap)
+			      (elements ($create-vector constrsize)))))
+		  ;; fd
+		  (js-bind! %this obj (& "fd")
+		     :get (js-make-function %this
+			     (lambda (this)
+				(with-access::JsHandle this (handle)
+				   (nodejs-stream-fd %worker handle)))
+			     (js-function-arity 0 0)
+			     (js-function-info :name "getGD" :len 0))
+		     :writable #f :configurable #f)
+		  ;; writeQueueSize
+		  (js-put! obj (& "writeQueueSize")
+		     (nodejs-stream-write-queue-size hdl) #f %this)
+		  obj)))))
    
    (with-access::JsGlobalObject %this (js-object)
       (with-access::JsProcess process (js-pipe)

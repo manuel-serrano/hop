@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 20 12:31:24 2014                          */
-;*    Last change :  Wed May  3 18:36:00 2023 (serrano)                */
+;*    Last change :  Sun May  7 10:52:55 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Common stream functions                                          */
@@ -57,12 +57,13 @@
 			   (when (<fx status 0)
 			      (js-put! process (& "_errno")
 				 (nodejs-err-name status) #f %this))
-			   (set! reqs (remq req reqs))
+			   ;; (set! reqs (remq req reqs))
 			   (let ((oncomp (js-get req (& "oncomplete") %this)))
-			      (!js-callback3 "shutdown" %worker %this
-				 oncomp req status this req)
+			      (when (js-function? oncomp)
+				 (!js-callback3 "shutdown" %worker %this
+				    oncomp req status this req))
 			      '(js-worker-tick %worker))))))
-	    (set! reqs (cons req reqs))
+	    ;; (set! reqs (cons req reqs))
 	    (when (=fx res 0)
 	       req)))))
 
@@ -87,7 +88,7 @@
    (with-access::JsGlobalObject %this (js-object js-nodejs-pcache)
       (with-access::JsHandle this (handle reqs)
 	 (let ((req (js-new %this js-object)))
-	    (set! reqs (cons req reqs))
+	    ;; (set! reqs (cons req reqs))
 	    (with-access::JsProcess process (using-domains)
 	       (if using-domains
 		   (let ((dom (js-get-jsobject-name/cache process (& "domain") #f %this
@@ -99,7 +100,7 @@
 	    (js-put-jsobject-name/cache! req (& "bytes") len #f %this
 	       (js-pcache-ref js-nodejs-pcache 6))
 	    (with-access::JsHandle this (handle)
-	       (set! reqs (remq req reqs))
+	       ;; (set! reqs (remq req reqs))
 	       (let ((cb (lambda (status req this %this process)
 			    (with-access::JsGlobalObject %this (worker js-nodejs-pcache)
 			       (with-access::JsHandle this (handle)
@@ -173,8 +174,9 @@
 			    (js-pcache-ref js-nodejs-pcache 19))
 			 (let ((onread (js-get-jsobject-name/cache this (& "onread") #f %this
 					  (js-pcache-ref js-nodejs-pcache 20))))
-			    (!js-callback3 "read-start" %worker %this onread this
-			       (js-undefined) (js-undefined) (js-undefined))))
+			    (when (js-function? onread)
+			       (!js-callback3 "read-start" %worker %this onread this
+				  (js-undefined) (js-undefined) (js-undefined)))))
 			((not status)
 			 ;; read error
 			 (slab-shrink! slab buf offset 0)
@@ -192,7 +194,7 @@
 			 (let* ((b (slab-shrink! slab buf offset len))
 				(onread (js-get-jsobject-name/cache this (& "onread") #f %this
 					   (js-pcache-ref js-nodejs-pcache 22))))
-			    (if (and (nodejs-pipe-ipc? handle) pending-type)
+			    (if (and (nodejs-pipe-ipc? handle) pending-type (js-function? onread))
 				(!js-callback4 "read-start" %worker %this
 				   onread this b offset len
 				   (nodejs-pipe-accept %worker %this this

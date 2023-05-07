@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Sun Apr 30 09:12:46 2023 (serrano)                */
+;*    Last change :  Sun May  7 14:21:23 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -329,7 +329,8 @@
 (define-inline (make-cmap props)
    (js-make-jsconstructmap 
       :methods (make-vector (vector-length props))
-      :props props))
+      :props props
+      :ctor (make-cell (vector-length props))))
 
 ;*---------------------------------------------------------------------*/
 ;*    current-loc ...                                                  */
