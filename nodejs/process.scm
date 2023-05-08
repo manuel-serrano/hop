@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Sun May  7 14:31:25 2023 (serrano)                */
+;*    Last change :  Mon May  8 07:09:14 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -320,8 +320,9 @@
 
 	 (define (need-tick-callback this)
 	    ;; see NeedTickCallback, node.cc:215
-	    (set! need-tick-cb #t)
-	    (nodejs-idle-start %worker %this tick-spinner))
+	    (unless need-tick-cb
+	       (set! need-tick-cb #t)
+	       (nodejs-idle-start %worker %this tick-spinner)))
 
 	 (define constant-binding #f)
 	 (define fs-binding #f)

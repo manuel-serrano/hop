@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Sat May  6 08:50:13 2023 (serrano)                */
+;*    Last change :  Mon May  8 06:29:03 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -98,15 +98,15 @@
 
 	   (nodejs-make-fs-poll ::WorkerHopThread)
 	   (nodejs-fs-poll-start ::JsGlobalObject ::JsObject ::obj ::bstring ::procedure ::int)
-	   (inline nodejs-fs-poll-stop ::obj)
+	   (nodejs-fs-poll-stop ::obj)
 
 	   (nodejs-make-idle ::WorkerHopThread ::JsGlobalObject ::procedure)
-	   (inline nodejs-idle-start ::WorkerHopThread ::JsGlobalObject ::obj)
-	   (inline nodejs-idle-stop ::WorkerHopThread ::JsGlobalObject ::obj)
+	   (nodejs-idle-start ::WorkerHopThread ::JsGlobalObject ::obj)
+	   (nodejs-idle-stop ::WorkerHopThread ::JsGlobalObject ::obj)
 	   
 	   (inline nodejs-check?::bool ::obj)
 	   (nodejs-make-check ::WorkerHopThread ::JsGlobalObject ::JsObject)
-	   (inline nodejs-check-stop ::WorkerHopThread ::JsGlobalObject ::obj)
+	   (nodejs-check-stop ::WorkerHopThread ::JsGlobalObject ::obj)
 	   
 	   (nodejs-loadavg ::u8vector)
 	   (nodejs-getfreemem::double)
@@ -856,7 +856,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-fs-poll-stop ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-inline (nodejs-fs-poll-stop hdl)
+(define (nodejs-fs-poll-stop hdl)
    (uv-fs-poll-stop hdl))
 
 ;*---------------------------------------------------------------------*/
@@ -870,13 +870,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-idle-start ...                                            */
 ;*---------------------------------------------------------------------*/
-(define-inline (nodejs-idle-start %worker %this obj)
+(define (nodejs-idle-start %worker %this obj)
    (uv-idle-start obj))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-idle-stop ...                                             */
 ;*---------------------------------------------------------------------*/
-(define-inline (nodejs-idle-stop %worker %this obj)
+(define (nodejs-idle-stop %worker %this obj)
    (uv-idle-stop obj))
 
 ;*---------------------------------------------------------------------*/
@@ -902,7 +902,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-check-stop ...                                            */
 ;*---------------------------------------------------------------------*/
-(define-inline (nodejs-check-stop %worker %this obj)
+(define (nodejs-check-stop %worker %this obj)
    (uv-check-stop obj))
    
 ;*---------------------------------------------------------------------*/
