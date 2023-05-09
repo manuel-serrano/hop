@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Tue May  9 09:02:01 2023 (serrano)                */
+;*    Last change :  Tue May  9 09:40:44 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -540,7 +540,7 @@
 	       (set! count actions-count)
 	       (let ((len (vector-length actions)))
 		  (when (<fx (vector-length %actions) len)
-		     ;; reallocate %actions which has become smaller
+		     ;; reallocate %actions which has become too small
 		     (set! %actions (make-vector len))
 		     (set! %actions-name (make-vector len)))
 		  ;; swap actions and %actions
@@ -549,7 +549,7 @@
 		  (set! actions %actions)
 		  (set! actions-name %actions-name)
 		  (set! %actions acts)
-		  (set! actions-name nms)
+		  (set! %actions-name nms)
 		  (set! actions-count 0)))
 	    ;; execute the actions
 	    (let loop ((i 0))
@@ -566,8 +566,11 @@
 		  (let liip ()
 		     (when (<fx i count)
 			(let ((act (vector-ref acts i))
-			      (nms (vector-ref nms i)))
-			   (with-trace 'nodejs-async nms
+			      (nm (vector-ref nms i)))
+			   ;; do not keep pointers to executed actions
+			   (vector-set! acts i #unspecified)
+			   (vector-set! nms i #unspecified)
+			   (with-trace 'nodejs-async nm
 			      (js-worker-call th act %this)))
 			(set! i (+fx i 1))
 			(liip)))))))))
@@ -750,8 +753,6 @@
 	       (let ((proc (js-get-jsobject-name/cache obj (& "ontimeout")
 			      #f %this (js-pcache-ref js-nodejs-pcache 24))))
 		  (when (js-procedure? proc)
-;* 		     (!js-callback1 "tick-spinner" worker %this        */
-;* 			proc obj status)))))))                         */
 		     (js-worker-push! worker "tick-spinner"
 			(lambda (%this)
 			   (js-call1-jsprocedure %this proc obj status)))))))))

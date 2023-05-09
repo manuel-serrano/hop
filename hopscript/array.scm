@@ -1371,8 +1371,25 @@
 	       (set! length nlen)
 	       (set! ilen nlen)
 	       first)))
-      
+
+      ;; MS 9may2023, used to be object-shift!
       (define (array-shift! o len::uint32)
+	 (let ((first (js-array-index-ref o #u32:0 %this)))
+	    (let loop ((i #u32:1))
+	       (cond
+		  ((=u32 i len)
+		   (js-delete! o (-fx (uint32->fixnum i) 1) #t %this)
+		   (js-put-length! o (-fx (uint32->fixnum i) 1) #f #f %this)
+		   first)
+		  ((js-absent? (js-array-index-ref o i %this))
+		   (js-delete! o (-fx (uint32->fixnum i) 1) #t %this)
+		   (loop (+u32 i #u32:1)))
+		  (else
+		   (let ((v (js-array-index-ref o i %this)))
+		      (js-array-index-set! o (-u32 i #u32:1)v #f %this)
+		      (loop (+u32 i #u32:1))))))))
+
+      (define (object-shift! o len::uint32)
 	 (let ((first (js-get o 0 %this))
 	       (len (uint32->fixnum len)))
 	    (let loop ((i 1))
@@ -1407,7 +1424,7 @@
 		    (js-put-length! o 0 #f #f %this)
 		    (js-undefined))
 		   (else
-		    (array-shift! o len)))))))
+		    (object-shift! o len)))))))
 
    (js-bind! %this js-array-prototype (& "shift")
       :value (js-make-function %this array-prototype-shift

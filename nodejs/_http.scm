@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug  7 06:23:37 2014                          */
-;*    Last change :  Wed May  3 18:00:41 2023 (serrano)                */
+;*    Last change :  Tue May  9 11:32:04 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HTTP bindings                                                    */
@@ -117,10 +117,13 @@
 (define (reset-parser! p::JsHttpParser)
    (when (>fx debug-parser 0)
       (tprint "RESET-PARSER!"))
-   (with-access::JsHttpParser p (state buffer shift prevec)
+   (with-access::JsHttpParser p (state buffer shift prevec ip)
       (set! buffer #f)
       (set! shift 0)
       (set! prevec #f)
+      (when (input-port? ip)
+	 (close-input-port ip)
+	 (set! ip #f))
       (reset-parsing! p)))
 
 ;*---------------------------------------------------------------------*/
@@ -209,6 +212,7 @@
 	 `((HTTPParser . ,http))
 	 %this)))
 
+(define K 0)
 ;*---------------------------------------------------------------------*/
 ;*    exn ...                                                          */
 ;*---------------------------------------------------------------------*/
@@ -220,7 +224,7 @@
 ;*    http-parser-execute ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (http-parser-execute %this parser::JsHttpParser buf off len)
-
+   
    (define (execute vec::bstring offfx::long bufoff::long buflen::long)
       (when (>=fx debug-parser 2)
 	 (tprint ">>> http-parser-execute vlen="
@@ -259,10 +263,11 @@
 			 "}")
 		      ""))))
 ;* 	 (tprint "str=" (string-length str) " stroff=" stroff " strend=" strend " off=" off " len=" len) */
-	 (let ((ip (open-input-string! str stroff strend)))
+	 (with-access::JsHttpParser parser (state parsemode errno buffer ip)
+	    (set! ip (open-input-string! str stroff strend))
 	    (let loop ((count 0)
 		       (avail (-fx strend stroff)))
-	       (with-access::JsHttpParser parser (state parsemode errno buffer)
+	       (with-access::JsHttpParser parser (state parsemode errno buffer ip)
 		  (multiple-value-bind (nstate nread)
 		     (state ip %this parser 0 avail)
 		     (when (>=fx debug-parser 2) 
@@ -335,7 +340,7 @@
 					 "")
 				     "}")))
 			    (loop byteparsed (-fx avail nread)))))))))))
-
+   
    (define (execute-safe vec::bstring bufoff::long buflen::long)
       (let ((offfx (->fixnum off))
 	    (lenfx (->fixnum len)))
@@ -359,7 +364,7 @@
 			     (js-put! e (& "code") errname #f %this)
 			     e))
 		       nparsed)))))))
-
+   
    (with-access::JsHttpParser parser (buffer state)
       (cond
 	 (buffer

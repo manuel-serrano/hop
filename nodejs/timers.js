@@ -457,7 +457,7 @@ function unrefTimeout() {
 exports._unrefActive = function(item) {
   // MS 18ap2023, this function is useless as the Bigloo libuv binding
   // already ensures that the timeout is live until it has expired
-  return;
+  //return;
   var msecs = item._idleTimeout;
   if (!msecs || msecs < 0) return;
   assert(msecs >= 0);

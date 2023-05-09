@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Mon May  1 06:56:45 2023 (serrano)                */
+/*    Last change :  Tue May  9 12:04:31 2023 (serrano)                */
 /*    Copyright   :  2016-23 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -1854,6 +1854,9 @@ bgl_jsarray_shift_builtin(obj_t array) {
    long size = VECTOR_LENGTH(BVECTOR(vec));
    obj_t nvec = (obj_t)(((obj_t *)vec) + 1);
 
+   // avoid memory leaks
+   VECTOR_SET(BVECTOR(vec), 0, BUNSPEC);
+   
    BGL_TAG_VECTOR(nvec);
    nvec->vector.length = size - 1;
    nvec = BVECTOR(nvec);
