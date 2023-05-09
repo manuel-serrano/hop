@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Mon May  8 06:29:03 2023 (serrano)                */
+;*    Last change :  Tue May  9 09:02:01 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -439,7 +439,9 @@
       ;; gc traces
       (let ((env (getenv "HOPTRACE")))
 	 (when (and (string? env) (>=fx (string-contains env "hopscript:gc") 0))
-	    ($bgl-gc-verbose-set! #t)))
+	    (cond-expand
+	       (gc ($bgl-gc-verbose-set! #t))
+	       (else #unspecified))))
       (set! __js_strings (&init!))
       (letrec* ((loop %loop)
 		(async (instantiate::UvAsync

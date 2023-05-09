@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Fri Mar  3 08:16:45 2023 (serrano)                */
+;*    Last change :  Tue May  9 08:25:18 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -425,6 +425,13 @@
 	       (define-js tof 1
 		  (lambda (this arg)
 		     (js-string->jsstring (typeof arg))))
+	       
+	       ;; gc
+	       (define-js gc 0
+		  (lambda (this)
+		     (cond-expand
+			(gc (gc))
+			(else #unspecified))))
 	       
 	       ;; request
 	       (define-js isLocalRequest 1
