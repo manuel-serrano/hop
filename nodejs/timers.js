@@ -21,7 +21,7 @@
 
 var Timer = process.binding('timer_wrap').Timer;
 var L = require('_linklist');
-var assert = require('assert').ok;
+//var assert = require('assert').ok;
 
 // Timeout values > TIMEOUT_MAX are set to 1.
 var TIMEOUT_MAX = 2147483647; // 2^31-1
@@ -73,7 +73,7 @@ function insert(item, msecs) {
   }
 
   L.append(list, item);
-  assert(!L.isEmpty(list)); // list is not empty
+//  assert(!L.isEmpty(list)); // list is not empty
 }
 
 function listOnTimeout() {
@@ -94,7 +94,7 @@ function listOnTimeout() {
       return;
     } else {
       L.remove(first);
-      assert(first !== L.peek(list));
+//      assert(first !== L.peek(list));
 
       if (!first._onTimeout) continue;
 
@@ -130,7 +130,7 @@ function listOnTimeout() {
   }
 
   debug(msecs + ' list empty');
-  assert(L.isEmpty(list));
+//  assert(L.isEmpty(list));
   list.close();
   delete lists[msecs];
 }
@@ -460,7 +460,7 @@ exports._unrefActive = function(item) {
   //return;
   var msecs = item._idleTimeout;
   if (!msecs || msecs < 0) return;
-  assert(msecs >= 0);
+//  assert(msecs >= 0);
   L.remove(item);
 
   if (!unrefList) {

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Mon May  8 07:09:14 2023 (serrano)                */
+;*    Last change :  Thu May 11 09:25:39 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -105,6 +105,9 @@
 	 (set! %process (new-process-object %worker %this))
 	 ;; bind process into %this
 	 (js-put! %this (& "process") %process #t %this)
+	 ;; hop binding
+	 (let ((hop (nodejs-require-core "hop" %worker %this)))
+	    (js-put! %process (& "hop") hop #f %this))
 	 ;; bind the process fatal error handler
 	 (js-worker-add-handler! %worker
 	    (js-make-function %this
