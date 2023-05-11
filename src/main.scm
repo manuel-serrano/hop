@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Tue May  9 09:01:29 2023 (serrano)                */
+;*    Last change :  Thu May 11 07:57:54 2023 (serrano)                */
 ;*    Copyright   :  2004-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -72,7 +72,7 @@
 (define (main args)
    ;; gc traces
    (let ((env (getenv "HOPTRACE")))
-      (when (and (string? env) (>=fx (string-contains env "hopscript:gc") 0))
+      (when (and (string? env) (string-contains env "hopscript:gc"))
 	 (cond-expand
 	    (gc ($bgl-gc-verbose-set! #t))
 	    (else #unspecified))))
