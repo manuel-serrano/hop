@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Sun May  7 14:21:23 2023 (serrano)                */
+;*    Last change :  Fri May 12 10:48:21 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -41,6 +41,7 @@
 
 	   (js-function-src ::JsProcedureInfo)
 	   (js-function-loc ::JsProcedureInfo)
+	   (js-function-name ::JsProcedureInfo)
 	   (inline js-function-length obj)
 	   (inline js-function-new-target? obj)
 	   (inline js-function-path ::JsFunction)
@@ -109,6 +110,22 @@
    (lambda (o)
       (js-undefined))
    (lambda (o %this) o))
+
+;*---------------------------------------------------------------------*/
+;*    object-print ::JsProcedureInfo ...                               */
+;*---------------------------------------------------------------------*/
+(define-method (object-print obj::JsProcedureInfo op proc)
+   (with-access::JsProcedureInfo obj (info)
+      (display "#<" op)
+      (display (class-name (object-class obj)) op)
+      (display " " op)
+      (display info op)
+      (display " " op)
+      (display (js-object-length obj) op)
+      (cond
+	 ((js-object-mapped? obj) (display " mapped>" op))
+	 ((js-object-hashed? obj) (display " hashed>" op))
+	 (else (display ">" op)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsFunction ...                                 */
@@ -194,6 +211,13 @@
 	  #f))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-function-name ...                                             */
+;*---------------------------------------------------------------------*/
+(define (js-function-name obj::JsProcedureInfo)
+   (with-access::JsProcedureInfo obj (info)
+      (vector-ref info 0)))
+   
+;*---------------------------------------------------------------------*/
 ;*    js-function-path ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-function-path obj::JsFunction)
@@ -220,11 +244,9 @@
 (define (js-function-debug-name::bstring obj::JsProcedure %this)
    (cond
       ((js-function? obj)
-       (with-access::JsFunction obj (info)
-	  (vector-ref info 0)))
+       (js-function-name obj))
       ((isa? obj JsProcedureInfo)
-       (with-access::JsProcedureInfo obj (info)
-	  (vector-ref info 0)))
+       (js-function-name obj))
       (else
        "procedure")))
 
@@ -529,8 +551,7 @@
 	       (configurable #f)
 	       (writable #f)
 	       (%get (lambda (obj owner propname %this)
-			(with-access::JsFunction obj (info)
-			   (js-string->jsstring (vector-ref info 0)))))
+			(js-string->jsstring (js-function-name obj))))
 	       (%set list))
 	    (instantiate::JsAccessorDescriptor
 	       (name (& "arguments"))

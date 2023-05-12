@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Wed May  3 15:41:09 2023 (serrano)                */
+;*    Last change :  Fri May 12 10:32:23 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -374,7 +374,6 @@
 	      (val::obj (default #unspecified))
 	      (thens::pair-nil (default '()))
 	      (catches::pair-nil (default '()))
-	      (resolved::bool (default #f))
 	      (resolver (default #f))
 	      (rejecter (default #f))
 	      worker
@@ -1445,39 +1444,52 @@
       (xml-write-attribute obj id p backend)))
 
 ;*---------------------------------------------------------------------*/
-;*    object-print ...                                                 */
+;*    object-print ::JsObject ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-method (object-print obj::JsObject port print-slot::procedure)
-   
-   (define (class-field-write/display field)
-      (let* ((name (class-field-name field))
-	     (get-value (class-field-accessor field)))
-	 (display " [" port)
-	 (display name port)
-	 (display #\: port)
-	 (display #\space port)
-	 (if (memq name '(__proto__ elements cmap))
-	     (let ((val (get-value obj)))
-		(if (vector? val)
-		    (display (format "vector[~a]" (vector-length val)) port)
-		    (display (typeof val) port)))
-	     (print-slot (get-value obj) port))
-	 (display #\] port)))
+(define-method (object-print obj::JsObject op proc)
+   (display "#<" op)
+   (display (class-name (object-class obj)) op)
+   (display " " op)
+   (display (js-object-length obj) op)
+   (cond
+      ((js-object-mapped? obj) (display " mapped>" op))
+      ((js-object-hashed? obj) (display " hashed>" op))
+      (else (display ">" op))))
 
-   (let* ((class (object-class obj))
-	  (class-name (class-name class))
-	  (fields (class-all-fields class))
-	  (len (vector-length fields)))
-      (display "#|" port)
-      (display class-name port)
-      (if (nil? obj)
-	  (display " nil|" port)
-	  (let loop ((i 0))
-	     (if (=fx i len)
-		 (display #\| port)
-		 (begin
-		    (class-field-write/display (vector-ref fields i))
-		    (loop (+fx i 1))))))))
+;* {*---------------------------------------------------------------------*} */
+;* {*    object-print ...                                                 *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define-method (object-print obj::JsObject port print-slot::procedure) */
+;*                                                                     */
+;*    (define (class-field-write/display field)                        */
+;*       (let* ((name (class-field-name field))                        */
+;* 	     (get-value (class-field-accessor field)))                 */
+;* 	 (display " [" port)                                           */
+;* 	 (display name port)                                           */
+;* 	 (display #\: port)                                            */
+;* 	 (display #\space port)                                        */
+;* 	 (if (memq name '(__proto__ elements cmap))                    */
+;* 	     (let ((val (get-value obj)))                              */
+;* 		(if (vector? val)                                      */
+;* 		    (display (format "vector[~a]" (vector-length val)) port) */
+;* 		    (display (typeof val) port)))                      */
+;* 	     (print-slot (get-value obj) port))                        */
+;* 	 (display #\] port)))                                          */
+;*                                                                     */
+;*    (let* ((class (object-class obj))                                */
+;* 	  (class-name (class-name class))                              */
+;* 	  (fields (class-all-fields class))                            */
+;* 	  (len (vector-length fields)))                                */
+;*       (display "#|" port)                                           */
+;*       (display class-name port)                                     */
+;*       (if (nil? obj)                                                */
+;* 	  (display " nil|" port)                                       */
+;* 	  (let loop ((i 0))                                            */
+;* 	     (if (=fx i len)                                           */
+;* 		 (display #\| port)                                    */
+;* 		 (begin                                                */
+;* 		    (class-field-write/display (vector-ref fields i))  */
+;* 		    (loop (+fx i 1))))))))                             */
 
 ;*---------------------------------------------------------------------*/
 ;*    object-print ::JsPropertyDescriptor ...                          */

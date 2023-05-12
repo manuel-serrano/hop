@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 19 11:16:33 2015                          */
-/*    Last change :  Wed Jan 18 06:34:01 2023 (serrano)                */
+/*    Last change :  Fri May 12 18:46:30 2023 (serrano)                */
 /*    Copyright   :  2015-23 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ES6 promises.                                            */
@@ -517,3 +517,28 @@ function enqueue() {
 }
 
 enqueue();
+
+/*---------------------------------------------------------------------*/
+/*    chaining                                                         */
+/*---------------------------------------------------------------------*/
+let G = 0;
+
+const chain0 = new Promise((res, rej) => {
+   res(14);
+});
+
+const chain1 = new Promise((res, rej) => {
+   res(chain0);
+});
+
+function chainh(v) {
+   G = v;
+   return 23;
+}
+
+function chain() {
+   const p = chain1;
+   const q = p.then(chainh).then(x=> G += x).then(_ => assert.ok(G === 14 + 23));
+}
+
+chain();

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    /tmp/HOPNEW/hop/hopscript/spawn.scm                              */
+;*    serrano/prgm/project/hop/hop/hopscript/spawn.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct  7 09:04:09 2016                          */
-;*    Last change :  Sun Feb 23 14:55:44 2020 (serrano)                */
+;*    Last change :  Fri May 12 09:25:44 2023 (serrano)                */
 ;*    Copyright   :  2016-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Spawn implementation as defined in                               */
@@ -139,19 +139,24 @@
 			 (call resolve (js-undefined) (ref 1 next (& "value")))
 			 (js-undefined))
 			(else
-			 (let ((promise (invoke 3 js-promise (& "resolve")
-					   (ref 2 next (& "value")))))
+			 (let* ((v (ref 2 next (& "value")))
+				(promise (js-promise-resolve-value
+					    js-promise v %this)))
 			    (invoke 4 promise (& "then")
 			       (fun (this v)
 				  (step
-				     (lambda () (invoke 5 gen (& "next") v))))
+				     (lambda ()
+					(invoke 5 gen (& "next") v))))
 			       (fun (this e)
 				  (step
-				     (lambda () (invoke 6 gen (& "throw") e))))))))))
+				     (lambda ()
+					(invoke 6 gen (& "throw") e))))))))))
 	       
 	       (step (lambda () (invoke 7 gen (& "next") (js-undefined)))))
 	    (js-function-arity 2 0)
-	    (js-function-info :name "AsyncPromise" :len 2)))))
+	    (js-function-info
+	       :name (string-append (js-function-name genF) "-spawn")
+	       :len 2)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    &end!                                                            */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 19 08:19:19 2015                          */
-;*    Last change :  Mon Mar  6 07:33:22 2023 (serrano)                */
+;*    Last change :  Fri May 12 08:58:14 2023 (serrano)                */
 ;*    Copyright   :  2015-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript promises                     */
@@ -39,6 +39,7 @@
 	   (js-new-promise ::JsGlobalObject ::obj)
 	   (js-new-promise/procedure ::JsGlobalObject executor::procedure)
 	   (js-promise-async ::JsPromise ::procedure)
+	   (js-promise-resolve-value ::obj ::obj ::JsGlobalObject)
 	   (js-promise-resolve ::JsPromise ::obj)
 	   (js-promise-reject ::JsPromise ::obj)
 	   (js-promise-then-catch ::JsGlobalObject ::JsPromise proc fail np))
@@ -49,6 +50,31 @@
 ;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
 (define __js_strings (&begin!))
+
+;*---------------------------------------------------------------------*/
+;*    object-print ::JsPromise ...                                     */
+;*---------------------------------------------------------------------*/
+(define-method (object-print obj::JsPromise op proc)
+   (with-access::JsPromise obj (%name state val thens catches)
+      (display "#<" op)
+      (display (class-name (object-class obj)) op)
+      (display " " op)
+      (display %name op)
+      (display " " op)
+      (display state op)
+      (when (memq state '(fullfilled rejected))
+	 (display "=" op)
+	 (display val op))
+      (display " thens=" op)
+      (display (length thens) op)
+      (display " catches=" op)
+      (display (length catches) op)
+      (display " " op)
+      (display (js-object-length obj) op)
+      (cond
+	 ((js-object-mapped? obj) (display " mapped>" op))
+	 ((js-object-hashed? obj) (display " hashed>" op))
+	 (else (display ">" op)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    reject-name ...                                                  */
@@ -182,7 +208,7 @@
 
       ;; promise pcache
       (set! js-promise-pcache
-	 ((@ js-make-pcache-table __hopscript_property) 4 "promise"))
+	 ((@ js-make-pcache-table __hopscript_property) 5 "promise"))
       
       (set! js-promise-cmap
 	 (js-make-jsconstructmap))
@@ -209,12 +235,6 @@
 		  :size 7
 		  :alloc js-promise-alloc))))
 
-      (define (js-promise-alloc/name::JsPromise %this name)
-	 (let ((promise (js-promise-alloc %this js-promise)))
-	    (with-access::JsPromise promise (%name)
-	       (set! %name name)
-	       promise)))
-      
       ;; http://www.ecma-international.org/ecma-262/6.0/#sec-promise.all
       ;; http://www.ecma-international.org/ecma-262/6.0/25.4.4.1 
       (define (js-promise-all this iterable)
@@ -311,20 +331,7 @@
       ;; http://www.ecma-international.org/ecma-262/6.0/#sec-promise.resolve
       ;; http://www.ecma-international.org/ecma-262/6.0/#25.4.4.4.5
       (define (promise-resolve this val)
-	 (cond
-	    ((not (js-object? this))
-	     ;; .2
-	     (js-raise-type-error %this "This not an object ~a" (typeof this)))
-	    ((and (isa? val JsPromise) (eq? (js-get val (& "constructor") %this) this))
-	     ;; .3
-	     val)
-	    (else
-	     ;; .4
-	     (let ((promise (js-promise-alloc/name %this "resolve")))
-		(with-handler
-		   (lambda (e) e)
-		   (js-promise-resolve promise val))
-		promise))))
+	 (js-promise-resolve-value this val %this))
       
       (js-bind! %this js-promise (& "resolve")
 	 :configurable #f :enumerable #f
@@ -363,6 +370,34 @@
 	 (__proto__ js-promise-prototype))))
 
 ;*---------------------------------------------------------------------*/
+;*    promise-counter ...                                              */
+;*---------------------------------------------------------------------*/
+(define promise-counter 0)
+
+;*---------------------------------------------------------------------*/
+;*    get-promise-counter ...                                          */
+;*---------------------------------------------------------------------*/
+(define (get-promise-counter)
+   (set! promise-counter (+fx promise-counter 1))
+   promise-counter)
+
+;*---------------------------------------------------------------------*/
+;*    get-promise-name ...                                             */
+;*---------------------------------------------------------------------*/
+(define (get-promise-name executor)
+   (if (isa? executor JsProcedureInfo)
+       (cond
+	  ((js-function-loc executor)
+	   =>
+	   (lambda (loc) (format "promise@~a" loc)))
+	  ((js-function-name executor)
+	   =>
+	   (lambda (name) (format "promise-~a@~a" (get-promise-counter) name)))
+	  (else
+	   (format "promise-~a" (get-promise-counter))))
+       (format "promise-~a" (get-promise-counter))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-promise-construct ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (js-promise-construct %this o executor)
@@ -377,13 +412,7 @@
 	  (typeof o)))
       (else
        (with-access::JsPromise o (state resolver rejecter thens catches %name)
-	  (unless %name
-	     (if (isa? executor JsProcedureInfo)
-		 (set! %name
-		    (string->symbol
-		       (format "promise~a"
-			  (js-function-loc executor))))
-		 (set! %name 'promise)))
+	  (unless %name (set! %name (get-promise-name executor)))
 	  ;; promise .5
 	  (set! state 'pending)
 	  (set! thens '())
@@ -422,7 +451,7 @@
    (with-access::JsGlobalObject %this (js-promise)
       (let ((o (js-promise-alloc %this js-promise)))
 	 (with-access::JsPromise o (state resolver rejecter thens catches %name)
-	    (set! %name 'promise)
+	    (set! %name (format "promise-~a" (get-promise-counter)))
 	    ;; promise .5
 	    (set! state 'pending)
 	    (set! thens '())
@@ -451,6 +480,7 @@
 ;*    http://www.ecma-international.org/ecma-262/6.0/#25.4.5.3         */
 ;*---------------------------------------------------------------------*/
 (define (js-promise-then-catch %this::JsGlobalObject this::JsPromise proc fail np)
+   ;; https://262.ecma-international.org/6.0/#sec-promise.prototype.then
    (with-access::JsPromise this (thens catches state val worker %name)
       ;; .5 & .6
       (let ((fullfill (cons np (if (js-procedure? proc) proc 'identity)))
@@ -480,7 +510,7 @@
 ;*---------------------------------------------------------------------*/
 (define (init-builtin-promise-prototype! %this::JsGlobalObject obj)
 
-   (define (then-catch this onfullfilled onrejected)
+   (define (prototype-then-catch this onfullfilled onrejected)
       ;; http://www.ecma-international.org/ecma-262/6.0/#25.4.5.3
       (if (not (isa? this JsPromise))
 	  ;; .2
@@ -494,9 +524,11 @@
 			  (rejecter #f)
 			  (elements '#())
 			  (state 'pending)
-			  (%name "then-catch"))))
+			  (%name (format "then-catch-~a"
+				    (get-promise-counter))))))
 		(js-object-proto-set! np (js-object-proto this))
 		(js-object-mode-set! np (js-object-default-mode))
+		(js-object-mode-inline-set! np #f)
 		(js-promise-then-catch %this this onfullfilled onrejected np)))))
       
    ;; catch
@@ -504,11 +536,11 @@
    (js-bind! %this obj (& "catch")
       :value (js-make-function %this
 		(lambda (this fail)
-		   (then-catch this
+		   (prototype-then-catch this
 		      (js-make-procedure %this (lambda (this v) v) 2)
 		      fail))
 		(js-function-arity 1 0)
-		(js-function-info :name "catch" :len 1))
+		(js-function-info :name "Promise.prototype.catch" :len 1))
       :enumerable #f
       :hidden-class #t)
    
@@ -517,9 +549,9 @@
    (js-bind! %this obj (& "then")
       :value (js-make-function %this
 		(lambda (this proc fail)
-		   (then-catch this proc fail))
+		   (prototype-then-catch this proc fail))
 		(js-function-arity 2 0)
-		(js-function-info :name "then" :len 2))
+		(js-function-info :name "Promise.prototype.then" :len 2))
       :enumerable #f
       :hidden-class #t))
 
@@ -538,24 +570,23 @@
 ;*---------------------------------------------------------------------*/
 (define (js-create-resolving-functions o::JsPromise)
    (with-access::JsPromise o (%this)
-      (let ((resolve (js-make-procedure %this
-			(lambda (_ resolution)
-			   (with-access::JsPromise o (resolved)
-			      (if resolved
-				  (js-undefined)
-				  (begin
-				     (set! resolved #t)
-				     (js-promise-resolve o resolution)))))
-			resolve-arity))
-	    (reject (js-make-procedure %this
-		       (lambda (_ reason)
-			  (with-access::JsPromise o (resolved)
-			     (if resolved
-				 (js-undefined)
-				 (begin
-				    (set! resolved #t)
-				    (js-promise-reject o reason)))))
-		       reject-arity)))
+      (let* ((resolved #f)
+	     (resolve (js-make-procedure %this
+			 (lambda (_ resolution)
+			    (if resolved
+				(js-undefined)
+				(begin
+				   (set! resolved #t)
+				   (js-promise-resolve o resolution))))
+			 resolve-arity))
+	     (reject (js-make-procedure %this
+			(lambda (_ reason)
+			   (if resolved
+			       (js-undefined)
+			       (begin
+				  (set! resolved #t)
+				  (js-promise-reject o reason))))
+			reject-arity)))
 	 (values resolve reject))))
 
 ;*---------------------------------------------------------------------*/
@@ -657,7 +688,43 @@
    (with-access::JsPromise o (state)
       (when (eq? state 'pending)
 	 (js-reject o reason))))
-	   
+
+;*---------------------------------------------------------------------*/
+;*    js-promise-alloc/name ...                                        */
+;*---------------------------------------------------------------------*/
+(define (js-promise-alloc/name::JsPromise %this name)
+   (with-access::JsGlobalObject %this (js-promise)
+      (let ((promise (js-promise-alloc %this js-promise)))
+	 (with-access::JsPromise promise (%name)
+	    (set! %name name)
+	    promise))))
+
+;*---------------------------------------------------------------------*/
+;*    js-promise-resolve-value ...                                     */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/6.0/#25.4.4.4.5       */
+;*---------------------------------------------------------------------*/
+(define (js-promise-resolve-value this val %this)
+   ;; http://www.ecma-international.org/ecma-262/6.0/#sec-promise.resolve
+   (with-access::JsGlobalObject %this (js-promise js-promise-pcache)
+      (cond
+	 ((not (js-object? this))
+	  ;; .2
+	  (js-raise-type-error %this "This not an object ~a" (typeof this)))
+	 ((and (isa? val JsPromise)
+	       (eq? (js-get-jsobject-name/cache val (& "constructor") #f %this
+		       (js-pcache-ref js-promise-pcache 4))
+		  js-promise))
+	  ;; .3
+	  val)
+	 (else
+	  ;; .4
+	  (let ((promise (js-promise-alloc/name %this "resolve")))
+	     (with-handler
+		(lambda (e) e)
+		(js-promise-resolve promise val))
+	     promise)))))
+
 ;*---------------------------------------------------------------------*/
 ;*    js-promise-resolve ...                                           */
 ;*    -------------------------------------------------------------    */
@@ -665,7 +732,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-promise-resolve o::JsPromise resolution)
    
-   (define (resolve-thenable o::JsPromise thenable then)
+   (define (js-promise-resolve-thenable o::JsPromise thenable then)
       ;; http://www.ecma-international.org/ecma-262/6.0/#25.4.2.2
       (multiple-value-bind (resolve reject)
 	 (js-create-resolving-functions o)
@@ -675,7 +742,7 @@
 		  (exception-notify e)
 		  (js-call1-jsprocedure %this reject (js-undefined) e))
 	       (js-call2-jsprocedure %this then thenable resolve reject)))))
-
+   
    (with-access::JsPromise o (%this worker)
       (cond
 	 ((eq? o resolution)
@@ -702,7 +769,7 @@
 		 ;; resolve .12
 		 (js-worker-push! worker "promise"
 		    (lambda (%this)
-		       (resolve-thenable o resolution then)))))))))
+		       (js-promise-resolve-thenable o resolution then)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-promise-async ...                                             */

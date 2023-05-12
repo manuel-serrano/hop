@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Sun Apr  2 06:14:04 2023 (serrano)                */
+;*    Last change :  Fri May 12 10:32:17 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -98,17 +98,6 @@
 	 (js-jsobject->plist obj %this)))
    (lambda (o)
       (error "string->obj" "Cannot unserialize JsResponse" o)))
-
-;*---------------------------------------------------------------------*/
-;*    object-print ::JsObject ...                                      */
-;*---------------------------------------------------------------------*/
-(define-method (object-print obj::JsObject op proc)
-   (display "#<JsObject " op)
-   (display (js-object-length obj) op)
-   (cond
-      ((js-object-mapped? obj) (display " mapped>" op))
-      ((js-object-hashed? obj) (display " hashed>" op))
-      (else (display ">" op))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-extensible? ...                                               */
