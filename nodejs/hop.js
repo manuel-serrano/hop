@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Mar 22 15:03:30 2014                          */
-/*    Last change :  Tue May  9 08:24:52 2023 (serrano)                */
+/*    Last change :  Sat May 13 09:10:20 2023 (serrano)                */
 /*    Copyright   :  2014-23 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hopscript/Hop binding.                                           */
@@ -89,7 +89,7 @@ exports.HTTPResponseError = function(obj) {
 /*    debug                                                            */
 /*---------------------------------------------------------------------*/
 exports.log = hop.log;
-exports.tof = hop.tof;
+exports.typeName = hop.typeName;
 exports.gc = hop.gc;
 
 /*---------------------------------------------------------------------*/

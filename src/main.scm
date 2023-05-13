@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Thu May 11 07:57:54 2023 (serrano)                */
+;*    Last change :  Sat May 13 06:32:59 2023 (serrano)                */
 ;*    Copyright   :  2004-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -312,6 +312,9 @@
 	       (condition-variable-wait! jscondv jsmutex)))))
    ;; start the JS repl loop
    (when (eq? (hop-enable-repl) 'js)
+      (signal sigint
+	 (lambda (n)
+	    (thread-kill! %worker sigint)))
       (js-worker-push! %worker "repl"
 	 (lambda (%this)
 	    (hopscript-repl (hop-scheduler) %global %worker))))
@@ -563,18 +566,6 @@
        (error "hop-repl"
 	  "not enough threads to start a REPL (see --threads-max option)"
 	  (hop-max-threads)))
-      ((isa? scd scheduler)
-       (with-access::scheduler scd (size)
-	  (if (<=fx size 1)
-	      (error "hop-repl"
-		 "HOP REPL cannot be spawned without multi-threading"
-		 scd)
-	      (multiple-value-bind (%worker %global %module)
-		 (js-main-worker! "repl" (pwd) #f
-		    nodejs-new-global-object nodejs-new-module)
-		 (js-worker-exec %worker "repl"
-		    (lambda (%this)
-		       (repljs %global %worker)))))))
       (else
        (repljs %global %worker))))
 

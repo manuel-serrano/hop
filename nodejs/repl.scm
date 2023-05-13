@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct  6 08:22:43 2013                          */
-;*    Last change :  Fri Mar  3 14:23:05 2023 (serrano)                */
+;*    Last change :  Sat May 13 06:23:26 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS like REPL                                                 */
@@ -61,13 +61,13 @@
 	    (bind-exit (re-enter-internal-repl)
 	       ;; we setup ^C interupt
 	       (letrec ((intrhdl (lambda (n)
-				    (print "CTRL-C")
-				    (notify-interrupt n)
+				    (print "(To exit, press ^D or type .exit)")
 				    ;; we flush current input port
 				    (reset-console! (current-input-port))
 				    ;; we restore signal handling
 				    (sigsetmask 0)
 				    (re-enter-internal-repl #unspecified))))
+		  ;; see main.scm
 		  (signal sigint intrhdl))
 	       ;; and we loop until eof
 	       (newline)
@@ -82,12 +82,10 @@
 			   (let ((exp (jsread-and-compile)))
 			      (if (null? exp)
 				  (quit)
-				  (let ((v (js-worker-exec-throws %worker "repl"
-					      (lambda (%this)
-						 (with-handler
-						    repl-error-handler
-						    (let ((v ((eval exp) %this %this %this module)))
-						       (jsprint v console %this)))))))
+				  (let ((v (with-handler
+					      repl-error-handler
+					      (let ((v ((eval exp) %this %this %this module)))
+						 (jsprint v console %this)))))
 				     (liip)))))))))
 	    (loop))
 	 (if (procedure? old-intrhdl)
@@ -99,6 +97,17 @@
 ;*---------------------------------------------------------------------*/
 (define (repl-error-handler e)
    (cond
+      ((isa? e &io-parse-error)
+       (with-access::&error e (obj)
+	  (if (and (equal? obj #\.)
+		   (char=? (read-char (current-input-port)) #\e)
+		   (char=? (read-char (current-input-port)) #\x)
+		   (char=? (read-char (current-input-port)) #\i)
+		   (char=? (read-char (current-input-port)) #\t))
+	      (exit 0)
+	      (begin
+		 (reset-eof (current-input-port))
+		 (exception-notify e)))))
       ((isa? e JsError)
        (exception-notify e))
       ((isa? e &error)
