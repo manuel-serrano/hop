@@ -46,6 +46,10 @@ Debugging
 
 ### hop.log(arg0, arg1, ...) ###
 [:@glyphicon glyphicon-tag function]  
+Print the arguments on the standard error port.
+
+### hop.dump(obj, [message]) ###
+[:@glyphicon glyphicon-tag function]  
 Dump the argument on the standard error port.
 
 ### hop.typeName(arg0) ###

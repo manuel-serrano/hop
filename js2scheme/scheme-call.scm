@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Thu May  4 11:29:42 2023 (serrano)                */
+;*    Last change :  Sat May 13 09:38:54 2023 (serrano)                */
 ;*    Copyright   :  2018-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -1761,7 +1761,13 @@
 	       ((and (isa? fun J2SAccess) (get-optional-chaining fun))
 		=>
 		(lambda (axs)
-		   (call-optional-chaining this axs)))
+		   (with-access::J2SAccess fun (obj)
+		      (with-access::J2SUnary obj (expr)
+			 (if (is-builtin-ref? expr 'hop)
+			     ;; "hop" is always bound when hop is the compiler
+			     (loop (duplicate::J2SAccess fun
+				      (obj expr)))
+			     (call-optional-chaining this axs))))))
 	       ((eq? protocol 'spread)
 		(j2s-scheme-call-spread this mode return ctx))
 	       ((eq? (j2s-type fun) 'procedure)

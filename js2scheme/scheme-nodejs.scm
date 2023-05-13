@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 22 13:12:15 2023                          */
-;*    Last change :  Thu May  4 15:30:32 2023 (serrano)                */
+;*    Last change :  Sat May 13 09:30:20 2023 (serrano)                */
 ;*    Copyright   :  2023 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Optimizing nodejs builtins                                       */
@@ -201,13 +201,20 @@
 			   (case id
 			      ((log) 'tprint)
 			      (else #f)))))))))
+      
       ((isa? fun J2SAccess)
        (with-access::J2SAccess fun (obj field)
-	  (when (and (hop-require? obj) (isa? field J2SString))
-	     (with-access::J2SString field (val)
-		(cond
-		   ((string=? val "log") 'tprint)
-		   (else #f))))))))
+	  (let loop ((obj obj))
+	     (cond
+		((and (hop-require? obj) (isa? field J2SString))
+		 (with-access::J2SString field (val)
+		    (cond
+		       ((string=? val "log") 'tprint)
+		       (else #f))))
+		((isa? obj J2SUnary)
+		 (with-access::J2SUnary obj (op expr)
+		    (when (eq? op '?.)
+		       (loop expr))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-call? ...                                                    */

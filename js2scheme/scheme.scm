@@ -1605,8 +1605,6 @@
    (with-access::J2SForIn this (loc lhs obj body op
 				  need-bind-exit-break need-bind-exit-continue)
       (cond
-;* 	 ((eq? (j2s-type obj) 'array)                                  */
-;* 	  (tprint "ICI"))                                              */
 	 ((and (isa? lhs J2SRef)
 	       (with-access::J2SRef lhs (decl)
 		  (with-access::J2SDecl decl (binder)

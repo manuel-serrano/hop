@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Sat May 13 09:10:36 2023 (serrano)                */
+;*    Last change :  Sat May 13 09:22:28 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -414,12 +414,20 @@
 		  (lambda (this proc req)
 		     (hopjs-response-async this proc req %this %worker)))
 
-	       ;; debug
+	       ;; log
 	       (define-js log -2
 		  (lambda (this . args)
 		     (let ((p (current-error-port)))
 			(for-each (lambda (a) (display a p)) args)
 			(newline p))))
+	       
+	       ;; dump
+	       (define-js dump 2
+		  (lambda (this obj msg)
+		     (let ((p (current-error-port)))
+			(if (eq? msg (js-undefined))
+			    (js-debug-object obj)
+			    (js-debug-object obj msg)))))
 	       
 	       ;; typeName
 	       (define-js typeName 1
