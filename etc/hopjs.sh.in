@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 13 14:06:56 2015                          */
-#*    Last change :  Fri Feb 10 10:15:41 2023 (serrano)                */
+#*    Last change :  Sun May 14 09:44:45 2023 (serrano)                */
 #*    Copyright   :  2015-23 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Nodejs compatible script engine                                  */
@@ -30,7 +30,7 @@ while : ; do
 
     -p|--http-port)
       shift
-      server=-p $1
+      server="-p $1"
       break;;
 
     -h|--help)
