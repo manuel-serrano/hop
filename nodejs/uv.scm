@@ -1452,7 +1452,7 @@
 	  (/fl (fixnum->flonum nsec) 1000000.)))
       (else
        (+fl (*fl 1000. (elong->flonum sec))
-	  (/fl (elong->flonum nec) 1000000.)))))
+	  (/fl (elong->flonum nsec) 1000000.)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    stat->jsobj! ...                                                 */
@@ -1482,7 +1482,7 @@
 	 ((or bint61 bint64)
 	  #unspecified)
 	 (else
-	  (let loop ((i (-fx i 1)))
+	  (let loop ((i (-fx l 1)))
 	     (when (>=fx i 4)
 		(vector-set! vec i (js-obj->jsobject (vector-ref vec i) %this))
 		(loop (-fx i 1))))))))
