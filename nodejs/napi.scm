@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 24 16:10:01 2023                          */
-;*    Last change :  Sun Apr  2 07:25:57 2023 (serrano)                */
+;*    Last change :  Mon May 15 12:29:31 2023 (serrano)                */
 ;*    Copyright   :  2023 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The Scheme part of the node_api.                                 */
@@ -39,13 +39,26 @@
 	   (export napi-create-string-utf8 "bgl_napi_create_string_utf8")
 	   (export napi-get-element "bgl_napi_get_element")
 	   (export napi-set-element! "bgl_napi_set_element")
+	   (export napi-delete-element! "bgl_napi_delete_element")
+	   (export napi-get-property "bgl_napi_get_property")
 	   (export napi-get-named-property "bgl_napi_get_named_property")
+	   (export napi-put-property! "bgl_napi_put_property")
 	   (export napi-put-named-property! "bgl_napi_put_named_property")
+	   (export napi-delete-property! "bgl_napi_delete_property")
+	   (export napi-has-property! "bgl_napi_has_property")
+	   (export napi-has-named-property! "bgl_napi_has_named_property")
+	   (export napi-has-own-property! "bgl_napi_has_own_property")
+	   (export napi-get-property-names "bgl_napi_get_property_names")
+	   (export napi-get-all-property-names "bgl_napi_get_all_property_names")
 	   (export napi-define-named-property! "bgl_napi_define_named_property")
 	   (export napi-make-property-descriptor "bgl_napi_make_property_descriptor")
+	   (export napi-get-type-tag-object "bgl_napi_get_type_tag_object")
+	   (export napi-set-type-tag-object! "bgl_napi_set_type_tag_object")
+	   (export napi-object-seal "bgl_napi_object_seal")
+	   (export napi-object-freeze "bgl_napi_object_freeze")
+	   
 	   (export napi-get-array-length "bgl_napi_get_array_length")
 	   (export napi-has-element "bgl_napi_has_element")
-	   (export napi-delete-element! "bgl_napi_delete_element")
 	   (export napi-create-function "bgl_napi_create_function")
 	   (export napi-create-object "bgl_napi_create_object")
 	   (export napi-create-array "bgl_napi_create_array")
@@ -81,10 +94,22 @@
 	   (napi-throw-range-error ::obj ::string ::string)
 	   (napi-throw-syntax-error ::obj ::string ::string)
 	   (napi-create-string-utf8::obj ::obj ::bstring)
+	   (napi-get-property::obj ::obj ::obj ::obj)
 	   (napi-get-named-property::obj ::obj ::obj ::bstring)
+	   (napi-put-property!::obj ::obj ::obj ::obj ::obj)
 	   (napi-put-named-property!::obj ::obj ::obj ::bstring ::obj)
+	   (napi-delete-property!::obj ::obj ::obj ::obj)
+	   (napi-has-property!::obj ::obj ::obj ::obj)
+	   (napi-has-named-property! ::obj ::obj ::obj)
+	   (napi-get-property-names::obj ::obj ::obj)
+	   (napi-get-all-property-names::obj ::obj ::obj ::bool ::int ::bool)
+	   (napi-has-own-property!::obj ::obj ::obj ::obj)
 	   (napi-define-named-property!::obj ::obj ::obj ::bstring ::obj)
 	   (napi-make-property-descriptor ::obj ::obj ::bstring ::obj ::bool ::bool ::bool ::obj ::obj)
+	   (napi-get-type-tag-object::obj ::obj ::obj)
+	   (napi-set-type-tag-object!::obj ::obj ::obj ::obj)
+	   (napi-object-seal::obj ::obj ::obj)
+	   (napi-object-freeze::obj ::obj ::obj)
 	   (napi-get-array-length::uint32 ::obj ::obj)
 	   (napi-has-element::bool ::obj ::obj ::int)
 	   (napi-delete-element!::obj ::obj ::obj ::int)
@@ -172,10 +197,22 @@
    (js-string->jsstring string))
 
 ;*---------------------------------------------------------------------*/
+;*    napi-get-property ...                                            */
+;*---------------------------------------------------------------------*/
+(define (napi-get-property %this this prop)
+   (js-get this prop %this))
+
+;*---------------------------------------------------------------------*/
 ;*    napi-get-named-property ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (napi-get-named-property %this this prop)
    (js-get this (js-string->name prop) %this))
+
+;*---------------------------------------------------------------------*/
+;*    napi-put-property! ...                                           */
+;*---------------------------------------------------------------------*/
+(define (napi-put-property! %this this prop val)
+   (js-put! this prop val #f %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    napi-put-named-property! ...                                     */
@@ -216,6 +253,78 @@
 		       (with-access::JsProcedure set (procedure) procedure)
 		       (lambda (this v) (js-undefined)))))))))
 
+;*---------------------------------------------------------------------*/
+;*    type-tags ...                                                    */
+;*---------------------------------------------------------------------*/
+(define type-tags #f)
+
+;*---------------------------------------------------------------------*/
+;*    napi-set-type-tag-object! ...                                    */
+;*---------------------------------------------------------------------*/
+(define (napi-set-type-tag-object! %this this tag)
+   (unless type-tags
+      (set! type-tags (create-hashtable :weak 'both)))
+   (hashtable-put! type-tags this tag))
+
+;*---------------------------------------------------------------------*/
+;*    napi-get-type-tag-object ...                                     */
+;*---------------------------------------------------------------------*/
+(define (napi-get-type-tag-object %this this)
+   (when type-tags
+      (hashtable-get type-tags this)))
+
+;*---------------------------------------------------------------------*/
+;*    napi-object-seal ...                                             */
+;*---------------------------------------------------------------------*/
+(define (napi-object-seal %this this)
+   (when (js-object? this)
+      (js-seal this this)))
+
+;*---------------------------------------------------------------------*/
+;*    napi-object-freeze ...                                           */
+;*---------------------------------------------------------------------*/
+(define (napi-object-freeze %this this)
+   (when (js-object? this)
+      (js-freeze this this)))
+
+;*---------------------------------------------------------------------*/
+;*    napi-delete-property! ...                                        */
+;*---------------------------------------------------------------------*/
+(define (napi-delete-property! %this this key)
+   (js-delete! this key #f %this))
+
+;*---------------------------------------------------------------------*/
+;*    napi-has-property! ...                                           */
+;*---------------------------------------------------------------------*/
+(define (napi-has-property! %this this key)
+   (js-has-property this key %this))
+
+;*---------------------------------------------------------------------*/
+;*    napi-has-named-property! ...                                     */
+;*---------------------------------------------------------------------*/
+(define (napi-has-named-property! %this this prop)
+   (js-has-property this (js-string->name prop) %this))
+
+;*---------------------------------------------------------------------*/
+;*    napi-has-own-property! ...                                       */
+;*---------------------------------------------------------------------*/
+(define (napi-has-own-property! %this this key)
+   (js-has-own-property this key %this))
+
+;*---------------------------------------------------------------------*/
+;*    napi-get-property-names ...                                      */
+;*---------------------------------------------------------------------*/
+(define (napi-get-property-names %this this)
+   (let ((names (js-properties-name this #f %this)))
+      (js-vector->jsarray names %this)))
+   
+;*---------------------------------------------------------------------*/
+;*    napi-get-all-property-names ...                                  */
+;*---------------------------------------------------------------------*/
+(define (napi-get-all-property-names %this this key-mode key-filter key-conversion)
+   (let ((names (js-properties-name this #t %this)))
+      (js-vector->jsarray names %this)))
+   
 ;*---------------------------------------------------------------------*/
 ;*    napi-get-array-length ...                                        */
 ;*---------------------------------------------------------------------*/

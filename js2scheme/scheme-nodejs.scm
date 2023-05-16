@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 22 13:12:15 2023                          */
-;*    Last change :  Sat May 13 09:30:20 2023 (serrano)                */
+;*    Last change :  Tue May 16 11:22:35 2023 (serrano)                */
 ;*    Copyright   :  2023 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Optimizing nodejs builtins                                       */
@@ -80,23 +80,25 @@
 ;*    stat-prop-table ...                                              */
 ;*---------------------------------------------------------------------*/
 (define stat-prop-table
-   (let* ((t (create-hashtable :weak 'open-string))
-	  (v (uv-fs-stat-cb-vector-props))
-	  (l (vector-length v)))
-      (let loop ((i (-fx (vector-length v) 1)))
-	 (when (>=fx i 0)
-	    (let ((k (vector-ref v i)))
-	       (cond
-		  ((string=? k "ctime") #unspecified)
-		  ((string=? k "atime") #unspecified)
-		  ((string=? k "mtime") #unspecified)
-		  ((string=? k "birthtime") #unspecified)
-		  ((string=? k "ctime-ns") (hashtable-put! t "ctimeMs" i))
-		  ((string=? k "mtime-ns") (hashtable-put! t "mtimeMs" i))
-		  ((string=? k "atime-ns") (hashtable-put! t "atimeMs" i))
-		  ((string=? k "birthtime-ns") (hashtable-put! t "birthtimeMs" i))
-		  (else (hashtable-put! t k i)))
-	       (loop (-fx i 1)))))
+   (let ((t (create-hashtable :weak 'open-string)))
+      (cond-expand
+	 (libuv-vec
+	  (let* ((v (uv-fs-stat-cb-vector-props))
+		 (l (vector-length v)))
+	     (let loop ((i (-fx (vector-length v) 1)))
+		(when (>=fx i 0)
+		   (let ((k (vector-ref v i)))
+		      (cond
+			 ((string=? k "ctime") #unspecified)
+			 ((string=? k "atime") #unspecified)
+			 ((string=? k "mtime") #unspecified)
+			 ((string=? k "birthtime") #unspecified)
+			 ((string=? k "ctime-ns") (hashtable-put! t "ctimeMs" i))
+			 ((string=? k "mtime-ns") (hashtable-put! t "mtimeMs" i))
+			 ((string=? k "atime-ns") (hashtable-put! t "atimeMs" i))
+			 ((string=? k "birthtime-ns") (hashtable-put! t "birthtimeMs" i))
+			 (else (hashtable-put! t k i)))
+		      (loop (-fx i 1))))))))
       t))
 
 ;*---------------------------------------------------------------------*/
@@ -145,9 +147,13 @@
 ;*    stat-field ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (stat-field field)
-   (when (isa? field J2SString)
-      (with-access::J2SString field (val)
-	 (hashtable-get stat-prop-table val))))
+   (cond-expand
+      (libuv-vec
+       (when (isa? field J2SString)
+	  (with-access::J2SString field (val)
+	     (hashtable-get stat-prop-table val))))
+      (else
+       #f)))
 
 ;*---------------------------------------------------------------------*/
 ;*    stat-method ...                                                  */

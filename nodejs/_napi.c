@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 24 14:34:24 2023                          */
-/*    Last change :  Fri Apr  7 10:31:26 2023 (serrano)                */
+/*    Last change :  Mon May 15 12:35:57 2023 (serrano)                */
 /*    Copyright   :  2023 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop node_api implementation.                                     */
@@ -1117,5 +1117,89 @@ napi_remove_wrap(napi_env env,
 		 napi_value js_object,
 		 void **result) {
    *result = (void *)bgl_napi_remove_wrap(env, js_object);
+   return napi_ok;
+}
+
+/*---------------------------------------------------------------------*/
+/*    BGL_RUNTIME_DEF napi_status                                      */
+/*    napi_delete_element ...                                          */
+/*---------------------------------------------------------------------*/
+#undef napi_delete_element
+BGL_RUNTIME_DEF napi_status
+napi_delete_element(napi_env env, napi_value object, uint32_t index, bool *result) {
+   bool res = bgl_napi_delete_element(env, object, index);
+   
+   if (result) *result = res;
+
+   return napi_ok;
+}
+      
+/*---------------------------------------------------------------------*/
+/*    BGL_RUNTIME_DEF napi_status                                      */
+/*    napi_has_element ...                                            */
+/*---------------------------------------------------------------------*/
+#undef napi_has_element
+BGL_RUNTIME_DEF napi_status
+napi_has_element(napi_env env, napi_value object, uint32_t index, bool *result) {
+   bool res = bgl_napi_has_element(env, object, index);
+   
+   if (result) *result = res;
+
+   return napi_ok;
+}
+
+/*---------------------------------------------------------------------*/
+/*    BGL_RUNTIME_DEF napi_status                                      */
+/*    napi_delete_property ...                                         */
+/*---------------------------------------------------------------------*/
+#undef napi_delete_property
+BGL_RUNTIME_DEF napi_status
+napi_delete_property(napi_env env, napi_value object, napi_value key, bool *result) {
+   bool res = bgl_napi_delete_property(env, object, key);
+   
+   if (result) *result = res;
+
+   return napi_ok;
+}
+
+/*---------------------------------------------------------------------*/
+/*    BGL_RUNTIME_DEF napi_status                                      */
+/*    napi_has_property ...                                            */
+/*---------------------------------------------------------------------*/
+#undef napi_has_property
+BGL_RUNTIME_DEF napi_status
+napi_has_property(napi_env env, napi_value object, napi_value key, bool *result) {
+   bool res = bgl_napi_has_property(env, object, key);
+   
+   if (result) *result = res;
+
+   return napi_ok;
+}
+
+/*---------------------------------------------------------------------*/
+/*    BGL_RUNTIME_DEF napi_status                                      */
+/*    napi_has_named_property ...                                      */
+/*---------------------------------------------------------------------*/
+#undef napi_has_named_property
+BGL_RUNTIME_DEF napi_status
+napi_has_named_property(napi_env env, napi_value object, const char *name, bool *result) {
+   bool res = bgl_napi_has_property(env, object, string_to_bstring((char *)name));
+   
+   if (result) *result = res;
+
+   return napi_ok;
+}
+
+/*---------------------------------------------------------------------*/
+/*    BGL_RUNTIME_DEF napi_status                                      */
+/*    napi_has_own_property ...                                        */
+/*---------------------------------------------------------------------*/
+#undef napi_has_own_property
+BGL_RUNTIME_DEF napi_status
+napi_has_own_property(napi_env env, napi_value object, napi_value key, bool *result) {
+   bool res = bgl_napi_has_own_property(env, object, key);
+   
+   if (result) *result = res;
+
    return napi_ok;
 }

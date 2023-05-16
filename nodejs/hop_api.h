@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 24 15:38:53 2023                          */
-/*    Last change :  Sun Apr  2 07:24:38 2023 (serrano)                */
+/*    Last change :  Mon May 15 12:03:10 2023 (serrano)                */
 /*    Copyright   :  2023 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop Specific macro redefinitions                                 */
@@ -20,6 +20,9 @@ extern int64_t bgl_bignum_to_int64(obj_t x);
 extern uint64_t bgl_bignum_to_uint64(obj_t x);
 extern obj_t bgl_int64_to_bignum(int64_t);
 extern obj_t bgl_uint64_to_bignum(uint64_t);
+
+static obj_t _reso;
+static bool _resb;
 
 extern int bgl_napi_is_array(obj_t);
 extern int bgl_napi_is_date(obj_t);
@@ -52,12 +55,26 @@ extern bool_t bgl_napi_has_element(obj_t, obj_t, int);
 extern obj_t bgl_napi_delete_element(obj_t, obj_t, int);
 extern obj_t bgl_napi_get_element(obj_t, obj_t, int);
 extern obj_t bgl_napi_set_element(obj_t, obj_t, int, obj_t);
+extern obj_t bgl_napi_get_property(obj_t, obj_t, obj_t);
 extern obj_t bgl_napi_get_named_property(obj_t, obj_t, obj_t);
+extern obj_t bgl_napi_put_property(obj_t, obj_t, obj_t, obj_t);
 extern obj_t bgl_napi_put_named_property(obj_t, obj_t, obj_t, obj_t);
 extern obj_t bgl_napi_define_named_property(obj_t, obj_t, obj_t, obj_t);
 extern obj_t bgl_napi_make_property_descriptor(obj_t, obj_t, obj_t, obj_t,
 					       bool_t, bool_t, bool_t,
 					       obj_t, obj_t);
+extern obj_t bgl_napi_delete_property(obj_t, obj_t, obj_t);
+extern obj_t bgl_napi_has_property(obj_t, obj_t, obj_t);
+extern obj_t bgl_napi_has_named_property(obj_t, obj_t, obj_t);
+extern obj_t bgl_napi_has_own_property(obj_t, obj_t, obj_t);
+extern obj_t bgl_napi_get_property_names(obj_t, obj_t);
+extern obj_t bgl_napi_get_all_property_names(obj_t, obj_t, bool_t, int, bool_t);
+
+extern obj_t bgl_napi_get_type_tag_object(obj_t, obj_t);
+extern obj_t bgl_napi_set_type_tag_object(obj_t, obj_t, obj_t);
+extern obj_t bgl_napi_object_seal(obj_t, obj_t);
+extern obj_t bgl_napi_object_freeze(obj_t, obj_t);
+
 extern bool_t bgl_napi_jsstringp(obj_t);
 extern obj_t bgl_napi_jsstring_to_string(obj_t);
 extern obj_t bgl_napi_jsstring_to_string_latin1(obj_t);
@@ -218,14 +235,53 @@ struct napi_async_work__ {
 #define napi_reject_deferred(_this, deferred, value) \
   (bgl_napi_call_function(_this, BUNSPEC, CDR(deferred), 1, &value), napi_ok)
   
+#define napi_get_property(_this, this, prop, res) \
+   (_reso = bgl_napi_get_property(_this, this, prop), (res != NULL ? *((obj_t *)res) = _reso : 0L), napi_ok)
+
 #define napi_get_named_property(_this, this, prop, res) \
-  (*res = bgl_napi_get_named_property(_this, this, string_to_bstring(prop)), napi_ok)
+   (_reso = bgl_napi_get_named_property(_this, this, string_to_bstring(prop)), (res != NULL ? *((obj_t *)res) = _reso : 0L), napi_ok)
+
+#define napi_put_property(_this, this, prop, val, res) \
+  (*res = bgl_napi_put_property(_this, this, prop, val), napi_ok)
 
 #define napi_put_named_property(_this, this, prop, val, res) \
   (*res = bgl_napi_put_named_property(_this, this, string_to_bstring(prop), val), napi_ok)
 
+#define napi_set_property(_this, this, prop, val) \
+  (bgl_napi_put_property(_this, this, prop, val), napi_ok)
+
 #define napi_set_named_property(_this, this, prop, val) \
   (bgl_napi_put_named_property(_this, this, string_to_bstring(prop), val), napi_ok)
+
+#define napi_delete_property(_this, this, key, res) \
+   (_resb = CBOOL(bgl_napi_delete_property(_this, this, key)), (res != NULL ? *((bool *)res) = _resb : 0L), napi_ok)
+
+#define napi_has_property(_this, this, key, res) \
+   (_resb = CBOOL(bgl_napi_has_property(_this, this, key)), (res != NULL ? *((bool *)res) = _resb : 0L), napi_ok)
+
+#define napi_has_named_property(_this, this, key, res) \
+   (_resb = CBOOL(bgl_napi_has_named_property(_this, this, string_to_bstring(key))), (res != NULL ? *((bool *)res) = _resb : 0L), napi_ok)
+
+#define napi_has_own_property(_this, this, key, res) \
+   (_resb = CBOOL(bgl_napi_has_own_property(_this, this, key)), (res != NULL ? *((bool *)res) = _resb : 0L), napi_ok)
+
+#define napi_get_property_names(_this, this, res) \
+   (_reso = bgl_napi_get_property_names(_this, this), (res != NULL ? *((obj_t *)res) = _reso : 0L), napi_ok)
+
+#define napi_get_all_property_names(_this, this, key_mode, key_filter, key_conversion, res) \
+   (_reso = bgl_napi_get_all_property_names(_this, this, key_mode, key_filter, key_conversion), (res != NULL ? *((obj_t *)res) = _reso : 0L), napi_ok)
+
+#define napi_type_tag_object(_this, this, tag) \
+   (bgl_napi_set_type_tag_object(_this, this, (obj_t)tag), napi_ok)
+
+#define napi_check_object_type_tag(_this, this, tag, res) \
+   (*res = bgl_napi_get_type_tag_object(_this, this) == (obj_t)tag, napi_ok)
+
+#define napi_object_seal(_this, this) \
+   (bgl_napi_object_seal(_this, this), napi_ok)
+
+#define napi_object_freeze(_this, this) \
+   (bgl_napi_object_freeze(_this, this), napi_ok)
 
 #define napi_get_undefined(env, res) \
   (*res = BUNSPEC, napi_ok)
@@ -237,7 +293,7 @@ struct napi_async_work__ {
   (*res = bgl_napi_has_element(_this, this, index), napi_ok)
 
 #define napi_delete_element(_this, this, index, res) \
-   (*res = CBOOL(bgl_napi_delete_element(_this, this, index)), napi_ok)
+   (_resb = CBOOL(bgl_napi_delete_element(_this, this, index)), (res != NULL ? *((obj_t *)res) = _resb : 0L), napi_ok)
 
 #define napi_get_element(_this, this, index, res) \
   (*res = bgl_napi_get_element(_this, this, index), napi_ok)

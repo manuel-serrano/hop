@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sun May  7 08:31:26 2023 (serrano)                */
+;*    Last change :  Mon May 15 15:39:30 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -623,7 +623,6 @@
 		       %id)))
 	    transitions))))
 
-(define K 0)
 ;*---------------------------------------------------------------------*/
 ;*    js-ctor-constrsize-extend! ...                                   */
 ;*---------------------------------------------------------------------*/
@@ -1133,6 +1132,7 @@
 			     (loop (-fx i 1) (cdr nprops))))))
 		target)))))
 
+(define K 0)
 ;*---------------------------------------------------------------------*/
 ;*    cmap-find-transition ...                                         */
 ;*---------------------------------------------------------------------*/
@@ -1143,7 +1143,7 @@
 	   (=fx (transition-flags t) flags)
 	   (or (not (transition-value t))
 	       (eq? (transition-value t) val))))
-   
+
    (with-access::JsConstructMap omap (transitions)
       (cond
 	 ((null? transitions)

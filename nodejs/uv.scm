@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Thu May 11 07:58:16 2023 (serrano)                */
+;*    Last change :  Tue May 16 11:24:48 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -1329,6 +1329,14 @@
       ((string=? s "atime-ns") "atimeMs")
       ((string=? s "birthtime-ns") "birthtimeMs")
       (else s)))
+
+;*---------------------------------------------------------------------*/
+;*    uv-fs-stat-cb-vector-props                                       */
+;*---------------------------------------------------------------------*/
+(cond-expand
+   ((not libuv-vec)
+    (define (uv-fs-stat-cb-vector-props)
+       '#())))
 
 ;*---------------------------------------------------------------------*/
 ;*    stat-cmap ...                                                    */
