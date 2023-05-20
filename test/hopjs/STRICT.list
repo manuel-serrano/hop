@@ -1,0 +1,8 @@
+# the list of tests of the also tested in strict mode
+
+noserv/date.js
+noserv/function.js
+noserv/number.js
+noserv/property.js
+noserv/regexp.js
+

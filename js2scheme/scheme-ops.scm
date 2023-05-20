@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Tue Mar 28 11:29:25 2023 (serrano)                */
+;*    Last change :  Sat May 20 11:04:15 2023 (serrano)                */
 ;*    Copyright   :  2017-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -2610,7 +2610,7 @@
 	   (match-case val
 	      ((fixnum->flonum ?expr) expr)
 	      (else `(flonum->fixnum ,val)))))
-      (else val)))
+      (else `(if (flonum? ,val) (flonum->fixnum ,val) ,val))))
 
 ;*---------------------------------------------------------------------*/
 ;*    asreal ...                                                       */
@@ -2864,7 +2864,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    tostring ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (tostring val type::symbol ctx)
+(define (tostring val type ctx)
    (case type
       ((string buffer)
        val)
@@ -3129,7 +3129,6 @@
 	       (binop-number-number op type
 		  (box left tl ctx) (box right tr ctx) flip)))))
       ((uint32)
-       
        (cond
 	  ((and (eq? type 'bool) (memq op '(< <= > >= == === != !==)))
 	   (binop-uint32-uint32 op type left right flip))

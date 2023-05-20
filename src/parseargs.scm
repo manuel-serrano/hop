@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Wed May  3 20:10:55 2023 (serrano)                */
+;*    Last change :  Fri May 19 08:25:52 2023 (serrano)                */
 ;*    Copyright   :  2004-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -92,6 +92,9 @@
 	     (print (dirname (hop-sofile-path "dummy.hop"))))
 	    (("-O" (help "Optimization mode (eq. to \"--so-policy aot\")"))
 	     (hop-sofile-compile-policy-set! 'aot))
+	    (("-Ox" (help "Experimal optimization mode"))
+	     (hop-hopc-flags-set! "-Ox")
+	     (hop-sofile-compile-policy-set! 'aot))
 	    
 	    ;; RC
 	    (section "RC & Autoload")
@@ -130,7 +133,7 @@
 	     (set! clear-so #f))
 	    (("--no-so" (help "Disable loading pre-compiled file"))
 	     (hop-sofile-enable-set! #f))
-	    (("--so-policy" ?policy (help "Sofile compile policy [none, aot, nte, nte1, nte+]"))
+	    (("--so-policy" ?policy (help "Sofile compile policy [none, aot, aot+, nte, nte1, nte+]"))
 	     (hop-sofile-compile-policy-set! (string->symbol policy)))
 	    (("--sofile-policy" ?policy (help "Deprecated, use \"--so-policy\" instead"))
 	     (hop-sofile-compile-policy-set! (string->symbol policy)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Fri May 12 10:32:23 2023 (serrano)                */
+;*    Last change :  Thu May 18 06:57:38 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -191,7 +191,10 @@
 	      (lock read-only (default (make-spinlock "JsConstructMap")))
 	      (props::vector (default '#()))
 	      (methods::vector (default '#()))
-	      (transitions::pair-nil (default '()))
+	      ;; list for all non __proto__ transitions
+	      (rtransitions::pair-nil (default '()))
+	      ;; hashtable for __proto__ transitions
+	      (ptransitions::obj (default #f))
 	      (detachcnt::long (default 0))
 	      (detachlocs::pair-nil (default '()))
 	      (ctor::obj (default #f))

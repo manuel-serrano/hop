@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Sat May 13 09:38:54 2023 (serrano)                */
+;*    Last change :  Thu May 18 07:35:05 2023 (serrano)                */
 ;*    Copyright   :  2018-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -1425,19 +1425,19 @@
    (define (call-arguments-function fun::J2SFun thisargs::pair-nil f %gen args)
       (with-access::J2SFun fun (params vararg idthis loc argumentsp)
 	 (let ((self (if idthis (j2s-self thisargs) '())))
-	    (if (context-get ctx :optim-arguments)
-		(with-access::J2SDeclArguments argumentsp (alloc-policy)
-		   (if (and (eq? alloc-policy 'lazy)
-			    (context-get ctx :optim-stack-alloc))
-		       (let ((v (gensym 'vec)))
-			  `(js-call-with-stack-vector
-			      (vector ,@(j2s-scheme args mode return ctx))
-			      (lambda (,v)
-				 (,f ,@%gen ,@self ,v))))
-		       `(,f ,@%gen ,@self
-			   (vector ,@(j2s-scheme args mode return ctx)))))
-		`(,f ,@%gen ,@self
-		    ,@(j2s-scheme args mode return ctx))))))
+	    (with-access::J2SDeclArguments argumentsp (alloc-policy)
+	       (case alloc-policy
+		  ((length)
+		   (call-fix-function fun self f %gen args (length args)))
+		  ((stack lazy)
+		   (let ((v (gensym '&vec)))
+		      `(js-call-with-stack-vector
+			  (vector ,@(j2s-scheme args mode return ctx))
+			  (lambda (,v)
+			     (,f ,@%gen ,@self ,v)))))
+		  (else
+		   `(,f ,@%gen ,@self
+		       (vector ,@(j2s-scheme args mode return ctx)))))))))
    
    (define (call-rest-function fun::J2SFun thisargs::pair-nil f %gen args)
       ;; call a function that accepts a rest argument
@@ -1450,8 +1450,9 @@
 		;; the rest argument
 		(with-access::J2SDeclRest (car params) (alloc-policy)
 		   (if (and (eq? alloc-policy 'lazy)
-			    (context-get ctx :optim-arguments)
-			    (context-get ctx :optim-stack-alloc))
+			    (or (not (isa? (car params) J2SDeclArguments))
+				(and (context-get ctx :optim-arguments)
+				     (context-get ctx :optim-stack-alloc))))
 		       (let ((v (gensym 'vec)))
 			  `(js-call-with-stack-vector
 			      (vector ,@(j2s-scheme args mode return ctx))

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Tue Oct 26 15:04:52 2021 (serrano)                */
-;*    Copyright   :  2017-21 Manuel Serrano                            */
+;*    Last change :  Sat May 20 11:26:48 2023 (serrano)                */
+;*    Copyright   :  2017-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Global properties optimization (constant propagation).           */
 ;*                                                                     */
@@ -43,10 +43,11 @@
 ;*      1. the assignment is toplevel or EXPR is a constant            */
 ;*      2. G is a read-only variable, initialized, not used as value   */
 ;*      3. no setter and getter are used                               */
-;*      4. INIT must be a literal, a function, or a builtin object     */
-;*      5. there should be only one single PROP1 in G, in particular   */
+;*      4. never used in a delete op                                   */
+;*      5. INIT must be a literal, a function, or a builtin object     */
+;*      6. there should be only one single PROP1 in G, in particular   */
 ;*         there is no computed prop assigned to G                     */
-;*      6. there is no direct EVAL                                     */
+;*      7. there is no direct EVAL                                     */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
@@ -170,7 +171,7 @@
       (if (isa? lhs J2SRef)
 	  (with-access::J2SRef lhs (decl)
 	     (with-access::J2SDecl decl (%info)
-		(if (and (not (decl-usage-has? decl '(assig uninit)))
+		(if (and (not (decl-usage-has? decl '(assig uninit delete)))
 			 (constant-object? rhs))
 		    (begin
 		       (set! %info (propinfo rhs '() #t))
@@ -183,7 +184,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (collect-globconst* this::J2SDeclInit ctx)
    (with-access::J2SDeclInit this (val %info)
-      (if (and (not (decl-usage-has? this '(assig))) (constant-object? val))
+      (if (and (not (decl-usage-has? this '(assig delete))) (constant-object? val))
 	  (begin
 	     (set! %info (propinfo val '() #f))
 	     (list this))

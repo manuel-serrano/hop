@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Sat May 13 09:22:28 2023 (serrano)                */
+;*    Last change :  Thu May 18 06:06:35 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -421,13 +421,22 @@
 			(for-each (lambda (a) (display a p)) args)
 			(newline p))))
 	       
-	       ;; dump
-	       (define-js dump 2
+	       ;; dumpObj
+	       (define-js dumpObj 2
 		  (lambda (this obj msg)
 		     (let ((p (current-error-port)))
 			(if (eq? msg (js-undefined))
 			    (js-debug-object obj)
 			    (js-debug-object obj msg)))))
+	       
+	       ;; dumpObjCmap
+	       (define-js dumpObjCmap 2
+		  (lambda (this obj msg)
+		     (with-access::JsObject obj (cmap)
+			(let ((p (current-error-port)))
+			   (if (eq? msg (js-undefined))
+			       (js-debug-cmap cmap)
+			       (js-debug-cmap cmap msg))))))
 	       
 	       ;; typeName
 	       (define-js typeName 1

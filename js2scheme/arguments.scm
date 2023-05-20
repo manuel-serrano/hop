@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec  5 09:14:00 2019                          */
-;*    Last change :  Sun Apr 30 11:31:41 2023 (serrano)                */
+;*    Last change :  Thu May 18 07:40:53 2023 (serrano)                */
 ;*    Copyright   :  2019-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arguments optimization                                           */
@@ -52,7 +52,7 @@
    (when (isa? this J2SProgram)
       (unless (> (config-get conf :debug 0) 0)
 	 (ause this)
-	 (annotate-arguments this this #f #f)))
+	 '(annotate-arguments this this #f #f)))
    this)
 
 ;*---------------------------------------------------------------------*/
@@ -65,19 +65,36 @@
 ;*    ause ::J2SFun ...                                                */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (ause this::J2SFun)
-   (with-access::J2SFun this (argumentsp)
+   (with-access::J2SFun this (argumentsp params)
       (when argumentsp
 	 ;; will be restored if used in a "true" ref
 	 (decl-usage-rem! argumentsp 'ref)
-	 (decl-usage-rem! argumentsp 'get)))
-   (call-default-walker))
+	 (decl-usage-rem! argumentsp 'get))
+      (when (pair? params)
+	 (let ((lastp (car (last-pair params))))
+	    (when (isa? lastp J2SDeclRest)
+	       (with-access::J2SDeclRest lastp (mode)
+		  (decl-usage-rem! lastp 'ref)
+		  (decl-usage-rem! lastp 'get)))))
+      (call-default-walker)
+      '(when argumentsp
+	 (with-access::J2SDeclArguments argumentsp (alloc-policy usage)
+	    (cond
+	       ((usage-strict? usage '(length))
+		(set! alloc-policy 'lonly)))))))
 				
+;*---------------------------------------------------------------------*/
+;*    ause ::J2SSvc ...                                                */
+;*---------------------------------------------------------------------*/
+(define-walk-method (ause this::J2SSvc)
+   (call-default-walker))
+   
 ;*---------------------------------------------------------------------*/
 ;*    ause ::J2SRef ...                                                */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (ause this::J2SRef)
    (with-access::J2SRef this (decl)
-      (when (isa? decl J2SDeclArguments)
+      (when (isa? decl J2SDeclRest)
 	 (decl-usage-add! decl 'ref))))
 
 ;*---------------------------------------------------------------------*/
@@ -97,7 +114,7 @@
       (ause field)
       (if (isa? obj J2SRef)
 	  (with-access::J2SRef obj (decl)
-	     (if (isa? decl J2SDeclArguments)
+	     (if (isa? decl J2SDeclRest)
 		 (decl-usage-add! decl
 		    (cond
 		       ((field-length? field) 'length)
@@ -164,7 +181,7 @@
 	  (let ((arg1 (cadr args)))
 	     (if (isa? arg1 J2SRef)
 		 (with-access::J2SRef arg1 (decl)
-		    (if (isa? decl J2SDeclArguments)
+		    (if (isa? decl J2SDeclRest)
 			(begin
 			   (ause fun)
 			   (ause (car args))
@@ -175,7 +192,7 @@
 	  (let ((arg0 (car args)))
 	     (if (isa? arg0 J2SRef)
 		 (with-access::J2SRef arg0 (decl)
-		    (if (isa? decl J2SDeclArguments)
+		    (if (isa? decl J2SDeclRest)
 			(begin
 			   (ause fun)
 			   (for-each ause (cdr args))

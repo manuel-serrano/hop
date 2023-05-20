@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Thu May  4 11:31:13 2023 (serrano)                */
+;*    Last change :  Sat May 20 06:56:30 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
@@ -35,9 +35,8 @@
    (export (js-init-arguments! ::JsGlobalObject)
 	   (js-arguments-define-own-property ::JsArguments ::int ::JsPropertyDescriptor)
 	   (js-materialize-arguments ::JsGlobalObject ::vector ::obj)
-	   (js-arguments ::JsGlobalObject ::vector)
-	   (js-strict-arguments ::JsGlobalObject ::pair-nil)
-	   (js-strict-arguments-vector ::JsGlobalObject ::vector)
+	   (js-sloppy-arguments ::JsGlobalObject ::vector)
+	   (js-strict-arguments ::JsGlobalObject ::vector)
 	   (js-arguments->list ::JsArguments ::JsGlobalObject)
 	   (js-arguments->vector ::JsArguments ::JsGlobalObject)
 	   (js-arguments->jsarray ::JsArguments ::JsGlobalObject)
@@ -117,6 +116,15 @@
 (define-method (js-donate o::JsArguments worker::WorkerHopThread %_this)
    (with-access::WorkerHopThread worker (%this)
       (js-raise-type-error %this "[[DonationTypeError]] ~a" o)))
+
+;*---------------------------------------------------------------------*/
+;*    js-debug-object ::JsArguments ...                                */
+;*---------------------------------------------------------------------*/
+(define-method (js-debug-object obj::JsArguments #!optional (msg ""))
+   (call-next-method)
+   (with-access::JsArguments obj (vec)
+      (fprint (current-error-port)
+	 "   vec=" vec)))
 
 ;*---------------------------------------------------------------------*/
 ;*    properties                                                       */
@@ -564,17 +572,17 @@
        target
        (let* ((nv (copy-vector vec (vector-length vec)))
 	      (arg (if (eq? target 'strict)
-		       (js-strict-arguments-vector %this vec)
-		       (js-arguments %this vec))))
+		       (js-strict-arguments %this nv)
+		       (js-sloppy-arguments %this nv))))
 	  (vector-shrink! vec 0)
 	  arg)))
 
 ;*---------------------------------------------------------------------*/
-;*    js-arguments ...                                                 */
+;*    js-sloppy-arguments ...                                          */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-10.6         */
 ;*---------------------------------------------------------------------*/
-(define (js-arguments %this::JsGlobalObject vec::vector)
+(define (js-sloppy-arguments %this::JsGlobalObject vec::vector)
    (with-access::JsGlobalObject %this (js-arguments-cmap)
       (instantiateJsArguments
 	 (vec vec)
@@ -585,13 +593,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-strict-arguments ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (js-strict-arguments %this::JsGlobalObject lst::pair-nil)
-   (js-strict-arguments-vector %this (apply vector lst)))
-
-;*---------------------------------------------------------------------*/
-;*    js-strict-arguments-vector ...                                   */
-;*---------------------------------------------------------------------*/
-(define (js-strict-arguments-vector %this::JsGlobalObject vec::vector)
+(define (js-strict-arguments %this::JsGlobalObject vec::vector)
    
    (define (value->descriptor v i)
       (instantiate::JsValueDescriptor

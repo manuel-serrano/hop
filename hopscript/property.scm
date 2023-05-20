@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Mon May 15 15:39:30 2023 (serrano)                */
+;*    Last change :  Wed May 17 07:27:31 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -392,7 +392,7 @@
 ;*    classes (see bug nodejs/simple/test-stream2-readable-wrap.js).   */
 ;*---------------------------------------------------------------------*/
 (define (js-invalidate-cache-method! cmap::JsConstructMap idx::long reason who)
-   (with-access::JsConstructMap cmap (methods transitions %id)
+   (with-access::JsConstructMap cmap (methods rtransitions ptransitions)
       (let ((m (vector-ref methods idx)))
 	 (when m
 	    (let ((r (not (eq? m #unspecified))))
@@ -401,7 +401,13 @@
 			    (let ((ncmap (transition-nextmap tr)))
 			       (when (js-invalidate-cache-method! ncmap idx reason who)
 				  (set! r #t))))
-		  transitions)
+		  rtransitions)
+	       (when ptransitions
+		  (hashtable-for-each ptransitions
+		     (lambda (key tr)
+			(let ((ncmap (transition-nextmap tr)))
+			   (when (js-invalidate-cache-method! ncmap idx reason who)
+			      (set! r #t))))))
 	       r)))))
 
 ;*---------------------------------------------------------------------*/
@@ -604,7 +610,9 @@
 ;*    js-debug-cmap ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (js-debug-cmap cmap #!optional (msg ""))
-   (with-access::JsConstructMap cmap (%id props methods transitions vtable mrtable mptable)
+   (with-access::JsConstructMap cmap (%id props methods
+					rtransitions ptransitions
+					vtable mrtable mptable)
       (fprint (current-error-port) "~~ " msg (typeof cmap)
 	 " %id=" %id
 	 " prop.vlen=" (vector-length props)
@@ -613,15 +621,22 @@
 	 "\n  props=" (vector-map js-debug-prop props)
 	 "\n  mrtable=" (when (vector? mrtable) (vector-length mrtable))
 	 " mptable=" (when (vector? mptable) (vector-length mptable))
-	 "\n  transitions="
+	 "\n  rtransitions="
 	 (map (lambda (tr)
-		 (format "~a:~a[~a]->~a"
+		 (format "~a[~a]->~a"
 		    (transition-name tr)
-		    (typeof (transition-value tr))
 		    (transition-flags tr)
 		    (with-access::JsConstructMap (transition-nextmap tr) (%id)
 		       %id)))
-	    transitions))))
+	    rtransitions)
+	 "\n  ptransitions="
+	 (when ptransitions
+	    (hashtable-map ptransitions
+	       (lambda (key tr)
+		  (format "[~a]->~a"
+		     (transition-flags tr)
+		     (with-access::JsConstructMap (transition-nextmap tr) (%id)
+			%id))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-ctor-constrsize-extend! ...                                   */
@@ -1019,20 +1034,111 @@
 ;*---------------------------------------------------------------------*/
 ;*    transition ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define-struct transition name value flags nextmap)
+(define-struct transition name flags nextmap)
+
+;*---------------------------------------------------------------------*/
+;*    link-regular-cmap! ...                                           */
+;*---------------------------------------------------------------------*/
+(define (link-regular-cmap! omap::JsConstructMap nmap::JsConstructMap
+	   name flags::int)
+   (with-access::JsConstructMap omap (rtransitions)
+;*       (when (>fx (length rtransitions) 100)                         */
+;* 	 (tprint "link-regular-cmap " name " " (length rtransitions))  */
+;* 	 (js-debug-cmap omap))                                         */
+      (set! rtransitions (cons (transition name flags nmap) rtransitions))
+      (with-access::JsConstructMap nmap (parent)
+	 (set! parent omap))
+      nmap))
+
+;*---------------------------------------------------------------------*/
+;*    link-proto-cmap! ...                                             */
+;*---------------------------------------------------------------------*/
+(define (link-proto-cmap! omap::JsConstructMap nmap::JsConstructMap
+	   value flags::int)
+   (with-access::JsConstructMap omap (ptransitions)
+      (unless ptransitions
+	 (set! ptransitions (create-hashtable :weak 'keys)))
+      (hashtable-put! ptransitions value
+	 (transition (& "__proto__") flags nmap))
+      (with-access::JsConstructMap nmap (parent)
+	 (set! parent omap))
+      nmap))
 
 ;*---------------------------------------------------------------------*/
 ;*    link-cmap! ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (link-cmap! omap::JsConstructMap nmap::JsConstructMap
 	   name value flags::int)
-   (with-access::JsConstructMap omap (transitions)
-      (let ((val (when (eq? name (& "__proto__"))
-		    value)))
-	 (set! transitions (cons (transition name val flags nmap) transitions)))
-      (with-access::JsConstructMap nmap (parent)
-	 (set! parent omap))
-      nmap))
+   (if (eq? name (& "__proto__"))
+       (link-proto-cmap! omap nmap value flags)
+       (link-regular-cmap! omap nmap name flags)))
+
+;*---------------------------------------------------------------------*/
+;*    cmap-find-regular-transition ...                                 */
+;*---------------------------------------------------------------------*/
+(define (cmap-find-regular-transition omap::JsConstructMap name flags::int)
+   
+   (define (is-transition? t)
+      (and (eq? (transition-name t) name)
+	   (=fx (transition-flags t) flags)))
+
+   (with-access::JsConstructMap omap (rtransitions)
+;*       (when (>fx (length rtransitions) 100)                         */
+;* 	 (tprint "find-regular-transition " name " " (length rtransitions)) */
+;* 	 (js-debug-cmap omap))                                         */
+      (cond
+	 ((null? rtransitions)
+	  #f)
+	 ((is-transition? (car rtransitions))
+	  (transition-nextmap (car rtransitions)))
+	 (else
+	  (let loop ((trs (cdr rtransitions))
+		     (prev rtransitions))
+	     (when (pair? trs)
+		(let ((t (car trs)))
+		   (if (is-transition? t)
+		       (begin
+			  ;; move the transition in front of the list
+			  (set-cdr! prev (cdr trs))
+			  (set-cdr! trs rtransitions)
+			  (set! rtransitions trs)
+			  (transition-nextmap t))
+		       (loop (cdr trs) trs)))))))))
+
+;*---------------------------------------------------------------------*/
+;*    cmap-find-proto-transition ...                                   */
+;*---------------------------------------------------------------------*/
+(define (cmap-find-proto-transition omap::JsConstructMap value flags::int)
+   (with-access::JsConstructMap omap (ptransitions)
+      (when ptransitions
+	 (let ((tr (hashtable-get ptransitions value)))
+	    (when tr
+	       (transition-nextmap tr))))))
+
+;*---------------------------------------------------------------------*/
+;*    cmap-find-transition ...                                         */
+;*---------------------------------------------------------------------*/
+(define (cmap-find-transition omap::JsConstructMap name val flags::int)
+   (if (eq? name (& "__proto__"))
+       (cmap-find-proto-transition omap val flags)
+       (cmap-find-regular-transition omap name flags)))
+
+;*---------------------------------------------------------------------*/
+;*    cmap-next-proto-cmap ...                                         */
+;*---------------------------------------------------------------------*/
+(define (cmap-next-proto-cmap %this::JsGlobalObject cmap::JsConstructMap old new)
+   (with-access::JsConstructMap cmap (parent lock (%cid %id))
+      (let ((flags (property-flags #t #t #t #f #t)))
+	 ;; 1- try to find a transition from the current cmap
+	 (synchronize lock
+	    (let ((nxmap (cmap-find-proto-transition cmap new flags)))
+	       (or nxmap
+		   ;; 2- create a new plain cmap connected to its parent
+		   ;; via a regular link
+		   (let ((nwmap (duplicate::JsConstructMap cmap
+				    (%id (gencmapid)))))
+		      (link-proto-cmap! cmap nwmap new flags)
+		      nwmap)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    vector-extend ...                                                */
@@ -1082,7 +1188,8 @@
 	    (lock (make-spinlock "JsConstructMap"))
 	    (props newprops)
 	    (methods newmethods)
-	    (transitions '())))))
+	    (rtransitions '())
+	    (ptransitions #f)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    merge-cmap! ...                                                  */
@@ -1131,55 +1238,6 @@
 			     (vector-set! rmets i (car nmets))
 			     (loop (-fx i 1) (cdr nprops))))))
 		target)))))
-
-(define K 0)
-;*---------------------------------------------------------------------*/
-;*    cmap-find-transition ...                                         */
-;*---------------------------------------------------------------------*/
-(define (cmap-find-transition omap::JsConstructMap name val flags::int)
-   
-   (define (is-transition? t)
-      (and (eq? (transition-name t) name)
-	   (=fx (transition-flags t) flags)
-	   (or (not (transition-value t))
-	       (eq? (transition-value t) val))))
-
-   (with-access::JsConstructMap omap (transitions)
-      (cond
-	 ((null? transitions)
-	  #f)
-	 ((is-transition? (car transitions))
-	  (transition-nextmap (car transitions)))
-	 (else
-	  (let loop ((trs (cdr transitions))
-		     (prev transitions))
-	     (when (pair? trs)
-		(let ((t (car trs)))
-		   (if (is-transition? t)
-		       (begin
-			  ;; move the transition in the front of the list
-			  (set-cdr! prev (cdr trs))
-			  (set-cdr! trs transitions)
-			  (set! transitions trs)
-			  (transition-nextmap t))
-		       (loop (cdr trs) trs)))))))))
-
-;*---------------------------------------------------------------------*/
-;*    cmap-next-proto-cmap ...                                         */
-;*---------------------------------------------------------------------*/
-(define (cmap-next-proto-cmap %this::JsGlobalObject cmap::JsConstructMap old new)
-   (with-access::JsConstructMap cmap (parent lock (%cid %id))
-      (let ((flags (property-flags #t #t #t #f #t)))
-	 ;; 1- try to find a transition from the current cmap
-	 (synchronize lock
-	    (let ((nextmap (cmap-find-transition cmap (& "__proto__") new flags)))
-	       (or nextmap
-		   ;; 2- create a new plain cmap connected to its parent
-		   ;; via a regular link
-		   (let ((newmap (duplicate::JsConstructMap cmap
-				    (%id (gencmapid)))))
-		      (link-cmap! cmap newmap (& "__proto__") new flags)
-		      newmap)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    reset-cmap-vtable! ...                                           */
@@ -3021,7 +3079,7 @@
 ;*    At the first level, special put! form for Array, String, etc.    */
 ;*    are overriden by method of the js-put! function.                 */
 ;*---------------------------------------------------------------------*/
-(define (js-put-jsobject! o prop v throw::bool %this::JsGlobalObject
+(define (js-put-jsobject! o::JsObject prop v throw::bool %this::JsGlobalObject
 	   #!key
 	   (extend #t)
 	   (override #f)
@@ -3499,7 +3557,6 @@
 		;; 8.12.5, step 6
 		(extend-properties-object!))))))
 
-   ;;(tprint "JS-PUT-JSOBJECT " name)
    (check-unplain! o name)
    (let loop ((obj o))
       (jsobject-find obj o name
@@ -3971,9 +4028,9 @@
 	  #f)))
 
    (define (check-cmap-parent cmap n)
-      (with-access::JsConstructMap cmap (parent transitions)
-	 (with-access::JsConstructMap parent ((ptransitions transitions))
-	    (when (=fx (+fx 1 (length ptransitions)) (length transitions))
+      (with-access::JsConstructMap cmap (parent rtransitions)
+	 (with-access::JsConstructMap parent ((ptransitions rtransitions))
+	    (when (=fx (+fx 1 (length ptransitions)) (length rtransitions))
 	       (let loop ((ptransitions ptransitions))
 		  (when (pair? ptransitions)
 		     (let ((tr (car ptransitions)))
@@ -4531,7 +4588,6 @@
 				   (js-typeof o %this) name)))
 			    ((and (get desc)
 				  (not (equal-undef? (get current) (get desc))))
-			     (tprint "CU=" (get current) " NW=" (get desc))
 			     (reject
 				(format "\"~a.~a\" getter mismatch"
 				   (js-typeof o %this) name)))
@@ -4615,17 +4671,19 @@
 	     (loop (-fx i 1))))))
    
    (define (find-transition cmap name)
-      (with-access::JsConstructMap cmap (transitions)
-	 (find (lambda (t) (eq? (transition-name t) name)) transitions)))
+      (with-access::JsConstructMap cmap (rtransitions)
+	 (find (lambda (t) (eq? (transition-name t) name)) rtransitions)))
    
-   (unless (isa? new JsValueDescriptor)
+  (unless (isa? new JsValueDescriptor)
       ;; to be improved
       (js-object-unmap! o))
    
-   (cond
-      ((js-object-mapped? o)
-       ;; update the mapped object
-       (with-access::JsPropertyDescriptor new (name)
+   (with-access::JsPropertyDescriptor new (name)
+      (cond
+	 ((eq? name (& "__proto__"))
+	  (error "js-replace-own-property!" "cannot replace property" new))
+	 ((js-object-mapped? o)
+	  ;; update the mapped object
 	  (with-access::JsObject o (cmap)
 	     (let loop ((cmap cmap))
 		(with-access::JsConstructMap cmap (transitions parent lock)
@@ -4636,21 +4694,20 @@
 				(let ((flags (descriptor->flags new)))
 				   (link-cmap! cmap (transition-nextmap tr)
 				      name value flags)))
-			     (loop parent)))))))))
-      ((js-object-hashed? o)
-       (with-access::JsObject o (elements)
-	  (with-access::JsPropertyDescriptor new (name)
+			     (loop parent))))))))
+	 ((js-object-hashed? o)
+	  (with-access::JsObject o (elements)
 	     (if (js-jsstring? name)
 		 (let ((e (prop-hashtable-get elements (js-jsstring->string name))))
 		    (if (cell? e)
 			(cell-set! e new)
 			(js-replace-own-property! (js-object-proto o) old new)))
-		 (js-replace-own-property! (js-object-proto o) old new)))))
-      (else
-       ;; update the unmapped object
-       (with-access::JsObject o (elements)
-	  (unless (replace-vector! elements old new)
-	     (js-replace-own-property! (js-object-proto o) old new))))))
+		 (js-replace-own-property! (js-object-proto o) old new))))
+	 (else
+	  ;; update the unmapped object
+	  (with-access::JsObject o (elements)
+	     (unless (replace-vector! elements old new)
+		(js-replace-own-property! (js-object-proto o) old new)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-seal ::JsObject ...                                           */

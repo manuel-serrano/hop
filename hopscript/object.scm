@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Fri May 12 10:32:17 2023 (serrano)                */
+;*    Last change :  Thu May 18 06:21:11 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -280,15 +280,6 @@
 		    (cmap (js-make-jsconstructmap))
 		    (__proto__ %proto)
 		    (elements (make-vector size)))))
-;*       (tprint "THIS...")                                            */
-;*       (tprint "THIS=" (typeof (car (list %this)))                   */
-;* 	 " " (object-class (car (list %this))))                        */
-;*       (js-object-mode-set! %this (js-globalobject-default-mode))    */
-;*       (tprint "THIS=" (typeof (car (list %this)))                   */
-;* 	 " mode=" (js-object-mode %this) " " (js-globalobject-default-mode) */
-;* 	 " " (object-class %this))                                     */
-;*       (js-object-proto-set! %this %proto)                           */
-;*       (tprint "THIS=" (typeof (car (list %this))) " " (isa? (car (list %this)) JsGlobalObject)) */
       ;; local constant strings
       (js-init-names!)
       (unless (vector? __js_strings) (set! __js_strings (&init!)))

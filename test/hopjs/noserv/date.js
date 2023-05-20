@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Wed Mar 29 19:07:45 2023 (serrano)                */
+/*    Last change :  Sat May 20 14:46:47 2023 (serrano)                */
 /*    Copyright   :  2014-23 Manuel Serrano                            */
 /*    Copyright   :  2014-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
@@ -373,7 +373,7 @@ function toPostgresString( date ) {
       + ':' + date.getUTCSeconds();
 }
 
-var d = new Date( 2014, 10, 4, 00, 22, 45 );
+var d = new Date( 2014, 10, 4, 0, 22, 45 );
 
 assert.ok( toPostgresString( d ) === "2014-11-3 23:22:45", "UTC date" );
 
@@ -397,7 +397,7 @@ checkDate( new Date('2014-11-03 19:00'), 2014, 10, 3, 19, 0, 0, 0 );
 checkDate( new Date('2014-11-03 19:23'), 2014, 10, 3, 19, 23, 0, 0 );
 checkDate( new Date('2014-11-03 19:23:22'), 2014, 10, 3, 19, 23, 22, 0 );
 checkDate( new Date('2014-11-03 19:23:22.478'), 2014, 10, 3, 19, 23, 22, 478 );
-checkDate( new Date('2014-11-03 19:23:22.478+01:00'), 2014, 10, 03, 19, 23, 22, 478 );
+checkDate( new Date('2014-11-03 19:23:22.478+01:00'), 2014, 10, 3, 19, 23, 22, 478 );
 
 function zdate() {
    var expectedDateTimeStr = "1970-01-01T00:00:00.000Z";

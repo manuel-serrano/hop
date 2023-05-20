@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Fri May 12 10:48:21 2023 (serrano)                */
+;*    Last change :  Sat May 20 07:30:01 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -1270,6 +1270,9 @@
 		 (js-arguments-ref argarray 8 %this)
 		 (js-arguments-ref argarray 9 %this)))
 	     (else
+	      (unless (number? n)
+		 (tprint "LEN not a number " (js-arguments-length argarray %this) " " (js-get argarray (& "length") %this))
+		 (js-debug-object argarray))
 	      (js-apply %this this thisarg
 		 (map! (lambda (idx)
 			  (js-arguments-ref argarray idx %this))
@@ -1560,6 +1563,8 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    js-function-arity ...                                            */
+;*    -------------------------------------------------------------    */
+;*    See also function.sch                                            */
 ;*---------------------------------------------------------------------*/
 (define (js-function-arity req #!optional opl (protocol 'fix))
    (cond
@@ -1578,12 +1583,10 @@
 		  "illegal optional for fix args"
 		  (vector req opl protocol)))
 	   (case protocol
-	      ((arguments-lazy)
+	      ((arguments-lazy arguments-stack)
 	       -2047)
-	      ((arguments-eager)
+	      ((arguments arguments-eager)
 	       -2048)
-	      ((arguments)
-	       0)
 	      ((rest-lazy)
 	       (let ((offset (if (=fx opl 0) 2049 4049)))
 		  (negfx (+fx offset (-fx req 1)))))

@@ -453,6 +453,15 @@
 		`(vector-ref %evars ,index)))
 	    ((decl-stack-vararg? decl)
 	     (j2s-arguments-stack-id))
+;* 	    ((isa? decl J2SDeclArguments)                              */
+;* 	     (with-access::J2SDeclArguments decl (id)                  */
+;* 		(let ((argid (j2s-ref-arguments-argid this)))          */
+;* 		   `(begin                                             */
+;* 		       (set! arguments                                 */
+;* 			  (js-materialize-arguments %this              */
+;* 			     ,argid                                    */
+;* 			     arguments))                               */
+;* 		       arguments))))                                   */
 	    ((j2s-let-opt? decl)
 	     (j2s-decl-scm-id decl ctx))
 	    ((j2s-let? decl)
@@ -919,7 +928,7 @@
 			  '())
 		    ,@(if export
 			  (with-access::J2SExport export (index)
-			     `((vector-set! %evars ,index ,id)))
+			     `((vector-set! %evars ,index ,^id)))
 			  '())))))
 	 ((decl-usage-has? d '(call))
 	  (with-access::J2SFun val (generator)
@@ -941,7 +950,8 @@
 			`(define ,id
 			    ,(jsfun->lambda val mode return ctx #f))
 			,(with-access::J2SExport export (index)
-			    `(vector-set! %evars ,index ,id))))
+			    `(vector-set! %evars ,index
+				(j2sfun->scheme val ,id #f mode return ctx)))))
 		   (else
 		    `(define ,id
 			,(jsfun->lambda val mode return ctx #f)))))))

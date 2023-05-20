@@ -97,7 +97,8 @@
 		  `(js-arguments-stack-index-ref
 		      ,(j2s-scheme obj mode return ctx)
 		      ,(j2s-scheme field mode return ctx)))
-		 ((and (isa? obj J2SRef) (j2s-ref-arguments-lazy? obj))
+		 ((and (isa? obj J2SRef)
+		       (j2s-ref-arguments-lazy-optimized? obj))
 		  (let ((argid (j2s-ref-arguments-argid obj)))
 		     `(js-arguments-vector-index-ref ,argid
 		       ,(j2s-scheme obj mode return ctx)
@@ -121,7 +122,8 @@
 	      `(js-arguments-stack-ref
 		  ,(j2s-scheme obj mode return ctx)
 		  ,(j2s-scheme field mode return ctx)))
-	     ((and (isa? obj J2SRef) (j2s-ref-arguments-lazy? obj))
+	     ((and (isa? obj J2SRef)
+		   (j2s-ref-arguments-lazy-optimized? obj))
 	      (let ((argid (j2s-ref-arguments-argid obj)))
 		 `(js-arguments-vector-ref ,argid
 		   ,(j2s-scheme obj mode return ctx)
@@ -139,7 +141,8 @@
 	     ((argument-stack? obj)
 	      ;; see scheme-fun.scm
 	      (j2s-arguments-lonly-id))
-	     ((and (isa? obj J2SRef) (j2s-ref-arguments-lazy? obj))
+	     ((and (isa? obj J2SRef)
+		   (j2s-ref-arguments-lazy-optimized? obj))
 	      `(if (js-object? ,(j2s-scheme obj mode return ctx))
 		   (js-arguments-length
 		      ,(j2s-scheme obj mode return ctx) %this)
@@ -159,7 +162,8 @@
       (with-access::J2SAccess lhs (obj field cache cspecs loc)
 	 (if (context-get ctx :optim-arguments)
 	     (if (eq? (j2s-type field) 'uint32)
-		 (if (and (isa? obj J2SRef) (j2s-ref-arguments-lazy? obj))
+		 (if (and (isa? obj J2SRef)
+			  (j2s-ref-arguments-lazy-optimized? obj))
 		     (let ((argid (j2s-ref-arguments-argid obj)))
 			`(js-arguments-vector-index-set! ,argid
 			    ,(j2s-scheme obj mode return ctx)
@@ -216,7 +220,16 @@
 		(j2s-ref-arguments-lazy? val))))
 	 (else
 	  #f))))
-		 
+
+;*---------------------------------------------------------------------*/
+;*    j2s-ref-arguments-lazy-optimized? ...                            */
+;*---------------------------------------------------------------------*/
+(define (j2s-ref-arguments-lazy-optimized? obj)
+   (when (j2s-ref-arguments-lazy? obj)
+      (with-access::J2SRef obj (decl)
+	 (with-access::J2SRef obj (decl)
+	    (not (decl-usage-has? decl '(ref set get)))))))
+      
 ;*---------------------------------------------------------------------*/
 ;*    j2s-ref-arguments-argid ...                                      */
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Dec 14 07:04:23 2019                          */
-;*    Last change :  Sun Apr 30 16:44:42 2023 (serrano)                */
+;*    Last change :  Sat May 20 09:42:26 2023 (serrano)                */
 ;*    Copyright   :  2019-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Ast node usage API                                               */
@@ -156,16 +156,16 @@
 ;*---------------------------------------------------------------------*/
 (define (decl-lonly-vararg? this)
    (when (isa? this J2SDeclArguments)
-      (with-access::J2SDeclArguments this (usage)
-	 (usage-strict? usage '(length)))))
+      (with-access::J2SDeclArguments this (alloc-policy)
+	 (eq? alloc-policy 'lonly))))
 
 ;*---------------------------------------------------------------------*/
 ;*    decl-stack-vararg? ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (decl-stack-vararg? this)
    (when (isa? this J2SDeclArguments)
-      (with-access::J2SDeclArguments this (usage)
-	 (usage-strict? usage '(slice aref length)))))
+      (with-access::J2SDeclArguments this (alloc-policy)
+	 (eq? alloc-policy 'stack))))
 
 ;*---------------------------------------------------------------------*/
 ;*    ref-lonly-vararg? ...                                            */

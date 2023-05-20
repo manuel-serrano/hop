@@ -48,9 +48,13 @@ Debugging
 [:@glyphicon glyphicon-tag function]  
 Print the arguments on the standard error port.
 
-### hop.dump(obj, [message]) ###
+### hop.dumpObj(obj, [message]) ###
 [:@glyphicon glyphicon-tag function]  
 Dump the argument on the standard error port.
+
+### hop.dumpObjCmap(obj, [message]) ###
+[:@glyphicon glyphicon-tag function]  
+Dump the argument'c cmap on the standard error port.
 
 ### hop.typeName(arg0) ###
 [:@glyphicon glyphicon-tag function]  

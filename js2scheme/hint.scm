@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Fri Feb 10 09:36:34 2023 (serrano)                */
+;*    Last change :  Sat May 20 16:55:14 2023 (serrano)                */
 ;*    Copyright   :  2016-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -1206,7 +1206,8 @@
 	     (loop expr)))
 	 ((isa? node J2SBlock)
 	  (with-access::J2SBlock node (nodes)
-	     (loop (car nodes))))
+	     (when (pair? nodes)
+		(loop (car nodes)))))
 	 (else
 	  #f))))
 

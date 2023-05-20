@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Sat Apr 29 08:38:30 2023 (serrano)                */
+;*    Last change :  Sat May 20 09:39:57 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -98,6 +98,7 @@
 	      (export::obj (default #f) (info '("notraverse"))))
 
 	   (class J2SDeclRest::J2SDecl
+	      ;; lonly, 
 	      (alloc-policy::symbol (default 'heap) (info '("notraverse"))))
 	   
 	   (class J2SDeclArguments::J2SDeclRest

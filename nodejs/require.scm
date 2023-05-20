@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Wed Apr 26 12:41:39 2023 (serrano)                */
+;*    Last change :  Fri May 19 08:31:18 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -1374,7 +1374,6 @@
 		  :debug (nodejs-hop-debug))))))
    
    (define (compile-ast ast::J2SProgram mod)
-      (tprint "COMPILE-AST...")
       (with-trace 'require "compile-ast"
 	 (with-access::J2SProgram ast (path)
 	    (trace-item "ast=" path)
@@ -1820,9 +1819,13 @@
       (lambda ()
 	 (let ((o (string-append (prefix sopathtmp) ".o")))
 	    (when (file-exists? o) (delete-file o))
-	    (rename-file sopathtmp sopath)
-	    (when (and misctmp (file-exists? misctmp)) (delete-file misctmp))
-	    sopath)))
+	    (cond
+	       ((file-exists? sopathtmp)
+		(rename-file sopathtmp sopath)
+		(when (and misctmp (file-exists? misctmp)) (delete-file misctmp))
+		sopath)
+	       ((file-exists? sopath)
+		sopath)))))
    
    (define (make-kfail sopath sopathtmp misctmp)
       (lambda ()
@@ -1838,7 +1841,7 @@
       (let loop ()
 	 (let ((tmp (synchronize/debug socompile-mutex
 		       (cond
-			  ((hop-find-sofile filename)
+			  ((find-new-sofile filename worker-slave)
 			   =>
 			   (lambda (x) x))
 			  ((member filename socompile-files)
@@ -1921,20 +1924,23 @@
 		      (trace-item "sopath=" sopath)
 		      (trace-item "sopathtmp=" sopathtmp)
 		      (trace-item "cmd=" cmd)
-		      (debug-compile-trace "nodejs-socompile" filename sopath)
-		      (hop-verb 2 (hop-color -2 -2 " COMPILE") " "
-			 (format "~( )\n"
-			    (map (lambda (s)
-				    (if (string-index s #\space)
-					(string-append "\"" s "\"")
-					s))
-			       cmd)))
 		      (synchronize-global
 			 (make-file-name
 			    (dirname (hop-sofile-path "hop.lock"))
 			    "hop.lock")
 			 (lambda ()
-			    (let ((msg (exec cmd ksucc kfail)))
+			    ;; check if the file has already been compiled while
+			    ;; we were waiting for the lock
+			    (let ((msg (unless (find-new-sofile filename worker-slave worker-slave)
+					  (debug-compile-trace "nodejs-socompile" filename sopath)
+					  (hop-verb 2 (hop-color -2 -2 " COMPILE") " "
+					     (format "~( )\n"
+						(map (lambda (s)
+							(if (string-index s #\space)
+							    (string-append "\"" s "\"")
+							    s))
+						   cmd)))
+					  (exec cmd ksucc kfail))))
 			       (trace-item "msg=" msg)
 			       (unwind-protect
 				  (cond
@@ -1959,20 +1965,21 @@
 ;*---------------------------------------------------------------------*/
 ;*    find-new-sofile ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (find-new-sofile filename::bstring worker-slave)
+(define (find-new-sofile filename::bstring worker-slave #!optional enable-cache)
    (with-trace 'require "find-new-sofile"
       (trace-item "filename=" filename)
-      (let ((sopath (hop-find-sofile filename
-		       :suffix (if worker-slave "_w" ""))))
-	 (trace-item "sopath=" sopath)
-	 (if (string? sopath)
-	     (begin
-		(trace-item "file.mtime=" (file-modification-time sopath))
-		(trace-item "sofi.mtime=" (file-modification-time filename))
-		(when (>= (file-modification-time sopath)
-			 (file-modification-time filename))
-		   sopath))
-	     sopath))))
+      (when (or (hop-cache-enable) enable-cache)
+	 (let ((sopath (hop-find-sofile filename
+			  :suffix (if worker-slave "_w" ""))))
+	    (trace-item "sopath=" sopath)
+	    (if (string? sopath)
+		(begin
+		   (trace-item "file.mtime=" (file-modification-time sopath))
+		   (trace-item "sofi.mtime=" (file-modification-time filename))
+		   (when (>= (file-modification-time sopath)
+			    (file-modification-time filename))
+		      sopath))
+		sopath)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-load ...                                                  */

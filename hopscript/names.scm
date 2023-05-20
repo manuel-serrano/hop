@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Mar 30 06:29:09 2019                          */
-;*    Last change :  Fri Apr 15 08:07:13 2022 (serrano)                */
-;*    Copyright   :  2019-22 Manuel Serrano                            */
+;*    Last change :  Sat May 20 15:41:13 2023 (serrano)                */
+;*    Copyright   :  2019-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Property names (see stringliteral.scm)                           */
 ;*=====================================================================*/
@@ -67,8 +67,7 @@
 	  (js-names thread-local)
 	  (js-private-names thread-local)
 	  (js-integer-length thread-local)
-	  (js-integer-names thread-local)
-	  (js-string-names thread-local)))))
+	  (js-integer-names thread-local)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    name-hashtable-weak ...                                          */
@@ -168,7 +167,14 @@
 ;*---------------------------------------------------------------------*/
 (define (js-init-names!)
    (synchronize js-name-lock
+      (unless (vector? js-string-names)
+	 ;; initialize the global name table (for library keys)
+	 (set! js-string-names
+	    (vector-map (lambda (val)
+			   (js-ascii-toname-unsafe-sans-hash val))
+	       (& strings))))
       (unless (hashtable? js-names)
+	 ;; intialize the thread-local name table
 	 (set! js-integer-length
 	    100)
 	 (set! js-names
@@ -190,12 +196,10 @@
 				   (iota 100))))))
 	       (cond-expand (enable-tls (set! gcroots (cons inames gcroots))))
 	       inames))
-	 (set! js-string-names
-	    (let ((snames (vector-map (lambda (val)
-					 (js-ascii-toname-unsafe val))
-			     (& strings))))
-	       (cond-expand (enable-tls (set! gcroots (cons snames gcroots))))
-	       snames))
+	 (vector-for-each 
+	    (lambda (name)
+	       (name-hashtable-put! js-names (js-jsstring->string name) name))
+	    js-string-names)
 	 (set! js-private-names
 	    (let ((table (create-hashtable
 			    :weak (name-hashtable-weak)
@@ -376,17 +380,24 @@
 	  (string-name str))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-ascii-toname-unsafe-sans-hash ...                             */
+;*---------------------------------------------------------------------*/
+(define (js-ascii-toname-unsafe-sans-hash::JsStringLiteralASCII str::bstring)
+   (let ((o (instantiate::JsStringLiteralASCII
+	       (length (fixnum->uint32 (string-length str)))
+	       (left str))))
+      (js-object-mode-set! o (js-jsstring-normalized-ascii-mode))
+      (js-jsstring-name-set! o o)
+      o))
+
+;*---------------------------------------------------------------------*/
 ;*    js-ascii-toname-unsafe ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (js-ascii-toname-unsafe::JsStringLiteralASCII str::bstring)
    (let ((n (name-hashtable-get js-names str)))
       (or n
-	  (let ((o (instantiate::JsStringLiteralASCII
-		      (length (fixnum->uint32 (string-length str)))
-		      (left str))))
-	     (js-object-mode-set! o (js-jsstring-normalized-ascii-mode))
+	  (let ((o (js-ascii-toname-unsafe-sans-hash str)))
 	     (name-hashtable-put! js-names str o)
-	     (js-jsstring-name-set! o o)
 	     o))))
 
 ;*---------------------------------------------------------------------*/
