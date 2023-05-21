@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Mon May  2 15:30:00 2022 (serrano)                */
-;*    Copyright   :  2016-22 Manuel Serrano                            */
+;*    Last change :  Sun May 21 06:17:30 2023 (serrano)                */
+;*    Copyright   :  2016-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
 ;*=====================================================================*/
@@ -678,8 +678,8 @@
 		    ((<= oa *max-int30*)
 		     (let ((max *max-int30*))
 			(interval (min oi max) max)))
-		    ((<= oa (- *max-index* #l10))
-		     (let ((max (- *max-index* #l10)))
+		    ((<= oa (-llong *max-index* #l10))
+		     (let ((max (-llong *max-index* #l10)))
 			(interval (min oi max) max)))
 		    ((<= oa *max-index*)
 		     (let ((max *max-index*))
@@ -1769,7 +1769,7 @@
 	 (multiple-value-bind (intff envf)
 	    (node-range field envo conf mode fix)
 	    (with-access::J2SExpr obj (type)
-	       (if (and (memq type '(string array jsvector)) (j2s-field-length? field))
+	       (if (and (type-array-like? type) (j2s-field-length? field))
 		   (expr-range-add! this envf fix *length-intv*)
 		   (expr-range-add! this envf fix *infinity-intv*)))))))
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Sat May 20 07:30:01 2023 (serrano)                */
+;*    Last change :  Sat May 20 20:12:22 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -1587,6 +1587,9 @@
 	       -2047)
 	      ((arguments arguments-eager)
 	       -2048)
+	      ((rest-stack)
+	       (let ((offset (if (=fx opl 0) 2049 4049)))
+		  (negfx (+fx offset (-fx req 1)))))
 	      ((rest-lazy)
 	       (let ((offset (if (=fx opl 0) 2049 4049)))
 		  (negfx (+fx offset (-fx req 1)))))

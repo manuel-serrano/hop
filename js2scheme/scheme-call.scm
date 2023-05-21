@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Thu May 18 07:35:05 2023 (serrano)                */
+;*    Last change :  Sat May 20 18:54:44 2023 (serrano)                */
 ;*    Copyright   :  2018-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -225,6 +225,9 @@
 	("slice" js-jsstring-maybe-slice2 (:hint string) (any any) %this #t)
 	("slice" js-arguments-slice1 arguments (any) %this #f)
 	("slice" js-arguments-slice arguments (any any) %this #f)
+	("slice" js-vector-slice0 vector () %this #f)
+	("slice" js-vector-slice1 vector (any) %this #f)
+	("slice" js-vector-slice2 vector (any any) %this #f)
 	("slice" js-array-maybe-slice0 any () %this #t)
 	("slice" js-array-maybe-slice1 any (any) %this #t)
 	("slice" js-array-maybe-slice2 any (any any) %this #t)
@@ -580,7 +583,7 @@
 		     ,(caddr args)))))
 	  ((arguments)
 	   (if (ref-stack-vararg? (car args))
-	       `(js-arguments-stack-slice ,(j2s-scheme (car args) mode return conf)
+	       `(js-arguments-vector-slice ,(j2s-scheme (car args) mode return conf)
 		   ,(j2s-scheme (cadr args) mode return conf)
 		   ,(j2s-arguments-lonly-id)
 		   ,(caddr args))
@@ -654,7 +657,7 @@
 	       ,(cadddr args)))
 	  ((arguments)
 	   `(,(if (ref-stack-vararg? (car args))
-		  'js-arguments-stack-slice
+		  'js-arguments-vector-slice
 		  'js-arguments-slice)
 	     ,(j2s-scheme (car args) mode return conf)
 	     ,(j2s-scheme (cadr args) mode return conf)
@@ -1449,10 +1452,7 @@
 	       ((null? (cdr params))
 		;; the rest argument
 		(with-access::J2SDeclRest (car params) (alloc-policy)
-		   (if (and (eq? alloc-policy 'lazy)
-			    (or (not (isa? (car params) J2SDeclArguments))
-				(and (context-get ctx :optim-arguments)
-				     (context-get ctx :optim-stack-alloc))))
+		   (if (eq? alloc-policy 'stack)
 		       (let ((v (gensym 'vec)))
 			  `(js-call-with-stack-vector
 			      (vector ,@(j2s-scheme args mode return ctx))

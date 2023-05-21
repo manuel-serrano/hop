@@ -190,6 +190,9 @@
 	   (js-array-maybe-slice1 ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-array-prototype-maybe-slice1 this start ::JsGlobalObject)
 	   (js-array-maybe-slice2 ::obj ::obj ::obj ::JsGlobalObject ::obj)
+	   (js-vector-slice0 ::vector ::JsGlobalObject)
+	   (js-vector-slice1 ::vector ::obj ::JsGlobalObject)
+	   (js-vector-slice2 ::vector ::obj ::obj ::JsGlobalObject)
 	   (js-array-maybe-splice2 ::obj ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-array-maybe-splice2-sans-result ::obj ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-array-maybe-shift0 ::obj ::JsGlobalObject ::obj)
@@ -5933,6 +5936,38 @@
 		   o)))
 	    (else
 	     (js-array-slice this start end %this))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-vector-slice0 ...                                             */
+;*---------------------------------------------------------------------*/
+(define (js-vector-slice0 this::vector %this::JsGlobalObject)
+   (js-vector->jsarray (vector-copy this) %this))
+
+;*---------------------------------------------------------------------*/
+;*    js-vector-slice1 ...                                             */
+;*---------------------------------------------------------------------*/
+(define (js-vector-slice1 this::vector from %this::JsGlobalObject)
+   (let ((start (if (fixnum? from)
+		    from
+		    (->fixnum (js-tointeger from %this)))))
+      (if (and (>=fx start 0) (<fx start (vector-length this)))
+	  (js-vector->jsarray (vector-copy this start) %this)
+	  (js-empty-vector->jsarray %this))))
+
+;*---------------------------------------------------------------------*/
+;*    js-vector-slice2 ...                                             */
+;*---------------------------------------------------------------------*/
+(define (js-vector-slice2 this::vector from to %this::JsGlobalObject)
+   (let ((start (if (fixnum? from)
+		    from
+		    (->fixnum (js-tointeger from %this))))
+	 (stop (if (fixnum? to)
+		   to
+		   (->fixnum (js-tointeger to %this)))))
+      (if (and (>=fx start 0) (<fx start (vector-length this))
+	       (>=fx stop start) (<fx stop (vector-length this)))
+	  (js-vector->jsarray (vector-copy this start stop) %this)
+	  (js-empty-vector->jsarray %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-maybe-splice2 ...                                       */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Fri May 19 19:48:00 2023 (serrano)                */
+;*    Last change :  Sat May 20 18:21:56 2023 (serrano)                */
 ;*    Copyright   :  2017-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -212,8 +212,8 @@
 	    ((eq? vararg 'arguments)
 	     (with-access::J2SDeclArguments argumentsp (alloc-policy usage)
 		(case alloc-policy
-		   ((length)
-		    `(js-function-arity ,req ,opt 'lonly))
+		   ((lonly)
+		    `(js-function-arity ,req ,opt 'arguments-lonly))
 		   ((stack)
 		    `(js-function-arity ,req ,opt 'arguments-stack))
 		   ((lazy)
@@ -232,6 +232,8 @@
 	    ((eq? vararg 'rest)
 	     (with-access::J2SDeclRest (car (last-pair params)) (alloc-policy)
 		(case alloc-policy
+		   ((stack)
+		    `(js-function-arity ,req ,opt 'rest-stack))
 		   ((lazy)
 		    `(js-function-arity ,req ,opt 'rest-lazy))
 		   (else

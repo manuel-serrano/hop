@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Dec  7 06:32:41 2019                          */
-;*    Last change :  Sat May 20 07:33:36 2023 (serrano)                */
+;*    Last change :  Sat May 20 20:12:06 2023 (serrano)                */
 ;*    Copyright   :  2019-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function macros for js2scheme                                    */
@@ -149,6 +149,9 @@
 		      (-fx -8192 req))
 		     (((kwote quote) arguments)
 		      -2048)
+		     (((kwote quote) rest-stack)
+		      (let ((offset (if (=fx opt 0) 2049 4049)))
+			 (negfx (+fx offset (-fx req 1)))))
 		     (((kwote quote) rest-lazy)
 		      (let ((offset (if (=fx opt 0) 2049 4049)))
 			 (negfx (+fx offset (-fx req 1)))))

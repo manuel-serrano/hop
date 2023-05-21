@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Tue Mar 28 10:55:49 2023 (serrano)                */
+;*    Last change :  Sun May 21 06:18:51 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -43,6 +43,7 @@
 	   (type-integer?::bool ::obj)
 	   (type-number?::bool ::obj)
 	   (type-object?::bool ::obj)
+	   (type-array-like?::bool ::symbol)
 	   (type-maybe?::bool ::obj ::pair-nil)
 	   (type-cannot?::bool ::obj ::pair-nil)
 	   (type-subtype?::bool ::obj ::obj)
@@ -287,6 +288,12 @@
 (define (type-object? type)
    (or (memq type '(object regexp date Promise array jsvector function arguments global this map weakmap set weakset))
        (isa? type J2SClass)))
+
+;*---------------------------------------------------------------------*/
+;*    type-array-like? ...                                             */
+;*---------------------------------------------------------------------*/
+(define (type-array-like? type)
+   (memq type '(string array jsvector vector)))
 
 ;*---------------------------------------------------------------------*/
 ;*    type-maybe? ...                                                  */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Thu Mar 30 08:36:53 2023 (serrano)                */
+;*    Last change :  Sun May 21 06:27:04 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -1236,6 +1236,7 @@
 	,@(dump-key key)
 	,@(dump-access this)
 	,@(dump-vtype this)
+	,@(dump-range this)
 	,@(if _scmid `(:_scmid ,_scmid) '())
 	:alloc-policy ,alloc-policy
 	,@(dump-info this))))

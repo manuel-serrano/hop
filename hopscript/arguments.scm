@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Sat May 20 06:56:30 2023 (serrano)                */
+;*    Last change :  Sat May 20 18:29:13 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
@@ -43,13 +43,15 @@
 	   (js-arguments-ref ::JsArguments ::obj ::JsGlobalObject)
 	   (inline js-arguments-stack-ref ::vector ::obj)
 	   (inline js-arguments-stack-index-ref ::vector ::uint32)
+	   (inline js-arguments-vector-ref ::vector ::long)
+	   (inline js-arguments-vector-index-ref ::vector ::uint32)
 	   (js-arguments-index-ref ::JsArguments ::uint32 ::JsGlobalObject)
 	   (js-arguments-set! ::JsArguments ::obj ::JsGlobalObject ::obj)
 	   (js-arguments-index-set! ::JsArguments ::uint32 ::obj ::JsGlobalObject)
 	   (js-arguments-length::obj ::JsArguments ::JsGlobalObject)
 	   (js-arguments-slice ::JsArguments start end ::JsGlobalObject)
 	   (js-arguments-slice1 ::JsArguments start ::JsGlobalObject)
-	   (js-arguments-stack-slice ::vector start end ::JsGlobalObject)))
+	   (js-arguments-vector-slice ::vector start end ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
@@ -243,6 +245,22 @@
 		    value)
 		 v))
 	  (js-get arr (js-uint32-tointeger idx) %this))))
+
+;*---------------------------------------------------------------------*/
+;*    js-arguments-vector-ref ...                                      */
+;*---------------------------------------------------------------------*/
+(define-inline (js-arguments-vector-ref vec::vector idx)
+   (if (and (>=fx idx 0) (<fx idx (vector-length vec)))
+       (vector-ref vec idx)
+       (js-undefined)))
+
+;*---------------------------------------------------------------------*/
+;*    js-arguments-vector-index-ref ...                                */
+;*---------------------------------------------------------------------*/
+(define-inline (js-arguments-vector-index-ref vec::vector idx::uint32)
+   (if (<fx (uint32->fixnum idx) (vector-length vec))
+       (vector-ref vec (uint32->fixnum idx))
+       (js-undefined)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-arguments-stack-ref ...                                       */
@@ -803,9 +821,9 @@
 	  (array-slice! this k final))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-arguments-stack-slice ...                                     */
+;*    js-arguments-vector-slice ...                                    */
 ;*---------------------------------------------------------------------*/
-(define (js-arguments-stack-slice this::vector start end %this)
+(define (js-arguments-vector-slice this::vector start end %this)
    (let* ((vec this)
 	  (len (vector-length vec))
 	  (end (if (eq? end (js-undefined)) len end)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec  5 09:14:00 2019                          */
-;*    Last change :  Thu May 18 07:40:53 2023 (serrano)                */
+;*    Last change :  Sat May 20 18:14:37 2023 (serrano)                */
 ;*    Copyright   :  2019-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arguments optimization                                           */
@@ -74,14 +74,26 @@
 	 (let ((lastp (car (last-pair params))))
 	    (when (isa? lastp J2SDeclRest)
 	       (with-access::J2SDeclRest lastp (mode)
+		  (decl-usage-rem! lastp 'method)
 		  (decl-usage-rem! lastp 'ref)
 		  (decl-usage-rem! lastp 'get)))))
       (call-default-walker)
-      '(when argumentsp
+      (when argumentsp
 	 (with-access::J2SDeclArguments argumentsp (alloc-policy usage)
 	    (cond
 	       ((usage-strict? usage '(length))
-		(set! alloc-policy 'lonly)))))))
+		(set! alloc-policy 'lonly))
+	       ((usage-strict? usage '(slice aref length))
+		(set! alloc-policy 'stack)))))
+      (when (pair? params)
+	 (let ((lastp (car (last-pair params))))
+	    (when (isa? lastp J2SDeclRest)
+	       (with-access::J2SDeclRest lastp (alloc-policy usage ctype vtype)
+		  (cond
+		     ((usage-strict? usage '(rest slice aref length))
+		      (set! ctype 'vector)
+		      (set! vtype 'vector)
+		      (set! alloc-policy 'stack)))))))))
 				
 ;*---------------------------------------------------------------------*/
 ;*    ause ::J2SSvc ...                                                */
@@ -167,13 +179,24 @@
 	 (else
 	  #f)))
       
-   (define (slice? fun args)
+   (define (arguments-slice? fun args)
       (when (and (isa? fun J2SAccess) (>=fx (length args) 2))
+         (with-access::J2SAccess fun (obj field)
+            (when (isa? field J2SString)
+               (with-access::J2SString field (val)
+                  (when (string=? val "call")
+                     (array-prototype-slice? obj)))))))
+
+   (define (rest-slice? fun args)
+      (when (and (isa? fun J2SAccess) (>=fx (length args) 1))
 	 (with-access::J2SAccess fun (obj field)
-	    (when (isa? field J2SString)
+	    (when (isa? obj J2SRef)
 	       (with-access::J2SString field (val)
-		  (when (string=? val "call")
-		     (array-prototype-slice? obj)))))))
+		  (when (string=? val "slice")
+		     (when (isa? obj J2SRef)
+			(with-access::J2SRef obj (decl)
+			   (and (isa? decl J2SDeclRest)
+				(not (isa? decl J2SDeclArguments)))))))))))
    
    (with-access::J2SCall this (fun args)
       (cond
@@ -188,7 +211,8 @@
 			   (decl-usage-add! decl 'apply))
 			(call-default-walker)))
 		 (call-default-walker))))
-	 ((slice? fun args)
+	 ((arguments-slice? fun args)
+	  (tprint "S=" (j2s->sexp this))
 	  (let ((arg0 (car args)))
 	     (if (isa? arg0 J2SRef)
 		 (with-access::J2SRef arg0 (decl)
@@ -199,6 +223,11 @@
 			   (decl-usage-add! decl 'slice))
 			(call-default-walker)))
 		 (call-default-walker))))
+	 ((rest-slice? fun args)
+	  (with-access::J2SAccess fun (obj)
+	     (with-access::J2SRef obj (decl)
+		(for-each ause args)
+		(decl-usage-add! decl 'slice))))
 	 (else
 	  (call-default-walker)))))
 
