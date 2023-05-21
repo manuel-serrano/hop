@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Sun May 21 17:19:59 2023 (serrano)                */
+;*    Last change :  Sun May 21 17:44:45 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -4960,7 +4960,7 @@
 ;*    js-jsstring-maybe-encodeuri ...                                  */
 ;*---------------------------------------------------------------------*/
 (define (js-jsstring-maybe-encodeuri this %this)
-   (if (js-jsstring-ascii? this)
+   (if (and (js-jsstring? this) (js-jsstring-ascii? this))
        (let ((str (js-jsstring->string this)))
 	  (js-ascii->jsstring (uri-encode str)))
        (js-jsstring-encodeuri (js-tojsstring this %this) %this)))
