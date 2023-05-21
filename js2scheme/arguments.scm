@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec  5 09:14:00 2019                          */
-;*    Last change :  Sun May 21 09:09:10 2023 (serrano)                */
+;*    Last change :  Sun May 21 09:51:47 2023 (serrano)                */
 ;*    Copyright   :  2019-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arguments optimization                                           */
@@ -195,7 +195,7 @@
    (define (rest-slice? fun args)
       (when (and (isa? fun J2SAccess) (>=fx (length args) 1))
 	 (with-access::J2SAccess fun (obj field)
-	    (when (isa? obj J2SRef)
+	    (when (and (isa? obj J2SRef) (isa? field J2SString))
 	       (with-access::J2SString field (val)
 		  (when (string=? val "slice")
 		     (when (isa? obj J2SRef)
@@ -217,7 +217,6 @@
 			(call-default-walker)))
 		 (call-default-walker))))
 	 ((arguments-slice? fun args)
-	  (tprint "S=" (j2s->sexp this))
 	  (let ((arg0 (car args)))
 	     (if (isa? arg0 J2SRef)
 		 (with-access::J2SRef arg0 (decl)
