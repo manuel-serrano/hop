@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec  5 09:14:00 2019                          */
-;*    Last change :  Sat May 20 18:14:37 2023 (serrano)                */
+;*    Last change :  Sun May 21 09:09:10 2023 (serrano)                */
 ;*    Copyright   :  2019-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arguments optimization                                           */
@@ -65,7 +65,7 @@
 ;*    ause ::J2SFun ...                                                */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (ause this::J2SFun)
-   (with-access::J2SFun this (argumentsp params)
+   (with-access::J2SFun this (argumentsp params mode params)
       (when argumentsp
 	 ;; will be restored if used in a "true" ref
 	 (decl-usage-rem! argumentsp 'ref)
@@ -78,7 +78,12 @@
 		  (decl-usage-rem! lastp 'ref)
 		  (decl-usage-rem! lastp 'get)))))
       (call-default-walker)
-      (when argumentsp
+      (when (and argumentsp
+		 ;; either strict mode or all parameters are read-only
+		 (or (not (eq? mode 'normal))
+		     (every (lambda (p)
+			       (not (decl-usage-has? p '(assig))))
+			params)))
 	 (with-access::J2SDeclArguments argumentsp (alloc-policy usage)
 	    (cond
 	       ((usage-strict? usage '(length))
