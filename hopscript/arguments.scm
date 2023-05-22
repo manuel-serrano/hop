@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Sat May 20 18:29:13 2023 (serrano)                */
+;*    Last change :  Mon May 22 10:48:04 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
@@ -386,12 +386,15 @@
 	       (unless (eq? v (js-absent))
 		  (if (isa? v JsPropertyDescriptor)
 		      v
-		      (instantiate::JsValueDescriptor
-			 (name (js-index-name (uint32->fixnum i)))
-			 (value v)
-			 (writable #t)
-			 (configurable #t)
-			 (enumerable #t)))))))))
+		      (let ((nv (instantiate::JsValueDescriptor
+				   (name (js-index-name (uint32->fixnum i)))
+				   (value v)
+				   (writable #t)
+				   (configurable #t)
+				   (enumerable #t))))
+			 ;; lazy creation of arguments property descriptor
+			 (u32vset! vec i nv)
+			 nv))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    function1->proc ...                                              */
