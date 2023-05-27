@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 24 14:34:24 2023                          */
-/*    Last change :  Fri May 26 21:02:02 2023 (serrano)                */
+/*    Last change :  Sat May 27 07:39:11 2023 (serrano)                */
 /*    Copyright   :  2023 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop node_api implementation.                                     */
@@ -399,26 +399,36 @@ napi_create_double(napi_env _this, double val, napi_value *result) {
 /*---------------------------------------------------------------------*/
 BGL_RUNTIME_DEF napi_status
 napi_define_properties(napi_env _this, napi_value this, size_t count, const napi_property_descriptor *properties) {
+   if (!_this) {
+      napi_last_error_message = "Invalid argument";
+      return napi_last_error_code = napi_invalid_arg;
+   } else if (!this) {
+      napi_last_error_message = "Invalid argument";
+      return napi_last_error_code = napi_invalid_arg;
+   } else if (!properties) {
+      napi_last_error_message = "Invalid argument";
+      return napi_last_error_code = napi_invalid_arg;
+   } else {
+      while (count-- > 0) {
+	 napi_property_descriptor *prop = (napi_property_descriptor *)properties;
 
-   while (count-- > 0) {
-      napi_property_descriptor *prop = (napi_property_descriptor *)properties;
+	 napi_prepare_property(_this, this, prop);
 
-      napi_prepare_property(_this, this, prop);
+	 obj_t desc = napi_make_prop_desc(_this, this, prop);
 
-      obj_t desc = napi_make_prop_desc(_this, this, prop);
-
-      if (desc) {
-	 bgl_napi_define_named_property(_this, this, prop->name, desc);
-      } else {
-	 bgl_napi_put_named_property(_this, this, prop->name, prop->value);
-      }
+	 if (desc) {
+	    bgl_napi_define_named_property(_this, this, prop->name, desc);
+	 } else {
+	    bgl_napi_put_named_property(_this, this, prop->name, prop->value);
+	 }
       
 /*       obj_t name = properties->name ? properties->name : string_to_bstring((char *)properties->utf8name); */
 /*                                                                     */
 /*       bgl_napi_define_property(_this, this, name, bgl_napi_method_to_procedure(_this, this, properties->method || properties->value, properties->data)); */
-      properties++;
+	 properties++;
+      }
+      return napi_ok;
    }
-   return napi_ok;
 }
 
 /*---------------------------------------------------------------------*/
@@ -470,9 +480,20 @@ napi_get_cb_info(napi_env _this, napi_callback_info info, size_t *argc, napi_val
 /*    napi_get_prototype ...                                           */
 /*---------------------------------------------------------------------*/
 napi_status
-napi_get_prototype(napi_env env, napi_value object, napi_value* result) {
-   *result = BGL_OBJECT_WIDENING(object);
-   return napi_ok;
+napi_get_prototype(napi_env env, napi_value this, napi_value* result) {
+   if (!env) {
+      napi_last_error_message = "Invalid argument";
+      return napi_last_error_code = napi_invalid_arg;
+   } else if (!this) {
+      napi_last_error_message = "Invalid argument";
+      return napi_last_error_code = napi_invalid_arg;
+   } else if (!result) {
+      napi_last_error_message = "Invalid argument";
+      return napi_last_error_code = napi_invalid_arg;
+   } else {
+      *result = BGL_OBJECT_WIDENING(this);
+      return napi_ok;
+   }
 }
 
 /*---------------------------------------------------------------------*/
@@ -851,7 +872,7 @@ napi_create_string_utf8(napi_env env, const char *value, size_t size, napi_value
       napi_last_error_message = "Invalid argument";
       return napi_last_error_code = napi_invalid_arg;
    } else {
-      obj_t str = bgl_napi_create_string_utf8(env, string_to_bstring((char *)value));
+      *result = bgl_napi_create_string_utf8(env, string_to_bstring((char *)value));
       
       napi_last_error_message = 0L;
       return napi_last_error_code = napi_ok;
@@ -1186,6 +1207,45 @@ napi_remove_wrap(napi_env env,
 
 /*---------------------------------------------------------------------*/
 /*    BGL_RUNTIME_DEF napi_status                                      */
+/*    napi_get_element ...                                             */
+/*---------------------------------------------------------------------*/
+BGL_RUNTIME_DEF napi_status
+napi_get_element(napi_env env, napi_value this, uint32_t index, napi_value *result) {
+   if (!env) {
+      napi_last_error_message = "Invalid argument";
+      return napi_last_error_code = napi_invalid_arg;
+   } else if (!result) {
+      napi_last_error_message = "Invalid argument";
+      return napi_last_error_code = napi_invalid_arg;
+   } else if (!this) {
+      napi_last_error_message = "Invalid argument";
+      return napi_last_error_code = napi_invalid_arg;
+   } else {
+      *result = bgl_napi_get_element(env, this, index);
+      return napi_ok;
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    BGL_RUNTIME_DEF napi_status                                      */
+/*    napi_set_element ...                                             */
+/*---------------------------------------------------------------------*/
+BGL_RUNTIME_DEF napi_status
+napi_set_element(napi_env env, napi_value this, uint32_t index, napi_value val) {
+   if (!env) {
+      napi_last_error_message = "Invalid argument";
+      return napi_last_error_code = napi_invalid_arg;
+   } else if (!this) {
+      napi_last_error_message = "Invalid argument";
+      return napi_last_error_code = napi_invalid_arg;
+   } else {
+      bgl_napi_set_element(env, this, index, val);
+      return napi_ok;
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    BGL_RUNTIME_DEF napi_status                                      */
 /*    napi_delete_element ...                                          */
 /*---------------------------------------------------------------------*/
 #undef napi_delete_element
@@ -1200,7 +1260,7 @@ napi_delete_element(napi_env env, napi_value object, uint32_t index, bool *resul
       
 /*---------------------------------------------------------------------*/
 /*    BGL_RUNTIME_DEF napi_status                                      */
-/*    napi_has_element ...                                            */
+/*    napi_has_element ...                                             */
 /*---------------------------------------------------------------------*/
 #undef napi_has_element
 BGL_RUNTIME_DEF napi_status
@@ -1232,12 +1292,21 @@ napi_delete_property(napi_env env, napi_value object, napi_value key, bool *resu
 /*---------------------------------------------------------------------*/
 #undef napi_has_property
 BGL_RUNTIME_DEF napi_status
-napi_has_property(napi_env env, napi_value object, napi_value key, bool *result) {
-   bool res = bgl_napi_has_property(env, object, key);
-   
-   if (result) *result = res;
+napi_has_property(napi_env env, napi_value this, napi_value key, bool *result) {
+   if (!env) {
+      napi_last_error_message = "Invalid argument";
+      return napi_last_error_code = napi_invalid_arg;
+   } else if (!result) {
+      napi_last_error_message = "Invalid argument";
+      return napi_last_error_code = napi_invalid_arg;
+   } else if (!this || !key) {
+      napi_last_error_message = "Invalid argument";
+      return napi_last_error_code = napi_invalid_arg;
+   } else {
+      *result = bgl_napi_has_property(env, this, key);
 
-   return napi_ok;
+      return napi_ok;
+   }
 }
 
 /*---------------------------------------------------------------------*/
@@ -1266,4 +1335,46 @@ napi_has_own_property(napi_env env, napi_value object, napi_value key, bool *res
    if (result) *result = res;
 
    return napi_ok;
+}
+
+/*---------------------------------------------------------------------*/
+/*    BGL_RUNTIME_DEF napi_status                                      */
+/*    napi_get_property_names ...                                      */
+/*---------------------------------------------------------------------*/
+BGL_RUNTIME_DEF napi_status
+napi_get_property_names(napi_env env, napi_value this, napi_value *result) {
+   if (!env) {
+      napi_last_error_message = "Invalid argument";
+      return napi_last_error_code = napi_invalid_arg;
+   } else if (!this) {
+      napi_last_error_message = "Invalid argument";
+      return napi_last_error_code = napi_invalid_arg;
+   } else if (!result) {
+      napi_last_error_message = "Invalid argument";
+      return napi_last_error_code = napi_invalid_arg;
+   } else {
+      *result = bgl_napi_get_property_names(env, this);
+      return napi_ok;
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    BGL_RUNTIME_DEF napi_status                                      */
+/*    napi_get_all_property_names ...                                  */
+/*---------------------------------------------------------------------*/
+BGL_RUNTIME_DEF napi_status
+napi_get_all_property_names(napi_env env, napi_value this, napi_key_collection_mode key_mode, napi_key_filter key_filter, napi_key_conversion key_conversion, napi_value *result) {
+   if (!env) {
+      napi_last_error_message = "Invalid argument";
+      return napi_last_error_code = napi_invalid_arg;
+   } else if (!this) {
+      napi_last_error_message = "Invalid argument";
+      return napi_last_error_code = napi_invalid_arg;
+   } else if (!result) {
+      napi_last_error_message = "Invalid argument";
+      return napi_last_error_code = napi_invalid_arg;
+   } else {
+      *result = bgl_napi_get_all_property_names(env, this, key_mode, key_filter, key_conversion);
+      return napi_ok;
+   }
 }

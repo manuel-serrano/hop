@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 24 16:10:01 2023                          */
-;*    Last change :  Fri May 26 21:13:57 2023 (serrano)                */
+;*    Last change :  Sat May 27 07:33:52 2023 (serrano)                */
 ;*    Copyright   :  2023 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The Scheme part of the node_api.                                 */
@@ -46,9 +46,9 @@
 	   (export napi-put-property! "bgl_napi_put_property")
 	   (export napi-put-named-property! "bgl_napi_put_named_property")
 	   (export napi-delete-property! "bgl_napi_delete_property")
-	   (export napi-has-property! "bgl_napi_has_property")
-	   (export napi-has-named-property! "bgl_napi_has_named_property")
-	   (export napi-has-own-property! "bgl_napi_has_own_property")
+	   (export napi-has-property "bgl_napi_has_property")
+	   (export napi-has-named-property "bgl_napi_has_named_property")
+	   (export napi-has-own-property "bgl_napi_has_own_property")
 	   (export napi-get-property-names "bgl_napi_get_property_names")
 	   (export napi-get-all-property-names "bgl_napi_get_all_property_names")
 	   (export napi-define-named-property! "bgl_napi_define_named_property")
@@ -101,11 +101,11 @@
 	   (napi-put-property!::obj ::obj ::obj ::obj ::obj)
 	   (napi-put-named-property!::obj ::obj ::obj ::bstring ::obj)
 	   (napi-delete-property!::obj ::obj ::obj ::obj)
-	   (napi-has-property!::obj ::obj ::obj ::obj)
-	   (napi-has-named-property! ::obj ::obj ::obj)
+	   (napi-has-property::obj ::obj ::obj ::obj)
+	   (napi-has-named-property ::obj ::obj ::obj)
 	   (napi-get-property-names::obj ::obj ::obj)
 	   (napi-get-all-property-names::obj ::obj ::obj ::bool ::int ::bool)
-	   (napi-has-own-property!::obj ::obj ::obj ::obj)
+	   (napi-has-own-property::obj ::obj ::obj ::obj)
 	   (napi-define-named-property!::obj ::obj ::obj ::bstring ::obj)
 	   (napi-make-property-descriptor ::obj ::obj ::bstring ::obj ::bool ::bool ::bool ::obj ::obj)
 	   (napi-get-type-tag-object::obj ::obj ::obj)
@@ -302,21 +302,21 @@
    (js-delete! this key #f %this))
 
 ;*---------------------------------------------------------------------*/
-;*    napi-has-property! ...                                           */
+;*    napi-has-property ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (napi-has-property! %this this key)
+(define (napi-has-property %this this key)
    (js-has-property this key %this))
 
 ;*---------------------------------------------------------------------*/
-;*    napi-has-named-property! ...                                     */
+;*    napi-has-named-property ...                                      */
 ;*---------------------------------------------------------------------*/
-(define (napi-has-named-property! %this this prop)
+(define (napi-has-named-property %this this prop)
    (js-has-property this (js-string->name prop) %this))
 
 ;*---------------------------------------------------------------------*/
-;*    napi-has-own-property! ...                                       */
+;*    napi-has-own-property ...                                        */
 ;*---------------------------------------------------------------------*/
-(define (napi-has-own-property! %this this key)
+(define (napi-has-own-property %this this key)
    (js-has-own-property this key %this))
 
 ;*---------------------------------------------------------------------*/

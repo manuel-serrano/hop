@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 24 15:38:53 2023                          */
-/*    Last change :  Fri May 26 21:03:04 2023 (serrano)                */
+/*    Last change :  Sat May 27 07:48:10 2023 (serrano)                */
 /*    Copyright   :  2023 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop Specific macro redefinitions                                 */
@@ -264,12 +264,6 @@ struct napi_async_work__ {
 #define napi_has_own_property(_this, this, key, res) \
    (_resb = CBOOL(bgl_napi_has_own_property(_this, this, key)), (res != NULL ? *((bool *)res) = _resb : 0L), napi_ok)
 
-#define napi_get_property_names(_this, this, res) \
-   (_reso = bgl_napi_get_property_names(_this, this), (res != NULL ? *((obj_t *)res) = _reso : 0L), napi_ok)
-
-#define napi_get_all_property_names(_this, this, key_mode, key_filter, key_conversion, res) \
-   (_reso = bgl_napi_get_all_property_names(_this, this, key_mode, key_filter, key_conversion), (res != NULL ? *((obj_t *)res) = _reso : 0L), napi_ok)
-
 #define napi_type_tag_object(_this, this, tag) \
    (bgl_napi_set_type_tag_object(_this, this, (obj_t)tag), napi_ok)
 
@@ -293,12 +287,6 @@ struct napi_async_work__ {
 
 #define napi_delete_element(_this, this, index, res) \
    (_resb = CBOOL(bgl_napi_delete_element(_this, this, index)), (res != NULL ? *((obj_t *)res) = _resb : 0L), napi_ok)
-
-#define napi_get_element(_this, this, index, res) \
-  (*res = bgl_napi_get_element(_this, this, index), napi_ok)
-
-#define napi_set_element(_this, this, index, val) \
-  (bgl_napi_set_element(_this, this, index, val), napi_ok)
 
 #define napi_get_global(_this, res) \
   (*res = _this, napi_ok)

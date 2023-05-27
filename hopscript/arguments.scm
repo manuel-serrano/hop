@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Mon May 22 10:48:04 2023 (serrano)                */
+;*    Last change :  Sat May 27 11:34:04 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
@@ -687,8 +687,18 @@
       (let loop ((i (-fx (vector-length vec) 1)))
 	 (when (>=fx i 0)
 	    (let ((desc (vector-ref vec i)))
-	       (unless (eq? desc (js-absent))
-		  (js-freeze-property! desc)))
+	       (cond
+		  ((isa? desc JsPropertyDescriptor)
+		   (js-freeze-property! desc))
+		  ((not (eq? desc (js-absent)))
+		   (let ((desc (instantiate::JsValueDescriptor
+				  (enumerable #t)
+				  (writable #t)
+				  (configurable #t)
+				  (name (js-index-name i))
+				  (value (vector-ref vec i)))))
+		      (vector-set! vec i desc)
+		      (js-freeze-property! desc)))))
 	    (loop (-fx i 1))))
       (call-next-method)))
 
