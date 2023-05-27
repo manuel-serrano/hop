@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 24 15:38:53 2023                          */
-/*    Last change :  Mon May 15 12:03:10 2023 (serrano)                */
+/*    Last change :  Fri May 26 21:03:04 2023 (serrano)                */
 /*    Copyright   :  2023 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop Specific macro redefinitions                                 */
@@ -37,7 +37,9 @@ extern obj_t bgl_napi_throw_range_error(obj_t, char *, char *);
 extern obj_t bgl_napi_throw_syntax_error(obj_t, char *, char *);
 
 extern obj_t bgl_napi_create_double(obj_t, obj_t, napi_value *result);
+extern obj_t bgl_napi_create_string_latin1(obj_t, obj_t);
 extern obj_t bgl_napi_create_string_utf8(obj_t, obj_t);
+extern obj_t bgl_napi_create_string_utf16(obj_t, obj_t);
 extern obj_t bgl_napi_create_function(obj_t, obj_t, obj_t);
 extern obj_t bgl_napi_create_object(obj_t);
 extern obj_t bgl_napi_create_array(obj_t);
@@ -180,9 +182,6 @@ struct napi_async_work__ {
 
 #define napi_throw_syntax_error(_this, code, msg) \
   bgl_napi_throw_syntax_error(_this, (char *)code, (char *)msg)
-
-#define napi_create_string_utf8(_this, string, sz, res) \
-  (*res = bgl_napi_create_string_utf8(_this, string_to_bstring((char *)string)), napi_ok)
 
 #define napi_create_int32(_this, val, res) \
    (*res = BINT(val), napi_ok)

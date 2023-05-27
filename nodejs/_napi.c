@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 24 14:34:24 2023                          */
-/*    Last change :  Mon May 15 12:35:57 2023 (serrano)                */
+/*    Last change :  Fri May 26 21:02:02 2023 (serrano)                */
 /*    Copyright   :  2023 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop node_api implementation.                                     */
@@ -263,11 +263,11 @@ bgl_napi_method_to_ctor(napi_env _this, napi_value this, napi_callback met, void
 /*---------------------------------------------------------------------*/
 BGL_RUNTIME_DEF napi_status
 napi_create_function(napi_env _this,
-		     const char* utf8name,
+		     const char *utf8name,
 		     size_t length,
 		     napi_callback cb,
 		     void* data,
-		     napi_value* result) {
+		     napi_value *result) {
    if (!_this) {
       napi_last_error_message = "Invalid argument";
       return napi_last_error_code = napi_invalid_arg;
@@ -838,6 +838,70 @@ napi_get_value_bigint_words(napi_env env,
 #endif
    } else {
       return napi_bigint_expected;
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    BGL_RUNTIME_DEF napi_status                                      */
+/*    napi_create_string_utf8 ...                                      */
+/*---------------------------------------------------------------------*/
+BGL_RUNTIME_DEF napi_status
+napi_create_string_utf8(napi_env env, const char *value, size_t size, napi_value *result) {
+   if (!env || !value || !result) {
+      napi_last_error_message = "Invalid argument";
+      return napi_last_error_code = napi_invalid_arg;
+   } else {
+      obj_t str = bgl_napi_create_string_utf8(env, string_to_bstring((char *)value));
+      
+      napi_last_error_message = 0L;
+      return napi_last_error_code = napi_ok;
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    void                                                             */
+/*    ucs2cpy ...                                                      */
+/*---------------------------------------------------------------------*/
+static void
+ucs2cpy( ucs2_t *u1, ucs2_t *u2, int len ) {
+   for( len--; len >= 0; len-- )
+      u1[ len ] = u2[ len ];
+}
+
+/*---------------------------------------------------------------------*/
+/*    BGL_RUNTIME_DEF napi_status                                      */
+/*    napi_create_string_utf16 ...                                     */
+/*---------------------------------------------------------------------*/
+BGL_RUNTIME_DEF napi_status
+napi_create_string_utf16(napi_env env, const char16_t *value, size_t size, napi_value *result) {
+   if (!env || !value || !result) {
+      napi_last_error_message = "Invalid argument";
+      return napi_last_error_code = napi_invalid_arg;
+   } else {
+      obj_t buf = make_ucs2_string(size, 0L);
+      ucs2cpy(BUCS2_STRING_TO_UCS2_STRING(buf), (ucs2_t *)value, size);
+      obj_t str = ucs2_string_to_utf8_string(buf);
+      *result = bgl_napi_create_string_utf8(env, string_to_bstring((char *)value));
+      
+      napi_last_error_message = 0L;
+      return napi_last_error_code = napi_ok;
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    BGL_RUNTIME_DEF napi_status                                      */
+/*    napi_create_string_latin1 ...                                    */
+/*---------------------------------------------------------------------*/
+BGL_RUNTIME_DEF napi_status
+napi_create_string_latin1(napi_env env, const char *value, size_t size, napi_value *result) {
+   if (!env || !value || !result) {
+      napi_last_error_message = "Invalid argument";
+      return napi_last_error_code = napi_invalid_arg;
+   } else {
+      *result = bgl_napi_create_string_latin1(env, string_to_bstring((char *)value));
+      
+      napi_last_error_message = 0L;
+      return napi_last_error_code = napi_ok;
    }
 }
 

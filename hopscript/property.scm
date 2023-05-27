@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Mon May 22 10:15:52 2023 (serrano)                */
+;*    Last change :  Fri May 26 20:19:23 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -4525,9 +4525,9 @@
 	      (unless rejected
 		 (when (js-object-mapped? o)
 		    (js-object-unmap! o)
-		    ;; MS22may2023, useless re-assign
-		    ;; (set! current (js-get-own-property o name %this))
-		    )
+		    ;; re-assign after unmap because the property
+		    ;; descriptor has changed during the unmapping
+		    (set! current (js-get-own-property o name %this)))
 		 (cond
 		    ((js-is-generic-descriptor? desc)
 		     ;; 8

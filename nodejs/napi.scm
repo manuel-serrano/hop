@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 24 16:10:01 2023                          */
-;*    Last change :  Mon May 15 12:29:31 2023 (serrano)                */
+;*    Last change :  Fri May 26 21:13:57 2023 (serrano)                */
 ;*    Copyright   :  2023 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The Scheme part of the node_api.                                 */
@@ -37,6 +37,7 @@
 	   (export napi-throw-range-error "bgl_napi_throw_range_error")
 	   (export napi-throw-syntax-error "bgl_napi_throw_syntax_error")
 	   (export napi-create-string-utf8 "bgl_napi_create_string_utf8")
+	   (export napi-create-string-latin1 "bgl_napi_create_string_latin1")
 	   (export napi-get-element "bgl_napi_get_element")
 	   (export napi-set-element! "bgl_napi_set_element")
 	   (export napi-delete-element! "bgl_napi_delete_element")
@@ -94,6 +95,7 @@
 	   (napi-throw-range-error ::obj ::string ::string)
 	   (napi-throw-syntax-error ::obj ::string ::string)
 	   (napi-create-string-utf8::obj ::obj ::bstring)
+	   (napi-create-string-latin1::obj ::obj ::bstring)
 	   (napi-get-property::obj ::obj ::obj ::obj)
 	   (napi-get-named-property::obj ::obj ::obj ::bstring)
 	   (napi-put-property!::obj ::obj ::obj ::obj ::obj)
@@ -194,6 +196,12 @@
 ;*    napi-create-string-utf8 ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (napi-create-string-utf8 %this string)
+   (js-utf8->jsstring string))
+
+;*---------------------------------------------------------------------*/
+;*    napi-create-string-latin1 ...                                    */
+;*---------------------------------------------------------------------*/
+(define (napi-create-string-latin1 %this string)
    (js-string->jsstring string))
 
 ;*---------------------------------------------------------------------*/
