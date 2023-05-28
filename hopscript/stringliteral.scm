@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Sun May 21 17:44:45 2023 (serrano)                */
+;*    Last change :  Sun May 28 06:37:10 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -3849,8 +3849,8 @@
 	   lastindex::long global::bool replacevalue %this)
    (cond
       ((js-procedure? replacevalue)
-       (with-access::JsProcedure replacevalue (procedure)
-	  (if (=fx ($procedure-arity procedure) 2)
+       (with-access::JsProcedure replacevalue (procedure arity)
+	  (if (=fx arity 2)
 	      (js-jsstring-replace-regexp-fun1 this rx
 		 lastindex global procedure %this)
 	      (js-jsstring-replace-regexp-funN this rx
@@ -4276,8 +4276,8 @@
    
    (define (fun1? v)
       (when (js-procedure? v)
-	 (with-access::JsProcedure v (procedure)
-	    (correct-arity? procedure 2))))
+	 (with-access::JsProcedure v (arity)
+	    (=fx arity 2))))
    
    (define (fun1 v)
       (with-access::JsProcedure v (procedure)
