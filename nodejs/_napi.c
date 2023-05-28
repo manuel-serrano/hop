@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 24 14:34:24 2023                          */
-/*    Last change :  Sun May 28 08:48:08 2023 (serrano)                */
+/*    Last change :  Sun May 28 10:03:06 2023 (serrano)                */
 /*    Copyright   :  2023 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop node_api implementation.                                     */
@@ -869,10 +869,19 @@ napi_get_value_bigint_words(napi_env env,
 BGL_RUNTIME_DEF napi_status
 napi_create_string_utf8(napi_env env, const char *value, size_t size, napi_value *result) {
    if (!env || !value || !result) {
-      napi_last_error_message = "Invalid argument";
-      return napi_last_error_code = napi_invalid_arg;
+      if (!size && result && env) {
+	 *result = bgl_napi_create_string_utf8(env, string_to_bstring(""));
+	 napi_last_error_message = 0L;
+	 return napi_last_error_code = napi_ok;
+      } else {
+	 napi_last_error_message = "Invalid argument";
+	 return napi_last_error_code = napi_invalid_arg;
+      }
    } else {
-      *result = bgl_napi_create_string_utf8(env, string_to_bstring((char *)value));
+      obj_t str = NAPI_AUTO_LENGTH == size
+	 ? string_to_bstring((char *)value)
+	 : string_to_bstring_len((char *)value, size);
+      *result = bgl_napi_create_string_utf8(env, str);
       
       napi_last_error_message = 0L;
       return napi_last_error_code = napi_ok;
@@ -886,11 +895,17 @@ napi_create_string_utf8(napi_env env, const char *value, size_t size, napi_value
 BGL_RUNTIME_DEF napi_status
 napi_create_string_utf16(napi_env env, const char16_t *value, size_t size, napi_value *result) {
    if (!env || !value || !result) {
-      napi_last_error_message = "Invalid argument";
-      return napi_last_error_code = napi_invalid_arg;
+      if (!size && result && env) {
+	 *result = bgl_napi_create_string_utf8(env, string_to_bstring(""));
+	 napi_last_error_message = 0L;
+	 return napi_last_error_code = napi_ok;
+      } else {
+	 napi_last_error_message = "Invalid argument";
+	 return napi_last_error_code = napi_invalid_arg;
+      }
    } else {
       obj_t str = ucs2_to_utf8_string((ucs2_t *)value, size);
-      *result = bgl_napi_create_string_utf8(env, string_to_bstring((char *)value));
+      *result = bgl_napi_create_string_utf8(env, str);
       
       napi_last_error_message = 0L;
       return napi_last_error_code = napi_ok;
@@ -904,14 +919,33 @@ napi_create_string_utf16(napi_env env, const char16_t *value, size_t size, napi_
 BGL_RUNTIME_DEF napi_status
 napi_create_string_latin1(napi_env env, const char *value, size_t size, napi_value *result) {
    if (!env || !value || !result) {
-      napi_last_error_message = "Invalid argument";
-      return napi_last_error_code = napi_invalid_arg;
+      if (!size && result && env) {
+	 *result = bgl_napi_create_string_utf8(env, string_to_bstring(""));
+	 napi_last_error_message = 0L;
+	 return napi_last_error_code = napi_ok;
+      } else {
+	 napi_last_error_message = "Invalid argument";
+	 return napi_last_error_code = napi_invalid_arg;
+      }
    } else {
-      *result = bgl_napi_create_string_latin1(env, string_to_bstring((char *)value));
-      
+      obj_t str = NAPI_AUTO_LENGTH == size
+	 ? string_to_bstring((char *)value)
+	 : string_to_bstring_len((char *)value, size);
+      *result = bgl_napi_create_string_latin1(env, str);
+
       napi_last_error_message = 0L;
       return napi_last_error_code = napi_ok;
    }
+}
+
+/*---------------------------------------------------------------------*/
+/*    static int                                                       */
+/*    utf8_char_size ...                                               */
+/*---------------------------------------------------------------------*/
+static int
+utf8_char_size(unsigned char c) {
+   static int utf8_sizes[] = {1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 4};
+   return utf8_sizes[c >> 4];
 }
 
 /*---------------------------------------------------------------------*/
@@ -936,16 +970,73 @@ napi_get_value_string_utf8(napi_env env, napi_value value, char *buf, size_t buf
 	 if (result) *result = STRING_LENGTH(str);
 	 if (buf) {
 	    strcpy(buf, BSTRING_TO_STRING(str));
-	    buf[STRING_LENGTH(str)] = 0;
 	 }
       } else {
-	 if (result) *result = bufsize;
+	 // compute the size to be copie
+	 long i = 0, size = 0;
+	 unsigned char *cstr = (unsigned char *)BSTRING_TO_STRING(str);
+	 
+	 while (1) {
+	    int s = utf8_char_size(cstr[i]);
+	    if (size + s < bufsize) {
+	       size += s;
+	       i += s;
+	    } else {
+	       break;
+	    }
+	 }
+	 
 	 if (buf) {
-	    strncpy(buf, BSTRING_TO_STRING(value), bufsize);
+	    if (result) *result = size;
+	    strncpy(buf, cstr, size);
+	    buf[size] - 0;
+	 } else {
+	    if (result) *result = STRING_LENGTH(str);
 	 }
       }
       napi_last_error_message = 0L;
       return napi_last_error_code = napi_ok;
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    BG:_RUNTIME_DEF napi_status                                      */
+/*    napi_get_value_string_utf16 ...                                  */
+/*---------------------------------------------------------------------*/
+BGL_RUNTIME_DEF napi_status
+napi_get_value_string_utf16(napi_env env, napi_value value, char16_t *buf, size_t bufsize, size_t *result) {
+   if (!env || !value) {
+      napi_last_error_message = "Invalid argument";
+      return napi_last_error_code = napi_invalid_arg;
+   } else if (!bgl_napi_jsstringp(value)) {
+      napi_last_error_message = "A string was expected";
+      return napi_last_error_code = napi_string_expected;
+   } else if (!buf && bufsize > 0) {
+      napi_last_error_message = "Invalid argument";
+      return napi_last_error_code = napi_invalid_arg;
+   } else {
+      obj_t str = bgl_napi_jsstring_to_string_utf16(value);
+      char16_t *ptr = &UCS2_STRING_REF(str, 0);
+      long len = UCS2_STRING_LENGTH(str);
+
+      if (len < bufsize - 1) {
+	 if (result) *result = len;
+	 if (buf) {
+	    memcpy(buf, ptr, sizeof(char16_t) * len);
+	    buf[len] = 0;
+	 }
+      } else {
+	 if (buf) {
+	    if (result) *result = bufsize - 1;
+	    memcpy(buf, ptr, sizeof(char16_t) * (bufsize - 1));
+	    buf[bufsize - 1] = 0;
+	 } else {
+	    if (result) *result = len;
+	 }
+      }
+      
+      napi_last_error_message = 0L;
+      return napi_ok;
    }
 }
 
@@ -967,45 +1058,19 @@ napi_get_value_string_latin1(napi_env env, napi_value value, char *buf, size_t b
    } else {
       obj_t str = bgl_napi_jsstring_to_string_latin1(value);
 
-      if (STRING_LENGTH(str) < bufsize) {
+      if (STRING_LENGTH(str) < ((long)bufsize - 1)) {
 	 if (result) *result = STRING_LENGTH(str);
-	 strcpy(buf, BSTRING_TO_STRING(value));
+	 if (buf) {
+	    strcpy(buf, BSTRING_TO_STRING(str));
+	 }
       } else {
-	 if (result) *result = bufsize;
-	 strncpy(buf, BSTRING_TO_STRING(value), bufsize);
-      }
-      
-      napi_last_error_message = 0L;
-      return napi_ok;
-   }
-}
-
-/*---------------------------------------------------------------------*/
-/*    BG:_RUNTIME_DEF napi_status                                      */
-/*    napi_get_value_string_latin1 ...                                 */
-/*---------------------------------------------------------------------*/
-BGL_RUNTIME_DEF napi_status
-napi_get_value_string_utf16(napi_env env, napi_value value, char16_t *buf, size_t bufsize, size_t *result) {
-   if (!env || !value) {
-      napi_last_error_message = "Invalid argument";
-      return napi_last_error_code = napi_invalid_arg;
-   } else if (!bgl_napi_jsstringp(value)) {
-      napi_last_error_message = "A string was expected";
-      return napi_last_error_code = napi_string_expected;
-   } else if (!buf && bufsize > 0) {
-      napi_last_error_message = "Invalid argument";
-      return napi_last_error_code = napi_invalid_arg;
-   } else {
-      obj_t str = bgl_napi_jsstring_to_string_utf16(value);
-      char16_t *ptr = &UCS2_STRING_REF(str, 0);
-      long len = UCS2_STRING_LENGTH(str);
-
-      if (len < bufsize) {
-	 if (result) *result = len;
-	 memcpy(buf, ptr, sizeof(char16_t) * len);
-      } else {
-	 if (result) *result = bufsize;
-	 memcpy(buf, ptr, sizeof(char16_t) * bufsize);
+	 if (buf) {
+	    if (result) *result = bufsize - 1;
+	    strncpy(buf, BSTRING_TO_STRING(str), bufsize - 1);
+	    buf[bufsize - 1] = 0;
+	 } else {
+	    if (result) *result = STRING_LENGTH(str);
+	 }
       }
       
       napi_last_error_message = 0L;

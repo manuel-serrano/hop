@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 24 16:10:01 2023                          */
-;*    Last change :  Sat May 27 07:33:52 2023 (serrano)                */
+;*    Last change :  Sun May 28 15:55:44 2023 (serrano)                */
 ;*    Copyright   :  2023 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The Scheme part of the node_api.                                 */
@@ -202,7 +202,13 @@
 ;*    napi-create-string-latin1 ...                                    */
 ;*---------------------------------------------------------------------*/
 (define (napi-create-string-latin1 %this string)
-   (js-string->jsstring string))
+   ;(js-string->jsstring string))
+   (let ((enc (string-minimal-charset string)))
+;;      (tprint "enc=" enc " " string)
+      (case enc
+	 ((ascii) (js-ascii->jsstring string))
+	 ((latin1) (js-utf8->jsstring (iso-latin->utf8 string)))
+	 (else (error "string->jsstring" "unsupported encoding" enc)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    napi-get-property ...                                            */
@@ -516,7 +522,10 @@
 ;*    napi-jsstring->string-latin1 ...                                 */
 ;*---------------------------------------------------------------------*/
 (define (napi-jsstring->string-latin1 obj)
-   (charset-convert (js-jsstring->string obj) 'utf8 'latin1))
+   (let ((str (js-jsstring->string obj)))
+      (if (js-jsstring-ascii? obj)
+	  str
+	  (charset-convert str 'utf8 'iso-latin-1))))
 
 ;*---------------------------------------------------------------------*/
 ;*    napi-jsstring->string-utf16 ...                                  */
