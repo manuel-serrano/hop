@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Fri May 26 20:19:23 2023 (serrano)                */
+;*    Last change :  Sun May 28 08:33:50 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -1042,9 +1042,6 @@
 (define (link-regular-cmap! omap::JsConstructMap nmap::JsConstructMap
 	   name flags::int)
    (with-access::JsConstructMap omap (rtransitions)
-;*       (when (>fx (length rtransitions) 100)                         */
-;* 	 (tprint "link-regular-cmap " name " " (length rtransitions))  */
-;* 	 (js-debug-cmap omap))                                         */
       (set! rtransitions (cons (transition name flags nmap) rtransitions))
       (with-access::JsConstructMap nmap (parent)
 	 (set! parent omap))
@@ -1069,7 +1066,7 @@
 ;*---------------------------------------------------------------------*/
 (define (link-cmap! omap::JsConstructMap nmap::JsConstructMap
 	   name value flags::int)
-   (if (eq? name (& "__proto__"))
+   (if (or (eq? name (& "__proto__")) (isa? name JsSymbolLiteral))
        (link-proto-cmap! omap nmap value flags)
        (link-regular-cmap! omap nmap name flags)))
 
@@ -1083,9 +1080,6 @@
 	   (=fx (transition-flags t) flags)))
 
    (with-access::JsConstructMap omap (rtransitions)
-;*       (when (>fx (length rtransitions) 100)                         */
-;* 	 (tprint "find-regular-transition " name " " (length rtransitions)) */
-;* 	 (js-debug-cmap omap))                                         */
       (cond
 	 ((null? rtransitions)
 	  #f)
@@ -1119,7 +1113,7 @@
 ;*    cmap-find-transition ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (cmap-find-transition omap::JsConstructMap name val flags::int)
-   (if (eq? name (& "__proto__"))
+   (if (or (eq? name (& "__proto__")) (isa? name JsSymbolLiteral))
        (cmap-find-proto-transition omap val flags)
        (cmap-find-regular-transition omap name flags)))
 
