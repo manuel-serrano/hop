@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Thu Jan 12 01:57:55 2023 (serrano)                */
+;*    Last change :  Sun May 28 09:07:47 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -608,6 +608,26 @@
       :value (js-make-function %this padstart
 		(js-function-arity padstart)
 		(js-function-info :name "padStart" :len 2)
+		:prototype (js-undefined))
+      :enumerable #f
+      :hidden-class #t)
+   
+   ;; repeat
+   ;; https://262.ecma-international.org/13.0/#sec-string.prototype.repeat
+   (define (replace this::obj count)
+      (let ((n (js-tointeger count %this)))
+	 (cond
+	    ((or (not (fixnum? n)) (<fx n 0))
+	     (js-raise-range-error %this
+		"string.repeat, wrong count" count))
+	    (else
+	     (js-jsstring-prototype-repeat (js-cast-string %this this)
+		n %this)))))
+      
+   (js-bind! %this obj (& "repeat")
+      :value (js-make-function %this replace
+		(js-function-arity replace)
+		(js-function-info :name "replace" :len 2)
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)

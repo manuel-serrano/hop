@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 24 14:34:24 2023                          */
-/*    Last change :  Sat May 27 07:39:11 2023 (serrano)                */
+/*    Last change :  Sun May 28 08:48:08 2023 (serrano)                */
 /*    Copyright   :  2023 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop node_api implementation.                                     */
@@ -880,16 +880,6 @@ napi_create_string_utf8(napi_env env, const char *value, size_t size, napi_value
 }
 
 /*---------------------------------------------------------------------*/
-/*    void                                                             */
-/*    ucs2cpy ...                                                      */
-/*---------------------------------------------------------------------*/
-static void
-ucs2cpy( ucs2_t *u1, ucs2_t *u2, int len ) {
-   for( len--; len >= 0; len-- )
-      u1[ len ] = u2[ len ];
-}
-
-/*---------------------------------------------------------------------*/
 /*    BGL_RUNTIME_DEF napi_status                                      */
 /*    napi_create_string_utf16 ...                                     */
 /*---------------------------------------------------------------------*/
@@ -899,9 +889,7 @@ napi_create_string_utf16(napi_env env, const char16_t *value, size_t size, napi_
       napi_last_error_message = "Invalid argument";
       return napi_last_error_code = napi_invalid_arg;
    } else {
-      obj_t buf = make_ucs2_string(size, 0L);
-      ucs2cpy(BUCS2_STRING_TO_UCS2_STRING(buf), (ucs2_t *)value, size);
-      obj_t str = ucs2_string_to_utf8_string(buf);
+      obj_t str = ucs2_to_utf8_string((ucs2_t *)value, size);
       *result = bgl_napi_create_string_utf8(env, string_to_bstring((char *)value));
       
       napi_last_error_message = 0L;
@@ -944,13 +932,17 @@ napi_get_value_string_utf8(napi_env env, napi_value value, char *buf, size_t buf
    } else {
       obj_t str = bgl_napi_jsstring_to_string(value);
 
-      if (STRING_LENGTH(str) < (bufsize - 1)) {
+      if (STRING_LENGTH(str) < ((long)bufsize - 1)) {
 	 if (result) *result = STRING_LENGTH(str);
-	 strcpy(buf, BSTRING_TO_STRING(str));
-	 buf[STRING_LENGTH(str)] = 0;
+	 if (buf) {
+	    strcpy(buf, BSTRING_TO_STRING(str));
+	    buf[STRING_LENGTH(str)] = 0;
+	 }
       } else {
 	 if (result) *result = bufsize;
-	 strncpy(buf, BSTRING_TO_STRING(value), bufsize);
+	 if (buf) {
+	    strncpy(buf, BSTRING_TO_STRING(value), bufsize);
+	 }
       }
       napi_last_error_message = 0L;
       return napi_last_error_code = napi_ok;

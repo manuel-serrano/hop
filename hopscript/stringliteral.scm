@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Sun May 28 06:45:20 2023 (serrano)                */
+;*    Last change :  Sun May 28 09:12:52 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -141,6 +141,7 @@
 	   (js-jsstring-replace-regexp-string ::obj ::regexp ::long ::bool ::obj ::JsGlobalObject)
 	   (js-jsstring-replace-string ::obj ::bool ::obj ::obj ::JsGlobalObject)
 	   (js-jsstring-replace ::obj ::bool ::obj ::obj ::JsGlobalObject)
+	   (js-jsstring-prototype-repeat ::obj ::obj ::JsGlobalObject)
 	   (js-jsstring-prototype-replace ::obj ::obj ::obj ::JsGlobalObject)
 	   (js-jsstring-prototype-replace-all ::obj ::obj ::obj ::JsGlobalObject)
 	   (js-jsstring-maybe-replace ::obj ::bool ::obj ::obj ::JsGlobalObject ::obj)
@@ -4267,6 +4268,46 @@
 		    (js-substring/enc string 0 i enc %this) tail)
 		 tail))))))
 
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-repeat ...                                           */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-repeat this count %this)
+   
+   (define (string-repeat this count)
+      (with-access::JsStringLiteral this (left length)
+	 (let* ((olen (uint32->fixnum length))
+		(nlen (*fx olen count))
+		(buf ($make-string/wo-fill nlen)))
+	    (let loop ((w 0))
+	       (if (=fx w nlen)
+		   (if (js-jsstring-ascii? this)
+		       (js-ascii->jsstring buf)
+		       (js-utf8->jsstring buf))
+		   (begin
+		      (blit-string! left 0 buf w olen)
+		      (loop (+fx w olen))))))))
+   
+   (unless (js-jsstring-normalized? this)
+      (js-jsstring-normalize! this))
+   (string-repeat this count))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-prototype-repeat ...                                 */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-prototype-repeat this count %this)
+   ;; https://262.ecma-international.org/13.0/#sec-string.prototype.repeat
+   (let loop ((this this))
+      (cond
+	 ((js-jsstring? this)
+	  (js-jsstring-repeat this count %this))
+	 ((isa? this JsString)
+	  (with-access::JsString this (val)
+	     (loop val)))
+	 ((js-object? this)
+	  (loop (js-tojsstring this %this)))
+	 (else
+	  (loop (js-tojsstring (js-toobject %this this) %this))))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-replace ...                                          */
 ;*    -------------------------------------------------------------    */
