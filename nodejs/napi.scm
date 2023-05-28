@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 24 16:10:01 2023                          */
-;*    Last change :  Sun May 28 15:55:44 2023 (serrano)                */
+;*    Last change :  Sun May 28 19:59:49 2023 (serrano)                */
 ;*    Copyright   :  2023 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The Scheme part of the node_api.                                 */
@@ -136,7 +136,7 @@
 	   (napi-jsstring?::bool ::obj)
 	   (napi-jsstring->string::bstring ::obj)
 	   (napi-jsstring->string-latin1::bstring ::obj)
-	   (napi-jsstring->string-utf16::ucs2string ::obj)
+	   (napi-jsstring->string-utf16::obj ::obj)
 	   (napi-coerce-to-bool::obj ::obj ::obj)
 	   (napi-coerce-to-number::obj ::obj ::obj)
 	   (napi-coerce-to-object::obj ::obj ::obj)
@@ -531,7 +531,10 @@
 ;*    napi-jsstring->string-utf16 ...                                  */
 ;*---------------------------------------------------------------------*/
 (define (napi-jsstring->string-utf16 obj)
-   (utf8-string->ucs2-string (js-jsstring->string obj)))
+   (let ((str (js-jsstring->string obj)))
+      (if (js-jsstring-ascii? obj)
+	  str
+	  (utf8-string->ucs2-string str))))
 
 ;*---------------------------------------------------------------------*/
 ;*    napi-coerce-to-bool ...                                          */

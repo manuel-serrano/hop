@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 24 14:34:24 2023                          */
-/*    Last change :  Sun May 28 10:03:06 2023 (serrano)                */
+/*    Last change :  Sun May 28 20:02:32 2023 (serrano)                */
 /*    Copyright   :  2023 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop node_api implementation.                                     */
@@ -1016,27 +1016,59 @@ napi_get_value_string_utf16(napi_env env, napi_value value, char16_t *buf, size_
       return napi_last_error_code = napi_invalid_arg;
    } else {
       obj_t str = bgl_napi_jsstring_to_string_utf16(value);
-      char16_t *ptr = &UCS2_STRING_REF(str, 0);
-      long len = UCS2_STRING_LENGTH(str);
-
-      if (len < bufsize - 1) {
-	 if (result) *result = len;
-	 if (buf) {
-	    memcpy(buf, ptr, sizeof(char16_t) * len);
-	    buf[len] = 0;
-	 }
-      } else {
-	 if (buf) {
-	    if (result) *result = bufsize - 1;
-	    memcpy(buf, ptr, sizeof(char16_t) * (bufsize - 1));
-	    buf[bufsize - 1] = 0;
-	 } else {
-	    if (result) *result = len;
-	 }
-      }
       
-      napi_last_error_message = 0L;
-      return napi_ok;
+      if (STRINGP(str)) {
+	 char *ptr = BSTRING_TO_STRING(str);
+	 long len = STRING_LENGTH(str);
+	 
+	 if (len < bufsize - 1) {
+	    long i;
+	    if (result) *result = len;
+	    if (buf) {
+	       for (i = 0; i < len; i++) {
+		  buf[i] = ptr[i];
+	       }
+	       buf[len] = 0;
+	    }
+	 } else {
+	    if (buf) {
+	       long i;
+	       if (result) *result = bufsize - 1;
+
+	       for (i = 0; i < bufsize - 1; i++) {
+		  buf[i] = ptr[i];
+	       }
+	       buf[bufsize - 1] = 0;
+	    } else {
+	       if (result) *result = len;
+	    }
+	 }
+      
+	 napi_last_error_message = 0L;
+	 return napi_ok;
+      } else {
+	 char16_t *ptr = &UCS2_STRING_REF(str, 0);
+	 long len = UCS2_STRING_LENGTH(str);
+
+	 if (len < bufsize - 1) {
+	    if (result) *result = len;
+	    if (buf) {
+	       memcpy(buf, ptr, sizeof(char16_t) * len);
+	       buf[len] = 0;
+	    }
+	 } else {
+	    if (buf) {
+	       if (result) *result = bufsize - 1;
+	       memcpy(buf, ptr, sizeof(char16_t) * (bufsize - 1));
+	       buf[bufsize - 1] = 0;
+	    } else {
+	       if (result) *result = len;
+	    }
+	 }
+      
+	 napi_last_error_message = 0L;
+	 return napi_ok;
+      }
    }
 }
 
