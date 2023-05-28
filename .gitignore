@@ -43,6 +43,7 @@ nodejs/_crypto.sch
 test/nodejs/HOP.exe
 test/nodejs/log.*
 test/nodejs/LOG
+test/hopjs/*/*.strict.js
 
 # hopscript
 hopscript/hopscript.sch
