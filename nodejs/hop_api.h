@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 24 15:38:53 2023                          */
-/*    Last change :  Sat May 27 07:48:10 2023 (serrano)                */
+/*    Last change :  Mon May 29 08:40:37 2023 (serrano)                */
 /*    Copyright   :  2023 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop Specific macro redefinitions                                 */
@@ -77,6 +77,7 @@ extern obj_t bgl_napi_set_type_tag_object(obj_t, obj_t, obj_t);
 extern obj_t bgl_napi_object_seal(obj_t, obj_t);
 extern obj_t bgl_napi_object_freeze(obj_t, obj_t);
 
+extern bool_t bgl_napi_jsstring_asciip(obj_t);
 extern bool_t bgl_napi_jsstringp(obj_t);
 extern obj_t bgl_napi_jsstring_to_string(obj_t);
 extern obj_t bgl_napi_jsstring_to_string_latin1(obj_t);

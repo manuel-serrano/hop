@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 24 16:10:01 2023                          */
-;*    Last change :  Sun May 28 19:59:49 2023 (serrano)                */
+;*    Last change :  Mon May 29 08:39:56 2023 (serrano)                */
 ;*    Copyright   :  2023 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The Scheme part of the node_api.                                 */
@@ -77,6 +77,7 @@
 	   (export napi-typeof "bgl_napi_typeof")
 	   (export napi-uvloop "bgl_napi_uvloop")
 	   (export napi-jsstring? "bgl_napi_jsstringp")
+	   (export napi-jsstring-ascii? "bgl_napi_jsstring_asciip")
 	   (export napi-jsstring->string "bgl_napi_jsstring_to_string")
 	   (export napi-jsstring->string-latin1 "bgl_napi_jsstring_to_string_latin1")
 	   (export napi-jsstring->string-utf16 "bgl_napi_jsstring_to_string_utf16")
@@ -134,6 +135,7 @@
 	   (napi-typeof::int ::obj ::obj)
 	   (napi-uvloop::$uv_loop_t ::obj)
 	   (napi-jsstring?::bool ::obj)
+	   (napi-jsstring-ascii?::bool ::obj)
 	   (napi-jsstring->string::bstring ::obj)
 	   (napi-jsstring->string-latin1::bstring ::obj)
 	   (napi-jsstring->string-utf16::obj ::obj)
@@ -511,6 +513,12 @@
 ;*---------------------------------------------------------------------*/
 (define (napi-jsstring? obj)
    (js-jsstring? obj))
+
+;*---------------------------------------------------------------------*/
+;*    napi-jsstring-ascii? ...                                         */
+;*---------------------------------------------------------------------*/
+(define (napi-jsstring-ascii? obj)
+   (js-jsstring-ascii? obj))
 
 ;*---------------------------------------------------------------------*/
 ;*    napi-jsstring->string ...                                        */

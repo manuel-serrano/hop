@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 24 14:34:24 2023                          */
-/*    Last change :  Sun May 28 20:02:32 2023 (serrano)                */
+/*    Last change :  Mon May 29 08:15:01 2023 (serrano)                */
 /*    Copyright   :  2023 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop node_api implementation.                                     */
@@ -1000,6 +1000,107 @@ napi_get_value_string_utf8(napi_env env, napi_value value, char *buf, size_t buf
 }
 
 /*---------------------------------------------------------------------*/
+/*    napi_status                                                      */
+/*    napi_get_value_string_utf6_from_ascii ...                        */
+/*---------------------------------------------------------------------*/
+napi_status
+napi_get_value_string_utf6_from_ascii(napi_env env, obj_t str, char16_t *buf, size_t bufsize, size_t *result) {
+   char *ptr = BSTRING_TO_STRING(str);
+   long len = STRING_LENGTH(str);
+
+   if (!buf) {
+      if (result) *result = len;
+   } else {
+      long sz = len < bufsize - 1 ? len : bufsize - 1;
+      long read;
+	    
+      if (result) *result = sz;
+
+      for (read = 0; read < sz; read++) {
+	 buf[read] = ptr[read];
+      }
+      buf[read] = 0;
+   }
+      
+   napi_last_error_message = 0L;
+   return napi_ok;
+}
+   
+/*---------------------------------------------------------------------*/
+/*    napi_status                                                      */
+/*    napi_get_value_string_utf6_from_ascii ...                        */
+/*---------------------------------------------------------------------*/
+napi_status
+napi_get_value_string_utf6_from_utf8(napi_env env, obj_t str, char16_t *buf, size_t bufsize, size_t *result) {
+   extern long BGl_utf8zd2stringzd2lengthz00zz__unicodez00(obj_t);
+   char *ptr = BSTRING_TO_STRING(str);
+   long len = BGl_utf8zd2stringzd2lengthz00zz__unicodez00(str);
+   
+   if (!buf) {
+      if (result) *result = len;
+   } else {
+      long read, write;
+      long sz = len < bufsize - 1 ? len : bufsize - 1;
+      
+      for (read = 0, write = 0; write < sz; write++) {
+	 unsigned char byte = ptr[read++];
+
+	 if (byte <= 0x7f) {
+	    buf[write] = (char16_t)byte;
+	 } else if (byte == 0xf8) {
+	    char b1 = ptr[read++];
+	    char b2 = ptr[read++];
+	    char b3 = ptr[read++];
+	    int u4u3 = (b3 & 0x3) << 2;
+	    int xx = (b2 >> 4) & 0x3;
+	    int wwww = b1 & 0xf;
+	    int u2u1 = (b1 >> 4) & 0x3;
+	    int uuuu = u4u3 | u2u1;
+	    int vvvv = uuuu -1;
+	    int hi = 0x36;
+	 
+	    buf[write] = (char16_t)(xx | (wwww << 2) | (vvvv << 6) | (hi << 10));
+	 } else if (byte == 0xfc) {
+	    char b1 = ptr[read++];
+	    char b2 = ptr[read++];
+	    char b3 = ptr[read++];
+	    int zzzzzz = b3 & 0x3f;
+	    int yyyy = b2 & 0xf;
+	    int hi = 0x37;
+	 
+	    buf[write] = (char16_t)(zzzzzz | (yyyy << 6) | (hi << 10));
+	 } else {
+	    unsigned long ucs2 = (unsigned long)byte;
+	    int bits = 6;
+
+	    while (byte & 0x40) {
+	       unsigned char next = ptr[read++];
+               
+	       ucs2 = (ucs2 << 6) + (next & 0x3f);
+	       byte <<= 1;
+	       bits += 5;
+	    }
+
+	    ucs2 &= (1<<bits) - 1;
+
+	    if (ucs2 >= 0x10000) {
+	       ucs2 -= 0x10000;
+	       buf[write++] = (char16_t)((ucs2 >> 10) + 0xd800);
+	       buf[write] = (char16_t)((ucs2 & 0x3FF) + 0xdc00);
+	    } else {
+	       buf[write] = (char16_t)ucs2;
+	    }
+	 }
+      }
+
+      buf[write] = 0;
+      if (result) *result = sz;
+   }
+   napi_last_error_message = 0L;
+   return napi_ok;
+}
+
+/*---------------------------------------------------------------------*/
 /*    BG:_RUNTIME_DEF napi_status                                      */
 /*    napi_get_value_string_utf16 ...                                  */
 /*---------------------------------------------------------------------*/
@@ -1015,63 +1116,16 @@ napi_get_value_string_utf16(napi_env env, napi_value value, char16_t *buf, size_
       napi_last_error_message = "Invalid argument";
       return napi_last_error_code = napi_invalid_arg;
    } else {
-      obj_t str = bgl_napi_jsstring_to_string_utf16(value);
+      obj_t str = bgl_napi_jsstring_to_string(value);
       
-      if (STRINGP(str)) {
-	 char *ptr = BSTRING_TO_STRING(str);
-	 long len = STRING_LENGTH(str);
-	 
-	 if (len < bufsize - 1) {
-	    long i;
-	    if (result) *result = len;
-	    if (buf) {
-	       for (i = 0; i < len; i++) {
-		  buf[i] = ptr[i];
-	       }
-	       buf[len] = 0;
-	    }
-	 } else {
-	    if (buf) {
-	       long i;
-	       if (result) *result = bufsize - 1;
-
-	       for (i = 0; i < bufsize - 1; i++) {
-		  buf[i] = ptr[i];
-	       }
-	       buf[bufsize - 1] = 0;
-	    } else {
-	       if (result) *result = len;
-	    }
-	 }
-      
-	 napi_last_error_message = 0L;
-	 return napi_ok;
+      if (bgl_napi_jsstring_asciip(value)) {
+	 return napi_get_value_string_utf6_from_ascii(env, str, buf, bufsize, result);
       } else {
-	 char16_t *ptr = &UCS2_STRING_REF(str, 0);
-	 long len = UCS2_STRING_LENGTH(str);
-
-	 if (len < bufsize - 1) {
-	    if (result) *result = len;
-	    if (buf) {
-	       memcpy(buf, ptr, sizeof(char16_t) * len);
-	       buf[len] = 0;
-	    }
-	 } else {
-	    if (buf) {
-	       if (result) *result = bufsize - 1;
-	       memcpy(buf, ptr, sizeof(char16_t) * (bufsize - 1));
-	       buf[bufsize - 1] = 0;
-	    } else {
-	       if (result) *result = len;
-	    }
-	 }
-      
-	 napi_last_error_message = 0L;
-	 return napi_ok;
+	 return napi_get_value_string_utf6_from_utf8(env, str, buf, bufsize, result);
       }
    }
 }
-
+	 
 /*---------------------------------------------------------------------*/
 /*    BG:_RUNTIME_DEF napi_status                                      */
 /*    napi_get_value_string_latin1 ...                                 */
