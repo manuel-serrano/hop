@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 24 16:10:01 2023                          */
-;*    Last change :  Mon May 29 10:04:05 2023 (serrano)                */
+;*    Last change :  Mon May 29 15:34:01 2023 (serrano)                */
 ;*    Copyright   :  2023 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The Scheme part of the node_api.                                 */
@@ -204,9 +204,7 @@
 ;*    napi-create-string-latin1 ...                                    */
 ;*---------------------------------------------------------------------*/
 (define (napi-create-string-latin1 %this string)
-   ;(js-string->jsstring string))
    (let ((enc (string-minimal-charset string)))
-;;      (tprint "enc=" enc " " string)
       (case enc
 	 ((ascii) (js-ascii->jsstring string))
 	 ((latin1) (js-utf8->jsstring (iso-latin->utf8 string)))
