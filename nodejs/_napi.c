@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 24 14:34:24 2023                          */
-/*    Last change :  Mon May 29 08:15:01 2023 (serrano)                */
+/*    Last change :  Mon May 29 09:56:17 2023 (serrano)                */
 /*    Copyright   :  2023 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop node_api implementation.                                     */
@@ -1034,15 +1034,14 @@ napi_status
 napi_get_value_string_utf6_from_utf8(napi_env env, obj_t str, char16_t *buf, size_t bufsize, size_t *result) {
    extern long BGl_utf8zd2stringzd2lengthz00zz__unicodez00(obj_t);
    char *ptr = BSTRING_TO_STRING(str);
-   long len = BGl_utf8zd2stringzd2lengthz00zz__unicodez00(str);
    
    if (!buf) {
-      if (result) *result = len;
+      if (result) *result = BGl_utf8zd2stringzd2lengthz00zz__unicodez00(str);
    } else {
       long read, write;
-      long sz = len < bufsize - 1 ? len : bufsize - 1;
+      long len = STRING_LENGTH(str);
       
-      for (read = 0, write = 0; write < sz; write++) {
+      for (read = 0, write = 0; (write < bufsize - 1) && (read < len); write++) {
 	 unsigned char byte = ptr[read++];
 
 	 if (byte <= 0x7f) {
@@ -1094,7 +1093,7 @@ napi_get_value_string_utf6_from_utf8(napi_env env, obj_t str, char16_t *buf, siz
       }
 
       buf[write] = 0;
-      if (result) *result = sz;
+      if (result) *result = write;
    }
    napi_last_error_message = 0L;
    return napi_ok;
