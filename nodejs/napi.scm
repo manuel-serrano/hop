@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 24 16:10:01 2023                          */
-;*    Last change :  Mon May 29 08:39:56 2023 (serrano)                */
+;*    Last change :  Mon May 29 10:04:05 2023 (serrano)                */
 ;*    Copyright   :  2023 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The Scheme part of the node_api.                                 */
@@ -533,7 +533,7 @@
    (let ((str (js-jsstring->string obj)))
       (if (js-jsstring-ascii? obj)
 	  str
-	  (charset-convert str 'utf8 'iso-latin-1))))
+	  (utf8->iso-latin str))))
 
 ;*---------------------------------------------------------------------*/
 ;*    napi-jsstring->string-utf16 ...                                  */
