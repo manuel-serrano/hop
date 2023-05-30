@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sun May 28 09:07:47 2023 (serrano)                */
+;*    Last change :  Tue May 30 10:27:56 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -614,7 +614,7 @@
    
    ;; repeat
    ;; https://262.ecma-international.org/13.0/#sec-string.prototype.repeat
-   (define (replace this::obj count)
+   (define (repeat this::obj count)
       (let ((n (js-tointeger count %this)))
 	 (cond
 	    ((or (not (fixnum? n)) (<fx n 0))
@@ -625,9 +625,9 @@
 		n %this)))))
       
    (js-bind! %this obj (& "repeat")
-      :value (js-make-function %this replace
-		(js-function-arity replace)
-		(js-function-info :name "replace" :len 2)
+      :value (js-make-function %this repeat
+		(js-function-arity repeat)
+		(js-function-info :name "repeat" :len 2)
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
