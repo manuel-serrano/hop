@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 24 14:34:24 2023                          */
-/*    Last change :  Mon May 29 09:56:17 2023 (serrano)                */
+/*    Last change :  Thu Jun  1 17:59:10 2023 (serrano)                */
 /*    Copyright   :  2023 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop node_api implementation.                                     */
@@ -14,6 +14,7 @@
 #include <uv.h>
 #include <math.h>
 #include "node_api.h"
+#include "../hopscript/bglhopscript_types.h"
 
 /*---------------------------------------------------------------------*/
 /*    imports                                                          */
@@ -1031,12 +1032,11 @@ napi_get_value_string_utf6_from_ascii(napi_env env, obj_t str, char16_t *buf, si
 /*    napi_get_value_string_utf6_from_ascii ...                        */
 /*---------------------------------------------------------------------*/
 napi_status
-napi_get_value_string_utf6_from_utf8(napi_env env, obj_t str, char16_t *buf, size_t bufsize, size_t *result) {
-   extern long BGl_utf8zd2stringzd2lengthz00zz__unicodez00(obj_t);
+napi_get_value_string_utf6_from_utf8(napi_env env, BgL_jsstringliteralz00_bglt value, obj_t str, char16_t *buf, size_t bufsize, size_t *result) {
    char *ptr = BSTRING_TO_STRING(str);
    
    if (!buf) {
-      if (result) *result = BGl_utf8zd2stringzd2lengthz00zz__unicodez00(str);
+      if (result) *result = value->BgL_lengthz00;
    } else {
       long read, write;
       long len = STRING_LENGTH(str);
@@ -1120,7 +1120,7 @@ napi_get_value_string_utf16(napi_env env, napi_value value, char16_t *buf, size_
       if (bgl_napi_jsstring_asciip(value)) {
 	 return napi_get_value_string_utf6_from_ascii(env, str, buf, bufsize, result);
       } else {
-	 return napi_get_value_string_utf6_from_utf8(env, str, buf, bufsize, result);
+	 return napi_get_value_string_utf6_from_utf8(env, (BgL_jsstringliteralz00_bglt)value, str, buf, bufsize, result);
       }
    }
 }
