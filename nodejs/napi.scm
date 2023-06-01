@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 24 16:10:01 2023                          */
-;*    Last change :  Mon May 29 15:34:01 2023 (serrano)                */
+;*    Last change :  Thu Jun  1 18:21:52 2023 (serrano)                */
 ;*    Copyright   :  2023 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The Scheme part of the node_api.                                 */
@@ -220,7 +220,7 @@
 ;*    napi-get-named-property ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (napi-get-named-property %this this prop)
-   (js-get this (js-string->name prop) %this))
+   (js-get-jsobject/name-cache this (js-string->name prop) %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    napi-put-property! ...                                           */
@@ -232,7 +232,7 @@
 ;*    napi-put-named-property! ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (napi-put-named-property! %this this prop val)
-   (js-put! this (js-string->name prop) val #f %this))
+   (js-put-jsobject/name-cache! this (js-string->name prop) val #f %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    napi-define-named-property! ...                                  */
