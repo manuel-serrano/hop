@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 24 15:38:53 2023                          */
-/*    Last change :  Mon May 29 08:40:37 2023 (serrano)                */
+/*    Last change :  Thu Jun  1 19:59:02 2023 (serrano)                */
 /*    Copyright   :  2023 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop Specific macro redefinitions                                 */
@@ -287,7 +287,7 @@ struct napi_async_work__ {
   (*res = bgl_napi_has_element(_this, this, index), napi_ok)
 
 #define napi_delete_element(_this, this, index, res) \
-   (_resb = CBOOL(bgl_napi_delete_element(_this, this, index)), (res != NULL ? *((obj_t *)res) = _resb : 0L), napi_ok)
+   (_resb = CBOOL(bgl_napi_delete_element(_this, this, index)), (res != NULL ? *((bool *)res) = _resb : 0L), napi_ok)
 
 #define napi_get_global(_this, res) \
   (*res = _this, napi_ok)
