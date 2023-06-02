@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 24 15:38:53 2023                          */
-/*    Last change :  Thu Jun  1 19:59:02 2023 (serrano)                */
+/*    Last change :  Fri Jun  2 11:13:40 2023 (serrano)                */
 /*    Copyright   :  2023 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop Specific macro redefinitions                                 */
@@ -58,9 +58,10 @@ extern obj_t bgl_napi_delete_element(obj_t, obj_t, int);
 extern obj_t bgl_napi_get_element(obj_t, obj_t, int);
 extern obj_t bgl_napi_set_element(obj_t, obj_t, int, obj_t);
 extern obj_t bgl_napi_get_property(obj_t, obj_t, obj_t);
-extern obj_t bgl_napi_get_named_property(obj_t, obj_t, obj_t);
+extern obj_t bgl_napi_get_named_property(obj_t, obj_t, char *);
 extern obj_t bgl_napi_put_property(obj_t, obj_t, obj_t, obj_t);
 extern obj_t bgl_napi_put_named_property(obj_t, obj_t, obj_t, obj_t);
+extern obj_t bgl_napi_put_named_string_property(obj_t, obj_t, char *, obj_t);
 extern obj_t bgl_napi_define_named_property(obj_t, obj_t, obj_t, obj_t);
 extern obj_t bgl_napi_make_property_descriptor(obj_t, obj_t, obj_t, obj_t,
 					       bool_t, bool_t, bool_t,
@@ -239,19 +240,19 @@ struct napi_async_work__ {
    (_reso = bgl_napi_get_property(_this, this, prop), (res != NULL ? *((obj_t *)res) = _reso : 0L), napi_ok)
 
 #define napi_get_named_property(_this, this, prop, res) \
-   (_reso = bgl_napi_get_named_property(_this, this, string_to_bstring(prop)), (res != NULL ? *((obj_t *)res) = _reso : 0L), napi_ok)
+   (_reso = bgl_napi_get_named_property(_this, this, prop), (res != NULL ? *((obj_t *)res) = _reso : 0L), napi_ok)
 
 #define napi_put_property(_this, this, prop, val, res) \
   (*res = bgl_napi_put_property(_this, this, prop, val), napi_ok)
 
 #define napi_put_named_property(_this, this, prop, val, res) \
-  (*res = bgl_napi_put_named_property(_this, this, string_to_bstring(prop), val), napi_ok)
+  (*res = bgl_napi_put_named_string_property(_this, this, prop, val), napi_ok)
 
 #define napi_set_property(_this, this, prop, val) \
   (bgl_napi_put_property(_this, this, prop, val), napi_ok)
 
 #define napi_set_named_property(_this, this, prop, val) \
-  (bgl_napi_put_named_property(_this, this, string_to_bstring(prop), val), napi_ok)
+  (bgl_napi_put_named_string_property(_this, this, prop, val), napi_ok)
 
 #define napi_delete_property(_this, this, key, res) \
    (_resb = CBOOL(bgl_napi_delete_property(_this, this, key)), (res != NULL ? *((bool *)res) = _resb : 0L), napi_ok)

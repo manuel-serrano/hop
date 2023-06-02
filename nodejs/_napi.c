@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 24 14:34:24 2023                          */
-/*    Last change :  Thu Jun  1 17:59:10 2023 (serrano)                */
+/*    Last change :  Fri Jun  2 10:34:52 2023 (serrano)                */
 /*    Copyright   :  2023 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop node_api implementation.                                     */
@@ -32,7 +32,7 @@ extern obj_t hop_js_call9(obj_t, obj_t, obj_t, obj_t, obj_t, obj_t, obj_t, obj_t
 extern obj_t hop_js_call10(obj_t, obj_t, obj_t, obj_t, obj_t, obj_t, obj_t, obj_t, obj_t, obj_t, obj_t, obj_t, obj_t);
 extern obj_t hop_js_calln(obj_t, obj_t, obj_t, obj_t);
 
-extern char *bgl_typeof();
+extern obj_t bgl_typeof();
 
 extern uv_loop_t *bgl_napi_uvloop(obj_t);
 
@@ -1029,14 +1029,20 @@ napi_get_value_string_utf6_from_ascii(napi_env env, obj_t str, char16_t *buf, si
    
 /*---------------------------------------------------------------------*/
 /*    napi_status                                                      */
-/*    napi_get_value_string_utf6_from_ascii ...                        */
+/*    napi_get_value_string_utf16_from_ascii ...                       */
 /*---------------------------------------------------------------------*/
 napi_status
-napi_get_value_string_utf6_from_utf8(napi_env env, BgL_jsstringliteralz00_bglt value, obj_t str, char16_t *buf, size_t bufsize, size_t *result) {
+napi_get_value_string_utf16_from_utf8(napi_env env, BgL_jsstringliteralutf8z00_bglt value, obj_t str, char16_t *buf, size_t bufsize, size_t *result) {
+   extern long BGl_utf8zd2stringzd2lengthz00zz__unicodez00(obj_t);
    char *ptr = BSTRING_TO_STRING(str);
    
    if (!buf) {
-      if (result) *result = value->BgL_lengthz00;
+      if (result) {
+	 uint32_t len = value->BgL_z52culenz52;
+	 fprintf(stderr, "len=%d tof=%s [%s]\n", len, BSTRING_TO_STRING(bgl_typeof(value)), ptr);
+	 dprint(value);
+	 *result = len > 0 ? len : BGl_utf8zd2stringzd2lengthz00zz__unicodez00(str);
+      }
    } else {
       long read, write;
       long len = STRING_LENGTH(str);
@@ -1120,7 +1126,7 @@ napi_get_value_string_utf16(napi_env env, napi_value value, char16_t *buf, size_
       if (bgl_napi_jsstring_asciip(value)) {
 	 return napi_get_value_string_utf6_from_ascii(env, str, buf, bufsize, result);
       } else {
-	 return napi_get_value_string_utf6_from_utf8(env, (BgL_jsstringliteralz00_bglt)value, str, buf, bufsize, result);
+	 return napi_get_value_string_utf16_from_utf8(env, (BgL_jsstringliteralutf8z00_bglt)value, str, buf, bufsize, result);
       }
    }
 }
