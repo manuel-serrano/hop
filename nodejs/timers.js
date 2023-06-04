@@ -90,7 +90,7 @@ function listOnTimeout() {
     var diff = now - first._monotonicStartTime;
     if (diff < msecs) {
       list.start(msecs - diff, 0);
-      debug(msecs + ' list wait because diff is ' + diff);
+//      debug(msecs + ' list wait because diff is ' + diff);
       return;
     } else {
       L.remove(first);
@@ -455,9 +455,6 @@ function unrefTimeout() {
 
 
 exports._unrefActive = function(item) {
-  // MS 18ap2023, this function is useless as the Bigloo libuv binding
-  // already ensures that the timeout is live until it has expired
-  //return;
   var msecs = item._idleTimeout;
   if (!msecs || msecs < 0) return;
 //  assert(msecs >= 0);
