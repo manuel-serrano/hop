@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 24 16:10:01 2023                          */
-;*    Last change :  Thu Jun  1 19:28:50 2023 (serrano)                */
+;*    Last change :  Fri Jun  2 08:07:31 2023 (serrano)                */
 ;*    Copyright   :  2023 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The Scheme part of the node_api.                                 */
@@ -45,6 +45,7 @@
 	   (export napi-get-named-property "bgl_napi_get_named_property")
 	   (export napi-put-property! "bgl_napi_put_property")
 	   (export napi-put-named-property! "bgl_napi_put_named_property")
+	   (export napi-put-named-string-property! "bgl_napi_put_named_string_property")
 	   (export napi-delete-property! "bgl_napi_delete_property")
 	   (export napi-has-property "bgl_napi_has_property")
 	   (export napi-has-named-property "bgl_napi_has_named_property")
@@ -98,9 +99,10 @@
 	   (napi-create-string-utf8::obj ::obj ::bstring)
 	   (napi-create-string-latin1::obj ::obj ::bstring)
 	   (napi-get-property::obj ::obj ::obj ::obj)
-	   (napi-get-named-property::obj ::obj ::obj ::bstring)
+	   (napi-get-named-property::obj ::obj ::obj ::string)
 	   (napi-put-property!::obj ::obj ::obj ::obj ::obj)
 	   (napi-put-named-property!::obj ::obj ::obj ::bstring ::obj)
+	   (napi-put-named-string-property!::obj ::obj ::obj ::string ::obj)
 	   (napi-delete-property!::obj ::obj ::obj ::obj)
 	   (napi-has-property::obj ::obj ::obj ::obj)
 	   (napi-has-named-property ::obj ::obj ::obj)
@@ -148,6 +150,30 @@
 	   (napi-unwrap::obj ::obj ::obj)
 	   (napi-remove-wrap::obj ::obj ::obj)))
 
+;*---------------------------------------------------------------------*/
+;*    napi-key-table ...                                               */
+;*---------------------------------------------------------------------*/
+(define napi-key-table
+   (create-hashtable
+      :weak 'open-string
+      :size 128
+      :max-length 8192
+      :max-bucket-length 20))
+
+;*---------------------------------------------------------------------*/
+;*    napi-string->name ...                                            */
+;*    -------------------------------------------------------------    */
+;*    In order to avoid re-allocating Scheme strings from C strings    */
+;*    C strings used as property key are stored in NAPI-KEY-TABLE.     */
+;*---------------------------------------------------------------------*/
+(define (napi-string->name str::string)
+   (let ((name ($open-string-hashtable-get napi-key-table str)))
+      (or name
+	  (let* ((bstr::bstring str)
+		 (name (js-string->name bstr)))
+	     (open-string-hashtable-put! napi-key-table bstr name)
+	     name))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    napi-throw-error ...                                             */
 ;*---------------------------------------------------------------------*/
@@ -221,8 +247,8 @@
 ;*---------------------------------------------------------------------*/
 (define (napi-get-named-property %this this prop)
    (if (js-object? this)
-       (js-get-jsobject/name-cache this (js-string->name prop) %this)
-       (js-get this (js-string->name prop) %this)))
+       (js-get-jsobject/name-cache this (napi-string->name prop) %this)
+       (js-get this (napi-string->name prop) %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    napi-put-property! ...                                           */
@@ -237,6 +263,14 @@
    (if (js-object? this)
        (js-put-jsobject/name-cache! this (js-string->name prop) val #f %this)
        (js-put! this (js-string->name prop) val #f %this)))
+
+;*---------------------------------------------------------------------*/
+;*    napi-put-named-string-property! ...                              */
+;*---------------------------------------------------------------------*/
+(define (napi-put-named-string-property! %this this prop val)
+   (if (js-object? this)
+       (js-put-jsobject/name-cache! this (napi-string->name prop) val #f %this)
+       (js-put! this (napi-string->name prop) val #f %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    napi-define-named-property! ...                                  */
