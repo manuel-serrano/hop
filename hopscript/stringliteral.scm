@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Fri Jun  2 13:14:55 2023 (serrano)                */
+;*    Last change :  Mon Jun  5 08:58:40 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -290,7 +290,6 @@
 		      ;; an utf8 name/culen
 		      (let ((str (vector-ref el 1))
 			    (culen (vector-ref el 2)))
-			 (tprint "str=" str " culen=" culen)
 			 (js-utf8-name->jsstring/culen str culen)))
 		     ((2)
 		      ;; a fixnum name
@@ -299,7 +298,6 @@
 		     ((1)
 		      ;; an utf8 name (deprectated, should use name/culen)
 		      (let ((str (vector-ref el 1)))
-			 (tprint "str2=" str " culen=" (utf8-codeunit-length str))
 			 (js-utf8-name->jsstring/culen str
 			    (utf8-codeunit-length str))))
 		     ((4)
@@ -761,7 +759,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-depth ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (_js-jsstring-depth s limit)
+(define (js-jsstring-depth s limit)
    (let loop ((s s)
 	      (d 0)
 	      (maxd 0))
@@ -777,13 +775,6 @@
 		(if (>=fx lmaxd limit)
 		    lmaxd
 		    (loop right (+fx d 1) (+fx lmaxd 1)))))))))
-
-(define (js-jsstring-depth s limit)
-   ;;(tprint ">>> js-jsstring-depth limit=" limit " len=" (js-jsstring-length s))
-   (let ((d (_js-jsstring-depth s limit)))
-      ;;(tprint "<<< js-jsstring-depth d=" d)
-      d))
-   
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-normalize-ASCII! ...                                 */
