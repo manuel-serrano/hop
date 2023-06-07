@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sun May 28 08:33:50 2023 (serrano)                */
+;*    Last change :  Wed Jun  7 08:07:32 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -1066,7 +1066,7 @@
 ;*---------------------------------------------------------------------*/
 (define (link-cmap! omap::JsConstructMap nmap::JsConstructMap
 	   name value flags::int)
-   (if (or (eq? name (& "__proto__")) (isa? name JsSymbolLiteral))
+   (if (eq? name (& "__proto__"))
        (link-proto-cmap! omap nmap value flags)
        (link-regular-cmap! omap nmap name flags)))
 
@@ -1113,7 +1113,7 @@
 ;*    cmap-find-transition ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (cmap-find-transition omap::JsConstructMap name val flags::int)
-   (if (or (eq? name (& "__proto__")) (isa? name JsSymbolLiteral))
+   (if (eq? name (& "__proto__"))
        (cmap-find-proto-transition omap val flags)
        (cmap-find-regular-transition omap name flags)))
 

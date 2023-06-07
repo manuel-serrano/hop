@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Sat May 20 20:12:22 2023 (serrano)                */
+;*    Last change :  Wed Jun  7 07:16:42 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -390,7 +390,6 @@
    (js-init-function-cmap! %this)
    ;; bind the builtin function prototype
    (with-access::JsGlobalObject %this (js-function-prototype
-					 js-function-strict-prototype
 					 js-function js-function-pcache)
       (set! js-function-pcache
 	 ((@ js-make-pcache-table __hopscript_property) 6 "function"))
@@ -408,12 +407,6 @@
 	       (__proto__ js-object-prototype)
 	       (elements ($create-vector 10)))))
 
-      (set! js-function-strict-prototype
-	 (instantiateJsObject
-	    (cmap (js-make-jsconstructmap))
-	    (__proto__ js-function-prototype)
-	    (elements (make-vector 10 (js-undefined)))))
-      
       ;; then, create the properties of the function contructor
       (set! js-function
 	 (let ((proc (%js-function %this)))
@@ -1360,9 +1353,10 @@
 ;*    js-function-apply ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (js-function-apply %this this thisarg argarray cache)
-   (if (js-object-mode-plain? this)
-       (js-apply-array %this this thisarg argarray)
-       (with-access::JsGlobalObject %this (js-function-pcache)
+   (with-access::JsGlobalObject %this (js-function-pcache js-function-prototype)
+      (if (and (js-object-mode-plain? this)
+	       (js-object-mode-plain? js-function-prototype))
+	  (js-apply-array %this this thisarg argarray)
 	  (js-call2 %this 
 	     (js-get-name/cache this (& "apply") #f %this
 		(or cache (js-pcache-ref js-function-pcache 2)))
@@ -1423,9 +1417,10 @@
 ;*    js-function-call0 ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (js-function-call0 %this this thisarg cache)
-   (if (js-object-mode-plain? this)
-       (js-call0 %this this thisarg)
-       (with-access::JsGlobalObject %this (js-function-pcache)
+   (with-access::JsGlobalObject %this (js-function-pcache js-function-prototype)
+      (if (and (js-object-mode-plain? this)
+	       (js-object-mode-plain? js-function-prototype))
+	  (js-call0 %this this thisarg)
 	  (js-call1 %this
 	     (js-get-jsobject-name/cache this (& "call") #f %this
 		(or cache (js-pcache-ref js-function-pcache 4))
@@ -1436,9 +1431,10 @@
 ;*    js-function-call1 ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (js-function-call1 %this this thisarg arg cache)
-   (if (js-object-mode-plain? this)
-       (js-call1 %this this thisarg arg)
-       (with-access::JsGlobalObject %this (js-function-pcache)
+   (with-access::JsGlobalObject %this (js-function-pcache js-function-prototype)
+      (if (and (js-object-mode-plain? this)
+	       (js-object-mode-plain? js-function-prototype))
+	  (js-call1 %this this thisarg arg)
 	  (js-call2 %this
 	     (js-get-jsobject-name/cache this (& "call") #f %this
 		(or cache (js-pcache-ref js-function-pcache 4)))
@@ -1448,9 +1444,10 @@
 ;*    js-function-call2 ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (js-function-call2 %this this thisarg arg0 arg1 cache)
-   (if (js-object-mode-plain? this)
-       (js-call2 %this this thisarg arg0 arg1)
-       (with-access::JsGlobalObject %this (js-function-pcache)
+   (with-access::JsGlobalObject %this (js-function-pcache js-function-prototype)
+      (if (and (js-object-mode-plain? this)
+	       (js-object-mode-plain? js-function-prototype))
+	  (js-call2 %this this thisarg arg0 arg1)
 	  (js-call3 %this
 	     (js-get-jsobject-name/cache this (& "call") #f %this
 		(or cache (js-pcache-ref js-function-pcache 4)))
@@ -1460,9 +1457,10 @@
 ;*    js-function-call3 ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (js-function-call3 %this this thisarg arg0 arg1 arg2 cache)
-   (if (js-object-mode-plain? this)
-       (js-call3 %this this thisarg arg0 arg1 arg2)
-       (with-access::JsGlobalObject %this (js-function-pcache)
+   (with-access::JsGlobalObject %this (js-function-pcache js-function-prototype)
+      (if (and (js-object-mode-plain? this)
+	       (js-object-mode-plain? js-function-prototype))
+	  (js-call3 %this this thisarg arg0 arg1 arg2)
 	  (js-call4 %this
 	     (js-get-jsobject-name/cache this (& "call") #f %this
 		(or cache (js-pcache-ref js-function-pcache 4)))
