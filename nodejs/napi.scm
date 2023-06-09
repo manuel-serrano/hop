@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 24 16:10:01 2023                          */
-;*    Last change :  Fri Jun  2 08:07:31 2023 (serrano)                */
+;*    Last change :  Fri Jun  9 08:55:21 2023 (serrano)                */
 ;*    Copyright   :  2023 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    The Scheme part of the node_api.                                 */
@@ -74,6 +74,7 @@
 	   (export napi-is-array? "bgl_napi_is_array")
 	   (export napi-is-date? "bgl_napi_is_date")
 	   (export napi-is-error? "bgl_napi_is_error")
+	   (export napi-is-promise? "bgl_napi_is_promise")
 	   (export napi-strict-equals? "bgl_napi_strict_equals")
 	   (export napi-typeof "bgl_napi_typeof")
 	   (export napi-uvloop "bgl_napi_uvloop")
@@ -133,6 +134,7 @@
 	   (napi-is-array?::bool ::obj) 
 	   (napi-is-date?::bool ::obj) 
 	   (napi-is-error?::bool ::obj)
+	   (napi-is-promise?::bool ::obj)
 	   (napi-strict-equals?::bool ::obj ::obj)
 	   (napi-typeof::int ::obj ::obj)
 	   (napi-uvloop::$uv_loop_t ::obj)
@@ -460,6 +462,12 @@
 ;*---------------------------------------------------------------------*/
 (define (napi-is-error? obj)
    (isa? obj JsError))
+
+;*---------------------------------------------------------------------*/
+;*    napi-is-promise? ...                                             */
+;*---------------------------------------------------------------------*/
+(define (napi-is-promise? obj)
+   (isa? obj JsPromise))
 
 ;*---------------------------------------------------------------------*/
 ;*    napi-strict-equals? ...                                          */

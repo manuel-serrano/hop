@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 24 15:38:53 2023                          */
-/*    Last change :  Fri Jun  2 11:13:40 2023 (serrano)                */
+/*    Last change :  Fri Jun  9 08:54:50 2023 (serrano)                */
 /*    Copyright   :  2023 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop Specific macro redefinitions                                 */
@@ -27,6 +27,7 @@ static bool _resb;
 extern int bgl_napi_is_array(obj_t);
 extern int bgl_napi_is_date(obj_t);
 extern int bgl_napi_is_error(obj_t);
+extern int bgl_napi_is_promise(obj_t);
 extern int bgl_napi_strict_equals(obj_t, obj_t);
 
 extern int bgl_napi_typeof(obj_t, obj_t);
@@ -313,6 +314,9 @@ struct napi_async_work__ {
 
 #define napi_is_error(_this, val, res) \
    (*res = bgl_napi_is_error(val), napi_ok)
+
+#define napi_is_promise(_this, val, res) \
+   (*res = bgl_napi_is_promise(val), napi_ok)
 
 #define napi_strict_equals(_this, x, y, res) \
   (*res = bgl_napi_strict_equals(x, y), napi_ok)
