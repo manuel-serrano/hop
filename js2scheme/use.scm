@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Wed Dec 22 06:57:48 2021 (serrano)                */
-;*    Copyright   :  2013-21 Manuel Serrano                            */
+;*    Last change :  Fri Jun  9 08:34:23 2023 (serrano)                */
+;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Count the number of occurrences for all variables                */
 ;*=====================================================================*/
@@ -24,6 +24,7 @@
 
    (export j2s-use-stage
 	   j2s-dead-stage
+	   j2s-eval-use-stage
 	   (generic reinit-use-count! ::J2SNode)
 	   (generic reset-use-count ::J2SNode)
 	   (generic use-count ::J2SNode inc::int looplevel::int)
@@ -47,6 +48,15 @@
       (name "dead")
       (comment "Removed dead variables")
       (proc j2s-dead!)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-eval-use-stage ...                                           */
+;*---------------------------------------------------------------------*/
+(define j2s-eval-use-stage
+   (instantiate::J2SStageProc
+      (name "export-eval")
+      (comment "Force escape of all top-level definitions")
+      (proc j2s-eval-use!)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-use! ::J2SProgram ...                                        */
@@ -587,3 +597,15 @@
       (set! decls (filter (lambda (n) (isa? n J2SDecl)) decls))
       this))
 
+;*---------------------------------------------------------------------*/
+;*    j2s-eval-use! ::J2SProgram ...                                   */
+;*---------------------------------------------------------------------*/
+(define (j2s-eval-use! this::J2SProgram args)
+   (when (isa? this J2SProgram)
+      (with-access::J2SProgram this (decls)
+	 (for-each (lambda (decl)
+		      (with-access::J2SDecl decl (escape id)
+			 (decl-usage-add! decl 'ref)
+			 (set! escape #t)))
+	    decls)))
+   this)
