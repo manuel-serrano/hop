@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Wed Jun  7 07:16:42 2023 (serrano)                */
+;*    Last change :  Fri Jun  9 08:52:51 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -532,7 +532,7 @@
 	    (instantiate::JsWrapperDescriptor
 	       (name (& "length"))
 	       (enumerable #f)
-	       (configurable #f)
+	       (configurable #t)
 	       (writable #f)
 	       (%get (lambda (obj owner propname %this)
 			(with-access::JsFunction obj (info)
@@ -541,7 +541,7 @@
 	    (instantiate::JsWrapperDescriptor
 	       (name (& "name"))
 	       (enumerable #f)
-	       (configurable #f)
+	       (configurable #t)
 	       (writable #f)
 	       (%get (lambda (obj owner propname %this)
 			(js-string->jsstring (js-function-name obj))))

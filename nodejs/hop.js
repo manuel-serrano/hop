@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Mar 22 15:03:30 2014                          */
-/*    Last change :  Thu May 18 06:06:53 2023 (serrano)                */
+/*    Last change :  Fri Jun  9 08:48:31 2023 (serrano)                */
 /*    Copyright   :  2014-23 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hopscript/Hop binding.                                           */
@@ -89,8 +89,8 @@ exports.HTTPResponseError = function(obj) {
 /*    debug                                                            */
 /*---------------------------------------------------------------------*/
 exports.log = hop.log;
-exports.dumpObj = hop.dumpObj;
-exports.dumpObjCmap = hop.dumpObjCmap;
+exports.inspect = hop.inspect;
+exports.inspectCmap = hop.inspectCmap;
 exports.typeName = hop.typeName;
 exports.gc = hop.gc;
 
