@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Dec  7 06:32:41 2019                          */
-;*    Last change :  Sat May 20 20:12:06 2023 (serrano)                */
+;*    Last change :  Thu Jun  8 14:42:46 2023 (serrano)                */
 ;*    Copyright   :  2019-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function macros for js2scheme                                    */
@@ -12,23 +12,34 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-function-apply-arguments ...                                  */
 ;*---------------------------------------------------------------------*/
-(define-macro (js-function-apply-arguments %this this thisarg vec arguments cache)
-   `(if (and (or (not (js-object? ,this)) (js-object-mode-plain? ,this))
-	     (not (object? ,arguments)))
-	(js-function-apply-vec ,%this ,this ,thisarg ,vec (fixnum->uint32 (vector-length ,vec)))
-	(begin
-	   (set! ,arguments (js-materialize-arguments ,%this ,vec ,arguments))
-	   (js-function-apply %this ,this ,thisarg ,arguments ,cache))))
+(define-macro (js-function-apply-arguments %this fun thisarg vec %arguments mode cache)
+   `(with-access::JsGlobalObject %this (js-function-prototype)
+       (cond
+	  (%arguments
+	   (js-function-apply ,%this ,fun ,thisarg %arguments ,cache))
+	  ((and (js-object-mode-plain? ,fun)
+		(js-object-mode-plain? js-function-prototype))
+	   (js-function-apply-vec ,%this ,fun ,thisarg
+	      ,vec #u32:0 (fixnum->uint32 (vector-length ,vec))))
+	  (else
+	   (set! %arguments 
+	      ,(if (eq? mode 'strict)
+		   `(js-strict-arguments %this (vector-copy ,vec))
+		   `(js-sloppy-arguments %this (vector-copy ,vec))))
+	   (js-function-apply %this ,fun ,thisarg ,%arguments ,cache)))))
 	   
 ;*---------------------------------------------------------------------*/
 ;*    js-function-maybe-apply-arguments ...                            */
 ;*---------------------------------------------------------------------*/
-(define-macro (js-function-maybe-apply-arguments %this this thisarg vec arguments cache)
+(define-macro (js-function-maybe-apply-arguments %this fun thisarg vec %arguments mode cache)
    `(if (js-function? ,this)
-	(js-function-apply-arguments ,%this ,this ,thisarg ,vec ,arguments ,cache)
+	(js-function-apply-arguments ,%this ,fun ,thisarg ,vec ,%arguments mode ,cache)
 	(begin
-	   (set! ,arguments (js-materialize-arguments ,%this ,vec ,arguments))
-	   (js-function-maybe-apply %this ,this ,thisarg ,arguments ,cache))))
+	   (set! %arguments 
+	      ,(if (eq? mode 'strict)
+		   `(js-strict-arguments %this (vector-copy ,vec))
+		   `(js-sloppy-arguments %this (vector-copy ,vec))))
+	   (js-function-maybe-apply %this ,fun ,thisarg ,%arguments ,cache))))
    
 ;*---------------------------------------------------------------------*/
 ;*    js-function-info ...                                             */

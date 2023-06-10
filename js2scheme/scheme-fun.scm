@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Sat May 20 18:21:56 2023 (serrano)                */
+;*    Last change :  Thu Jun  8 08:12:40 2023 (serrano)                */
 ;*    Copyright   :  2017-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -481,22 +481,23 @@
       (with-access::J2SFun fun (idgen idthis thisp params rtype loc)
 	 ;; see scheme-arguments.scm
 	 (let ((args (append (map j2s-type-scheme params)
-			(list (symbol-append (j2s-arguments-lonly-id) '::long)))))
+			(list (symbol-append (j2s-arguments-length-id) '::long)))))
 	    (lambda-or-labels rtype idgen
 	       (type-this idthis thisp)
 	       (unless (isa? fun J2SArrow) id) args body loc))))
    
    (define (stack-vararg-lambda fun id body)
       ;; this function uses a stack allocated vector arguments
-      (with-access::J2SFun fun (idgen idthis thisp params rtype loc)
+      (with-access::J2SFun fun (idgen idthis thisp params rtype loc argumentsp)
 	 ;; see scheme-arguments.scm
 	 (let ((args (list (symbol-append (j2s-arguments-stack-id) '::vector)))
-	       (body `(let* ((,(j2s-arguments-lonly-id) (vector-length ,(j2s-arguments-stack-id)))
+	       (body `(let* ((,(j2s-arguments-length-id) (vector-length ,(j2s-arguments-stack-id)))
+			     (,(j2s-arguments-object-id) #f)
 			     ,@(map (lambda (a i)
-				       `(,(j2s-scheme a mode return ctx)
-					 (if (<fx ,i ,(j2s-arguments-lonly-id))
-					     (vector-ref ,(j2s-arguments-stack-id) ,i)
-					     (js-undefined))))
+				       (let ((v (J2SAccess (J2SRef argumentsp)
+						   (J2SNumber/type 'uint32 (fixnum->uint32 i)))))
+					  `(,(j2s-scheme a mode return ctx)
+					    ,(j2s-arguments-ref v mode return ctx))))
 				  params
 				  (iota (length params))))
 			 ,body)))
@@ -528,8 +529,8 @@
 			      (gensym 'arguments))))
 	    (lambda-or-labels rtype idgen (type-this idthis thisp)
 	       (unless (isa? fun J2SArrow) id)
-	       (list arguments)
-	       (jsfun-strict-vararg-body fun body id arguments ctx)
+	       (list (symbol-append arguments '::vector))
+	       (jsfun-strict-vararg-body fun body id arguments mode return ctx)
 	       loc))))
 
    (with-access::J2SFun this (loc vararg mode params generator name decl)
@@ -691,20 +692,20 @@
 ;*---------------------------------------------------------------------*/
 ;*    jsfun-strict-vararg-body ...                                     */
 ;*---------------------------------------------------------------------*/
-(define (jsfun-strict-vararg-body this::J2SFun body id arguments ctx)
+(define (jsfun-strict-vararg-body this::J2SFun body id arguments mode return ctx)
    
    (define (optim-arguments-prelude argumentsp params body)
-      (with-access::J2SDeclArguments argumentsp (alloc-policy argid mode)
-	 (let ((%len (j2s-arguments-length-id argid)))
+      (with-access::J2SDeclArguments argumentsp (alloc-policy argid mode loc)
+	 (let ((%len (j2s-arguments-length-id)))
 	    `(let ((,%len (vector-length ,argid))
 		    (arguments ,(if (eq? alloc-policy 'lazy)
 				    `',mode
 				    `(js-strict-arguments %this ,arguments))))
 		(let (,@(map (lambda (p i)
-				(list (j2s-decl-scm-id p ctx)
-				   `(if (<fx ,i ,%len)
-					(vector-ref ,argid ,i)
-					(js-undefined))))
+				(let ((v (J2SAccess (J2SRef argumentsp)
+					    (J2SNumber/type 'uint32 (fixnum->uint32 i)))))
+				   (list (j2s-decl-scm-id p ctx)
+				      (j2s-arguments-ref v mode return ctx))))
 			   params (iota (length params))))
 		   ,body)))))
    
@@ -713,11 +714,11 @@
 	     (arguments (js-strict-arguments %this ,arguments)))
 	  (let (,@(map (lambda (param i)
 			  (with-access::J2SDecl param (loc)
-			     (epairify loc
-				`(,(j2s-decl-scm-id param ctx)
-				    (if (<fx ,i &len)
-					(vector-ref ,arguments ,i)
-					(js-undefined))))))
+			     (let ((v (J2SAccess (J2SRef argumentsp)
+					 (J2SNumber/type 'uint32 (fixnum->uint32 i)))))
+				(epairify loc
+				   `(,(j2s-decl-scm-id param ctx)
+				     ,(j2s-arguments-ref v mode return ctx))))))
 		     params (iota (length params))))
 	     ,body)))
    

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 24 14:34:24 2023                          */
-/*    Last change :  Fri Jun  2 10:34:52 2023 (serrano)                */
+/*    Last change :  Sat Jun 10 07:38:21 2023 (serrano)                */
 /*    Copyright   :  2023 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop node_api implementation.                                     */
@@ -1039,8 +1039,6 @@ napi_get_value_string_utf16_from_utf8(napi_env env, BgL_jsstringliteralutf8z00_b
    if (!buf) {
       if (result) {
 	 uint32_t len = value->BgL_z52culenz52;
-	 fprintf(stderr, "len=%d tof=%s [%s]\n", len, BSTRING_TO_STRING(bgl_typeof(value)), ptr);
-	 dprint(value);
 	 *result = len > 0 ? len : BGl_utf8zd2stringzd2lengthz00zz__unicodez00(str);
       }
    } else {

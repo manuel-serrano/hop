@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Sat May 20 18:54:44 2023 (serrano)                */
+;*    Last change :  Thu Jun  8 14:34:20 2023 (serrano)                */
 ;*    Copyright   :  2018-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -341,18 +341,29 @@
 (define (j2s-apply obj args mode return conf)
 
    (define (def obj args mode return conf)
-      `(js-function-maybe-apply ,(caddr args)
-	  ,(j2s-scheme obj mode return conf)
-	  ,(j2s-scheme (car args) mode return conf)
-	  ,(j2s-scheme (cadr args) mode return conf)
-	  ,(cadddr args)))
+      (let ((arr (j2s-scheme (cadr args) mode return conf)))
+	 (match-case arr
+	    ((js-arguments-vector-slice ?arguments ?index ?len ?%this)
+	     `(js-function-maybe-apply-arguments-slice ,(caddr args)
+		 ,(j2s-scheme obj mode return conf)
+		 ,(j2s-scheme (car args) mode return conf)
+		 ,arguments ,index ,len
+		 ,(j2s-arguments-object-id)
+		 ,(cadddr args)))
+	    (else
+	     `(js-function-maybe-apply ,(caddr args)
+		 ,(j2s-scheme obj mode return conf)
+		 ,(j2s-scheme (car args) mode return conf)
+		 ,arr
+		 ,(cadddr args))))))
 
    (define (def-arguments obj args mode return conf)
       `(js-function-maybe-apply-arguments ,(caddr args)
 	  ,(j2s-scheme obj mode return conf)
 	  ,(j2s-scheme (car args) mode return conf)
-	  ,(j2s-ref-arguments-argid (cadr args))
 	  ,(j2s-scheme (cadr args) mode return conf)
+	  ,(j2s-arguments-object-id)
+	  ',mode
 	  ,(cadddr args)))
 
    (define (def-vector obj args mode return conf)
@@ -383,6 +394,12 @@
 	       (with-access::J2SString field (val)
 		  (string=? val "concat"))))))
 
+   (define (arguments-vec-apply? this::J2SRef)
+      (with-access::J2SRef this (decl)
+	 (when (isa? decl J2SDeclArguments)
+	    (with-access::J2SDeclArguments decl (alloc-policy)
+	       (eq? alloc-policy 'stack)))))
+
    (cond
       ((isa? obj J2SRef)
        (with-access::J2SRef obj (loc decl)
@@ -391,21 +408,17 @@
 			    (with-access::J2SDeclInit decl (val)
 			       (and (isa? val J2SFun) (decl-ronly? decl)))))
 		   (decl-only-call? decl)
-		   (and (pair? args) (=fx (length args) 4)))
+		   (and (pair? args)
+			(=fx (length args) 4)
+			(isa? (cadr args) J2SRef)))
 	      (cond
 		 ((ref-stack-vararg? (cadr args))
-		  `(js-function-apply-vec ,(caddr args)
-		      ,(j2s-scheme obj mode return conf)
-		      ,(j2s-scheme (car args) mode return conf)
-		      ,(j2s-scheme (cadr args) mode return conf)
-		      (fixnum->uint32 ,(j2s-arguments-lonly-id))))
-		 ((and (isa? (cadr args) J2SRef)
-		       (j2s-ref-arguments-lazy? (cadr args)))
 		  `(js-function-apply-arguments ,(caddr args)
 		      ,(j2s-scheme obj mode return conf)
 		      ,(j2s-scheme (car args) mode return conf)
-		      ,(j2s-ref-arguments-argid (cadr args))
 		      ,(j2s-scheme (cadr args) mode return conf)
+		      ,(j2s-arguments-object-id)
+		      ',mode
 		      ,(cadddr args)))
 		 (else
 		  `(js-function-apply ,(caddr args)
@@ -585,7 +598,7 @@
 	   (if (ref-stack-vararg? (car args))
 	       `(js-arguments-vector-slice ,(j2s-scheme (car args) mode return conf)
 		   ,(j2s-scheme (cadr args) mode return conf)
-		   ,(j2s-arguments-lonly-id)
+		   ,(j2s-arguments-length-id)
 		   ,(caddr args))
 	       (let ((a (gensym '%a)))
 		  `(let ((,a ,(j2s-scheme (car args) mode return conf)))

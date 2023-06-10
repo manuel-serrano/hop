@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec  5 09:14:00 2019                          */
-;*    Last change :  Sun May 21 09:51:47 2023 (serrano)                */
+;*    Last change :  Thu Jun  8 08:40:53 2023 (serrano)                */
 ;*    Copyright   :  2019-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arguments optimization                                           */
@@ -51,29 +51,36 @@
 (define (j2s-arguments this conf)
    (when (isa? this J2SProgram)
       (unless (> (config-get conf :debug 0) 0)
-	 (ause this)
-	 '(annotate-arguments this this #f #f)))
+	 ;; "ause" replaces "annotate-arguments", which is no longer used
+	 ;;(annotate-arguments this this #f #f)
+	 (argsuse this)
+	 ))
    this)
 
 ;*---------------------------------------------------------------------*/
-;*    ause ...                                                         */
+;*    argsuse ...                                                      */
+;*    -------------------------------------------------------------    */
+;*    Compute ARGUMENTS specific usage properties.                     */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (ause this::J2SNode)
+(define-walk-method (argsuse this::J2SNode)
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
-;*    ause ::J2SFun ...                                                */
+;*    argsuse ::J2SFun ...                                             */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (ause this::J2SFun)
+(define-walk-method (argsuse this::J2SFun)
    (with-access::J2SFun this (argumentsp params mode params)
       (when argumentsp
+	 (with-access::J2SDecl argumentsp (%info)
+	    (set! %info '()))
 	 ;; will be restored if used in a "true" ref
 	 (decl-usage-rem! argumentsp 'ref)
 	 (decl-usage-rem! argumentsp 'get))
       (when (pair? params)
 	 (let ((lastp (car (last-pair params))))
 	    (when (isa? lastp J2SDeclRest)
-	       (with-access::J2SDeclRest lastp (mode)
+	       (with-access::J2SDeclRest lastp (mode %info)
+		  (set! %info '())
 		  (decl-usage-rem! lastp 'method)
 		  (decl-usage-rem! lastp 'ref)
 		  (decl-usage-rem! lastp 'get)))))
@@ -84,11 +91,14 @@
 		     (every (lambda (p)
 			       (not (decl-usage-has? p '(assig))))
 			params)))
-	 (with-access::J2SDeclArguments argumentsp (alloc-policy usage)
+	 (with-access::J2SDeclArguments argumentsp (alloc-policy usage useinloop)
 	    (cond
 	       ((usage-strict? usage '(length))
 		(set! alloc-policy 'lonly))
 	       ((usage-strict? usage '(slice aref length))
+		(set! alloc-policy 'stack))
+	       ((and (usage-strict? usage '(slice aref length apply))
+		     (not useinloop))
 		(set! alloc-policy 'stack)))))
       (when (pair? params)
 	 (let ((lastp (car (last-pair params))))
@@ -99,25 +109,25 @@
 		      (set! ctype 'vector)
 		      (set! vtype 'vector)
 		      (set! alloc-policy 'stack)))))))))
-				
+
 ;*---------------------------------------------------------------------*/
-;*    ause ::J2SSvc ...                                                */
+;*    argsuse ::J2SSvc ...                                             */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (ause this::J2SSvc)
+(define-walk-method (argsuse this::J2SSvc)
    (call-default-walker))
-   
+
 ;*---------------------------------------------------------------------*/
-;*    ause ::J2SRef ...                                                */
+;*    argsuse ::J2SRef ...                                             */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (ause this::J2SRef)
+(define-walk-method (argsuse this::J2SRef)
    (with-access::J2SRef this (decl)
       (when (isa? decl J2SDeclRest)
 	 (decl-usage-add! decl 'ref))))
 
 ;*---------------------------------------------------------------------*/
-;*    ause ::J2SAccess ...                                             */
+;*    argsuse ::J2SAccess ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (ause this::J2SAccess)
+(define-walk-method (argsuse this::J2SAccess)
 
    (define (field-length? field)
       (and (isa? field J2SString)
@@ -128,7 +138,7 @@
       (type-fixnum? (j2s-type field)))
 
    (with-access::J2SAccess this (obj field)
-      (ause field)
+      (argsuse field)
       (if (isa? obj J2SRef)
 	  (with-access::J2SRef obj (decl)
 	     (if (isa? decl J2SDeclRest)
@@ -141,9 +151,9 @@
 	  (call-default-walker))))
 
 ;*---------------------------------------------------------------------*/
-;*    ause ::J2SCall ...                                               */
+;*    argsuse ::J2SCall ...                                            */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (ause this::J2SCall)
+(define-walk-method (argsuse this::J2SCall)
    
    (define (apply? fun args)
       (when (and (isa? fun J2SAccess) (=fx (length args) 2))
@@ -211,8 +221,8 @@
 		 (with-access::J2SRef arg1 (decl)
 		    (if (isa? decl J2SDeclRest)
 			(begin
-			   (ause fun)
-			   (ause (car args))
+			   (argsuse fun)
+			   (argsuse (car args))
 			   (decl-usage-add! decl 'apply))
 			(call-default-walker)))
 		 (call-default-walker))))
@@ -222,15 +232,15 @@
 		 (with-access::J2SRef arg0 (decl)
 		    (if (isa? decl J2SDeclRest)
 			(begin
-			   (ause fun)
-			   (for-each ause (cdr args))
+			   (argsuse fun)
+			   (for-each argsuse (cdr args))
 			   (decl-usage-add! decl 'slice))
 			(call-default-walker)))
 		 (call-default-walker))))
 	 ((rest-slice? fun args)
 	  (with-access::J2SAccess fun (obj)
 	     (with-access::J2SRef obj (decl)
-		(for-each ause args)
+		(for-each argsuse args)
 		(decl-usage-add! decl 'slice))))
 	 (else
 	  (call-default-walker)))))

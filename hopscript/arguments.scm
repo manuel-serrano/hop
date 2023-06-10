@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Sat May 27 11:34:04 2023 (serrano)                */
+;*    Last change :  Sat Jun 10 07:09:43 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
@@ -34,17 +34,12 @@
 
    (export (js-init-arguments! ::JsGlobalObject)
 	   (js-arguments-define-own-property ::JsArguments ::int ::JsPropertyDescriptor)
-	   (js-materialize-arguments ::JsGlobalObject ::vector ::obj)
 	   (js-sloppy-arguments ::JsGlobalObject ::vector)
 	   (js-strict-arguments ::JsGlobalObject ::vector)
 	   (js-arguments->list ::JsArguments ::JsGlobalObject)
 	   (js-arguments->vector ::JsArguments ::JsGlobalObject)
 	   (js-arguments->jsarray ::JsArguments ::JsGlobalObject)
 	   (js-arguments-ref ::JsArguments ::obj ::JsGlobalObject)
-	   (inline js-arguments-stack-ref ::vector ::obj)
-	   (inline js-arguments-stack-index-ref ::vector ::uint32)
-	   (inline js-arguments-vector-ref ::vector ::long)
-	   (inline js-arguments-vector-index-ref ::vector ::uint32)
 	   (js-arguments-index-ref ::JsArguments ::uint32 ::JsGlobalObject)
 	   (js-arguments-set! ::JsArguments ::obj ::JsGlobalObject ::obj)
 	   (js-arguments-index-set! ::JsArguments ::uint32 ::obj ::JsGlobalObject)
@@ -245,38 +240,6 @@
 		    value)
 		 v))
 	  (js-get arr (js-uint32-tointeger idx) %this))))
-
-;*---------------------------------------------------------------------*/
-;*    js-arguments-vector-ref ...                                      */
-;*---------------------------------------------------------------------*/
-(define-inline (js-arguments-vector-ref vec::vector idx)
-   (if (and (>=fx idx 0) (<fx idx (vector-length vec)))
-       (vector-ref vec idx)
-       (js-undefined)))
-
-;*---------------------------------------------------------------------*/
-;*    js-arguments-vector-index-ref ...                                */
-;*---------------------------------------------------------------------*/
-(define-inline (js-arguments-vector-index-ref vec::vector idx::uint32)
-   (if (<fx (uint32->fixnum idx) (vector-length vec))
-       (vector-ref vec (uint32->fixnum idx))
-       (js-undefined)))
-
-;*---------------------------------------------------------------------*/
-;*    js-arguments-stack-ref ...                                       */
-;*---------------------------------------------------------------------*/
-(define-inline (js-arguments-stack-ref vec::vector idx)
-   (if (<fx idx (vector-length vec))
-       (vector-ref vec idx)
-       (js-undefined)))
-
-;*---------------------------------------------------------------------*/
-;*    js-arguments-stack-index-ref ...                                 */
-;*---------------------------------------------------------------------*/
-(define-inline (js-arguments-stack-index-ref vec::vector idx::uint32)
-   (if (<u32 idx (fixnum->uint32 (vector-length vec)))
-       (vector-ref vec (uint32->fixnum idx))
-       (js-undefined)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-arguments-set! ...                                            */
@@ -584,19 +547,6 @@
 		  throw::bool %this::JsGlobalObject
 		  cache::JsPropertyCache)
    (js-get o p %this))
-
-;*---------------------------------------------------------------------*/
-;*    js-materialize-arguments ...                                     */
-;*---------------------------------------------------------------------*/
-(define (js-materialize-arguments %this::JsGlobalObject vec::vector target)
-   (if (object? target)
-       target
-       (let* ((nv (copy-vector vec (vector-length vec)))
-	      (arg (if (eq? target 'strict)
-		       (js-strict-arguments %this nv)
-		       (js-sloppy-arguments %this nv))))
-	  (vector-shrink! vec 0)
-	  arg)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-sloppy-arguments ...                                          */

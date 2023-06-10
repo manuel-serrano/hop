@@ -453,15 +453,6 @@
 		`(vector-ref %evars ,index)))
 	    ((decl-stack-vararg? decl)
 	     (j2s-arguments-stack-id))
-;* 	    ((isa? decl J2SDeclArguments)                              */
-;* 	     (with-access::J2SDeclArguments decl (id)                  */
-;* 		(let ((argid (j2s-ref-arguments-argid this)))          */
-;* 		   `(begin                                             */
-;* 		       (set! arguments                                 */
-;* 			  (js-materialize-arguments %this              */
-;* 			     ,argid                                    */
-;* 			     arguments))                               */
-;* 		       arguments))))                                   */
 	    ((j2s-let-opt? decl)
 	     (j2s-decl-scm-id decl ctx))
 	    ((j2s-let? decl)
@@ -632,7 +623,7 @@
 	 ((eq? type 'uint32)
 	  (cond
 	     ((flonum? val) (flonum->uint32 val))
-	     ((uint32? val) (int32->uint32 val))
+	     ((int32? val) (int32->uint32 val))
 	     ((uint32? val) val)
 	     (else (fixnum->uint32 val))))
 	 ((fixnum? val)

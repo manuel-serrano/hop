@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Dec 14 07:04:23 2019                          */
-;*    Last change :  Sat May 20 09:42:26 2023 (serrano)                */
+;*    Last change :  Thu Jun  8 14:16:34 2023 (serrano)                */
 ;*    Copyright   :  2019-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Ast node usage API                                               */
@@ -71,7 +71,7 @@
 (define (usage->keys usage)
    (let loop ((i #u32:1))
       (cond
-	 ((>u32 i#u32:131072)
+	 ((>u32 i#u32:262144)
 	  '())
 	 ((=u32 (bit-andu32 i usage) i)
 	  (cons (usage-bit->key i) (loop (bit-lshu32 i 1))))
@@ -85,7 +85,7 @@
 
 (define (usage? keys usage)
    (any (lambda (k)
-	   [assert (k) (memq k '(uninit init new ref assig get set call eval delete instanceof rest))]
+	   [assert (k) (memq k '(uninit init new ref assig get set call eval delete instanceof rest slide length aref apply +))]
 	   (memq k usage))
       keys))
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed Jun  7 08:07:32 2023 (serrano)                */
+;*    Last change :  Fri Jun  9 19:35:56 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -518,6 +518,7 @@
 		" plain=" (js-object-mode-plain? obj)
 		" isproto=" (js-object-mode-isprotoof? obj)
 		" ext=" (js-object-mode-extensible? obj)
+		" num=" (js-object-mode-hasnumeralprop? obj)
 		" met.vlen=" (vector-length methods)
 		"\n   cmap.%id=" %id
 		"\n   Iels="
