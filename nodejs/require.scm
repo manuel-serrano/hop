@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Fri May 19 08:31:18 2023 (serrano)                */
+;*    Last change :  Tue Jun 13 07:18:42 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -1125,6 +1125,16 @@
 ;*    nodejs-init-v8-global-object! ...                                */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-init-v8-global-object! %this::JsGlobalObject proto::JsObject)
+   ;; global values
+   (cond-expand
+      (gc (js-bind! %this %this (& "gc")
+	     :value (js-make-function %this
+		       (lambda (this) (gc))
+		       (js-function-arity 0 0)
+		       (js-function-info :name "gc" :len 0))
+	     :enumerable #f
+	     :writable #t
+	     :configurable #f)))
    ;; v8 compatibility (used by nodejs/lib)
    (js-bind! %this proto (& "__defineGetter__")
       :value (js-make-function %this
