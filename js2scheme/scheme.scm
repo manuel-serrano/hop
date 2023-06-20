@@ -489,6 +489,8 @@
 	     (if (isa? super J2SRecord)
 		 (class-prototype-id super)
 		 (j2s-scheme-error "super" "Illegal context" this))))
+	 ((eq? context 'static)
+	  '%super)
 	  (else
 	   '%super-prototype))))
 

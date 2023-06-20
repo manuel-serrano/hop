@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Sat Apr 29 08:39:21 2023 (serrano)                */
+;*    Last change :  Tue Jun 20 18:16:30 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -1013,7 +1013,7 @@
    (with-access::J2SClassElement this (prop static clazz)
       (cond
 	 (static
-	  (set! prop (resolve! prop env mode withs withs genv ctx conf)))
+	  (set! prop (resolve! prop env mode withs withs genv 'static conf)))
 	 ((not (isa? prop J2SDataPropertyInit))
 	  (set! prop (resolve! prop env mode withs withs genv 'class conf)))
 	 (else
@@ -1199,7 +1199,8 @@
 	 (raise
 	    (instantiate::&io-parse-error
 	       (proc "hopc (symbol)")
-	       (msg (format "`super' call unexpected in context (~a)" (typeof ctx)))
+	       (msg (format "`super' call unexpected in context (~a)"
+		       (if (symbol? ctx) ctx (typeof ctx))))
 	       (obj (j2s-expression-src loc conf "super"))
 	       (fname (cadr loc))
 	       (location (caddr loc))))))
@@ -1273,7 +1274,8 @@
 	  (raise
 	     (instantiate::&io-parse-error
 		(proc "hopc (symbol)")
-		(msg (format "`super' keyword unexpected in context (~a)" (typeof ctx)))
+		(msg (format "`super' keyword unexpected in context (~a)"
+			(if (symbol? ctx) ctx (typeof ctx))))
 		(obj (j2s-expression-src loc conf "super"))
 		(fname (cadr loc))
 		(location (caddr loc))))
