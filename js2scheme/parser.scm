@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Tue Jun 20 12:00:09 2023 (serrano)                */
+;*    Last change :  Tue Jun 20 12:06:23 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1785,6 +1785,35 @@
 	    (set! export x)
 	    (set! exports (cons x exports)))
 	 decl))
+
+   (define (export-from token ids aliases)
+      (let ((loc (token-loc (consume-any!))))
+	 (if (peek-token-id? 'from)
+	     (let ((loc (token-loc (consume-any!))))
+		(multiple-value-bind (path dollarpath)
+		   (consume-module-path!)
+		   (let* ((i (instantiate::J2SImport
+				(names '())
+				(loc loc)
+				(path path)
+				(dollarpath dollarpath)))
+			  (x (map (lambda (id a)
+				     (instantiate::J2SRedirect
+					(loc loc)
+					(id id)
+					(alias a)
+					(import i)))
+				ids aliases)))
+		      (set! exports (append x exports))
+		      i)))
+	     (let ((x (map (lambda (id a)
+			      (instantiate::J2SExport
+				 (loc loc)
+				 (id id)
+				 (alias a)))
+			 ids aliases)))
+		(set! exports (append x exports))
+		(J2SNop)))))
    
    (define (export token)
       (set! es-module #t)
@@ -1815,38 +1844,13 @@
 				  id)))
 		   (case (peek-token-type)
 		      ((RBRACE)
-		       (let ((loc (token-loc (consume-any!))))
-			  (if (peek-token-id? 'from)
-			      (let ((loc (token-loc (consume-any!))))
-				 (multiple-value-bind (path dollarpath)
-				    (consume-module-path!)
-				    (let* ((i (instantiate::J2SImport
-						 (names '())
-						 (loc loc)
-						 (path path)
-						 (dollarpath dollarpath)))
-					   (x (map (lambda (id a)
-						      (instantiate::J2SRedirect
-							 (loc loc)
-							 (id id)
-							 (alias a)
-							 (import i)))
-						 (cons id ids)
-						 (cons alias aliases))))
-				       (set! exports (append x exports))
-				       i)))
-			      (let ((x (map (lambda (id a)
-					       (instantiate::J2SExport
-						  (loc loc)
-						  (id id)
-						  (alias a)))
-					  (cons id ids)
-					  (cons alias aliases))))
-				 (set! exports (append x exports))
-				 (J2SNop)))))
+		       (export-from (consume-any!)
+			  (cons id ids) (cons alias aliases)))
 		      ((COMMA)
 		       (consume-any!)
-		       (loop (cons id ids) (cons alias aliases)))
+		       (if (eq? (peek-token-type) 'RBRACE)
+			   (export-from (consume-any!) ids aliases)
+			   (loop (cons id ids) (cons alias aliases))))
 		      (else
 		       (parse-token-error "Illegal export" token)))))))
 	 ((function)
@@ -2022,19 +2026,25 @@
 		(if (eq? (peek-token-type) 'COMMA)
 		    (begin
 		       (consume-any!)
-		       (if (eq? (peek-token-type) 'DOTS)
-			   (begin
-			      (consume-any!)
-			      (let ((param (consume-rest-param!)))
-				 (pop-open-token (consume-token! 'RPAREN))
-				 (values
-				    (reverse! (cons param rev-params))
-				    (reverse! (cons #f rev-args)))))
+		       (case (peek-token-type)
+			  ((DOTS)
+			   (consume-any!)
+			   (let ((param (consume-rest-param!)))
+			      (pop-open-token (consume-token! 'RPAREN))
+			      (values
+				 (reverse! (cons param rev-params))
+				 (reverse! (cons #f rev-args)))))
+			  ((RPAREN)
+			   (pop-open-token (consume-token! 'RPAREN))
+			   (values
+			      (reverse! rev-params)
+			      (reverse! rev-args)))
+			  (else
 			   (multiple-value-bind (param arg)
 			      (consume-param! idx maybe-expr?)
 			      (loop (cons param rev-params)
 				 (cons arg rev-args)
-				 (+fx idx 1)))))
+				 (+fx idx 1))))))
 		    (begin
 		       (pop-open-token (consume-token! 'RPAREN))
 		       (values
@@ -3543,6 +3553,25 @@
 		    (if (j2s-reserved-id? (peek-token-type))
 			(property-accessor (consume-any!) tokname name props)
 			(parse-token-error "Wrong property name (init)" (peek-token))))))
+	       ((and (eq? (token-value token) 'async)
+		     (eq? (peek-token-type) 'ID))
+		(let* ((token (consume-any!))
+		       (loc (token-loc token))
+		       (val (case (peek-token-type)
+			       ((LPAREN)
+				(let ((fun (function #f token '__proto__)))
+				   (if (isa? fun J2SFun)
+				       (async->generator fun)
+				       (parse-token-error
+					  "Illegal async function expression"
+					  token))))
+			       (else
+				(parse-token-error "Unexpected token"
+				   (peek-token))))))
+		   (instantiate::J2SDataPropertyInit
+		      (loc loc)
+		      (name tokname)
+		      (val val))))
 	       ((and (pair? tokname) (eq? (token-tag tokname) 'DOTS))
 		(instantiate::J2SDataPropertyInit
 		   (loc (token-loc tokname))
