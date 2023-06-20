@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Fri Jun  9 08:33:06 2023 (serrano)                */
+;*    Last change :  Tue Jun 20 07:47:47 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -118,40 +118,42 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-make-driver names)
    
-   (define (make-driver-stage name-or-proc)
+   (define (make-driver-stage stg)
       (cond
-	 ((procedure? name-or-proc)
+	 ((procedure? stg)
 	  (instantiate::J2SStageProc
-	     (name (format "~s" name-or-proc))
+	     (name (format "~s" stg))
 	     (comment "")
-	     (proc name-or-proc)))
-	 ((not (string? name-or-proc))
-	  (error "j2s-make-driver" "Illegal stage" name-or-proc))
-	 ((string-prefix? "http://" name-or-proc)
+	     (proc stg)))
+	 ((isa? stg J2SStage)
+	  stg)
+	 ((not (string? stg))
+	  (error "j2s-make-driver" "Illegal stage" stg))
+	 ((string-prefix? "http://" stg)
 	  (instantiate::J2SStageUrl
-	     (name name-or-proc)
-	     (comment name-or-proc)
-	     (url name-or-proc)))
-	 ((file-exists? name-or-proc)
+	     (name stg)
+	     (comment stg)
+	     (url stg)))
+	 ((file-exists? stg)
 	  (instantiate::J2SStageFile
-	     (name name-or-proc)
-	     (comment name-or-proc)
-	     (path name-or-proc)))
-	 ((file-exists? (file-name-unix-canonicalize name-or-proc))
+	     (name stg)
+	     (comment stg)
+	     (path stg)))
+	 ((file-exists? (file-name-unix-canonicalize stg))
 	  (instantiate::J2SStageFile
-	     (name name-or-proc)
-	     (comment name-or-proc)
-	     (path (file-name-unix-canonicalize name-or-proc))))
+	     (name stg)
+	     (comment stg)
+	     (path (file-name-unix-canonicalize stg))))
 	 ((find (lambda (s::J2SStage)
 		   (with-access::J2SStage s ((sname name))
-		      (string=? sname name-or-proc)))
+		      (string=? sname stg)))
 	     (cons* j2s-javascript-stage j2s-debug-stage 
 		(j2s-optim-driver)))
 	  =>
 	  (lambda (x) x))
 	 (else
-	  (error "j2s-make-driver" "Cannot find builtin stage" name-or-proc))))
-   
+	  (error "j2s-make-driver" "Cannot find builtin stage" stg))))
+
    (if (and (pair? names) (null? (cdr names)))
        (let ((driver (assoc (car names) *builtin-drivers*)))
 	  (if (pair? driver)
@@ -183,72 +185,68 @@
 ;*    j2s-optim-driver ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (j2s-optim-driver)
-   (cond-expand
-      ((or license-academic license-commercial)
-       (list
-	  j2s-syntax-stage
-	  j2s-sourcemap-stage
-	  j2s-hopscript-stage
-	  j2s-loopexit-stage
-	  j2s-bestpractice-stage
-	  j2s-module-stage
-	  j2s-symbol-stage
-	  j2s-multivar-stage
-	  j2s-narrow-stage
-	  j2s-letfusion-stage
-	  j2s-ronly-stage
-	  j2s-letfun-stage
-	  j2s-letopt-stage
-	  j2s-var->let-stage
-	  j2s-unletrec-stage
-	  j2s-this-stage
-	  j2s-record-stage
-	  j2s-use-stage
-	  j2s-letclass-stage
-	  j2s-callapply-stage
-	  j2s-sweep-stage
-	  j2s-ronly-stage
-	  j2s-uninit-stage
-	  j2s-globprop-stage
-	  j2s-uninit-globprop-stage
-	  j2s-globvar-stage
-	  j2s-testreduce-stage
-	  j2s-cspecs-stage
-	  j2s-method-stage
-	  j2s-return-stage
-	  j2s-newtarget-stage
-	  j2s-inline-stage
-	  j2s-cps-stage
-	  j2s-objinit-stage
-	  j2s-constant-stage
-	  j2s-varpreinit-stage
-	  j2s-tyflow-stage
-	  j2s-sweep-stage
-	  j2s-cnstlift-stage
-	  j2s-loopcnst-stage
-	  j2s-hintnum-stage
-	  j2s-cse-stage
-	  j2s-propcache-stage
-	  j2s-instanceof-stage
-	  j2s-propcce-stage
-	  j2s-range-stage
-	  j2s-loopspec-stage
-	  j2s-sweep-stage
-	  j2s-ctor-stage
-	  j2s-pce-stage
-	  j2s-genyield-stage
-	  j2s-cast-stage
-	  j2s-arguments-stage
-	  j2s-vector-stage
-	  j2s-array-stage
-	  j2s-dead-stage
-	  j2s-constrsize-stage
-	  j2s-unthis-stage
-	  j2s-procedure-stage
-	  j2s-strbuffer-stage
-	  j2s-scheme-stage))
-      (else
-       (j2s-plain-driver))))
+   (list
+      j2s-syntax-stage
+      j2s-sourcemap-stage
+      j2s-hopscript-stage
+      j2s-loopexit-stage
+      j2s-bestpractice-stage
+      j2s-module-stage
+      j2s-symbol-stage
+      j2s-multivar-stage
+      j2s-narrow-stage
+      j2s-letfusion-stage
+      j2s-ronly-stage
+      j2s-letfun-stage
+      j2s-letopt-stage
+      j2s-var->let-stage
+      j2s-unletrec-stage
+      j2s-this-stage
+      j2s-record-stage
+      j2s-use-stage
+      j2s-letclass-stage
+      j2s-callapply-stage
+      j2s-sweep-stage
+      j2s-ronly-stage
+      j2s-uninit-stage
+      j2s-globprop-stage
+      j2s-uninit-globprop-stage
+      j2s-globvar-stage
+      j2s-testreduce-stage
+      j2s-cspecs-stage
+      j2s-method-stage
+      j2s-return-stage
+      j2s-newtarget-stage
+      j2s-inline-stage
+      j2s-cps-stage
+      j2s-objinit-stage
+      j2s-constant-stage
+      j2s-varpreinit-stage
+      j2s-tyflow-stage
+      j2s-sweep-stage
+      j2s-cnstlift-stage
+      j2s-loopcnst-stage
+      j2s-hintnum-stage
+      j2s-cse-stage
+      j2s-propcache-stage
+      j2s-instanceof-stage
+      j2s-propcce-stage
+      j2s-range-stage
+      j2s-loopspec-stage
+      j2s-sweep-stage
+      j2s-ctor-stage
+      j2s-pce-stage
+      j2s-genyield-stage
+      j2s-cast-stage
+      j2s-arguments-stage
+      j2s-vector-stage
+      j2s-array-stage
+      j2s-dead-stage
+      j2s-constrsize-stage
+      j2s-unthis-stage
+      j2s-procedure-stage
+      j2s-strbuffer-stage
+      j2s-scheme-stage))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-plain-driver ...                                             */

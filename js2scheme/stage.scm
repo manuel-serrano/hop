@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 29 07:48:29 2013                          */
-;*    Last change :  Fri Oct  1 11:40:12 2021 (serrano)                */
-;*    Copyright   :  2013-21 Manuel Serrano                            */
+;*    Last change :  Tue Jun 20 08:38:33 2023 (serrano)                */
+;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme stage definition and execution                         */
 ;*=====================================================================*/
@@ -158,5 +158,8 @@
 	     (if (isa? stage J2SStage)
 		 (stage-exec stage ast tmp count args)
 		 (error "js2scheme" "Illegal plugin file" path))))
+	 ((or (string-suffix? ".js" path)
+	      (string-suffix? ".ts" path))
+	  (error "js2scheme" "JS plugin file not implemented" path))
 	 (else
 	  (error "js2scheme" "Illegal plugin file" path)))))

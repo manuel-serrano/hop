@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec  5 09:14:00 2019                          */
-;*    Last change :  Thu Jun  8 08:40:53 2023 (serrano)                */
+;*    Last change :  Tue Jun 20 08:42:40 2023 (serrano)                */
 ;*    Copyright   :  2019-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arguments optimization                                           */
@@ -69,7 +69,7 @@
 ;*    argsuse ::J2SFun ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (argsuse this::J2SFun)
-   (with-access::J2SFun this (argumentsp params mode params)
+   (with-access::J2SFun this (argumentsp params mode)
       (when argumentsp
 	 (with-access::J2SDecl argumentsp (%info)
 	    (set! %info '()))

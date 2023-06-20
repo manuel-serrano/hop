@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug  9 14:00:32 2013                          */
-;*    Last change :  Sun Dec 26 13:43:44 2021 (serrano)                */
-;*    Copyright   :  2013-21 Manuel Serrano                            */
+;*    Last change :  Tue Jun 20 08:48:59 2023 (serrano)                */
+;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    THe module used to build the js2scheme heap file.                */
 ;*=====================================================================*/
@@ -26,7 +26,8 @@
 	   __js2scheme_scheme
 	   __js2scheme_js
 	   __js2scheme_sourcemap
-	   __js2scheme_stage)
+	   __js2scheme_stage
+	   __js2scheme_usage)
    
    (eval   (class J2SStage)
            (class J2SStageProc)

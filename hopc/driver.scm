@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Wed Apr 26 19:12:15 2023 (serrano)                */
+;*    Last change :  Tue Jun 20 07:55:07 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
@@ -87,18 +87,39 @@
 ;*    js-driver ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (js-driver)
-   (cond
-      ((string? (hopc-js-driver))
-       (j2s-make-driver (string-split (hopc-js-driver) ",")))
-      ((eq? (hopc-pass) 'client-js)
-       (cond
-	  ((eq? (hopc-js-target) 'es5) (j2s-ecmascript5-driver))
-	  ((>=fx (hopc-optim-level) 1) (j2s-javascript-optim-driver))
-	  (else (j2s-javascript-driver))))
-      ((>=fx (hopc-optim-level) 1)
-       (j2s-optim-driver))
-      (else
-       (j2s-plain-driver))))
+   
+   (define (builtin-driver)
+      (cond
+	 ((eq? (hopc-pass) 'client-js)
+	  (cond
+	     ((eq? (hopc-js-target) 'es5) (j2s-ecmascript5-driver))
+	     ((>=fx (hopc-optim-level) 1) (j2s-javascript-optim-driver))
+	     (else (j2s-javascript-driver))))
+	 ((>=fx (hopc-optim-level) 1)
+	  (j2s-optim-driver))
+	 (else
+	  (j2s-plain-driver))))
+   
+   (if (string? (hopc-js-driver))
+       ;; use defined driver
+       (let ((lst (string-split (hopc-js-driver) ",")))
+	  (match-case lst
+	     (("..." ?anchor ?userpass)
+	      (j2s-make-driver
+		 (let loop ((stages (builtin-driver)))
+		    (if (null? stages)
+			(error "Cannot find anchor stage" anchor
+			   (map (lambda (s)
+				   (with-access::J2SStage s (name) name))
+			      (builtin-driver)))
+			(with-access::J2SStage (car stages) (name)
+			   (if (string=? name anchor)
+			       (cons* (car stages) userpass (cdr stages))
+			       (cons (car stages) (loop (cdr stages)))))))))
+	     (else
+	      (j2s-make-driver lst))))
+       ;; builtin driver
+       (builtin-driver)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-driver-name ...                                               */
