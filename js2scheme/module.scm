@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 15 15:16:16 2018                          */
-;*    Last change :  Tue Jun 20 17:12:35 2023 (serrano)                */
+;*    Last change :  Tue Jun 20 18:27:49 2023 (serrano)                */
 ;*    Copyright   :  2018-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES6 Module handling                                              */
@@ -265,7 +265,7 @@
 	    (multiple-value-bind (x i)
 	       (find-export id this iprgm loc)
 	       (if (not x)
-		   (with-access::J2SImportPath ipath (protocol)
+		   (with-access::J2SImportPath ipath (protocol abspath)
 		      (if (eq? protocol 'missing)
 			  (let ((x (instantiate::J2SExport
 				      (loc loc)
@@ -282,15 +282,14 @@
 				(scope 'local)
 				(export x)
 				(import import)))
-			  (with-access::J2SImportPath ipath (abspath)
-			     (raise
-				(instantiate::&io-parse-error
-				   (proc "import")
-				   (msg (format "imported binding \"~a\" not exported by module ~s"
-					   id abspath))
-				   (obj id)
-				   (fname (cadr loc))
-				   (location (caddr loc)))))))
+			  (raise
+			     (instantiate::&io-parse-error
+				(proc "import")
+				(msg (format "imported binding \"~a\" not exported by module ~s"
+					id abspath))
+				(obj id)
+				(fname (cadr loc))
+				(location (caddr loc))))))
 		   (instantiate::J2SDeclImport
 		      (loc loc)
 		      (id alias)
@@ -389,15 +388,22 @@
 	 (let ((x (find-export id iprgm loc)))
 	    (if x
 		(set! export x)
-		(with-access::J2SImportPath ipath (abspath)
-		   (raise
-		      (instantiate::&io-parse-error
-			 (proc "export")
-			 (msg (format "imported binding \"~a\" not exported by module ~s"
-				 id abspath))
-			 (obj id)
-			 (fname (cadr loc))
-			 (location (caddr loc)))))))
+		(with-access::J2SImportPath ipath (abspath protocol)
+		   (if (eq? protocol 'missing)
+		       (let ((x (instantiate::J2SExport
+				   (loc loc)
+				   (id id)
+				   (alias id)
+				   (index 0))))
+			  (set! export x))
+		       (raise
+			  (instantiate::&io-parse-error
+			     (proc "export")
+			     (msg (format "imported binding \"~a\" not exported by module ~s"
+				     id abspath))
+			     (obj id)
+			     (fname (cadr loc))
+			     (location (caddr loc))))))))
 	 this)))
 
 ;*---------------------------------------------------------------------*/

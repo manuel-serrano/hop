@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Tue Jun 20 16:42:02 2023 (serrano)                */
+;*    Last change :  Tue Jun 20 18:33:08 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1849,7 +1849,7 @@
 		      ((COMMA)
 		       (consume-any!)
 		       (if (eq? (peek-token-type) 'RBRACE)
-			   (export-from (consume-any!) ids aliases)
+			   (export-from (consume-any!) (cons id ids) (cons alias aliases))
 			   (loop (cons id ids) (cons alias aliases))))
 		      (else
 		       (parse-token-error "Illegal export" token)))))))
