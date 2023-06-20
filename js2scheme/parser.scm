@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Thu Feb  9 18:07:35 2023 (serrano)                */
+;*    Last change :  Tue Jun 20 11:56:45 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -2828,9 +2828,12 @@
 		 (pop-open-token (consume-any!))
 		 (reverse! rev-args))
 		((COMMA)
-		 (let* ((ignore (consume-any!))
-			(arg (assig-expr #f #f #t)))
-		    (loop (cons arg rev-args))))
+		 (let ((tok (consume-any!)))
+		    (let ((arg (if (eq? (peek-token-type) 'RPAREN)
+				   (instantiate::J2SUndefined
+				      (loc (token-loc tok)))
+				   (assig-expr #f #f #t))))
+		       (loop (cons arg rev-args)))))
 		(else
 		 (parse-token-error "Illegal argument expression" (peek-token)))))))
 
