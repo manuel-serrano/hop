@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Fri Mar 17 09:50:41 2023 (serrano)                */
+;*    Last change :  Tue Jun 20 14:09:17 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -50,6 +50,7 @@
 	   (js-dsssl-args->jsargs ::pair ::JsGlobalObject)
 	   (js-object->keyword-arguments*::pair-nil ::JsObject ::JsGlobalObject)
 	   (js-iterable->list::pair-nil ::obj ::JsGlobalObject)
+	   (js-jsobject-spread ::JsObject ::vector ::JsGlobalObject)
 	   (generic js-jsobject->jsarray ::obj ::JsGlobalObject)
 	   (inline fixnums?::bool ::obj ::obj)
 	   (js-tls-gc-mark! ::obj)))
@@ -496,6 +497,29 @@
       (else
        (error "js-iterable->list"
 	  (format "not implemented yet \"~a\"" (typeof obj)) obj))))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsobject-spread ...                                           */
+;*---------------------------------------------------------------------*/
+(define (js-jsobject-spread o::JsObject keys::vector %this::JsGlobalObject)
+
+   (define (vector-member k v)
+      (let loop ((i (-fx (vector-length v) 1)))
+	 (unless (=fx i -1)
+	    (or (string=? (vector-ref v i) k)
+		(loop (-fx i 1))))))
+   
+   (let ((no (instantiateJsObject
+		(__proto__ (js-object-proto %this))
+		(elements '#()))))
+      (js-for-in o
+	 (lambda (k %this)
+	    (let ((s (js-tostring k %this)))
+	       (unless (vector-member s keys)
+		  (let ((v (js-get o k %this)))
+		     (js-put! no k v #f %this)))))
+	 %this)
+      no))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsobject->jsarray ::obj ...                                   */

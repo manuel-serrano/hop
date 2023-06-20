@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sun May 21 09:13:41 2023 (serrano)                */
+;*    Last change :  Tue Jun 20 15:12:04 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -755,7 +755,6 @@
 
 (define (js-call10% %this fun::JsProcedure procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
    (with-access::JsProcedure fun (arity)
-      (tprint "call10 " arity)
       (gen-calln fun procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)))
 
 (define (js-calln-many% %this fun procedure this args n)

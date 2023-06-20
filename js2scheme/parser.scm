@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Tue Jun 20 12:06:23 2023 (serrano)                */
+;*    Last change :  Tue Jun 20 13:53:25 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1787,7 +1787,7 @@
 	 decl))
 
    (define (export-from token ids aliases)
-      (let ((loc (token-loc (consume-any!))))
+      (let ((loc (token-loc token)))
 	 (if (peek-token-id? 'from)
 	     (let ((loc (token-loc (consume-any!))))
 		(multiple-value-bind (path dollarpath)
@@ -3930,6 +3930,13 @@
 	     (list (J2SAssig lhs src)))
 	  (parse-node-error "Bad access declaration" lhs)))
 
+   (define (init-name this::J2SNode)
+      (when (isa? this J2SDataPropertyInit)
+	 (with-access::J2SDataPropertyInit this (name val loc)
+	    (when (isa? name J2SString)
+	       (with-access::J2SString name (val)
+		  val)))))
+	 
    (define (destructure-obj lhs::J2SExpr tmp path)
       (with-access::J2SObjInit lhs (inits)
 	 (append-map (lambda (init)
@@ -3961,6 +3968,22 @@
 					    (J2SAccess tmp name) rhs)
 					 `(get-alias-default ,rhs)
 					 bind)))
+				  ((isa? val J2SSpread)
+				   ;; { ...., ...id }
+				   (with-access::J2SSpread val (loc expr)
+				      (let ((decl (instantiate::J2SDeclInit
+						     (binder 'let)
+						     (loc loc)
+						     (id (gensym '%dots))
+						     (val (J2SDConsumer decl path
+							     (J2SHopCall
+								(J2SHopRef 'js-jsobject-spread)
+								tmp
+								(J2SPragma `',(apply vector (filter-map init-name inits)))
+								(J2SHopRef '%this)))))))
+					 (cons decl
+					    (destructure expr (J2SRef decl)
+					       `(spread ,path) bind)))))
 				  (else
 				   ;; { ..., id:pat, ... }
 				   (destructure val (J2SAccess tmp name)
