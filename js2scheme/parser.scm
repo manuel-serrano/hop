@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Tue Jun 20 13:53:25 2023 (serrano)                */
+;*    Last change :  Tue Jun 20 16:42:02 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -3567,10 +3567,13 @@
 					  token))))
 			       (else
 				(parse-token-error "Unexpected token"
-				   (peek-token))))))
+				   (peek-token)))))
+		       (name (instantiate::J2SString
+				(loc (token-loc token))
+				(val (symbol->string (token-value token))))))
 		   (instantiate::J2SDataPropertyInit
 		      (loc loc)
-		      (name tokname)
+		      (name name)
 		      (val val))))
 	       ((and (pair? tokname) (eq? (token-tag tokname) 'DOTS))
 		(instantiate::J2SDataPropertyInit
