@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Tue Jun 20 11:56:45 2023 (serrano)                */
+;*    Last change :  Tue Jun 20 12:00:09 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1766,7 +1766,11 @@
 	       ((RBRACE)
 		(cons impnm lst))
 	       ((COMMA)
-		(loop (cons impnm lst)))
+		(if (eq? (peek-token-type) 'RBRACE)
+		    (begin
+		       (consume-any!)
+		       lst)
+		    (loop (cons impnm lst))))
 	       (else
 		(parse-token-error "Illegal import" next))))))
 
