@@ -252,6 +252,9 @@
 	     (hopc-js-module-main-set! #f))
 	    (("--js-no-header" (help "Don't generate hopscript header"))
 	     (hopc-js-header-set! #f))
+	    (("--js-ignore-unresolved-modules" (help "Ignore unresolved modules"))
+	     (hopc-j2s-flags-set!
+		(cons* :ignore-unresolved-modules #t (hopc-j2s-flags))))
 	    (("--js-header" (help "Generate hopscript header"))
 	     (hopc-js-header-set! #t))
 	    (("--js-require-hop" (help "Force an explicit hop require"))
