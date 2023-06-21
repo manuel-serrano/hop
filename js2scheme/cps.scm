@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Wed Jun 21 17:22:11 2023 (serrano)                */
+;*    Last change :  Wed Jun 21 17:54:51 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript CPS transformation                                    */
@@ -44,7 +44,9 @@
 		  (name::bstring read-only (default "")))
 	       (class KontStmt::Kont)
 	       (class KontExpr::Kont)
-	       (class KontExpr*::Kont))))
+	       (class KontExpr*::Kont)
+	       (class KontInit::Kont)
+   	       (class KontInit*::Kont))))
 
    (export j2s-cps-stage))
 
@@ -120,6 +122,34 @@
    (cond-expand
       (bigloo-debug
        `(instantiate::KontExpr*
+	   (proc ,proc)
+	   (node ,node)
+	   (link ,link)
+	   (name ,(if (pair? name) (string-append "[" (car name) "]") ""))))
+      (else
+       proc)))
+
+;*---------------------------------------------------------------------*/
+;*    KontInit ...                                                     */
+;*---------------------------------------------------------------------*/
+(define-macro (KontInit proc node link . name)
+   (cond-expand
+      (bigloo-debug
+       `(instantiate::KontInit
+	   (proc ,proc)
+	   (node ,node)
+	   (link ,link)
+	   (name ,(if (pair? name) (string-append "[" (car name) "]") ""))))
+      (else
+       proc)))
+
+;*---------------------------------------------------------------------*/
+;*    KontInit* ...                                                    */
+;*---------------------------------------------------------------------*/
+(define-macro (KontInit* proc node link . name)
+   (cond-expand
+      (bigloo-debug
+       `(instantiate::KontInit*
 	   (proc ,proc)
 	   (node ,node)
 	   (link ,link)
@@ -441,13 +471,29 @@
 (define (cps*::J2SNode nodes::pair-nil k* r* kbreaks kcontinues fun conf)
    (assert-kont k* KontExpr* nodes)
    (let loop ((nodes nodes)
+              (knodes '()))
+      (if (null? nodes)
+          (kcall k* (reverse! knodes))
+          (cps (car nodes)
+             (KontExpr (lambda (kexpr::J2SExpr)
+                          (loop (cdr nodes)
+                             (cons kexpr knodes)))
+                nodes k*)
+             r* kbreaks kcontinues fun conf))))
+
+;*---------------------------------------------------------------------*/
+;*    cps-init* ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (cps-init*::J2SNode nodes::pair-nil k* r* kbreaks kcontinues fun conf)
+   (assert-kont k* KontInit* nodes)
+   (let loop ((nodes nodes)
 	      (knodes '()))
       (if (null? nodes)
 	  (kcall k* (reverse! knodes))
 	  (cps (car nodes)
-	     (KontExpr (lambda (kexpr::J2SExpr)
+	     (KontInit (lambda (kinit::J2SDataPropertyInit)
 			  (loop (cdr nodes)
-			     (cons kexpr knodes)))
+			     (cons kinit knodes)))
 		nodes k*)
 	     r* kbreaks kcontinues fun conf))))
 
@@ -513,6 +559,22 @@
 		      (J2SReturnYield kexpr (J2SUndefined) #f))
 	    this k)
 	 r kbreaks kcontinues fun conf)))
+
+;*---------------------------------------------------------------------*/
+;*    cps ::J2SDataPropertyInit ...                                    */
+;*---------------------------------------------------------------------*/
+(define-method (cps this::J2SDataPropertyInit k r kbreaks kcontinues fun conf)
+   (with-access::J2SDataPropertyInit this (loc val)
+      (if (yield-expr? val kbreaks kcontinues)
+	  (cps val
+	     (KontExpr (lambda (kval::J2SExpr)
+			  (set! val kval)
+			  (cps this k r kbreaks kcontinues fun conf))
+		val k)
+	     r kbreaks kcontinues fun conf)
+	  (begin
+	     (set! val (cps-fun! val r conf))
+	     (kcall k this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    cps ::J2SExpr ...                                                */
@@ -1260,9 +1322,26 @@
 		exprs k)
 	     r kbreaks kcontinues fun conf)
 	  (begin
-	     (set! exprs (map! (lambda (n) (cps-fun! n r conf)) exprs ))
+	     (set! exprs (map! (lambda (n) (cps-fun! n r conf)) exprs))
 	     (kcall k this)))))
 
+;*---------------------------------------------------------------------*/
+;*    cps ::J2SObjInit ...                                             */
+;*---------------------------------------------------------------------*/
+(define-method (cps this::J2SObjInit k r kbreaks kcontinues fun conf)
+   (assert-kont k KontExpr this)
+   (with-access::J2SObjInit this (inits)
+      (if (any (lambda (e) (yield-expr? e kbreaks kcontinues)) inits)
+	  (cps-init* inits
+	     (KontInit* (lambda (kinits::pair-nil)
+			   (set! inits kinits)
+			   (cps this k r kbreaks kcontinues fun conf))
+		inits k)
+	     r kbreaks kcontinues fun conf)
+	  (begin
+	     (set! inits (map! (lambda (n) (cps-fun! n r conf)) inits))
+	     (kcall k this)))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    cps ::J2SCond ...                                                */
 ;*---------------------------------------------------------------------*/
