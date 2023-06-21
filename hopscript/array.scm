@@ -1968,6 +1968,19 @@
       :enumerable #f
       :hidden-class #t)
 
+   ;; flat
+   ;; https://tc39.es/ecma262/#sec-array.prototype.flat
+   (define (array-prototype-flat this::obj depth)
+      (js-array-prototype-flat this depth %this))
+
+   (js-bind! %this js-array-prototype (& "flat")
+      :value (js-make-function %this array-prototype-flat
+		(js-function-arity array-prototype-flat)
+		(js-function-info :name "flat" :len 0)
+		:prototype (js-undefined))
+      :enumerable #f
+      :hidden-class #t)
+
    ;; flatMap
    ;; https://tc39.es/ecma262/#sec-array.prototype.flatmap
    (define (array-prototype-flatmap this::obj proc t)
@@ -4825,6 +4838,139 @@
 		this jsproc thisarg)))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-array-prototype-flat ...                                      */
+;*    ------------------------------------------------------------     */
+;*    https://tc39.es/ecma262/#sec-array.prototype.flatmap             */
+;*---------------------------------------------------------------------*/
+(define (js-array-prototype-flat this depth %this)
+   
+   (define (vector-array-copy nvec::vector w::bint el::JsArray)
+      (if (js-object-mode-arrayinline? el)
+	  ;; fast path
+	  (with-access::JsArray el (ilen vec)
+	     (let ((ilen (uint32->fixnum ilen))
+		   (vec vec))
+		(let loop ((r 0)
+			   (w w))
+		   (cond
+		      ((=fx r ilen)
+		       w)
+		      ((eq? (vector-ref vec r) (js-absent))
+		       (loop (+fx r 1) w))
+		      (else
+		       (vector-set! nvec w (vector-ref vec r))
+		       (loop (+fx r 1) (+fx w 1)))))))
+	  ;; flow path
+	  (let ((ilen (js-array-length el)))
+	     (let loop ((r 0)
+			(w w))
+		(if (=u32 r ilen)
+		    w
+		    (let ((e (js-array-index-ref el r %this)))
+		       (if (and (eq? e (js-undefined))
+				(not (js-has-property el (js-index-name r) %this)))
+			   (loop (+fx r 1) w)
+			   (begin
+			      (vector-set! nvec w e)
+			      (loop (+fx r 1) (+fx w 1))))))))))
+   
+   (define (js-vector-flat vec::vector ilen::long d::long)
+      (let loop ((vec vec)
+		 (d d))
+	 (case d
+	    ((0)
+	     (let ((nvec ($create-vector ilen))
+		   (ilen ilen)
+		   (vec vec))
+		(let loop ((r 0) (w 0))
+		   (cond
+		      ((=fx r ilen)
+		       (let ((arr (js-vector->jsarray nvec %this)))
+			  (with-access::JsArray arr (length ilen)
+			     (set! length (fixnum->uint32 w))
+			     (set! ilen (fixnum->uint32 w))
+			     arr)))
+		      ((eq? (vector-ref vec r) (js-absent))
+		       (loop (+fx r 1) w))
+		      (else
+		       (vector-set! nvec w (vector-ref vec r))
+		       (loop (+fx r 1) (+fx w 1)))))))
+	    ((1)
+	     (let loop ((i 0)
+			(nlen 0))
+		(if (=fx i ilen)
+		    (let ((nvec ($create-vector (uint32->fixnum nlen))))
+		       (let loop ((r 0)
+				  (w 0))
+			  (if (=fx r ilen)
+			      (let ((a (js-vector->jsarray nvec %this)))
+				 (with-access::JsArray a (length ilen)
+				    (set! length (fixnum->uint32 w))
+				    (set! ilen (fixnum->uint32 w))
+				    a))
+			      (let ((el (vector-ref vec r)))
+				 (cond
+				    ((js-array? el)
+				     (loop (+fx r 1)
+					(vector-array-copy nvec w el)))
+				    ((eq? el (js-absent))
+				     (loop (+fx r 1) w))
+				    (else
+				     (vector-set! nvec w el)
+				     (loop (+fx r 1) (+fx w 1))))))))
+		    (let ((el (vector-ref vec i)))
+		       (loop (+fx i 1)
+			  (+fx nlen 
+			     (cond
+				((js-array? el)
+				 (uint32->fixnum (js-array-length el)))
+				((eq? el (js-absent))
+				 0)
+				(else
+				 1))))))))
+	    (else
+	     (let ((nvec (vector-map (lambda (e)
+					(cond
+					   ((not (js-array? e))
+					    e)
+					   ((js-object-mode-arrayinline? e)
+					    (with-access::JsArray e (vec ilen)
+					       (js-vector-flat vec
+						  (uint32->fixnum ilen)
+						  (-fx d 1))))
+					   (else
+					    (js-array-flat e (-fx d 1)))))
+			    vec)))
+		(vector-shrink! nvec ilen)
+		(loop nvec (-fx d 1)))))))
+   
+   (define (js-array-flat this d::long)
+      (let ((ilen (js-tointeger (js-get this (& "length") %this) %this)))
+	 (if (or (not (fixnum? ilen)) (<fx ilen 0))
+	     (js-empty-vector->jsarray %this)
+	     (js-call-with-stack-vector
+		(make-vector ilen)
+		(lambda (vec)
+		   (let loop ((r 0)
+			      (w 0))
+		      (if (=fx r ilen)
+			  (js-vector-flat vec w d)
+			  (let* ((n (js-index-name r))
+				 (el (js-get this n %this)))
+			     (if (and (eq? el (js-undefined))
+				      (not (js-has-property this n %this)))
+				 (loop (+fx r 1) w)
+				 (begin
+				    (vector-set! vec w el)
+				    (loop (+fx r 1) (+fx w 1))))))))))))
+   
+   (let ((d (if (eq? depth (js-undefined)) 1 (js-tointeger depth %this))))
+      (if (and (js-array? this) (js-object-mode-arrayinline? this))
+	  (with-access::JsArray this (vec ilen)
+	     (js-vector-flat vec (uint32->fixnum ilen) d))
+	  (js-array-flat this d))))
+   
+;*---------------------------------------------------------------------*/
 ;*    flatten-vector->array ...                                        */
 ;*---------------------------------------------------------------------*/
 (define (flatten-vector->array this vec vlen flen %this)
@@ -4932,7 +5078,7 @@
 	    (array-flatmap/array this o len proc thisarg i v #u32:0 %this))))
    
    (array-prototype-iterator this proc thisarg array-flatmap vector-flatmap %this))
-   
+
 ;*---------------------------------------------------------------------*/
 ;*    js-array-flatmap ...                                             */
 ;*---------------------------------------------------------------------*/

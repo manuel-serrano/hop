@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Wed Apr 26 09:12:20 2023 (serrano)                */
+;*    Last change :  Wed Jun 21 14:00:11 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript CPS transformation                                    */
@@ -1210,7 +1210,8 @@
 ;*---------------------------------------------------------------------*/
 (define-method (cps this::J2SCall k r kbreaks kcontinues fun conf)
    (assert-kont k KontExpr this)
-   (with-access::J2SCall this ((callee fun) args)
+   (with-access::J2SCall this ((callee fun) args loc)
+      (tprint "ICI loc=" loc)
       (cond
 	 ((yield-expr? callee kbreaks kcontinues)
 	  (cps callee
