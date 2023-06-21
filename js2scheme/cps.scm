@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Wed Jun 21 14:00:11 2023 (serrano)                */
+;*    Last change :  Wed Jun 21 17:22:11 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript CPS transformation                                    */
@@ -520,7 +520,7 @@
 (define-method (cps this::J2SExpr k r kbreaks kcontinues fun conf)
    (assert-kont k KontExpr this)
    (kcall k this))
-   
+
 ;*---------------------------------------------------------------------*/
 ;*    cps ::J2SLiteral ...                                             */
 ;*---------------------------------------------------------------------*/
@@ -541,6 +541,20 @@
 (define-method (cps this::J2SRef k r kbreaks kcontinues fun conf)
    (assert-kont k KontExpr this)
    (kcall k this))
+
+;*---------------------------------------------------------------------*/
+;*    cps ::J2SSpread ...                                              */
+;*---------------------------------------------------------------------*/
+(define-method (cps this::J2SSpread k r kbreaks kcontinues fun conf)
+   (assert-kont k KontExpr this)
+   (with-access::J2SSpread this (expr)
+      (cps expr
+	 (KontExpr (lambda (kexpr::J2SExpr)
+		      (kcall k
+			 (duplicate::J2SSpread this
+			    (expr kexpr))))
+	    this k)
+	 r kbreaks kcontinues fun conf)))
 
 ;*---------------------------------------------------------------------*/
 ;*    cps ::J2SParen ...                                               */
@@ -1211,7 +1225,6 @@
 (define-method (cps this::J2SCall k r kbreaks kcontinues fun conf)
    (assert-kont k KontExpr this)
    (with-access::J2SCall this ((callee fun) args loc)
-      (tprint "ICI loc=" loc)
       (cond
 	 ((yield-expr? callee kbreaks kcontinues)
 	  (cps callee
