@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Thu Jun  8 08:12:40 2023 (serrano)                */
+;*    Last change :  Thu Jun 22 14:57:58 2023 (serrano)                */
 ;*    Copyright   :  2017-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -832,10 +832,14 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SFun mode return ctx)
    (with-access::J2SFun this (loc name params mode vararg generator method type decl)
-      (let* ((tmp (if (eq? name '||)
+      (let* ((tmp (cond
+		     ((eq? name '||)
 		      (gensym (format "~a:~a-"
-				 (basename (cadr loc)) (caddr loc)))
-		      name))
+				 (basename (cadr loc)) (caddr loc))))
+		     ((eq? name '|quote|)
+		      '%quote)
+		     (else
+		      name)))
 	     (tmpm (when method (symbol-append name '&)))
 	     (arity (if vararg -1 (+fx 1 (length params))))
 	     (fundef (cond
