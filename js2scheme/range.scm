@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Sun May 21 06:17:30 2023 (serrano)                */
+;*    Last change :  Thu Jun 22 15:05:40 2023 (serrano)                */
 ;*    Copyright   :  2016-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -357,7 +357,8 @@
 	  (let ((nr (interval-merge range rng)))
 	     (unless (equal? nr range)
 		(unfix! fix
-		   (format "J2SExpr.add(~a) range=~a/~a -> ~a" loc range rng nr))
+		   (format "J2SExpr.add(~a@~a) range=~a/~a -> ~a"
+		      (typeof this) loc range rng nr))
 		(set! range nr))
 	     (return nr env))
 	  (return rng env))))
@@ -507,6 +508,8 @@
 ;*---------------------------------------------------------------------*/
 (define (interval-merge left right)
    (cond
+      ((or (eq? left 'any) (eq? right 'any))
+       'any)
       ((not (interval? left))
        right)
       ((not (interval? right))
@@ -1657,13 +1660,13 @@
 (define-walk-method (node-range this::J2SNew env::pair-nil conf mode::symbol fix::cell)
    (with-access::J2SNew this (clazz args loc)
       (when *indebug*
-	 (tprint "... J2SCall.1 env=" (dump-env env)))
+	 (tprint "... J2SNew.1 env=" (dump-env env)))
       (multiple-value-bind (_ env)
 	 (node-range clazz env conf mode fix)
 	 (multiple-value-bind (_ env)
 	    (node-range-call clazz args env conf mode fix)
 	    (when *indebug*
-	       (tprint "... J2SCall.2 env=" (dump-env env)))
+	       (tprint "... J2SNew env=" (dump-env env)))
 	    (expr-range-add! this env fix *infinity-intv*)))))
 
 ;*---------------------------------------------------------------------*/
