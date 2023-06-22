@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 20 14:34:39 2016                          */
-;*    Last change :  Fri Jul 22 15:53:02 2022 (serrano)                */
-;*    Copyright   :  2016-22 Manuel Serrano                            */
+;*    Last change :  Thu Jun 22 10:47:42 2023 (serrano)                */
+;*    Copyright   :  2016-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    AST Alpha conversion                                             */
 ;*=====================================================================*/
@@ -294,6 +294,8 @@
    
    (with-access::J2SRef this (decl type loc)
       (with-access::J2SDecl decl (%info id)
+	 (when (eq? id 'trailingTimeout)
+	    (tprint "ICI " (j2s->sexp this)))
 	 (if (isa? %info AlphaInfo)
 	     (with-access::AlphaInfo %info (new)
 		(cond

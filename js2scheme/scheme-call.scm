@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Thu Jun  8 14:34:20 2023 (serrano)                */
+;*    Last change :  Thu Jun 22 10:25:48 2023 (serrano)                */
 ;*    Copyright   :  2018-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -143,7 +143,7 @@
 	("padStart" ,j2s-jsstring-padstart string (any any) #t)
 	("padEnd" ,j2s-jsstring-maybe-padend any (any any) #t)
 	("padEnd" ,j2s-jsstring-padend string (any any) #t)
-	("concat" j2s-jsstring-append string (string) #f)
+	("concat" js-jsstring-append string (string) #f)
 	("concat" js-jsstring-concat string (any) %this #f)
 	;; regexp
 	("test" ,j2s-regexp-test regexp (any) %this #f ,j2s-regexp-plain?)

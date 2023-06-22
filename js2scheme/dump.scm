@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Sun May 21 06:27:04 2023 (serrano)                */
+;*    Last change :  Thu Jun 22 10:33:00 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -1438,7 +1438,9 @@
    (let ((nstack (check-stack this stack)))
       (with-access::J2SDConsumer this (expr path)
 	 `(,@(call-next-method) ,@(dump-type this)
-	     :path ,(map (lambda (p) (j2s->list p nstack)) path)
+	     :path ,(if (pair? path)
+			(map (lambda (p) (j2s->list p nstack)) path)
+			path)
 	     ,(j2s->list expr nstack)))))
 
 ;*---------------------------------------------------------------------*/
