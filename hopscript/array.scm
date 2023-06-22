@@ -4948,21 +4948,23 @@
       (let ((ilen (js-tointeger (js-get this (& "length") %this) %this)))
 	 (if (or (not (fixnum? ilen)) (<fx ilen 0))
 	     (js-empty-vector->jsarray %this)
-	     (js-call-with-stack-vector
-		(make-vector ilen)
-		(lambda (vec)
-		   (let loop ((r 0)
-			      (w 0))
-		      (if (=fx r ilen)
-			  (js-vector-flat vec w d)
-			  (let* ((n (js-index-name r))
-				 (el (js-get this n %this)))
-			     (if (and (eq? el (js-undefined))
-				      (not (js-has-property this n %this)))
-				 (loop (+fx r 1) w)
-				 (begin
-				    (vector-set! vec w el)
-				    (loop (+fx r 1) (+fx w 1))))))))))))
+	     (let ((len::long ilen))
+		;; js-call-with-stack-vector requires the len to be a long
+		(js-call-with-stack-vector
+		   (make-vector len)
+		   (lambda (vec)
+		      (let loop ((r 0)
+				 (w 0))
+			 (if (=fx r len)
+			     (js-vector-flat vec w d)
+			     (let* ((n (js-index-name r))
+				    (el (js-get this n %this)))
+				(if (and (eq? el (js-undefined))
+					 (not (js-has-property this n %this)))
+				    (loop (+fx r 1) w)
+				    (begin
+				       (vector-set! vec w el)
+				       (loop (+fx r 1) (+fx w 1)))))))))))))
    
    (let ((d (if (eq? depth (js-undefined)) 1 (js-tointeger depth %this))))
       (if (and (js-array? this) (js-object-mode-arrayinline? this))
