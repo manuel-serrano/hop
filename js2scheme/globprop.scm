@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Sat May 20 11:26:48 2023 (serrano)                */
+;*    Last change :  Thu Jun 22 15:37:07 2023 (serrano)                */
 ;*    Copyright   :  2017-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Global properties optimization (constant propagation).           */
@@ -85,19 +85,25 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-globprop! ::J2SProgram ...                                   */
 ;*---------------------------------------------------------------------*/
-(define (j2s-globprop! this args)
+(define (j2s-globprop! this conf)
    (when (isa? this J2SProgram)
       (with-access::J2SProgram this (nodes decls direct-eval)
 	 (unless direct-eval
-	    (let ((gcnsts (collect-globconst* this args)))
+	    (let ((gcnsts (collect-globconst* this conf)))
 	       (when (pair? gcnsts)
 		  ;; propagate the constants
-		  (collect-globprops this args)
-		  (collect-globprops-toplevel! this args)
+		  (when (>=fx (config-get conf :verbose 0) 3)
+		     (display " collect-this" (current-error-port)))
+		  (collect-globprops this conf)
+		  (when (>=fx (config-get conf :verbose 0) 3)
+		     (display " collect-toplevel" (current-error-port)))
+		  (collect-globprops-toplevel! this conf)
+		  (when (>=fx (config-get conf :verbose 0) 3)
+		     (display " rewrite-access" (current-error-port)))
 		  (rewrite-accesses! this)
 		  (let ((ndecls (append-map globprop-const gcnsts)))
 		     (set! decls (append decls ndecls))
-		     (when (>=fx (config-get args :verbose 0) 3)
+		     (when (>=fx (config-get conf :verbose 0) 3)
 			(globprop-verb gcnsts))))))))
    this)
 
@@ -231,7 +237,7 @@
 		    (collect-globprops rhs ctx)
 		    (with-access::J2SDecl decl (%info)
 		       (or (collect-property %info field)
-			   (call-default-walker))))
+			   (collect-globprops lhs ctx))))
 		 (call-default-walker))))
 	 ((and (isa? lhs J2SRef) (isa? rhs J2SObjInit))
 	  (with-access::J2SObjInit rhs (inits loc)
@@ -245,9 +251,7 @@
 					      (collect-property %info name))))
 			      inits)
 			   (call-default-walker))))
-		 (begin
-		    (tprint "LARGE..." loc)
-		    (collect-globprops lhs ctx)))))
+		 (collect-globprops lhs ctx))))
 	 (else
 	  (call-default-walker)))))
 
