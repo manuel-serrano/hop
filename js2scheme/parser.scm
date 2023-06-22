@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Tue Jun 20 18:33:08 2023 (serrano)                */
+;*    Last change :  Thu Jun 22 10:20:13 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -96,9 +96,11 @@
    (define (parse-token-warning msg token)
       (with-handler
 	 (lambda (e)
-	    (exception-notify e)
-	    (display "ignoring...\n" (current-error-port))
-	    #f)
+	    (when (>fx (bigloo-warning) 0)
+	       (exception-notify e)
+	       (display "ignoring...\n" (current-error-port)))
+	    (instantiate::J2SNop
+	       (loc (token-loc token))))
 	 (parse-token-error msg token)))
    
    (define (parse-error msg obj)
@@ -395,7 +397,7 @@
 		       (make-file-name (dirname (input-port-name input-port))
 			  (token-value tok)))
 		    'source-map)
-		 (parse-token-error "Unexpected source-map" tok))))
+		 (parse-token-warning "Unexpected source-map" tok))))
 	 ((SOURCEELEMENT)
 	  (token-value (consume-any!)))
 	 (else

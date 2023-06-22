@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.4.x/js2scheme/cse.scm                 */
+;*    serrano/prgm/project/hop/hop/js2scheme/cse.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 10 10:07:35 2020                          */
-;*    Last change :  Tue May 11 13:54:38 2021 (serrano)                */
-;*    Copyright   :  2020-21 Manuel Serrano                            */
+;*    Last change :  Thu Jun 22 10:04:56 2023 (serrano)                */
+;*    Copyright   :  2020-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Common subexpressions elimination optimization                   */
 ;*    -------------------------------------------------------------    */
@@ -371,7 +371,6 @@
 ;*    j2s-expr-equal? ::J2SExpr ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-generic (j2s-expr-equal? this::J2SExpr e)
-   (tprint "eq " (typeof this) " " (typeof e))
    #f)
 
 ;*---------------------------------------------------------------------*/
