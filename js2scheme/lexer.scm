@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:33:09 2013                          */
-;*    Last change :  Fri Oct  7 07:57:30 2022 (serrano)                */
-;*    Copyright   :  2013-22 Manuel Serrano                            */
+;*    Last change :  Fri Jun 23 07:49:01 2023 (serrano)                */
+;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript lexer                                                 */
 ;*=====================================================================*/
@@ -828,7 +828,7 @@
 		     (range (: #\[ (* (or (out lt #\]) e2)) #\]))
 		     (start (+ (or (out #\/ #\* #\\ #\[ lt) escape range e2)))
 		     (regexp (: start (* (or (out #\/ #\\ #\[ lt) e2 escape range)))))
-      ((: regexp "/" (+ (in "igm")))
+      ((: regexp "/" (+ (in "dgimsuvy")))
        (let* ((s (the-string))
 	      (l (the-length))
 	      (i (string-index-right s "/"))

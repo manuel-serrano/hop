@@ -3,10 +3,13 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Mon Feb 13 17:26:19 2023 (serrano)                */
+;*    Last change :  Fri Jun 23 07:54:16 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript regexps                      */
+;*    -------------------------------------------------------------    */
+;*    Warning: the flags d, s, v, and y are not supported.             */
+;*    See: doc/lang/01-es.md                                           */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
@@ -159,14 +162,22 @@
    (call-next-method)
    (with-access::JsRegExp obj (flags)
       (fprint (current-error-port) "   flags=" flags)
+      (fprint (current-error-port) "     indices"
+	 (js-regexp-flags-indices? flags))
       (fprint (current-error-port) "     global="
 	 (js-regexp-flags-global? flags))
       (fprint (current-error-port) "     icase="
 	 (js-regexp-flags-ignorecase? flags))
       (fprint (current-error-port) "     multi="
+	 (js-regexp-flags-dotall? flags))
+      (fprint (current-error-port) "     dotall="
 	 (js-regexp-flags-multiline? flags))
       (fprint (current-error-port) "     uni="
-	 (js-regexp-flags-unicode? flags))))
+	 (js-regexp-flags-unicode? flags))
+      (fprint (current-error-port) "     uniset="
+	 (js-regexp-flags-unicodesets? flags))
+      (fprint (current-error-port) "     sticky"
+	 (js-regexp-flags-sticky? flags))))
    
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsRegexp ...                                   */
@@ -180,12 +191,22 @@
 	 (display "/" op)
 	 (display (js-get o (& "source") %this) op)
 	 (display "/" op)
+	 (when (js-totest (js-get o (& "hasIndices") %this))
+	    (display "d" op))
 	 (when (js-totest (js-get o (& "global") %this))
 	    (display "g" op))
 	 (when (js-totest (js-get o (& "ignoreCase") %this))
 	    (display "i" op))
 	 (when (js-totest (js-get o (& "multiline") %this))
-	    (display "m" op)))))
+	    (display "m" op))
+	 (when (js-totest (js-get o (& "dotAll") %this))
+	    (display "s" op))
+	 (when (js-totest (js-get o (& "unicode") %this))
+	    (display "u" op))
+	 (when (js-totest (js-get o (& "unicodeSets") %this))
+	    (display "v" op))
+	 (when (js-totest (js-get o (& "sticky") %this))
+	    (display "y" op)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-init-regexp! ...                                              */
@@ -647,10 +668,14 @@
 	      (set! pattern (js-tostring pattern %this)))
 	  (unless (eq? uflags (js-undefined))
 	     (let* ((f (js-tostring uflags %this))
+		    (d (string-index f #\d))
+		    (g (string-index f #\g))
 		    (i (string-index f #\i))
 		    (m (string-index f #\m))
-		    (g (string-index f #\g))
-		    (u (string-index f #\u)))
+		    (s (string-index f #\s))
+		    (u (string-index f #\u))
+		    (v (string-index f #\v))
+		    (y (string-index f #\y)))
 		(set! flags
 		   (bit-oru32
 		      (if (integer? i)
@@ -667,15 +692,15 @@
 			    (if (integer? u)
 				(JS-REGEXP-FLAG-UNICODE)
 				#u32:0)))))
-		(when (or (string-skip f "igmu")
-			  (and (integer? i)
-			       (string-index f #\i (+fx 1 i)))
-			  (and (integer? m)
-			       (string-index f #\m (+fx 1 m)))
-			  (and (integer? g)
-			       (string-index f #\g (+fx 1 g)))
-			  (and (integer? u)
-			       (string-index f #\u (+fx 1 u))))
+		(when (or (string-skip f "dgimsuvy")
+			  (and (integer? d) (string-index f #\d (+fx 1 d)))
+			  (and (integer? g) (string-index f #\g (+fx 1 g)))
+			  (and (integer? i) (string-index f #\i (+fx 1 i)))
+			  (and (integer? m) (string-index f #\m (+fx 1 m)))
+			  (and (integer? s) (string-index f #\m (+fx 1 s)))
+			  (and (integer? u) (string-index f #\u (+fx 1 u)))
+			  (and (integer? v) (string-index f #\v (+fx 1 v)))
+			  (and (integer? y) (string-index f #\y (+fx 1 y))))
 		   (js-raise-syntax-error %this "Illegal flags \"~a\"" f))))))
       (multiple-value-bind (pat enc)
 	 (make-js-regexp-pattern %this pattern)

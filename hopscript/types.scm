@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Wed Jun  7 07:26:41 2023 (serrano)                */
+;*    Last change :  Fri Jun 23 07:51:48 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -652,11 +652,19 @@
 	   (inline JS-REGEXP-FLAG-MULTILINE::uint32)
 	   (inline JS-REGEXP-FLAG-GLOBAL::uint32)
 	   (inline JS-REGEXP-FLAG-UNICODE::uint32)
+	   (inline JS-REGEXP-FLAG-INDICES::uint32)
+	   (inline JS-REGEXP-FLAG-DOTALL::uint32)
+	   (inline JS-REGEXP-FLAG-UNICODESETS::uint32)
+	   (inline JS-REGEXP-FLAG-STICKY::uint32)
 
 	   (inline js-regexp-flags-ignorecase?::bool ::uint32)
 	   (inline js-regexp-flags-multiline?::bool ::uint32)
 	   (inline js-regexp-flags-global?::bool ::uint32)
 	   (inline js-regexp-flags-unicode?::bool ::uint32)
+	   (inline js-regexp-flags-indices?::bool ::uint32)
+	   (inline js-regexp-flags-dotall?::bool ::uint32)
+	   (inline js-regexp-flags-unicodesets?::bool ::uint32)
+	   (inline js-regexp-flags-sticky?::bool ::uint32)
 
 	   (inline js-object-inline-elements::vector ::JsObject)
 	   (inline js-object-inline-elements-length::long ::JsObject)
@@ -1224,6 +1232,10 @@
 (define-inline (JS-REGEXP-FLAG-MULTILINE) #u32:2)
 (define-inline (JS-REGEXP-FLAG-GLOBAL) #u32:4)
 (define-inline (JS-REGEXP-FLAG-UNICODE) #u32:8)
+(define-inline (JS-REGEXP-FLAG-INDICES) #u32:16)
+(define-inline (JS-REGEXP-FLAG-DOTALL) #u32:32)
+(define-inline (JS-REGEXP-FLAG-UNICODESETS) #u32:64)
+(define-inline (JS-REGEXP-FLAG-STICKY) #u32:128)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-regexp-flags-XXX ...                                          */
@@ -1236,6 +1248,14 @@
    (>u32 (bit-andu32 flags (JS-REGEXP-FLAG-GLOBAL)) #u32:0))
 (define-inline (js-regexp-flags-unicode? flags)
    (>u32 (bit-andu32 flags (JS-REGEXP-FLAG-UNICODE)) #u32:0))
+(define-inline (js-regexp-flags-indices? flags)
+   (>u32 (bit-andu32 flags (JS-REGEXP-FLAG-INDICES)) #u32:0))
+(define-inline (js-regexp-flags-dotall? flags)
+   (>u32 (bit-andu32 flags (JS-REGEXP-FLAG-DOTALL)) #u32:0))
+(define-inline (js-regexp-flags-unicodesets? flags)
+   (>u32 (bit-andu32 flags (JS-REGEXP-FLAG-UNICODESETS)) #u32:0))
+(define-inline (js-regexp-flags-sticky? flags)
+   (>u32 (bit-andu32 flags (JS-REGEXP-FLAG-STICKY)) #u32:0))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-inline-elements ...                                    */

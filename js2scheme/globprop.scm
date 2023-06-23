@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Thu Jun 22 15:37:07 2023 (serrano)                */
+;*    Last change :  Thu Jun 22 16:05:37 2023 (serrano)                */
 ;*    Copyright   :  2017-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Global properties optimization (constant propagation).           */
@@ -337,24 +337,25 @@
    
    (define (collect-init! init::J2SDataPropertyInit %info)
       (with-access::J2SDataPropertyInit init (loc val name)
-	 (with-access::J2SString name ((str val))
-	    (let ((c (assoc str (propinfo-props %info))))
-	       (cond
-		  ((not (and (pair? c) (cdr c)))
-		   #f)
-		  ((isa? val J2SLiteralCnst)
-		   (let* ((ndecl (J2SLetOptRoGlobal '(ref init) (gensym str)
-				    val))
-			  (init (J2SInit (J2SRef ndecl) val)))
-		      (set-cdr! c (list ndecl))
-		      (set! val (J2SRef ndecl))
-		      init))
-		  (else
-		   (let* ((ndecl (J2SDeclGlobal 'let '(ref init) (gensym str)))
-			  (init (J2SInit (J2SRef ndecl) val)))
-		      (set-cdr! c (list ndecl))
-		      (set! val (J2SRef ndecl))
-		      init)))))))
+	 (when (isa? name J2SString)
+	    (with-access::J2SString name ((str val))
+	       (let ((c (assoc str (propinfo-props %info))))
+		  (cond
+		     ((not (and (pair? c) (cdr c)))
+		      #f)
+		     ((isa? val J2SLiteralCnst)
+		      (let* ((ndecl (J2SLetOptRoGlobal '(ref init) (gensym str)
+				       val))
+			     (init (J2SInit (J2SRef ndecl) val)))
+			 (set-cdr! c (list ndecl))
+			 (set! val (J2SRef ndecl))
+			 init))
+		     (else
+		      (let* ((ndecl (J2SDeclGlobal 'let '(ref init) (gensym str)))
+			     (init (J2SInit (J2SRef ndecl) val)))
+			 (set-cdr! c (list ndecl))
+			 (set! val (J2SRef ndecl))
+			 init))))))))
    
    (define (col init %info)
       (when (isa? init J2SDataPropertyInit)
