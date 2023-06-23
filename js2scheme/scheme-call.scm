@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Fri Jun 23 10:16:05 2023 (serrano)                */
+;*    Last change :  Fri Jun 23 12:45:04 2023 (serrano)                */
 ;*    Copyright   :  2018-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -2040,12 +2040,16 @@
 	    (tprint "spread.expr=" (j2s->sexp expr))
 	    (ref-stack-vararg? expr))))
    
+   (define (j2s-scheme-fun fun mode return ctx)
+      (if (symbol? fun)
+	  fun
+	  (j2s-scheme fun mode return ctx)))
+   
    (with-access::J2SCall this (loc profid fun thisargs args protocol)
       (let ((expr (spread->array-expr loc args #f)))
 	 (tprint "SPREAD=" (j2s->sexp this))
 	 (tprint "expr=" (j2s->sexp expr))
 	 (tprint "ref=" (spread-stack-vararg? (car args)))
-	 
 	 (cond
 	    ((and (isa? fun J2SRef)
 		  (with-access::J2SRef fun (decl)
@@ -2096,10 +2100,18 @@
 			       (obj (J2SHopRef o)))))
 		   `(let* ((,o ,(j2s-scheme obj mode return ctx))
 			   (,f ,(j2s-scheme axs mode return ctx)))
-		       (js-apply-array %this ,f ,o
-			  ,(j2s-scheme expr mode return ctx))))))
+		       ,(if (spread-stack-vararg? (car args))
+			    `(with-access::J2SSpread (car args) (expr)
+				`(js-function-maybe-spread-arguments %this
+				    ,f
+				    (js-undefined)
+				    ,(j2s-scheme expr mode return ctx)
+				    ,(j2s-arguments-object-id)))
+			    `(js-apply-array %this ,f ,o
+			       ,(j2s-scheme expr mode return ctx)))))))
 	    ((isa? fun J2SHopRef)
-	     (if (isa? expr J2SArray)
+	     (cond
+		((isa? expr J2SArray)
 		 ;; fun(...[x,y,z])
 		 (with-access::J2SArray expr (exprs)
 		    (let ((ncall (instantiate::J2SCall
@@ -2107,7 +2119,16 @@
 				    (fun fun)
 				    (thisargs (list (J2SNull)))
 				    (args exprs))))
-		       (j2s-scheme ncall mode return ctx)))
+		       (j2s-scheme ncall mode return ctx))))
+		((spread-stack-vararg? (car args))
+		 (with-access::J2SSpread (car args) (expr)
+		    `(,(j2s-scheme fun mode return ctx)
+		      ,@(map (lambda (a) (j2s-scheme a mode return ctx))
+			   thisargs)
+		      (if ,(j2s-arguments-object-id)
+			  (js-arguments->list ,(j2s-arguments-object-id))
+			  (vector->list (j2s-scheme expr mode return ctx))))))
+		(else
 		 (epairify loc
 		    `(js-call-with-stack-list
 			,(j2s-spread->expr-list args mode return ctx)
@@ -2115,7 +2136,7 @@
 			   (,(j2s-scheme fun mode return ctx)
 			    ,@(map (lambda (a) (j2s-scheme a mode return ctx))
 				 thisargs)
-			    %lst))))))
+			    %lst)))))))
 	    ((spread-stack-vararg? (car args))
 	     (with-access::J2SSpread (car args) (expr)
 		`(js-function-maybe-spread-arguments %this
