@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jul 11 10:52:32 2014                          */
-;*    Last change :  Mon Feb 21 15:43:57 2022 (serrano)                */
-;*    Copyright   :  2014-22 Manuel Serrano                            */
+;*    Last change :  Fri Jun 23 16:09:11 2023 (serrano)                */
+;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript source map generation                                 */
 ;*=====================================================================*/
@@ -21,6 +21,7 @@
    
    (import __js2scheme_ast
 	   __js2scheme_dump
+	   __js2scheme_utils
 	   __js2scheme_stage
 	   __js2scheme_dump)
 
@@ -48,7 +49,7 @@
 
    (when (isa? this J2SProgram)
       (with-access::J2SProgram this (source-map nodes path)
-	 (when source-map
+	 (when (and source-map (config-get conf :source-map #t))
 	    (let* ((smap (read-source-map source-map))
 		   (mappings (assq-get 'mappings smap))
 		   (sources (assq-get 'sources smap))

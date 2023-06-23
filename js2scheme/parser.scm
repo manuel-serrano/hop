@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Thu Jun 22 10:20:13 2023 (serrano)                */
+;*    Last change :  Fri Jun 23 14:25:30 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -875,7 +875,7 @@
 	     (with-access::J2SVarDecls lhs (decls)
 		(cond
 		   ((null? lhs)
-		    (parse-error "Illegal emtpy declaration"
+		    (parse-error "Illegal empty declaration"
 		       error-token))
 		   ((null? (cdr decls))
 		    (instantiate::J2SForIn
@@ -1771,7 +1771,7 @@
 		(if (eq? (peek-token-type) 'RBRACE)
 		    (begin
 		       (consume-any!)
-		       lst)
+		       (cons impnm lst))
 		    (loop (cons impnm lst))))
 	       (else
 		(parse-token-error "Illegal import" next))))))
@@ -1827,34 +1827,39 @@
 	     stmt))
 	 ((LBRACE)
 	  (let ((token (consume-any!)))
-	     (let loop ((ids '())
-			(aliases '()))
-		(let* ((tid (consume-oneof! 'ID 'default))
-		       (id (token-value tid))
-		       (alias (if (peek-token-id? 'as)
-				  (begin
-				     (consume-any!)
-				     (let ((talias (consume-any!)))
-					(case (token-tag talias)
-					   ((default)
-					    'default)
-					   ((ID)
-					    (token-value talias))
-					   (else
-					    (parse-token-error "Illegal export"
-					       talias)))))
-				  id)))
-		   (case (peek-token-type)
-		      ((RBRACE)
-		       (export-from (consume-any!)
-			  (cons id ids) (cons alias aliases)))
-		      ((COMMA)
-		       (consume-any!)
-		       (if (eq? (peek-token-type) 'RBRACE)
-			   (export-from (consume-any!) (cons id ids) (cons alias aliases))
-			   (loop (cons id ids) (cons alias aliases))))
-		      (else
-		       (parse-token-error "Illegal export" token)))))))
+	     (if (eq? (peek-token-type) 'RBRACE)
+		 (begin
+		    (consume-any!)
+		    (instantiate::J2SNop
+		       (loc (token-loc token))))
+		 (let loop ((ids '())
+			    (aliases '()))
+		    (let* ((tid (consume-oneof! 'ID 'default))
+			   (id (token-value tid))
+			   (alias (if (peek-token-id? 'as)
+				      (begin
+					 (consume-any!)
+					 (let ((talias (consume-any!)))
+					    (case (token-tag talias)
+					       ((default)
+						'default)
+					       ((ID)
+						(token-value talias))
+					       (else
+						(parse-token-error "Illegal export"
+						   talias)))))
+				      id)))
+		       (case (peek-token-type)
+			  ((RBRACE)
+			   (export-from (consume-any!)
+			      (cons id ids) (cons alias aliases)))
+			  ((COMMA)
+			   (consume-any!)
+			   (if (eq? (peek-token-type) 'RBRACE)
+			       (export-from (consume-any!) (cons id ids) (cons alias aliases))
+			       (loop (cons id ids) (cons alias aliases))))
+			  (else
+			   (parse-token-error "Illegal export" token))))))))
 	 ((function)
 	  (export-decl (statement)))
 	 ((default)
@@ -3515,110 +3520,116 @@
 		  prop))))
       
       (define (property-init props)
-	 (let* ((token (peek-token))
-		(tokname (property-name destructuring? #f))
-		(name (when (pair? tokname) (token-value tokname))))
-	    (cond
-	       ((memq name '(get set))
-		(case (peek-token-type)
-		   ((ID RESERVED type)
-		    (property-accessor (consume-any!) tokname name props))
-		   ((STRING ESTRING OSTRING)
-		    (let* ((tok (consume-any!))
-			   (id (make-token 'ID
-				  (string->symbol (token-value tok))
-				  (token-loc tok))))
-		       (property-accessor id tokname name props)))
-		   ((:)
-		    (let* ((ignore (consume-any!))
-			   (loc (token-loc ignore))
-			   (val (assig-expr #f #f #f)))
-		       (instantiate::J2SDataPropertyInit
-			  (loc loc)
-			  (name (instantiate::J2SString
-				   (loc loc)
-				   (val (symbol->string name))))
-			  (val val))))
-		   ((LBRACKET)
-		    (consume-any!)
-		    (let ((expr (expression #f #f)))
-		       (consume-token! 'RBRACKET)
-		       (dynamic-property-accessor (token-loc token) expr name props)))
-		   ((LPAREN)
-		    (instantiate::J2SDataPropertyInit
-		       (loc (token-loc token))
-		       (name (instantiate::J2SString
+	 (let ((token (peek-token)))
+	    (let loop ((tokname (property-name destructuring? #f)))
+	       (let ((name (when (pair? tokname) (token-value tokname))))
+		  (cond
+		     ((memq name '(get set))
+		      (case (peek-token-type)
+			 ((ID RESERVED type)
+			  (property-accessor (consume-any!) tokname name props))
+			 ((STRING ESTRING OSTRING)
+			  (let* ((tok (consume-any!))
+				 (id (make-token 'ID
+					(string->symbol (token-value tok))
+					(token-loc tok))))
+			     (property-accessor id tokname name props)))
+			 ((:)
+			  (let* ((ignore (consume-any!))
+				 (loc (token-loc ignore))
+				 (val (assig-expr #f #f #f)))
+			     (instantiate::J2SDataPropertyInit
+				(loc loc)
+				(name (instantiate::J2SString
+					 (loc loc)
+					 (val (symbol->string name))))
+				(val val))))
+			 ((COMMA RBRACE)
+			  (loop
+			     (instantiate::J2SString
 				(loc (token-loc token))
-				(val (symbol->string (token-value token)))))
-		       (val (function #f token '__proto__))))
-		   (else
-		    (if (j2s-reserved-id? (peek-token-type))
-			(property-accessor (consume-any!) tokname name props)
-			(parse-token-error "Wrong property name (init)" (peek-token))))))
-	       ((and (eq? (token-value token) 'async)
-		     (eq? (peek-token-type) 'ID))
-		(let* ((token (consume-any!))
-		       (loc (token-loc token))
-		       (val (case (peek-token-type)
-			       ((LPAREN)
-				(let ((fun (function #f token '__proto__)))
-				   (if (isa? fun J2SFun)
-				       (async->generator fun)
-				       (parse-token-error
-					  "Illegal async function expression"
-					  token))))
-			       (else
-				(parse-token-error "Unexpected token"
-				   (peek-token)))))
-		       (name (instantiate::J2SString
-				(loc (token-loc token))
+				(private #t)
 				(val (symbol->string (token-value token))))))
-		   (instantiate::J2SDataPropertyInit
-		      (loc loc)
-		      (name name)
-		      (val val))))
-	       ((and (pair? tokname) (eq? (token-tag tokname) 'DOTS))
-		(instantiate::J2SDataPropertyInit
-		   (loc (token-loc tokname))
-		   (name (instantiate::J2SUndefined
-			    (loc (token-loc tokname))))
-		   (val (instantiate::J2SSpread
-			   (loc (token-loc tokname))
-			   (stype 'object)
-			   ;; 21feb2022
-			   ;; (expr (primary #f #t))
-			   (expr (assig-expr #f #f #f))))))
-	       (else
-		(let* ((loc (token-loc token))
-		       (val (case (peek-token-type)
-			       ((COMMA RBRACE)
-				(if (memq (token-tag token) '(ID type))
-				    (instantiate::J2SUnresolvedRef
-				       (loc loc)
-				       (id (token-value token)))
-				    (parse-token-error "Unexpected token"
-				       token)))
-			       ((LPAREN)
-				(function #f token '__proto__))
-			       ((:)
-				(consume-any!)
-				(assig-expr #f #f #f))
-			       ((=)
-				(if destructuring?
-				    (begin
-				       (consume-any!)
-				       (destructure-or loc
-					  (J2SUnresolvedRef (token-value token))
-					  (assig-expr #f #f #f)))
-				    (parse-token-error "Unexpected \"=\""
-				       (peek-token))))
-			       (else
-				(parse-token-error "Unexpected token"
-				   (peek-token))))))
-		   (instantiate::J2SDataPropertyInit
-		      (loc loc)
-		      (name tokname)
-		      (val val)))))))
+			 ((LBRACKET)
+			  (consume-any!)
+			  (let ((expr (expression #f #f)))
+			     (consume-token! 'RBRACKET)
+			     (dynamic-property-accessor (token-loc token) expr name props)))
+			 ((LPAREN)
+			  (instantiate::J2SDataPropertyInit
+			     (loc (token-loc token))
+			     (name (instantiate::J2SString
+				      (loc (token-loc token))
+				      (val (symbol->string (token-value token)))))
+			     (val (function #f token '__proto__))))
+			 (else
+			  (if (j2s-reserved-id? (peek-token-type))
+			      (property-accessor (consume-any!) tokname name props)
+			      (parse-token-error "Wrong property name (init)" (peek-token))))))
+		     ((and (eq? (token-value token) 'async)
+			   (eq? (peek-token-type) 'ID))
+		      (let* ((token (consume-any!))
+			     (loc (token-loc token))
+			     (val (case (peek-token-type)
+				     ((LPAREN)
+				      (let ((fun (function #f token '__proto__)))
+					 (if (isa? fun J2SFun)
+					     (async->generator fun)
+					     (parse-token-error
+						"Illegal async function expression"
+						token))))
+				     (else
+				      (parse-token-error "Unexpected token"
+					 (peek-token)))))
+			     (name (instantiate::J2SString
+				      (loc (token-loc token))
+				      (val (symbol->string (token-value token))))))
+			 (instantiate::J2SDataPropertyInit
+			    (loc loc)
+			    (name name)
+			    (val val))))
+		     ((and (pair? tokname) (eq? (token-tag tokname) 'DOTS))
+		      (instantiate::J2SDataPropertyInit
+			 (loc (token-loc tokname))
+			 (name (instantiate::J2SUndefined
+				  (loc (token-loc tokname))))
+			 (val (instantiate::J2SSpread
+				 (loc (token-loc tokname))
+				 (stype 'object)
+				 ;; 21feb2022
+				 ;; (expr (primary #f #t))
+				 (expr (assig-expr #f #f #f))))))
+		     (else
+		      (let* ((loc (token-loc token))
+			     (val (case (peek-token-type)
+				     ((COMMA RBRACE)
+				      (if (memq (token-tag token) '(ID type))
+					  (instantiate::J2SUnresolvedRef
+					     (loc loc)
+					     (id (token-value token)))
+					  (parse-token-error "Unexpected token"
+					     token)))
+				     ((LPAREN)
+				      (function #f token '__proto__))
+				     ((:)
+				      (consume-any!)
+				      (assig-expr #f #f #f))
+				     ((=)
+				      (if destructuring?
+					  (begin
+					     (consume-any!)
+					     (destructure-or loc
+						(J2SUnresolvedRef (token-value token))
+						(assig-expr #f #f #f)))
+					  (parse-token-error "Unexpected \"=\""
+					     (peek-token))))
+				     (else
+				      (parse-token-error "Unexpected token"
+					 (peek-token))))))
+			 (instantiate::J2SDataPropertyInit
+			    (loc loc)
+			    (name tokname)
+			    (val val)))))))))
 
       (push-open-token (consume-token! 'LBRACE))
       (if (eq? (peek-token-type) 'RBRACE)

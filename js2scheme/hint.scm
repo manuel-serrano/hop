@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Sat May 20 16:55:14 2023 (serrano)                */
+;*    Last change :  Fri Jun 23 16:47:31 2023 (serrano)                */
 ;*    Copyright   :  2016-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -1135,6 +1135,9 @@
 	      (htypes htypes))
       (let ((decl (car decls))
 	    (htype (car htypes)))
+	 (unless htype
+	    (tprint "test-hint-decls pas bon " htypes " " loc)
+	    (tprint (map j2s->sexp decls)))
 	 (with-access::J2SDecl decl (vtype)
 	    (cond
 	       ((null? (cdr decls))
@@ -1142,10 +1145,10 @@
 		    (instantiate::J2SBool
 		       (loc loc)
 		       (val #t))
-		    (test-hint-decl (car decls) htype)))
+		    (test-hint-decl decl htype)))
 	       ((memq htype '(unknown any))
 		(loop (cdr decls) (cdr htypes)))
-	       ((test-hint-decl (car decls) htype)
+	       ((test-hint-decl decl htype)
 		=>
 		(lambda (lhs)
 		   (instantiate::J2SBinary

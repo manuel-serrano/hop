@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:33:09 2013                          */
-;*    Last change :  Fri Jun 23 07:49:01 2023 (serrano)                */
+;*    Last change :  Fri Jun 23 14:08:02 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript lexer                                                 */
@@ -194,7 +194,7 @@
       ((or bom_utf16_le bom_utf16_be)
        (token 'ERROR (string-for-read (the-string)) 1))
 
-      ((: "#!/" (+ all))
+      ((: "#!" (* blank_no_lt) "/" (+ all))
        (ignore))
       
       ((or ls ps)
