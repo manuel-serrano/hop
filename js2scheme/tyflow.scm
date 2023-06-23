@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Thu Mar 30 08:56:48 2023 (serrano)                */
+;*    Last change :  Fri Jun 23 09:19:29 2023 (serrano)                */
 ;*    Copyright   :  2016-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -727,17 +727,25 @@
 ;*    node-type ::J2SSuper ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-method (node-type  this::J2SSuper env::pair-nil ctx::pair)
+   
+   (define (class-super-val obj)
+      ;; because of :ignore-unresolved-modules super-val may be
+      ;; J2SUndefined values
+      (let ((supv (j2s-class-super-val obj)))
+	 (unless (isa? supv J2SUndefined)
+	    supv)))
+   
    (with-trace 'j2s-tyflow (format "node-type ::J2SSuper ~a" (cdr ctx))
       (with-access::J2SSuper this (decl loc super context)
 	 (cond
 	    ((isa? super J2SClass)
 	     (expr-type-add! this env ctx super))
 	    ((isa? context J2SClass)
-	     (expr-type-add! this env ctx (or (j2s-class-super-val context) 'any)))
+	     (expr-type-add! this env ctx (or (class-super-val context) 'any)))
 	    (else
 	     (let ((ty (env-lookup env decl)))
 		(if (isa? ty J2SClass)
-		    (expr-type-add! this env ctx (or (j2s-class-super-val ty) 'any))
+		    (expr-type-add! this env ctx (or (class-super-val ty) 'any))
 		    (expr-type-add! this env ctx 'any))))))))
 
 ;*---------------------------------------------------------------------*/

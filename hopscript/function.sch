@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Dec  7 06:32:41 2019                          */
-;*    Last change :  Thu Jun  8 14:42:46 2023 (serrano)                */
+;*    Last change :  Fri Jun 23 10:27:07 2023 (serrano)                */
 ;*    Copyright   :  2019-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function macros for js2scheme                                    */
@@ -29,6 +29,18 @@
 	   (js-function-apply %this ,fun ,thisarg ,%arguments ,cache)))))
 	   
 ;*---------------------------------------------------------------------*/
+;*    js-function-spread-arguments ...                                 */
+;*---------------------------------------------------------------------*/
+(define-macro (js-function-spread-arguments %this fun thisarg vec %arguments)
+   `(with-access::JsGlobalObject %this (js-function-prototype)
+       (cond
+	  (%arguments
+	   (js-apply-array ,%this ,fun ,thisarg %arguments))
+	  (else
+	   (js-function-apply-vec ,%this ,fun ,thisarg
+	      ,vec #u32:0 (fixnum->uint32 (vector-length ,vec)))))))
+	   
+;*---------------------------------------------------------------------*/
 ;*    js-function-maybe-apply-arguments ...                            */
 ;*---------------------------------------------------------------------*/
 (define-macro (js-function-maybe-apply-arguments %this fun thisarg vec %arguments mode cache)
@@ -40,6 +52,14 @@
 		   `(js-strict-arguments %this (vector-copy ,vec))
 		   `(js-sloppy-arguments %this (vector-copy ,vec))))
 	   (js-function-maybe-apply %this ,fun ,thisarg ,%arguments ,cache))))
+   
+;*---------------------------------------------------------------------*/
+;*    js-function-maybe-spread-arguments ...                           */
+;*---------------------------------------------------------------------*/
+(define-macro (js-function-maybe-spread-arguments %this fun thisarg vec %arguments)
+   `(if (js-function? ,fun)
+	(js-function-spread-arguments ,%this ,fun ,thisarg ,vec ,%arguments)
+	(js-raise-type-error ,%this "spread: this is not a function ~s" ,fun)))
    
 ;*---------------------------------------------------------------------*/
 ;*    js-function-info ...                                             */

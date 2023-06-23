@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Dec 14 17:16:48 2019                          */
-;*    Last change :  Thu Jun  8 14:12:33 2023 (serrano)                */
+;*    Last change :  Fri Jun 23 10:00:51 2023 (serrano)                */
 ;*    Copyright   :  2019-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Usage bit names                                                  */
@@ -29,7 +29,7 @@
 ;*      length: variable used in a VAR.length expression               */
 ;*      aref: variable used in a integer array indexed access          */
 ;*      apply: variable used in the second position of an apply call   */
-;*      +: apply used several times                                    */
+;*      spread: used in spread call                                    */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
@@ -63,7 +63,7 @@
       ((length) #u32:32768)
       ((aref) #u32:65536)
       ((apply) #u32:131072)
-      ((+) #u32:262144)
+      ((spread) #u32:262144)
       (else (error "usage-key->bit" "Illegal key" key))))
 
 ;*---------------------------------------------------------------------*/
@@ -89,6 +89,6 @@
       ((#u32:32768) 'length)
       ((#u32:65536) 'aref)
       ((#u32:131072) 'apply)
-      ((#u32:262144) '+)
+      ((#u32:262144) 'spread)
       (else (error "usage-bit->key" "Illegal key" bit))))
    

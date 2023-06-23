@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec  5 09:14:00 2019                          */
-;*    Last change :  Tue Jun 20 08:42:40 2023 (serrano)                */
+;*    Last change :  Fri Jun 23 09:57:32 2023 (serrano)                */
 ;*    Copyright   :  2019-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arguments optimization                                           */
@@ -95,9 +95,9 @@
 	    (cond
 	       ((usage-strict? usage '(length))
 		(set! alloc-policy 'lonly))
-	       ((usage-strict? usage '(slice aref length))
+	       ((usage-strict? usage '(slice aref length spread))
 		(set! alloc-policy 'stack))
-	       ((and (usage-strict? usage '(slice aref length apply))
+	       ((and (usage-strict? usage '(slice aref length spread apply))
 		     (not useinloop))
 		(set! alloc-policy 'stack)))))
       (when (pair? params)
@@ -105,7 +105,7 @@
 	    (when (isa? lastp J2SDeclRest)
 	       (with-access::J2SDeclRest lastp (alloc-policy usage ctype vtype)
 		  (cond
-		     ((usage-strict? usage '(rest slice aref length))
+		     ((usage-strict? usage '(rest slice aref length spread))
 		      (set! ctype 'vector)
 		      (set! vtype 'vector)
 		      (set! alloc-policy 'stack)))))))))
@@ -161,6 +161,10 @@
 	    (when (isa? field J2SString)
 	       (with-access::J2SString field (val)
 		  (string=? val "apply"))))))
+
+   (define (spread? args)
+      (when (and (pair? args) (null? (cdr args)))
+	 (isa? (car args) J2SSpread)))
 
    (define (array-prototype? obj)
       (when (isa? obj J2SAccess)
@@ -224,6 +228,16 @@
 			   (argsuse fun)
 			   (argsuse (car args))
 			   (decl-usage-add! decl 'apply))
+			(call-default-walker)))
+		 (call-default-walker))))
+	 ((spread? args)
+	  (with-access::J2SSpread (car args) (expr)
+	     (if (isa? expr J2SRef)
+		 (with-access::J2SRef expr (decl)
+		    (if (isa? decl J2SDeclRest)
+			(begin
+			   (argsuse fun)
+			   (decl-usage-add! decl 'spread))
 			(call-default-walker)))
 		 (call-default-walker))))
 	 ((arguments-slice? fun args)

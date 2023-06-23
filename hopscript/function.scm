@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Fri Jun  9 18:29:16 2023 (serrano)                */
+;*    Last change :  Fri Jun 23 10:22:09 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -93,6 +93,7 @@
 	   (js-function-maybe-apply-vec ::JsGlobalObject ::obj ::obj ::vector ::uint32 ::obj)
 	   (js-function-maybe-apply ::JsGlobalObject ::obj ::obj ::obj ::obj)
 	   (js-function-maybe-apply-arguments-slice ::JsGlobalObject ::obj ::obj ::vector ::uint32 ::uint32 ::obj ::obj)
+	   (js-function-spread-arguments-slice ::JsGlobalObject ::obj ::obj ::vector ::uint32 ::uint32 ::obj ::obj)
 	   (js-function-maybe-call0 ::JsGlobalObject ::obj ::obj ::obj)
 	   (js-function-maybe-call1 ::JsGlobalObject ::obj ::obj ::obj ::obj)
 	   (js-function-maybe-call2 ::JsGlobalObject ::obj ::obj ::obj ::obj ::obj)
@@ -1435,6 +1436,21 @@
 	  (js-function-maybe-apply %this this thisarg
 	     (js-arguments-vector-slice argarray offset len %this)
 	     cache)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-function-spread-arguments-slice ...                           */
+;*---------------------------------------------------------------------*/
+(define (js-function-spread-arguments-slice %this this thisarg argarray offset len %arguments cache)
+   (with-access::JsGlobalObject %this (js-function-prototype)
+      (cond
+	 ((and (js-procedure? this) (not %arguments))
+	  (js-function-apply-vec %this this thisarg argarray offset len))
+	 (%arguments
+	  (js-apply-array %this this thisarg
+	     (js-arguments-slice %arguments offset len %this)))
+	 (else
+	  (js-apply-array %this this thisarg
+	     (js-arguments-vector-slice argarray offset len %this))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-function-call0 ...                                            */

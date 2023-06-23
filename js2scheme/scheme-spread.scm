@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec  6 16:35:12 2018                          */
-;*    Last change :  Fri Oct 29 09:43:19 2021 (serrano)                */
-;*    Copyright   :  2018-21 Manuel Serrano                            */
+;*    Last change :  Fri Jun 23 11:26:34 2023 (serrano)                */
+;*    Copyright   :  2018-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions to deal with spread syntax.                    */
 ;*=====================================================================*/
@@ -26,7 +26,8 @@
 	   __js2scheme_scheme-arguments)
 
    (export (spread->array-expr::J2SExpr loc exprs::pair copy?::bool)
-	   (j2s-spread->expr-list exprs mode return conf)))
+	   (j2s-spread->expr-list exprs mode return conf)
+	   (j2s-spread->expr-vector exprs mode return conf)))
    
 ;*---------------------------------------------------------------------*/
 ;*    spread->array-expr::J2SExpr ...                                  */
@@ -107,6 +108,25 @@
 ;*    j2s-spread->expr-list ...                                        */
 ;*---------------------------------------------------------------------*/
 (define (j2s-spread->expr-list exprs mode return conf)
+   (let loop ((exprs exprs))
+      (if (null? exprs)
+	  ''()
+	  (multiple-value-bind (nospread rest)
+	     (collect-no-spread exprs)
+	     (if (null? nospread)
+		 (with-access::J2SSpread (car rest) (expr)
+		    (let ((arr (j2s-iterable->list expr mode return conf)))
+		       (if (null? (cdr rest))
+			   arr
+			   `(append ,arr ,(loop (cdr rest))))))
+		 `(cons* ,@(map (lambda (n) (j2s-scheme n mode return conf))
+			      nospread)
+		     ,(loop rest)))))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-spread->expr-vector ...                                      */
+;*---------------------------------------------------------------------*/
+(define (j2s-spread->expr-vector exprs mode return conf)
    (let loop ((exprs exprs))
       (if (null? exprs)
 	  ''()
