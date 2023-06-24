@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:33:09 2013                          */
-;*    Last change :  Sat Jun 24 06:46:35 2023 (serrano)                */
+;*    Last change :  Sat Jun 24 07:01:43 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript lexer                                                 */
@@ -826,7 +826,7 @@
 			     (: "\xe2\x80" (out "\xa8\xa9"))))
 		     (nonsep (or (out lt) e2))
 		     (escape (: #\\ nonsep))
-		     (range (: #\[ (* (or (out lt #\]) e2)) #\]))
+		     (range (: #\[ (* (or (out lt #\] #\\) e2 escape)) #\]))
 		     (start (+ (or (out #\/ #\* #\\ #\[ lt) escape range e2)))
 		     (regexp (: start (* (or (out #\/ #\\ #\[ lt) e2 escape range)))))
       ((: regexp "/" (+ (in "dgimsuvy")))
