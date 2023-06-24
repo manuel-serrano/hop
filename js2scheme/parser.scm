@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Fri Jun 23 14:25:30 2023 (serrano)                */
+;*    Last change :  Sat Jun 24 06:26:26 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -201,7 +201,7 @@
 		(format "Expected \"~(, )\" got \"~a\"" types (token-tag token))
 		token))))
    
-   (define (consume-statement-semicolon! where)
+   (define (consume-statement-semicolon! where loc)
       (cond
 	 ((eq? (peek-token-type) 'SEMICOLON)
 	  (consume-any!))
@@ -212,7 +212,9 @@
 	      (eq? (peek-token-type) 'EOF))
 	  (peek-token))
 	 (else
-	  (parse-token-error (format "~a, \"\;\", or newline expected" where)
+	  (parse-token-error
+	     (format "~a [@~a]: \"\;\", or newline expected"
+		where (caddr loc))
 	     (peek-token)))))
 
    (define (peek-token-id? val)
@@ -945,12 +947,12 @@
 	 (if (and (eq? (peek-token-type) 'ID)
 		  (not (at-new-line-token?)))
 	     (let ((id (consume! 'ID)))
-		(consume-statement-semicolon! "continue")
+		(consume-statement-semicolon! "continue" loc)
 		(instantiate::J2SContinue
 		   (loc loc)
 		   (id id)))
 	     (begin
-		(consume-statement-semicolon! "continue")
+		(consume-statement-semicolon! "continue" loc)
 		(instantiate::J2SContinue
 		   (loc loc)
 		   (id #f))))))
@@ -960,12 +962,12 @@
 	 (if (and (eq? (peek-token-type) 'ID)
 		  (not (at-new-line-token?)))
 	     (let ((id (consume! 'ID)))
-		(consume-statement-semicolon! "break")
+		(consume-statement-semicolon! "break" loc)
 		(instantiate::J2SBreak
 		   (loc loc)
 		   (id id)))
 	     (begin
-		(consume-statement-semicolon! "break")
+		(consume-statement-semicolon! "break" loc)
 		(instantiate::J2SBreak
 		   (loc loc))))))
    
@@ -976,7 +978,7 @@
 		    ((EOF ERROR SEMICOLON) #t)
 		    (else #f))
 		 (at-new-line-token?))
-	     (consume-statement-semicolon! "return")
+	     (consume-statement-semicolon! "return" loc)
 	     (instantiate::J2SReturn
 		(loc loc)
 		(expr (instantiate::J2SUndefined
@@ -990,7 +992,7 @@
 			 (loc loc)))))
 	    (else
 	     (let ((expr (expression #f #f)))
-		(consume-statement-semicolon! "return")
+		(consume-statement-semicolon! "return" loc)
 		(instantiate::J2SReturn
 		   (loc loc)
 		   (expr expr)))))))
@@ -1071,10 +1073,11 @@
 	 (peek-token)
 	 (when (or (at-new-line-token?) (eq? (peek-token-type) 'NEWLINE))
 	    (parse-token-error "Throw must have a value" (peek-token)))
-	 (let ((expr (expression #f #f)))
-	    (consume-statement-semicolon! "throw")
+	 (let ((expr (expression #f #f))
+	       (loc (token-loc token)))
+	    (consume-statement-semicolon! "throw" loc)
 	    (instantiate::J2SThrow
-	       (loc (token-loc token))
+	       (loc loc)
 	       (expr expr)))))
    
    (define (trie)
@@ -1192,8 +1195,10 @@
 	    (loc (token-loc token)))))
    
    (define (expression-statement)
-      (let ((expr (expression #f #f)))
-	 (consume-statement-semicolon! "expression")
+      (let ((tok (peek-token))
+	    (expr (expression #f #f)))
+	 (consume-statement-semicolon!
+	    (format "expression \"~a\"" (token-value tok)) (token-loc tok))
 	 (with-access::J2SExpr expr (loc)
 	    (instantiate::J2SStmtExpr
 	       (loc loc)
