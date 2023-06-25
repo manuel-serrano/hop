@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Sun May 21 06:18:51 2023 (serrano)                */
+;*    Last change :  Sun Jun 25 09:43:12 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -43,7 +43,7 @@
 	   (type-integer?::bool ::obj)
 	   (type-number?::bool ::obj)
 	   (type-object?::bool ::obj)
-	   (type-array-like?::bool ::symbol)
+	   (type-array-like?::bool ::obj)
 	   (type-maybe?::bool ::obj ::pair-nil)
 	   (type-cannot?::bool ::obj ::pair-nil)
 	   (type-subtype?::bool ::obj ::obj)
