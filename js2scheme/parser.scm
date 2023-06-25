@@ -1,9 +1,9 @@
-;*=====================================================================*/
+                    ;*=====================================================================*/
 ;*    serrano/prgm/project/hop/hop/js2scheme/parser.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Sat Jun 24 06:26:26 2023 (serrano)                */
+;*    Last change :  Sat Jun 24 07:14:49 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1361,7 +1361,17 @@
 	 (if (isa? fun J2SFun)
 	     (async->generator fun)
 	     (parse-token-error "Illegal async function expression" tok))))
-   
+
+   (define (arrow-param-bind-exit-desctructure? p)
+      (when (isa? p J2SBindExit)
+	 (with-access::J2SBindExit p (stmt)
+	    (with-access::J2SBlock stmt (nodes)
+	       (when (isa? (car nodes) J2SVarDecls)
+		  (with-access::J2SVarDecls (car nodes) (decls)
+		     (when (and (pair? decls) (isa? (car decls) J2SDeclInit))
+			(with-access::J2SDeclInit (car decls) (val)
+			   (isa? val J2SDProducer)))))))))
+
    (define (arrow-params args)
       (map (lambda (p idx)
 	      (cond
@@ -1395,27 +1405,100 @@
 			   (binder 'param)))))
 		 ((isa? p J2SDecl)
 		  p)
+		 ((arrow-param-bind-exit-desctructure? p)
+		  (with-access::J2SBindExit p (stmt)
+		     (with-access::J2SBlock stmt (nodes)
+			(with-access::J2SVarDecls (car nodes) (decls)
+			   (duplicate::J2SDecl (car decls)
+			      (binder 'param))))))
 		 (else
 		  (parse-node-error "Unexpected token in arrow parameter list" p))))
 	 args (iota (length args))))
 
    (define (arrow-body params::pair-nil args::pair-nil)
-      (if (eq? (peek-token-type) 'LBRACE)
-	  ;; a statement
-	  (fun-body params args current-mode)
-	  ;; an expression
-	  (let* ((expr (assig-expr #f #f #f))
-		 (endloc (token-loc (peek-token) -1)))
-	     (with-access::J2SNode expr (loc)
-		(fun-body-params-defval-block loc endloc params
-		   (destructure-fun-params params args
-		      (instantiate::J2SBlock
-			 (loc loc)
-			 (endloc endloc)
-			 (nodes (list
-				   (instantiate::J2SReturn
-				      (loc loc)
-				      (expr expr)))))))))))
+      (arrow-body-params-defval-block params args
+	 (if (eq? (peek-token-type) 'LBRACE)
+	     ;; a statement
+	     (fun-body params args current-mode)
+	     ;; an expression
+	     (let* ((expr (assig-expr #f #f #f))
+		    (endloc (token-loc (peek-token) -1)))
+		(with-access::J2SNode expr (loc)
+		   (fun-body-params-defval-block loc endloc params
+		      (destructure-fun-params params args
+			 (instantiate::J2SBlock
+			    (loc loc)
+			    (endloc endloc)
+			    (nodes (list
+				      (instantiate::J2SReturn
+					 (loc loc)
+					 (expr expr))))))))))))
+
+   (define (arrow-body-params-defval-block params args body)
+      (let loop ((args args))
+	 (cond
+	    ((null? args)
+	     body)
+	    ((arrow-param-bind-exit-desctructure? (car args))
+	     (arrow-param-defval (car args) (loop (cdr args))))
+	    (else
+	     (loop (cdr args))))))
+
+   (define (arrow-param-defval p body)
+      
+      (define (assig->decl node::J2SStmtExpr)
+	 (with-access::J2SStmtExpr node (expr)
+	    (when (isa? expr J2SAssig)
+	       (with-access::J2SAssig expr (lhs rhs loc)
+		  (with-access::J2SUnresolvedRef lhs (id)
+		     (instantiate::J2SDeclInit
+			(loc loc)
+			(id id)
+			(binder 'let)
+			(val rhs)))))))
+      
+      (with-access::J2SBindExit p (stmt loc)
+	 (with-access::J2SBlock stmt (nodes endloc)
+	    (with-access::J2SVarDecls (car nodes) (decls)
+	       (with-access::J2SDeclInit (car decls) (val)
+		  (with-access::J2SDProducer val (expr)
+		     (let ((decl (let* ((rhs (instantiate::J2SUndefined
+						(loc loc)))
+					(lhs (instantiate::J2SRef
+						(loc loc)
+						(decl (car decls))))
+					(test (instantiate::J2SBinary
+						 (loc loc)
+						 (op '===)
+						 (lhs lhs)
+						 (rhs rhs)))
+					(then expr)
+					(else (instantiate::J2SRef
+						 (loc loc)
+						 (decl (car decls))))
+					(val (instantiate::J2SCond
+						(loc loc)
+						(test test)
+						(then then)
+						(else else))))
+				    (duplicate::J2SDeclInit (cadr decls)
+				       (val val))))
+			   (args (instantiate::J2SBlock
+				    (loc loc)
+				    (endloc endloc)
+				    (nodes (list
+					      (instantiate::J2SVarDecls
+						 (loc loc)
+						 (decls (filter-map assig->decl (cdr nodes))))
+					      body)))))
+			(with-access::J2SBlock body (loc endloc)
+			   (instantiate::J2SBlock
+			      (loc loc)
+			      (endloc endloc)
+			      (nodes (list (instantiate::J2SVarDecls
+					      (loc loc)
+					      (decls (cons decl (cddr decls))))
+					args)))))))))))
    
    (define (arrow-function args::pair-nil loc)
       ;; ES6 arrow functions
@@ -3133,7 +3216,7 @@
 				  ((isa? expr J2SSequence)
 				   (with-access::J2SSequence expr (exprs)
 				      (arrow-function exprs (token-loc token))))
-				  ((or (isa? expr J2SObjInit) (isa? expr J2SArray))
+				  ((or (isa? expr J2SObjInit) (isa? expr J2SArray) (isa? expr J2SBindExit))
 				   (arrow-function (list expr) (token-loc token)))
 				  ((isa? expr J2SDecl)
 				   (arrow-function (list expr) (token-loc token)))
