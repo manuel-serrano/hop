@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Fri Jun 23 09:19:29 2023 (serrano)                */
+;*    Last change :  Sun Jun 25 09:57:44 2023 (serrano)                */
 ;*    Copyright   :  2016-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -185,6 +185,9 @@
 ;*    return ...                                                       */
 ;*---------------------------------------------------------------------*/
 (define (return ty env::pair-nil bk::pair-nil)
+   (unless (every (lambda (s) (isa? s J2SStmt)) bk)
+      (tprint "PAS BON " (map j2s->sexp bk))
+      (error 1 2 3))
    (values ty env bk))
 
 ;*---------------------------------------------------------------------*/
@@ -561,13 +564,13 @@
 	 ((eq? lang 'scheme)
 	  (if (eq? type 'unknown)
 	      (expr-type-add! this env ctx 'any)
-	      (return type env env)))
+	      (return type env '())))
 	 ((isa? expr J2SNode)
 	  (multiple-value-bind (_ _ bk)
 	     (node-type expr env ctx)
 	     (if (eq? type 'unknown)
 		 (expr-type-add! this env ctx 'any bk)
-		 (return type env env))))
+		 (return type env '()))))
 	 (else
 	  (expr-type-add! this env ctx 'any)))))
 	  
