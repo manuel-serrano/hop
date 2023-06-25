@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 15 15:16:16 2018                          */
-;*    Last change :  Tue Jun 20 18:27:49 2023 (serrano)                */
+;*    Last change :  Sun Jun 25 09:27:01 2023 (serrano)                */
 ;*    Copyright   :  2018-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES6 Module handling                                              */
@@ -219,18 +219,25 @@
 ;*---------------------------------------------------------------------*/
 (define-method (collect-decls* this::J2SImport env args)
    
-   (define (find-redirect id::symbol export import::J2SImport iprgm::J2SProgram)
-      (with-access::J2SRedirect export (loc import alias)
-	 (with-access::J2SImport import (iprgm path ipath)
-	    (let ((iname (instantiate::J2SImportName
-			    (loc loc)
-			    (id id)
-			    (alias alias)))
-		  (import (duplicate::J2SImport import
-			     (path path)
-			     (ipath ipath)
-			     (names (list id)))))
-	       (find-export id import iprgm loc)))))
+   (define (find-redirect id::symbol export import::J2SImport iprgm)
+      (cond
+	 (iprgm
+	  (with-access::J2SRedirect export (loc import alias)
+	     (with-access::J2SImport import (iprgm path ipath)
+		(let ((iname (instantiate::J2SImportName
+				(loc loc)
+				(id id)
+				(alias alias)))
+		      (import (duplicate::J2SImport import
+				 (path path)
+				 (ipath ipath)
+				 (names (list id)))))
+		   (find-export id import iprgm loc)))))
+	 ((config-get args :ignore-unresolved-modules #f)
+	  #f)
+	 (else
+	  (with-access::J2SImport import (path)
+	     (error "collect-decls" "wrong import" path)))))
    
    (define (find-export id::symbol import::J2SImport iprgm::J2SProgram loc)
       (with-access::J2SProgram iprgm (exports path)
@@ -266,7 +273,8 @@
 	       (find-export id this iprgm loc)
 	       (if (not x)
 		   (with-access::J2SImportPath ipath (protocol abspath)
-		      (if (eq? protocol 'missing)
+		      (if (or (eq? protocol 'missing)
+			      (config-get args :ignore-unresolved-modules #f))
 			  (let ((x (instantiate::J2SExport
 				      (loc loc)
 				      (id id)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Fri Jun 23 16:47:31 2023 (serrano)                */
+;*    Last change :  Fri Jun 23 16:52:00 2023 (serrano)                */
 ;*    Copyright   :  2016-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -1135,9 +1135,6 @@
 	      (htypes htypes))
       (let ((decl (car decls))
 	    (htype (car htypes)))
-	 (unless htype
-	    (tprint "test-hint-decls pas bon " htypes " " loc)
-	    (tprint (map j2s->sexp decls)))
 	 (with-access::J2SDecl decl (vtype)
 	    (cond
 	       ((null? (cdr decls))
