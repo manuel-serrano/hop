@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Mon Jun 26 08:42:33 2023 (serrano)                */
+;*    Last change :  Mon Jun 26 10:29:28 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -2559,7 +2559,7 @@
 		    (instantiate::J2SBinary
 		       (op '??)
 		       (loc (token-loc op))
-		       (lhs lhs)
+		       (lhs (dup-expr lhs))
 		       (rhs (instantiate::J2SAssig
 			       (loc (token-loc op))
 			       (lhs lhs)

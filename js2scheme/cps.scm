@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Wed Jun 21 17:54:51 2023 (serrano)                */
+;*    Last change :  Mon Jun 26 10:25:29 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript CPS transformation                                    */
@@ -1286,7 +1286,34 @@
 ;*---------------------------------------------------------------------*/
 (define-method (cps this::J2SCall k r kbreaks kcontinues fun conf)
    (assert-kont k KontExpr this)
-   (with-access::J2SCall this ((callee fun) args loc)
+   (with-access::J2SCall this ((callee fun) args)
+      (cond
+	 ((yield-expr? callee kbreaks kcontinues)
+	  (cps callee
+	     (KontExpr (lambda (kfun::J2SExpr)
+			  (set! callee kfun)
+			  (cps this k r kbreaks kcontinues fun conf))
+		this k)
+	     r kbreaks kcontinues fun conf))
+	 ((any (lambda (e) (yield-expr? e kbreaks kcontinues)) args)
+	  (cps-fun! callee r conf)
+	  (cps* args
+	     (KontExpr* (lambda (kargs::pair-nil)
+			   (set! args kargs)
+			   (cps this k r kbreaks kcontinues fun conf))
+		args k)
+	     r kbreaks kcontinues fun conf))
+	 (else
+	  (cps-fun! callee r conf)
+	  (for-each (lambda (n) (cps-fun! n r conf)) args)
+	  (kcall k this)))))
+
+;*---------------------------------------------------------------------*/
+;*    cps ::J2SNew ...                                                 */
+;*---------------------------------------------------------------------*/
+(define-method (cps this::J2SNew k r kbreaks kcontinues fun conf)
+   (assert-kont k KontExpr this)
+   (with-access::J2SNew this ((callee clazz) args)
       (cond
 	 ((yield-expr? callee kbreaks kcontinues)
 	  (cps callee
