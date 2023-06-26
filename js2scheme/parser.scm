@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Sat Jun 24 07:14:49 2023 (serrano)                */
+;*    Last change :  Mon Jun 26 08:13:14 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -2492,7 +2492,7 @@
    
    (define (assig-operator? x)
       (case x
-	 ((= *= /= %= += -= <<= >>= >>>= &= ^= BIT_OR= **=)
+	 ((= *= /= %= += -= <<= >>= >>>= &= ^= BIT_OR= **= ??=)
 	  #t)
 	 (else #f)))
    
@@ -2509,8 +2509,8 @@
 	 (if (assig-operator? (peek-token-type))
 	     (let* ((op (consume-any!))
 		    (rhs (assig-expr in-for-init? #f #f)))
-		(cond
-		   ((eq? (car op) '=)
+		(case (token-tag op)
+		   ((=)
 		    (cond
 		       ((or (isa? lhs J2SArray) (isa? lhs J2SObjInit))
 			(let* ((loc (token-loc op))
@@ -2549,6 +2549,17 @@
 			   (loc (token-loc op))
 			   (lhs lhs)
 			   (rhs rhs)))))
+		   ((??=)
+		    ;; a short circuit for x ?? (x = y)
+		    ;; see ;; https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Nullish_coalescing_assignment
+		    (instantiate::J2SBinary
+		       (op '??)
+		       (loc (token-loc op))
+		       (lhs lhs)
+		       (rhs (instantiate::J2SAssig
+			       (loc (token-loc op))
+			       (lhs lhs)
+			       (rhs rhs)))))
 		   (else
 		    (instantiate::J2SAssigOp
 		       (loc (token-loc op))

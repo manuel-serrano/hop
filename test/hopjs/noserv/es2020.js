@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Jun 30 17:54:33 2015                          */
-/*    Last change :  Sat Jun  5 06:26:09 2021 (serrano)                */
-/*    Copyright   :  2015-21 Manuel Serrano                            */
+/*    Last change :  Mon Jun 26 08:22:04 2023 (serrano)                */
+/*    Copyright   :  2015-23 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 2020 features                                 */
 /*=====================================================================*/
@@ -195,6 +195,12 @@ function nullishMdnD() {
    return val === "foo";
 }
 
+function nullishMdnE(options) {
+  options.duration ??= 100;
+  options.speed ??= 25;
+  return options;
+}
+
 console.log("nullish");
 console.log("   Kangax...");
 assert.equal(nullishKangax(), true, "nullishKangax");
@@ -207,6 +213,13 @@ console.log("   MdnC...");
 assert.equal(nullishMdnC(), true, "nullishMdnC");
 console.log("   MdnD...");
 assert.equal(nullishMdnD(), true, "nullishMdnD");
+console.log("   MdnE...");
+assert.equal(nullishMdnE({ duration: 125 }).speed, 25, "nullishMdnEa");
+assert.equal(nullishMdnE({ duration: 125 }).duration, 125, "nullishMdnEb");
+assert.equal(nullishMdnE({}).duration, 100, "nullishMdnEc");
+assert.equal(nullishMdnE({}).speed, 25, "nullishMdnEd");
+
+
 
 
 
