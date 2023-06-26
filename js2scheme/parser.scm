@@ -1,9 +1,9 @@
-                    ;*=====================================================================*/
+;*=====================================================================*/
 ;*    serrano/prgm/project/hop/hop/js2scheme/parser.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Mon Jun 26 08:13:14 2023 (serrano)                */
+;*    Last change :  Mon Jun 26 08:27:51 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1993,8 +1993,12 @@
 		       (set! exports (cons x exports))
 		       i))
 		 (parse-token-error "Illegal export, \"from\" expected" fro))))
+	 ((type)
+	  (type-decl-list)
+	  (instantiate::J2SNop
+	     (loc (token-loc token))))
 	 (else
-	  (parse-token-error "Illegal export declaration" token))))
+	  (parse-token-error "Illegal export declaration" (peek-token)))))
 
    (define (service declaration?)
       (let* ((token (consume-token! 'ID))
