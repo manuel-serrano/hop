@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 21 09:27:29 2017                          */
-;*    Last change :  Thu Jun 22 10:37:52 2023 (serrano)                */
+;*    Last change :  Mon Jun 26 10:20:25 2023 (serrano)                */
 ;*    Copyright   :  2017-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    This optimization consists in "pre-initializating" variables     */
@@ -340,19 +340,6 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (patchinit! this::J2SNode args)
    (call-default-walker))
-
-;*---------------------------------------------------------------------*/
-;*    patchinit! ::J2SInit ...                                         */
-;*---------------------------------------------------------------------*/
-(define-walk-method (patchinit! this::J2SInit args)
-   (with-access::J2SInit this (lhs loc)
-      (if (isa? lhs J2SRef)
-	  (with-access::J2SRef lhs (decl)
-	     (with-access::J2SDecl decl (%info)
-		(if (preinit? %info)
-		    (J2SUndefined)
-		    (call-default-walker))))
-	  (call-default-walker))))
 
 ;*---------------------------------------------------------------------*/
 ;*    decl->declinit ...                                               */
