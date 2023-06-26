@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Thu Feb 16 16:47:54 2023 (serrano)                */
+;*    Last change :  Mon Jun 26 10:39:06 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preallocate constant objects (regexps, literal cmaps,            */
@@ -66,7 +66,8 @@
       (with-access::J2SProgram this (nodes headers decls loc pcache-size cnsts)
 	 (let ((env (env 0 '() (create-hashtable)
 		       (create-hashtable :eqtest equal?
-			  :hash keys-hashnumber)
+			  :hash keys-hashnumber
+			  :max-bucket-length 32)
 		       '())))
 	    (for-each (lambda (n) (constant! n env 0 conf)) headers)
 	    (for-each (lambda (n) (constant! n env 0 conf)) decls)
