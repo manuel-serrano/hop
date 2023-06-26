@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Mon Jun 26 08:27:51 2023 (serrano)                */
+;*    Last change :  Mon Jun 26 08:37:28 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -2933,8 +2933,10 @@
 		(args (tag-call-arguments loc))))
 	    ((?.)
 	     (let* ((token (consume-any!))
-		    (loc (token-loc token)))
-		(when (eq? (peek-token-type) 'ID)
+		    (loc (token-loc token))
+		    (t (peek-token-type)))
+		(when (or memq (t '(ID 'RESERVED type))
+			  (j2s-reserved-id? t))
 		   (token-push-back! (make-token 'DOT "." loc)))
 		(loop (J2SUnary '?. expr))))
 	    (else
