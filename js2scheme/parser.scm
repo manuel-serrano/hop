@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Mon Jun 26 08:37:28 2023 (serrano)                */
+;*    Last change :  Mon Jun 26 08:42:33 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -3631,7 +3631,7 @@
 		  (cond
 		     ((memq name '(get set))
 		      (case (peek-token-type)
-			 ((ID RESERVED type)
+			 ((ID RESERVED type get set)
 			  (property-accessor (consume-any!) tokname name props))
 			 ((STRING ESTRING OSTRING)
 			  (let* ((tok (consume-any!))
@@ -3653,7 +3653,6 @@
 			  (loop
 			     (instantiate::J2SString
 				(loc (token-loc token))
-				(private #t)
 				(val (symbol->string (token-value token))))))
 			 ((LBRACKET)
 			  (consume-any!)
