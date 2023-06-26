@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec  5 09:14:00 2019                          */
-;*    Last change :  Fri Jun 23 09:57:32 2023 (serrano)                */
+;*    Last change :  Mon Jun 26 18:37:00 2023 (serrano)                */
 ;*    Copyright   :  2019-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arguments optimization                                           */
@@ -135,7 +135,8 @@
 	      (string=? val "length"))))
 
    (define (field-index? field)
-      (type-fixnum? (j2s-type field)))
+      (let ((ty (j2s-type field)))
+	 (or (type-fixnum? ty) (type-int53? ty))))
 
    (with-access::J2SAccess this (obj field)
       (argsuse field)
