@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Sun Apr 30 12:14:33 2023 (serrano)                */
+;*    Last change :  Tue Jun 27 13:03:53 2023 (serrano)                */
 ;*    Copyright   :  2015-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Let optimisation                                                 */
@@ -764,15 +764,17 @@
 			     (else
 			      ;; do not optimize this variable and disable
 			      ;; the variables it uses
-			      (let ((decl (init-decl init))
-				    (used (get-used-decls rhs
-					     (append decls vars)))
-				    (disabled (get-used-deps used deps)))
-				 (liip (cdr inits)
-				    (remove-disabled! decls disabled)
-				    deps
-				    (cons (car n) res)
-				    #f))))))))))
+			      (with-access::J2SInit init (loc)
+				 (let ((decl (init-decl init))
+				       (used (get-used-decls rhs
+						(append decls vars)))
+				       (disabled (get-used-deps used deps))
+				       (stmt (J2SStmtExpr init)))
+				    (liip (cdr inits)
+				       (remove-disabled! decls disabled)
+				       deps
+				       (cons stmt res)
+				       #f)))))))))))
 	 ((null? (cdr n))
 	  ;; this is the last stmt which happens not to be a binding
 	  (reverse! (cons (car n) res)))
