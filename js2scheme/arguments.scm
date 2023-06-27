@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec  5 09:14:00 2019                          */
-;*    Last change :  Mon Jun 26 18:37:00 2023 (serrano)                */
+;*    Last change :  Tue Jun 27 07:48:38 2023 (serrano)                */
 ;*    Copyright   :  2019-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arguments optimization                                           */
@@ -200,7 +200,7 @@
 	  #f)))
       
    (define (arguments-slice? fun args)
-      (when (and (isa? fun J2SAccess) (>=fx (length args) 2))
+      (when (and (isa? fun J2SAccess) (>=fx (length args) 1))
          (with-access::J2SAccess fun (obj field)
             (when (isa? field J2SString)
                (with-access::J2SString field (val)

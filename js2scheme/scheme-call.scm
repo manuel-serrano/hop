@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Fri Jun 23 12:45:04 2023 (serrano)                */
+;*    Last change :  Tue Jun 27 07:53:28 2023 (serrano)                */
 ;*    Copyright   :  2018-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -580,6 +580,67 @@
 		  (is-builtin-ref? obj 'Array)))))))
 
 ;*---------------------------------------------------------------------*/
+;*    array-prototype-slice? ...                                       */
+;*---------------------------------------------------------------------*/
+(define (array-prototype-slice? obj)
+
+   (define (array-prototype? obj)
+      (when (isa? obj J2SAccess)
+	 (with-access::J2SAccess obj (obj field)
+	    (when (isa? obj J2SRef)
+	       (with-access::J2SRef obj (decl)
+		  (when (isa? decl J2SDeclExtern)
+		     (with-access::J2SDeclExtern decl (id)
+			(when (and (eq? id 'Array) (decl-ronly? decl))
+			   (when (isa? field J2SString)
+			      (with-access::J2SString field (val)
+				 (string=? val "prototype")))))))))))
+
+   (define (builtin-array-prototype-slice? obj)
+      (when (isa? obj J2SRef)
+	 (with-access::J2SRef obj (decl)
+	    (when (and (isa? decl J2SDeclInit) (decl-ronly? decl))
+	       (with-access::J2SDeclInit decl (val)
+		  (array-prototype-slice? val))))))
+   
+   ;; see ause::J2SCall@argument.scm
+   (cond
+      ((isa? obj J2SAccess)
+       (with-access::J2SAccess obj (obj field)
+	  (when (isa? field J2SString)
+	     (with-access::J2SString field (val)
+		(when (string=? val "slice")
+		   (array-prototype? obj))))))
+      ((isa? obj J2SRef)
+       (builtin-array-prototype-slice? obj))
+      (else
+       #f)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-call-array-prototype-slice ...                               */
+;*---------------------------------------------------------------------*/
+(define (j2s-call-array-prototype-slice obj arg args %this)
+   (case (j2s-type (car args))
+      ((string)
+       (let ((o (gensym '%o)))
+	  `(let ((,o ,obj))
+	      (js-jsstring-slice ,o ,arg
+		 (js-jsstring-lengthfx ,o)
+		 ,%this))))
+      ((arguments)
+       (if (ref-stack-vararg? (car args))
+	   `(js-arguments-vector-slice ,obj ,arg
+	       ,(j2s-arguments-length-id)
+	       ,%this)
+	   (let ((a (gensym '%a)))
+	      `(let ((,a ,obj))
+		  (js-arguments-slice ,a ,arg
+		     (js-arguments-length ,a %this)
+		     ,%this)))))
+      (else
+       `(js-array-prototype-maybe-slice1 ,obj ,arg ,%this))))
+
+;*---------------------------------------------------------------------*/
 ;*    j2s-call0 ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (j2s-call0 obj args mode return conf)
@@ -601,11 +662,20 @@
 		     (when (string=? val "toString")
 			(is-object-prototype? obj))))))))
 
+   (define (is-array-prototype-slice? obj args)
+      (when (=fx (length args) 3)
+	 ;; a method called with exactly one argument
+	 ;; (%this and cache have been added)
+	 (array-prototype-slice? obj)))
+   
    (cond
       ((is-object-prototype-tostring? obj args)
        `(js-object-prototype-tostring 
 	   ,(j2s-scheme (car args) mode return conf)
 	   ,(cadr args)))
+      ((is-array-prototype-slice? obj args)
+       (j2s-call-array-prototype-slice
+	  (j2s-scheme (car args) mode return conf) 0 args (cadr args)))
       ((isa? obj J2SRef)
        (with-access::J2SRef obj (loc decl)
 	  (cond
@@ -653,39 +723,6 @@
 		     (when (string=? val "hasOwnProperty")
 			(is-object-prototype? obj))))))))
 
-   (define (array-prototype? obj)
-      (when (isa? obj J2SAccess)
-	 (with-access::J2SAccess obj (obj field)
-	    (when (isa? obj J2SRef)
-	       (with-access::J2SRef obj (decl)
-		  (when (isa? decl J2SDeclExtern)
-		     (with-access::J2SDeclExtern decl (id)
-			(when (and (eq? id 'Array) (decl-ronly? decl))
-			   (when (isa? field J2SString)
-			      (with-access::J2SString field (val)
-				 (string=? val "prototype")))))))))))
-
-   (define (builtin-array-prototype-slice? obj)
-      (when (isa? obj J2SRef)
-	 (with-access::J2SRef obj (decl)
-	    (when (and (isa? decl J2SDeclInit) (decl-ronly? decl))
-	       (with-access::J2SDeclInit decl (val)
-		  (array-prototype-slice? val))))))
-	 
-   (define (array-prototype-slice? obj)
-      ;; see ause::J2SCall@argument.scm
-      (cond
-	 ((isa? obj J2SAccess)
-	  (with-access::J2SAccess obj (obj field)
-	     (when (isa? field J2SString)
-		(with-access::J2SString field (val)
-		   (when (string=? val "slice")
-		      (array-prototype? obj))))))
-	 ((isa? obj J2SRef)
-	  (builtin-array-prototype-slice? obj))
-	 (else
-	  #f)))
-      
    (define (is-array-prototype-slice? obj args)
       (when (=fx (length args) 4)
 	 ;; a method called with exactly two arguments
@@ -699,31 +736,10 @@
 	   ,(j2s-scheme (cadr args) mode return conf)
 	   ,(caddr args)))
       ((is-array-prototype-slice? obj args)
-       (case (j2s-type (car args))
-	  ((string)
-	   (let ((o (gensym '%o)))
-	      `(let ((,o ,(j2s-scheme (car args) mode return conf)))
-		  (js-jsstring-slice ,o
-		     ,(j2s-scheme (cadr args) mode return conf)
-		     (js-jsstring-lengthfx ,o)
-		     ,(caddr args)))))
-	  ((arguments)
-	   (if (ref-stack-vararg? (car args))
-	       `(js-arguments-vector-slice ,(j2s-scheme (car args) mode return conf)
-		   ,(j2s-scheme (cadr args) mode return conf)
-		   ,(j2s-arguments-length-id)
-		   ,(caddr args))
-	       (let ((a (gensym '%a)))
-		  `(let ((,a ,(j2s-scheme (car args) mode return conf)))
-		      (js-arguments-slice ,a
-			 ,(j2s-scheme (cadr args) mode return conf)
-			 (js-arguments-length ,a %this)
-			 ,(caddr args))))))
-	  (else
-	   `(js-array-prototype-maybe-slice1
-	       ,(j2s-scheme (car args) mode return conf)
-	       ,(j2s-scheme (cadr args) mode return conf)
-	       ,(caddr args)))))
+       (j2s-call-array-prototype-slice
+	  (j2s-scheme (car args) mode return conf)
+	  (j2s-scheme (cadr args) mode return conf)
+	  args (caddr args)))
       ((isa? obj J2SRef)
        (with-access::J2SRef obj (loc decl)
 	  (cond
