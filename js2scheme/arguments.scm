@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec  5 09:14:00 2019                          */
-;*    Last change :  Tue Jun 27 07:48:38 2023 (serrano)                */
+;*    Last change :  Tue Jul  4 06:54:15 2023 (serrano)                */
 ;*    Copyright   :  2019-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arguments optimization                                           */
@@ -51,8 +51,6 @@
 (define (j2s-arguments this conf)
    (when (isa? this J2SProgram)
       (unless (> (config-get conf :debug 0) 0)
-	 ;; "ause" replaces "annotate-arguments", which is no longer used
-	 ;;(annotate-arguments this this #f #f)
 	 (argsuse this)
 	 ))
    this)
@@ -71,6 +69,8 @@
 (define-walk-method (argsuse this::J2SFun)
    (with-access::J2SFun this (argumentsp params mode)
       (when argumentsp
+	 ;; approximate the argument range
+	 (argsrange this #f '())
 	 (with-access::J2SDecl argumentsp (%info)
 	    (set! %info '()))
 	 ;; will be restored if used in a "true" ref
@@ -138,7 +138,7 @@
       (let ((ty (j2s-type field)))
 	 (or (type-fixnum? ty) (type-int53? ty))))
 
-   (with-access::J2SAccess this (obj field)
+   (with-access::J2SAccess this (obj field %info)
       (argsuse field)
       (if (isa? obj J2SRef)
 	  (with-access::J2SRef obj (decl)
@@ -146,7 +146,7 @@
 		 (decl-usage-add! decl
 		    (cond
 		       ((field-length? field) 'length)
-		       ((field-index? field) 'aref)
+		       ((and (field-index? field) (eq? %info 'in-range)) 'aref)
 		       (else 'get)))
 		 (call-default-walker)))
 	  (call-default-walker))))
@@ -361,4 +361,133 @@
 	     (with-access::J2SDecl decl (%info)
 		(when (arguments-alias? %info)
 		   (loop (arguments-alias-arguments %info)))))))))
+   
+;*---------------------------------------------------------------------*/
+;*    argsrange ...                                                    */
+;*    -------------------------------------------------------------    */
+;*    For each access "arguments[X]", approximate X to check whether   */
+;*    it is in the range [0..arguments.length] or not.                 */
+;*---------------------------------------------------------------------*/
+(define-walk-method (argsrange this::J2SNode range env)
+   (call-default-walker))
+
+
+;*---------------------------------------------------------------------*/
+;*    argsrange ::J2SAccess ...                                        */
+;*---------------------------------------------------------------------*/
+(define-walk-method (argsrange this::J2SAccess range env)
+   
+   (define (field-index? field)
+      (let ((ty (j2s-type field)))
+	 (or (type-fixnum? ty) (type-int53? ty))))
+   
+   (call-default-walker)
+   (with-access::J2SAccess this (obj field %info)
+      (when (isa? obj J2SRef)
+	 (with-access::J2SRef obj (decl)
+	    (when (and (isa? decl J2SDeclRest) (field-index? field))
+	       (cond
+		  ((isa? field J2SNumber)
+		   (with-access::J2SNumber field (val)
+		      (when (and range (<= val range))
+			 (set! %info 'in-range))))
+		  ((isa? field J2SRef)
+		   (with-access::J2SRef field (decl)
+		      (when (memq decl env)
+			 (set! %info 'in-range))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    argsrange-test ...                                               */
+;*---------------------------------------------------------------------*/
+(define (argsrange-test this::J2SExpr)
+
+   (define (field-length? field)
+      (and (isa? field J2SString)
+	   (with-access::J2SString field (val)
+	      (string=? val "length"))))
+
+   (define (args-ref? obj)
+      (when (isa? obj J2SRef)
+	 (with-access::J2SRef obj (decl)
+	    (isa? decl J2SDeclRest))))
+      
+   (define (args-length? expr)
+      (when (isa? expr J2SAccess)
+	 (with-access::J2SAccess expr (obj field)
+	    (and (field-length? field) (args-ref? obj)))))
+
+   (define (inv op)
+      (case op
+	 ((<) '>=)
+	 ((<=) '>)
+	 ((>) '<=)
+	 ((>=) '<)
+	 (else op)))
+
+   (define (argsrange-test-number op num)
+      (with-access::J2SNumber num (val)
+	 (case op
+	    ((>= == ===) (values val #f '() '()))
+	    ((>) (values (+ val 1) #f '() '()))
+	    ((<) (values #f val #f '() '()))
+	    ((<=) (values #f (+ 1 val) #f '() '()))
+	    (else (values #f #f '() '())))))
+
+   (define (argsrange-test-ref op ref)
+      (with-access::J2SRef ref (decl)
+	 (case op
+	    ((>=) (values #f #f '() (list decl)))
+	    ((<) (values #f #f (list decl) '()))
+	    (else (values #f #f '() '())))))
+
+   (if (isa? this J2SBinary)
+       (with-access::J2SBinary this (op lhs rhs)
+	  (cond
+	     ((and (args-length? lhs) (isa? rhs J2SNumber))
+	      (argsrange-test-number op rhs))
+	     ((and (args-length? rhs) (isa? lhs J2SNumber))
+	      (argsrange-test-number (inv op) lhs))
+	     ((and (args-length? lhs) (isa? rhs J2SRef))
+	      (values #f #f '() '()))
+	     ((and (args-length? rhs) (isa? lhs J2SRef))
+	      (argsrange-test-ref op rhs))
+	     (else
+	      (argsrange-test-ref (inv op) rhs))))
+       (values #f #f '() '())))
+
+;*---------------------------------------------------------------------*/
+;*    argsrange ::J2SIf ...                                            */
+;*---------------------------------------------------------------------*/
+(define-walk-method (argsrange this::J2SIf range env)
+   (with-access::J2SIf this (test then else)
+      (argsrange test range env)
+      (multiple-value-bind (nrange+ nrange- env+ env-)
+	 (argsrange-test test)
+	 (argsrange then (or nrange+ range) (append env+ env))
+	 (argsrange else (or nrange- range) (append env- env)))))
+
+;*---------------------------------------------------------------------*/
+;*    argsrange ::J2SLetBlock ...                                      */
+;*---------------------------------------------------------------------*/
+(define-method (argsrange this::J2SLetBlock range env)
+   (with-access::J2SLetBlock this (decls body)
+      (if (and (pair? decls) (null? (cdr decls))
+	       (isa? (cdr decls) J2SDeclInit)
+	       (pair? body) (null? (cdr body))
+	       (isa? (car body) J2SFor))
+	  (with-access::J2SDeclInit (car decls) (val)
+	     (if (isa? val J2SNumber)
+		 (argsrange-for (car body) (car decls) range env)
+		 (call-default-walker)))
+	  (call-default-walker))))
+
+;*---------------------------------------------------------------------*/
+;*    argsrange-for ...                                                */
+;*---------------------------------------------------------------------*/
+(define (argsrange-for this::J2SFor decl::J2SDecl range env)
+   (with-access::J2SFor this (init test incr body)
+      (argsrange init range env)
+      (argsrange incr range env)
+      (argsrange body range env)))
+	 
    
