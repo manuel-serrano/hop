@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Sat Jun 10 06:51:44 2023 (serrano)                */
+;*    Last change :  Tue Jul  4 10:23:58 2023 (serrano)                */
 ;*    Copyright   :  2017-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript arguments functions.        */
@@ -96,6 +96,10 @@
 	  (int32->fixnum n)
 	  `(int32->fixnum ,n)))
 
+   (define (ref-usage-strict? this::J2SRef usages)
+      (with-access::J2SRef this (decl)
+	 (decl-usage-strict? decl usages)))
+
    (with-access::J2SAccess this (obj field type)
       (cond
 	 ((maybe-number? field)
@@ -103,39 +107,51 @@
 	     ((eq? (j2s-type field) 'uint32)
 	      (cond
 		 ((argument-stack? obj)
-		  `(js-arguments-vector-index-ref
-		      ,(j2s-scheme obj mode return ctx)
-		      ,(js-uint32->fixnum (j2s-scheme field mode return ctx))
-		      ,(j2s-arguments-length-id)
-		      ,(j2s-arguments-object-id)
-		      %this
-		      ',mode))
+		  (if (ref-usage-strict? obj '(slice aref length spread))
+		      `(vector-ref
+			  ,(j2s-scheme obj mode return ctx)
+			  ,(js-uint32->fixnum (j2s-scheme field mode return ctx)))
+		      `(js-arguments-vector-index-ref
+			  ,(j2s-scheme obj mode return ctx)
+			  ,(js-uint32->fixnum (j2s-scheme field mode return ctx))
+			  ,(j2s-arguments-length-id)
+			  ,(j2s-arguments-object-id)
+			  %this
+			  ',mode)))
 		 (else
 		  `(js-arguments-index-ref ,(j2s-scheme obj mode return ctx)
 		      ,(j2s-scheme field mode return ctx)
 		      %this))))
 	     ((eq? (j2s-type field) 'int32)
 	      (if (argument-stack? obj)
-		  `(js-arguments-vector-ref
-		      ,(j2s-scheme obj mode return ctx)
-		      ,(js-int32->fixnum (j2s-scheme field mode return ctx))
-		      ,(j2s-arguments-length-id)
-		      ,(j2s-arguments-object-id)
-		      %this
-		      ',mode)
+		  (if (ref-usage-strict? obj '(slice aref length spread))
+		      `(vector-ref
+			  ,(j2s-scheme obj mode return ctx)
+			  ,(js-int32->fixnum (j2s-scheme field mode return ctx)))
+		      `(js-arguments-vector-ref
+			  ,(j2s-scheme obj mode return ctx)
+			  ,(js-int32->fixnum (j2s-scheme field mode return ctx))
+			  ,(j2s-arguments-length-id)
+			  ,(j2s-arguments-object-id)
+			  %this
+			  ',mode))
 		  (let ((argid (j2s-ref-arguments-argid obj)))
 		     `(js-arguments-index-ref ,argid
 			 ,(j2s-scheme obj mode return ctx)
 			 ,(js-int32->fixnum (j2s-scheme field mode return ctx))
 			 %this))))
 	     ((argument-stack? obj)
-	      `(js-arguments-vector-ref
-		  ,(j2s-scheme obj mode return ctx)
-		  ,(j2s-scheme field mode return ctx)
-		  ,(j2s-arguments-length-id)
-		  ,(j2s-arguments-object-id)
-		  %this
-		  ',mode))
+	      (if (ref-usage-strict? obj '(slice aref length spread))
+		  `(vector-ref
+		      ,(j2s-scheme obj mode return ctx)
+		      ,(j2s-scheme field mode return ctx))
+		  `(js-arguments-vector-ref
+		      ,(j2s-scheme obj mode return ctx)
+		      ,(j2s-scheme field mode return ctx)
+		      ,(j2s-arguments-length-id)
+		      ,(j2s-arguments-object-id)
+		      %this
+		      ',mode)))
 	     (else
 	      `(js-arguments-ref ,(j2s-scheme obj mode return ctx)
 		  ,(j2s-scheme field mode return ctx)
