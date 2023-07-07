@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Dec  7 06:32:41 2019                          */
-;*    Last change :  Fri Jun 23 10:27:07 2023 (serrano)                */
+;*    Last change :  Fri Jul  7 10:40:56 2023 (serrano)                */
 ;*    Copyright   :  2019-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function macros for js2scheme                                    */
@@ -44,7 +44,7 @@
 ;*    js-function-maybe-apply-arguments ...                            */
 ;*---------------------------------------------------------------------*/
 (define-macro (js-function-maybe-apply-arguments %this fun thisarg vec %arguments mode cache)
-   `(if (js-function? ,this)
+   `(if (js-function? ,fun)
 	(js-function-apply-arguments ,%this ,fun ,thisarg ,vec ,%arguments mode ,cache)
 	(begin
 	   (set! %arguments 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Tue Jun 27 07:53:28 2023 (serrano)                */
+;*    Last change :  Fri Jul  7 10:59:57 2023 (serrano)                */
 ;*    Copyright   :  2018-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -361,7 +361,7 @@
       `(js-function-maybe-apply-arguments ,(caddr args)
 	  ,(j2s-scheme obj mode return conf)
 	  ,(j2s-scheme (car args) mode return conf)
-	  ,(j2s-scheme (cadr args) mode return conf)
+	  ,(j2s-arguments-stack-id)
 	  ,(j2s-arguments-object-id)
 	  ',mode
 	  ,(cadddr args)))

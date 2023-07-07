@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec  5 09:14:00 2019                          */
-;*    Last change :  Fri Jul  7 07:31:24 2023 (serrano)                */
+;*    Last change :  Fri Jul  7 10:16:00 2023 (serrano)                */
 ;*    Copyright   :  2019-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arguments optimization                                           */
@@ -98,10 +98,7 @@
 	       ((usage-strict? usage '(slice aref length spread))
 		(set! alloc-policy 'stack))
 	       ((usage-strict? usage '(slice aref length spread apply))
-		(set! alloc-policy 'stack))
-	       ((and (usage-strict? usage '(slice aref length spread apply get))
-		     (not useinloop))
-		(set! alloc-policy 'stack)))))
+		(set! alloc-policy 'lazy)))))
       (when (pair? params)
 	 (let ((lastp (car (last-pair params))))
 	    (when (isa? lastp J2SDeclRest)

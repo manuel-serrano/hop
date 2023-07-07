@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Dec 14 07:04:23 2019                          */
-;*    Last change :  Thu Jun  8 14:16:34 2023 (serrano)                */
+;*    Last change :  Fri Jul  7 10:16:35 2023 (serrano)                */
 ;*    Copyright   :  2019-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Ast node usage API                                               */
@@ -40,12 +40,14 @@
 
 	   (decl-lonly-vararg?::bool ::obj)
 	   (decl-stack-vararg?::bool ::obj)
+	   (decl-lazy-vararg?::bool ::obj)
 	   
 	   (ref-lonly-vararg?::bool ::obj)
 	   (ref-stack-vararg?::bool ::obj)
 	   
 	   (fun-lonly-vararg?::bool ::J2SFun)
-	   (fun-stack-vararg?::bool ::J2SFun)))
+	   (fun-stack-vararg?::bool ::J2SFun)
+	   (fun-lazy-vararg?::bool ::J2SFun)))
 
 ;*---------------------------------------------------------------------*/
 ;*    usage ...                                                        */
@@ -168,6 +170,14 @@
 	 (eq? alloc-policy 'stack))))
 
 ;*---------------------------------------------------------------------*/
+;*    decl-lazy-vararg? ...                                            */
+;*---------------------------------------------------------------------*/
+(define (decl-lazy-vararg? this)
+   (when (isa? this J2SDeclArguments)
+      (with-access::J2SDeclArguments this (alloc-policy)
+	 (eq? alloc-policy 'lazy))))
+
+;*---------------------------------------------------------------------*/
 ;*    ref-lonly-vararg? ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (ref-lonly-vararg? this)
@@ -200,3 +210,12 @@
 (define (fun-stack-vararg? this::J2SFun)
    (with-access::J2SFun this (argumentsp)
       (decl-stack-vararg? argumentsp)))
+
+;*---------------------------------------------------------------------*/
+;*    fun-lazy-vararg? ...                                             */
+;*    -------------------------------------------------------------    */
+;*    Fun uses ARGUMENTS that can be a lazy allocated vector           */
+;*---------------------------------------------------------------------*/
+(define (fun-lazy-vararg? this::J2SFun)
+   (with-access::J2SFun this (argumentsp)
+      (decl-lazy-vararg? argumentsp)))

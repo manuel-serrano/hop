@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Thu Jun 22 14:57:58 2023 (serrano)                */
+;*    Last change :  Fri Jul  7 10:17:56 2023 (serrano)                */
 ;*    Copyright   :  2017-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -220,15 +220,6 @@
 		    `(js-function-arity ,req ,opt 'arguments-lazy))
 		   (else
 		    `(js-function-arity ,req ,opt 'arguments)))))
-;* 		(cond                                                  */
-;* 		   ((fun-lonly-vararg? this)                           */
-;* 		    `(js-function-arity ,req ,opt 'lonly))   */
-;* 		   ((fun-stack-vararg? this)                           */
-;* 		    `(js-function-arity ,req ,opt 'arguments-lazy))    */
-;* 		   ((eq? alloc-policy 'lazy)                           */
-;* 		    `(js-function-arity ,req ,opt 'arguments-lazy))    */
-;* 		   (else                                               */
-;* 		    `(js-function-arity ,req ,opt 'arguments)))))      */
 	    ((eq? vararg 'rest)
 	     (with-access::J2SDeclRest (car (last-pair params)) (alloc-policy)
 		(case alloc-policy
@@ -544,7 +535,7 @@
 		      (rest-lambda this id body))
 		     ((fun-lonly-vararg? this)
 		      (lonly-vararg-lambda this id body))
-		     ((fun-stack-vararg? this)
+		     ((or (fun-stack-vararg? this) (fun-lazy-vararg? this))
 		      (stack-vararg-lambda this id body))
 		     ((eq? mode 'normal)
 		      (sloppy-vararg-lambda this id body))
@@ -698,9 +689,10 @@
       (with-access::J2SDeclArguments argumentsp (alloc-policy argid mode loc)
 	 (let ((%len (j2s-arguments-length-id)))
 	    `(let ((,%len (vector-length ,argid))
-		    (arguments ,(if (eq? alloc-policy 'lazy)
-				    `',mode
-				    `(js-strict-arguments %this ,arguments))))
+		    (,(j2s-arguments-object-id)
+		     ,(if (eq? alloc-policy 'lazy)
+			  #f
+			  `(js-strict-arguments %this ,arguments))))
 		(let (,@(map (lambda (p i)
 				(let ((v (J2SAccess (J2SRef argumentsp)
 					    (J2SNumber/type 'uint32 (fixnum->uint32 i)))))
@@ -711,7 +703,7 @@
    
    (define (strict-arguments-prelude argumentsp params body)
       `(let ((&len (vector-length ,arguments))
-	     (arguments (js-strict-arguments %this ,arguments)))
+	     (,(j2s-arguments-object-id) (js-strict-arguments %this ,arguments)))
 	  (let (,@(map (lambda (param i)
 			  (with-access::J2SDecl param (loc)
 			     (let ((v (J2SAccess (J2SRef argumentsp)
@@ -1078,7 +1070,7 @@
    
    (define (init-alias-argument argument::symbol param::J2SDecl indx::long)
       (let ((id (j2s-decl-scm-id param ctx)))
-	 `(js-arguments-define-own-property arguments ,indx
+	 `(js-arguments-define-own-property ,(j2s-arguments-object-id) ,indx
 	     (instantiate::JsAccessorDescriptor
 		(name (js-integer-name->jsstring ,indx))
 		(get (js-make-function %this
@@ -1097,7 +1089,7 @@
    (define (sloppy-arguments-prelude argumentsp params body loc)
       (with-access::J2SDeclArguments argumentsp (argid alloc-policy mode)
 	 `(let ((%len (vector-length ,argid))
-		(arguments (js-sloppy-arguments %this ,argid))
+		(,(j2s-arguments-object-id) (js-sloppy-arguments %this ,argid))
 		,@(map (lambda (param i)
 			  (with-access::J2SDecl param (loc)
 			     (epairify loc
@@ -1114,7 +1106,8 @@
 			       (vector-ref ,argid ,i))
 			    ,(init-alias-argument argid param i)
 			    ,(loop (cdr params) (+fx i 1))))))
-	     (js-bind! %this arguments ,(& "callee" (context-program ctx))
+	     (js-bind! %this ,(j2s-arguments-object-id)
+		,(& "callee" (context-program ctx))
 		:value (js-make-function %this ,id
 			  0
 			  (js-function-info :name ,(symbol->string id) :len 0))
