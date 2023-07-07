@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec  5 09:14:00 2019                          */
-;*    Last change :  Tue Jul  4 09:34:34 2023 (serrano)                */
+;*    Last change :  Fri Jul  7 07:31:24 2023 (serrano)                */
 ;*    Copyright   :  2019-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arguments optimization                                           */
@@ -399,24 +399,29 @@
 			 (set! %info 'in-range))))))))))
 
 ;*---------------------------------------------------------------------*/
-;*    argsrange-test ...                                               */
+;*    argsrange-length? ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (argsrange-test this::J2SExpr env)
-
+(define (argsrange-length? this::J2SExpr)
    (define (field-length? field)
       (and (isa? field J2SString)
 	   (with-access::J2SString field (val)
 	      (string=? val "length"))))
-
+   
    (define (args-ref? obj)
       (when (isa? obj J2SRef)
 	 (with-access::J2SRef obj (decl)
 	    (isa? decl J2SDeclRest))))
-      
-   (define (args-length? expr)
-      (when (isa? expr J2SAccess)
-	 (with-access::J2SAccess expr (obj field)
-	    (and (field-length? field) (args-ref? obj)))))
+   
+   (when (isa? this J2SAccess)
+      (with-access::J2SAccess this (obj field)
+	 (and (field-length? field) (args-ref? obj)))))
+
+;*---------------------------------------------------------------------*/
+;*    argsrange-test ...                                               */
+;*    -------------------------------------------------------------    */
+;*    If alias is not #f, it is a J2SDecl that contains a.length.      */
+;*---------------------------------------------------------------------*/
+(define (argsrange-test this::J2SExpr alias env)
 
    (define (inv op)
       (case op
@@ -444,16 +449,23 @@
 		(else (values #f #f '() '())))
 	     (values #f #f '() '()))))
 
+   (define (alength? lhs)
+      (or (argsrange-length? lhs)
+	  (and alias
+	       (isa? lhs J2SRef)
+	       (with-access::J2SRef lhs (decl)
+		  (eq? decl alias)))))
+	       
    (if (isa? this J2SBinary)
        (with-access::J2SBinary this (op lhs rhs)
 	  (cond
-	     ((and (args-length? lhs) (isa? rhs J2SNumber))
+	     ((and (alength? lhs) (isa? rhs J2SNumber))
 	      (argsrange-test-number op rhs))
-	     ((and (args-length? rhs) (isa? lhs J2SNumber))
+	     ((and (alength? rhs) (isa? lhs J2SNumber))
 	      (argsrange-test-number (inv op) lhs))
-	     ((and (args-length? lhs) (isa? rhs J2SRef))
+	     ((and (alength? lhs) (isa? rhs J2SRef))
 	      (values #f #f '() '()))
-	     ((and (args-length? rhs) (isa? lhs J2SRef))
+	     ((and (alength? rhs) (isa? lhs J2SRef))
 	      (argsrange-test-ref op lhs))
 	     (else
 	      (argsrange-test-ref (inv op) rhs))))
@@ -466,7 +478,7 @@
    (with-access::J2SIf this (test then else)
       (argsrange test range env)
       (multiple-value-bind (nrange+ nrange- env+ env-)
-	 (argsrange-test test env)
+	 (argsrange-test test #f env)
 	 (argsrange then (or nrange+ range) (append env+ env))
 	 (argsrange else (or nrange- range) (append env- env)))))
 
@@ -475,27 +487,51 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (argsrange this::J2SLetBlock range env)
    (with-access::J2SLetBlock this (decls nodes)
-      (if (and (pair? decls) (null? (cdr decls))
+      (cond
+	 ((and (pair? decls) (null? (cdr decls))
 	       (isa? (car decls) J2SDeclInit)
 	       (pair? nodes) (null? (cdr nodes))
 	       (isa? (car nodes) J2SFor))
+	  ;; for (let i = 0; i < arguments.length; i++) { ... }
 	  (with-access::J2SDeclInit (car decls) (val)
 	     (let ((ty (j2s-type val)))
 		(if (or (type-fixnum? ty) (type-int53? ty))
-		    (argsrange-for (car nodes) (car decls) range env)
-		    (call-default-walker))))
-	  (call-default-walker))))
+		    (argsrange-for (car nodes) (car decls) #f range env)
+		    (call-default-walker)))))
+	 ((and (pair? decls) (pair? (cdr decls)) (null? (cddr decls))
+	       (isa? (car decls) J2SDeclInit)
+	       (isa? (cadr decls) J2SDeclInit)
+	       (pair? nodes) (null? (cdr nodes))
+	       (isa? (car nodes) J2SFor))
+	  ;; for (let i = 0, l = arguments.length; i < l; i++) { ... }
+	  (with-access::J2SDeclInit (car decls) ((ival val))
+	     (with-access::J2SDeclInit (cadr decls) ((lval val))
+		(cond
+		   ((let ((ty (j2s-type ival)))
+		       (and (or (type-fixnum? ty) (type-int53? ty))
+			    (argsrange-length? lval)
+			    (decl-ronly? (cadr decls))))
+		    (argsrange-for (car nodes) (car decls) (cadr decls) range env))
+		   ((let ((ty (j2s-type lval)))
+		       (and (or (type-fixnum? ty) (type-int53? ty))
+			    (argsrange-length? lval)
+			    (decl-ronly? (car decls))))
+		    (argsrange-for (car nodes) (cadr decls) (car decls) range env))
+		   (else
+		    (call-default-walker))))))
+	 (else
+	  (call-default-walker)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    argsrange-for ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (argsrange-for this::J2SFor decl::J2SDecl range env)
+(define (argsrange-for this::J2SFor decl::J2SDecl alias::obj range env)
    (with-access::J2SFor this (init test incr body)
       (argsrange init range env)
       (argsrange incr range env)
       (if (ronly-in? body decl)
 	  (multiple-value-bind (nrange+ nrange- env+ env-)
-	     (argsrange-test test (cons decl env))
+	     (argsrange-test test alias (cons decl env))
 	     (argsrange body range env+))
 	  (argsrange body range env))))
    
