@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Fri Jul  7 10:39:25 2023 (serrano)                */
+;*    Last change :  Fri Jul  7 17:26:34 2023 (serrano)                */
 ;*    Copyright   :  2017-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript arguments functions.        */
@@ -174,7 +174,8 @@
 	      ;; see scheme-fun.scm
 	      (j2s-arguments-length-id))
 	     (else
-	      `(js-arguments-length ,(j2s-scheme obj mode return ctx) %this))))
+	      `(js-arguments-length
+		  ,(j2s-scheme obj mode return ctx) %this))))
 	 (else
 	  #f))))
 

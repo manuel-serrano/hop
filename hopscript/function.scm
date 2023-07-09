@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Fri Jun 23 10:22:09 2023 (serrano)                */
+;*    Last change :  Fri Jul  7 17:27:02 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -1265,9 +1265,6 @@
 		 (js-arguments-ref argarray 8 %this)
 		 (js-arguments-ref argarray 9 %this)))
 	     (else
-	      (unless (number? n)
-		 (tprint "LEN not a number " (js-arguments-length argarray %this) " " (js-get argarray (& "length") %this))
-		 (js-debug-object argarray))
 	      (js-apply %this this thisarg
 		 (map! (lambda (idx)
 			  (js-arguments-ref argarray idx %this))

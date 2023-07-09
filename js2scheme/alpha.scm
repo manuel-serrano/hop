@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 20 14:34:39 2016                          */
-;*    Last change :  Thu Jun 22 11:14:40 2023 (serrano)                */
+;*    Last change :  Sun Jul  9 08:55:09 2023 (serrano)                */
 ;*    Copyright   :  2016-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    AST Alpha conversion                                             */
@@ -384,15 +384,20 @@
 (define-method (alpha this::J2SFun)
    
    (define (alpha-fun/decl this)
-      (with-access::J2SFun this (thisp params body method decl name)
+      (with-access::J2SFun this (thisp params body method decl name %info)
 	 (let* ((ndecl (duplicate::J2SDeclFun decl
 			  (key (ast-decl-key))))
 		(nthisp (when thisp (j2sdecl-duplicate thisp)))
 		(nparams (map j2sdecl-duplicate params))
 		(nfun (duplicate::J2SFun this
 			 (decl ndecl)
-			 (params nparams))))
+			 (params nparams)))
+		(oinfo %info))
 	    (with-access::J2SFun nfun (body method)
+	       (set! %info
+		  (instantiate::AlphaInfo
+		     (new nfun)
+		     (%oinfo %info)))
 	       (with-access::J2SDeclFun ndecl (val)
 		  (set! val nfun))
 	       (when method
@@ -407,17 +412,23 @@
 			 (cons* ndecl nfun nthisp nparams))
 		      (j2s-alpha body
 			 (cons* decl this params)
-			 (cons* ndecl nfun nparams)))))
+			 (cons* ndecl nfun nparams))))
+	       (set! %info oinfo))
 	    nfun)))
    
    (define (alpha-fun/w-decl this)
-      (with-access::J2SFun this (params body method name thisp)
+      (with-access::J2SFun this (params body method name thisp %info)
 	 (let* ((nparams (map j2sdecl-duplicate params))
 		(nthisp (when thisp (j2sdecl-duplicate thisp)))
 		(nfun (duplicate::J2SFun this
 			 (params nparams)
-			 (thisp (when thisp nthisp)))))
+			 (thisp (when thisp nthisp))))
+		(oinfo %info))
 	    (with-access::J2SFun nfun (body method)
+	       (set! %info
+		  (instantiate::AlphaInfo
+		     (new nfun)
+		     (%oinfo %info)))
 	       (when method
 		  (set! method
 		     (j2s-alpha method
@@ -430,7 +441,8 @@
 			 (cons nthisp nparams))
 		      (j2s-alpha body
 			 params
-			 nparams))))
+			 nparams)))
+	       (set! %info oinfo))
 	    nfun)))
    
    (with-access::J2SFun this (decl)

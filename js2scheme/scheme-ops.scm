@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Sat May 20 11:04:15 2023 (serrano)                */
+;*    Last change :  Fri Jul  7 17:00:00 2023 (serrano)                */
 ;*    Copyright   :  2017-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -818,8 +818,8 @@
 		   (lambda (left right)
 		      (if-fixnums? left tl right tr
 			 (binop-fixnum-fixnum op 'bool
-			    (asfixnum left tl)
-			    (asfixnum right tr)
+			    (asfixnum left 'int53)
+			    (asfixnum right 'int53)
 			    #f)
 			 (if-flonums? left tl right tr
 			    (binop-flonum-flonum op 'bool
@@ -835,8 +835,8 @@
 		   (lambda (left right)
 		      (if-fixnums? left tl right tr
 			 (binop-fixnum-fixnum op 'bool
-			    (asfixnum left tl)
-			    (asfixnum right tr)
+			    (asfixnum left 'int53)
+			    (asfixnum right 'int53)
 			    #f)
 			 (if-flonums? left tl right tr
 			    (binop-flonum-flonum op 'bool
@@ -1644,8 +1644,8 @@
 		    (and (eq? tl 'any) (eq? tr 'number)))
 		(if-fixnums? left tl right tr
 		   (binop-fixnum-fixnum/ctx ctx '+ type
-		      (asfixnum left tl)
-		      (asfixnum right tr)
+		      (asfixnum left 'int53)
+		      (asfixnum right 'int53)
 		      #f)
 		   (binop-any-any op type
 		      (box left tl ctx)
@@ -1654,8 +1654,8 @@
 	       ((or (is-hint? lhs 'integer) (is-hint? rhs 'integer))
 		(if-fixnums? left tl right tr
 		   (binop-fixnum-fixnum/ctx ctx '+ type
-		      (asfixnum left tl)
-		      (asfixnum right tr)
+		      (asfixnum left 'int53)
+		      (asfixnum right 'int53)
 		      #f)
 		   (binop-any-any op type
 		   (box left tl ctx)
@@ -1814,8 +1814,8 @@
 		  ((and (eq? tl 'number) (eq? tr 'number))
 		   (if-fixnums? left tl right tr
 		      (binop-fixnum-fixnum/ctx ctx op type
-			 (asfixnum left tl)
-			 (asfixnum right tr)
+			 (asfixnum left 'int53)
+			 (asfixnum right 'int53)
 			 #f)
 		      (if-flonums? left tl right tr
 			 (binop-flonum-flonum (real-op op type lhs rhs left right #f) type
@@ -1834,8 +1834,8 @@
 		  ((or (eq? tl 'number) (eq? tr 'number))
 		   (if-fixnums? left tl right tr
 		      (binop-fixnum-fixnum/ctx ctx op type
-			 (asfixnum left tl)
-			 (asfixnum right tr)
+			 (asfixnum left 'int53)
+			 (asfixnum right 'int53)
 			 #f)
 		      (if-flonums? left tl right tr
 			 (binop-flonum-flonum (real-op op type lhs rhs left right #f) type
@@ -1856,8 +1856,8 @@
 		  (else
 		   (if-fixnums? left tl right tr
 		      (binop-fixnum-fixnum/ctx ctx op type
-			 (asfixnum left tl)
-			 (asfixnum right tr)
+			 (asfixnum left 'int53)
+			 (asfixnum right 'int53)
 			 #f)
 		      (if-flonums? left tl right tr
 			 (binop-flonum-flonum (real-op op type lhs rhs left right #f) type
@@ -1950,8 +1950,8 @@
 		   (else
 		    (if-fixnums? left tl right tr
 		       (binop-fixnum-fixnum/ctx ctx '* type
-			  (asfixnum left tl)
-			  (asfixnum right tr)
+			  (asfixnum left 'int53)
+			  (asfixnum right 'int53)
 			  #f)
 		       (if-flonums? left tl right tr
 			  (binop-flonum-flonum (real-op '* type lhs rhs left right #f) type
@@ -2592,6 +2592,8 @@
 ;*---------------------------------------------------------------------*/
 (define (asfixnum val type::symbol)
    (case type
+      ((int53)
+       val)
       ((int32)
        (if (int32? val)
 	   (int32->fixnum val)

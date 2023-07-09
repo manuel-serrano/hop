@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Sun Jun 25 09:57:44 2023 (serrano)                */
+;*    Last change :  Fri Jul  7 16:49:17 2023 (serrano)                */
 ;*    Copyright   :  2016-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -1738,7 +1738,8 @@
 	 (multiple-value-bind (tyf envf bkf)
 	    (node-type field envo ctx)
 	    (cond
-	       ((and (memq tyo '(array string jsvector)) (j2s-field-length? field))
+	       ((and (memq tyo '(array string jsvector))
+		     (j2s-field-length? field))
 		(with-access::J2SString field (val)
 		   (expr-type-add! this envf ctx 'integer (append bko bkf))))
 	       ((and (eq? tyo 'arguments)
@@ -1747,8 +1748,7 @@
 		     (with-access::J2SRef obj (decl)
 			;; MS 13may2021: because of the new arguments
 			;; optimization, alias arguments are optimized too
-			(and ;; (isa? decl J2SDeclArguments)
-			     (not (decl-usage-has? decl '(set ref))))))
+			(and (not (decl-usage-has? decl '(set ref))))))
 		;; The length field of a arguments is not necessarily
 		;; an number (when assigned a random value, see
 		;; S10.6_A5_T4.js test.
