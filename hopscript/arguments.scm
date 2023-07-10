@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Sat Jun 10 07:09:43 2023 (serrano)                */
+;*    Last change :  Mon Jul 10 07:52:12 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
@@ -565,25 +565,15 @@
 ;*    js-strict-arguments ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (js-strict-arguments %this::JsGlobalObject vec::vector)
-   
-   (define (value->descriptor v i)
-      (instantiate::JsValueDescriptor
-	 (name (js-integer->jsstring i))
-	 (value v)
-	 (writable #t)
-	 (configurable #t)
-	 (enumerable #t)))
-   
-   (let ((len (vector-length vec)))
-      ;; build the arguments object
-      (with-access::JsGlobalObject %this (js-strict-arguments-cmap)
-	 (instantiateJsArguments
-	    (vec vec)
-	    (cmap js-strict-arguments-cmap)
-	    (elements (vector (vector-length vec)
-			 strict-callee-property
-			 strict-caller-property))
-	    (__proto__ (js-object-proto %this))))))
+   ;; build the arguments object
+   (with-access::JsGlobalObject %this (js-strict-arguments-cmap)
+      (instantiateJsArguments
+	 (vec vec)
+	 (cmap js-strict-arguments-cmap)
+	 (elements (vector (vector-length vec)
+		      strict-callee-property
+		      strict-caller-property))
+	 (__proto__ (js-object-proto %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-arguments->vector..                                           */

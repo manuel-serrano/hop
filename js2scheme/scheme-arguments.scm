@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Fri Jul  7 17:26:34 2023 (serrano)                */
+;*    Last change :  Mon Jul 10 09:19:11 2023 (serrano)                */
 ;*    Copyright   :  2017-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript arguments functions.        */
@@ -173,6 +173,11 @@
 	     ((arguments-stack? obj)
 	      ;; see scheme-fun.scm
 	      (j2s-arguments-length-id))
+	     ((arguments-lazy? obj)
+	      ;; see scheme-fun.scm
+	      `(if ,(j2s-arguments-object-id)
+		   (js-arguments-length ,(j2s-arguments-object-id) %this)
+		   ,(j2s-arguments-length-id)))
 	     (else
 	      `(js-arguments-length
 		  ,(j2s-scheme obj mode return ctx) %this))))

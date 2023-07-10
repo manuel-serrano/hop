@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Dec 14 07:04:23 2019                          */
-;*    Last change :  Fri Jul  7 10:16:35 2023 (serrano)                */
+;*    Last change :  Mon Jul 10 08:55:27 2023 (serrano)                */
 ;*    Copyright   :  2019-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Ast node usage API                                               */
@@ -73,7 +73,7 @@
 (define (usage->keys usage)
    (let loop ((i #u32:1))
       (cond
-	 ((>u32 i#u32:262144)
+	 ((>u32 i#u32:524288)
 	  '())
 	 ((=u32 (bit-andu32 i usage) i)
 	  (cons (usage-bit->key i) (loop (bit-lshu32 i 1))))

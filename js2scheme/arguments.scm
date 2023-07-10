@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec  5 09:14:00 2019                          */
-;*    Last change :  Fri Jul  7 10:16:00 2023 (serrano)                */
+;*    Last change :  Mon Jul 10 08:21:03 2023 (serrano)                */
 ;*    Copyright   :  2019-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arguments optimization                                           */
@@ -97,14 +97,14 @@
 		(set! alloc-policy 'lonly))
 	       ((usage-strict? usage '(slice aref length spread))
 		(set! alloc-policy 'stack))
-	       ((usage-strict? usage '(slice aref length spread apply))
+	       ((usage-strict? usage '(slice aref length spread apply iref))
 		(set! alloc-policy 'lazy)))))
       (when (pair? params)
 	 (let ((lastp (car (last-pair params))))
 	    (when (isa? lastp J2SDeclRest)
 	       (with-access::J2SDeclRest lastp (alloc-policy usage ctype vtype)
 		  (cond
-		     ((usage-strict? usage '(rest slice aref length spread))
+		     ((usage-strict? usage '(slice aref length spread apply iref rest))
 		      (set! ctype 'vector)
 		      (set! vtype 'vector)
 		      (set! alloc-policy 'stack)))))))))
@@ -127,16 +127,16 @@
 ;*    argsuse ::J2SAccess ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (argsuse this::J2SAccess)
-
+   
    (define (field-length? field)
       (and (isa? field J2SString)
 	   (with-access::J2SString field (val)
 	      (string=? val "length"))))
-
+   
    (define (field-index? field)
       (let ((ty (j2s-type field)))
 	 (or (type-fixnum? ty) (type-int53? ty))))
-
+   
    (with-access::J2SAccess this (obj field %info)
       (argsuse field)
       (if (isa? obj J2SRef)
@@ -144,9 +144,12 @@
 	     (if (isa? decl J2SDeclRest)
 		 (decl-usage-add! decl
 		    (cond
-		       ((field-length? field) 'length)
-		       ((and (field-index? field) (eq? %info 'in-range)) 'aref)
-		       (else 'get)))
+		       ((field-length? field)
+			'length)
+		       ((field-index? field)
+			(if (eq? %info 'in-range) 'aref 'iref))
+		       (else
+			'get)))
 		 (call-default-walker)))
 	  (call-default-walker))))
 
@@ -483,18 +486,34 @@
 ;*    argsrange ::J2SLetBlock ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (argsrange this::J2SLetBlock range env)
+
+   (define (num-eq?::bool this::J2SExpr num)
+      (when (isa? this J2SNumber)
+	 (with-access::J2SNumber this (val)
+	    (= val num))))
+
+   (define (alen?::bool this::J2SExpr)
+      (when (isa? this J2SBinary)
+	 (with-access::J2SBinary this (op lhs rhs)
+	    (and (eq? op '-) (num-eq? rhs 1) (argsrange-length? lhs)))))
+   
    (with-access::J2SLetBlock this (decls nodes)
       (cond
 	 ((and (pair? decls) (null? (cdr decls))
 	       (isa? (car decls) J2SDeclInit)
 	       (pair? nodes) (null? (cdr nodes))
 	       (isa? (car nodes) J2SFor))
-	  ;; for (let i = 0; i < arguments.length; i++) { ... }
 	  (with-access::J2SDeclInit (car decls) (val)
 	     (let ((ty (j2s-type val)))
-		(if (or (type-fixnum? ty) (type-int53? ty))
-		    (argsrange-for (car nodes) (car decls) #f range env)
-		    (call-default-walker)))))
+		(cond
+		   ((num-eq? val 0)
+		    ;; for (let i = 0; i < arguments.length; i++) { ... }
+		    (argsrange-for+ (car nodes) (car decls) #f range env))
+		   ((alen? val)
+		    ;; for (let i = arguments.length -1; i >= 0; i--) { ... }
+		    (argsrange-for- (car nodes) (car decls) #f range env))
+		   (else
+		    (call-default-walker))))))
 	 ((and (pair? decls) (pair? (cdr decls)) (null? (cddr decls))
 	       (isa? (car decls) J2SDeclInit)
 	       (isa? (cadr decls) J2SDeclInit)
@@ -508,21 +527,21 @@
 		       (and (or (type-fixnum? ty) (type-int53? ty))
 			    (argsrange-length? lval)
 			    (decl-ronly? (cadr decls))))
-		    (argsrange-for (car nodes) (car decls) (cadr decls) range env))
+		    (argsrange-for+ (car nodes) (car decls) (cadr decls) range env))
 		   ((let ((ty (j2s-type lval)))
 		       (and (or (type-fixnum? ty) (type-int53? ty))
 			    (argsrange-length? lval)
 			    (decl-ronly? (car decls))))
-		    (argsrange-for (car nodes) (cadr decls) (car decls) range env))
+		    (argsrange-for+ (car nodes) (cadr decls) (car decls) range env))
 		   (else
 		    (call-default-walker))))))
 	 (else
 	  (call-default-walker)))))
 
 ;*---------------------------------------------------------------------*/
-;*    argsrange-for ...                                                */
+;*    argsrange-for+ ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (argsrange-for this::J2SFor decl::J2SDecl alias::obj range env)
+(define (argsrange-for+ this::J2SFor decl::J2SDecl alias::obj range env)
    (with-access::J2SFor this (init test incr body)
       (argsrange init range env)
       (argsrange incr range env)
@@ -530,6 +549,31 @@
 	  (multiple-value-bind (nrange+ nrange- env+ env-)
 	     (argsrange-test test alias (cons decl env))
 	     (argsrange body range env+))
+	  (argsrange body range env))))
+   
+;*---------------------------------------------------------------------*/
+;*    argsrange-for- ...                                               */
+;*---------------------------------------------------------------------*/
+(define (argsrange-for- this::J2SFor decl::J2SDecl alias::obj range env)
+
+   (define (positive? this::J2SExpr decl)
+      ;; i > -1 or i >= 0
+      (when (isa? this J2SBinary)
+	 (with-access::J2SBinary this (op lhs rhs)
+	    (when (and (isa? lhs J2SRef) (isa? rhs J2SNumber))
+	       (with-access::J2SRef lhs ((vdecl decl))
+		  (with-access::J2SNumber rhs (val)
+		     (when (eq? vdecl decl)
+			(cond
+			   ((eq? op '>) (>= val -1))
+			   ((eq? op '>=) (>= val 0))
+			   (else #f)))))))))
+	       
+   (with-access::J2SFor this (init test incr body)
+      (argsrange init range env)
+      (argsrange incr range env)
+      (if (and (ronly-in? body decl) (positive? test decl))
+	  (argsrange body range (cons decl env))
 	  (argsrange body range env))))
    
 ;*---------------------------------------------------------------------*/

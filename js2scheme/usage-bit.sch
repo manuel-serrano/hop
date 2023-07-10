@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Dec 14 17:16:48 2019                          */
-;*    Last change :  Fri Jun 23 10:00:51 2023 (serrano)                */
+;*    Last change :  Mon Jul 10 08:47:13 2023 (serrano)                */
 ;*    Copyright   :  2019-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Usage bit names                                                  */
@@ -64,6 +64,7 @@
       ((aref) #u32:65536)
       ((apply) #u32:131072)
       ((spread) #u32:262144)
+      ((iref) #u32:524288)
       (else (error "usage-key->bit" "Illegal key" key))))
 
 ;*---------------------------------------------------------------------*/
@@ -90,5 +91,6 @@
       ((#u32:65536) 'aref)
       ((#u32:131072) 'apply)
       ((#u32:262144) 'spread)
+      ((#u32:524288) 'iref)
       (else (error "usage-bit->key" "Illegal key" bit))))
    

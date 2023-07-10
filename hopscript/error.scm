@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sun Apr  2 06:40:14 2023 (serrano)                */
+;*    Last change :  Mon Jul 10 09:08:20 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
@@ -790,29 +790,33 @@
 ;*    js-type-error ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (js-type-error msg fname loc %this)
-   (with-access::JsGlobalObject %this (js-type-error)
-      (js-new3 %this js-type-error msg fname loc)))
+   ($hopscript-breakpoint
+      (with-access::JsGlobalObject %this (js-type-error)
+	 (js-new3 %this js-type-error msg fname loc))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-reference-error ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (js-reference-error msg fname loc %this)
-   (with-access::JsGlobalObject %this (js-reference-error)
-      (js-new3 %this js-reference-error msg fname loc)))
+   ($hopscript-breakpoint
+      (with-access::JsGlobalObject %this (js-reference-error)
+	 (js-new3 %this js-reference-error msg fname loc))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-type-error2 ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (js-type-error2 msg fname %this)
-   (with-access::JsGlobalObject %this (js-type-error)
-      (js-new2 %this js-type-error msg fname)))
+   ($hopscript-breakpoint
+      (with-access::JsGlobalObject %this (js-type-error)
+	 (js-new2 %this js-type-error msg fname))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-type-error1 ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (js-type-error1 msg %this)
-   (with-access::JsGlobalObject %this (js-type-error)
-      (js-new1 %this js-type-error msg)))
+   ($hopscript-breakpoint
+      (with-access::JsGlobalObject %this (js-type-error)
+	 (js-new1 %this js-type-error msg))))
 
 ;*---------------------------------------------------------------------*/
 ;*    &end!                                                            */
