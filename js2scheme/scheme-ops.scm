@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Fri Jul  7 17:00:00 2023 (serrano)                */
+;*    Last change :  Tue Jul 11 10:54:31 2023 (serrano)                */
 ;*    Copyright   :  2017-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -3185,13 +3185,19 @@
 		(and (uint32? left) (=u32 left #u32:1))
 		(not (inrange-int32? rhs))
 		(not (inrange-uint32? rhs)))
-	   (j2s-int53-op 'inc right type))
+	   `(+fx ,right 1))
+	  ;; MS: 10jul2023, if type is an int53, there is
+	  ;; no reason to check the oveflow
+	  ;;(j2s-int53-op 'inc right type))
 	  ((and (memq op '(- --))
 		(and (uint32? left) (=u32 left #u32:1))
 		(not (inrange-int32? rhs))
 		(not (inrange-uint32? rhs))
 		flip)
-	   (j2s-int53-op 'dec right type))
+	   `(-fx ,right 1))
+	  ;; MS: 10jul2023, if type is an int53, there is
+	  ;; no reason to check the oveflow
+	  ;;(j2s-int53-op 'dec right type))
 	  (else
 	   (binop-int53-int53 op type
 	      (asfixnum left tl) right flip))))

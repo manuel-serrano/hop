@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec  5 09:14:00 2019                          */
-;*    Last change :  Tue Jul 11 08:54:13 2023 (serrano)                */
+;*    Last change :  Tue Jul 11 09:14:49 2023 (serrano)                */
 ;*    Copyright   :  2019-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arguments optimization                                           */
@@ -67,7 +67,7 @@
 ;*    argsuse ::J2SFun ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (argsuse this::J2SFun)
-   (with-access::J2SFun this (argumentsp params mode)
+   (with-access::J2SFun this (argumentsp params mode body)
       (when argumentsp
 	 ;; approximate the argument range
 	 (argsrange this #f '())
@@ -98,7 +98,8 @@
 	       ((usage-strict? usage '(slice aref length spread))
 		(set! alloc-policy 'stack))
 	       ((usage-strict? usage '(slice aref length spread apply iref))
-		(set! alloc-policy 'lazy)))))
+		(set! alloc-policy 'lazy))))
+	 (patch-type body))
       (when (pair? params)
 	 (let ((lastp (car (last-pair params))))
 	    (when (isa? lastp J2SDeclRest)
@@ -373,7 +374,6 @@
 (define-walk-method (argsrange this::J2SNode range env)
    (call-default-walker))
 
-
 ;*---------------------------------------------------------------------*/
 ;*    argsrange ::J2SAccess ...                                        */
 ;*---------------------------------------------------------------------*/
@@ -601,5 +601,49 @@
 	     (when (eq? vdecl decl)
 		(cell-set! cell #f)))
 	  (call-default-walker))))
-	     
 
+;*---------------------------------------------------------------------*/
+;*    patch-type ...                                                   */
+;*    -------------------------------------------------------------    */
+;*    This function propagates the type int53 for ARGUMENTS.length     */
+;*    expressions, when ARGUMENTS is known not to escape.              */
+;*---------------------------------------------------------------------*/
+(define-walk-method (patch-type this::J2SNode)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    patch-type ::J2SRef ...                                          */
+;*---------------------------------------------------------------------*/
+(define-method (patch-type this::J2SRef)
+   (with-access::J2SRef this (decl type)
+      (unless (eq? type 'int53)
+	 (with-access::J2SDecl decl (vtype)
+	    (when (eq? vtype 'int53)
+	       (set! type 'int53))))))
+
+;*---------------------------------------------------------------------*/
+;*    patch-type ::J2SDeclInit ...                                     */
+;*---------------------------------------------------------------------*/
+(define-walk-method (patch-type this::J2SDeclInit)
+   (call-default-walker)
+   (with-access::J2SDeclInit this (vtype ctype itype mtype usage val usage)
+      (let ((ty (j2s-type val)))
+	 (when (and (decl-ronly? this)
+		    (eq? ty 'int53)
+		    (not (eq? vtype 'int53)) )
+	    (set! mtype 'int53)
+	    (set! vtype 'int53)
+	    (set! ctype 'int53)
+	    (set! itype 'int53)))))
+
+;*---------------------------------------------------------------------*/
+;*    patch-type ::J2SAccess ...                                       */
+;*---------------------------------------------------------------------*/
+(define-walk-method (patch-type this::J2SAccess)
+   (if (argsrange-length? this)
+       (with-access::J2SAccess this (obj type)
+	  (with-access::J2SRef obj (decl)
+	     (with-access::J2SDecl decl (usage)
+		(when (usage-strict? usage '(aref length spread rest))
+		   (set! type 'int53)))))
+       (call-default-walker)))
