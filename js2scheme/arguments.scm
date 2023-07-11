@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec  5 09:14:00 2019                          */
-;*    Last change :  Tue Jul 11 08:19:25 2023 (serrano)                */
+;*    Last change :  Tue Jul 11 08:54:13 2023 (serrano)                */
 ;*    Copyright   :  2019-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arguments optimization                                           */
@@ -402,6 +402,7 @@
 ;*    argsrange-length? ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (argsrange-length? this::J2SExpr)
+   
    (define (field-length? field)
       (and (isa? field J2SString)
 	   (with-access::J2SString field (val)
@@ -492,11 +493,11 @@
 	 (with-access::J2SNumber this (val)
 	    (= val num))))
 
-   (define (alen?::bool this::J2SExpr)
+   (define (alen-?::bool this::J2SExpr)
       (when (isa? this J2SBinary)
 	 (with-access::J2SBinary this (op lhs rhs)
 	    (and (eq? op '-) (num-eq? rhs 1) (argsrange-length? lhs)))))
-   
+
    (with-access::J2SLetBlock this (decls nodes)
       (cond
 	 ((and (pair? decls) (null? (cdr decls))
@@ -508,7 +509,7 @@
 		((num-eq? val 0)
 		 ;; for (let i = 0; i < arguments.length; i++) { ... }
 		 (argsrange-for+ (car nodes) (car decls) #f range env))
-		((alen? val)
+		((alen-? val)
 		 ;; for (let i = arguments.length -1; i >= 0; i--) { ... }
 		 (argsrange-for- (car nodes) (car decls) #f range env))
 		(else
@@ -529,7 +530,7 @@
 		    (argsrange-for+ (car nodes) (car decls) (cadr decls) range env))
 		   ((let ((ty (j2s-type sval)))
 		       (and (or (type-fixnum? ty) (type-int53? ty))
-			    (argsrange-length? sval)
+			    (argsrange-length? fval)
 			    (decl-ronly? (car decls))))
 		    (argsrange-for+ (car nodes) (cadr decls) (car decls) range env))
 		   (else
