@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec  5 09:14:00 2019                          */
-;*    Last change :  Mon Jul 10 08:21:03 2023 (serrano)                */
+;*    Last change :  Tue Jul 11 08:19:25 2023 (serrano)                */
 ;*    Copyright   :  2019-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arguments optimization                                           */
@@ -504,33 +504,32 @@
 	       (pair? nodes) (null? (cdr nodes))
 	       (isa? (car nodes) J2SFor))
 	  (with-access::J2SDeclInit (car decls) (val)
-	     (let ((ty (j2s-type val)))
-		(cond
-		   ((num-eq? val 0)
-		    ;; for (let i = 0; i < arguments.length; i++) { ... }
-		    (argsrange-for+ (car nodes) (car decls) #f range env))
-		   ((alen? val)
-		    ;; for (let i = arguments.length -1; i >= 0; i--) { ... }
-		    (argsrange-for- (car nodes) (car decls) #f range env))
-		   (else
-		    (call-default-walker))))))
+	     (cond
+		((num-eq? val 0)
+		 ;; for (let i = 0; i < arguments.length; i++) { ... }
+		 (argsrange-for+ (car nodes) (car decls) #f range env))
+		((alen? val)
+		 ;; for (let i = arguments.length -1; i >= 0; i--) { ... }
+		 (argsrange-for- (car nodes) (car decls) #f range env))
+		(else
+		 (call-default-walker)))))
 	 ((and (pair? decls) (pair? (cdr decls)) (null? (cddr decls))
 	       (isa? (car decls) J2SDeclInit)
 	       (isa? (cadr decls) J2SDeclInit)
 	       (pair? nodes) (null? (cdr nodes))
 	       (isa? (car nodes) J2SFor))
 	  ;; for (let i = 0, l = arguments.length; i < l; i++) { ... }
-	  (with-access::J2SDeclInit (car decls) ((ival val))
-	     (with-access::J2SDeclInit (cadr decls) ((lval val))
+	  (with-access::J2SDeclInit (car decls) ((fval val))
+	     (with-access::J2SDeclInit (cadr decls) ((sval val))
 		(cond
-		   ((let ((ty (j2s-type ival)))
+		   ((let ((ty (j2s-type fval)))
 		       (and (or (type-fixnum? ty) (type-int53? ty))
-			    (argsrange-length? lval)
+			    (argsrange-length? sval)
 			    (decl-ronly? (cadr decls))))
 		    (argsrange-for+ (car nodes) (car decls) (cadr decls) range env))
-		   ((let ((ty (j2s-type lval)))
+		   ((let ((ty (j2s-type sval)))
 		       (and (or (type-fixnum? ty) (type-int53? ty))
-			    (argsrange-length? lval)
+			    (argsrange-length? sval)
 			    (decl-ronly? (car decls))))
 		    (argsrange-for+ (car nodes) (cadr decls) (car decls) range env))
 		   (else
