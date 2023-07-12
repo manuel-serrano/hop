@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:01:46 2017                          */
-;*    Last change :  Sun Nov 27 08:49:01 2022 (serrano)                */
-;*    Copyright   :  2017-22 Manuel Serrano                            */
+;*    Last change :  Wed Jul 12 13:08:14 2023 (serrano)                */
+;*    Copyright   :  2017-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES2015 Scheme class generation                                   */
 ;*=====================================================================*/
@@ -472,7 +472,7 @@
 					(gen-class this %super
 					   (class-unknown-super->lambda this loc)
 					   (super-ctor->lambda this #f mode return ctx)
-					   `(with-access::JsFunction ,%super (arity) arity)
+					   -2 ;;`(with-access::JsFunction ,%super (arity) arity)
 					   0 src loc))))))
 			 ((isa? init J2SClassElement)
 			  (let ((arity (ctor-arity init)))
@@ -492,8 +492,7 @@
 			  (gen-class this %super
 			     (class-unknown-super->lambda this loc)
 			     (super-ctor->lambda this init mode return ctx)
-			     `(with-access::JsFunction ,%super (arity)
-				 arity)
+			     -2 ;; `(with-access::JsFunction ,%super (arity) arity)
 			     `(with-access::JsFunction ,%super (info)
 				 (vector-ref info 1))
 			     src loc))

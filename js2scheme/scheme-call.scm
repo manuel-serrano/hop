@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Fri Jul  7 10:59:57 2023 (serrano)                */
+;*    Last change :  Wed Jul 12 08:48:52 2023 (serrano)                */
 ;*    Copyright   :  2018-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -343,7 +343,7 @@
    (define (def obj args mode return conf)
       (let ((arr (j2s-scheme (cadr args) mode return conf)))
 	 (match-case arr
-	    ((js-arguments-vector-slice ?arguments ?index ?len ?%this)
+	    ((js-jsobject->jsarray (js-arguments-vector-slice ?arguments ?index ?len ?%this) %this)
 	     `(js-function-maybe-apply-arguments-slice ,(caddr args)
 		 ,(j2s-scheme obj mode return conf)
 		 ,(j2s-scheme (car args) mode return conf)
@@ -422,119 +422,6 @@
 		      ,(cadddr args)))
 		 (else
 		  `(js-function-apply ,(caddr args)
-		      ,(j2s-scheme obj mode return conf)
-		      ,(j2s-scheme (car args) mode return conf)
-		      ,(j2s-scheme (cadr args) mode return conf)
-		      ,(cadddr args))))
-	      (if (and (isa? (cadr args) J2SRef)
-		       (j2s-ref-arguments-lazy? (cadr args)))
-		  (def-arguments obj args mode return conf)
-		  (def obj args mode return conf)))))
-      ((and (isa? (cadr args) J2SRef) (j2s-ref-arguments-lazy? (cadr args)))
-       (def-arguments obj args mode return conf))
-      ((isa? (cadr args) J2SArray)
-       (def-vector obj args mode return conf))
-      ((is-concat-apply? obj)
-       (if (and (isa? (car args) J2SArray)
-		(with-access::J2SArray (car args) (len)
-		   (=fx len 0)))
-	   `(js-array-concat-apply ,(j2s-scheme (cadr args) mode return conf)
-	       ,(caddr args))
-	   (def obj args mode return conf)))
-      (else
-       (def obj args mode return conf))))
-
-;*---------------------------------------------------------------------*/
-;*    j2s-spread ...                                                   */
-;*    -------------------------------------------------------------    */
-;*    Contrary to apply, a spread call does not look for the           */
-;*    "apply" method of the function, nor the method of the            */
-;*    "Function.prototype" object. It is always a true apply.          */
-;*---------------------------------------------------------------------*/
-(define (j2s-spread obj args mode return conf)
-
-   (define (def obj args mode return conf)
-      (let ((arr (j2s-scheme (cadr args) mode return conf)))
-	 (match-case arr
-	    ((js-arguments-vector-slice ?arguments ?index ?len ?%this)
-	     `(js-function-spread-arguments-slice ,(caddr args)
-		 ,(j2s-scheme obj mode return conf)
-		 ,(j2s-scheme (car args) mode return conf)
-		 ,arguments ,index ,len
-		 ,(j2s-arguments-object-id)
-		 ,(cadddr args)))
-	    (else
-	     `(js-function-spread ,(caddr args)
-		 ,(j2s-scheme obj mode return conf)
-		 ,(j2s-scheme (car args) mode return conf)
-		 ,arr
-		 ,(cadddr args))))))
-
-   (define (def-arguments obj args mode return conf)
-      `(js-function-maybe-spread-arguments ,(caddr args)
-	  ,(j2s-scheme obj mode return conf)
-	  ,(j2s-scheme (car args) mode return conf)
-	  ,(j2s-scheme (cadr args) mode return conf)
-	  ,(j2s-arguments-object-id)
-	  ',mode
-	  ,(cadddr args)))
-
-   (define (def-vector obj args mode return conf)
-      (with-access::J2SArray (cadr args) (exprs)
-	 `(js-call-with-stack-vector
-	     (vector ,@(map (lambda (e) (j2s-scheme e mode return conf)) exprs))
-	     (lambda (%vec)
-		(js-function-spread-vec ,(caddr args)
-		   ,(j2s-scheme obj mode return conf)
-		   ,(j2s-scheme (car args) mode return conf)
-		   %vec
-		   ,(fixnum->uint32 (length exprs))
-		   ,(cadddr args))))))
-
-   (define (is-concat-apply? this::J2SExpr)
-      
-      (define (is-array-prototype? this::J2SExpr)
-	 (when (isa? this J2SAccess)
-	    (with-access::J2SAccess this (obj field)
-	       (when (and (is-builtin-ref? obj 'Array) (isa? field J2SString))
-		  (with-access::J2SString field (val)
-		     (string=? val "prototype"))))))
-      
-      (when (isa? this J2SAccess)
-	 (with-access::J2SAccess this (obj field)
-	    (when (and (is-array-prototype? obj)
-		       (isa? field J2SString))
-	       (with-access::J2SString field (val)
-		  (string=? val "concat"))))))
-
-   (define (arguments-vec-apply? this::J2SRef)
-      (with-access::J2SRef this (decl)
-	 (when (isa? decl J2SDeclArguments)
-	    (with-access::J2SDeclArguments decl (alloc-policy)
-	       (eq? alloc-policy 'stack)))))
-
-   (cond
-      ((isa? obj J2SRef)
-       (with-access::J2SRef obj (loc decl)
-	  (if (and (or (isa? decl J2SDeclFun)
-		       (and (isa? decl J2SDeclInit)
-			    (with-access::J2SDeclInit decl (val)
-			       (and (isa? val J2SFun) (decl-ronly? decl)))))
-		   (decl-only-call? decl)
-		   (and (pair? args)
-			(=fx (length args) 4)
-			(isa? (cadr args) J2SRef)))
-	      (cond
-		 ((ref-stack-vararg? (cadr args))
-		  `(js-function-spread-arguments ,(caddr args)
-		      ,(j2s-scheme obj mode return conf)
-		      ,(j2s-scheme (car args) mode return conf)
-		      ,(j2s-scheme (cadr args) mode return conf)
-		      ,(j2s-arguments-object-id)
-		      ',mode
-		      ,(cadddr args)))
-		 (else
-		  `(js-function-spread ,(caddr args)
 		      ,(j2s-scheme obj mode return conf)
 		      ,(j2s-scheme (car args) mode return conf)
 		      ,(j2s-scheme (cadr args) mode return conf)
@@ -2053,19 +1940,32 @@
    (define (spread-stack-vararg? this::J2SExpr)
       (when (isa? this J2SSpread)
 	 (with-access::J2SSpread this (expr)
-	    (tprint "spread.expr=" (j2s->sexp expr))
 	    (ref-stack-vararg? expr))))
    
    (define (j2s-scheme-fun fun mode return ctx)
       (if (symbol? fun)
 	  fun
 	  (j2s-scheme fun mode return ctx)))
+
+   (define (array-prototype-slice-call this::J2SExpr)
+      (cond
+	 ((isa? this J2SCall)
+	  (with-access::J2SCall this (fun args)
+	     (when (and (=fx (length args) 2) (isa? fun J2SAccess))
+		(with-access::J2SAccess fun (obj field)
+		   (when (isa? field J2SString)
+		      (with-access::J2SString field (val)
+			 (when (string=? val "call")
+			    (when (array-prototype-slice? obj)
+			       args))))))))
+	 ((isa? this J2SCast)
+	  (with-access::J2SCast this (expr type)
+	     (when (eq? type 'iterable) (array-prototype-slice-call expr))))
+	 (else
+	  #f)))
    
    (with-access::J2SCall this (loc profid fun thisargs args protocol)
       (let ((expr (spread->array-expr loc args #f)))
-	 (tprint "SPREAD=" (j2s->sexp this))
-	 (tprint "expr=" (j2s->sexp expr))
-	 (tprint "ref=" (spread-stack-vararg? (car args)))
 	 (cond
 	    ((and (isa? fun J2SRef)
 		  (with-access::J2SRef fun (decl)
@@ -2093,11 +1993,19 @@
 		(else
 		 (epairify loc
 		    (case protocol
-		       ((spread) 
-			`(js-apply-array %this ,(j2s-scheme fun mode return ctx)
-			    ,@(map (lambda (a) (j2s-scheme a mode return ctx))
-				 thisargs)
-			    ,(j2s-scheme expr mode return ctx)))
+		       ((spread)
+			(let ((sliceargs (array-prototype-slice-call expr)))
+			   (if (and sliceargs (ref-stack-vararg? (car sliceargs)))
+			       `(js-function-spread-arguments-slice %this ,(j2s-scheme fun mode return ctx)
+				   ,@(map (lambda (a) (j2s-scheme a mode return ctx))
+					thisargs)
+				   ,(j2s-arguments-stack-id)
+				   ,(j2s-arguments-object-id)
+				   ,(j2s-scheme (cadr sliceargs) mode return ctx))
+			       `(js-apply-array %this ,(j2s-scheme fun mode return ctx)
+				   ,@(map (lambda (a) (j2s-scheme a mode return ctx))
+					thisargs)
+				   ,(j2s-scheme expr mode return ctx)))))
 		       ((spread-procedure-this-arity)
 			`(apply ,(j2s-scheme fun mode return ctx)
 			    ,@(map (lambda (a) (j2s-scheme a mode return ctx))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec  5 09:14:00 2019                          */
-;*    Last change :  Tue Jul 11 08:19:25 2023 (serrano)                */
+;*    Last change :  Wed Jul 12 08:54:40 2023 (serrano)                */
 ;*    Copyright   :  2019-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arguments optimization                                           */
@@ -529,7 +529,7 @@
 		    (argsrange-for+ (car nodes) (car decls) (cadr decls) range env))
 		   ((let ((ty (j2s-type sval)))
 		       (and (or (type-fixnum? ty) (type-int53? ty))
-			    (argsrange-length? sval)
+			    (argsrange-length? fval)
 			    (decl-ronly? (car decls))))
 		    (argsrange-for+ (car nodes) (cadr decls) (car decls) range env))
 		   (else

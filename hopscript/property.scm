@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Fri Jun  9 19:35:56 2023 (serrano)                */
+;*    Last change :  Wed Jul 12 13:41:51 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -4637,6 +4637,11 @@
 			     (cmap-next-proto-cmap %this cmap
 				   (js-object-proto o) v)))))
 		(js-assert-object o "js-setprototypeof")
+		(when (isa? o JsFunction)
+		   ;; when the __proto__ of a function is changed, it as
+		   ;; to be marked as unplain so that the guard
+		   ;; such as that of js-function-apply-arguments detect it.
+		   (js-object-mode-plain-set! o #f))
 		(js-object-proto-set! o v))
 	     o))))
 

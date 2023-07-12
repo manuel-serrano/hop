@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Dec  7 06:32:41 2019                          */
-;*    Last change :  Fri Jul  7 10:40:56 2023 (serrano)                */
+;*    Last change :  Wed Jul 12 15:05:04 2023 (serrano)                */
 ;*    Copyright   :  2019-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function macros for js2scheme                                    */
@@ -39,6 +39,26 @@
 	  (else
 	   (js-function-apply-vec ,%this ,fun ,thisarg
 	      ,vec #u32:0 (fixnum->uint32 (vector-length ,vec)))))))
+	   
+;*---------------------------------------------------------------------*/
+;*    js-function-spread-arguments-slice ...                           */
+;*---------------------------------------------------------------------*/
+(define-macro (js-function-spread-arguments-slice %this fun thisarg vec %arguments offset)
+   `(with-access::JsGlobalObject %this (js-function-prototype)
+       (cond
+	  (%arguments
+	   ((@ js-function-spread-arguments-slice __hopscript_function)
+	    ,%this ,fun ,thisarg ,vec ,%arguments
+	    ,offset (js-arguments-length ,%arguments ,%this) #f))
+	  ((not (js-object-mode-plain? js-function-prototype))
+	   (set! ,%arguments 
+	      (js-strict-arguments ,%this (vector-copy ,vec)))
+	   ((@ js-function-spread-arguments-slice __hopscript_function)
+	    ,%this ,fun ,thisarg ,vec ,%arguments
+	    ,offset (js-arguments-length ,%arguments ,%this) #f))
+	  (else
+	   (js-function-apply-vec ,%this ,fun ,thisarg
+	      ,vec ,offset (fixnum->uint32 (vector-length ,vec)))))))
 	   
 ;*---------------------------------------------------------------------*/
 ;*    js-function-maybe-apply-arguments ...                            */
