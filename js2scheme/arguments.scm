@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec  5 09:14:00 2019                          */
-;*    Last change :  Thu Jul 13 07:34:37 2023 (serrano)                */
+;*    Last change :  Thu Jul 13 09:44:29 2023 (serrano)                */
 ;*    Copyright   :  2019-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arguments optimization                                           */
@@ -493,6 +493,11 @@
 	 (with-access::J2SNumber this (val)
 	    (= val num))))
 
+   (define (num->=::bool this::J2SExpr num)
+      (when (isa? this J2SNumber)
+	 (with-access::J2SNumber this (val)
+	    (>= val num))))
+
    (define (alen-?::bool this::J2SExpr)
       (when (isa? this J2SBinary)
 	 (with-access::J2SBinary this (op lhs rhs)
@@ -506,7 +511,7 @@
 	       (isa? (car nodes) J2SFor))
 	  (with-access::J2SDeclInit (car decls) (val)
 	     (cond
-		((num-eq? val 0)
+		((num->= val 0)
 		 ;; for (let i = 0; i < arguments.length; i++) { ... }
 		 (argsrange-for+ (car nodes) (car decls) #f range env))
 		((alen-? val)
