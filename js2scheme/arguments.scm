@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec  5 09:14:00 2019                          */
-;*    Last change :  Wed Jul 12 08:54:40 2023 (serrano)                */
+;*    Last change :  Thu Jul 13 07:34:37 2023 (serrano)                */
 ;*    Copyright   :  2019-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arguments optimization                                           */
@@ -437,8 +437,8 @@
 	 (case op
 	    ((>= == ===) (values val #f '() '()))
 	    ((>) (values (+ val 1) #f '() '()))
-	    ((<) (values #f val #f '() '()))
-	    ((<=) (values #f (+ 1 val) #f '() '()))
+	    ((<) (values #f val '() '()))
+	    ((<=) (values #f (+ 1 val) '() '()))
 	    (else (values #f #f '() '())))))
 
    (define (argsrange-test-ref op ref)
@@ -465,11 +465,11 @@
 	     ((and (alength? rhs) (isa? lhs J2SNumber))
 	      (argsrange-test-number (inv op) lhs))
 	     ((and (alength? lhs) (isa? rhs J2SRef))
-	      (values #f #f '() '()))
+	      (argsrange-test-ref (inv op) rhs))
 	     ((and (alength? rhs) (isa? lhs J2SRef))
 	      (argsrange-test-ref op lhs))
 	     (else
-	      (argsrange-test-ref (inv op) rhs))))
+	      (values #f #f '() '()))))
        (values #f #f '() '())))
 
 ;*---------------------------------------------------------------------*/
