@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Mon Jun  5 08:58:40 2023 (serrano)                */
+;*    Last change :  Fri Jul 14 07:44:21 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -33,7 +33,7 @@
    
    (export (js-init-stringliteral! ::JsGlobalObject)
 	   (&jsstring-init ::bstring)
-	   (js-debug-jsstring ::JsStringLiteral #!optional (msg ""))
+	   (js-inspect-jsstring ::JsStringLiteral #!optional (msg ""))
 	   (js-jsstring-for-in str ::procedure ::JsGlobalObject)
 	   (js-jsstring-for-of str ::procedure ::JsGlobalObject)
 	   (inline js-ascii->jsstring::JsStringLiteralASCII ::bstring)
@@ -310,9 +310,9 @@
       cnsts))
 
 ;*---------------------------------------------------------------------*/
-;*    js-debug-jsstring ...                                            */
+;*    js-inspect-jsstring ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (js-debug-jsstring obj #!optional (msg ""))
+(define (js-inspect-jsstring obj #!optional (msg ""))
    (let loop ((obj obj)
 	      (margin ""))
       (with-access::JsStringLiteral obj (left right length)
@@ -329,9 +329,9 @@
 	       (loop right nm))))))
    
 ;*---------------------------------------------------------------------*/
-;*    js-debug-object ::JsStringLiteral ...                            */
+;*    js-inspect-object ::JsStringLiteral ...                          */
 ;*---------------------------------------------------------------------*/
-(define-method (js-debug-object obj::JsStringLiteral #!optional (msg ""))
+(define-method (js-inspect-object obj::JsStringLiteral #!optional (msg ""))
    
    (define (excerpt str)
       (if (<fx (string-length str) 20)

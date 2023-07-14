@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Sun Apr 30 15:06:48 2023 (serrano)                */
+;*    Last change :  Fri Jul 14 07:43:09 2023 (serrano)                */
 ;*    Copyright   :  2018-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -80,15 +80,15 @@
 (define __js_strings (&begin!))
 
 ;*---------------------------------------------------------------------*/
-;*    js-debug-object ::JsProxy ...                                    */
+;*    js-inspect-object ::JsProxy ...                                  */
 ;*---------------------------------------------------------------------*/
-(define-method (js-debug-object obj::JsProxy #!optional (msg ""))
+(define-method (js-inspect-object obj::JsProxy #!optional (msg ""))
    (with-access::JsProxy obj (handler)
       (call-next-method)
       (fprint (current-error-port) ">>>>> target: ")
-      (js-debug-object (js-proxy-target obj))
+      (js-inspect-object (js-proxy-target obj))
       (fprint (current-error-port) ">>>>> handler: ")
-      (js-debug-object handler)))
+      (js-inspect-object handler)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-proxy-target* ...                                             */

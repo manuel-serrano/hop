@@ -2563,6 +2563,21 @@
 		(j2s-scheme-error "j2sscheme" "Illegal assignment" this 'js-reference-error)))))))
 
 ;*---------------------------------------------------------------------*/
+;*    j2s-function-prototype-get ...                                   */
+;*---------------------------------------------------------------------*/
+(define (j2s-function-prototype-get obj mode return ctx)
+   (let ((sobj (j2s-scheme obj mode return ctx)))
+      (if (isa? obj J2SRef)
+	  `(js-function-prototype-get
+	      ,sobj ,sobj
+	      ,(& "prototype" (context-program ctx)) %this)
+	  (let ((tmp (gensym 'obj)))
+	     `(let ((,tmp ,sobj))
+		 (js-function-prototype-get
+		    ,tmp ,tmp
+		    ,(& "prototype" (context-program ctx)) %this))))))
+
+;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SAccess ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SAccess mode return ctx)
@@ -2684,16 +2699,13 @@
 	  (with-access::J2SUnresolvedRef obj (id)
 	     (eq? id 'Symbol)))))
    
-   
+
    (define (get-builtin-object obj field mode return ctx)
       (when (isa? field J2SString)
 	 (with-access::J2SString field (val)
 	    (cond
 	       ((string=? val "prototype")
-		`(js-function-prototype-get
-		    (js-undefined)
-		    ,(j2s-scheme obj mode return ctx)
-		    ,(& "prototype" (context-program ctx)) %this))
+		(j2s-function-prototype-get obj mode return ctx))
 	       (else
 		#f)))))
    
@@ -2793,10 +2805,7 @@
 		  (isa? field J2SString)
 		  (with-access::J2SString field (val)
 		     (string=? val "prototype")))
-	     `(js-function-prototype-get
-		 (js-undefined)
-		 ,(j2s-scheme obj mode return ctx)
-		 ,(& "prototype" (context-program ctx)) %this))
+	     (j2s-function-prototype-get obj mode return ctx))
 	    ((and (mightbe-number? field)
 		  (or (mightbe-array? obj) (mightbe-string? obj)))
 	     (index-ref obj field cache cspecs loc))

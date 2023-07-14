@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Mon Jul 10 07:52:12 2023 (serrano)                */
+;*    Last change :  Fri Jul 14 07:41:34 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
@@ -115,9 +115,9 @@
       (js-raise-type-error %this "[[DonationTypeError]] ~a" o)))
 
 ;*---------------------------------------------------------------------*/
-;*    js-debug-object ::JsArguments ...                                */
+;*    js-inspect-object ::JsArguments ...                              */
 ;*---------------------------------------------------------------------*/
-(define-method (js-debug-object obj::JsArguments #!optional (msg ""))
+(define-method (js-inspect-object obj::JsArguments #!optional (msg ""))
    (call-next-method)
    (with-access::JsArguments obj (vec)
       (fprint (current-error-port)

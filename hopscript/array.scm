@@ -241,9 +241,9 @@
 (define __js_strings (&begin!))
 
 ;*---------------------------------------------------------------------*/
-;*    js-debug-object ::JsArray ...                                    */
+;*    js-inspect-object ::JsArray ...                                  */
 ;*---------------------------------------------------------------------*/
-(define-method (js-debug-object obj::JsArray #!optional (msg ""))
+(define-method (js-inspect-object obj::JsArray #!optional (msg ""))
    (call-next-method)
    (with-access::JsArray obj (vec ilen length)
       (fprint (current-error-port)
