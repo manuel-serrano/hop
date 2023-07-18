@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Tue Jul 18 06:48:05 2023 (serrano)                */
+;*    Last change :  Tue Jul 18 11:46:30 2023 (serrano)                */
 ;*    Copyright   :  2018-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -419,7 +419,9 @@
 		   (decl-only-call? decl)
 		   (and (pair? args)
 			(=fx (length args) 4)
-			(isa? (cadr args) J2SRef)))
+			(isa? (cadr args) J2SRef)
+			(with-access::J2SRef (cadr args) (decl)
+			   (isa? decl J2SDeclArguments))))
 	      (cond
 		 ((arguments-vec-apply? (cadr args))
 		  `(js-function-apply-arguments ,(caddr args)
