@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Fri Apr  7 12:34:38 2023 (serrano)                */
+;*    Last change :  Fri Jul 14 08:08:00 2023 (serrano)                */
 ;*    Copyright   :  2016-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -1035,7 +1035,7 @@
 				  ,cache ,loc ',cspecs))))
 		     ((pmap)
 		      (loop (cons 'nmap (cdr cs))))
-		     ((pmap)
+		     ((pmap+)
 		      (loop (cons 'nmap+ (cdr cs))))
 		     ((amap)
 		      ;; accessor property put

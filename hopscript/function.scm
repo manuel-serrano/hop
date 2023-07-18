@@ -251,9 +251,9 @@
        "procedure")))
 
 ;*---------------------------------------------------------------------*/
-;*    js-debug-object ::JsFunction ...                                 */
+;*    js-inspect-object ::JsFunction ...                               */
 ;*---------------------------------------------------------------------*/
-(define-method (js-debug-object obj::JsFunction #!optional (msg ""))
+(define-method (js-inspect-object obj::JsFunction #!optional (msg ""))
    (call-next-method)
    (with-access::JsFunction obj (info arity procedure)
       (fprint (current-error-port) "   src=" (js-function-src obj))
@@ -836,7 +836,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-make-method-strict ...                                        */
 ;*    -------------------------------------------------------------    */
-;*    specialized method constructor for regular strict methods.       */
+;*    Specialized method constructor for regular strict methods.       */
 ;*---------------------------------------------------------------------*/
 (define (js-make-method-strict %this procedure
 	   arity info constrsize method
@@ -922,26 +922,40 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    js-function-prototype-get ...                                    */
+;*    -------------------------------------------------------------    */
+;*    Function uses there Prototype accessor property differently      */
+;*    from standard object. The owner is the OBJ arguments, while      */
+;*    for standard objects it is the OWNER argements. This save        */
+;*    CMAP allocations.                                                */
+;*                                                                     */
+;*    In order to apply the standard schema where OWNER is used,       */
+;*    the allocation routines for functions (see _bglhopscript.c)      */
+;*    should be changed and a fresh cmap should be allocated per       */
+;*    object.                                                          */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-function-prototype-get obj owner::JsFunction propname %this)
-   (with-access::JsFunction owner (prototype alloc name src)
-      (when (eq? prototype #\F)
-	 (js-function-setup-prototype! %this owner))
-      prototype))
+   (let ((function-owner obj))
+      (with-access::JsFunction function-owner (prototype alloc name src)
+	 (when (eq? prototype #\F)
+	    (js-function-setup-prototype! %this function-owner))
+	 prototype)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-function-maybe-prototype-get ...                              */
 ;*---------------------------------------------------------------------*/
 (define (js-function-maybe-prototype-get obj owner propname %this)
-   (let loop ((owner owner))
-      (cond
-	 ((js-function? owner)
-	  (js-function-prototype-get obj owner propname %this))
-	 ((js-proxy-function? owner)
-	  (loop (js-proxy-target owner)))
-	 (else
-	  (js-raise-type-error %this "prototype: not a function ~s"
-	     (js-typeof owner %this))))))
+   ;; see JS-FUNCTION-PROTOTYPE-GET
+   (let ((function-owner obj))
+      (let loop ((o function-owner))
+	 (cond
+	    ((js-function? o)
+	     ;; see JS-FUNCTION-PROTOTYPE-GET
+	     (js-function-prototype-get o owner propname %this))
+	    ((js-proxy-function? o)
+	     (loop (js-proxy-target o)))
+	    (else
+	     (js-raise-type-error %this "prototype: not a function ~s"
+		(js-typeof o %this)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-function-prototype-set ...                                    */
@@ -957,20 +971,22 @@
 		      (vector-ref vec i)
 		      (loop (+fx i 1))))))))
 
-   (with-access::JsFunction owner (constrmap %prototype prototype elements cmap)
-      ;; as the prototype property is not configurable,
-      ;; it is always owned by the object
-      (let ((desc (if (eq? cmap (js-not-a-cmap))
-		      (find-desc elements (& "prototype"))
-		      (vector-ref elements 0))))
-	 (with-access::JsDataDescriptor desc (writable)
-	    (when writable
-	       ;; changing the prototype invalidates the fun's constrmap
-	       ;; (MS, change 2019-01-18)
-	       (unless (eq? constrmap (js-not-a-cmap))
-		  (js-function-set-constrmap! owner))
-	       (set! prototype v)))))
-   v)
+   ;; see JS-FUNCTION-PROTOTYPE-GET
+   (let ((function-owner obj))
+      (with-access::JsFunction function-owner (constrmap %prototype prototype elements cmap)
+	 ;; as the prototype property is not configurable,
+	 ;; it is always owned by the object
+	 (let ((desc (if (eq? cmap (js-not-a-cmap))
+			 (find-desc elements (& "prototype"))
+			 (vector-ref elements 0))))
+	    (with-access::JsDataDescriptor desc (writable)
+	       (when writable
+		  ;; changing the prototype invalidates the fun's constrmap
+		  ;; (MS, change 2019-01-18)
+		  (unless (eq? constrmap (js-not-a-cmap))
+		     (js-function-set-constrmap! function-owner))
+		  (set! prototype v)))))
+      v))
 
 ;*---------------------------------------------------------------------*/
 ;*    init-builtin-function-prototype! ...                             */

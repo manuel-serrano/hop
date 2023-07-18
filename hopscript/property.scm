@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed Jul 12 13:41:51 2023 (serrano)                */
+;*    Last change :  Fri Jul 14 07:42:19 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -50,10 +50,10 @@
 	      "bgl_make_pcache_table"))
 
    (export (js-init-property! ::JsGlobalObject)
-	   (js-debug-object-cmap-id ::JsObject)
-	   (generic js-debug-object ::obj #!optional (msg ""))
-	   (js-debug-pcache ::obj #!optional (msg ""))
-	   (js-debug-cmap ::obj #!optional (msg ""))
+	   (js-inspect-object-cmap-id ::JsObject)
+	   (generic js-inspect-object ::obj #!optional (msg ""))
+	   (js-inspect-pcache ::obj #!optional (msg ""))
+	   (js-inspect-cmap ::obj #!optional (msg ""))
 	   (%define-pcache ::int)
 	   (js-make-pcache-table ::int ::obj #!optional profile-info-table)
 	   (js-pcache-table-profile-init::obj ::obj ::long ::obj)
@@ -453,9 +453,9 @@
 		  ,(prop (& "set") (property-flags #t #t #t #t #f))))))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-debug-object-cmap-id ...                                      */
+;*    js-inspect-object-cmap-id ...                                    */
 ;*---------------------------------------------------------------------*/
-(define (js-debug-object-cmap-id o)
+(define (js-inspect-object-cmap-id o)
    (with-access::JsObject o (cmap)
       (with-access::JsConstructMap cmap (%id)
 	 %id)))
@@ -472,9 +472,9 @@
 	  #unspecified))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-debug-prop ...                                                */
+;*    js-inspect-prop ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (js-debug-prop prop)
+(define (js-inspect-prop prop)
    (let ((name (prop-name prop))
 	 (flags (prop-flags prop)))
       (format "~a[~a]" name
@@ -486,15 +486,15 @@
 	    (if (flags-accessor? flags) "a" "-")))))
 	 
 ;*---------------------------------------------------------------------*/
-;*    js-debug-object ...                                              */
+;*    js-inspect-object ...                                            */
 ;*---------------------------------------------------------------------*/
-(define-generic (js-debug-object obj #!optional (msg ""))
+(define-generic (js-inspect-object obj #!optional (msg ""))
    (fprint (current-error-port) msg (typeof obj)))
 
 ;*---------------------------------------------------------------------*/
-;*    js-debug-cmap-chain ...                                          */
+;*    js-inspect-cmap-chain ...                                        */
 ;*---------------------------------------------------------------------*/
-(define (js-debug-cmap-chain o::JsConstructMap)
+(define (js-inspect-cmap-chain o::JsConstructMap)
    (let loop ((o o))
       (if (or (not o) (eq? o (js-not-a-pmap)))
 	  '()
@@ -504,9 +504,9 @@
 		 (cons %id (loop parent)))))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-debug-object ::JsObject ...                                   */
+;*    js-inspect-object ::JsObject ...                                 */
 ;*---------------------------------------------------------------------*/
-(define-method (js-debug-object obj::JsObject #!optional (msg ""))
+(define-method (js-inspect-object obj::JsObject #!optional (msg ""))
    (with-access::JsObject obj (cmap elements)
       (cond
 	 ((js-object-mapped? obj)
@@ -541,7 +541,7 @@
 		"\n   cmap.props="
 		(vector-length props)
 		" " 
-		(vector-map js-debug-prop props))))
+		(vector-map js-inspect-prop props))))
 	 ((js-object-hashed? obj)
 	  (with-access::JsConstructMap cmap (%id props)
 	     (fprint (current-error-port) "== " msg (typeof obj) " HASHED"
@@ -566,9 +566,9 @@
 		   (vector->list elements))))))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-debug-pcache ...                                              */
+;*    js-inspect-pcache ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (js-debug-pcache pcache #!optional (msg ""))
+(define (js-inspect-pcache pcache #!optional (msg ""))
    (if (isa? pcache JsPropertyCache)
        (with-access::JsPropertyCache pcache (point src imap cmap pmap nmap emap amap xmap cntmiss iindex cindex pindex nindex aindex eindex)
 	  (fprint (current-error-port) "-- " msg (typeof pcache)
@@ -577,40 +577,40 @@
 	  (unless (eq? imap (js-not-a-pmap))
 	     (with-access::JsConstructMap imap (%id props)
 		(fprint (current-error-port) "  imap %id=" %id
-		   " iindex=" iindex " props=" (vector-length props) " " (vector-map js-debug-prop props))))
+		   " iindex=" iindex " props=" (vector-length props) " " (vector-map js-inspect-prop props))))
 	  (unless (eq? cmap (js-not-a-pmap))
 	     (with-access::JsConstructMap cmap (%id props)
 		(fprint (current-error-port) "  cmap %id=" %id
-		   " cindex=" cindex " props=" (vector-length props) " " (vector-map js-debug-prop props))))
+		   " cindex=" cindex " props=" (vector-length props) " " (vector-map js-inspect-prop props))))
 	  (unless (eq? pmap (js-not-a-pmap))
 	     (with-access::JsConstructMap pmap (%id props)
 		(fprint (current-error-port) "  pmap %id=" %id
-		   " pindex=" pindex " props=" (vector-length props) " " (vector-map js-debug-prop props))))
+		   " pindex=" pindex " props=" (vector-length props) " " (vector-map js-inspect-prop props))))
 	  (unless (eq? nmap (js-not-a-pmap))
 	     (with-access::JsConstructMap nmap (%id props)
 		(fprint (current-error-port) "  nmap %id=" %id
-		   " nindex=" nindex " props=" (vector-length props) " " (vector-map js-debug-prop props))))
+		   " nindex=" nindex " props=" (vector-length props) " " (vector-map js-inspect-prop props))))
 	  (unless (eq? emap (js-not-a-pmap))
 	     (with-access::JsConstructMap emap (%id props)
 		(fprint (current-error-port) "  emap %id=" %id
-		   " eindex=" eindex " props=" (vector-length props) " " (vector-map js-debug-prop props))))
+		   " eindex=" eindex " props=" (vector-length props) " " (vector-map js-inspect-prop props))))
 	  (unless (eq? amap (js-not-a-pmap))
 	     (with-access::JsConstructMap amap (%id props)
 		(fprint (current-error-port) "  amap %id=" %id
-		   " aindex=" aindex " props=" (vector-length props) " " (vector-map js-debug-prop props))))
+		   " aindex=" aindex " props=" (vector-length props) " " (vector-map js-inspect-prop props))))
 	  (unless (eq? xmap (js-not-a-pmap))
 	     (with-access::JsConstructMap xmap (%id props)
 		 (fprint (current-error-port) "  xmap %id=" %id
-		    " props=" (vector-length props) " " (vector-map js-debug-prop props))))
+		    " props=" (vector-length props) " " (vector-map js-inspect-prop props))))
 	  (with-access::JsPropertyCache pcache (vindex)
 	     (unless (=fx vindex (js-not-a-index))
 		(fprint (current-error-port) "  vindex=" vindex))))
        (fprint (current-error-port) msg (typeof pcache))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-debug-cmap ...                                                */
+;*    js-inspect-cmap ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (js-debug-cmap cmap #!optional (msg ""))
+(define (js-inspect-cmap cmap #!optional (msg ""))
    (with-access::JsConstructMap cmap (%id props methods
 					rtransitions ptransitions
 					vtable mrtable mptable)
@@ -619,7 +619,7 @@
 	 " prop.vlen=" (vector-length props)
 	 " met.vlen=" (vector-length methods)
 	 " vtable.len=" (vector-length vtable)
-	 "\n  props=" (vector-map js-debug-prop props)
+	 "\n  props=" (vector-map js-inspect-prop props)
 	 "\n  mrtable=" (when (vector? mrtable) (vector-length mrtable))
 	 " mptable=" (when (vector? mptable) (vector-length mptable))
 	 "\n  rtransitions="

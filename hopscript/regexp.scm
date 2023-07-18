@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Fri Jun 23 07:54:16 2023 (serrano)                */
+;*    Last change :  Fri Jul 14 07:44:02 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript regexps                      */
@@ -156,9 +156,9 @@
 	    nobj))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-debug-object ...                                              */
+;*    js-inspect-object ...                                            */
 ;*---------------------------------------------------------------------*/
-(define-method (js-debug-object obj::JsRegExp #!optional (msg ""))
+(define-method (js-inspect-object obj::JsRegExp #!optional (msg ""))
    (call-next-method)
    (with-access::JsRegExp obj (flags)
       (fprint (current-error-port) "   flags=" flags)

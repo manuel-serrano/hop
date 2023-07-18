@@ -241,9 +241,9 @@
 (define __js_strings (&begin!))
 
 ;*---------------------------------------------------------------------*/
-;*    js-debug-object ::JsArray ...                                    */
+;*    js-inspect-object ::JsArray ...                                  */
 ;*---------------------------------------------------------------------*/
-(define-method (js-debug-object obj::JsArray #!optional (msg ""))
+(define-method (js-inspect-object obj::JsArray #!optional (msg ""))
    (call-next-method)
    (with-access::JsArray obj (vec ilen length)
       (fprint (current-error-port)
@@ -2185,7 +2185,7 @@
 	 ((js-vector? origin)
 	  (js-vector-alloc (fixnum->uint32 new-len) %this))
 	 ((eq? (js-object-proto origin) js-array-prototype)
-	  (js-array-construct-alloc/lengthu32 %this (fixnum->uint32 new-len)))
+	  (js-array-construct-alloc-small %this (fixnum->uint32 new-len)))
 	 (else
 	  (let ((ctor (js-get-name/cache origin (& "constructor") #f %this
 			 (js-pcache-ref js-array-pcache 13))))
@@ -3998,7 +3998,7 @@
 ;*    Concat from an empty array.                                      */
 ;*---------------------------------------------------------------------*/
 (define (js-array-concat0-empty %this cache)
-   (js-array-construct-alloc/lengthu32 %this #u32:0))
+   (js-array-construct-alloc-small %this #u32:0))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-concat0-create ...                                      */
@@ -4006,7 +4006,7 @@
 ;*    Concat from a literal array of one element.                      */
 ;*---------------------------------------------------------------------*/
 (define (js-array-concat0-create el::obj %this cache)
-   (let ((arr (js-array-construct-alloc/lengthu32 %this #u32:1)))
+   (let ((arr (js-array-construct-alloc-small %this #u32:1)))
       (with-access::JsArray arr (vec length ilen)
 	 (set! length #u32:1)
 	 (set! ilen #u32:1)
@@ -4037,11 +4037,13 @@
 			       (uint32->fixnum ailen)))
 		   (arr (js-array-species-create %this this new-len)))
 	       (with-access::JsArray arr ((vdst vec) ilen)
-		  (vector-blit! vdst 0
-		     tvec 0 (uint32->fixnum tilen))
-		  (vector-blit! vdst (uint32->fixnum tilen)
-		     avec 0 (uint32->fixnum ailen))
-		  (set! ilen (uint32->fixnum (+u32 tilen ailen))))
+		  (let ((vdst vdst))
+		     [assert (vdst) (>=fx (vector-length vdst) new-len)]
+		     (vector-blit! vdst 0
+			tvec 0 (uint32->fixnum tilen))
+		     (vector-blit! vdst (uint32->fixnum tilen)
+			avec 0 (uint32->fixnum ailen))
+		     (set! ilen (uint32->fixnum (+u32 tilen ailen)))))
 	       arr))))
    
    (if (and (js-object-mode-arrayinline? this)
@@ -4062,7 +4064,7 @@
    
    (define (array-concat1-empty arg %this)
       (with-access::JsArray arg ((avec vec) (ailen ilen))
-	 (let ((arr (js-array-construct-alloc/lengthu32 %this ailen)))
+	 (let ((arr (js-array-construct-alloc-small %this ailen)))
 	    (with-access::JsArray arr ((vdst vec) ilen length)
 	       (vector-blit! vdst 0 avec 0 (uint32->fixnum ailen))
 	       (set! ilen ailen)
@@ -4446,16 +4448,17 @@
 	  (with-access::JsProcedure proc (procedure)
 	     (let ((fun procedure))
 		(with-access::JsArray o (vec ilen)
-		   (let loop ((i i))
-		      (cond
-			 ((>=u32 i ilen)
-			  (js-undefined))
-			 ((not (js-object-mode-arrayinline? o))
-			  (array-foreach this o len proc t i %this))
-			 (else
-			  (let ((v (vector-ref vec (uint32->fixnum i))))
-			     (fun t v)
-			     (loop (+u32 i 1))))))))))
+		   (let ((ilen ilen))
+		      (let loop ((i i))
+			 (cond
+			    ((>=u32 i ilen)
+			     (js-undefined))
+			    ((not (js-object-mode-arrayinline? o))
+			     (array-foreach this o len proc t i %this))
+			    (else
+			     (let ((v (vector-ref vec (uint32->fixnum i))))
+				(fun t v)
+				(loop (+u32 i 1)))))))))))
 	 (else
 	  (with-access::JsArray o (vec ilen)
 	     (let loop ((i i))

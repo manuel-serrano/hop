@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Fri Jun  9 08:47:31 2023 (serrano)                */
+;*    Last change :  Fri Jul 14 07:45:37 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -426,8 +426,8 @@
 		  (lambda (this obj msg)
 		     (let ((p (current-error-port)))
 			(if (eq? msg (js-undefined))
-			    (js-debug-object obj)
-			    (js-debug-object obj msg)))))
+			    (js-inspect-object obj)
+			    (js-inspect-object obj msg)))))
 	       
 	       ;; inspectCmap
 	       (define-js imspectCmap 2
@@ -435,8 +435,8 @@
 		     (with-access::JsObject obj (cmap)
 			(let ((p (current-error-port)))
 			   (if (eq? msg (js-undefined))
-			       (js-debug-cmap cmap)
-			       (js-debug-cmap cmap msg))))))
+			       (js-inspect-cmap cmap)
+			       (js-inspect-cmap cmap msg))))))
 	       
 	       ;; typeName
 	       (define-js typeName 1

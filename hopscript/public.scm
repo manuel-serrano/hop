@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Wed Jul 12 07:50:06 2023 (serrano)                */
+;*    Last change :  Thu Jul 13 07:44:54 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -76,8 +76,7 @@
 	   (inline js-new-target-pop! ::JsGlobalObject)
 
 	   (macro %bgl-call)
-	   (macro %bgl-callX)
-	   (macro %bgl-callY)
+	   (macro %bgl-call4)
 	   
 	   (js-call0% ::JsGlobalObject ::JsProcedure ::procedure this)
 	   (js-call1% ::JsGlobalObject ::JsProcedure ::procedure this a0)
@@ -431,34 +430,22 @@
 ;*---------------------------------------------------------------------*/
 (define-macro (%bgl-call fun . args)
    (cond-expand
-      (bigloo-c `(,(string->symbol (format "$call~a" (length args))) ,fun ,@args))
-      (else `(,fun ,@args))))
+      ((and bigloo-c debug)
+       `(if (=fx (procedure-arity ,fun) ,(length args))
+	    (,fun ,@args)
+	    (error "%bgl-call"
+	       (format "wrong arity: ~a" (procedure-arity ,fun))
+	       '(,fun ,@args))))
+      (bigloo-cXXX
+       `(,(string->symbol (format "$call~a" (length args))) ,fun ,@args))
+      (else
+       `(,fun ,@args))))
 
-(define-macro (%bgl-callX key fun . args)
-   (let ((n (length args)))
-      (if (<=fx n 4)
-	  ;; 4 is the maximal number of evaluated procedures
-	  (cond-expand
-	     (bigloo-c
-	      `(begin
-		  (unless (>=fx (procedure-arity ,fun) 0)
-		     (error "PAS BON %bgl-callX" '(,fun ,@args) ',key))
-		  (,(string->symbol (format "$call~a" n)) ,fun ,@args)))
-	     (else `(,fun ,@args)))
-	  `(,fun ,@args))))
-
-(define-macro (%bgl-callY key proc fun . args)
-   (let ((n (length args)))
-      (if (<=fx n 4)
-	  ;; 4 is the maximal number of evaluated procedures
-	  (cond-expand
-	     (bigloo-c
-	      `(begin
-		  (unless (>=fx (procedure-arity ,fun) 0)
-		     (error "PAS BON %bgl-callY" ,fun ,proc))
-		  (,(string->symbol (format "$call~a" n)) ,fun ,@args)))
-	     (else `(,fun ,@args)))
-	  `(,fun ,@args))))
+(define-macro (%bgl-call4 fun . args)
+   ;; 4 is the maximal number of evaluated procedures
+   (if (<=fx (length args) 4)
+       `(%bgl-call ,fun ,@args)
+       `(,fun ,@args)))
 
 ;*---------------------------------------------------------------------*/
 ;*    gen-calln ...                                                    */
@@ -768,7 +755,7 @@
 	     ;; fix too many arguments
 	     ,@(map call-fix-too-many (iota (-fx n 1) 1))
 	     ;; direct call
-	     ((,n) (%bgl-callY 1 ,fun ,procedure ,this ,@args))
+	     ((,n) (%bgl-call4 ,procedure ,this ,@args))
 	     ;; fix missing arguments
 	     ,@(map call-fix-missing (iota (-fx 10 n) (+fx n 1)))
 	     ;; dynamic dispatch
@@ -950,67 +937,67 @@
 (define-inline (js-call0-jsprocedure %this fun this)
    (with-access::JsProcedure fun (procedure arity)
       (if (=fx arity 1)
-	  (%bgl-callX 2 procedure this)
+	  (%bgl-call4 procedure this)
 	  (js-call0% %this fun procedure this))))
 
 (define-inline (js-call1-jsprocedure %this fun this a0)
    (with-access::JsProcedure fun (procedure arity)
       (if (=fx arity 2)
-	  (%bgl-callX 3 procedure this a0)
+	  (%bgl-call4 procedure this a0)
 	  (js-call1% %this fun procedure this a0))))
 
 (define-inline (js-call2-jsprocedure %this fun this a0 a1)
    (with-access::JsProcedure fun (procedure arity)
       (if (=fx arity 3)
-	  (%bgl-callX 4 procedure this a0 a1)
+	  (%bgl-call4 procedure this a0 a1)
 	  (js-call2% %this fun procedure this a0 a1))))
 
 (define-inline (js-call3-jsprocedure %this fun this a0 a1 a2)
    (with-access::JsProcedure fun (procedure arity)
       (if (=fx arity 4)
-	  (%bgl-callX 5 procedure this a0 a1 a2)
+	  (%bgl-call4 procedure this a0 a1 a2)
 	  (js-call3% %this fun procedure this a0 a1 a2))))
 
 (define-inline (js-call4-jsprocedure %this fun this a0 a1 a2 a3)
    (with-access::JsProcedure fun (procedure arity)
       (if (=fx arity 5)
-	  (%bgl-callX 6 procedure this a0 a1 a2 a3)
+	  (%bgl-call4 procedure this a0 a1 a2 a3)
 	  (js-call4% %this fun procedure this a0 a1 a2 a3))))
 
 (define-inline (js-call5-jsprocedure %this fun this a0 a1 a2 a3 a4)
    (with-access::JsProcedure fun (procedure arity)
       (if (=fx arity 6)
-	  (%bgl-callX 7 procedure this a0 a1 a2 a3 a4)
+	  (%bgl-call4 procedure this a0 a1 a2 a3 a4)
 	  (js-call5% %this fun procedure this a0 a1 a2 a3 a4))))
 
 (define-inline (js-call6-jsprocedure %this fun this a0 a1 a2 a3 a4 a5)
    (with-access::JsProcedure fun (procedure arity)
       (if (=fx arity 7)
-	  (%bgl-callX 8 procedure this a0 a1 a2 a3 a4 a5)
+	  (%bgl-call4 procedure this a0 a1 a2 a3 a4 a5)
 	  (js-call6% %this fun procedure this a0 a1 a2 a3 a4 a5))))
 
 (define-inline (js-call7-jsprocedure %this fun this a0 a1 a2 a3 a4 a5 a6)
    (with-access::JsProcedure fun (procedure arity)
       (if (=fx arity 8)
-	  (%bgl-callX 9 procedure this a0 a1 a2 a3 a4 a5 a6)
+	  (%bgl-call4 procedure this a0 a1 a2 a3 a4 a5 a6)
 	  (js-call7% %this fun procedure this a0 a1 a2 a3 a4 a5 a6))))
 
 (define-inline (js-call8-jsprocedure %this fun this a0 a1 a2 a3 a4 a5 a6 a7)
    (with-access::JsProcedure fun (procedure arity)
       (if (=fx arity 9)
-	  (%bgl-callX 10 procedure this a0 a1 a2 a3 a4 a5 a6 a7)
+	  (%bgl-call4 procedure this a0 a1 a2 a3 a4 a5 a6 a7)
 	  (js-call8% %this fun procedure this a0 a1 a2 a3 a4 a5 a6 a7))))
 
 (define-inline (js-call9-jsprocedure %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8)
    (with-access::JsProcedure fun (procedure arity)
       (if (=fx arity 10)
-	  (%bgl-callX 11 procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8)
+	  (%bgl-call4 procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8)
 	  (js-call9% %this fun procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8))))
 
 (define-inline (js-call10-jsprocedure %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
    (with-access::JsProcedure fun (procedure arity)
       (if (=fx arity 11)
-	  (%bgl-callX 12 procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
+	  (%bgl-call4 procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
 	  (js-call10% %this fun procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9))))
 
 (define-inline (js-calln-jsprocedure %this fun this args)
@@ -1022,9 +1009,9 @@
    ;; it is needed to handle array function in hopscript mode
    (with-access::JsProcedure fun (arity procedure)
       (case arity
-	 ((2) (%bgl-callX 13 procedure this a0))
-	 ((3) (%bgl-callX 14 procedure this a0 a1))
-	 ((4) (%bgl-callX 15 procedure this a0 a1 a2))
+	 ((2) (%bgl-call4 procedure this a0))
+	 ((3) (%bgl-call4 procedure this a0 a1))
+	 ((4) (%bgl-call4 procedure this a0 a1 a2))
 	 (else (js-call3 %this fun this a0 a1 a2)))))
 
 (define (js-call2-4-jsprocedure %this fun this a0 a1 a2 a3)
@@ -1032,9 +1019,9 @@
    ;; it is needed to handle array function in hopscript mode
    (with-access::JsProcedure fun (arity procedure)
       (case arity
-	 ((3) (%bgl-callX 16 procedure this a0 a1))
-	 ((4) (%bgl-callX 17 procedure this a0 a1 a2))
-	 ((5) (%bgl-callX 18 procedure this a0 a1 a2 a3))
+	 ((3) (%bgl-call4 procedure this a0 a1))
+	 ((4) (%bgl-call4 procedure this a0 a1 a2))
+	 ((5) (%bgl-call4 procedure this a0 a1 a2 a3))
 	 (else (js-call4 %this fun this a0 a1 a2 a3)))))
 
 ;*---------------------------------------------------------------------*/
