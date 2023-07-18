@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Dec  7 06:32:41 2019                          */
-;*    Last change :  Wed Jul 12 15:05:04 2023 (serrano)                */
+;*    Last change :  Tue Jul 18 09:20:13 2023 (serrano)                */
 ;*    Copyright   :  2019-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function macros for js2scheme                                    */
@@ -15,17 +15,17 @@
 (define-macro (js-function-apply-arguments %this fun thisarg vec %arguments mode cache)
    `(with-access::JsGlobalObject %this (js-function-prototype)
        (cond
-	  (%arguments
-	   (js-function-apply ,%this ,fun ,thisarg %arguments ,cache))
+	  (,%arguments
+	   (js-function-apply ,%this ,fun ,thisarg ,%arguments ,cache))
 	  ((and (js-object-mode-plain? ,fun)
 		(js-object-mode-plain? js-function-prototype))
 	   (js-function-apply-vec ,%this ,fun ,thisarg
 	      ,vec #u32:0 (fixnum->uint32 (vector-length ,vec))))
 	  (else
-	   (set! %arguments 
+	   (set! ,%arguments 
 	      ,(if (eq? mode 'strict)
-		   `(js-strict-arguments %this (vector-copy ,vec))
-		   `(js-sloppy-arguments %this (vector-copy ,vec))))
+		   `(js-strict-arguments ,%this (vector-copy ,vec))
+		   `(js-sloppy-arguments ,%this (vector-copy ,vec))))
 	   (js-function-apply %this ,fun ,thisarg ,%arguments ,cache)))))
 	   
 ;*---------------------------------------------------------------------*/
@@ -41,26 +41,6 @@
 	      ,vec #u32:0 (fixnum->uint32 (vector-length ,vec)))))))
 	   
 ;*---------------------------------------------------------------------*/
-;*    js-function-spread-arguments-slice ...                           */
-;*---------------------------------------------------------------------*/
-(define-macro (js-function-spread-arguments-slice %this fun thisarg vec %arguments offset)
-   `(with-access::JsGlobalObject %this (js-function-prototype)
-       (cond
-	  (%arguments
-	   ((@ js-function-spread-arguments-slice __hopscript_function)
-	    ,%this ,fun ,thisarg ,vec ,%arguments
-	    ,offset (js-arguments-length ,%arguments ,%this) #f))
-	  ((not (js-object-mode-plain? js-function-prototype))
-	   (set! ,%arguments 
-	      (js-strict-arguments ,%this (vector-copy ,vec)))
-	   ((@ js-function-spread-arguments-slice __hopscript_function)
-	    ,%this ,fun ,thisarg ,vec ,%arguments
-	    ,offset (js-arguments-length ,%arguments ,%this) #f))
-	  (else
-	   (js-function-apply-vec ,%this ,fun ,thisarg
-	      ,vec ,offset (fixnum->uint32 (vector-length ,vec)))))))
-	   
-;*---------------------------------------------------------------------*/
 ;*    js-function-maybe-apply-arguments ...                            */
 ;*---------------------------------------------------------------------*/
 (define-macro (js-function-maybe-apply-arguments %this fun thisarg vec %arguments mode cache)
@@ -72,7 +52,49 @@
 		   `(js-strict-arguments %this (vector-copy ,vec))
 		   `(js-sloppy-arguments %this (vector-copy ,vec))))
 	   (js-function-maybe-apply %this ,fun ,thisarg ,%arguments ,cache))))
-   
+
+;*---------------------------------------------------------------------*/
+;*    js-function-maybe-apply-arguments-slice ...                      */
+;*---------------------------------------------------------------------*/
+(define-macro (js-function-maybe-apply-arguments-slice %this this thisarg vec offset len %arguments mode cache)
+   `(with-access::JsGlobalObject ,%this (js-function-prototype)
+      (cond
+	 (,%arguments
+	  (js-function-maybe-apply ,%this ,this ,thisarg
+	     (js-arguments-slice ,%arguments ,offset ,len ,%this)
+	     ,cache))
+	 ((and (js-procedure? ,this)
+	       (js-object-mode-plain? ,this)
+	       (js-object-mode-plain? js-function-prototype))
+	  (js-function-apply-vec ,%this ,this ,thisarg ,vec ,offset ,len))
+	 (else
+	  (set! ,%arguments 
+	     ,(if (eq? mode 'strict)
+		  `(js-strict-arguments ,%this (vector-copy ,vec))
+		  `(js-sloppy-arguments ,%this (vector-copy ,vec))))
+	  (js-function-maybe-apply ,%this ,this ,thisarg
+	     (js-arguments-vector-slice ,vec ,offset ,len ,%this)
+	     ,cache)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-function-spread-arguments-slice ...                           */
+;*---------------------------------------------------------------------*/
+(define-macro (js-function-spread-arguments-slice %this this thisarg vec offset len %arguments mode cache)
+   `(with-access::JsGlobalObject %this (js-function-prototype)
+       (cond
+	  (,%arguments
+	   (js-apply-array ,%this ,this ,thisarg
+	      (js-arguments-slice ,%arguments ,offset ,len ,%this)))
+	  ((js-procedure? ,this) 
+	   (js-function-apply-vec ,%this ,this ,thisarg ,vec ,offset ,len))
+	  (else
+	   (set! ,%arguments 
+	      ,(if (eq? mode 'strict)
+		   `(js-strict-arguments ,%this (vector-copy ,vec))
+		   `(js-sloppy-arguments ,%this (vector-copy ,vec))))
+	   (js-apply-array ,%this ,this ,thisarg
+	      (js-arguments-vector-slice ,vec ,offset ,len ,%this))))))
+
 ;*---------------------------------------------------------------------*/
 ;*    js-function-maybe-spread-arguments ...                           */
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Dec  7 06:56:07 2019                          */
-;*    Last change :  Sat Jun 10 07:01:25 2023 (serrano)                */
+;*    Last change :  Tue Jul 18 09:38:21 2023 (serrano)                */
 ;*    Copyright   :  2019-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arguments macros for js2scheme                                   */
@@ -14,12 +14,12 @@
 ;*---------------------------------------------------------------------*/
 (define-macro (js-arguments-vector-index-ref vec idx len %arguments %this mode)
    `(cond
-       (%arguments
+       (,%arguments
 	(js-get ,%arguments ,idx ,%this))
        ((<fx ,idx ,len)
 	(vector-ref ,vec ,idx))
        (else
-	(set! %arguments 
+	(set! ,%arguments 
 	   ,(if (eq? mode 'strict)
 		`(js-strict-arguments %this (vector-copy ,vec))
 		`(js-sloppy-arguments %this (vector-copy ,vec))))

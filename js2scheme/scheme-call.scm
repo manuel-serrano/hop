@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Wed Jul 12 08:48:52 2023 (serrano)                */
+;*    Last change :  Tue Jul 18 06:48:05 2023 (serrano)                */
 ;*    Copyright   :  2018-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -343,12 +343,21 @@
    (define (def obj args mode return conf)
       (let ((arr (j2s-scheme (cadr args) mode return conf)))
 	 (match-case arr
+	    ((js-arguments-vector-slice ?arguments ?index ?len ?%this)
+	     `(js-function-maybe-apply-arguments-slice ,(caddr args)
+		 ,(j2s-scheme obj mode return conf)
+		 ,(j2s-scheme (car args) mode return conf)
+		 ,arguments ,index ,len
+		 ,(j2s-arguments-object-id)
+		 ',mode
+		 ,(cadddr args)))
 	    ((js-jsobject->jsarray (js-arguments-vector-slice ?arguments ?index ?len ?%this) %this)
 	     `(js-function-maybe-apply-arguments-slice ,(caddr args)
 		 ,(j2s-scheme obj mode return conf)
 		 ,(j2s-scheme (car args) mode return conf)
 		 ,arguments ,index ,len
 		 ,(j2s-arguments-object-id)
+		 ',mode
 		 ,(cadddr args)))
 	    (else
 	     `(js-function-maybe-apply ,(caddr args)
@@ -398,7 +407,7 @@
       (with-access::J2SRef this (decl)
 	 (when (isa? decl J2SDeclArguments)
 	    (with-access::J2SDeclArguments decl (alloc-policy)
-	       (eq? alloc-policy 'stack)))))
+	       (memq alloc-policy '(stack lazy))))))
 
    (cond
       ((isa? obj J2SRef)
@@ -412,7 +421,7 @@
 			(=fx (length args) 4)
 			(isa? (cadr args) J2SRef)))
 	      (cond
-		 ((ref-stack-vararg? (cadr args))
+		 ((arguments-vec-apply? (cadr args))
 		  `(js-function-apply-arguments ,(caddr args)
 		      ,(j2s-scheme obj mode return conf)
 		      ,(j2s-scheme (car args) mode return conf)
@@ -421,11 +430,7 @@
 		      ',mode
 		      ,(cadddr args)))
 		 (else
-		  `(js-function-apply ,(caddr args)
-		      ,(j2s-scheme obj mode return conf)
-		      ,(j2s-scheme (car args) mode return conf)
-		      ,(j2s-scheme (cadr args) mode return conf)
-		      ,(cadddr args))))
+		  (def-arguments obj args mode return conf)))
 	      (if (and (isa? (cadr args) J2SRef)
 		       (j2s-ref-arguments-lazy? (cadr args)))
 		  (def-arguments obj args mode return conf)
@@ -1996,12 +2001,17 @@
 		       ((spread)
 			(let ((sliceargs (array-prototype-slice-call expr)))
 			   (if (and sliceargs (ref-stack-vararg? (car sliceargs)))
-			       `(js-function-spread-arguments-slice %this ,(j2s-scheme fun mode return ctx)
+			       `(js-function-spread-arguments-slice %this
+				   ,(j2s-scheme fun mode return ctx)
 				   ,@(map (lambda (a) (j2s-scheme a mode return ctx))
 					thisargs)
 				   ,(j2s-arguments-stack-id)
+				   ,(j2s-scheme (cadr sliceargs) mode return ctx)
+				   ,(j2s-arguments-length-id)
 				   ,(j2s-arguments-object-id)
-				   ,(j2s-scheme (cadr sliceargs) mode return ctx))
+				   ',mode
+				   
+				   ,#f)
 			       `(js-apply-array %this ,(j2s-scheme fun mode return ctx)
 				   ,@(map (lambda (a) (j2s-scheme a mode return ctx))
 					thisargs)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Fri Jul  7 10:17:56 2023 (serrano)                */
+;*    Last change :  Tue Jul 18 06:40:39 2023 (serrano)                */
 ;*    Copyright   :  2017-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -485,10 +485,10 @@
 	       (body `(let* ((,(j2s-arguments-length-id) (vector-length ,(j2s-arguments-stack-id)))
 			     (,(j2s-arguments-object-id) #f)
 			     ,@(map (lambda (a i)
-				       (let ((v (J2SAccess (J2SRef argumentsp)
-						   (J2SNumber/type 'uint32 (fixnum->uint32 i)))))
-					  `(,(j2s-scheme a mode return ctx)
-					    ,(j2s-arguments-ref v mode return ctx))))
+				       `(,(j2s-scheme a mode return ctx)
+					 (if (<fx ,i ,(j2s-arguments-length-id))
+					     (vector-ref ,(j2s-arguments-stack-id) ,i)
+					     (js-undefined))))
 				  params
 				  (iota (length params))))
 			 ,body)))
