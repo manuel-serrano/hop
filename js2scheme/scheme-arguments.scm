@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Tue Jul 18 09:39:14 2023 (serrano)                */
+;*    Last change :  Tue Jul 18 14:51:58 2023 (serrano)                */
 ;*    Copyright   :  2017-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript arguments functions.        */
@@ -136,7 +136,9 @@
 		      ,(j2s-scheme obj mode return ctx)
 		      ,(js-int32->fixnum (j2s-scheme field mode return ctx))))
 		 ((arguments-lazy? obj)
-		  `(js-arguments-vector-ref
+		  `(,(if (inrange-positive? field)
+			 'js-arguments-vector-index-ref
+			 'js-arguments-vector-ref)
 		      ,(j2s-arguments-stack-id)
 		      ,(js-int32->fixnum (j2s-scheme field mode return ctx))
 		      ,(j2s-arguments-length-id)
@@ -154,7 +156,9 @@
 		  ,(j2s-scheme obj mode return ctx)
 		  ,(j2s-scheme field mode return ctx)))
 	     ((arguments-lazy? obj)
-	      `(js-arguments-vector-ref
+	      `(,(if (inrange-positive? field)
+		     'js-arguments-vector-index-ref
+		     'js-arguments-vector-ref)
 		  ,(j2s-arguments-stack-id)
 		  ,(j2s-scheme field mode return ctx)
 		  ,(j2s-arguments-length-id)

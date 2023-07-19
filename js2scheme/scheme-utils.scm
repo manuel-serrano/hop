@@ -115,6 +115,7 @@
 	   (inrange-uint32?::bool ::J2SExpr)
 	   (inrange-uint32-number?::bool ::J2SExpr)
 	   (inrange-int53?::bool ::J2SExpr)
+	   (inrange-uint53?::bool ::J2SExpr)
 
 	   (boxed-type?::bool ::obj)
 	   (box ::obj ::obj ::struct #!optional proc::obj)
@@ -1301,6 +1302,27 @@
 		   (<llong (interval-max range) (bit-lshllong #l1 53))
 		   (eq? (interval-type range) 'integer))
 	      (memq type '(int32 uint32 integer bint))))))
+
+;*---------------------------------------------------------------------*/
+;*    inrange-uint53? ...                                              */
+;*---------------------------------------------------------------------*/
+(define (inrange-uint53? expr)
+   (when (inrange-int53? expr)
+      (with-access::J2SNumber expr (val)
+	  (cond
+	     ((uint32? val) #t)
+	     ((fixnum? val)
+	      (or (and (>=fx val 0) (<fx val (bit-lsh 1 29)))
+		  (let ((lval (fixnum->llong val)))
+		     (and (>=llong lval #l0)
+			  (<llong lval (bit-lshllong #l1 53))))))
+	     (else
+	      (with-access::J2SExpr expr (range type)
+		 (if (interval? range)
+		     (and (>=llong (interval-min range) #l0)
+			  (<llong (interval-max range) (bit-lshllong #l1 53))
+			  (eq? (interval-type range) 'integer))
+		     (memq type '(int32 uint32 integer bint)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    boxed-type? ...                                                  */
