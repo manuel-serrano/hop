@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Fri Jul 14 07:43:09 2023 (serrano)                */
+;*    Last change :  Thu Jul 20 18:57:06 2023 (serrano)                */
 ;*    Copyright   :  2018-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -72,7 +72,19 @@
 	   (js-call-proxy/cache-miss9 ::JsGlobalObject
 	      ::JsProxy ::obj a0 a1 a2 a3 a4 a5 a6 a7 a8)
 	   (js-call-proxy/cache-miss10 ::JsGlobalObject
-	      ::JsProxy ::obj a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)))
+	      ::JsProxy ::obj a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
+	   (js-call-proxy/cache-miss11 ::JsGlobalObject
+	      ::JsProxy ::obj a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10)
+	   (js-call-proxy/cache-miss12 ::JsGlobalObject
+	      ::JsProxy ::obj a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11)
+	   (js-call-proxy/cache-miss13 ::JsGlobalObject
+	      ::JsProxy ::obj a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12)
+	   (js-call-proxy/cache-miss14 ::JsGlobalObject
+	      ::JsProxy ::obj a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13)
+	   (js-call-proxy/cache-miss15 ::JsGlobalObject
+	      ::JsProxy ::obj a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14)
+	   (js-call-proxy/cache-miss16 ::JsGlobalObject
+	      ::JsProxy ::obj a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15)))
 
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
@@ -979,6 +991,24 @@
 
 (define (js-call-proxy/cache-miss10 %this proxy this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
    (gen-call-proxy/cache-miss %this proxy this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9))
+
+(define (js-call-proxy/cache-miss11 %this proxy this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10)
+   (gen-call-proxy/cache-miss %this proxy this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10))
+
+(define (js-call-proxy/cache-miss12 %this proxy this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11)
+   (gen-call-proxy/cache-miss %this proxy this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11))
+
+(define (js-call-proxy/cache-miss13 %this proxy this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12)
+   (gen-call-proxy/cache-miss %this proxy this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12))
+
+(define (js-call-proxy/cache-miss14 %this proxy this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13)
+   (gen-call-proxy/cache-miss %this proxy this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13))
+
+(define (js-call-proxy/cache-miss15 %this proxy this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14)
+   (gen-call-proxy/cache-miss %this proxy this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14))
+
+(define (js-call-proxy/cache-miss16 %this proxy this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15)
+   (gen-call-proxy/cache-miss %this proxy this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15))
 
 ;*---------------------------------------------------------------------*/
 ;*    &end!                                                            */

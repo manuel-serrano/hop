@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 11 09:35:38 2022                          */
-/*    Last change :  Thu Jul 20 09:04:51 2023 (serrano)                */
+/*    Last change :  Thu Jul 20 17:46:42 2023 (serrano)                */
 /*    Copyright   :  2022-23 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Macros for accelerating C compilation.                           */
@@ -122,15 +122,22 @@ extern bool_t hop_js_toboolean_no_boolean(obj_t);
 /*---------------------------------------------------------------------*/
 /*    Overflow ...                                                     */
 /*---------------------------------------------------------------------*/
-#if BGL_HAVE_OVERFLOW && TAG_INT == 0 && 1
+#if BGL_HAVE_OVERFLOW && TAG_INT == 0 && 0
 #  define BGL_ADDFX_OV53(x, y, res) \
    !__builtin_saddl_overflow(CINT(x) << (63-53), CINT(y) << (63-53), (long *)(&res)) \
    ? BINT((long)res >> 63-53) : DOUBLE_TO_REAL((double)((long)res))
+#  define BGL_SUBFX_OV53(x, y, res) \
+   !__builtin_ssubl_overflow(CINT(x) << (63-53), CINT(y) << (63-53), (long *)(&res)) \
+   ? BINT((long)res >> 63-53) : DOUBLE_TO_REAL((double)((long)res))
 #else
+#define BGL_OV53(res) \
+   ((uint64_t)((long)res - (long)BINT(-9007199254740992)) <= (uint64_t)BINT(18014398509481983))
 #  define BGL_ADDFX_OV53(x, y, res) \
    (res = (obj_t)((long)x + (long)y), \
-    (uint64_t)((long)res - -9007199254740992) <= (uint64_t)18014398509481983 \
-    ? res : DOUBLE_TO_REAL((double)((long)res)))
+    BGL_OV53(res) ? res : DOUBLE_TO_REAL((double)((long)res)))
+#  define BGL_SUBFX_OV53(x, y, res) \
+   (res = (obj_t)((long)x - (long)y), \
+    BGL_OV53(res) ? res : DOUBLE_TO_REAL((double)((long)res)))
 #endif 
 
 /*---------------------------------------------------------------------*/

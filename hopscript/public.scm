@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Thu Jul 13 07:44:54 2023 (serrano)                */
+;*    Last change :  Thu Jul 20 18:13:53 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -89,6 +89,12 @@
 	   (js-call8% ::JsGlobalObject ::JsProcedure ::procedure this a0 a1 a2 a3 a4 a5 a6 a7)
 	   (js-call9% ::JsGlobalObject ::JsProcedure ::procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8)
 	   (js-call10% ::JsGlobalObject ::JsProcedure ::procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
+	   (js-call11% ::JsGlobalObject ::JsProcedure ::procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10)
+	   (js-call12% ::JsGlobalObject ::JsProcedure ::procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11)
+	   (js-call13% ::JsGlobalObject ::JsProcedure ::procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12)
+	   (js-call14% ::JsGlobalObject ::JsProcedure ::procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13)
+	   (js-call15% ::JsGlobalObject ::JsProcedure ::procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14)
+	   (js-call16% ::JsGlobalObject ::JsProcedure ::procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15)
 	   (js-calln% ::JsGlobalObject ::JsProcedure ::procedure this ::pair-nil)
 	   
 	   (inline js-call0-jsprocedure ::JsGlobalObject ::JsProcedure this)
@@ -102,6 +108,12 @@
 	   (inline js-call8-jsprocedure ::JsGlobalObject ::JsProcedure this a0 a1 a2 a3 a4 a5 a6 a7)
 	   (inline js-call9-jsprocedure ::JsGlobalObject ::JsProcedure this a0 a1 a2 a3 a4 a5 a6 a7 a8)
 	   (inline js-call10-jsprocedure ::JsGlobalObject ::JsProcedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
+	   (inline js-call11-jsprocedure ::JsGlobalObject ::JsProcedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10)
+	   (inline js-call12-jsprocedure ::JsGlobalObject ::JsProcedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11)
+	   (inline js-call13-jsprocedure ::JsGlobalObject ::JsProcedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12)
+	   (inline js-call14-jsprocedure ::JsGlobalObject ::JsProcedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13)
+	   (inline js-call15-jsprocedure ::JsGlobalObject ::JsProcedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14)
+	   (inline js-call16-jsprocedure ::JsGlobalObject ::JsProcedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15)
 	   (inline js-calln-jsprocedure ::JsGlobalObject ::JsProcedure this args)
 	   (js-call1-3-jsprocedure ::JsGlobalObject ::JsProcedure this a0 a1 a2)
 	   (js-call2-4-jsprocedure ::JsGlobalObject ::JsProcedure this a0 a1 a2 a3)
@@ -117,6 +129,12 @@
 	   (inline js-call8-procedure fun::procedure this a0 a1 a2 a3 a4 a5 a6 a7)
 	   (inline js-call9-procedure fun::procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8)
 	   (inline js-call10-procedure fun::procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
+	   (inline js-call11-procedure fun::procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10)
+	   (inline js-call12-procedure fun::procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11)
+	   (inline js-call13-procedure fun::procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12)
+	   (inline js-call14-procedure fun::procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13)
+	   (inline js-call15-procedure fun::procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14)
+	   (inline js-call16-procedure fun::procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15)
 	   (js-calln-procedure fun::procedure this args)
 	   (js-calln-procedure/arity fun::procedure arity::long this args)
 	   
@@ -131,6 +149,12 @@
 	   (js-call8%-procedure fun::procedure this a0 a1 a2 a3 a4 a5 a6 a7)
 	   (js-call9%-procedure fun::procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8)
 	   (js-call10%-procedure fun::procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
+	   (js-call11%-procedure fun::procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10)
+	   (js-call12%-procedure fun::procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11)
+	   (js-call13%-procedure fun::procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12)
+	   (js-call14%-procedure fun::procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13)
+	   (js-call15%-procedure fun::procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14)
+	   (js-call16%-procedure fun::procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15)
 	   (js-call0-obj ::JsGlobalObject ::obj this)
 	   (js-call1-obj ::JsGlobalObject ::obj this a0)
 	   (js-call2-obj ::JsGlobalObject ::obj this a0 a1)
@@ -142,6 +166,12 @@
 	   (js-call8-obj ::JsGlobalObject ::obj this a0 a1 a2 a3 a4 a5 a6 a7)
 	   (js-call9-obj ::JsGlobalObject ::obj this a0 a1 a2 a3 a4 a5 a6 a7 a8)
 	   (js-call10-obj ::JsGlobalObject ::obj this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
+	   (js-call11-obj ::JsGlobalObject ::obj this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10)
+	   (js-call12-obj ::JsGlobalObject ::obj this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11)
+	   (js-call13-obj ::JsGlobalObject ::obj this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12)
+	   (js-call14-obj ::JsGlobalObject ::obj this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13)
+	   (js-call15-obj ::JsGlobalObject ::obj this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14)
+	   (js-call16-obj ::JsGlobalObject ::obj this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15)
 	   
 	   (inline js-call0 ::JsGlobalObject ::obj this)
 	   (inline js-call1 ::JsGlobalObject ::obj this a0)
@@ -154,6 +184,12 @@
 	   (inline js-call8 ::JsGlobalObject ::obj this a0 a1 a2 a3 a4 a5 a6 a7)
 	   (inline js-call9 ::JsGlobalObject ::obj this a0 a1 a2 a3 a4 a5 a6 a7 a8)
 	   (inline js-call10 ::JsGlobalObject ::obj this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
+	   (inline js-call11 ::JsGlobalObject ::obj this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10)
+	   (inline js-call12 ::JsGlobalObject ::obj this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11)
+	   (inline js-call13 ::JsGlobalObject ::obj this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12)
+	   (inline js-call14 ::JsGlobalObject ::obj this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13)
+	   (inline js-call15 ::JsGlobalObject ::obj this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14)
+	   (inline js-call16 ::JsGlobalObject ::obj this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15)
 	   (js-calln ::JsGlobalObject ::obj this args)
 	   (js-call1-3 ::JsGlobalObject ::obj this a0 a1 a2)
 	   (js-call2-4 ::JsGlobalObject ::obj this a0 a1 a2 a3)
@@ -169,6 +205,12 @@
 	   (js-call8/debug ::JsGlobalObject loc fun::obj this a0 a1 a2 a3 a4 a5 a6 a7)
 	   (js-call9/debug ::JsGlobalObject loc fun::obj this a0 a1 a2 a3 a4 a5 a6 a7 a8)
 	   (js-call10/debug ::JsGlobalObject loc fun::obj this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
+	   (js-call11/debug ::JsGlobalObject loc fun::obj this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10)
+	   (js-call12/debug ::JsGlobalObject loc fun::obj this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11)
+	   (js-call13/debug ::JsGlobalObject loc fun::obj this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12)
+	   (js-call14/debug ::JsGlobalObject loc fun::obj this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13)
+	   (js-call15/debug ::JsGlobalObject loc fun::obj this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14)
+	   (js-call16/debug ::JsGlobalObject loc fun::obj this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15)
 	   (js-calln/debug ::JsGlobalObject loc fun::obj this args)
 
 	   (js-call-method0 ::JsGlobalObject val prop)
@@ -291,6 +333,13 @@
 	   (macro $call9::obj (::procedure ::obj ::obj ::obj ::obj ::obj ::obj ::obj ::obj ::obj) "HOP_CALL9")
 	   (macro $call10::obj (::procedure ::obj ::obj ::obj ::obj ::obj ::obj ::obj ::obj ::obj ::obj) "HOP_CALL10")
 	   (macro $call11::obj (::procedure ::obj ::obj ::obj ::obj ::obj ::obj ::obj ::obj ::obj ::obj ::obj) "HOP_CALL11")
+	   (macro $call12::obj (::procedure ::obj ::obj ::obj ::obj ::obj ::obj ::obj ::obj ::obj ::obj ::obj ::obj) "HOP_CALL12")
+	   (macro $call13::obj (::procedure ::obj ::obj ::obj ::obj ::obj ::obj ::obj ::obj ::obj ::obj ::obj ::obj ::obj) "HOP_CALL13")
+	   (macro $call14::obj (::procedure ::obj ::obj ::obj ::obj ::obj ::obj ::obj ::obj ::obj ::obj ::obj ::obj ::obj ::obj) "HOP_CALL14")
+	   (macro $call15::obj (::procedure ::obj ::obj ::obj ::obj ::obj ::obj ::obj ::obj ::obj ::obj ::obj ::obj ::obj ::obj ::obj) "HOP_CALL15")
+	   (macro $call16::obj (::procedure ::obj ::obj ::obj ::obj ::obj ::obj ::obj ::obj ::obj ::obj ::obj ::obj ::obj ::obj ::obj ::obj) "HOP_CALL16")
+	   (macro $call17::obj (::procedure ::obj ::obj ::obj ::obj ::obj ::obj ::obj ::obj ::obj ::obj ::obj ::obj ::obj ::obj ::obj ::obj ::obj) "HOP_CALL17")
+	   (macro $call18::obj (::procedure ::obj ::obj ::obj ::obj ::obj ::obj ::obj ::obj ::obj ::obj ::obj ::obj ::obj ::obj ::obj ::obj ::obj ::obj) "HOP_CALL18")
 	   (export js-toboolean-no-boolean "hop_js_toboolean_no_boolean")
 	   (export js-call0 "hop_js_call0")
 	   (export js-call1 "hop_js_call1")
@@ -303,6 +352,12 @@
 	   (export js-call8 "hop_js_call8")
 	   (export js-call9 "hop_js_call9")
 	   (export js-call10 "hop_js_call10")
+	   (export js-call11 "hop_js_call11")
+	   (export js-call12 "hop_js_call12")
+	   (export js-call13 "hop_js_call13")
+	   (export js-call14 "hop_js_call14")
+	   (export js-call15 "hop_js_call15")
+	   (export js-call16 "hop_js_call16")
 	   (export js-calln "hop_js_calln")))
 
 ;*---------------------------------------------------------------------*/
@@ -795,6 +850,30 @@
    (with-access::JsProcedure fun (arity)
       (gen-calln fun procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)))
 
+(define (js-call11% %this fun::JsProcedure procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10)
+   (with-access::JsProcedure fun (arity)
+      (gen-calln fun procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10)))
+
+(define (js-call12% %this fun::JsProcedure procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11)
+   (with-access::JsProcedure fun (arity)
+      (gen-calln fun procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11)))
+
+(define (js-call13% %this fun::JsProcedure procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12)
+   (with-access::JsProcedure fun (arity)
+      (gen-calln fun procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12)))
+
+(define (js-call14% %this fun::JsProcedure procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13)
+   (with-access::JsProcedure fun (arity)
+      (gen-calln fun procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13)))
+
+(define (js-call15% %this fun::JsProcedure procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14)
+   (with-access::JsProcedure fun (arity)
+      (gen-calln fun procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14)))
+
+(define (js-call16% %this fun::JsProcedure procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15)
+   (with-access::JsProcedure fun (arity)
+      (gen-calln fun procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15)))
+
 (define (js-calln-many% %this fun procedure this args n)
 
    (define (rest-argument-empty arity)
@@ -1000,6 +1079,42 @@
 	  (%bgl-call4 procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
 	  (js-call10% %this fun procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9))))
 
+(define-inline (js-call11-jsprocedure %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10)
+   (with-access::JsProcedure fun (procedure arity)
+      (if (=fx arity 12)
+	  (%bgl-call4 procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10)
+	  (js-call11% %this fun procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10))))
+
+(define-inline (js-call12-jsprocedure %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11)
+   (with-access::JsProcedure fun (procedure arity)
+      (if (=fx arity 13)
+	  (%bgl-call4 procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11)
+	  (js-call12% %this fun procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11))))
+
+(define-inline (js-call13-jsprocedure %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12)
+   (with-access::JsProcedure fun (procedure arity)
+      (if (=fx arity 14)
+	  (%bgl-call4 procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12)
+	  (js-call13% %this fun procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12))))
+
+(define-inline (js-call14-jsprocedure %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13)
+   (with-access::JsProcedure fun (procedure arity)
+      (if (=fx arity 15)
+	  (%bgl-call4 procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13)
+	  (js-call14% %this fun procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13))))
+
+(define-inline (js-call15-jsprocedure %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14)
+   (with-access::JsProcedure fun (procedure arity)
+      (if (=fx arity 16)
+	  (%bgl-call4 procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14)
+	  (js-call15% %this fun procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14))))
+
+(define-inline (js-call16-jsprocedure %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15)
+   (with-access::JsProcedure fun (procedure arity)
+      (if (=fx arity 17)
+	  (%bgl-call4 procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15)
+	  (js-call16% %this fun procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15))))
+
 (define-inline (js-calln-jsprocedure %this fun this args)
    (with-access::JsProcedure fun (procedure)
       (js-calln% %this fun procedure this args)))
@@ -1104,6 +1219,36 @@
        (%bgl-call proc this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
        (js-call10%-procedure proc this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)))
 
+(define-inline (js-call11-procedure proc this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10)
+   (if (=fx (procedure-arity proc) 12)
+       (%bgl-call proc this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10)
+       (js-call11%-procedure proc this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10)))
+
+(define-inline (js-call12-procedure proc this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11)
+   (if (=fx (procedure-arity proc) 13)
+       (%bgl-call proc this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11)
+       (js-call12%-procedure proc this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11)))
+
+(define-inline (js-call13-procedure proc this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12)
+   (if (=fx (procedure-arity proc) 14)
+       (%bgl-call proc this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12)
+       (js-call13%-procedure proc this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12)))
+
+(define-inline (js-call14-procedure proc this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13)
+   (if (=fx (procedure-arity proc) 15)
+       (%bgl-call proc this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13)
+       (js-call14%-procedure proc this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13)))
+
+(define-inline (js-call15-procedure proc this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14)
+   (if (=fx (procedure-arity proc) 16)
+       (%bgl-call proc this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14)
+       (js-call15%-procedure proc this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14)))
+
+(define-inline (js-call16-procedure proc this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15)
+   (if (=fx (procedure-arity proc) 17)
+       (%bgl-call proc this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15)
+       (js-call16%-procedure proc this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15)))
+
 (define (js-call0%-procedure proc this)
    (gen-call-procedure proc this))
 
@@ -1136,6 +1281,24 @@
 
 (define (js-call10%-procedure proc this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
    (gen-call-procedure proc this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9))
+
+(define (js-call11%-procedure proc this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10)
+   (gen-call-procedure proc this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10))
+
+(define (js-call12%-procedure proc this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11)
+   (gen-call-procedure proc this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11))
+
+(define (js-call13%-procedure proc this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12)
+   (gen-call-procedure proc this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12))
+
+(define (js-call14%-procedure proc this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13)
+   (gen-call-procedure proc this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13))
+
+(define (js-call15%-procedure proc this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14)
+   (gen-call-procedure proc this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14))
+
+(define (js-call16%-procedure proc this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15)
+   (gen-call-procedure proc this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15))
 
 (define (js-calln-procedure proc this args)
    ;; this protocol only support fix arity
@@ -1216,6 +1379,24 @@
 (define (js-call10-obj %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
    (gen-call-obj %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9))
 
+(define (js-call11-obj %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10)
+   (gen-call-obj %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10))
+
+(define (js-call12-obj %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11)
+   (gen-call-obj %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11))
+
+(define (js-call13-obj %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12)
+   (gen-call-obj %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12))
+
+(define (js-call14-obj %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13)
+   (gen-call-obj %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13))
+
+(define (js-call15-obj %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14)
+   (gen-call-obj %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14))
+
+(define (js-call16-obj %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15)
+   (gen-call-obj %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15))
+
 ;*---------------------------------------------------------------------*/
 ;*    js-callXXX ...                                                   */
 ;*---------------------------------------------------------------------*/
@@ -1273,6 +1454,36 @@
    (if (and (js-procedure? fun) (=fx (js-procedure-arity fun) 11))
        ((js-procedure-procedure fun) this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
        (js-call10-obj %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)))
+
+(define-inline (js-call11 %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10)
+   (if (and (js-procedure? fun) (=fx (js-procedure-arity fun) 12))
+       ((js-procedure-procedure fun) this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10)
+       (js-call11-obj %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10)))
+
+(define-inline (js-call12 %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11)
+   (if (and (js-procedure? fun) (=fx (js-procedure-arity fun) 13))
+       ((js-procedure-procedure fun) this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11)
+       (js-call12-obj %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11)))
+
+(define-inline (js-call13 %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12)
+   (if (and (js-procedure? fun) (=fx (js-procedure-arity fun) 14))
+       ((js-procedure-procedure fun) this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12)
+       (js-call13-obj %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12)))
+
+(define-inline (js-call14 %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13)
+   (if (and (js-procedure? fun) (=fx (js-procedure-arity fun) 15))
+       ((js-procedure-procedure fun) this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13)
+       (js-call14-obj %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13)))
+
+(define-inline (js-call15 %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14)
+   (if (and (js-procedure? fun) (=fx (js-procedure-arity fun) 16))
+       ((js-procedure-procedure fun) this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14)
+       (js-call15-obj %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14)))
+
+(define-inline (js-call16 %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15)
+   (if (and (js-procedure? fun) (=fx (js-procedure-arity fun) 17))
+       ((js-procedure-procedure fun) this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15)
+       (js-call16-obj %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15)))
 
 (define (js-calln %this fun this args)
    (cond
@@ -1369,6 +1580,24 @@
 
 (define (js-call10/debug %this loc fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
    (gen-call/debug %this loc fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9))
+
+(define (js-call11/debug %this loc fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10)
+   (gen-call/debug %this loc fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10))
+
+(define (js-call12/debug %this loc fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11)
+   (gen-call/debug %this loc fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11))
+
+(define (js-call13/debug %this loc fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12)
+   (gen-call/debug %this loc fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12))
+
+(define (js-call14/debug %this loc fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13)
+   (gen-call/debug %this loc fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13))
+
+(define (js-call15/debug %this loc fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14)
+   (gen-call/debug %this loc fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14))
+
+(define (js-call16/debug %this loc fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15)
+   (gen-call/debug %this loc fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15))
 
 (define (js-calln/debug %this loc fun this args)
    (cond
@@ -1476,6 +1705,18 @@
        (js-call9% %this fun proc obj a0 a1 a2 a3 a4 a5 a6 a7 a8))
       ((?a0 ?a1 ?a2 ?a3 ?a4 ?a5 ?a6 ?a7 ?a8 ?a9)
        (js-call10% %this fun proc obj a0 a1 a2 a3 a4 a5 a6 a7 a8 a9))
+      ((?a0 ?a1 ?a2 ?a3 ?a4 ?a5 ?a6 ?a7 ?a8 ?a9 ?a10)
+       (js-call11% %this fun proc obj a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10))
+      ((?a0 ?a1 ?a2 ?a3 ?a4 ?a5 ?a6 ?a7 ?a8 ?a9 ?a10 ?a11)
+       (js-call12% %this fun proc obj a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11))
+      ((?a0 ?a1 ?a2 ?a3 ?a4 ?a5 ?a6 ?a7 ?a8 ?a9 ?a10 ?a11 ?a12)
+       (js-call13% %this fun proc obj a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12))
+      ((?a0 ?a1 ?a2 ?a3 ?a4 ?a5 ?a6 ?a7 ?a8 ?a9 ?a10 ?a11 ?a12 ?a13)
+       (js-call14% %this fun proc obj a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13))
+      ((?a0 ?a1 ?a2 ?a3 ?a4 ?a5 ?a6 ?a7 ?a8 ?a9 ?a10 ?a11 ?a12 ?a13 ?a14)
+       (js-call15% %this fun proc obj a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14))
+      ((?a0 ?a1 ?a2 ?a3 ?a4 ?a5 ?a6 ?a7 ?a8 ?a9 ?a10 ?a11 ?a12 ?a13 ?a14 ?a15)
+       (js-call16% %this fun proc obj a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15))
       (else
        (js-calln% %this fun proc obj args))))
 
