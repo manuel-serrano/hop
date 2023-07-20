@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Fri Mar 31 07:41:02 2023 (serrano)                */
+;*    Last change :  Thu Jul 20 09:07:54 2023 (serrano)                */
 ;*    Copyright   :  2017-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on 64 bit platforms                        */
@@ -28,7 +28,8 @@
 	   __hopscript_lib
 	   __hopscript_public)
    
-   (extern (macro $real64-set!::real (::real ::double) "BGL_REAL_SET"))
+   (extern (macro $real64-set!::real (::real ::double) "BGL_REAL_SET")
+	   (macro $+fx/ov53::obj (::bint ::bint ::long) "BGL_ADDFX_OV53"))
    
    (cond-expand
       ((or bint61 bint64)
@@ -62,6 +63,7 @@
 	  (inline js-int53-dec::long ::long)
 	  
 	  (inline +fx/overflow::obj ::long ::long)
+	  (inline +fx/overflow53::obj ::bint ::bint)
 	  (inline +s32/overflow::obj ::int32 ::int32)
 	  (inline +u32/overflow::obj ::uint32 ::uint32)
 	  (+/overflow::obj ::obj ::obj)
@@ -488,6 +490,11 @@
 (define-inline (+fx/overflow::obj x::long y::long)
    ;; see arithmetic.sch
    (overflow53 (+fx x y)))
+
+(define-inline (+fx/overflow53::obj x::bint y::bint)
+   ;; see arithmetic.sch
+   ($let ((tmp::bint 0))
+      ($+fx/ov53 x y tmp)))
 
 ;*---------------------------------------------------------------------*/
 ;*    +s32/overflow ...                                                */
