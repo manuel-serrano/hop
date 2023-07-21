@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Tue Jul 18 06:40:39 2023 (serrano)                */
+;*    Last change :  Fri Jul 21 11:07:05 2023 (serrano)                */
 ;*    Copyright   :  2017-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -520,7 +520,7 @@
 			      (gensym 'arguments))))
 	    (lambda-or-labels rtype idgen (type-this idthis thisp)
 	       (unless (isa? fun J2SArrow) id)
-	       (list (symbol-append arguments '::vector))
+	       (list (symbol-append (j2s-arguments-stack-id) '::vector))
 	       (jsfun-strict-vararg-body fun body id arguments mode return ctx)
 	       loc))))
 
@@ -688,7 +688,7 @@
    (define (optim-arguments-prelude argumentsp params body)
       (with-access::J2SDeclArguments argumentsp (alloc-policy argid mode loc)
 	 (let ((%len (j2s-arguments-length-id)))
-	    `(let ((,%len (vector-length ,argid))
+	    `(let ((,%len (vector-length ,(j2s-arguments-stack-id)))
 		    (,(j2s-arguments-object-id)
 		     ,(if (eq? alloc-policy 'lazy)
 			  #f
@@ -702,8 +702,8 @@
 		   ,body)))))
    
    (define (strict-arguments-prelude argumentsp params body)
-      `(let ((&len (vector-length ,arguments))
-	     (,(j2s-arguments-object-id) (js-strict-arguments %this ,arguments)))
+      `(let ((&len (vector-length ,(j2s-arguments-stack-id)))
+	     (,(j2s-arguments-object-id) (js-strict-arguments %this ,(j2s-arguments-stack-id))))
 	  (let (,@(map (lambda (param i)
 			  (with-access::J2SDecl param (loc)
 			     (let ((v (J2SAccess (J2SRef argumentsp)
