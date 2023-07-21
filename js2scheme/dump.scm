@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Thu Jun 22 10:33:00 2023 (serrano)                */
+;*    Last change :  Fri Jul 21 18:38:58 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -1404,7 +1404,7 @@
    (set! stack (check-stack this stack))
    (with-access::J2SClassElement this (prop static type usage index clazz rtwin)
       (with-access::J2SPropertyInit prop (name)
-	 `(J2SClassElement :name ,(j2s->list name stack)
+	 `(J2SClassElement
 	     :clazz 
 	     ,(with-access::J2SClass clazz (name) name)
 	     :static ,static

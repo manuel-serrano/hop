@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Fri Jun 23 07:51:48 2023 (serrano)                */
+;*    Last change :  Fri Jul 21 17:13:11 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -1332,7 +1332,7 @@
 	   ($js-object-inline-elements-ref o idx)
 	   (begin
 	      (tprint "*** ASSERT ERROR:js-object-inline-ref idx=" idx)
-	      (js-debug-object o))))
+	      (js-inspect-object o))))
       ((and bigloo-c (not disable-inline))
        ;; (pragma::obj "VECTOR_REF( BVECTOR( (obj_t)(( ((obj_t *)(&(((BgL_jsobjectz00_bglt)(COBJECT($1)))->BgL_elementsz00))) + 1))), $2 )" o idx)
        ($js-object-inline-elements-ref o idx))
@@ -1350,7 +1350,7 @@
 	   ($js-object-inline-elements-set! o idx val)
 	   (begin
 	      (tprint "*** ASSERT ERROR:js-object-inline-set! idx=" idx)
-	      (js-debug-object o))))
+	      (js-inspect-object o))))
       ((and bigloo-c (not disable-inline))
        ;; (pragma::obj "VECTOR_SET( BVECTOR( (obj_t)(( ((obj_t *)(&(((BgL_jsobjectz00_bglt)(COBJECT($1)))->BgL_elementsz00))) + 1))), $2, $3 )" o idx val)
        ($js-object-inline-elements-set! o idx val))

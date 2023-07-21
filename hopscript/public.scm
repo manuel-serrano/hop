@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Fri Jul 21 09:28:33 2023 (serrano)                */
+;*    Last change :  Fri Jul 21 17:22:28 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -3501,7 +3501,7 @@
 			  (js-raise-type-error/loc %this
 			     `(at ,(js-jsstring->string (vector-ref vec 2))
 				 ,(vector-ref vec 3))
-			     (format "wrong argument type ~a:~a, ~~s"
+			     (format "wrong argument type \"~a:~a\", value=~~a"
 				(js-jsstring->string (vector-ref vec 1))
 				(js-jsstring->string (vector-ref vec 0)))
 			     arg))))
@@ -3509,7 +3509,7 @@
 		   (js-raise-type-error/loc %this
 		      `(at ,(js-jsstring->string (vector-ref vec 2))
 			  ,(vector-ref vec 3))
-		      (format "wrong argument types, ~~s")
+		      (format "wrong argument types, value=~~a")
 		      args)))))))
 			    
 ;*---------------------------------------------------------------------*/
