@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Tue Jun 20 07:55:07 2023 (serrano)                */
+;*    Last change :  Fri Jul 21 09:51:39 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
@@ -480,10 +480,11 @@
 						    (prefix (basename path))
 						    ".scm"))))
 				     (obj (make-file-name (os-tmp)
-					      (string-append
-						 (prefix (basename path))
-						 ".o")))
-				     (opts (cons* "-c" "-o" obj (bigloo-options))))
+					     (string-append
+						(prefix (basename path))
+						".o")))
+				     (opts (append (bigloo-options)
+					      (list "-c" "-o" obj))))
 				 (call-with-input-file path
 				    (lambda (in)
 				       (compile-hop-with-deps in opts path temp '())))
@@ -635,7 +636,7 @@
 		   (loop (cdr opts) o))))))
 
       (define (dest-opts dest opts)
-	 (cons* "-o" dest opts))
+	 (append opts (list "-o" dest)))
       
       (let* ((opts (bigloo-options))
 	     (file (when (and (pair? (hopc-sources))

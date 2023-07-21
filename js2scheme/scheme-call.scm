@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Tue Jul 18 11:46:30 2023 (serrano)                */
+;*    Last change :  Fri Jul 21 09:30:11 2023 (serrano)                */
 ;*    Copyright   :  2018-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -46,6 +46,11 @@
 	   __js2scheme_scheme-cast
 	   __js2scheme_scheme-constant
 	   __js2scheme_scheme-nodejs))
+
+;*---------------------------------------------------------------------*/
+;*    CALLN-OPTIMIZED-LIMIT ...                                        */
+;*---------------------------------------------------------------------*/
+(define (CALLN-OPTIMIZED-LIMIT) 17)
 
 ;*---------------------------------------------------------------------*/
 ;*    builtin-method ...                                               */
@@ -1642,14 +1647,14 @@
       (with-access::J2SCall this (loc cache profid)
 	 (let* ((len (length args))
 		(call (cond
-			 ((>=fx len 11)
+			 ((>=fx len (CALLN-OPTIMIZED-LIMIT))
 			  'js-calln)
 			 ((and (context-get ctx :optim-size)
 			       (= (context-get ctx :debug 0) 0))
 			  (string->symbol (format "js-call~a-obj" len)))
 			 (else
 			  (string->symbol (format "js-call~a" len)))))
-		(packargs (if (>=fx len 11)
+		(packargs (if (>=fx len (CALLN-OPTIMIZED-LIMIT))
 			      (lambda (expr) `((list ,@expr)))
 			      (lambda (expr) expr))))
 	    (case protocol

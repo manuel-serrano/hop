@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Thu Jul 20 09:07:54 2023 (serrano)                */
+;*    Last change :  Thu Jul 20 17:45:47 2023 (serrano)                */
 ;*    Copyright   :  2017-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on 64 bit platforms                        */
@@ -29,7 +29,11 @@
 	   __hopscript_public)
    
    (extern (macro $real64-set!::real (::real ::double) "BGL_REAL_SET")
-	   (macro $+fx/ov53::obj (::bint ::bint ::long) "BGL_ADDFX_OV53"))
+	   (macro $+fx/ov53::obj (::bint ::bint ::bint) "BGL_ADDFX_OV53")
+	   (macro $-fx/ov53::obj (::bint ::bint ::bint) "BGL_SUBFX_OV53"))
+
+   (pragma ($+fx/ov53 nesting args-safe)
+	   ($-fx/ov53 nesting args-safe))
    
    (cond-expand
       ((or bint61 bint64)
@@ -71,6 +75,7 @@
 	  (+/overflow!::obj ::obj ::obj)
 	  
 	  (inline -fx/overflow::obj ::long ::long)
+	  (inline -fx/overflow53::obj ::bint ::bint)
 	  (inline -s32/overflow::long ::int32 ::int32)
 	  (inline -u32/overflow::long ::uint32 ::uint32)
 	  (-/overflow::obj ::obj ::obj)
@@ -489,12 +494,12 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (+fx/overflow::obj x::long y::long)
    ;; see arithmetic.sch
-   (overflow53 (+fx x y)))
+   ($let ((tmp::bint 0))
+      ($+fx/ov53 x y tmp)))
 
 (define-inline (+fx/overflow53::obj x::bint y::bint)
    ;; see arithmetic.sch
-   ($let ((tmp::bint 0))
-      ($+fx/ov53 x y tmp)))
+   (overflow53 (+fx x y)))
 
 ;*---------------------------------------------------------------------*/
 ;*    +s32/overflow ...                                                */
@@ -558,6 +563,11 @@
 ;*    see +fx/overflow                                                 */
 ;*---------------------------------------------------------------------*/
 (define-inline (-fx/overflow::obj x::long y::long)
+   ($let ((tmp::bint 0))
+      ($-fx/ov53 x y tmp)))
+
+(define-inline (-fx/overflow53::obj x::bint y::bint)
+   ;; see arithmetic.sch
    (overflow53 (-fx x y)))
 
 ;*---------------------------------------------------------------------*/
