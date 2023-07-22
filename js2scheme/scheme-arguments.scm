@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Tue Jul 18 14:51:58 2023 (serrano)                */
+;*    Last change :  Sat Jul 22 06:33:51 2023 (serrano)                */
 ;*    Copyright   :  2017-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript arguments functions.        */
@@ -34,6 +34,7 @@
 	   (j2s-arguments-ref ::J2SAccess mode return ::struct)
 	   (j2s-arguments-set! ::J2SAssig mode return ::struct)
 	   (j2s-ref-arguments-lazy?::bool ::J2SRef)
+	   (j2s-ref-arguments-stack?::bool ::J2SRef)
 	   (j2s-ref-arguments-argid::symbol ::J2SRef)
 	   (j2s-ref-arguments-mode::symbol ::J2SRef)))
 
@@ -242,6 +243,22 @@
 	 ((isa? decl J2SDeclArguments)
 	  (with-access::J2SDeclArguments decl (alloc-policy)
 	     (eq? alloc-policy 'lazy)))
+	 ((isa? decl J2SDeclInit)
+	  (with-access::J2SDeclInit decl (val)
+	     (when (isa? val J2SRef)
+		(j2s-ref-arguments-lazy? val))))
+	 (else
+	  #f))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-ref-arguments-stack? ...                                     */
+;*---------------------------------------------------------------------*/
+(define (j2s-ref-arguments-stack? obj)
+   (with-access::J2SRef obj (decl)
+      (cond
+	 ((isa? decl J2SDeclArguments)
+	  (with-access::J2SDeclArguments decl (alloc-policy)
+	     (memq alloc-policy '(stack lazy))))
 	 ((isa? decl J2SDeclInit)
 	  (with-access::J2SDeclInit decl (val)
 	     (when (isa? val J2SRef)
