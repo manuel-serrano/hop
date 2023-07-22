@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Fri Jul 21 11:07:05 2023 (serrano)                */
+;*    Last change :  Sat Jul 22 06:05:14 2023 (serrano)                */
 ;*    Copyright   :  2017-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -692,7 +692,7 @@
 		    (,(j2s-arguments-object-id)
 		     ,(if (eq? alloc-policy 'lazy)
 			  #f
-			  `(js-strict-arguments %this ,arguments))))
+			  `(js-strict-arguments %this ,(j2s-arguments-stack-id)))))
 		(let (,@(map (lambda (p i)
 				(let ((v (J2SAccess (J2SRef argumentsp)
 					    (J2SNumber/type 'uint32 (fixnum->uint32 i)))))
