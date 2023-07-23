@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec  5 09:14:00 2019                          */
-;*    Last change :  Thu Jul 13 14:05:59 2023 (serrano)                */
+;*    Last change :  Sun Jul 23 08:39:45 2023 (serrano)                */
 ;*    Copyright   :  2019-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arguments optimization                                           */
@@ -95,9 +95,9 @@
 	    (cond
 	       ((usage-strict? usage '(length))
 		(set! alloc-policy 'lonly))
-	       ((usage-strict? usage '(slice aref length spread))
+	       ((usage-strict? usage '(slice getx length spread))
 		(set! alloc-policy 'stack))
-	       ((usage-strict? usage '(slice aref length spread apply iref))
+	       ((usage-strict? usage '(slice getx length spread apply geti))
 		(set! alloc-policy 'lazy))))
 	 (patch-type body))
       (when (pair? params)
@@ -105,7 +105,7 @@
 	    (when (isa? lastp J2SDeclRest)
 	       (with-access::J2SDeclRest lastp (alloc-policy usage ctype vtype)
 		  (cond
-		     ((usage-strict? usage '(slice aref length spread apply iref rest))
+		     ((usage-strict? usage '(slice getx length spread apply geti rest))
 		      (set! ctype 'vector)
 		      (set! vtype 'vector)
 		      (set! alloc-policy 'stack)))))))))
@@ -138,7 +138,7 @@
       (let ((ty (j2s-type field)))
 	 (or (type-fixnum? ty) (type-int53? ty))))
    
-   (with-access::J2SAccess this (obj field %info)
+   (with-access::J2SAccess this (obj field %info range)
       (argsuse field)
       (if (isa? obj J2SRef)
 	  (with-access::J2SRef obj (decl)
@@ -148,7 +148,11 @@
 		       ((field-length? field)
 			'length)
 		       ((field-index? field)
-			(if (eq? %info 'in-range) 'aref 'iref))
+			(if (eq? %info 'in-range)
+			    (begin
+			       (set! range 'in-range)
+			       'getx)
+			    'geti))
 		       (else
 			'get)))
 		 (call-default-walker)))
@@ -419,10 +423,8 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    argsrange-test ...                                               */
-;*    -------------------------------------------------------------    */
-;*    If alias is not #f, it is a J2SDecl that contains a.length.      */
 ;*---------------------------------------------------------------------*/
-(define (argsrange-test this::J2SExpr alias env)
+(define (argsrange-test this::J2SExpr env)
 
    (define (inv op)
       (case op
@@ -450,23 +452,16 @@
 		(else (values #f #f '() '())))
 	     (values #f #f '() '()))))
 
-   (define (alength? lhs)
-      (or (argsrange-length? lhs)
-	  (and alias
-	       (isa? lhs J2SRef)
-	       (with-access::J2SRef lhs (decl)
-		  (eq? decl alias)))))
-	       
    (if (isa? this J2SBinary)
        (with-access::J2SBinary this (op lhs rhs)
 	  (cond
-	     ((and (alength? lhs) (isa? rhs J2SNumber))
+	     ((and (argsrange-length? lhs) (isa? rhs J2SNumber))
 	      (argsrange-test-number op rhs))
-	     ((and (alength? rhs) (isa? lhs J2SNumber))
+	     ((and (argsrange-length? rhs) (isa? lhs J2SNumber))
 	      (argsrange-test-number (inv op) lhs))
-	     ((and (alength? lhs) (isa? rhs J2SRef))
+	     ((and (argsrange-length? lhs) (isa? rhs J2SRef))
 	      (argsrange-test-ref (inv op) rhs))
-	     ((and (alength? rhs) (isa? lhs J2SRef))
+	     ((and (argsrange-length? rhs) (isa? lhs J2SRef))
 	      (argsrange-test-ref op lhs))
 	     (else
 	      (values #f #f '() '()))))
@@ -479,10 +474,25 @@
    (with-access::J2SIf this (test then else)
       (argsrange test range env)
       (multiple-value-bind (nrange+ nrange- env+ env-)
-	 (argsrange-test test #f env)
+	 (argsrange-test test env)
 	 (argsrange then (or nrange+ range) (append env+ env))
 	 (argsrange else (or nrange- range) (append env- env)))))
 
+;*---------------------------------------------------------------------*/
+;*    argsrange ::J2SSwitch ...                                        */
+;*---------------------------------------------------------------------*/
+(define-walk-method (argsrange this::J2SSwitch range env)
+   (with-access::J2SSwitch this (key cases)
+      (if (argsrange-length? key)
+	  (for-each (lambda (c::J2SCase)
+		       (with-access::J2SCase c (expr body)
+			  (if (isa? expr J2SNumber)
+			      (with-access::J2SNumber expr (val)
+				 (argsrange body val env))
+			      (argsrange body range env))))
+	     cases)
+	  (call-default-walker))))
+      
 ;*---------------------------------------------------------------------*/
 ;*    argsrange ::J2SLetBlock ...                                      */
 ;*---------------------------------------------------------------------*/
@@ -710,6 +720,6 @@
        (with-access::J2SAccess this (obj type)
 	  (with-access::J2SRef obj (decl)
 	     (with-access::J2SDecl decl (usage)
-		(when (usage-strict? usage '(aref length spread rest))
+		(when (usage-strict? usage '(getx length spread rest))
 		   (set! type 'int53)))))
        (call-default-walker)))

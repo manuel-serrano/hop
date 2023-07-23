@@ -99,12 +99,12 @@ EventEmitter.prototype.emit = function emit(type) {
         break;
       // slower
       default:
-        len = arguments.length;
+/*         len = arguments.length;                                     */
 /*         args = new Array(len - 1);                                  */
 /*         for (i = 1; i < len; i++)                                   */
 /*           args[i - 1] = arguments[i];                               */
 /*         handler.apply(this, args);                                  */
-        handler.apply(this, arguments.slice(1));	  
+        handler.apply(this, Array.prototype.slice.call(arguments,1));	  
     }
   } else if (typeof handler === 'object') {
 /*     len = arguments.length;                                         */

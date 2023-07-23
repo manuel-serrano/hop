@@ -3,11 +3,19 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Dec  7 06:56:07 2019                          */
-;*    Last change :  Tue Jul 18 09:38:21 2023 (serrano)                */
+;*    Last change :  Sun Jul 23 12:19:53 2023 (serrano)                */
 ;*    Copyright   :  2019-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arguments macros for js2scheme                                   */
 ;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    js-arguments-vector-inrange-ref ...                              */
+;*---------------------------------------------------------------------*/
+(define-macro (js-arguments-vector-inrange-ref vec idx len %arguments %this mode)
+   `(if ,%arguments
+	(js-get ,%arguments ,idx ,%this)
+	(vector-ref ,vec ,idx)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-arguments-vector-index-ref ...                                */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Sat Jul 22 06:33:51 2023 (serrano)                */
+;*    Last change :  Sun Jul 23 12:17:52 2023 (serrano)                */
 ;*    Copyright   :  2017-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript arguments functions.        */
@@ -107,8 +107,15 @@
    (define (ref-usage-strict? this::J2SRef usages)
       (with-access::J2SRef this (decl)
 	 (decl-usage-strict? decl usages)))
-   
-   (with-access::J2SAccess this (obj field type)
+
+   (define (js-ref this)
+      (with-access::J2SAccess this (obj field type range)
+	 (cond
+	    ((eq? range 'in-range) 'js-arguments-vector-inrange-ref)
+	    ((inrange-positive? field) 'js-arguments-vector-index-ref)
+	    (else 'js-arguments-vector-ref))))
+      
+   (with-access::J2SAccess this (obj field type range)
       (cond
 	 ((maybe-number? field)
 	  (cond
@@ -119,7 +126,7 @@
 		      ,(j2s-scheme obj mode return ctx)
 		      ,(js-uint32->fixnum (j2s-scheme field mode return ctx))))
 		 ((arguments-lazy? obj)
-		  `(js-arguments-vector-index-ref
+		  `(,(js-ref this)
 		      ,(j2s-arguments-stack-id)
 		      ,(js-uint32->fixnum (j2s-scheme field mode return ctx))
 		      ,(j2s-arguments-length-id)
@@ -137,9 +144,7 @@
 		      ,(j2s-scheme obj mode return ctx)
 		      ,(js-int32->fixnum (j2s-scheme field mode return ctx))))
 		 ((arguments-lazy? obj)
-		  `(,(if (inrange-positive? field)
-			 'js-arguments-vector-index-ref
-			 'js-arguments-vector-ref)
+		  `(,(js-ref this)
 		      ,(j2s-arguments-stack-id)
 		      ,(js-int32->fixnum (j2s-scheme field mode return ctx))
 		      ,(j2s-arguments-length-id)
@@ -157,9 +162,7 @@
 		  ,(j2s-scheme obj mode return ctx)
 		  ,(j2s-scheme field mode return ctx)))
 	     ((arguments-lazy? obj)
-	      `(,(if (inrange-positive? field)
-		     'js-arguments-vector-index-ref
-		     'js-arguments-vector-ref)
+	      `(,(js-ref this)
 		  ,(j2s-arguments-stack-id)
 		  ,(j2s-scheme field mode return ctx)
 		  ,(j2s-arguments-length-id)

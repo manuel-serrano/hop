@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Dec 14 07:04:23 2019                          */
-;*    Last change :  Mon Jul 10 08:55:27 2023 (serrano)                */
+;*    Last change :  Sun Jul 23 08:39:26 2023 (serrano)                */
 ;*    Copyright   :  2019-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Ast node usage API                                               */
@@ -87,7 +87,7 @@
 
 (define (usage? keys usage)
    (any (lambda (k)
-	   [assert (k) (memq k '(uninit init new ref assig get set call eval delete instanceof rest slide length aref apply +))]
+	   [assert (k) (memq k '(uninit init new ref assig get set call eval delete instanceof rest slide length getx apply +))]
 	   (memq k usage))
       keys))
 

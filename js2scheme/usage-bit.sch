@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Dec 14 17:16:48 2019                          */
-;*    Last change :  Mon Jul 10 08:47:13 2023 (serrano)                */
+;*    Last change :  Sun Jul 23 08:39:20 2023 (serrano)                */
 ;*    Copyright   :  2019-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Usage bit names                                                  */
@@ -27,9 +27,10 @@
 ;*    (see arguments.scm):                                             */
 ;*      slice: variable used in a slice call (apply or call)           */
 ;*      length: variable used in a VAR.length expression               */
-;*      aref: variable used in a integer array indexed access          */
+;*      getx: variable used in a integer array indexed access          */
 ;*      apply: variable used in the second position of an apply call   */
 ;*      spread: used in spread call                                    */
+;*      geti: variable used in a integer array access                  */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
@@ -61,10 +62,10 @@
       ((&ref) #u32:8192)
       ((slice) #u32:16384)
       ((length) #u32:32768)
-      ((aref) #u32:65536)
+      ((getx) #u32:65536)
       ((apply) #u32:131072)
       ((spread) #u32:262144)
-      ((iref) #u32:524288)
+      ((geti) #u32:524288)
       (else (error "usage-key->bit" "Illegal key" key))))
 
 ;*---------------------------------------------------------------------*/
@@ -88,9 +89,9 @@
       ((#u32:8192) '&ref)
       ((#u32:16384) 'slice)
       ((#u32:32768) 'length)
-      ((#u32:65536) 'aref)
+      ((#u32:65536) 'getx)
       ((#u32:131072) 'apply)
       ((#u32:262144) 'spread)
-      ((#u32:524288) 'iref)
+      ((#u32:524288) 'geti)
       (else (error "usage-bit->key" "Illegal key" bit))))
    
