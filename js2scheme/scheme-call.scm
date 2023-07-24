@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Sat Jul 22 06:35:33 2023 (serrano)                */
+;*    Last change :  Mon Jul 24 07:29:13 2023 (serrano)                */
 ;*    Copyright   :  2018-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -372,7 +372,10 @@
 		 ,(cadddr args))))))
 
    (define (def-arguments obj args mode return conf)
-      `(js-function-maybe-apply-arguments ,(caddr args)
+      `(,(if (eq? (j2s-type obj) 'function)
+	     'js-function-apply-arguments
+	     'js-function-maybe-apply-arguments)
+	  ,(caddr args)
 	  ,(j2s-scheme obj mode return conf)
 	  ,(j2s-scheme (car args) mode return conf)
 	  ,(j2s-arguments-stack-id)

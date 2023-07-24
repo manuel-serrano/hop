@@ -1671,23 +1671,31 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SAssig mode return ctx)
 
+   (define (check-array-set lhs::J2SAccess rhs::J2SExpr)
+      (with-access::J2SAccess lhs (obj field cache loc)
+	 `(if (js-array? ,(j2s-scheme obj mode return ctx))
+	      ,(j2s-array-set! this mode return ctx)
+	      ,(j2s-put! loc (j2s-scheme obj mode return ctx)
+		  field
+		  (typeof-this obj ctx)
+		  (j2s-scheme field mode return ctx)
+		  (j2s-type field)
+		  (j2s-scheme rhs mode return ctx)
+		  (j2s-type rhs)
+		  (strict-mode? mode)
+		  ctx
+		  cache
+		  :optim #f
+		  :cachefun (or (is-function? rhs) (is-prototype? obj))))))
+   
    (define (maybe-array-set lhs::J2SAccess rhs::J2SExpr)
       (with-access::J2SAccess lhs (obj field cache loc)
-	 (if (isa? lhs J2SRef)
-	     `(if (js-array? ,(j2s-scheme obj mode return ctx))
-		  ,(j2s-array-set! this mode return ctx)
-		  ,(j2s-put! loc (j2s-scheme obj mode return ctx)
-		      field
-		      (typeof-this obj ctx)
-		      (j2s-scheme field mode return ctx)
-		      (j2s-type field)
-		      (j2s-scheme rhs mode return ctx)
-		      (j2s-type rhs)
-		      (strict-mode? mode)
-		      ctx
-		      cache
-		      :optim #f
-		      :cachefun (or (is-function? rhs) (is-prototype? obj))))
+	 (if (isa? rhs J2SRef)
+	     (if (or (isa? rhs J2SRef) (isa? rhs J2SLiteral))
+		 (check-array-set lhs rhs)
+		 (let ((id (gensym 'rhs)))
+		    `(let ((,id (j2s-scheme rhs mode return ctx)))
+			(check-array-set lhs (J2SHopRef id)))))
 	     (let* ((tmp (gensym 'assigtmp))
 		    (access (duplicate::J2SAccess lhs (obj (J2SHopRef tmp))))
 		    (tyo (j2s-type obj)))
@@ -1697,26 +1705,29 @@
 		   ((memq tyo '(int8array uint8array))
 		    (j2s-tarray-set! this mode return ctx))
 		   (else
-		    `(let ((,tmp ,(j2s-scheme obj mode return ctx)))
-			(if (js-array? ,tmp)
-			    ,(j2s-array-set!
-				(duplicate::J2SAssig this
-				   (lhs (duplicate::J2SAccess lhs
-					   (obj (J2SHopRef tmp)))))
-				mode return ctx)
-			    ,(j2s-put! loc tmp
-				field
-				(typeof-this obj ctx)
-				(j2s-scheme field mode return ctx)
-				(j2s-type field)
-				(j2s-scheme rhs mode return ctx)
-				(j2s-type rhs)
-				(strict-mode? mode)
-				ctx
-				cache
-				:optim #f
-				:cachefun (or (is-function? rhs)
-					      (is-prototype? obj)))))))))))
+		    (let ((tmpr (gensym 'rhs)))
+		       `(let ((,tmp ,(j2s-scheme obj mode return ctx))
+			      (,tmpr ,(j2s-scheme rhs mode return ctx)))
+			   (if (js-array? ,tmp)
+			       ,(j2s-array-set!
+				   (duplicate::J2SAssig this
+				      (lhs (duplicate::J2SAccess lhs
+					      (obj (J2SHopRef tmp))))
+				      (rhs (J2SHopRef/type tmpr (j2s-type rhs))))
+				   mode return ctx)
+			       ,(j2s-put! loc tmp
+				   field
+				   (typeof-this obj ctx)
+				   (j2s-scheme field mode return ctx)
+				   (j2s-type field)
+				   (j2s-scheme (J2SHopRef tmpr) mode return ctx)
+				   (j2s-type rhs)
+				   (strict-mode? mode)
+				   ctx
+				   cache
+				   :optim #f
+				   :cachefun (or (is-function? rhs)
+						 (is-prototype? obj))))))))))))
 
    (define (j2s-record-set! this idx mode return ctx)
       (with-access::J2SAssig this (lhs rhs)
