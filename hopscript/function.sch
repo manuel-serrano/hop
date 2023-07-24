@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Dec  7 06:32:41 2019                          */
-;*    Last change :  Tue Jul 18 09:20:13 2023 (serrano)                */
+;*    Last change :  Mon Jul 24 16:24:39 2023 (serrano)                */
 ;*    Copyright   :  2019-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function macros for js2scheme                                    */
@@ -44,14 +44,24 @@
 ;*    js-function-maybe-apply-arguments ...                            */
 ;*---------------------------------------------------------------------*/
 (define-macro (js-function-maybe-apply-arguments %this fun thisarg vec %arguments mode cache)
-   `(if (js-function? ,fun)
-	(js-function-apply-arguments ,%this ,fun ,thisarg ,vec ,%arguments mode ,cache)
-	(begin
-	   (set! %arguments 
-	      ,(if (eq? mode 'strict)
-		   `(js-strict-arguments %this (vector-copy ,vec))
-		   `(js-sloppy-arguments %this (vector-copy ,vec))))
-	   (js-function-maybe-apply %this ,fun ,thisarg ,%arguments ,cache))))
+   (if (symbol? fun)
+       (if (symbol? thisarg)
+	   `(if (js-function? ,fun)
+		(js-function-apply-arguments ,%this ,fun ,thisarg ,vec ,%arguments mode ,cache)
+		(begin
+		   (set! %arguments 
+		      ,(if (eq? mode 'strict)
+			   `(js-strict-arguments %this (vector-copy ,vec))
+			   `(js-sloppy-arguments %this (vector-copy ,vec))))
+		   (js-function-maybe-apply %this ,fun ,thisarg ,%arguments ,cache)))
+	   (let ((tmpt (gensym 'tmpt)))
+	      `(let ((,tmpt ,thisarg))
+		  (js-function-maybe-apply-arguments ,%this ,fun ,tmpt
+		     ,vec ,%arguments ,mode ,cache))))
+       (let ((tmpf (gensym 'tmpf)))
+	  `(let ((,tmpf ,fun))
+	      (js-function-maybe-apply-arguments ,%this ,tmpf ,thisarg
+		 ,vec ,%arguments ,mode ,cache)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-function-maybe-apply-arguments-slice ...                      */

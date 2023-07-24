@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Fri Jul 14 08:08:00 2023 (serrano)                */
+;*    Last change :  Mon Jul 24 16:41:29 2023 (serrano)                */
 ;*    Copyright   :  2016-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -1072,6 +1072,9 @@
 	  ((js-put-jsobject-name/cache! (and (? (lambda (o) (not (symbol? o)))) ?obj) . ?rest)
 	   (let ((o (gensym '%o)))
 	      (e `(let ((,o ,obj)) (js-put-jsobject-name/cache! ,o ,@rest)) e)))
+	  ((js-put-jsobject-name/cache! ?o (and (? (lambda (v) (and (not (number? v)) (not (boolean? v)) (not (symbol? v))))) ?val) . ?rest)
+	   (let ((v (gensym '%v)))
+	      (e `(let ((,v ,val)) (js-put-jsobject-name/cache! ,o ,v ,@rest)) e)))
 	  ((js-put-jsobject-name/cache! (and (? symbol?) ?obj)
 	      ?prop ?val ?throw ?%this
 	      ?cache ?loc ((kwote quote) ?cspecs))
