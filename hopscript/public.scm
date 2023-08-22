@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Fri Jul 21 17:22:28 2023 (serrano)                */
+;*    Last change :  Wed Aug 16 10:15:06 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -3079,12 +3079,10 @@
 ;*    %js-hss ...                                                      */
 ;*---------------------------------------------------------------------*/
 (define (%js-eval-hss ip::input-port %this %worker scope)
-   (js-worker-exec %worker "eval-hss"
-      (lambda (%this)
-	 (let ((v (%js-eval ip 'repl %this (js-get scope (& "this") %this) scope)))
-	    (if (js-jsstring? v)
-		(js-jsstring->string v)
-		v)))))
+   (let ((v (%js-eval ip 'repl %this (js-get scope (& "this") %this) scope)))
+      (if (js-jsstring? v)
+	  (js-jsstring->string v)
+	  v)))
 
 ;*---------------------------------------------------------------------*/
 ;*    lib-hopscript-path ...                                           */
