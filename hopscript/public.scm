@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Wed Aug 16 10:15:06 2023 (serrano)                */
+;*    Last change :  Thu Aug 24 12:22:38 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -2704,9 +2704,20 @@
 
    (define (primitive->jsstring obj)
       (let ((p (js-toprimitive obj 'string %this)))
-	 (if (eq? p obj)
-	     (js-ascii->jsstring (format "#<~a>" (typeof p)))
-	     (js-tojsstring p %this))))
+	 (cond
+	    ((not (eq? p obj))
+	     (js-tojsstring p %this))
+	    ((isa? obj xml-element)
+	     (js-xml-element->jsstring obj))
+	    (else
+	     (js-ascii->jsstring (format "#<~a>" (typeof p)))))))
+
+   (define (js-xml-element->jsstring obj)
+      (let ((be (hop-get-xml-backend 'html5)))
+	 (js-string->jsstring
+	    (call-with-output-string
+	       (lambda (op)
+		  (xml-write obj op be))))))
 
    (cond
       ((js-jsstring? obj) obj)

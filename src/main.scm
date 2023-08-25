@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Sat May 13 06:32:59 2023 (serrano)                */
+;*    Last change :  Tue Aug 22 14:55:47 2023 (serrano)                */
 ;*    Copyright   :  2004-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -414,12 +414,10 @@
 		     (%js-eval in 'repl %global %global scope)))
 	       (hop-hss-foreign-eval-set!
 		  (lambda (ip)
-		     (js-worker-exec %worker "hss"
-			(lambda (%this)
-			   (js-put! mod (& "filename")
-			      (js-string->jsstring (input-port-name ip)) #f
-			      %global)
-			   (%js-eval-hss ip %global %worker scope))))))))))
+		     (js-put! mod (& "filename")
+			(js-string->jsstring (input-port-name ip)) #f
+			%global)
+		     (%js-eval-hss ip %global %worker scope))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    make-hop-scheduler ...                                           */
