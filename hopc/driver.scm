@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Fri Jul 21 09:51:39 2023 (serrano)                */
+;*    Last change :  Wed Aug 30 16:45:13 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
@@ -354,27 +354,27 @@
 	 (compile-file opts temp))
 
       (define (compile-temp-ast opts comp file temp)
-	 (call-with-output-file temp comp)
-	 (let* ((baseopts (cons "-fread-internal-src"
-			     (append (srfi-opts) opts)))
-		(opts (if (string? file)
-			  (cons* "-fread-internal-src-file-name" file baseopts)
-			  baseopts))
-		(proc (apply run-process (hopc-bigloo)
-			 "-suffix" "ast" temp
-			 opts))
-		(cmd (format "~a -suffix ast ~a ~l" (hopc-bigloo) temp opts))
-		(out (process-input-port proc)))
-	    (signal sigterm
-	       (lambda (sig)
-		  (process-kill proc)
-		  (exit 1)))
-	    (hop-verb 4 cmd "\n")
-	    (unwind-protect
-	       (begin
+	 (unwind-protect
+	    (begin
+	       (call-with-output-file temp comp)
+	       (let* ((baseopts (cons "-fread-internal-src"
+				   (append (srfi-opts) opts)))
+		      (opts (if (string? file)
+				(cons* "-fread-internal-src-file-name" file baseopts)
+				baseopts))
+		      (proc (apply run-process (hopc-bigloo)
+			       "-suffix" "ast" temp
+			       opts))
+		      (cmd (format "~a -suffix ast ~a ~l" (hopc-bigloo) temp opts))
+		      (out (process-input-port proc)))
+		  (signal sigterm
+		     (lambda (sig)
+			(process-kill proc)
+			(exit 1)))
+		  (hop-verb 4 cmd "\n")
 		  (process-wait proc)
-		  (process-exit-status proc))
-	       (delete-file temp))))
+		  (process-exit-status proc)))
+	    (delete-file temp)))
 
       (define (compile-pipe opts comp file)
          (let* ((baseopts (cons "-fread-internal-src"
