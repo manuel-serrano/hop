@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Fri Mar  3 14:19:05 2023 (serrano)                */
+;*    Last change :  Tue Sep 12 23:33:07 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -50,6 +50,8 @@
 	   (generic js-worker-exception-handler ::object ::obj ::int)
 	   (generic js-worker-exec ::object ::bstring ::procedure)
 	   (generic js-worker-exec-throws ::object ::bstring ::procedure)
+	   (generic js-worker-run ::object ::bstring ::procedure)
+	   (generic js-worker-run-throws ::object ::bstring ::procedure)
 	   (generic js-worker-push! ::object ::bstring ::procedure)
 	   (generic js-worker-alive? ::object)
 	   
@@ -648,6 +650,24 @@
 ;*    js-worker-exec-throws ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-generic (js-worker-exec-throws th::object name::bstring proc::procedure))
+
+;*---------------------------------------------------------------------*/
+;*    js-worker-run ...                                                */
+;*---------------------------------------------------------------------*/
+(define-generic (js-worker-run th::object name::bstring proc::procedure)
+   (if (eq? (current-thread) th)
+       (with-access::WorkerHopThread th (%this %loop mutex condv)
+	  (proc %this))
+       (js-worker-exec th name proc)))
+
+;*---------------------------------------------------------------------*/
+;*    js-worker-run-throws ...                                         */
+;*---------------------------------------------------------------------*/
+(define-generic (js-worker-run-throws th::object name::bstring proc::procedure)
+   (if (eq? (current-thread) th)
+       (with-access::WorkerHopThread th (%this %loop mutex condv)
+	  (proc %this))
+       (js-worker-exec-throws th name proc)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-worker-push! ::object ...                                     */

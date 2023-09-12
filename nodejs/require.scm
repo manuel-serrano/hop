@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Tue Jun 13 07:18:42 2023 (serrano)                */
+;*    Last change :  Tue Sep 12 23:24:47 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -2808,7 +2808,7 @@
 (define (make-plugins-loader %ctxthis %ctxmodule worker)
    (when (and (isa? %ctxthis JsGlobalObject) (isa? %ctxmodule JsObject))
       (lambda (lang file conf)
-	 (js-worker-exec-throws worker "plugins-loader"
+	 (js-worker-run-throws worker "plugins-loader"
 	    (lambda (%this)
 	       (with-access::JsGlobalObject %ctxthis (js-object js-symbol)
 		  (let* ((filemod (nodejs-new-module-sans-cache file file
@@ -2826,7 +2826,7 @@
 					(if (procedure? (cdr p))
 					    (cons (car p)
 					       (lambda (tok decl conf ctrl)
-						  (js-worker-exec-throws worker
+						  (js-worker-run-throws worker
 						     "plugins"
 						     (lambda (%this)
 							((cdr p) tok decl conf ctrl)))))

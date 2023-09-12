@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Mon Jun 26 10:53:35 2023 (serrano)                */
+;*    Last change :  Tue Sep 12 23:21:27 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -138,8 +138,8 @@
    
    (define (peek-token)
       (if (null? *peeked-tokens*)
-	  (begin
-	     (set! *peeked-tokens* (list (read/rp (j2s-lexer) input-port lang conf)))
+	  (let ((tok (read/rp (j2s-lexer) input-port lang conf)))
+	     (set! *peeked-tokens* (list tok))
 	     (if (eq? (caar *peeked-tokens*) 'NEWLINE)
 		 (begin
 		    (set! *previous-token-type* 'NEWLINE)
