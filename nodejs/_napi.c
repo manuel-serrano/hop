@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 24 14:34:24 2023                          */
-/*    Last change :  Sat Jun 10 07:38:21 2023 (serrano)                */
+/*    Last change :  Wed Sep 13 22:03:17 2023 (serrano)                */
 /*    Copyright   :  2023 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop node_api implementation.                                     */
@@ -808,7 +808,9 @@ napi_get_value_double(napi_env _this, napi_value value, double *res) {
 /*    bool                                                             */
 /*    BXALLOC ...                                                      */
 /*---------------------------------------------------------------------*/
-#define BXALLOC(x) (BIGNUM(x).mpz._mp_alloc)
+#if BGL_HAVE_GMP
+#  define BXALLOC(x) (BIGNUM(x).mpz._mp_alloc)
+#endif
 
 /*---------------------------------------------------------------------*/
 /*    BGL_RUNTIME_DEF napi_status                                      */
@@ -816,13 +818,17 @@ napi_get_value_double(napi_env _this, napi_value value, double *res) {
 /*---------------------------------------------------------------------*/
 BGL_RUNTIME_DEF napi_status
 napi_get_value_bigint_int64(napi_env _this, napi_value value, int64_t *res, bool *lossless) {
+#if BGL_HAVE_GMP
    if (BIGNUMP(value)) {
       *res = bgl_bignum_to_int64(value);
       *lossless = BXALLOC(value) < 4;
-      return napi_ok;;
+      return napi_ok;
    } else {
       return napi_bigint_expected;
    }
+#else
+   return napi_generic_failure;
+#endif   
 }
 
 /*---------------------------------------------------------------------*/
@@ -831,6 +837,7 @@ napi_get_value_bigint_int64(napi_env _this, napi_value value, int64_t *res, bool
 /*---------------------------------------------------------------------*/
 BGL_RUNTIME_DEF napi_status
 napi_get_value_bigint_uint64(napi_env _this, napi_value value, uint64_t *res, bool *lossless) {
+#if BGL_HAVE_GMP
    if (BIGNUMP(value)) {
       *res = bgl_bignum_to_uint64(value);
       *lossless = !BXNEGATIVE(value) && BXALLOC(value) < 4;
@@ -838,6 +845,9 @@ napi_get_value_bigint_uint64(napi_env _this, napi_value value, uint64_t *res, bo
    } else {
       return napi_bigint_expected;
    }
+#else
+   return napi_generic_failure;
+#endif   
 }
 
 /*---------------------------------------------------------------------*/
@@ -850,17 +860,17 @@ napi_get_value_bigint_words(napi_env env,
 			    int *sign_bit,
 			    size_t *word_count,
 			    uint64_t *words) {
-   if (BIGNUMP(value)) {
 #if (BGL_HAVE_GMP)
+   if (BIGNUMP(value)) {
       if (sign_bit) *sign_bit = BXNEGATIVE(value);
       mpz_export((void *)words, word_count, 1, sizeof(int64_t), 0, 0, &(BIGNUM(value).mpz));
       return napi_ok;
-#else
-      return napi_invalid_arg;
-#endif
    } else {
       return napi_bigint_expected;
    }
+#else
+   return napi_generic_failure;
+#endif   
 }
 
 /*---------------------------------------------------------------------*/
