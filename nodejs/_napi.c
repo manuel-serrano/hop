@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 24 14:34:24 2023                          */
-/*    Last change :  Wed Sep 13 22:03:17 2023 (serrano)                */
+/*    Last change :  Wed Sep 13 22:55:02 2023 (serrano)                */
 /*    Copyright   :  2023 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop node_api implementation.                                     */
@@ -808,7 +808,7 @@ napi_get_value_double(napi_env _this, napi_value value, double *res) {
 /*    bool                                                             */
 /*    BXALLOC ...                                                      */
 /*---------------------------------------------------------------------*/
-#if BGL_HAVE_GMP
+#if (BGL_HAVE_GMP)
 #  define BXALLOC(x) (BIGNUM(x).mpz._mp_alloc)
 #endif
 
@@ -818,7 +818,7 @@ napi_get_value_double(napi_env _this, napi_value value, double *res) {
 /*---------------------------------------------------------------------*/
 BGL_RUNTIME_DEF napi_status
 napi_get_value_bigint_int64(napi_env _this, napi_value value, int64_t *res, bool *lossless) {
-#if BGL_HAVE_GMP
+#if (BGL_HAVE_GMP)
    if (BIGNUMP(value)) {
       *res = bgl_bignum_to_int64(value);
       *lossless = BXALLOC(value) < 4;
@@ -837,7 +837,7 @@ napi_get_value_bigint_int64(napi_env _this, napi_value value, int64_t *res, bool
 /*---------------------------------------------------------------------*/
 BGL_RUNTIME_DEF napi_status
 napi_get_value_bigint_uint64(napi_env _this, napi_value value, uint64_t *res, bool *lossless) {
-#if BGL_HAVE_GMP
+#if (BGL_HAVE_GMP)
    if (BIGNUMP(value)) {
       *res = bgl_bignum_to_uint64(value);
       *lossless = !BXNEGATIVE(value) && BXALLOC(value) < 4;
