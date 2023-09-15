@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Thu Sep 14 17:31:43 2023 (serrano)                */
+;*    Last change :  Fri Sep 15 17:22:06 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -82,16 +82,16 @@
 	  (raise
 	     (instantiate::&io-parse-error
 		(proc (format "hopc (~a)" lang))
-		(msg (if (eq? (token-tag token) 'BAD) (cadr token) msg))
-		(obj (if (eq? (token-tag token) 'BAD) (cddr token) (token-value token)))
+		(msg (if (eq? (token-type token) 'BAD) (cadr token) msg))
+		(obj (if (eq? (token-type token) 'BAD) (cddr token) (token-value token)))
 		(fname fname)
 		(location loc))))
 	 (else
 	  (raise
 	     (instantiate::&io-parse-error
 		(proc (format "hopc (~a)" lang))
-		(msg (if (eq? (token-tag token) 'BAD) (cadr token) msg))
-		(obj (if (eq? (token-tag token) 'BAD) (cddr token) (token-value token))))))))
+		(msg (if (eq? (token-type token) 'BAD) (cadr token) msg))
+		(obj (if (eq? (token-type token) 'BAD) (cddr token) (token-value token))))))))
    
    (define (parse-token-warning msg token)
       (with-handler
@@ -140,7 +140,7 @@
       (if (null? *peeked-tokens*)
 	  (let ((tok (read/rp (j2s-lexer) input-port lang conf)))
 	     (set! *peeked-tokens* (list tok))
-	     (if (eq? (caar *peeked-tokens*) 'NEWLINE)
+	     (if (eq? (token-type (car *peeked-tokens*)) 'NEWLINE)
 		 (begin
 		    (set! *previous-token-type* 'NEWLINE)
 		    (set! *peeked-tokens* (cdr *peeked-tokens*))
@@ -151,13 +151,13 @@
    (define (token-push-back! token)
       (if (at-new-line-token?)
 	  (set! *peeked-tokens*
-	     (cons* token (econs 'NEWLINE 'NEWLINE (token-loc token))
+	     (cons* token (make-token 'NEWLINE "\n" (token-loc token))
 		*peeked-tokens*))
 	  (set! *peeked-tokens*
 	     (cons token *peeked-tokens*))))
    
    (define (peek-token-type)
-      (token-tag (peek-token)))
+      (token-type (peek-token)))
    
    (define (peek-token-value)
       (token-value (peek-token)))
@@ -171,17 +171,17 @@
    
    (define (pop-open-token token)
       (if (null? *open-tokens*)
-	  (error "js2scheme" (format "cannot pop token \"~s\"" (cdr token))
+	  (error "js2scheme" (format "cannot pop token \"~s\"" (token-value token))
 	     (token-loc token))
 	  (set! *open-tokens* (cdr *open-tokens*)))
       token)
    
    (define (consume-token! type)
       (let ((token (consume-any!)))
-	 (if (eq? (token-tag token) type)
+	 (if (eq? (token-type token) type)
 	     token
 	     (parse-token-error 
-		(format "Expected \"~a\" got \"~a\"" type (token-tag token))
+		(format "Expected \"~a\" got \"~a\"" type (token-type token))
 		token))))
    
    (define (consume! type)
@@ -195,10 +195,10 @@
 
    (define (consume-oneof! . types)
       (let ((token (consume-any!)))
-	 (if (memq (token-tag token) types)
+	 (if (memq (token-type token) types)
 	     token
 	     (parse-token-error
-		(format "Expected \"~(, )\" got \"~a\"" types (token-tag token))
+		(format "Expected \"~(, )\" got \"~a\"" types (token-type token))
 		token))))
    
    (define (consume-statement-semicolon! where loc)
@@ -231,7 +231,7 @@
       (when (eq? intro-token '/=)
 	 (unread-char! #\= input-port))
       (let ((token (read/rp (j2s-regex-lexer) input-port)))
-	 (case (token-tag token)
+	 (case (token-type token)
 	    ((EOF)
 	     (parse-token-error "Unfinished regular expression literal" token))
 	    ((ERROR)
@@ -415,7 +415,7 @@
 	 ((ID) (source-id))
 	 ((class) (class-declaration))
 	 ((record) (record-declaration))
-	 ((EOF) (cdr (consume-any!)))
+	 ((EOF) (token-value (consume-any!)))
 	 ((ERROR) (parse-token-error "Error" (consume-any!)))
 	 (else (statement))))
    
@@ -594,7 +594,7 @@
 	  (consume-any!)
 	  (let ((tok (consume-any!)))
 	     (parse-token-error 
-		(format "Expected ident got \"~a\"" (token-tag tok))
+		(format "Expected ident got \"~a\"" (token-type tok))
 		tok)))
       (when (eq? (peek-token-type) '?)
 	 (consume-any!))
@@ -725,19 +725,19 @@
 
    (define (var::pair in-for-init? constrinit constr)
       (let ((id (peek-token)))
-	 (case (token-tag id)
+	 (case (token-type id)
 	    ((ID)
 	     (consume-any!)
 	     (let ((ty (opt-type)))
-		(if (or (eq? (token-tag id) 'ID) (eq? current-mode 'normal))
+		(if (or (eq? (token-type id) 'ID) (eq? current-mode 'normal))
 		    (case (peek-token-type)
 		       ((=)
 			(let* ((token (consume-any!))
 			       (expr (assig-expr in-for-init? #f #f)))
 			   (list
-			      (constrinit (token-loc token) (cdr id) expr ty))))
+			      (constrinit (token-loc token) (token-value id) expr ty))))
 		       (else
-			(list (constr (token-loc id) (cdr id) ty))))
+			(list (constr (token-loc id) (token-value id) ty))))
 		    (parse-token-error "Illegal lhs" id))) )
 	    ((undefined NaN Infinity)
 	     (consume-any!)
@@ -862,9 +862,9 @@
       ;; TODO: weed out bad lhs
       (let* ((tok (consume-any!))
 	     (op (cond
-		    ((eq? (token-tag tok) 'in)
+		    ((eq? (token-type tok) 'in)
 		     'in)
-		    ((and (eq? (token-tag tok) 'ID) (eq? (token-value tok) 'of))
+		    ((and (eq? (token-type tok) 'ID) (eq? (token-value tok) 'of))
 		     'of)
 		    (else
 		     (parse-error "Token 'in' or 'of' expectede" tok))))
@@ -1168,7 +1168,7 @@
 	     (consume-any!)
 	     (instantiate::J2SLabel
 		(loc (token-loc id-token))
-		(id (cdr id-token))
+		(id (token-value id-token))
 		(body (statement))))
 	    ((eq? (token-value id-token) 'async)
 	     (cond
@@ -1559,7 +1559,7 @@
 					       (src fun-src)
 					       (thisp (new-decl-this loc))
 					       (params params)
-					       (name (cdr id))
+					       (name (token-value id))
 					       (mode mode)
 					       (generator gen)
 					       (ismethodof methodof)
@@ -1572,7 +1572,7 @@
 						(usage (if (eq? mode 'hopscript)
 							   (usage '())
 							   (usage '(assig))))
-						(id (cdr id))
+						(id (token-value id))
 						(val val))))
 			 decl))
 		     (id
@@ -1582,7 +1582,7 @@
 					       (decl decl)
 					       (mode mode)
 					       (generator gen)
-					       (name (cdr id))
+					       (name (token-value id))
 					       (thisp (new-decl-this loc))
 					       (params params)
 					       (ismethodof methodof)
@@ -1590,7 +1590,7 @@
 					       (body body)))
 				       (decl (instantiate::J2SDeclFun
 						(loc (token-loc id))
-						(id (cdr id))
+						(id (token-value id))
 						(writable #f)
 						(usage (usage '()))
 						(expression #t)
@@ -1620,15 +1620,15 @@
 				      (thisp (new-decl-this loc))
 				      (params params)
 				      (vararg (rest-params params))
-				      (name (cdr id))
+				      (name (token-value id))
 				      (init (J2SNop))
 				      (mode mode)
-				      (path (cdr id))
+				      (path (token-value id))
 				      (body body)
 				      (decl decl)))
 			      (decl (instantiate::J2SDeclSvc
 				       (loc loc)
-				       (id (cdr id))
+				       (id (token-value id))
 				       (writable #f)
 				       (usage (usage '()))
 				       (val val))))
@@ -1642,14 +1642,14 @@
 				      (thisp (new-decl-this loc))
 				      (params params)
 				      (vararg (rest-params params))
-				      (name (cdr id))
+				      (name (token-value id))
 				      (init (J2SNop))
 				      (mode mode)
-				      (path (cdr id))
+				      (path (token-value id))
 				      (body body)))
 			      (decl (instantiate::J2SDeclFun
 				       (loc (token-loc id))
-				       (id (cdr id))
+				       (id (token-value id))
 				       (writable #f)
 				       (usage (usage '()))
 				       (expression #t)
@@ -1800,7 +1800,7 @@
 			(id (token-value token))
 			(sep (consume-any!)))
 		    (cond
-		       ((and (eq? (token-tag sep) 'ID) (eq? (token-value sep) 'from))
+		       ((and (eq? (token-type sep) 'ID) (eq? (token-value sep) 'from))
 			(let* ((path (consume-token! 'STRING))
 			       (loc (token-loc token))
 			       (impnm (instantiate::J2SImportName
@@ -1812,7 +1812,7 @@
 			      (names (list impnm))
 			      (path (token-value path))
 			      (dollarpath (instantiate::J2SUndefined (loc loc))))))
-		       ((eq? (token-tag sep) 'COMMA)
+		       ((eq? (token-type sep) 'COMMA)
 			(let ((imp (loop #f))
 			      (impnm (instantiate::J2SImportName
 					(loc (token-loc sep))
@@ -1852,7 +1852,7 @@
 			  (id id)
 			  (alias alias)))
 		(next (consume-any!)))
-	    (case (token-tag next)
+	    (case (token-type next)
 	       ((RBRACE)
 		(cons impnm lst))
 	       ((COMMA)
@@ -1928,7 +1928,7 @@
 				      (begin
 					 (consume-any!)
 					 (let ((talias (consume-any!)))
-					    (case (token-tag talias)
+					    (case (token-type talias)
 					       ((default)
 						'default)
 					       ((ID)
@@ -2513,7 +2513,7 @@
 	 (if (assig-operator? (peek-token-type))
 	     (let* ((op (consume-any!))
 		    (rhs (assig-expr in-for-init? #f #f)))
-		(case (token-tag op)
+		(case (token-type op)
 		   ((=)
 		    (cond
 		       ((or (isa? lhs J2SArray) (isa? lhs J2SObjInit))
@@ -2577,7 +2577,7 @@
       ;; (let ((expr (binary-expr in-for-init? #t spread?))
       (let ((expr (binary-expr in-for-init? destructuring? spread?))
 	    (token (peek-token)))
-	 (if (eq? (token-tag token) '?)
+	 (if (eq? (token-type token) '?)
 	     (let* ((ignore-? (consume-any!))
 		    (then (assig-expr #f #f #f))
 		    (ignore-colon (consume! ':))
@@ -2658,7 +2658,7 @@
 				(token-push-back!
 				   (make-token 'ID id
 				      (token-loc token)))
-				(token-tag-set! token '<)))
+				(token-type-set! token '<)))
 			  (let ((rhs (binary-aux (+fx level 1))))
 			     (cond
 				((and (eq? typ '??)
@@ -2673,7 +2673,7 @@
 				 (loop (instantiate::J2SBinary
 					  (loc (token-loc token))
 					  (lhs expr)
-					  (op (token-tag token))
+					  (op (token-type token))
 					  (rhs rhs))))))))
 		      (else
 		       expr)))))))
@@ -2689,7 +2689,7 @@
 		     (isa? expr J2SParen))
 		 (let* ((rhs (instantiate::J2SBinary
 				(loc loc)
-				(op (token-tag token))
+				(op (token-type token))
 				(lhs expr)
 				(rhs (instantiate::J2SNumber
 					(loc loc)
@@ -2699,7 +2699,7 @@
 		       (loc loc)
 		       (lhs expr)
 		       (rhs (dup-expr rhs))
-		       (op (token-tag token))))
+		       (op (token-type token))))
 		 (parse-token-error
 		    "Invalid left-hand side expression in prefix operation"
 		    token))))
@@ -2707,14 +2707,14 @@
 	  (let ((token (consume-any!))
 		(expr (unary #f #f)))
 	     (instantiate::J2SUnary
-		(op (token-tag token))
+		(op (token-type token))
 		(loc (token-loc token))
 		(expr expr))))
 	 ((void typeof ~ !)
 	  (let ((token (consume-any!)))
 	     (instantiate::J2SUnary
 		(loc (token-loc token))
-		(op (token-tag token))
+		(op (token-type token))
 		(expr (unary #f #f)))))
 	 ((+ -)
 	  (let ((token (consume-any!))
@@ -2723,12 +2723,12 @@
 		 (with-access::J2SNumber expr (val)
 		    (duplicate::J2SNumber expr
 		       (loc (token-loc token))
-		       (val (if (eq? (token-tag token) '+)
+		       (val (if (eq? (token-type token) '+)
 				(if (= val 0) 0.0 val)
 				(if (= val 0) -0.0 (- val))))))
 		 (instantiate::J2SUnary
 		    (loc (token-loc token))
-		    (op (token-tag token))
+		    (op (token-type token))
 		    (expr expr)))))
 	 (else
 	  (postfix (token-loc (peek-token)) destructuring? spread?))))
@@ -2742,7 +2742,7 @@
 		    (if (or (isa? expr J2SUnresolvedRef)
 			    (isa? expr J2SAccess)
 			    (isa? expr J2SParen))
-			(let* ((op (token-tag token))
+			(let* ((op (token-type token))
 			       (rhs (instantiate::J2SBinary
 				       (loc loc)
 				       (op op)
@@ -2757,7 +2757,7 @@
 			      (loc loc)
 			      (lhs (dup-expr expr))
 			      (rhs rhs)
-			      (op (token-tag token))))
+			      (op (token-type token))))
 			(parse-token-error
 			   "Invalid left-hand side expression in postfix operation"
 			   token))))
@@ -2890,7 +2890,7 @@
 	     (let* ((ignore (consume-any!))
 		    (field (consume-any!))
 		    (key (car field))
-		    (field-str (format "~a" (cdr field))))
+		    (field-str (format "~a" (token-value field))))
 		(cond
 		   ((or (eq? key 'ID)
 			(eq? key 'RESERVED)
@@ -3040,7 +3040,7 @@
 	 (let ((val (instantiate::J2SString
 		       (loc (token-loc tok))
 		       (val (token-value tok)))))
-	    (case (token-tag tok)
+	    (case (token-type tok)
 	       ((TSTRING)
 		(reverse! (cons val vals)))
 	       ((TEMPLATE)
@@ -3052,7 +3052,7 @@
 		       (parse-node-error "Expression expected" stmt))))
 	       (else
 		(parse-token-error
-		   (format "Invalid template string (~a)" (token-tag tok))
+		   (format "Invalid template string (~a)" (token-type tok))
 		   tok))))))
    
    (define (template-expression)
@@ -3278,7 +3278,7 @@
 	  (let ((token (consume-any!)))
 	     (instantiate::J2SBool
 		(loc (token-loc token))
-		(val (eq? (token-tag token) 'true)))))
+		(val (eq? (token-type token) 'true)))))
 	 ((NUMBER)
 	  (let ((token (consume-token! 'NUMBER)))
 	     (instantiate::J2SNumber
@@ -3404,7 +3404,7 @@
 	     (RPAREN (consume-token! 'RPAREN)))
 	 (pop-open-token RPAREN)
 	 (if (memq (car str) '(STRING ESTRING OSTRING))
-	     (call-with-input-string (cdr str)
+	     (call-with-input-string (token-value str)
 		(lambda (ip)
 		   (instantiate::J2SPragma
 		      (loc (token-loc token))
@@ -3692,7 +3692,7 @@
 			    (loc loc)
 			    (name name)
 			    (val val))))
-		     ((and (pair? tokname) (eq? (token-tag tokname) 'DOTS))
+		     ((and (pair? tokname) (eq? (token-type tokname) 'DOTS))
 		      (instantiate::J2SDataPropertyInit
 			 (loc (token-loc tokname))
 			 (name (instantiate::J2SUndefined
@@ -3707,7 +3707,7 @@
 		      (let* ((loc (token-loc token))
 			     (val (case (peek-token-type)
 				     ((COMMA RBRACE)
-				      (if (memq (token-tag token) '(ID type))
+				      (if (memq (token-type token) '(ID type))
 					  (instantiate::J2SUnresolvedRef
 					     (loc loc)
 					     (id (token-value token)))
