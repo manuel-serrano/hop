@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Tue Sep 12 23:21:27 2023 (serrano)                */
+;*    Last change :  Thu Sep 14 17:31:43 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -246,7 +246,7 @@
 	 (when mode
 	    (unless (eq? current-mode 'hopscript)
 	       (when (eq? mode 'hopscript)
-		   (set! conf (cons* :type-annotations #t conf)))
+		  (set! conf (config-add! conf :type-annotations #t)))
 	       (set! current-mode mode)))))
 
    (define (source-element-plugins node::J2SNode config)
@@ -1502,8 +1502,8 @@
    
    (define (arrow-function args::pair-nil loc)
       ;; ES6 arrow functions
-      (let* ((=> (consume-any!))
-	     (params (arrow-params args)))
+      (consume-any!)
+      (let ((params (arrow-params args)))
 	 (instantiate::J2SArrow
 	    (idthis '%)
 	    (loc loc)
@@ -4176,19 +4176,6 @@
 
    (with-access::J2SDecl decl (loc)
       (destructure lhs (J2SRef decl) path bind)))
-
-;*---------------------------------------------------------------------*/
-;*    lbrace-following? ...                                            */
-;*---------------------------------------------------------------------*/
-(define (lbrace-following? port)
-   (read/rp
-      (regular-grammar ()
-	 ((: (* (or (in " \t\n") (or "\xc2\xa0"))) #\{)
-	  (rgc-buffer-insert-substring! port (the-string) 0 (the-length))
-	  #t)
-	 (else
-	  #f))
-      port))
 
 ;*---------------------------------------------------------------------*/
 ;*    javascript-mode ...                                              */
