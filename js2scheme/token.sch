@@ -3,11 +3,29 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jul 23 18:19:18 2015                          */
-;*    Last change :  Fri Sep 15 17:23:27 2023 (serrano)                */
+;*    Last change :  Fri Sep 15 19:43:12 2023 (serrano)                */
 ;*    Copyright   :  2015-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Token tools                                                      */
 ;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    make-loc ...                                                     */
+;*---------------------------------------------------------------------*/
+(define-inline (make-loc file offset)
+   `(at ,file ,offset))
+
+;*---------------------------------------------------------------------*/
+;*    loc-filename ...                                                 */
+;*---------------------------------------------------------------------*/
+(define-inline (loc-filename l)
+   (cadr l))
+
+;*---------------------------------------------------------------------*/
+;*    loc-offset ...                                                   */
+;*---------------------------------------------------------------------*/
+(define-inline (loc-offset l)
+   (caddr l))
 
 ;*---------------------------------------------------------------------*/
 ;*    the-choord ...                                                   */
@@ -15,10 +33,10 @@
 ;*    Builds a Bigloo location object                                  */
 ;*---------------------------------------------------------------------*/
 (define (the-coord input-port offset)
-   `(at ,(if (input-string-port? input-port)
-	     (string-append "string://" (input-port-buffer input-port))
-	     (input-port-name input-port))
-       ,(-fx (input-port-position input-port) offset)))
+   (make-loc (if (input-string-port? input-port)
+		 (string-append "string://" (input-port-buffer input-port))
+		 (input-port-name input-port))
+      (-fx (input-port-position input-port) offset)))
 
 ;*---------------------------------------------------------------------*/
 ;*    make-token ...                                                   */
@@ -58,7 +76,39 @@
        (cer token)
        (match-case (cer token)
 	  ((at ?name ?pos)
-	   `(at ,name ,(+fx pos shift)))
+	   (make-loc name (+fx pos shift)))
 	  (else
 	   (error "token-loc" "no location" token)))))
 
+;*---------------------------------------------------------------------*/
+;*    queue-init ...                                                   */
+;*    -------------------------------------------------------------    */
+;*    This abstraction is used to simplifying the compilation of       */
+;*    the parser into JS.                                              */
+;*---------------------------------------------------------------------*/
+(define-inline (queue-init . opt)
+   opt)
+
+;*---------------------------------------------------------------------*/
+;*    queue-empty? ...                                                 */
+;*---------------------------------------------------------------------*/
+(define-inline (queue-empty? queue)
+   (null? queue))
+
+;*---------------------------------------------------------------------*/
+;*    queue-push  ...                                                  */
+;*---------------------------------------------------------------------*/
+(define-inline (queue-push val queue)
+   (cons val queue))
+
+;*---------------------------------------------------------------------*/
+;*    queue-pop ...                                                    */
+;*---------------------------------------------------------------------*/
+(define-inline (queue-pop queue)
+   (cdr queue))
+
+;*---------------------------------------------------------------------*/
+;*    queue-peek ...                                                   */
+;*---------------------------------------------------------------------*/
+(define-inline (queue-peek queue)
+   (car queue))

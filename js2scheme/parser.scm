@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Fri Sep 15 17:22:06 2023 (serrano)                */
+;*    Last change :  Fri Sep 15 19:43:28 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -59,7 +59,7 @@
 	 res))
    
    (define (current-loc)
-      `(at ,(input-port-name input-port) ,(input-port-position input-port)))
+      (make-loc (input-port-name input-port) (input-port-position input-port)))
 
    (define (new-decl-this loc)
       (instantiate::J2SDecl
@@ -132,29 +132,30 @@
 		   (msg msg)
 		   (obj (typeof node))))))))
    
-   (define *peeked-tokens* '())
+   (define *peeked-tokens* (queue-init))
    (define *previous-token-type* #unspecified)
-   (define *open-tokens* '())
+   (define *open-tokens* (queue-init))
    
    (define (peek-token)
-      (if (null? *peeked-tokens*)
+      (if (queue-empty? *peeked-tokens*)
 	  (let ((tok (read/rp (j2s-lexer) input-port lang conf)))
-	     (set! *peeked-tokens* (list tok))
-	     (if (eq? (token-type (car *peeked-tokens*)) 'NEWLINE)
+	     (set! *peeked-tokens* (queue-init tok))
+	     (if (eq? (token-type (queue-peek *peeked-tokens*)) 'NEWLINE)
 		 (begin
 		    (set! *previous-token-type* 'NEWLINE)
-		    (set! *peeked-tokens* (cdr *peeked-tokens*))
+		    (set! *peeked-tokens* (queue-pop *peeked-tokens*))
 		    (peek-token))
-		 (car *peeked-tokens*)))
-	  (car *peeked-tokens*)))
+		 (queue-peek *peeked-tokens*)))
+	  (queue-peek *peeked-tokens*)))
    
    (define (token-push-back! token)
       (if (at-new-line-token?)
 	  (set! *peeked-tokens*
-	     (cons* token (make-token 'NEWLINE "\n" (token-loc token))
-		*peeked-tokens*))
+	     (queue-push token
+		(queue-push (make-token 'NEWLINE "\n" (token-loc token))
+		   *peeked-tokens*)))
 	  (set! *peeked-tokens*
-	     (cons token *peeked-tokens*))))
+	     (queue-push token *peeked-tokens*))))
    
    (define (peek-token-type)
       (token-type (peek-token)))
@@ -166,14 +167,14 @@
       (eq? *previous-token-type* 'NEWLINE))
    
    (define (push-open-token token)
-      (set! *open-tokens* (cons token *open-tokens*))
+      (set! *open-tokens* (queue-push token *open-tokens*))
       token)
    
    (define (pop-open-token token)
-      (if (null? *open-tokens*)
+      (if (queue-empty? *open-tokens*)
 	  (error "js2scheme" (format "cannot pop token \"~s\"" (token-value token))
 	     (token-loc token))
-	  (set! *open-tokens* (cdr *open-tokens*)))
+	  (set! *open-tokens* (queue-pop *open-tokens*)))
       token)
    
    (define (consume-token! type)
@@ -185,21 +186,23 @@
 		token))))
    
    (define (consume! type)
-      (cdr (consume-token! type)))
+      (token-value (consume-token! type)))
+
+   (define (consume2! type1 type2)
+      (let* ((token (consume-any!))
+	     (typ (token-type token)))
+	 (if (or (eq? typ type1) (eq? typ type2))
+	     token
+	     (parse-token-error
+		(format "Expected \"~a\" or \"~a\" got \"~a\"" type1 type2
+		   (token-type token))
+		token))))
    
    (define (consume-any!)
       (let ((res (peek-token)))
-	 (set! *previous-token-type* (car res))
-	 (set! *peeked-tokens* (cdr *peeked-tokens*))
+	 (set! *previous-token-type* (token-type res))
+	 (set! *peeked-tokens* (queue-pop *peeked-tokens*))
 	 res))
-
-   (define (consume-oneof! . types)
-      (let ((token (consume-any!)))
-	 (if (memq (token-type token) types)
-	     token
-	     (parse-token-error
-		(format "Expected \"~(, )\" got \"~a\"" types (token-type token))
-		token))))
    
    (define (consume-statement-semicolon! where loc)
       (cond
@@ -214,7 +217,7 @@
 	 (else
 	  (parse-token-error
 	     (format "~a [@~a]: \"\;\", or newline expected"
-		where (caddr loc))
+		where (loc-offset loc))
 	     (peek-token)))))
 
    (define (peek-token-id? val)
@@ -303,8 +306,8 @@
 	 (if (eof?)
 	     (if (null? rev-ses)
 		 (instantiate::J2SBlock
-		    (loc `(at ,(input-port-name input-port) 0))
-		    (endloc `(at ,(input-port-name input-port) 0))
+		    (loc (make-loc (input-port-name input-port) 0))
+		    (endloc (make-loc (input-port-name input-port) 0))
 		    (nodes (if pluginit (list pluginit) '())))
 		 (let* ((lastnode (car rev-ses))
 			(nodes (reverse! rev-ses)))
@@ -1218,7 +1221,7 @@
 			 (msg "generic functions require at least one argument")
 			 (obj id)
 			 (fname (cadr loc))
-			 (location (caddr loc))))
+			 (location (loc-offset loc))))
 		   (let* ((endloc (node-endloc body))
 			  (nparams (map (lambda (p)
 					   (duplicate::J2SDecl p
@@ -1267,7 +1270,7 @@
 			 (msg "methods require at least one argument")
 			 (obj id)
 			 (fname (cadr loc))
-			 (location (caddr loc)))))
+			 (location (loc-offset loc)))))
 		  ((with-access::J2SDecl (car params) (utype)
 		      (eq? utype 'unknown))
 		   (raise
@@ -1276,7 +1279,7 @@
 			 (msg "methods require a typed first argument")
 			 (obj id)
 			 (fname (cadr loc))
-			 (location (caddr loc)))))
+			 (location (loc-offset loc)))))
 		  (else
 		   (with-access::J2SDecl (car params) (utype)
 		      (let ((gen (J2SUnresolvedRef id))
@@ -1538,7 +1541,7 @@
 	    'rest)))
    
    (define (loc->funname pref loc)
-      (string->symbol (format "~a@~a:~a" pref (cadr loc) (caddr loc))))
+      (string->symbol (format "~a@~a:~a" pref (cadr loc) (loc-offset loc))))
    
    (define (function declaration? token #!optional methodof)
       (let ((loc (token-loc token)))
@@ -1839,7 +1842,7 @@
    (define (import-name-list)
       (consume-any!)
       (let loop ((lst '()))
-	 (let* ((token (consume-oneof! 'ID 'default))
+	 (let* ((token (consume2! 'ID 'default))
 		(loc (token-loc token))
 		(id (token-value token))
 		(alias (if (peek-token-id? 'as)
@@ -1922,7 +1925,7 @@
 		       (loc (token-loc token))))
 		 (let loop ((ids '())
 			    (aliases '()))
-		    (let* ((tid (consume-oneof! 'ID 'default))
+		    (let* ((tid (consume2! 'ID 'default))
 			   (id (token-value tid))
 			   (alias (if (peek-token-id? 'as)
 				      (begin
@@ -3915,7 +3918,7 @@
 	       (msg "Octal literals are not allowed in strict mode")
 	       (obj val)
 	       (fname (cadr loc))
-	       (location (caddr loc))))))
+	       (location (loc-offset loc))))))
    
    (define (check-octal-string n)
       (cond
@@ -4329,7 +4332,7 @@
 	    (msg "arrow function disabled")
 	    (obj '=>)
 	    (fname (cadr loc))
-	    (location (caddr loc))))))
+	    (location (loc-offset loc))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    disable-es6-default-value ...                                    */
@@ -4358,7 +4361,7 @@
 		  (msg "default parameter values disabled")
 		  (obj id)
 		  (fname (cadr loc))
-		  (location (caddr loc))))))))
+		  (location (loc-offset loc))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    disable-es6-rest-argument ::J2SNode ...                          */
@@ -4378,7 +4381,7 @@
 		(msg "rest arguments values disabled")
 		(obj name)
 		(fname (cadr loc))
-		(location (caddr loc))))
+		(location (loc-offset loc))))
 	  (call-default-walker))))
 
 ;*---------------------------------------------------------------------*/
@@ -4454,7 +4457,7 @@
 	       (msg "Unexpected strict mode reserved word")
 	       (obj id)
 	       (fname (cadr loc))
-	       (location (caddr loc)))))))
+	       (location (loc-offset loc)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    disable-reserved-ident ::J2SDeclInit ...                         */
@@ -4475,7 +4478,7 @@
 	       (msg "Unexpected strict mode reserved word")
 	       (obj id)
 	       (fname (cadr loc))
-	       (location (caddr loc)))))))
+	       (location (loc-offset loc)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    disable-reserved-ident ::J2SFun ...                              */
