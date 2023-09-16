@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Fri Sep 15 19:43:28 2023 (serrano)                */
+;*    Last change :  Sat Sep 16 17:33:43 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -4273,24 +4273,25 @@
 ;*    specified by the MODE argument).                                 */
 ;*---------------------------------------------------------------------*/
 (define (dialect node::J2SNode mode conf)
-   ;; propagate function definition modes
-   (hopscript-mode-fun! node mode)
-   ;; make hopscript function constant
-   (hopscript-cnst-fun! node mode)
-   ;; disable hopscript var binders, and force let at beginning of blocks
-   (hopscript-let! node mode)
-   ;; treates top-level await import-dynamic as require
-   (hopscript-async-import! node mode)
-   (unless (memq mode '(strict hopscript ecmascript6 ecmascript2017))
-      (unless (config-get conf :es6-let #f)
-	 (disable-es6-let node))
-      (unless (config-get conf :es6-default-value #f)
-	 (disable-es6-default-value node))
-      (unless (config-get conf :es6-arrow-function #f)
-	 (disable-es6-arrow node))
-      (unless (config-get conf :es6-rest-argument #f)
-	 (disable-es6-rest-argument node)))
-   (disable-reserved-ident node mode)
+   (unless (config-get conf :no-dialect #f)
+      ;; propagate function definition modes
+      (hopscript-mode-fun! node mode)
+      ;; make hopscript function constant
+      (hopscript-cnst-fun! node mode)
+      ;; disable hopscript var binders, and force let at beginning of blocks
+      (hopscript-let! node mode)
+      ;; treates top-level await import-dynamic as require
+      (hopscript-async-import! node mode)
+      (unless (memq mode '(strict hopscript ecmascript6 ecmascript2017))
+	 (unless (config-get conf :es6-let #f)
+	    (disable-es6-let node))
+	 (unless (config-get conf :es6-default-value #f)
+	    (disable-es6-default-value node))
+	 (unless (config-get conf :es6-arrow-function #f)
+	    (disable-es6-arrow node))
+	 (unless (config-get conf :es6-rest-argument #f)
+	    (disable-es6-rest-argument node)))
+      (disable-reserved-ident node mode))
    node)
 
 ;*---------------------------------------------------------------------*/
