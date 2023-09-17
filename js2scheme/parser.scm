@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Sat Sep 16 17:33:43 2023 (serrano)                */
+;*    Last change :  Sun Sep 17 13:30:00 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -2892,7 +2892,7 @@
 	    ((DOT)
 	     (let* ((ignore (consume-any!))
 		    (field (consume-any!))
-		    (key (car field))
+		    (key (token-type field))
 		    (field-str (format "~a" (token-value field))))
 		(cond
 		   ((or (eq? key 'ID)
