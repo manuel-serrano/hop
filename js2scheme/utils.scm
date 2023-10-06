@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Thu Sep 14 17:31:19 2023 (serrano)                */
+;*    Last change :  Fri Oct  6 18:37:13 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -26,7 +26,7 @@
 	   (config-get ::pair-nil ::keyword #!optional def)
 	   (config-get-mmap ::pair-nil path)
 	   (config-put! ::pair-nil ::keyword ::obj)
-	   (config-add! ::pair-nil ::keyword ::obj)
+	   (config-add::pair-nil ::pair-nil ::keyword ::obj)
 	   (this?::bool ::J2SNode)
 	   
 	   (j2s-expression-src loc ::pair-nil ::bstring)
@@ -158,9 +158,9 @@
 	  (error "config-put!" (format "entry `~a' not in conf" k) conf))))
 
 ;*---------------------------------------------------------------------*/
-;*    config-add! ...                                                  */
+;*    config-add ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define (config-add! conf k val)
+(define (config-add conf k val)
    (cons* k val conf))
 
 ;*---------------------------------------------------------------------*/

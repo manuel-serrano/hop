@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Sun Sep 17 16:23:14 2023 (serrano)                */
+;*    Last change :  Fri Oct  6 18:37:08 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -249,7 +249,7 @@
 	 (when mode
 	    (unless (eq? current-mode 'hopscript)
 	       (when (eq? mode 'hopscript)
-		  (set! conf (config-add! conf :type-annotations #t)))
+		  (set! conf (config-add conf :type-annotations #t)))
 	       (set! current-mode mode)))))
 
    (define (source-element-plugins node::J2SNode config)
@@ -2968,12 +2968,12 @@
 
    (define (xml-expression tag delim)
       (html-parser input-port
-	 (config-add! :tilde-level tilde-level conf)
+	 (config-add conf :tilde-level tilde-level)
 	 main-parser plugins tag delim))
 
    (define (doctype-expression)
       (html-parser input-port
-	 (config-add! :tilde-level tilde-level conf)
+	 (config-add conf :tilde-level tilde-level)
 	 main-parser plugins))
 
    (define (tilde token)

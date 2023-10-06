@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Wed Feb 15 12:32:43 2023 (serrano)                */
+;*    Last change :  Fri Oct  6 18:09:19 2023 (serrano)                */
 ;*    Copyright   :  2016-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -431,7 +431,9 @@
 		 (d (J2SLetOpt/vtype tr '(get) id (type-cast! rhs tr))))
 	     ;; ms 13oct2021
 	     ;;(set! rhs (type-cast! (J2SRef d :type tr) '*))
-	     (set! rhs (type-cast! (J2SRef d :type tr) (j2s-type lhs)))
+	     ;; ms 06oct2023
+	     ;;(set! rhs (type-cast! (J2SRef d :type tr) (j2s-type lhs)))
+	     (set! rhs (type-cast! (J2SRef d :type tr) (j2s-vtype lhs)))
 	     (let* ((tyb (if (eq? totype '*) type totype))
 		    (ret (J2SReturn #t (type-cast! (J2SRef d :type tr) tyb)))
 		    (bex (J2SBindExit/type tyb #f 

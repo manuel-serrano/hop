@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Thu Jun 22 16:05:37 2023 (serrano)                */
+;*    Last change :  Fri Oct  6 18:31:09 2023 (serrano)                */
 ;*    Copyright   :  2017-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Global properties optimization (constant propagation).           */
@@ -48,6 +48,7 @@
 ;*      6. there should be only one single PROP1 in G, in particular   */
 ;*         there is no computed prop assigned to G                     */
 ;*      7. there is no direct EVAL                                     */
+;*      8. PROP1 is never assigned                                     */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
@@ -223,10 +224,15 @@
 		 (isa? field J2SString))
 	 (with-access::J2SString field (val)
 	    (let ((c (assoc val (propinfo-props %info))))
-	       (if (pair? c)
-		   (set-cdr! c #f)
+	       (cond
+		  ((pair? c)
+		   (set-cdr! c #f))
+		  ((or (isa? this J2SPostfix) (isa? this J2SPrefix) (isa? this J2SAssigOp))
 		   (propinfo-props-set! %info
-		      (cons (cons val #t) (propinfo-props %info))))))))
+		      (cons (cons val #f) (propinfo-props %info))))
+		  (else
+		   (propinfo-props-set! %info
+		      (cons (cons val #t) (propinfo-props %info)))))))))
    
    (with-access::J2SAssig this (lhs rhs loc)
       (cond
