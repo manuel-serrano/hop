@@ -9,6 +9,7 @@
 	      "../node_modules/hz/doc/hz.md",
  	      [], 
 	      "../node_modules/openpgp/doc/openpgp.md",
+	      "../node_modules/sqlite/doc/sqlite.md",
 	      "../node_modules/syslog/doc/syslog.md",
 	      "../node_modules/systime/doc/systime.md",
 	      "../node_modules/system/doc/system.md",
@@ -22,6 +23,8 @@
 	      "../node_modules/texinfo/doc/texinfo.md",
 	      "../node_modules/text/doc/text.md",
               "../node_modules/xml/doc/xml.md",
-              "../node_modules/zeroconf/doc/zeroconf.md"
+              "../node_modules/zeroconf/doc/zeroconf.md",
+ 	      [], 
+              "../node_modules/exif/doc/exif.md"
 	    ]
 }

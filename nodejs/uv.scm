@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Tue May 16 11:24:48 2023 (serrano)                */
+;*    Last change :  Fri Oct 13 08:37:25 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -614,16 +614,15 @@
    (with-access::WorkerHopThread th (%loop)
       (with-access::JsLoop %loop (actions actions-name actions-count async)
 	 (let ((cnt actions-count))
-	    (cond
-	       ((=fx cnt 0)
-		(uv-ref async)
-		(uv-async-send async))
-	       ((=fx cnt (vector-length actions))
-		(set! actions (copy-vector actions (*fx 2 cnt)))
-		(set! actions-name (copy-vector actions-name (*fx 2 cnt)))))
+	    (when (=fx cnt (vector-length actions))
+	       (set! actions (copy-vector actions (*fx 2 cnt)))
+	       (set! actions-name (copy-vector actions-name (*fx 2 cnt))))
 	    (vector-set! actions cnt proc)
 	    (vector-set! actions-name cnt name)
-	    (set! actions-count (+fx cnt 1))))))
+	    (set! actions-count (+fx cnt 1))
+	    (when (=fx cnt 0)
+	       (uv-ref async)
+	       (uv-async-send async))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-worker-push! ::WorkerHopThread ...                            */

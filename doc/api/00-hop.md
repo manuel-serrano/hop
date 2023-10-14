@@ -874,6 +874,11 @@ Hop configutation. See [config](config.html).
 
 Efficient CSV parser. See [csv](csv.html).
 
+### hop.exit ###
+[:@glyphicon glyphicon-tag parameter]
+
+EXIF info decoding. See [exit](exif.html).
+
 ### hop.feed ###
 [:@glyphicon glyphicon-tag parameter]
 
@@ -919,6 +924,11 @@ Minimalist Openpgp binding. See [openpgp](openpgp.html).
 [:@glyphicon glyphicon-tag parameter]
 
 XML widget. See [spage](spage.html).
+
+### hop.sqlite ###
+[:@glyphicon glyphicon-tag parameter]
+
+Sqlite binding. See [sqlite](sqlite.html).
 
 ### hop.syslog ###
 [:@glyphicon glyphicon-tag parameter]

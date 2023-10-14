@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Fri Jul 14 07:42:19 2023 (serrano)                */
+;*    Last change :  Thu Oct 12 14:47:35 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -520,6 +520,7 @@
 		" ext=" (js-object-mode-extensible? obj)
 		" num=" (js-object-mode-hasnumeralprop? obj)
 		" met.vlen=" (vector-length methods)
+		"\n   __proto__=" (typeof (js-object-proto obj))
 		"\n   cmap.%id=" %id
 		"\n   Iels="
 		(vector-length (js-object-inline-elements obj))
@@ -546,6 +547,7 @@
 	  (with-access::JsConstructMap cmap (%id props)
 	     (fprint (current-error-port) "== " msg (typeof obj) " HASHED"
 		" els.vlen=" (hashtable-size elements)
+		"\n   __proto__=" (typeof (typeof (js-object-proto obj)))
 		"\n   prop.names="
 		(hashtable-key-list elements)
 		"\n   prop.values="
@@ -554,6 +556,7 @@
 	  (with-access::JsConstructMap cmap (%id props)
 	     (fprint (current-error-port) "== " msg (typeof obj) " UNMAPPED"
 		" els.vlen=" (vector-length elements)
+		"\n   __proto__=" (typeof (typeof (js-object-proto obj)))
 		"\n   prop.names="
 		(map (lambda (d)
 			(if (isa? d JsPropertyDescriptor)
@@ -2463,7 +2466,9 @@
 	 (js-absent))
       ;; prototype search
       (lambda (__proto__)
-	 (js-get-property-value __proto__ base p %this))))
+	 (if (eq? p (& "__proto__"))
+	     (js-object-proto o)
+	     (js-get-property-value __proto__ base p %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-jsobject-property-value/string ...                        */

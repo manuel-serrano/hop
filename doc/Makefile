@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Tue Feb 21 08:18:28 2023 (serrano)                */
+#*    Last change :  Thu Oct 12 11:13:40 2023 (serrano)                */
 #*    Copyright   :  2006-23 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Doc Makefile                                                     */
@@ -60,7 +60,7 @@ POPULATION=$(BOOTSTRAP_POP:%=lib/bootstrap/%) $(JQUERY_POP:%=lib/jquery/%) \
   html-idx.json mdn-idx.json mdn.js node-idx.json node.js
 
 API_TARGETS=api.html 00-hop.html 10-dom.html 20-websocket.html \
-  hss.html config.html user.html 01-html.html syslog.html \
+  hss.html config.html user.html 01-html.html sqlite.html syslog.html \
   systime.html system.html utils.html hopdroid.html texinfo.html \
   csv.html text.html vcf.html openpgp.html zeroconf.html
 
@@ -100,6 +100,7 @@ VPATH=api lang dev widget intf \
   ../node_modules/text/doc \
   ../node_modules/vcf/doc \
   ../node_modules/openpgp/doc \
+  ../node_modules/sqlite/doc \
   ../node_modules/systime/doc \
   ../node_modules/cpp/doc \
   ../node_modules/xml/doc \

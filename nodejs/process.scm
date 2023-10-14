@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Thu May 11 09:25:39 2023 (serrano)                */
+;*    Last change :  Fri Oct 13 15:32:29 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -454,6 +454,12 @@
 		 (node: . ,(nodejs-version))
 		 (ares: . "-")
 		 (zlib: . "-"))
+	       %this)
+	    #f %this)
+
+	 (js-put! proc (& "release")
+	    (js-alist->jsobject
+	       `((name: . "hop"))
 	       %this)
 	    #f %this)
 	 

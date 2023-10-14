@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Thu Feb 16 13:31:25 2023 (serrano)                */
+;*    Last change :  Thu Oct 12 13:19:11 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Json                         */
@@ -133,10 +133,14 @@
 				     (writable #t))))
 			(js-define-own-property o name desc #f %this)))
       :object-return (lambda (o) o)
-      :parse-error (lambda (msg fname loc)
-		      (js-raise-syntax-error %this msg #f
-			 (if (string? fname) (js-string->jsstring fname) ip)
-			 loc))
+      :parse-error (lambda (msg obj loc)
+		      (match-case loc
+			 ((at ?- ?-)
+			  (js-raise-syntax-error/loc %this loc
+			     (format "~a: ~~a" msg) obj))
+			 (else
+			  (js-raise-syntax-error %this msg #f
+			     (format "~a: ~~a" msg) obj))))
       :reviver (when (js-procedure? reviver)
 		  (lambda (this key val)
 		     (let ((res (js-call2 %this reviver this key val)))
