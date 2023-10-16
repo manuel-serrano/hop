@@ -2361,7 +2361,7 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-let-ref val ident loc %this)
    (if (eq? val #\Z)
-       (js-raise-reference-error/loc %this loc "dead-zone access" ident)
+       (js-raise-reference-error/loc %this loc "\"~a\" dead-zone access" ident)
        val))
 
 ;*---------------------------------------------------------------------*/
