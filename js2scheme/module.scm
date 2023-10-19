@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 15 15:16:16 2018                          */
-;*    Last change :  Sun Jun 25 09:27:01 2023 (serrano)                */
+;*    Last change :  Thu Oct 19 16:58:35 2023 (serrano)                */
 ;*    Copyright   :  2018-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES6 Module handling                                              */
@@ -570,6 +570,10 @@
 	 ((or (string-prefix? "http://" name)
 	      (string-prefix? "https://" name))
 	  (cons name 'http))
+	 ((string-prefix? "@hop/" name)
+	  (let ((dir (or (config-get args :node-modules-directory)
+			 (hop-node-modules-dir))))
+	     (loop (make-file-path dir (substring name 5)))))
 	 ((string-prefix? "hop:" name)
 	  (let ((dir (or (config-get args :node-modules-directory)
 			 (hop-node-modules-dir))))

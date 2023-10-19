@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Tue Sep 12 23:24:47 2023 (serrano)                */
+;*    Last change :  Thu Oct 19 14:38:23 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -2592,6 +2592,11 @@
 		      (lambda (x) #f)
 		      :host host
 		      :port port))))
+	    ((string-prefix? "@hop/" name)
+	     (or (resolve-file-or-directory
+		    (substring name 5)
+		    (nodejs-node-modules-directory))
+		 (resolve-error name dir)))
 	    ((string-prefix? "hop:" name)
 	     (or (resolve-file-or-directory
 		    (substring name 4)
