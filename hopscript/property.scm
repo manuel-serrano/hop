@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Thu Oct 12 14:47:35 2023 (serrano)                */
+;*    Last change :  Fri Oct 20 13:38:35 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -2263,7 +2263,8 @@
 		      #f))))))
 
    (if (js-jsstring? p)
-       (let ((pname (js-toname p %this)))
+       (let ((pname (synchronize-name
+		       (js-jsstring-toname-unsafe p))))
 	  (let ((cacher (js-name-pcacher pname)))
 	     (if cacher
 		 (js-has-own-property/cache o pname cacher)

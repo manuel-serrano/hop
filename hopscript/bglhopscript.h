@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 11 09:35:38 2022                          */
-/*    Last change :  Thu Jul 20 17:46:42 2023 (serrano)                */
+/*    Last change :  Fri Oct 20 13:52:57 2023 (serrano)                */
 /*    Copyright   :  2022-23 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Macros for accelerating C compilation.                           */
@@ -48,11 +48,17 @@ extern bool_t hop_js_toboolean_no_boolean(obj_t);
 #define HOP_JSARRAYP(o, tag) \
    (HOP_OBJECTP(o) && HOP_OBJECT_HEADER_SIZE(o) >= tag)
 
+#define HOP_OBJECT_JSSTRINGP(o, tag) \
+   ((HOP_OBJECT_HEADER_SIZE(o) & tag) == tag)
+
 #define HOP_JSSTRINGP(o, tag) \
-   (HOP_OBJECTP(o) && ((HOP_OBJECT_HEADER_SIZE(o) & tag) == tag))
+   (HOP_OBJECTP(o) && HOP_OBJECT_JSSTRINGP(o, tag))
+
+#define HOP_OBJECT_JSPROCEDUREP(o, tag) \
+   ((HOP_OBJECT_HEADER_SIZE(o) & tag) == tag)
 
 #define HOP_JSPROCEDUREP(o, tag) \
-   (HOP_OBJECTP(o) && ((HOP_OBJECT_HEADER_SIZE(o) & tag) == tag))
+   (HOP_OBJECTP(o) && HOP_OBJECT_JSPROCEDUREP(o, tag))
 
 /*---------------------------------------------------------------------*/
 /*    Objects & properties predicates                                  */

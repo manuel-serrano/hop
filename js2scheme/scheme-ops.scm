@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Tue Jul 11 10:54:31 2023 (serrano)                */
+;*    Last change :  Fri Oct 20 12:46:46 2023 (serrano)                */
 ;*    Copyright   :  2017-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -1222,6 +1222,12 @@
 			       (j2s-type expr)
 			       ctx))))
 	     (if (memq op '(!= !==)) `(not ,t) t)))))
+
+   (define (js-null? obj)
+      (let ((v (j2s-scheme obj mode return ctx)))
+	 (if (memq op '(!= !==))
+	     `(not (null? ,v))
+	     `(null? ,v))))
    
    (let ((tl (j2s-type lhs))
 	 (tr (j2s-type rhs)))
@@ -1276,6 +1282,10 @@
 			     test)))))
 	     (else
 	      (js-cmp loc op lhs rhs mode return ctx))))
+	 ((eq? tl 'null)
+	  (js-null? rhs))
+	 ((eq? tr 'null)
+	  (js-null? lhs))
 	 ((eq? tl 'int32)
 	  (equality-int32 op lhs tl rhs tr mode return ctx #f))
 	 ((eq? tr 'int32)

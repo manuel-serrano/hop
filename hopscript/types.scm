@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Fri Jul 21 17:13:11 2023 (serrano)                */
+;*    Last change :  Fri Oct 20 13:52:31 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -100,8 +100,12 @@
 		  "HOP_JSARRAYP")
 	   (macro $js-jsstring?::bool (::obj ::uint32)
 		  "HOP_JSSTRINGP")
+	   (macro $js-object-jsstring?::bool (::obj ::uint32)
+		  "HOP_OBJECT_JSSTRINGP")
 	   (macro $js-procedure?::bool (::obj ::uint32)
 		  "HOP_JSPROCEDUREP")
+	   (macro $js-object-procedure?::bool (::obj ::uint32)
+		  "HOP_OBJECT_JSPROCEDUREP")
 	   (macro $js-object-mode-inline?::bool (::JsObject ::uint32)
 		  "HOP_JSOBJECT_MODE_INLINEP"))
    
@@ -727,6 +731,7 @@
 	   
 	   (inline js-number?::bool ::obj)
 	   (inline js-jsstring?::bool ::obj)
+	   (inline js-object-jsstring?::bool ::obj)
 	   (inline js-jsstring-ascii?::bool ::JsStringLiteral)
 	   (inline js-jsstring-index?::bool ::JsStringLiteral)
 	   (inline js-jsstring-substring?::bool  ::JsStringLiteral)
@@ -741,6 +746,7 @@
 	   (inline js-method?::bool ::obj)
 	   (inline js-procedure-proxy?::bool ::obj)
 	   (inline js-procedure?::bool ::obj)
+	   (inline js-object-procedure?::bool ::obj)
 	   (inline js-callable?::bool ::obj)
 	   (inline js-service?::bool ::obj)
 	   (inline js-symbol?::bool ::obj)
@@ -1929,6 +1935,17 @@
 	       (bit-andu32 (js-object-mode o) (JS-OBJECT-MODE-JSSTRINGTAG)))))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-object-jsstring? ...                                          */
+;*---------------------------------------------------------------------*/
+(define-inline (js-object-jsstring? o)
+   (cond-expand
+      (bigloo-c
+       ($js-object-jsstring? o (JS-OBJECT-MODE-JSSTRINGTAG)))
+      (else
+       (=u32 (JS-OBJECT-MODE-JSSTRINGTAG)
+	  (bit-andu32 (js-object-mode o) (JS-OBJECT-MODE-JSSTRINGTAG))))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-jsstring-ascii? ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-jsstring-ascii? o)
@@ -2045,6 +2062,17 @@
        (and (%object? o)
 	    (=u32 (JS-OBJECT-MODE-JSPROCEDURETAG)
 	       (bit-andu32 (js-object-mode o) (JS-OBJECT-MODE-JSPROCEDURETAG)))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-procedure? ...                                         */
+;*---------------------------------------------------------------------*/
+(define-inline (js-object-procedure? o)
+   (cond-expand
+      (bigloo-c
+       ($js-object-procedure? o (JS-OBJECT-MODE-JSPROCEDURETAG)))
+      (else
+       (=u32 (JS-OBJECT-MODE-JSPROCEDURETAG)
+	  (bit-andu32 (js-object-mode o) (JS-OBJECT-MODE-JSPROCEDURETAG))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-callable? ...                                                 */

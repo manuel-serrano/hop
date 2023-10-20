@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Thu Oct 19 14:38:23 2023 (serrano)                */
+;*    Last change :  Fri Oct 20 19:12:04 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -2596,6 +2596,7 @@
 	     (or (resolve-file-or-directory
 		    (substring name 5)
 		    (nodejs-node-modules-directory))
+		 (resolve-modules mod name)
 		 (resolve-error name dir)))
 	    ((string-prefix? "hop:" name)
 	     (or (resolve-file-or-directory
