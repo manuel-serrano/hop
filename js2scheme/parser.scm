@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Fri Oct  6 18:37:08 2023 (serrano)                */
+;*    Last change :  Sun Oct 22 14:09:50 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -3788,7 +3788,6 @@
 	       (instantiate::J2SProgram
 		  (loc loc)
 		  (endloc endloc)
-		  (path (abspath))
 		  (module module)
 		  (source-map (config-get conf :source-mapping-url source-map))
 		  (path (config-get conf :filename (abspath)))
