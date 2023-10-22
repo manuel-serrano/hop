@@ -268,6 +268,10 @@
    
    (define (import-binding name import::J2SImport)
       (with-access::J2SImport import (iprgm loc ipath)
+	 (unless iprgm
+	    (error (with-access::J2SImportName name (id) id)
+	       "Cannot find imported module"
+	       (with-access::J2SImportPath ipath (path) path)))
 	 (with-access::J2SImportName name (id alias)
 	    (multiple-value-bind (x i)
 	       (find-export id this iprgm loc)
@@ -580,6 +584,8 @@
 	  (let ((dir (or (config-get args :node-modules-directory)
 			 (hop-node-modules-dir))))
 	     (loop (make-file-path dir (substring name 4)))))
+	 ((string-prefix? "node:" name)
+	  (loop (substring name 5)))
 	 ((or (string-prefix? "./" name) (string-prefix? "../" name))
 	  (or (resolve-file-or-directory name dir)
 	      (resolve-modules name)
@@ -724,32 +730,25 @@
 	 (lambda (ip)
 	    (string->obj (read ip)))))
    
-   (set! core-modules   
-      (create-hashtable
-	 :weak 'open-string
-	 :size 64
-	 :max-length 4096
-	 :max-bucket-length 10))
-   (for-each (lambda (cm)
-		(let ((loc `(at ,(string-append cm ".js") 0))
-		      (mo (make-file-path (hop-lib-directory)
-			     "hop" (hop-version) "mo"
-			     (string-append cm ".mod.mo"))))
-		   (co-instantiate ((decl (instantiate::J2SDecl
-					     (id 'default)
-					     (loc loc)
-					     (vtype 'any)
-					     (export expo)
-					     (binder 'let-opt)
-					     (scope 'export)))
-				    (expo (instantiate::J2SExport
-					     (loc loc)
-					     (id 'default)
-					     (alias 'default)
-					     (index 0)
-					     (decl decl))))
-		      (hashtable-put! core-modules cm
-			 (if (file-exists? mo)
+   (define (init-coremodule! cm)
+      (let ((loc `(at ,(string-append cm ".js") 0))
+	    (mo (make-file-path (hop-lib-directory)
+		   "hop" (hop-version) "mo"
+		   (string-append cm ".mod.mo"))))
+	 (co-instantiate ((decl (instantiate::J2SDecl
+				   (id 'default)
+				   (loc loc)
+				   (vtype 'any)
+				   (export expo)
+				   (binder 'let-opt)
+				   (scope 'export)))
+			  (expo (instantiate::J2SExport
+				   (loc loc)
+				   (id 'default)
+				   (alias 'default)
+				   (index 0)
+				   (decl decl))))
+	    (let ((iprgm (if (file-exists? mo)
 			     (read-mo mo)
 			     (instantiate::J2SProgram
 				(loc loc)
@@ -757,8 +756,17 @@
 				(path cm)
 				(mode 'core)
 				(nodes '())
-				(exports (list expo))))))))
-      core-module-list))
+				(exports (list expo))))))
+	    (hashtable-put! core-modules cm iprgm)
+	    (hashtable-put! core-modules (string-append "node:" cm) iprgm) ))))
+
+   (set! core-modules   
+      (create-hashtable
+	 :weak 'open-string
+	 :size 64
+	 :max-length 4096
+	 :max-bucket-length 10))
+   (for-each init-coremodule! core-module-list))
 
 ;*---------------------------------------------------------------------*/
 ;*    path-lang ...                                                    */

@@ -2562,64 +2562,67 @@
 				(if (js-array? paths)
 				    (jsarray->vector paths %this)
 				    paths)))
-	 (cond
-	    ((core-module? name)
-	     (if (eq? mode 'import)
-		 (let ((namem (string-append name ".mod")))
-		    ;; MS 21feb23, once all the nodejs core modules are
-		    ;; supporting ES6 module, this test should be removed
-		    (if (core-module? namem)
-			namem
-			name))
-		 name))
-	    ((or (string-prefix? "http://" name)
-		 (string-prefix? "https://" name))
-	     name)
-	    ((or (string-prefix? "http://" dir)
-		 (string-prefix? "https://" dir))
-	     (multiple-value-bind (scheme uinfo host port path)
-		(url-parse filename)
-		(let* ((paths (js-get mod (& "paths") %this))
-		       (abspath (hop-apply-url
-				   (string-append "/hop/" *resolve-url-path*)
-				   (list name path)
-				   %this)))
-		   (with-hop-remote abspath
-		      (lambda (x)
-			 (if uinfo
-			     (format "~a://~a:~a~@a~a" scheme host port uinfo x)
-			     (format "~a://~a:~a~a" scheme host port x)))
-		      (lambda (x) #f)
-		      :host host
-		      :port port))))
-	    ((string-prefix? "@hop/" name)
-	     (or (resolve-file-or-directory
-		    (substring name 5)
-		    (nodejs-node-modules-directory))
-		 (resolve-modules mod name)
-		 (resolve-error name dir)))
-	    ((string-prefix? "hop:" name)
-	     (or (resolve-file-or-directory
-		    (substring name 4)
-		    (nodejs-node-modules-directory))
-		 (resolve-error name dir)))
-	    ((or (string-prefix? "./" name)
-		 (string-prefix? "../" name)
-		 (string=? ".." name))
-	     (or (resolve-file-or-directory name dir)
-		 (resolve-modules mod name)
-		 (resolve-error name dir)))
-	    ((string-prefix? "/" name)
-	     (or (resolve-file-or-directory name "/")
-		 (resolve-modules mod name)
-		 (resolve-error name dir)))
-	    ((string-suffix? ".hz" name)
-	     (or (resolve-hz name)
-		 (resolve-modules mod name)
-		 (resolve-error name dir)))
-	    (else
-	     (or (resolve-modules mod name)
-		 (resolve-error name dir)))))))
+	 (let loop ((name name))
+	    (cond
+	       ((core-module? name)
+		(if (eq? mode 'import)
+		    (let ((namem (string-append name ".mod")))
+		       ;; MS 21feb23, once all the nodejs core modules are
+		       ;; supporting ES6 module, this test should be removed
+		       (if (core-module? namem)
+			   namem
+			   name))
+		    name))
+	       ((string-prefix? "node:" name)
+		(loop (substring name 5)))
+	       ((or (string-prefix? "http://" name)
+		    (string-prefix? "https://" name))
+		name)
+	       ((or (string-prefix? "http://" dir)
+		    (string-prefix? "https://" dir))
+		(multiple-value-bind (scheme uinfo host port path)
+		   (url-parse filename)
+		   (let* ((paths (js-get mod (& "paths") %this))
+			  (abspath (hop-apply-url
+				      (string-append "/hop/" *resolve-url-path*)
+				      (list name path)
+				      %this)))
+		      (with-hop-remote abspath
+			 (lambda (x)
+			    (if uinfo
+				(format "~a://~a:~a~@a~a" scheme host port uinfo x)
+				(format "~a://~a:~a~a" scheme host port x)))
+			 (lambda (x) #f)
+			 :host host
+			 :port port))))
+	       ((string-prefix? "@hop/" name)
+		(or (resolve-file-or-directory
+		       (substring name 5)
+		       (nodejs-node-modules-directory))
+		    (resolve-modules mod name)
+		    (resolve-error name dir)))
+	       ((string-prefix? "hop:" name)
+		(or (resolve-file-or-directory
+		       (substring name 4)
+		       (nodejs-node-modules-directory))
+		    (resolve-error name dir)))
+	       ((or (string-prefix? "./" name)
+		    (string-prefix? "../" name)
+		    (string=? ".." name))
+		(or (resolve-file-or-directory name dir)
+		    (resolve-modules mod name)
+		    (resolve-error name dir)))
+	       ((string-prefix? "/" name)
+		(or (resolve-file-or-directory name "/")
+		    (resolve-modules mod name)
+		    (resolve-error name dir)))
+	       ((string-suffix? ".hz" name)
+		(or (resolve-hz name)
+		    (resolve-modules mod name)
+		    (resolve-error name dir)))
+	       (else
+		(or (resolve-modules mod name)
+		    (resolve-error name dir))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-env-path ...                                              */
