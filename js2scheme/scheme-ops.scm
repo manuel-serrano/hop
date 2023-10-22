@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Fri Oct 20 12:46:46 2023 (serrano)                */
+;*    Last change :  Sun Oct 22 07:19:06 2023 (serrano)                */
 ;*    Copyright   :  2017-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -1225,9 +1225,12 @@
 
    (define (js-null? obj)
       (let ((v (j2s-scheme obj mode return ctx)))
-	 (if (memq op '(!= !==))
-	     `(not (null? ,v))
-	     `(null? ,v))))
+	 (case op
+	    ((!==) `(not (null? ,v)))
+	    ((===) `(null? ,v))
+	    ((!=) `(not (js-null-or-undefined? ,v)))
+	    ((==) `(js-null-or-undefined? ,v))
+	    (else "js-null?" "illegal operator" op))))
    
    (let ((tl (j2s-type lhs))
 	 (tr (j2s-type rhs)))

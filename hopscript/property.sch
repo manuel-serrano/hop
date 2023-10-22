@@ -77,6 +77,8 @@
    js-pcache-owner-expander)
 (define-expander js-pcache-method
    js-pcache-method-expander)
+(define-expander js-pcache-function
+   js-pcache-function-expander)
 
 (define-expander js-pcache-point-set!
    js-pcache-point-set-expander)

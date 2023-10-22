@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Fri Oct 20 13:38:35 2023 (serrano)                */
+;*    Last change :  Sun Oct 22 08:44:03 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -2245,12 +2245,18 @@
    
    (define (js-has-own-property/cache o pname cache)
       (with-access::JsObject o ((omap cmap))
-	 (with-access::JsPropertyCache cache (cmap)
-	    (or (eq? cmap omap)
+	 (with-access::JsPropertyCache cache (imap cmap xmap)
+	    (cond
+	       ((eq? imap omap) #t)
+	       ((eq? cmap omap) #t)
+	       ((eq? xmap omap) #f)
+	       (else
 		(jsobject-find o o pname
 		   ;; cmap search
 		   (lambda (owner i)
-		      (set! cmap omap)
+		      (if (<fx i (js-object-inline-length o))
+			  (set! imap omap)
+			  (set! cmap omap))
 		      #t)
 		   ;; hash search
 		   (lambda (owner e)
@@ -2260,7 +2266,8 @@
 		      #t)
 		   ;; not found
 		   (lambda (o)
-		      #f))))))
+		      (set! xmap omap)
+		      #f)))))))
 
    (if (js-jsstring? p)
        (let ((pname (synchronize-name
@@ -2681,10 +2688,11 @@
    (cond
       ((js-jsstring? prop)
        (cond
-	  ((js-object-hashed? o)
-	   (js-get-jsobject-hashed o o prop %this))
-	  ((js-jsstring-index? prop)
-	   (js-get o prop %this))
+	  ;; MS 22oct2023, I don't understand why it should help
+	  ;; to check first js-object-hashed? and js-jsstring-index?
+	  ;; for now, I comment these tests
+	  ;; ((js-object-hashed? o) (js-get-jsobject-hashed o o prop %this))
+	  ;; ((js-jsstring-index? prop) (js-get o prop %this))
 	  (else
 	   (synchronize-name
 	      (let ((pname (js-jsstring-toname-unsafe prop)))
@@ -5209,13 +5217,19 @@
 				      (with-access::JsFunction f (len procedure arity info)
 					 (cond
 					    ((<fx arity 0)
+					     (with-access::JsPropertyCache ccache (nmap function)
+						;; variable arity, put in cache
+						(js-validate-pmap-pcache! ccache)
+						(set! nmap omap)
+						(set! function f)))
+					    ((<fx arity 0)
 					     ;; varargs functions, currently not cached...
 					     (with-access::JsPropertyCache ccache (pmap emap cmap)
 						(set! emap (js-not-a-pmap))
 						(set! cmap (js-uncachable-pmap))
 						(set! pmap (js-not-a-pmap))))
 					    ((=fx (procedure-arity procedure) (+fx 1 (length args)))
-					     (with-access::JsPropertyCache ccache (emap cmap pmap pindex (cmethod method) function)
+					     (with-access::JsPropertyCache ccache (pmap (cmethod method) function)
 						;; correct arity, put in cache
 						(js-validate-pmap-pcache! ccache)
 						(set! pmap omap)

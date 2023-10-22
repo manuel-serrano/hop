@@ -1180,6 +1180,12 @@
 			      (js-profile-log-cache ,ccache :pmap #t)
 			      ((js-pcache-method ,ccache) ,obj ,@args))
 			   ,(loop (cdr cs))))
+		     ((nmap)
+		      `(if (eq? %cmap (js-pcache-nmap ,ccache))
+			   (begin
+			      (js-profile-log-cache ,ccache :pmap #t)
+			      ,(calln %this `(js-pcache-function ,ccache) obj args))
+			   ,(loop (cdr cs))))
 		     ((cmap)
 		      (let ((idx (gensym 'idx)))
 			 `(if (eq? %cmap (js-pcache-cmap ,ccache))

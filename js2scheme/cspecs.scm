@@ -77,7 +77,7 @@
 			  ;; assignew
 			  (config-get conf :cspecs-assignew '(emap imap cmap))
 			  ;; call
-			  (config-get conf :cspecs-call '(pmap cmap vtable poly))
+			  (config-get conf :cspecs-call '(pmap nmap cmap vtable poly))
 			  ;; assigthis
 			  (config-get conf :cspecs-put '(imap emap cmap nmap amap vtable))))))
 	 (cspecs-default! this csdef)

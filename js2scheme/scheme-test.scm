@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:41:17 2017                          */
-;*    Last change :  Fri Feb 11 09:15:00 2022 (serrano)                */
-;*    Copyright   :  2017-22 Manuel Serrano                            */
+;*    Last change :  Sat Oct 21 12:52:59 2023 (serrano)                */
+;*    Copyright   :  2017-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme test code generation                                      */
 ;*=====================================================================*/
@@ -14,7 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_scheme-test
 
-   (include "ast.sch")
+   (include "ast.sch" "context.sch")
    
    (import __js2scheme_ast
 	   __js2scheme_dump
@@ -29,7 +29,7 @@
 
    (export (j2s-test ::J2SExpr mode return conf)
 	   (j2s-test-not ::J2SExpr mode return conf)
-	   (j2s-totest ::obj)))
+	   (j2s-totest ::obj ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-test ...                                                     */
@@ -57,7 +57,7 @@
 	  (with-access::J2SExpr test (hint)
 	     (if (pair? (assq 'object hint))
 		 `(js-totest-likely-object ,(j2s-scheme test mode return conf))
-		 (j2s-totest (j2s-scheme test mode return conf))))))))
+		 (j2s-totest (j2s-scheme test mode return conf) conf)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-test-not ...                                                 */
@@ -71,7 +71,7 @@
 ;*    This function tries to push the totest conversion as deeply      */
 ;*    as possible to help the forthcoming register allocation.         */
 ;*---------------------------------------------------------------------*/
-(define (j2s-totest expr)
+(define (j2s-totest expr ctx)
    (match-case expr
       ((js-regexp-prototype-exec ?rx ?arg ?%this)
        `(js-regexp-prototype-exec-as-bool ,rx ,arg ,%this))
@@ -92,12 +92,14 @@
 	   ,(match-case body
 	       ((cond . ?clauses)
 		`(cond
-		    ,@(map (lambda (c) `(,(car c) ,(j2s-totest (cadr c))))
+		    ,@(map (lambda (c) `(,(car c) ,(j2s-totest (cadr c) ctx)))
 		       clauses)))
 	       (else
-		(j2s-totest body)))))
+		(j2s-totest body ctx)))))
       (else
-       `(js-totest ,expr))))
+       (if (config-get (context-conf ctx) :optim-inline 0)
+	   `(js-totest-inline ,expr)
+	   `(js-totest ,expr)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-bool-test ::J2SNode ...                                      */

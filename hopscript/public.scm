@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Fri Oct 20 13:52:20 2023 (serrano)                */
+;*    Last change :  Sat Oct 21 11:52:51 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -238,6 +238,7 @@
 	   
 	   (js-raise-reference-error/loc ::JsGlobalObject loc ::bstring obj . args)
 	   (inline js-totest::bool ::obj)
+	   (inline js-totest-inline::bool ::obj)
 	   (inline js-totest-likely-object::bool ::obj)
 	   (js-toboolean::bool ::obj)
 	   (js-toboolean-no-boolean::bool ::obj)
@@ -2373,6 +2374,30 @@
    (cond-expand
       (bigloo-c
        ($js-totest obj))
+      (else
+       (cond
+	  ((boolean? obj) obj)
+	  ((js-null-or-undefined? obj) #f)
+	  (else (js-toboolean-no-boolean obj))))))
+      
+;*---------------------------------------------------------------------*/
+;*    js-totest ...                                                    */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-12.5         */
+;*---------------------------------------------------------------------*/
+(define-inline (js-totest-inline obj)
+   (cond-expand
+      (bigloo-c
+       (cond
+	  ((eq? obj #t) #t)
+	  ((eq? obj #f) #f)
+	  ((eq? obj 0) #f)
+	  ((js-null-or-undefined? obj) #f)
+	  ((js-object? obj) #t)
+	  ((flonum? obj) (not (or (=fl obj 0.0) (nanfl? obj))))
+	  ((bignum? obj) (not (=bx obj #z0)))
+	  ((js-jsstring? obj) (js-jsstring-toboolean obj))
+	  (else #t)))
       (else
        (cond
 	  ((boolean? obj) obj)
