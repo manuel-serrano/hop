@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Sun Oct 22 18:35:45 2023 (serrano)                */
+/*    Last change :  Mon Oct 23 06:47:13 2023 (serrano)                */
 /*    Copyright   :  2014-23 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing REGEXP matching                                          */
@@ -146,18 +146,31 @@ assert.ok(rxProperties(), "regexp properties");
 /*---------------------------------------------------------------------*/
 function rxSticky() {
    const re = /[a-z]+/y;
-   const buffer = "foo bar gee";
+   const buffer = "foo bar gee 0124";
 
    const m1 = buffer.match(re);
-   re.sticky = 4;
+   if (!(m1[0] === "foo" && re.lastIndex === 3)) return "wrong.1";
+   
+   re.lastIndex = 4;
    const m2 = buffer.match(re);
-   re.sticky = 8;
+   if (!(m2[0] === "bar" && re.lastIndex === 7)) return "wrong.2";
+   
+   re.lastIndex = 8;
    const m3 = buffer.match(re);
+   if (!(m3[0] === "gee" && re.lastIndex === 11)) return "wrong.3";
+   
+   re.lastIndex = 13;
+   const m4 = buffer.match(re);
+   if (!(m4 === null && re.lastIndex === 0)) return "wrong.4";
 
-   return m1[0] === "foo" && m2[0] === "bar" && m3[0] === "gee";
+   re.lastIndex = 1000;
+   const m5 = buffer.match(re);
+   if (!(m5 === null && re.lastIndex === 0)) return "wrong.5";
+
+   return "good";
 }
 
 console.log("rxSticky");
-assert.ok(rxSticky(), "regexp sticky");
+assert.strictEqual(rxSticky(), "good", "regexp sticky");
    
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Fri Jul 14 07:44:21 2023 (serrano)                */
+;*    Last change :  Sun Oct 22 18:54:47 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -4447,10 +4447,14 @@
    (with-access::JsGlobalObject %this (js-regexp js-array js-regexp-prototype js-string-pcache)
       (with-access::JsRegExp rx (flags)
 	 ;; 7
-	 (if (not (js-regexp-flags-global? flags))
+	 (cond
+	    ((js-regexp-flags-sticky? flags)
+	     (js-regexp-prototype-exec-sticky rx this %this))
+	    ((not (js-regexp-flags-global? flags))
 	     ;; match _always_ invoke the native exec, even if
 	     ;; RegExp.prototype.exec is modified
-	     (js-regexp-prototype-exec-no-global rx this %this)
+	     (js-regexp-prototype-exec-no-global rx this %this))
+	    (else
 	     ;; 8
 	     (let ((lastindex 0)
 		   (previousLastIndex 0)
@@ -4476,7 +4480,7 @@
 				(let ((matchStr (vector-ref vec 0)))
 				   (js-array-index-set! a (fixnum->uint32 n)
 				      matchStr #f %this)))
-			     (loop (+fx 1 n)))))))))))
+			     (loop (+fx 1 n))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-match-regexp-from-string ...                         */
