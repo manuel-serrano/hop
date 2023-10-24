@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sun Oct 22 18:48:10 2023 (serrano)                */
+;*    Last change :  Mon Oct 23 08:03:31 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript regexps                      */
@@ -716,7 +716,8 @@
 		      (if (and (eq? enc 'ascii)
 			       (not (js-regexp-flags-unicode? flags)))
 			  'JAVASCRIPT_COMPAT 'UTF8)
-		      (when (js-regexp-flags-multiline? flags) 'MULTILINE))))
+		      (when (js-regexp-flags-multiline? flags) 'MULTILINE)
+		      (when (js-regexp-flags-sticky? flags) 'ANCHORED))))
 	    (if (string? rx)
 		(js-raise-syntax-error/loc %this loc rx "")
 		(js-regexp-construct/rx %this rx pattern flags))))))
@@ -741,7 +742,8 @@
 			 (js-tostring (js-get this (& "source") %this) %this) "/"
 			 (if (js-totest (js-get this (& "global") %this)) "g" "")
 			 (if (js-totest (js-get this (& "ignoreCase") %this)) "i" "")
-			 (if (js-totest (js-get this (& "multiline") %this)) "m" ""))))
+			 (if (js-totest (js-get this (& "multiline") %this)) "m" "")
+			 (if (js-totest (js-get this (& "sticky") %this)) "y" ""))))
 		(js-function-arity 0 0)
 		(js-function-info :name "toString" :len 0)
 		:prototype (js-undefined))
@@ -789,6 +791,21 @@
 		     (js-raise-type-error %this "Not a regexp" this)))
 	      (js-function-arity 0 0)
 	      (js-function-info :name "global" :len 0)
+	      :prototype (js-undefined))
+      :set (js-undefined)
+      :writable #f
+      :enumerable #f
+      :configurable #t)
+   ;; sticky
+   (js-bind! %this obj (& "sticky")
+      :get (js-make-function %this
+	      (lambda (this)
+		 (if (js-regexp? this)
+		     (with-access::JsRegExp this (flags)
+			(js-regexp-flags-sticky? flags))
+		     (js-raise-type-error %this "Not a regexp" this)))
+	      (js-function-arity 0 0)
+	      (js-function-info :name "sticky" :len 0)
 	      :prototype (js-undefined))
       :set (js-undefined)
       :writable #f
