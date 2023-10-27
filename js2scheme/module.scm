@@ -575,11 +575,13 @@
 	      (string-prefix? "https://" name))
 	  (cons name 'http))
 	 ((string-prefix? "@hop/" name)
-	  (let ((dir (or (config-get args :node-modules-directory)
-			 (hop-node-modules-dir))))
-	     (or (resolve-file-or-directory (substring name 5) dir)
-		 (resolve-modules name)
-		 (resolve-error name))))
+	  (if (string=? "@hop/hop" name)
+	      (cons "hop" 'core)
+	      (let ((dir (or (config-get args :node-modules-directory)
+			     (hop-node-modules-dir))))
+		 (or (resolve-file-or-directory (substring name 5) dir)
+		     (resolve-modules name)
+		     (resolve-error name)))))
 	 ((string-prefix? "hop:" name)
 	  (let ((dir (or (config-get args :node-modules-directory)
 			 (hop-node-modules-dir))))
@@ -766,7 +768,9 @@
 	 :size 64
 	 :max-length 4096
 	 :max-bucket-length 10))
-   (for-each init-coremodule! core-module-list))
+   (for-each init-coremodule! core-module-list)
+   ;; manually create the @hop/hop and hop alias
+   (hashtable-put! core-modules "@hop/hop" (hashtable-get core-modules "hop")))
 
 ;*---------------------------------------------------------------------*/
 ;*    path-lang ...                                                    */

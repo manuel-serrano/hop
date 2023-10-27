@@ -499,6 +499,7 @@
       (let ((impid (importpath-var im)))
 	 (with-access::J2SImportPath im (abspath path protocol import loc)
 	    (with-access::J2SImport import (iprgm)
+	       (unless iprgm (tprint "pas iprgm abpath=" abspath " path=" path))
 	       `(define ,impid
 		   (nodejs-import-module %worker %this %module
 		      ,(if (char=? (string-ref path 0) #\.)

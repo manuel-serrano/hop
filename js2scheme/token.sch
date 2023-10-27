@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jul 23 18:19:18 2015                          */
-;*    Last change :  Fri Sep 15 19:43:12 2023 (serrano)                */
+;*    Last change :  Fri Oct 27 16:48:29 2023 (serrano)                */
 ;*    Copyright   :  2015-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Token tools                                                      */
@@ -37,6 +37,12 @@
 		 (string-append "string://" (input-port-buffer input-port))
 		 (input-port-name input-port))
       (-fx (input-port-position input-port) offset)))
+
+;*---------------------------------------------------------------------*/
+;*    token? ...                                                       */
+;*---------------------------------------------------------------------*/
+(define (token? v)
+   (epair? v))
 
 ;*---------------------------------------------------------------------*/
 ;*    make-token ...                                                   */

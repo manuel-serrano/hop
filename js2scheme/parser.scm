@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Sun Oct 22 14:09:50 2023 (serrano)                */
+;*    Last change :  Fri Oct 27 16:48:36 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1378,7 +1378,7 @@
    (define (arrow-params args)
       (map (lambda (p idx)
 	      (cond
-		 ((pair? p)
+		 ((token? p)
 		  (let ((loc (token-loc p)))
 		     (instantiate::J2SDecl
 			(loc loc)
