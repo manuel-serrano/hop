@@ -503,10 +503,10 @@ bgl_napi_call_function(napi_env _this, obj_t this, obj_t fun, size_t argc, napi_
 }
 
 /*---------------------------------------------------------------------*/
-/*    obj_t                                                            */
+/*    napi_status                                                      */
 /*    bgl_napi_call_function ...                                       */
 /*---------------------------------------------------------------------*/
-BGL_RUNTIME_DEF obj_t
+BGL_RUNTIME_DEF napi_status
 bgl_napi_call_function_res(napi_env _this, obj_t this, obj_t fun, size_t argc, napi_value *argv, napi_value *res) {
    napi_value r = bgl_napi_call_function(_this, this, fun, argc, argv);
    if (res) *res = r;
@@ -1164,7 +1164,7 @@ make_bignum(size_t sz) {
 
    return BREF(o);
 #else   
-   return napi_bigint_expected;
+   return BFALSE;
 #endif
 }
 
