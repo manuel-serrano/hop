@@ -1164,6 +1164,7 @@ make_bignum(size_t sz) {
 
    return BREF(o);
 #else   
+   bgl_napi_throw_range_error(env, "make_bignum", "bignum not supported");
    return BFALSE;
 #endif
 }
