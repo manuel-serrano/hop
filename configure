@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Sun Apr 16 06:48:28 2023 (serrano)                */
+#*    Last change :  Wed Nov  8 16:49:03 2023 (serrano)                */
 #*    Copyright   :  2004-23 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -637,7 +637,7 @@ bglsharedsuffix=`$bigloo -q -eval "(begin (print (bigloo-config 'shared-lib-suff
 
 for lib in libbigloo_s-$bglversion.a libbigloo_u-$bglversion.a libbigloo_s_mt-$bglversion.$bglsharedsuffix libbigloo_u_mt-$bglversion.$bglsharedsuffix; do
   if [ ! -f $bgllibdir/$lib ]; then
-    echo "*** ERROR:configure:bigloo not propertly installed, library missing" >&2
+    echo "*** ERROR:configure:bigloo not propertly installed, library missing ($lib)" >&2
     echo "$bgllibdir/$lib" >&2
     exit 1
   fi
