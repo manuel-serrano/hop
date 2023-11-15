@@ -688,4 +688,6 @@
       ((not (every (lambda (v)
 		      (memq v '(imap emap cmap vtable nmap amap pmap)))
 	       val))
-       (error "hopc" (format "Illegal `~a' option value" opt) val))))
+       (error "hopc" (format "Illegal `~a' option value" opt) val))
+      (else
+       val)))
