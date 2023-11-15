@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 24 14:34:24 2023                          */
-/*    Last change :  Fri Oct 20 10:00:34 2023 (serrano)                */
+/*    Last change :  Wed Nov  8 20:48:18 2023 (serrano)                */
 /*    Copyright   :  2023 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop node_api implementation.                                     */
@@ -133,7 +133,7 @@ napi_callback_to_jsproc(obj_t _this, obj_t this, napi_callback cb, void *data, o
 /*---------------------------------------------------------------------*/
 static obj_t
 napi_make_prop_desc(obj_t _this, obj_t this, const napi_property_descriptor *prop) {
-   if (prop->attributes & napi_default == napi_default && !prop->getter && !prop->setter) {
+   if (((prop->attributes & napi_default) == napi_default) && !prop->getter && !prop->setter) {
       return BFALSE;
    } else {
       return bgl_napi_make_property_descriptor(_this, this, prop->name, prop->value,
@@ -503,10 +503,10 @@ bgl_napi_call_function(napi_env _this, obj_t this, obj_t fun, size_t argc, napi_
 }
 
 /*---------------------------------------------------------------------*/
-/*    obj_t                                                            */
+/*    napi_status                                                      */
 /*    bgl_napi_call_function ...                                       */
 /*---------------------------------------------------------------------*/
-BGL_RUNTIME_DEF obj_t
+BGL_RUNTIME_DEF napi_status
 bgl_napi_call_function_res(napi_env _this, obj_t this, obj_t fun, size_t argc, napi_value *argv, napi_value *res) {
    napi_value r = bgl_napi_call_function(_this, this, fun, argc, argv);
    if (res) *res = r;
@@ -968,7 +968,7 @@ napi_get_value_string_utf8(napi_env env, napi_value value, char *buf, size_t buf
 	 
 	 if (buf) {
 	    if (result) *result = size;
-	    strncpy(buf, cstr, size);
+	    strncpy(buf, (const char *)cstr, size);
 	    buf[size] - 0;
 	 } else {
 	    if (result) *result = STRING_LENGTH(str);
@@ -1152,6 +1152,7 @@ napi_get_value_string_latin1(napi_env env, napi_value value, char *buf, size_t b
 /*---------------------------------------------------------------------*/
 static obj_t
 make_bignum(size_t sz) {
+#if (BGL_HAVE_GMP)
 #define BIGNUM_ALLOC_SIZE(sz) \
    (BIGNUM_SIZE + ((sz) * sizeof(mp_limb_t)))
 
@@ -1162,6 +1163,10 @@ make_bignum(size_t sz) {
    o->bignum.mpz._mp_alloc = sz;
 
    return BREF(o);
+#else   
+   bgl_napi_throw_range_error(env, "make_bignum", "bignum not supported");
+   return BFALSE;
+#endif
 }
 
 /*---------------------------------------------------------------------*/
