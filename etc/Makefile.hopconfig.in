@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/hop/etc/Makefile.hopconfig.in           */
+#*    serrano/prgm/project/hop/3.7.x/etc/Makefile.hopconfig.in         */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Sep 17 14:27:28 2004                          */
-#*    Last change :  Sat Feb 25 06:45:51 2023 (serrano)                */
+#*    Last change :  Thu Nov 16 09:05:50 2023 (serrano)                */
 #*    Copyright   :  2004-23 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The autoconf Makefile skeleton for HOP.                          */
@@ -17,6 +17,7 @@ HOPDEVEL	= @DEVEL@
 HOPBRANCH	= @BRANCH@
 HOPDATE		= @DATE@
 HOPBUILDID	= @BUILDID@
+HOPBUILDTAG	= @BUILDTAG@
 
 #*---------------------------------------------------------------------*/
 #*    Compilers, tools, and misc configuration                         */
@@ -120,6 +121,7 @@ HOPWEBLETSDIR	= @WEBLETSDIR@
 HOPNMODULESDIR  = @NMODULESDIR@
 HOPCONTRIBSDIR	= @CONTRIBSDIR@
 HOPDOCDIR	= @DOCDIR@
+HOPNPMDIR	= hop-$(HOPRELEASE)-$(HOPBUILDTAG)
 
 HOPFILDIR	= hop/$(HOPRELEASE)
 HOPDEMOSDIR	= $(HOPSHAREDIR)/demos

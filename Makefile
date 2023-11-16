@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/hop/Makefile                            */
+#*    serrano/prgm/project/hop/3.7.x/Makefile                          */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Sat Feb 25 06:45:20 2023 (serrano)                */
+#*    Last change :  Thu Nov 16 09:04:22 2023 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -281,7 +281,7 @@ clean-quick:
 	$(MAKE) -C doc clean
 	$(RM) -f bin/hopc.sh bin/hop.sh bin/hopaot.sh 
 
-clean:
+clean: 
 	$(MAKE) -C runtime clean
 	$(MAKE) -C scheme2js clean
 	$(MAKE) -C hopscheme clean
@@ -299,6 +299,9 @@ clean:
 	$(MAKE) -C share clean
 	$(MAKE) -C node_modules clean
 	$(MAKE) -C doc clean
+
+clean-npm:
+	rm -rf npm
 
 devclean:
 	$(MAKE) -C runtime devclean
@@ -494,3 +497,41 @@ predistrib:
 	$(MAKE) -C share predistrib
 	$(MAKE) -C hophz predistrib
 	$(MAKE) .buildtag
+
+#*---------------------------------------------------------------------*/
+#*    npm                                                              */
+#*---------------------------------------------------------------------*/
+.PHONY: npm npm-module
+
+MODULES=readlines hop hopc
+MODULEDIR=$(MODULE)-$(HOPRELEASE)-$(HOPBUILDTAG)
+
+npm: npm-dir
+	for m in $(MODULES); do \
+	   $(MAKE) npm-module MODULE=$$m; \
+        done
+
+npm-sans-rm: npm-dir
+	for m in $(MODULES); do \
+	   $(MAKE) npm-module-sans-rm MODULE=$$m; \
+        done
+
+npm-dir:
+	mkdir -p npm
+
+npm-module-sans-rm:
+	echo $(MODULEDIR)
+	mkdir -p npm/$(MODULEDIR)
+	mkdir -p npm/$(MODULEDIR)/lib
+	cp node_modules/$(MODULE)/package.json npm/$(MODULEDIR)
+	cp node_modules/$(MODULE)/lib/*.*s npm/$(MODULEDIR)
+	cp -r node_modules/$(MODULE)/test npm/$(MODULEDIR)
+	if [ -f node_modules/$(MODULE)/node/Makefile ]; then \
+           $(MAKE) -C node_modules/$(MODULE)/node; \
+           $(MAKE) -C node_modules/$(MODULE)/node clean; \
+        fi
+	cp node_modules/$(MODULE)/node/*.*s npm/$(MODULEDIR)/lib
+	(cd npm; tar cvfz $(MODULEDIR).tgz $(MODULEDIR))
+
+npm-module: npm-module-sans-rm
+	(cd npm; rm -rf $(MODULEDIR))
