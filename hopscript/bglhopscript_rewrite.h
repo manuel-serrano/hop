@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 11 09:35:38 2022                          */
-/*    Last change :  Wed May 10 10:29:16 2023 (serrano)                */
+/*    Last change :  Wed Nov 15 11:40:00 2023 (serrano)                */
 /*    Copyright   :  2022-23 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Code rewrite (patching) macros.                                  */
@@ -18,7 +18,7 @@
 #  define HOP_REWRITE_LOCATIONS(n)
 #  define HOP_REWRITE_INIT(n)
 #  define HOP_REWRITE_CACHE_HIT(n) 
-#  define HOP_REWRITE_CACHE_MISS(n, entry)
+#  define HOP_REWRITE_CACHE_MISS(n, obj)
 #else
 #  include "RewriteLib.h"
 
@@ -28,8 +28,8 @@
      init_rewrite_lib(n);
 #  define HOP_REWRITE_CACHE_HIT(n) \
      BINREWRITELIB_EXPAND_LABEL(n):
-#  define HOP_REWRITE_CACHE_MISS(n, entry) \
-     BINREWRITELIB_CACHE_MISS_32(n, &(__bgl_pcache[((long) n)].entry), &hop_rewrite_locations[n])
+#  define HOP_REWRITE_CACHE_MISS(n, obj) \
+     BINREWRITELIB_CACHE_MISS_32(n, &(__bgl_pcache[((long) n)]), obj, &hop_rewrite_locations[n])
 #endif
 
 #endif

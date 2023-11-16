@@ -555,27 +555,37 @@
 	     (call-with-input-string cspecs
 		(lambda (ip)
 		   (hopc-j2s-flags-set!
-		      (cons* :cspecs-get (read ip) (hopc-j2s-flags))))))
+		      (cons* :cspecs-get
+			 (check-cspecs "--js-cspecs-get" (read ip))
+			 (hopc-j2s-flags))))))
 	    (("--js-cspecs-put" ?cspecs (help "Use put specs"))
 	     (call-with-input-string cspecs
 		(lambda (ip)
 		   (hopc-j2s-flags-set!
-		      (cons* :cspecs-put (read ip) (hopc-j2s-flags))))))
+		      (cons* :cspecs-put
+			 (check-cspecs "--js-cspecs-put" (read ip))
+			 (hopc-j2s-flags))))))
 	    (("--js-cspecs-assigop" ?cspecs (help "Use assigop specs"))
 	     (call-with-input-string cspecs
 		(lambda (ip)
 		   (hopc-j2s-flags-set!
-		      (cons* :cspecs-assigop (read ip) (hopc-j2s-flags))))))
+		      (cons* :cspecs-assigop
+			 (check-cspecs "--js-cspecs-assigop" (read ip))
+			 (hopc-j2s-flags))))))
 	    (("--js-cspecs-assignew" ?cspecs (help "Use assignew specs"))
 	     (call-with-input-string cspecs
 		(lambda (ip)
 		   (hopc-j2s-flags-set!
-		      (cons* :cspecs-assignew (read ip) (hopc-j2s-flags))))))
+		      (cons* :cspecs-assignew
+			 (check-cspecs "--js-cspecs-assignew" (read ip))
+			 (hopc-j2s-flags))))))
 	    (("--js-cspecs-call" ?cspecs (help "Use call specs"))
 	     (call-with-input-string cspecs
 		(lambda (ip)
 		   (hopc-j2s-flags-set!
-		      (cons* :cspecs-call (read ip) (hopc-j2s-flags))))))
+		      (cons* :cspecs-call
+			 (check-cspecs "--js-cspecs-call" (read ip))
+			 (hopc-j2s-flags))))))
 	    (("--tls" (help "Thread local storage"))
 	     (cond-expand
 		(enable-tls
@@ -667,3 +677,17 @@
 				   (format "Unknown key \"~a\"" k)
 				   configs)))))
 	       keys)))))
+
+;*---------------------------------------------------------------------*/
+;*    check-cspecs ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (check-cspecs opt val)
+   (cond
+      ((not (pair? val))
+       (error "hopc" (format "Illegal `~a' option value" opt) val))
+      ((not (every (lambda (v)
+		      (memq v '(imap emap cmap vtable nmap amap pmap)))
+	       val))
+       (error "hopc" (format "Illegal `~a' option value" opt) val))
+      (else
+       val)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Mon Jul 24 16:41:29 2023 (serrano)                */
+;*    Last change :  Thu Nov 16 11:41:41 2023 (serrano)                */
 ;*    Copyright   :  2016-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -245,13 +245,13 @@
 ;*---------------------------------------------------------------------*/
 (define (js-pcache-rewrite-miss-label-expander x e)
    (e (match-case x
-	 ((js-pcache-rewrite-miss-label (js-pcache-ref %pcache ?idx))
+	 ((js-pcache-rewrite-miss-label (js-pcache-ref %pcache ?idx) ?obj)
 	  (cond-expand
 	     ((and bigloo-c (not hop-eval) (not hopjs-worker-slave))
-	      `(pragma::obj "HOP_REWRITE_CACHE_MISS($1, BgL_iindexz00)" ,idx))
+	      `(pragma::obj "HOP_REWRITE_CACHE_MISS($1, $2)" ,idx ,obj))
 	     (else
 	      #unspecified)))
-	 ((js-pcache-rewrite-miss-label ?-)
+	 ((js-pcache-rewrite-miss-label ?- ?obj)
 	  #unspecified)
 	 (else
 	  (error "js-pcache-rewrite-miss-label" "bad syntax" x)))
@@ -597,7 +597,7 @@
 		`(let ((m ((@ js-get-proxy-name/cache-miss __hopscript_proxy)
 			   ,obj ,prop ,throw ,%this ,cache)))
 		    (js-pcache-point-set! ,cache ,loc)
-		    ,(when rewrite `(js-pcache-rewrite-miss-label ,cache))
+		    ,(when rewrite `(js-pcache-rewrite-miss-label ,cache ,obj))
 		    m))
 	       ((eq? cs 'imap)
 		`(let ((idx (js-pcache-iindex ,cache)))
