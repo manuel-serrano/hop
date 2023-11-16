@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Tue Mar 10 16:09:42 2020 (serrano)                */
-;*    Copyright   :  2017-20 Manuel Serrano                            */
+;*    Last change :  Thu May 11 08:18:58 2023 (serrano)                */
+;*    Copyright   :  2017-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Date functions.             */
 ;*=====================================================================*/
@@ -28,8 +28,7 @@
 	   __js2scheme_scheme-fun)
    
    (export (j2s-new-date ::J2SNew mode return::procedure ctx)
-	   (j2s-date-builtin-method fun::J2SAccess args
-	      expr mode return::procedure conf)
+	   (j2s-date-builtin-method fun::J2SAccess args expr mode return ctx)
 	   (j2s-date-setminutes obj::J2SExpr args mode return ctx)
 	   (j2s-date-maybe-setminutes obj::J2SExpr args mode return ctx)
 	   (j2s-date-setutcminutes obj::J2SExpr args mode return ctx)

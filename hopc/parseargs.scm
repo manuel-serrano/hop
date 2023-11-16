@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Copyright   :  2004-22 Manuel Serrano                            */
+;*    Copyright   :  2004-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
 ;*=====================================================================*/
@@ -47,7 +47,7 @@
    (print "      j2s:profid, nodejs:compile,")
    (print "      hopscript:cache[num] (*), hopscript:uncache,")
    (print "      hopscript:alloc[num], hopscript:call, hopscript:hint[num] (*)")
-   (print "      hopscript:function[num] hopscript:symtable")
+   (print "      hopscript:function[num] hopscript:symtable hopscript:pmap")
    (print "      hopscript:fprofile (alias of \"hopscript:cache hopscript:call format:fprofile\")")
    (print "      format:json, format:fprofile, format:memviz, srcfile=path, logfile=path")
    (print "   - HOPCFLAGS: hopc compilation flags")
@@ -136,6 +136,8 @@
 		 (hopc-bigloo-options-set!
 		    (cons (format "-g~a" level)
 		       (hopc-bigloo-options))))))
+	    (("-cg" (help "C debug compilation"))
+	     (hopc-bigloo-options-set! (cons "-cg" (hopc-bigloo-options))))
 	    (("-w?level" (help "Increase or set warning level (-w0 no warning)"))
 	     (if (string=? level "")
 		 (bigloo-warning-set! (+fx 1 (bigloo-warning)))
@@ -250,6 +252,9 @@
 	     (hopc-js-module-main-set! #f))
 	    (("--js-no-header" (help "Don't generate hopscript header"))
 	     (hopc-js-header-set! #f))
+	    (("--js-ignore-unresolved-modules" (help "Ignore unresolved modules"))
+	     (hopc-j2s-flags-set!
+		(cons* :ignore-unresolved-modules #t (hopc-j2s-flags))))
 	    (("--js-header" (help "Generate hopscript header"))
 	     (hopc-js-header-set! #t))
 	    (("--js-require-hop" (help "Force an explicit hop require"))
@@ -556,6 +561,21 @@
 		(lambda (ip)
 		   (hopc-j2s-flags-set!
 		      (cons* :cspecs-put (read ip) (hopc-j2s-flags))))))
+	    (("--js-cspecs-assigop" ?cspecs (help "Use assigop specs"))
+	     (call-with-input-string cspecs
+		(lambda (ip)
+		   (hopc-j2s-flags-set!
+		      (cons* :cspecs-assigop (read ip) (hopc-j2s-flags))))))
+	    (("--js-cspecs-assignew" ?cspecs (help "Use assignew specs"))
+	     (call-with-input-string cspecs
+		(lambda (ip)
+		   (hopc-j2s-flags-set!
+		      (cons* :cspecs-assignew (read ip) (hopc-j2s-flags))))))
+	    (("--js-cspecs-call" ?cspecs (help "Use call specs"))
+	     (call-with-input-string cspecs
+		(lambda (ip)
+		   (hopc-j2s-flags-set!
+		      (cons* :cspecs-call (read ip) (hopc-j2s-flags))))))
 	    (("--tls" (help "Thread local storage"))
 	     (cond-expand
 		(enable-tls

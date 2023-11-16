@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Mon May  9 08:38:05 2022 (serrano)                */
-;*    Copyright   :  2013-22 Manuel Serrano                            */
+;*    Last change :  Tue May 30 10:27:56 2023 (serrano)                */
+;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
 ;*    -------------------------------------------------------------    */
@@ -612,6 +612,26 @@
       :enumerable #f
       :hidden-class #t)
    
+   ;; repeat
+   ;; https://262.ecma-international.org/13.0/#sec-string.prototype.repeat
+   (define (repeat this::obj count)
+      (let ((n (js-tointeger count %this)))
+	 (cond
+	    ((or (not (fixnum? n)) (<fx n 0))
+	     (js-raise-range-error %this
+		"string.repeat, wrong count" count))
+	    (else
+	     (js-jsstring-prototype-repeat (js-cast-string %this this)
+		n %this)))))
+      
+   (js-bind! %this obj (& "repeat")
+      :value (js-make-function %this repeat
+		(js-function-arity repeat)
+		(js-function-info :name "repeat" :len 2)
+		:prototype (js-undefined))
+      :enumerable #f
+      :hidden-class #t)
+   
    ;; replace
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.11
    (define (replace this::obj searchvalue replacevalue)
@@ -969,7 +989,7 @@
 ;*    js-get-own-property-descriptor ::JsString ...                    */
 ;*---------------------------------------------------------------------*/
 (define-method (js-get-own-property-descriptor o::JsString p::obj %this)
-   (js-from-property-descriptor %this o (js-get-own-property o p %this) o))
+   (js-from-property-descriptor %this p (js-get-own-property o p %this) o))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-property-value ::JsString ...                             */

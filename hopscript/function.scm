@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Fri Oct 14 13:13:12 2022 (serrano)                */
-;*    Copyright   :  2013-22 Manuel Serrano                            */
+;*    Last change :  Tue Jul 18 09:27:50 2023 (serrano)                */
+;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
 ;*    -------------------------------------------------------------    */
@@ -41,6 +41,7 @@
 
 	   (js-function-src ::JsProcedureInfo)
 	   (js-function-loc ::JsProcedureInfo)
+	   (js-function-name ::JsProcedureInfo)
 	   (inline js-function-length obj)
 	   (inline js-function-new-target? obj)
 	   (inline js-function-path ::JsFunction)
@@ -85,7 +86,7 @@
 	   (js-function-maybe-prototype-get ::obj ::obj ::obj ::JsGlobalObject)
 	   (js-function-setup-prototype!::JsObject ::JsGlobalObject ::JsFunction)
 	   
-	   (js-function-apply-vec ::JsGlobalObject ::JsProcedure ::obj ::vector ::uint32)
+	   (js-function-apply-vec ::JsGlobalObject ::JsProcedure ::obj ::vector ::uint32 ::uint32)
 	   (js-function-apply ::JsGlobalObject ::obj ::obj ::obj ::obj)
 	   (js-apply-array ::JsGlobalObject ::obj ::obj ::obj)
 	   (js-apply-vec ::JsGlobalObject ::obj ::obj ::vector ::uint32)
@@ -109,6 +110,22 @@
    (lambda (o)
       (js-undefined))
    (lambda (o %this) o))
+
+;*---------------------------------------------------------------------*/
+;*    object-print ::JsProcedureInfo ...                               */
+;*---------------------------------------------------------------------*/
+(define-method (object-print obj::JsProcedureInfo op proc)
+   (with-access::JsProcedureInfo obj (info)
+      (display "#<" op)
+      (display (class-name (object-class obj)) op)
+      (display " " op)
+      (display info op)
+      (display " " op)
+      (display (js-object-length obj) op)
+      (cond
+	 ((js-object-mapped? obj) (display " mapped>" op))
+	 ((js-object-hashed? obj) (display " hashed>" op))
+	 (else (display ">" op)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsFunction ...                                 */
@@ -194,6 +211,13 @@
 	  #f))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-function-name ...                                             */
+;*---------------------------------------------------------------------*/
+(define (js-function-name obj::JsProcedureInfo)
+   (with-access::JsProcedureInfo obj (info)
+      (vector-ref info 0)))
+   
+;*---------------------------------------------------------------------*/
 ;*    js-function-path ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-function-path obj::JsFunction)
@@ -220,22 +244,20 @@
 (define (js-function-debug-name::bstring obj::JsProcedure %this)
    (cond
       ((js-function? obj)
-       (with-access::JsFunction obj (info)
-	  (vector-ref info 0)))
+       (js-function-name obj))
       ((isa? obj JsProcedureInfo)
-       (with-access::JsProcedureInfo obj (info)
-	  (vector-ref info 0)))
+       (js-function-name obj))
       (else
        "procedure")))
 
 ;*---------------------------------------------------------------------*/
-;*    js-debug-object ::JsFunction ...                                 */
+;*    js-inspect-object ::JsFunction ...                               */
 ;*---------------------------------------------------------------------*/
-(define-method (js-debug-object obj::JsFunction #!optional (msg ""))
+(define-method (js-inspect-object obj::JsFunction #!optional (msg ""))
    (call-next-method)
-   (with-access::JsFunction obj (info arity)
+   (with-access::JsFunction obj (info arity procedure)
       (fprint (current-error-port) "   src=" (js-function-src obj))
-      (fprint (current-error-port) "   arity=" arity)
+      (fprint (current-error-port) "   arity=" arity " (" (procedure-arity procedure) ")")
       (fprint (current-error-port) "   path=" (js-function-path obj))))
       
 ;*---------------------------------------------------------------------*/
@@ -263,11 +285,15 @@
 	 ((eq? n (& "prototype"))
 	  (js-undefined))
 	 ((eq? n (& "name"))
-	  (js-undefined))
+	  (js-string->jsstring (js-function-debug-name o %this)))
 	 ((eq? n (& "caller"))
-	  (js-undefined))
+	  (if (isa? o JsFunction)
+	      (call-next-method)
+	      (js-undefined)))
 	 ((eq? n (& "arguments"))
-	  (js-undefined))
+	  (if (isa? o JsFunction)
+	      (call-next-method)
+	      (js-undefined)))
 	 (else
 	  (call-next-method)))))
 
@@ -275,16 +301,19 @@
 ;*    js-get ::JsProcedure ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-method (js-get o::JsProcedure p %this)
-   (cond
-      ((eq? (js-toname p %this) (& "length"))
-       (if (js-function? o)
-	   (call-next-method)
-	   (js-get-length-jsprocedure o)))
-      ((and (eq? (js-toname p %this) (& "prototype"))
-	    (eq? (object-class o) JsProcedure))
-       (js-undefined))
-      (else
-       (call-next-method))))
+   (let ((pn (js-toname p %this)))
+      (cond
+	 ((eq? pn (& "length"))
+	  (if (js-function? o)
+	      (call-next-method)
+	      (js-get-length-jsprocedure o)))
+	 ((and (eq? pn (& "prototype"))
+	       (eq? (object-class o) JsProcedure))
+	  (js-undefined))
+	 ((eq? pn (& "name"))
+	  (js-string->jsstring (js-function-debug-name o %this)))
+	 (else
+	  (call-next-method)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-length ::JsProcedure ...                                  */
@@ -322,7 +351,8 @@
 (define-inline (make-cmap props)
    (js-make-jsconstructmap 
       :methods (make-vector (vector-length props))
-      :props props))
+      :props props
+      :ctor (make-cell (vector-length props))))
 
 ;*---------------------------------------------------------------------*/
 ;*    current-loc ...                                                  */
@@ -360,7 +390,6 @@
    (js-init-function-cmap! %this)
    ;; bind the builtin function prototype
    (with-access::JsGlobalObject %this (js-function-prototype
-					 js-function-strict-prototype
 					 js-function js-function-pcache)
       (set! js-function-pcache
 	 ((@ js-make-pcache-table __hopscript_property) 6 "function"))
@@ -378,12 +407,6 @@
 	       (__proto__ js-object-prototype)
 	       (elements ($create-vector 10)))))
 
-      (set! js-function-strict-prototype
-	 (instantiateJsObject
-	    (cmap (js-make-jsconstructmap))
-	    (__proto__ js-function-prototype)
-	    (elements (make-vector 10 (js-undefined)))))
-      
       ;; then, create the properties of the function contructor
       (set! js-function
 	 (let ((proc (%js-function %this)))
@@ -403,6 +426,7 @@
 			     "[[ThrowTypeError]] ~a" o)))
 	     (thrower (js-make-function %this
 			 (lambda (o v)
+			    (tprint "ICI")
 			    (js-raise-type-error %this
 			       "[[ThrowTypeError]] ~a" o))
 			 (js-function-arity 1 0)
@@ -508,7 +532,7 @@
 	    (instantiate::JsWrapperDescriptor
 	       (name (& "length"))
 	       (enumerable #f)
-	       (configurable #f)
+	       (configurable #t)
 	       (writable #f)
 	       (%get (lambda (obj owner propname %this)
 			(with-access::JsFunction obj (info)
@@ -517,11 +541,10 @@
 	    (instantiate::JsWrapperDescriptor
 	       (name (& "name"))
 	       (enumerable #f)
-	       (configurable #f)
+	       (configurable #t)
 	       (writable #f)
 	       (%get (lambda (obj owner propname %this)
-			(with-access::JsFunction obj (info)
-			   (js-string->jsstring (vector-ref info 0)))))
+			(js-string->jsstring (js-function-name obj))))
 	       (%set list))
 	    (instantiate::JsAccessorDescriptor
 	       (name (& "arguments"))
@@ -813,7 +836,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-make-method-strict ...                                        */
 ;*    -------------------------------------------------------------    */
-;*    specialized method constructor for regular strict methods.       */
+;*    Specialized method constructor for regular strict methods.       */
 ;*---------------------------------------------------------------------*/
 (define (js-make-method-strict %this procedure
 	   arity info constrsize method
@@ -899,26 +922,40 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    js-function-prototype-get ...                                    */
+;*    -------------------------------------------------------------    */
+;*    Function uses there Prototype accessor property differently      */
+;*    from standard object. The owner is the OBJ arguments, while      */
+;*    for standard objects it is the OWNER argements. This save        */
+;*    CMAP allocations.                                                */
+;*                                                                     */
+;*    In order to apply the standard schema where OWNER is used,       */
+;*    the allocation routines for functions (see _bglhopscript.c)      */
+;*    should be changed and a fresh cmap should be allocated per       */
+;*    object.                                                          */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-function-prototype-get obj owner::JsFunction propname %this)
-   (with-access::JsFunction owner (prototype alloc name src)
-      (when (eq? prototype #\F)
-	 (js-function-setup-prototype! %this owner))
-      prototype))
+   (let ((function-owner obj))
+      (with-access::JsFunction function-owner (prototype alloc name src)
+	 (when (eq? prototype #\F)
+	    (js-function-setup-prototype! %this function-owner))
+	 prototype)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-function-maybe-prototype-get ...                              */
 ;*---------------------------------------------------------------------*/
 (define (js-function-maybe-prototype-get obj owner propname %this)
-   (let loop ((owner owner))
-      (cond
-	 ((js-function? owner)
-	  (js-function-prototype-get obj owner propname %this))
-	 ((js-proxy-function? owner)
-	  (loop (js-proxy-target owner)))
-	 (else
-	  (js-raise-type-error %this "prototype: not a function ~s"
-	     (js-typeof owner %this))))))
+   ;; see JS-FUNCTION-PROTOTYPE-GET
+   (let ((function-owner obj))
+      (let loop ((o function-owner))
+	 (cond
+	    ((js-function? o)
+	     ;; see JS-FUNCTION-PROTOTYPE-GET
+	     (js-function-prototype-get o owner propname %this))
+	    ((js-proxy-function? o)
+	     (loop (js-proxy-target o)))
+	    (else
+	     (js-raise-type-error %this "prototype: not a function ~s"
+		(js-typeof o %this)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-function-prototype-set ...                                    */
@@ -934,20 +971,22 @@
 		      (vector-ref vec i)
 		      (loop (+fx i 1))))))))
 
-   (with-access::JsFunction owner (constrmap %prototype prototype elements cmap)
-      ;; as the prototype property is not configurable,
-      ;; it is always owned by the object
-      (let ((desc (if (eq? cmap (js-not-a-cmap))
-		      (find-desc elements (& "prototype"))
-		      (vector-ref elements 0))))
-	 (with-access::JsDataDescriptor desc (writable)
-	    (when writable
-	       ;; changing the prototype invalidates the fun's constrmap
-	       ;; (MS, change 2019-01-18)
-	       (unless (eq? constrmap (js-not-a-cmap))
-		  (js-function-set-constrmap! owner))
-	       (set! prototype v)))))
-   v)
+   ;; see JS-FUNCTION-PROTOTYPE-GET
+   (let ((function-owner obj))
+      (with-access::JsFunction function-owner (constrmap %prototype prototype elements cmap)
+	 ;; as the prototype property is not configurable,
+	 ;; it is always owned by the object
+	 (let ((desc (if (eq? cmap (js-not-a-cmap))
+			 (find-desc elements (& "prototype"))
+			 (vector-ref elements 0))))
+	    (with-access::JsDataDescriptor desc (writable)
+	       (when writable
+		  ;; changing the prototype invalidates the fun's constrmap
+		  ;; (MS, change 2019-01-18)
+		  (unless (eq? constrmap (js-not-a-cmap))
+		     (js-function-set-constrmap! function-owner))
+		  (set! prototype v)))))
+      v))
 
 ;*---------------------------------------------------------------------*/
 ;*    init-builtin-function-prototype! ...                             */
@@ -1122,12 +1161,12 @@
 ;*---------------------------------------------------------------------*/
 ;*    vector->sublist ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (vector->sublist vec len)
-   (if (=fx (vector-length vec) len)
+(define (vector->sublist vec offset len)
+   (if (and (=fx (vector-length vec) len) (-fx offset 0))
        (vector->list vec)
        (let loop ((i (-fx len 1))
 		  (acc '()))
-	  (if (=fx i -1)
+	  (if (<fx i offset)
 	      acc
 	      (loop (-fx i 1) (cons (vector-ref vec i) acc))))))
 
@@ -1148,7 +1187,7 @@
 		 (js-apply %this this thisarg
 		    (map (lambda (p)
 			    (if (eq? p (js-absent)) (js-undefined) p))
-		       (vector->sublist vec len)))))
+		       (vector->sublist vec 0 len)))))
 	     (else
 	      ;; slow path
 	      (let ((len (js-get argarray (& "length") %this)))
@@ -1264,69 +1303,74 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-function-apply-vec ...                                        */
 ;*---------------------------------------------------------------------*/
-(define (js-function-apply-vec %this this thisarg vec::vector ilen::uint32)
+(define (js-function-apply-vec %this this thisarg vec::vector offset::uint32 ilen::uint32)
    (with-access::JsProcedure this (arity procedure)
-      (let ((n (uint32->fixnum ilen)))
+      (let* ((o (uint32->fixnum offset))
+	     (n (-fx (uint32->fixnum ilen) o)))
 	 (cond
-	    ((>fx arity -2047)
+	    ((or (>fx arity -2047) (<=fx arity -8192))
 	     (case n
 		((0)
 		 (js-call0-jsprocedure %this this thisarg))
 		((1)
-		 (js-call1-jsprocedure %this this thisarg (vector-ref vec 0)))
+		 (js-call1-jsprocedure %this this thisarg (vector-ref vec o)))
 		((2)
-		 (js-call2-jsprocedure %this this thisarg (vector-ref vec 0)
-		    (vector-ref vec 1)))
+		 (js-call2-jsprocedure %this this thisarg (vector-ref vec o)
+		    (vector-ref vec (+fx o 1))))
 		((3)
-		 (js-call3-jsprocedure %this this thisarg (vector-ref vec 0)
-		    (vector-ref vec 1) (vector-ref vec 2)))
+		 (js-call3-jsprocedure %this this thisarg (vector-ref vec o)
+		    (vector-ref vec (+fx o 1)) (vector-ref vec (+fx o 2))))
 		((4)
-		 (js-call4-jsprocedure %this this thisarg (vector-ref vec 0)
-		    (vector-ref vec 1) (vector-ref vec 2) (vector-ref vec 3)))
+		 (js-call4-jsprocedure %this this thisarg (vector-ref vec o)
+		    (vector-ref vec (+fx o 1)) (vector-ref vec (+fx o 2)) (vector-ref vec (+fx o 3))))
 		((5)
-		 (js-call5-jsprocedure %this this thisarg (vector-ref vec 0)
-		    (vector-ref vec 1) (vector-ref vec 2) (vector-ref vec 3)
-		    (vector-ref vec 4)))
+		 (js-call5-jsprocedure %this this thisarg (vector-ref vec o)
+		    (vector-ref vec (+fx o 1)) (vector-ref vec (+fx o 2)) (vector-ref vec (+fx o 3))
+		    (vector-ref vec (+fx o 4))))
 		((6)
-		 (js-call6-jsprocedure %this this thisarg (vector-ref vec 0)
-		    (vector-ref vec 1) (vector-ref vec 2) (vector-ref vec 3)
-		    (vector-ref vec 4) (vector-ref vec 5)))
+		 (js-call6-jsprocedure %this this thisarg (vector-ref vec o)
+		    (vector-ref vec (+fx o 1)) (vector-ref vec (+fx o 2)) (vector-ref vec (+fx o 3))
+		    (vector-ref vec (+fx o 4)) (vector-ref vec (+fx o 5))))
 		((7)
-		 (js-call7-jsprocedure %this this thisarg (vector-ref vec 0)
-		    (vector-ref vec 1) (vector-ref vec 2) (vector-ref vec 3)
-		    (vector-ref vec 4) (vector-ref vec 5) (vector-ref vec 6)))
+		 (js-call7-jsprocedure %this this thisarg (vector-ref vec o)
+		    (vector-ref vec (+fx o 1)) (vector-ref vec (+fx o 2)) (vector-ref vec (+fx o 3))
+		    (vector-ref vec (+fx o 4)) (vector-ref vec (+fx o 5)) (vector-ref vec (+fx o 6))))
 		((8)
-		 (js-call8-jsprocedure %this this thisarg (vector-ref vec 0)
-		    (vector-ref vec 1) (vector-ref vec 2) (vector-ref vec 3)
-		    (vector-ref vec 4) (vector-ref vec 5) (vector-ref vec 6)
-		    (vector-ref vec 7)))
+		 (js-call8-jsprocedure %this this thisarg (vector-ref vec o)
+		    (vector-ref vec (+fx o 1)) (vector-ref vec (+fx o 2)) (vector-ref vec (+fx o 3))
+		    (vector-ref vec (+fx o 4)) (vector-ref vec (+fx o 5)) (vector-ref vec (+fx o 6))
+		    (vector-ref vec (+fx o 7))))
 		((9)
-		 (js-call9-jsprocedure %this this thisarg (vector-ref vec 0)
-		    (vector-ref vec 1) (vector-ref vec 2) (vector-ref vec 3)
-		    (vector-ref vec 4) (vector-ref vec 5) (vector-ref vec 6)
-		    (vector-ref vec 7) (vector-ref vec 8)))
+		 (js-call9-jsprocedure %this this thisarg (vector-ref vec o)
+		    (vector-ref vec (+fx o 1)) (vector-ref vec (+fx o 2)) (vector-ref vec (+fx o 3))
+		    (vector-ref vec (+fx o 4)) (vector-ref vec (+fx o 5)) (vector-ref vec (+fx o 6))
+		    (vector-ref vec (+fx o 7)) (vector-ref vec (+fx o 8))))
 		((10)
-		 (js-call10-jsprocedure %this this thisarg (vector-ref vec 0)
-		    (vector-ref vec 1) (vector-ref vec 2) (vector-ref vec 3)
-		    (vector-ref vec 4) (vector-ref vec 5) (vector-ref vec 6)
-		    (vector-ref vec 7) (vector-ref vec 8) (vector-ref vec 9)))
+		 (js-call10-jsprocedure %this this thisarg (vector-ref vec o)
+		    (vector-ref vec (+fx o 1)) (vector-ref vec (+fx o 2)) (vector-ref vec (+fx o 3))
+		    (vector-ref vec (+fx o 4)) (vector-ref vec (+fx o 5)) (vector-ref vec (+fx o 6))
+		    (vector-ref vec (+fx o 7)) (vector-ref vec (+fx o 8)) (vector-ref vec (+fx o 9))))
 		(else
-		 (js-apply %this this thisarg (vector->sublist vec n)))))
+		 (js-apply %this this thisarg (vector->sublist vec o n)))))
 	    ((=fx arity -2048)
-	     (procedure thisarg (vector-copy vec 0 n)))
+	     (procedure thisarg (vector-copy vec o (+fx o n))))
 	    ((=fx arity -2047)
-	     (vector-shrink! vec n)
-	     (procedure thisarg vec))
+	     (js-call-with-stack-vector
+		(make-vector n)
+		(lambda (tgt)
+		   (vector-copy! tgt 0 vec o (+fx n o))
+		   (procedure thisarg tgt))))
 	    (else
-	     (js-apply %this this thisarg (vector->sublist vec n)))))))
+	     (js-apply %this this thisarg (vector->sublist vec o n)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-function-apply ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (js-function-apply %this this thisarg argarray cache)
-   (if (js-object-mode-plain? this)
-       (js-apply-array %this this thisarg argarray)
-       (with-access::JsGlobalObject %this (js-function-pcache)
+   (with-access::JsGlobalObject %this (js-function-pcache js-function-prototype)
+      (if (and (js-object-mode-plain? this)
+	       (js-object-mode-plain? js-function-prototype))
+	  (js-apply-array %this this thisarg argarray)
 	  (js-call2 %this 
 	     (js-get-name/cache this (& "apply") #f %this
 		(or cache (js-pcache-ref js-function-pcache 2)))
@@ -1338,10 +1382,10 @@
 (define (js-apply-vec %this this thisarg vec::vector ilen::uint32)
    (cond
       ((js-procedure? this)
-       (js-function-apply-vec %this this thisarg vec ilen))
+       (js-function-apply-vec %this this thisarg vec #u32:0 ilen))
       ((js-procedure-proxy? this)
        (js-calln %this this thisarg
-	  (vector->sublist vec (uint32->fixnum ilen))))
+	  (vector->sublist vec 0 (uint32->fixnum ilen))))
       (else
        (js-raise-type-error %this "apply: argument not a function ~s" this))))
 
@@ -1349,47 +1393,50 @@
 ;*    js-function-maybe-apply-vec ...                                  */
 ;*---------------------------------------------------------------------*/
 (define (js-function-maybe-apply-vec %this this thisarg vec ilen::uint32 cache)
-   (let loop ((this this))
-      (cond
-	 ((js-procedure? this)
-	  (js-function-apply-vec %this this thisarg vec ilen))
-	 ((js-object? this)
-	  (let ((argarray (js-vector->jsarray (vector-copy vec) %this)))
-	     (with-access::JsGlobalObject %this (js-function-pcache)
+   (with-access::JsGlobalObject %this (js-function-prototype js-function-pcache)
+      (let loop ((this this))
+	 (cond
+	    ((and (js-procedure? this)
+		  (js-object-mode-plain? js-function-prototype))
+	     (js-function-apply-vec %this this thisarg vec #u32:0 ilen))
+	    ((js-object? this)
+	     (let ((argarray (js-vector->jsarray (vector-copy vec) %this)))
 		(js-call2 %this
 		   (js-get-jsobject-name/cache this (& "apply") #f %this
 		      (or cache (js-pcache-ref js-function-pcache 3)))
-		   this thisarg argarray))))
-	 (else
-	  (loop (js-toobject %this this))))))
+		   this thisarg argarray)))
+	    (else
+	     (loop (js-toobject %this this)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-function-maybe-apply ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (js-function-maybe-apply %this this thisarg argarray cache)
-   (let loop ((this this))
-      (cond
-	 ((js-procedure? this)
-	  (js-function-apply %this this thisarg argarray cache))
-	 ((js-object? this)
-	  (with-access::JsGlobalObject %this (js-function-pcache)
+   (with-access::JsGlobalObject %this (js-function-prototype js-function-pcache)
+      (let loop ((this this))
+	 (cond
+	    ((and (js-procedure? this)
+		  (js-object-mode-plain? js-function-prototype))
+	     (js-function-apply %this this thisarg argarray cache))
+	    ((js-object? this)
 	     (js-method-call-name/cache %this this (& "apply")
 		(or cache (js-pcache-ref js-function-pcache 3))
 		(js-pcache-ref js-function-pcache 5)
 		0
 		'(pmap cmap vtable poly)
-		'(imap vtable)
-		thisarg argarray)))
-	 (else
-	  (loop (js-toobject %this this))))))
+		'(cmap vtable)
+		thisarg argarray))
+	    (else
+	     (loop (js-toobject %this this)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-function-call0 ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (js-function-call0 %this this thisarg cache)
-   (if (js-object-mode-plain? this)
-       (js-call0 %this this thisarg)
-       (with-access::JsGlobalObject %this (js-function-pcache)
+   (with-access::JsGlobalObject %this (js-function-pcache js-function-prototype)
+      (if (and (js-object-mode-plain? this)
+	       (js-object-mode-plain? js-function-prototype))
+	  (js-call0 %this this thisarg)
 	  (js-call1 %this
 	     (js-get-jsobject-name/cache this (& "call") #f %this
 		(or cache (js-pcache-ref js-function-pcache 4))
@@ -1400,9 +1447,10 @@
 ;*    js-function-call1 ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (js-function-call1 %this this thisarg arg cache)
-   (if (js-object-mode-plain? this)
-       (js-call1 %this this thisarg arg)
-       (with-access::JsGlobalObject %this (js-function-pcache)
+   (with-access::JsGlobalObject %this (js-function-pcache js-function-prototype)
+      (if (and (js-object-mode-plain? this)
+	       (js-object-mode-plain? js-function-prototype))
+	  (js-call1 %this this thisarg arg)
 	  (js-call2 %this
 	     (js-get-jsobject-name/cache this (& "call") #f %this
 		(or cache (js-pcache-ref js-function-pcache 4)))
@@ -1412,9 +1460,10 @@
 ;*    js-function-call2 ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (js-function-call2 %this this thisarg arg0 arg1 cache)
-   (if (js-object-mode-plain? this)
-       (js-call2 %this this thisarg arg0 arg1)
-       (with-access::JsGlobalObject %this (js-function-pcache)
+   (with-access::JsGlobalObject %this (js-function-pcache js-function-prototype)
+      (if (and (js-object-mode-plain? this)
+	       (js-object-mode-plain? js-function-prototype))
+	  (js-call2 %this this thisarg arg0 arg1)
 	  (js-call3 %this
 	     (js-get-jsobject-name/cache this (& "call") #f %this
 		(or cache (js-pcache-ref js-function-pcache 4)))
@@ -1424,9 +1473,10 @@
 ;*    js-function-call3 ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (js-function-call3 %this this thisarg arg0 arg1 arg2 cache)
-   (if (js-object-mode-plain? this)
-       (js-call3 %this this thisarg arg0 arg1 arg2)
-       (with-access::JsGlobalObject %this (js-function-pcache)
+   (with-access::JsGlobalObject %this (js-function-pcache js-function-prototype)
+      (if (and (js-object-mode-plain? this)
+	       (js-object-mode-plain? js-function-prototype))
+	  (js-call3 %this this thisarg arg0 arg1 arg2)
 	  (js-call4 %this
 	     (js-get-jsobject-name/cache this (& "call") #f %this
 		(or cache (js-pcache-ref js-function-pcache 4)))
@@ -1527,6 +1577,8 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    js-function-arity ...                                            */
+;*    -------------------------------------------------------------    */
+;*    See also function.sch                                            */
 ;*---------------------------------------------------------------------*/
 (define (js-function-arity req #!optional opl (protocol 'fix))
    (cond
@@ -1545,12 +1597,13 @@
 		  "illegal optional for fix args"
 		  (vector req opl protocol)))
 	   (case protocol
-	      ((arguments-lazy)
+	      ((arguments-lazy arguments-stack)
 	       -2047)
-	      ((arguments-eager)
+	      ((arguments arguments-eager)
 	       -2048)
-	      ((arguments)
-	       0)
+	      ((rest-stack)
+	       (let ((offset (if (=fx opl 0) 2049 4049)))
+		  (negfx (+fx offset (-fx req 1)))))
 	      ((rest-lazy)
 	       (let ((offset (if (=fx opl 0) 2049 4049)))
 		  (negfx (+fx offset (-fx req 1)))))

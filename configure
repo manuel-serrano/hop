@@ -4,8 +4,8 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Wed Dec 21 06:54:10 2022 (serrano)                */
-#*    Copyright   :  2004-22 Manuel Serrano                            */
+#*    Last change :  Wed Nov  8 16:49:03 2023 (serrano)                */
+#*    Copyright   :  2004-23 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
 #*=====================================================================*/
@@ -58,7 +58,7 @@ bcflagsopt="-unsafe -O3 -fstackable"
 bcflagsrts="-unsafe -safee"
 bcflagsmodules="-unsafe"
 bscm2jsflags="-unsafe"
-bhopcflags=""
+bhopcflags="-q"
 
 blflags="-copt \$(CPICFLAGS) -L \$(BUILDLIBDIR) -srfi bigloo-compile"
 
@@ -98,6 +98,7 @@ docurl="http://hop-dev.inria.fr/home/lang.html"
 etcdir=$prefix/etc
 bindir=$prefix/bin
 libdir=$prefix/lib
+incdir=$prefix/include
 sharedir=$prefix/share/hop
 mansec=man1
 mandir=$prefix/man/$mansec
@@ -173,6 +174,7 @@ while : ; do
       prefix="`echo $1 | sed 's/^[^=]*=//'`";
       bindir=$prefix/bin;
       libdir=$prefix/lib;
+      incdir=$prefix/include;
       sharedir=$prefix/share/hop;
       mandir=$prefix/man/$mansec;
       etcdir=$prefix/etc;
@@ -187,6 +189,9 @@ while : ; do
 
     --libdir=*)
       libdir="`echo $1 | sed 's/^[^=]*=//'`";;
+
+    --includedir=*)
+      incdir="`echo $1 | sed 's/^[^=]*=//'`";;
 
     --sharedir=*)
       sharedir="`echo $1 | sed 's/^[^=]*=//'`";;
@@ -353,6 +358,9 @@ while : ; do
       hflags=-g;
       bcflags="$bcflags $bcflagsdbg2 -Wall -Wno-slot -srfi devel -srfi debug -srfi disable-inline";;
 
+    --debug-c)
+      bcflags="$bcflags -cg";;
+
     --pmem)
       devmode="pmem";
       debug=no;
@@ -464,6 +472,7 @@ while : ; do
       echo "   --etcdir=dir................ Hop etc directory" >&2;
       echo "   --bindir=dir................ alternative Hop bin directory" >&2;
       echo "   --libdir=dir................ alternative Hop lib directory" >&2;
+      echo "   --includedir=dir............ alternative Hop include directory" >&2;
       echo "   --sharedir=dir.............. alternative Hop share directory" >&2;
       echo "   --mandir=dir................ alternative Hop man directory" >&2;
       echo "   --webletsdir=dir............ alternative Hop weblets directory" >&2;
@@ -624,10 +633,11 @@ fi
 
 # check the Bigloo libraries
 bgllibdir=`$bigloo -q -eval "(begin (print (bigloo-config 'library-directory)) (exit 0))"`
+bglsharedsuffix=`$bigloo -q -eval "(begin (print (bigloo-config 'shared-lib-suffix)) (exit 0))"`
 
-for lib in libbigloo_s-$bglversion.a libbigloo_u-$bglversion.a libbigloo_s_mt-$bglversion.so libbigloo_u_mt-$bglversion.so; do
+for lib in libbigloo_s-$bglversion.a libbigloo_u-$bglversion.a libbigloo_s_mt-$bglversion.$bglsharedsuffix libbigloo_u_mt-$bglversion.$bglsharedsuffix; do
   if [ ! -f $bgllibdir/$lib ]; then
-    echo "*** ERROR:configure:bigloo not propertly installed, library missing" >&2
+    echo "*** ERROR:configure:bigloo not propertly installed, library missing ($lib)" >&2
     echo "$bgllibdir/$lib" >&2
     exit 1
   fi
@@ -965,14 +975,18 @@ fi
 #*---------------------------------------------------------------------*/
 #*    libbacktrace                                                     */
 #*---------------------------------------------------------------------*/
+if [ -f $bigloolibdir/libbacktrace.heap ]; then
+   libraries="$libraries libbacktrace"
+   bglcloselibs="$bglcloselibs libbacktrace"
+   bglextralibs="$bglextralibs bigloolibbacktrace"
+fi
+
 if [ "$devmode " = "debug " -o "$devmode " = "debug-inline " ]; then
-  if [ -f $bigloolibdir/libbacktrace.heap ]; then
-    bcflagsrts="$bcflagsrts -gtrace0"
-    bcflagsmodules="$bcflagsmodules -gtrace0"
-    bhopcflags="$bhopcflags -gtrace0"
-    hflags="$hflags -gtrace0"
-    bhflags=""
-  fi
+  bcflagsrts="$bcflagsrts -gtrace0"
+  bcflagsmodules="$bcflagsmodules -gtrace0"
+  bhopcflags="$bhopcflags -gtrace0"
+  hflags="$hflags -gtrace0"
+  bhflags=""
 fi
 
 #*---------------------------------------------------------------------*/
@@ -1121,7 +1135,7 @@ if [ "$threads " = "yes " ]; then
   bigloopthlibs="-lbigloopthread_s-$""(RELEASE)"
   bigloopthlibu="-lbigloopthread_u-$""(RELEASE)"
   bigloogc="-lbigloogc_fth-$""(RELEASE)"
-  bhopcflags="--js-worker-slave"
+  bhopcflags="-q --js-worker-slave"
 else
   bigloopthlibs=""
   bigloopthlibu=""
@@ -1161,6 +1175,7 @@ for p in hopc.sh hop.sh hopjs.sh hopaot.sh; do
           -e "s|@INSTALLSPECIFIC@|$installspecific|" \
           -e "s|@BINDIR@|$bindir|" \
           -e "s|@LIBDIR@|$libdir|" \
+          -e "s|@INCDIR@|$incdir|" \
           -e "s|@LIBPATH@|$libdir/hop/$version|" \
   > bin/$p
   chmod a+rx bin/$p
@@ -1231,6 +1246,7 @@ cat $mkmf.in \
         -e "s|@INSTALLSPECIFIC@|$installspecific|" \
         -e "s|@BINDIR@|$bindir|" \
         -e "s|@LIBDIR@|$libdir|" \
+        -e "s|@INCDIR@|$incdir|" \
         -e "s|@LIBPATH@|$libdir/hop/$version|" \
         -e "s|@SHAREDIR@|$sharedir|" \
         -e "s|@MANDIR@|$mandir|" \
@@ -1280,6 +1296,7 @@ for p in configure.scm configure_noarch.sch configure_macosx.sch configure_andro
           -e "s|@URL@|$url|" \
           -e "s|@BINDIR@|$bindir|" \
           -e "s|@LIBDIR@|$libdir|" \
+          -e "s|@INCDIR@|$incdir|" \
           -e "s|@LIBPATH@|$libdir/hop/$version|" \
           -e "s|@SHAREDIR@|$sharedir/$version|" \
           -e "s|@ETCDIR@|$etcdir|" \
@@ -1320,6 +1337,7 @@ for p in nodejs.sch; do
           -e "s|@URL@|$url|" \
           -e "s|@BINDIR@|$bindir|" \
           -e "s|@LIBDIR@|$libdir|" \
+          -e "s|@INCDIR@|$incdir|" \
           -e "s|@LIBPATH@|$libdir/hop/$version|" \
           -e "s|@SHAREDIR@|$sharedir/$version|" \
           -e "s|@ETCDIR@|$etcdir|" \
@@ -1353,6 +1371,7 @@ for script in test/nodejs/TEST test/nodejs/HOP.exe test/hopjs/TEST test/hopts/TE
           -e "s|@URL@|$url|g" \
           -e "s|@BINDIR@|$bindir|g" \
           -e "s|@LIBDIR@|$libdir|g" \
+          -e "s|@INCDIR@|$incdir|g" \
           -e "s|@LIBPATH@|$libdir/hop/$version|g" \
           -e "s|@SHAREDIR@|$sharedir/$version|g" \
           -e "s|@ETCDIR@|$etcdir|g" \
@@ -1392,6 +1411,7 @@ for file in etc/hopjs-config.el; do
           -e "s|@URL@|$url|" \
           -e "s|@BINDIR@|$bindir|" \
           -e "s|@LIBDIR@|$libdir|" \
+          -e "s|@INCDIR@|$incdir|" \
           -e "s|@LIBPATH@|$libdir/hop/$version|" \
           -e "s|@SHAREDIR@|$sharedir/$version|" \
           -e "s|@ETCDIR@|$etcdir|" \
@@ -1417,6 +1437,7 @@ cat etc/hoprc.hop.in \
         -e "s|@BRANCH@|$branch|" \
         -e "s|@BINDIR@|$bindir|" \
         -e "s|@LIBDIR@|$libdir|" \
+        -e "s|@INCDIR@|$incdir|" \
         -e "s|@LIBPATH@|$libdir/hop/$version|" \
         -e "s|@SHAREDIR@|$sharedir/$version|" \
         -e "s|@ETCDIR@|$etcdir|" \
@@ -1436,6 +1457,7 @@ cat etc/hopshrc.hop.in \
         -e "s|@BRANCH@|$branch|" \
         -e "s|@BINDIR@|$bindir|" \
         -e "s|@LIBDIR@|$libdir|" \
+        -e "s|@INCDIR@|$incdir|" \
         -e "s|@LIBPATH@|$libdir/hop/$version|" \
         -e "s|@SHAREDIR@|$sharedir/$version|" \
         -e "s|@ETCDIR@|$etcdir|" \
@@ -1505,6 +1527,7 @@ cat etc/hopc_config.sch.in \
           -e "s|@URL@|$url|" \
           -e "s|@BINDIR@|$bindir|" \
           -e "s|@LIBDIR@|$libdir|" \
+          -e "s|@INCDIR@|$incdir|" \
           -e "s|@LIBRARY-PATH@|$libdir/hop/$version|" \
           -e "s|@SHAREDIR@|$sharedir/$version|" \
           -e "s|@ETCDIR@|$etcdir|" \
@@ -1574,6 +1597,7 @@ echo ";* Automatically generated file (don't edit) */" > $init
 cat etc/scheme2js.init.in \
     | sed -e "s|@VERSION@|$version|" \
           -e "s|@BRANCH@|$branch|" \
+          -e "s|@BIGLOOCLOSELIBS@|$bglcloselibs|" \
     >> $init
 echo "" >> $init
 chmod a-w $init
@@ -1589,6 +1613,7 @@ echo ";* Automatically generated file (don't edit) */" > $init
 cat etc/hopscheme.init.in \
     | sed -e "s|@VERSION@|$version|" \
           -e "s|@BRANCH@|$branch|" \
+          -e "s|@BIGLOOCLOSELIBS@|$bglcloselibs|" \
     >> $init
 echo "" >> $init
 chmod a-w $init
@@ -1605,6 +1630,7 @@ if [ "$arch " = "android " ]; then
   cat etc/hopdroid.init.in \
       | sed -e "s|@VERSION@|$version|" \
             -e "s|@BRANCH@|$branch|" \
+            -e "s|@BIGLOOCLOSELIBS@|$bglcloselibs|" \
       >> $init
   echo "" >> $init
   chmod a-w $init
@@ -1640,6 +1666,7 @@ echo ";* Automatically generated file (don't edit) */" > $init
 cat etc/js2scheme.init.in \
     | sed -e "s|@VERSION@|$version|" \
           -e "s|@BRANCH@|$branch|" \
+          -e "s|@BIGLOOCLOSELIBS@|$bglcloselibs|" \
     >> $init
 echo "" >> $init
 chmod a-w $init
@@ -1657,6 +1684,7 @@ cat etc/hopscript.init.in \
           -e "s|@BRANCH@|$branch|" \
           -e "s|@LIBPATH@|$libdir/hop/$version|" \
           -e "s|@BUILDDIR@|$PWD|" \
+          -e "s|@BIGLOOCLOSELIBS@|$bglcloselibs|" \
     >> $init
 echo "" >> $init
 
@@ -1710,6 +1738,7 @@ echo ";* Automatically generated file (don't edit) */" > $init
 cat etc/nodejs.init.in \
     | sed -e "s|@VERSION@|$version|" \
           -e "s|@BRANCH@|$branch|" \
+          -e "s|@BIGLOOCLOSELIBS@|$bglcloselibs|" \
     >> $init
 echo "" >> $init
 chmod a-w $init
@@ -1727,6 +1756,7 @@ for init in hop-autoconf.js hop-boot.js; do
           -e "s|@URL@|$url|" \
           -e "s|@BINDIR@|$bindir|" \
           -e "s|@LIBDIR@|$libdir|" \
+          -e "s|@INCDIR@|$incdir|" \
           -e "s|@LIBPATH@|$libdir/hop/$version|" \
           -e "s|@SHAREDIR@|$sharedir/$version|" \
           -e "s|@ETCDIR@|$etcdir|" \
@@ -1740,6 +1770,7 @@ for init in hop-autoconf.js hop-boot.js; do
           -e "s|@BUILDID@|$buildid|" \
           -e "s|@BUILDTAG@|$buildtag|" \
           -e 's|//[^\"]*$||g' \
+          -e "s|@BIGLOOCLOSELIBS@|$bglcloselibs|" \
 	  >> share/$init
   echo "" >> share/$init
   chmod a-w share/$init
@@ -1842,6 +1873,7 @@ echo "Directories where Hop will be installed:"
 echo "  etc directory......................... $etcdir"
 echo "  bin directory......................... $bindir"
 echo "  lib directory......................... $libdir"
+echo "  include directory..................... $incdir"
 echo "  share directory....................... $sharedir"
 echo "  man directory......................... $mandir"
 echo "  weblets directory..................... $webletsdir"

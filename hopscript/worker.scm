@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Tue May  4 20:19:25 2021 (serrano)                */
-;*    Copyright   :  2014-21 Manuel Serrano                            */
+;*    Last change :  Tue Sep 12 23:33:07 2023 (serrano)                */
+;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
 ;*    -------------------------------------------------------------    */
@@ -30,7 +30,7 @@
 	   __hopscript_function
 	   __hopscript_error
 	   __hopscript_array)
-
+   
    (static (class WorkerException::&exception
 	      exn))
    
@@ -41,16 +41,18 @@
  	   (js-main-no-worker!::WorkerHopThread ::bstring ::bstring ::bool ::procedure ::procedure)
 	   (js-current-worker::WorkerHopThread)
 	   (js-main-worker?::bool ::WorkerHopThread)
-
+	   
 	   (js-worker-load::procedure)
 	   (js-worker-load-set! ::procedure)
 
-	   (generic js-worker-init! ::object)
-	   (generic js-worker-loop ::object)
+	   (generic js-worker-loop ::object ::procedure)
 	   (generic js-worker-tick ::object)
 	   (generic js-worker-exception-handler ::object ::obj ::int)
-	   (generic js-worker-exec ::object ::bstring ::bool ::procedure)
-	   (generic js-worker-push-thunk! ::object ::bstring ::procedure)
+	   (generic js-worker-exec ::object ::bstring ::procedure)
+	   (generic js-worker-exec-throws ::object ::bstring ::procedure)
+	   (generic js-worker-run ::object ::bstring ::procedure)
+	   (generic js-worker-run-throws ::object ::bstring ::procedure)
+	   (generic js-worker-push! ::object ::bstring ::procedure)
 	   (generic js-worker-alive? ::object)
 	   
 	   (generic js-worker-terminate! ::object ::obj)
@@ -190,8 +192,8 @@
    (define (onexit th)
       (with-access::WorkerHopThread th (keep-alive parent exitlisteners)
 	 (when (pair? exitlisteners)
-	    (js-worker-push-thunk! parent "slave-terminate"
-	       (lambda ()
+	    (js-worker-push! parent "slave-terminate"
+	       (lambda (%this)
 		  (let ((e (instantiate::MessageEvent
 			      (name "exit")
 			      (target (js-undefined))
@@ -212,12 +214,9 @@
 				   (with-access::WorkerHopThread thread (%this module-cache)
 				      (set! %this this)
 				      (set! module-cache (js-new0 this js-object)))))))
-		   (thunk (lambda ()
-			     (with-access::WorkerHopThread thread (%this)
-				(with-handler
-				   (lambda (e)
-				      (exception-notify e))
-				   (loader source thread %this)))))
+		   (proc (lambda (thread)
+			    (with-access::WorkerHopThread thread (%this)
+			       (loader source thread %this))))
 		   (mutex (make-mutex))
 		   (condv (make-condition-variable))
 		   (thread (instantiate::WorkerHopThread
@@ -228,7 +227,6 @@
 					 (with-access::WorkerHopThread parent (mutex)
 					    mutex)
 					 (make-mutex)))
-			      (tqueue (list (cons "init" thunk)))
 			      (onexit (js-make-function %this
 					 (lambda (this process retval)
 					    (onexit thread))
@@ -239,16 +237,14 @@
 				       (setup)
 				       (synchronize mutex
 					  (condition-variable-broadcast! condv))
-				       (js-worker-init! thread)
-				       (js-worker-loop thread)))
+				       (js-worker-loop thread proc)))
 			      (cleanup (lambda (thread)
 					  (when (isa? parent WorkerHopThread)
 					     (remove-subworker! parent thread)))))))
-
 	    ;; add the worker to the parent list
 	    (when (isa? parent WorkerHopThread)
 	       (add-subworker! parent thread))
-	    
+
 	    ;; start the worker thread
 	    (thread-start! thread)
 	    (condition-variable-wait! condv mutex)
@@ -380,8 +376,8 @@
    (with-access::JsWorker worker (thread)
       (with-access::WorkerHopThread thread (parent listeners %this)
 	 (when (isa? parent WorkerHopThread)
-	    (js-worker-push-thunk! parent "post-slave-message"
-	       (lambda ()
+	    (js-worker-push! parent "post-slave-message"
+	       (lambda (%this)
 		  (let ((e (instantiate::MessageEvent
 			      (name "message")
 			      (target worker)
@@ -395,8 +391,8 @@
    (with-handler
       exception-notify 
       (with-access::WorkerHopThread thread (parent errorlisteners %this mutex)
-	 (js-worker-push-thunk! parent "post-slave-message"
-	    (lambda ()
+	 (js-worker-push! parent "post-slave-message"
+	    (lambda (%this)
 	       (let ((e (instantiate::MessageEvent
 			   (name "error")
 			   (target parent)
@@ -412,8 +408,8 @@
 (define-generic (js-worker-post-master-message this::JsWorker data)
    (with-access::JsWorker this (thread)
       (with-access::WorkerHopThread thread (onmessage %this)
-	 (js-worker-push-thunk! thread "post-master-message"
-	    (lambda ()
+	 (js-worker-push! thread "post-master-message"
+	    (lambda (%this)
 	       (when (js-procedure? onmessage)
 		  (let ((e (instantiate::MessageEvent
 			      (name "message")
@@ -539,7 +535,7 @@
       (with-access::JsGlobalObject %global (js-object worker)
 	 (set! worker %worker)
 	 (set! %module (ctormod (basename path) path %worker %global))
-	 (with-access::WorkerHopThread %worker (%this module-cache)
+	 (with-access::WorkerHopThread %worker (%this module-cache %loop)
 	    ;; module-cache is used in src/main to check
 	    ;; where the worker is running or not
 	    (set! module-cache (js-new0 %this js-object))
@@ -561,8 +557,7 @@
 			   (setup-worker! %worker)
 			   (synchronize mutex
 			      (condition-variable-broadcast! condv))
-			   (js-worker-init! %worker)
-			   (js-worker-loop %worker)))))
+			   (js-worker-loop %worker (lambda (th) th))))))
 	    (thread-start-joinable! %worker)
 	    (condition-variable-wait! condv mutex))))
    
@@ -599,8 +594,7 @@
 		     (error "js-main-no-worker"
 			"Cannot execute main worker in --js-no-worker mode"
 			#f)))))
-      (setup-worker! %worker)
-      (js-worker-init! %worker))
+      (setup-worker! %worker))
    
    (values %worker %global %module))
 
@@ -634,135 +628,61 @@
 	     errval))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-worker-tick ...                                               */
-;*---------------------------------------------------------------------*/
-(define-generic (js-worker-tick th::object)
-   (with-access::WorkerHopThread th (%loop %process %retval
-				       tqueue subworkers call
-				       state mutex condv alivep)
-      (tprint "THIS CODE SHOULD NOT BE EXECUTED (never tested)")
-      (let loop ()
-	 (let ((nthunk (synchronize mutex
-			  (let liip ()
-			     (cond
-				((pair? tqueue)
-				 (let ((nthunk (car tqueue)))
-				    (set! tqueue (cdr tqueue))
-				    nthunk))
-				((and (eq? state 'terminated)
-				      (or (not alivep) (not (alivep)))
-				      (null? subworkers))
-				 #f)
-				(else
-				 (condition-variable-wait! condv mutex)
-				 (liip)))))))
-	    (when (pair? nthunk)
-	       (with-trace 'hopscript-worker (car nthunk)
-		  (call (cdr nthunk)))
-	       (loop))))))
-
-;*---------------------------------------------------------------------*/
-;*    js-worker-init! ...                                              */
-;*---------------------------------------------------------------------*/
-(define-generic (js-worker-init! th::object)
-   #unspecified)
-
-;*---------------------------------------------------------------------*/
 ;*    js-worker-loop ...                                               */
 ;*    -------------------------------------------------------------    */
 ;*    This code is used only when HopScript is run without LIBUV.      */
 ;*    Otherwise, the LIBUV binding (see nodejs directory),             */
 ;*    overwrites this definition.                                      */
 ;*---------------------------------------------------------------------*/
-(define-generic (js-worker-loop th::object)
-   (with-access::WorkerHopThread th (state subworkers name %this call mutex condv)
-      (synchronize mutex
-	 (condition-variable-broadcast! condv)
-	 (tprint "THIS CODE SHOULD NOT BE EXECUTED")
-	 ;; loop unless terminated
-	 (with-handler
-	    (lambda (exn)
-	       (js-worker-exception-handler th exn 1))
-	    (unwind-protect
-	       (js-worker-tick th)
-	       (set! state 'terminated))
-	    #t))))
+(define-generic (js-worker-loop th::object proc::procedure))
+
+;*---------------------------------------------------------------------*/
+;*    js-worker-tick ...                                               */
+;*---------------------------------------------------------------------*/
+(define-generic (js-worker-tick th::object))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-worker-exec ...                                               */
 ;*---------------------------------------------------------------------*/
-(define-generic (js-worker-exec th::object name::bstring
-		   handleerror::bool thunk::procedure)
-   (cond
-      ((and (eq? (current-thread) th)
-	    (with-access::WorkerHopThread th (tqueue)
-	       (null? tqueue)))
-       (thunk))
-      (handleerror
-       (let ((response #f)
-	     (mutex (make-mutex))
-	     (condv (make-condition-variable)))
-	  (synchronize mutex
-	     (js-worker-push-thunk! th name
-		(lambda ()
-		   (set! response (thunk))
-		   (synchronize mutex
-		      (condition-variable-signal! condv))))
-	     (condition-variable-wait! condv mutex)
-	     response)))
-      (else
-       (let ((response #f)
-	     (mutex (make-mutex))
-	     (condv (make-condition-variable)))
-	  (synchronize mutex
-	     (js-worker-push-thunk! th name
-		(lambda ()
-		   (set! response
-		      (with-handler
-			 (lambda (e)
-			    (instantiate::WorkerException
-			       (exn e)))
-			 (thunk)))
-		   (synchronize mutex
-		      (condition-variable-signal! condv))))
-	     (condition-variable-wait! condv mutex)
-	     (if (isa? response WorkerException)
-		 (with-access::WorkerException response (exn)
-		    (raise exn))
-		 response))))))
+(define-generic (js-worker-exec th::object name::bstring proc::procedure))
 
 ;*---------------------------------------------------------------------*/
-;*    js-worker-push-thunk! ::object ...                               */
+;*    js-worker-exec-throws ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-generic (js-worker-push-thunk! th::object name::bstring thunk::procedure)
-   (tprint "THIS CODE SHOULD NOT BE EXECUTED")
-   (with-access::WorkerHopThread th (mutex condv tqueue)
-      (synchronize mutex
-	 (with-trace 'hopscript-worker "js-worker-push-thunk"
-	    (trace-item "name=" name)
-	    (trace-item "queue=" (map car tqueue)))
-	 (set! tqueue (append! tqueue (list (cons name thunk))))
-	 (condition-variable-signal! condv))))
+(define-generic (js-worker-exec-throws th::object name::bstring proc::procedure))
+
+;*---------------------------------------------------------------------*/
+;*    js-worker-run ...                                                */
+;*---------------------------------------------------------------------*/
+(define-generic (js-worker-run th::object name::bstring proc::procedure)
+   (if (eq? (current-thread) th)
+       (with-access::WorkerHopThread th (%this %loop mutex condv)
+	  (proc %this))
+       (js-worker-exec th name proc)))
+
+;*---------------------------------------------------------------------*/
+;*    js-worker-run-throws ...                                         */
+;*---------------------------------------------------------------------*/
+(define-generic (js-worker-run-throws th::object name::bstring proc::procedure)
+   (if (eq? (current-thread) th)
+       (with-access::WorkerHopThread th (%this %loop mutex condv)
+	  (proc %this))
+       (js-worker-exec-throws th name proc)))
+
+;*---------------------------------------------------------------------*/
+;*    js-worker-push! ::object ...                                     */
+;*---------------------------------------------------------------------*/
+(define-generic (js-worker-push! th::object name::bstring proc::procedure))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-worker-alive? ::object ...                                    */
 ;*---------------------------------------------------------------------*/
-(define-generic (js-worker-alive? th::object)
-   (tprint "THIS CODE SHOULD NOT BE EXECUTED")
-   (with-access::WorkerHopThread th (tqueue state)
-      (and (not (eq? state 'terminated)) (pair? tqueue))))
+(define-generic (js-worker-alive? th::object))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-worker-terminate! ::WorkerHopThread ...                       */
 ;*---------------------------------------------------------------------*/
-(define-generic (js-worker-terminate! th::object pred)
-   (tprint "THIS CODE SHOULD NOT BE EXECUTED")
-   (with-access::WorkerHopThread th (state mutex condv alivep)
-      (set! alivep pred)
-      (synchronize mutex
-	 (set! state 'terminated)
-	 (condition-variable-signal! condv))))
-
+(define-generic (js-worker-terminate! th::object pred))
 
 ;*---------------------------------------------------------------------*/
 ;*    &end!                                                            */

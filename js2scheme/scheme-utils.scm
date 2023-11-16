@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Copyright   :  2017-22 Manuel Serrano                            */
+;*    Copyright   :  2017-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
 ;*=====================================================================*/
@@ -52,6 +52,9 @@
 	   (j2s-decl-scm-id ::J2SDecl conf)
 	   (j2s-class-id clazz::J2SClass ctx)
 	   (j2s-escape-id ::symbol ::obj)
+	   (j2s-arguments-stack-id::symbol)
+	   (j2s-arguments-length-id::symbol)
+	   (j2s-arguments-object-id::symbol)
 	   (js-need-global? ::J2SDecl scope mode)
 	   (flatten-stmt stmt)
 	   (flatten-nodes nodes)
@@ -72,6 +75,7 @@
 	   (vtype-ident ident vtype ::pair-nil #!optional compound)
 	   (type-ident ident type ::pair-nil)
 	   (j2s-number val conf)
+	   (j2s-scheme-error proc msg obj #!optional (js-error 'js-type-error))
 	   (j2s-error proc msg obj #!optional str)
 	   (is-fixnum? expr::J2SExpr ::struct)
 	   (is-number? expr::J2SExpr)
@@ -83,6 +87,8 @@
 	   (is-uint53? expr::J2SExpr)
 	   (is-string? expr::J2SExpr)
 	   (is-buffer-cast? ::J2SExpr)
+
+	   (j2s-scheme-box ::obj ::symbol ::procedure ::struct)
 
 	   (j2s-jsstring val loc ::struct)
 	   
@@ -109,6 +115,7 @@
 	   (inrange-uint32?::bool ::J2SExpr)
 	   (inrange-uint32-number?::bool ::J2SExpr)
 	   (inrange-int53?::bool ::J2SExpr)
+	   (inrange-uint53?::bool ::J2SExpr)
 
 	   (boxed-type?::bool ::obj)
 	   (box ::obj ::obj ::struct #!optional proc::obj)
@@ -294,6 +301,24 @@
    (if (symbol? id)
        (symbol-append escape '- id)
        escape))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-arguments-lengtg-id ...                                      */
+;*---------------------------------------------------------------------*/
+(define (j2s-arguments-length-id)
+   '&len)
+
+;*---------------------------------------------------------------------*/
+;*    j2s-arguments-stack-id ...                                       */
+;*---------------------------------------------------------------------*/
+(define (j2s-arguments-stack-id)
+   '&arguments)
+
+;*---------------------------------------------------------------------*/
+;*    j2s-arguments-object-id ...                                      */
+;*---------------------------------------------------------------------*/
+(define (j2s-arguments-object-id)
+   '%arguments)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-need-global? ...                                              */
@@ -556,6 +581,30 @@
       (else val)))
 
 ;*---------------------------------------------------------------------*/
+;*    j2s-scheme-error ...                                             */
+;*    -------------------------------------------------------------    */
+;*    Trigger a compile-time error and return a Scheme code that       */
+;*    will raises an error at runtime.                                 */
+;*---------------------------------------------------------------------*/
+(define (j2s-scheme-error proc msg obj #!optional (js-error 'js-type-error))
+   (with-access::J2SNode obj (loc)
+      (match-case loc
+	 ((at ?fname ?loc)
+	  (with-handler
+	     (lambda (e)
+		(exception-notify e)
+		`(raise
+		    (,js-error (js-string->jsstring ,msg) ,fname ,loc %this)))
+	     (error/location proc msg (j2s->sexp obj) fname loc)))
+	 (else
+	  (with-handler
+	     (lambda (e)
+		(exception-notify e)
+		`(raise
+		    (js-type-error1 (js-string->jsstring ,msg) %this)))
+	     (error proc msg (j2s->sexp obj)))))))
+   
+;*---------------------------------------------------------------------*/
 ;*    j2s-error ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (j2s-error proc msg obj #!optional str)
@@ -564,7 +613,7 @@
 	 ((at ?fname ?loc)
 	  (error/location proc msg (or str (j2s->sexp obj)) fname loc))
 	 (else
-	  (error proc msg obj)))))
+	  (error proc msg (or str (j2s->sexp obj)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    is-number? ...                                                   */
@@ -632,6 +681,13 @@
    (and (isa? this J2SCast)
 	(with-access::J2SCast this (expr)
 	   (eq? (j2s-type expr) 'buffer))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-scheme-box ...                                               */
+;*---------------------------------------------------------------------*/
+(define (j2s-scheme-box this mode return::procedure ctx)
+   (j2s-as (j2s-scheme this mode return ctx)
+      this (j2s-type this) 'any ctx))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-jsstring ...                                                 */
@@ -1246,6 +1302,27 @@
 		   (<llong (interval-max range) (bit-lshllong #l1 53))
 		   (eq? (interval-type range) 'integer))
 	      (memq type '(int32 uint32 integer bint))))))
+
+;*---------------------------------------------------------------------*/
+;*    inrange-uint53? ...                                              */
+;*---------------------------------------------------------------------*/
+(define (inrange-uint53? expr)
+   (when (inrange-int53? expr)
+      (with-access::J2SNumber expr (val)
+	  (cond
+	     ((uint32? val) #t)
+	     ((fixnum? val)
+	      (or (and (>=fx val 0) (<fx val (bit-lsh 1 29)))
+		  (let ((lval (fixnum->llong val)))
+		     (and (>=llong lval #l0)
+			  (<llong lval (bit-lshllong #l1 53))))))
+	     (else
+	      (with-access::J2SExpr expr (range type)
+		 (if (interval? range)
+		     (and (>=llong (interval-min range) #l0)
+			  (<llong (interval-max range) (bit-lshllong #l1 53))
+			  (eq? (interval-type range) 'integer))
+		     (memq type '(int32 uint32 integer bint)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    boxed-type? ...                                                  */

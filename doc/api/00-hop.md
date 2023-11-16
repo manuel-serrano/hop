@@ -1,4 +1,4 @@
-${ var doc = require( "hopdoc" ) }
+${ var doc = require("hopdoc") }
 
 Hop
 ===
@@ -23,16 +23,46 @@ The `engine` property is used to distinguish Hop from other JavaScript
 engines when an application is compatible with different systems. With
 Hop, its value is always the string `hop`.
 
+### hop.debug ###
+[:@glyphicon glyphicon-tag parameter]
+
 ### hop.isServer ###
 [:@glyphicon glyphicon-tag parameter]
 The `isServer` property is true for code executing on a server and false
 for code executing on a client.
 
-
 ### hop.isWorker ###
 [:@glyphicon glyphicon-tag parameter]
 The `isWorker` property is true if and only if the expression is evaluated
 within a worker context.
+
+### hop.loadPath ###
+[:@glyphicon glyphicon-tag parameter]  
+The Hop load path for weblets
+
+
+Debugging
+---------
+
+### hop.log(arg0, arg1, ...) ###
+[:@glyphicon glyphicon-tag function]  
+Print the arguments on the standard error port.
+
+### hop.inspect(obj, [message]) ###
+[:@glyphicon glyphicon-tag function]  
+Dump the argument on the standard error port.
+
+### hop.inspectCmap(obj, [message]) ###
+[:@glyphicon glyphicon-tag function]  
+Dump the argument'c cmap on the standard error port.
+
+### hop.typeName(arg0) ###
+[:@glyphicon glyphicon-tag function]  
+Returns the implementation type of `arg0'.
+
+### hop.gc() ###
+[:@glyphicon glyphicon-tag function]  
+Trigger a collection.
 
 
 Server Information
@@ -47,7 +77,7 @@ The port number of the running Hop server. To set the port and
 protocol for the Hop server, see [config](config.html).
 
 ```hopscript
-console.log( "port:", hop.port );
+console.log("port:", hop.port);
 ```
 
 ### hop.ports ###
@@ -56,7 +86,7 @@ Returns all the ports number of the running Hop server.
 
 
 ```hopscript
-console.log( "port:", hop.ports );
+console.log("port:", hop.ports);
 ```
 
 ### hop.hostname ###
@@ -64,7 +94,15 @@ console.log( "port:", hop.ports );
 The host name of the running Hop server.  
 
 ```hopscript
-console.log( "hostname:", hop.hostname );
+console.log("hostname:", hop.hostname);
+```
+
+### hop.hostip ###
+[:@glyphicon glyphicon-tag parameter] 
+The ip address of the running Hop server.  
+
+```hopscript
+console.log("hostname:", hop.hostname);
 ```
 
 ### hop.version ###
@@ -72,15 +110,27 @@ console.log( "hostname:", hop.hostname );
 The Hop version. 
 
 ```hopscript
-console.log( "Hop version:", hop.version );
+console.log("Hop version:", hop.version);
 ```
+
+### hop.buildId ###
+[:@glyphicon glyphicon-tag parameter]  
+The Hop build identifier. 
+
+### hop.buildTag ###
+[:@glyphicon glyphicon-tag parameter]  
+The Hop build tag. 
+
+### hop.buildArch ###
+[:@glyphicon glyphicon-tag parameter]  
+The Hop running architecture. 
 
 ### hop.arch ###
 [:@glyphicon glyphicon-tag parameter]  
 The Hop architecture. 
 
 ```hopscript
-console.log( "Hop arch:", hop.arch );
+console.log("Hop arch:", hop.arch);
 ```
 
 ### hop.loginCookieCryptKey ###
@@ -89,7 +139,7 @@ An unique integer seed to for password encryption. This value is
 shared amongst all Hop workers.
 
 ```hopscript
-console.log( "seed:", hop.loginCookieCryptKey );
+console.log("seed:", hop.loginCookieCryptKey);
 ```
 
 
@@ -101,7 +151,7 @@ Server Configuration
 The Hop HTTP authentication method. Can either be `"basic"` or `"digest"`.
 
 ```hopscript
-console.log( "method:", hop.httpAuthenticationMethod );
+console.log("method:", hop.httpAuthenticationMethod);
 ```
 
 ### hop.useProxy ###
@@ -130,14 +180,14 @@ Responses
 Service result values are transformed into Hop *responses* before being
 sent to the clients. 
 
-### hop.HTTPResponseHop( obj, [option] ) ###
+### hop.HTTPResponseHop(obj, [option]) ###
 [:FOO@glyphicon glyphicon-tag function]
 
 This class is used to respond values to client requests.
 
 ```hopscript
 service getObj() {
-  return hop.HTTPResponseHop( { key: "foo", value: [ 1,2 3 ] } );
+  return hop.HTTPResponseHop({ key: "foo", value: [ 1,2 3 ] });
 ```
 
 ${ <span class="label label-warning">Note:</span> }
@@ -154,14 +204,14 @@ The options list is:
   * `header`: the full response header, an object.
 
 
-### hop.HTTPResponseXml( obj, [option] ) ###
+### hop.HTTPResponseXml(obj, [option]) ###
 [:@glyphicon glyphicon-tag function]
 
 This class is used to deliver XML documents to client. 
 
 ```hopscript
 service getXml() {
-  return hop.HTTPResponseXml( <div>a div</div> );
+  return hop.HTTPResponseXml(<div>a div</div>);
 ```
 
 The options list is:
@@ -184,14 +234,14 @@ is to be associated with the response. Example:
 service foo() {
    return hop.HTTPResponseXml(
      <html>
-       <button onclick=~{console.log( document.cookie )}>show</button>
+       <button onclick=~{console.log(document.cookie)}>show</button>
      </html>,
-     { contentType: "text/html", header: { "set-cookie": "a=b; HttpOnly" } } );
+     { contentType: "text/html", header: { "set-cookie": "a=b; HttpOnly" } });
 }
 ```
 [:@warning]
 
-### hop.HTTPResponseString( string, [option] ) ###
+### hop.HTTPResponseString(string, [option]) ###
 [:@glyphicon glyphicon-tag function]
 
 This class is used to deliver plain character strings to client.
@@ -200,7 +250,7 @@ This class is used to deliver plain character strings to client.
 service getXml() {
   return hop.HTTPResponseString(
     "This resource does not exist here!",
-    { startLine: "HTTP/1.0 404 File not found" } ) 
+    { startLine: "HTTP/1.0 404 File not found" }) 
 ```
 
 The options list is:
@@ -212,22 +262,22 @@ The options list is:
 
 #### Example ####
 
-${ doc.include( doc.BUILDDIR + "/examples/redirection/README.md" ) }
+${ doc.include(doc.BUILDDIR + "/examples/redirection/README.md") }
 
 ${ <span class="label label-info">redirection/redirection.js</span> }
 
 ```hopscript
-${ doc.include( doc.BUILDDIR + "/examples/redirection/redirection.js", 14 ) }
+${ doc.include(doc.BUILDDIR + "/examples/redirection/redirection.js", 14) }
 ```
 
-### hop.HTTPResponseJson( object ) ###
+### hop.HTTPResponseJson(object) ###
 [:@glyphicon glyphicon-tag function]
 
 This convenience function returns an `\[application/json\]` value from a
 JavaScript object. It is the same as:
 
 ```hopscript
-hop.HTTPResponseString( JSON.stringify( obj ), { contentType: 'application/json' } )
+hop.HTTPResponseString(JSON.stringify(obj), { contentType: 'application/json' })
 ```
 
   * `startLine`: a string denoting the HTTP start line.
@@ -236,7 +286,7 @@ hop.HTTPResponseString( JSON.stringify( obj ), { contentType: 'application/json'
   * `header`: the full response header, an object.
 
 
-### hop.HTTPResponseFile( path, [option] ) ###
+### hop.HTTPResponseFile(path, [option]) ###
 [:@glyphicon glyphicon-tag function]
 
 This class is used to respond files to clients. The argument `path` is
@@ -250,12 +300,12 @@ be:
 
 #### Example ####
 
-${ doc.include( doc.BUILDDIR + "/examples/file/README.md" ) }
+${ doc.include(doc.BUILDDIR + "/examples/file/README.md") }
 
 ${ <span class="label label-info">file/file.js</span> }
 
 ```hopscript
-${ doc.include( doc.BUILDDIR + "/examples/file/file.js", 14 ) }
+${ doc.include(doc.BUILDDIR + "/examples/file/file.js", 14) }
 ```
 
 ${ <span class="label label-warning">Note:</span> }
@@ -264,7 +314,7 @@ the same behaviour can also be implemented combining standard `fs` operations
 and `HTTPResponseString` values.
 [:@warning]
 
-### hop.HTTPResponseAuthentication( msg, [request] ) ###
+### hop.HTTPResponseAuthentication(msg, [request]) ###
 [:@glyphicon glyphicon-tag function]
 
 This class is used to respond HTTP `401 Unauthorized` response to Web
@@ -279,20 +329,20 @@ and passing a `startLine` value in the optional argument.
 
 #### Example ####
 
-${ doc.include( doc.BUILDDIR + "/examples/authentication/README.md" ) }
+${ doc.include(doc.BUILDDIR + "/examples/authentication/README.md") }
 
 ${ <span class="label label-info">authentication/authentication.js</span> }
 
 ```hopscript
-${ doc.include( doc.BUILDDIR + "/examples/authentication/authentication.js", 14 ) }
+${ doc.include(doc.BUILDDIR + "/examples/authentication/authentication.js", 14) }
 ```
 
-### hop.HTTPResponseError( obj ) ###
+### hop.HTTPResponseError(obj) ###
 
 Respond an error value to the client, which either invokes the `fail`
 callback of the `post` service call, or raises an exception.
 
-### hop.HTTPResponseAsync( sender, req ) ###
+### hop.HTTPResponseAsync(sender, req) ###
 [:@glyphicon glyphicon-tag function]
 
 Asynchronous responses are used when a service cannot returns instantly
@@ -314,12 +364,12 @@ of the reply to the client.
 
 #### Example ####
 
-${ doc.include( doc.BUILDDIR + "/examples/svc3/README.md" ) }
+${ doc.include(doc.BUILDDIR + "/examples/svc3/README.md") }
 
 ${ <span class="label label-info">svc3/svc3.js</span> }
 
 ```hopscript
-${ doc.include( doc.BUILDDIR + "/examples/svc3/svc3.js", 14 ) }
+${ doc.include(doc.BUILDDIR + "/examples/svc3/svc3.js", 14) }
 ```
 
 ${ <span class="label label-warning">Note:</span> }
@@ -330,10 +380,10 @@ defined above can be implemented as:
 [:@warning]
 
 ```hopscript
-service foo( x ) {
-   console.log( "in foo x=", x );
-   return new Promise( function( resolve, reject ) {
-      bar( x + 1 ).post( resolve );
+service foo(x) {
+   console.log("in foo x=", x);
+   return new Promise(function(resolve, reject) {
+      bar(x + 1).post(resolve);
    }
 }
 ```
@@ -343,7 +393,7 @@ Invoking the `reject` as the same effect of responding a `HHTPResponseError`
 value.
 
 
-### hop.HTTPResponseProxy( obj ) ###
+### hop.HTTPResponseProxy(obj) ###
 [:@glyphicon glyphicon-tag function]
  
 The `hop.HTTPResponseProxy` objects are to be used when a remote resource
@@ -355,12 +405,12 @@ remote resources by the server.
 
 #### Example ####
 
-${ doc.include( doc.BUILDDIR + "/examples/image/README.md" ) }
+${ doc.include(doc.BUILDDIR + "/examples/image/README.md") }
 
 ${ <span class="label label-info">image/image.js</span> }
 
 ```hopscript
-${ doc.include( doc.BUILDDIR + "/examples/image/image.js", 14 ) }
+${ doc.include(doc.BUILDDIR + "/examples/image/image.js", 14) }
 ```
 
 Requests
@@ -370,7 +420,7 @@ Requests
 The `this` value of service invokations is an object that denotes the
 current request.
 
-### hop.isLocalRequest( req ) ###
+### hop.isLocalRequest(req) ###
 [:@glyphicon glyphicon-tag function]
 
 Returns `true` if and only if `req` denotes a locate request, i.e., an
@@ -402,18 +452,18 @@ ${ <span class="label label-warning">Note:</span> }
 Adding filter in the `hoprc.js` file is then recommended.
 [:@warning]
 
-### hop.addRequestFilter( filter ) ###
+### hop.addRequestFilter(filter) ###
 [:@glyphicon glyphicon-tag function]  
-### hop.addRequestFilterFirst( filter ) ###
+### hop.addRequestFilterFirst(filter) ###
 [:@glyphicon glyphicon-tag function]  
-### hop.addRequestFilterLast( filter ) ###
+### hop.addRequestFilterLast(filter) ###
 [:@glyphicon glyphicon-tag function]  
 
-The function `hop.addRequestFilter( filter )` adds a filter, a
+The function `hop.addRequestFilter(filter)` adds a filter, a
 function of one argument, that will be invoked upon every request
 received by the server.  The function `hop.addRequestFilterFirst(
-filter )` adds a filter that is executed before the existing
-filter. The function `hop.addRequestFilterLast( filter )` adds a
+filter)` adds a filter that is executed before the existing
+filter. The function `hop.addRequestFilterLast(filter)` adds a
 filter after the registered filters. All filters are executed in the
 main worker. Their execution should then be short.
 
@@ -426,12 +476,12 @@ filter returns a response.
 
 #### Example ####
 
-${ doc.include( doc.BUILDDIR + "/examples/image/README.md" ) }
+${ doc.include(doc.BUILDDIR + "/examples/image/README.md") }
 
 ${ <span class="label label-info">reqfilter.js</span> }
 
 ```hopscript
-${ doc.include( doc.BUILDDIR + "/doc/api/reqfilter.js" ) }
+${ doc.include(doc.BUILDDIR + "/doc/api/reqfilter.js") }
 ```
 
 
@@ -444,7 +494,7 @@ and to invoke services from server to another server (see
 [service](01-service.html)).
 
 
-### new hop.Server( [ hostname [, port [, authorization [, ssl ] ] ] ) ###
+### new hop.Server([ hostname [, port [, authorization [, ssl ] ] ]) ###
 [:server@glyphicon glyphicon-tag constructor]
 
 Creates a new server object. The arguments are as follows:
@@ -460,7 +510,7 @@ Creates a new server object. The arguments are as follows:
   the two servers uses SSL.
   
 
-### Server.addEventListener( eventName, handler [, options] ) ###
+### Server.addEventListener(eventName, handler [, options]) ###
 [:@glyphicon glyphicon-tag function]
 
 Use this method on the client side to register to the `eventName`
@@ -472,14 +522,14 @@ the client. `handler` takes one argument, the event. The transmitted
 
 When used within a web browser, connection is established with the Hop 
 server serving the current page, the exact syntax is 
-`server.addEventListener( eventName, handler )` where `server` denotes 
+`server.addEventListener(eventName, handler)` where `server` denotes 
 the current server (the runtime system automatically binds the 
 `server` variable to the current server). 
 
 ```hopscript
-server.addEventListener( 'refreshScore', function( event ) {
+server.addEventListener('refreshScore', function(event) {
   var score = event.value;
-  var scoreElement = this.document.getElementById( 'score' );
+  var scoreElement = this.document.getElementById('score');
   // update GUI element with new score
 ```
 
@@ -489,7 +539,7 @@ Two predefined events are automatically sent to clients:
   * `down`: that event is emtted when the connection with the server is lost.
   
 
-### Server.removeEventListener( eventName, handler ) ###
+### Server.removeEventListener(eventName, handler) ###
 [:@glyphicon glyphicon-tag function]
 
 Removes an attached listener.
@@ -507,7 +557,7 @@ clients most often lie behind a NAT router or firewall and would not
 accept a connection from a remote server (forbidding the remote server
 to invoke services running on the client process).
 
-### hop.broadcast( eventName, value ) ###
+### hop.broadcast(eventName, value) ###
 [:@glyphicon glyphicon-tag function]
 
 Generates an event of type `eventName` with payload `value`. The event
@@ -518,7 +568,7 @@ xml-elements. Clients register to specific broadcast events with the
 `addEventListener`method.
 
 ```hopscript
-hop.broadcast( 'refreshScore', 14 );
+hop.broadcast('refreshScore', 14);
 ```
 
 ### hop.signal() ###
@@ -533,18 +583,18 @@ EventMonitor
 
 Event listener monitors are used to react to client connection requests.
 
-### hop.eventListenerMonitor( eventName ) ###
+### hop.eventListenerMonitor(eventName) ###
 [:@glyphicon glyphicon-tag constructor]
 
 Creates a new event monitor on event `eventName`.
 
-### eventListenerMonitor.monitor( eventName ) ###
+### eventListenerMonitor.monitor(eventName) ###
 [:@glyphicon glyphicon-tag function]
 
 Add a new event to be monitored by this monitor.
 
 
-### eventListenerMonitor.addEventListener( event, callback ) ###
+### eventListenerMonitor.addEventListener(event, callback) ###
 [:@glyphicon glyphicon-tag function]
 
 The argument `event` can be `newListener` or `removeListener`:
@@ -559,7 +609,7 @@ Example:
 
 
 ```hopscript
-${ doc.include( doc.BUILDDIR + "/examples/evtmonitor/evtserver.js", 14 ) }
+${ doc.include(doc.BUILDDIR + "/examples/evtmonitor/evtserver.js", 14) }
 ```
 
 
@@ -573,16 +623,16 @@ interoperability notes).
 
 
 ```hopscript
-var hop = require( 'hop' );
-var mymemory = hop.webService( "http://mymemory.translated.net/api/get" );
-mymemory( {q: 'My tailor is rich.', langpair: 'en|fr' } ).post( function( result ) {
-   console.log( result.responseData );
-   }, { fail: function( error ) {
-   console.log( 'failure' );
+var hop = require('hop');
+var mymemory = hop.webService("http://mymemory.translated.net/api/get");
+mymemory({q: 'My tailor is rich.', langpair: 'en|fr' }).post(function(result) {
+   console.log(result.responseData);
+   }, { fail: function(error) {
+   console.log('failure');
 } });
 ```
 
-### hop.webService( url ) ###
+### hop.webService(url) ###
 [:@glyphicon glyphicon-tag function]
 
 Use this method to declare a remote WebService,that can later be
@@ -592,7 +642,7 @@ named arguments you want to send to the WebService. The returned value
 is a WebServiceFrame (very similar in use to Service Frames).
 
 
-### WebServiceFrame.post([ success [, fail-or-options]] ) ###
+### WebServiceFrame.post([ success [, fail-or-options]]) ###
 [:@glyphicon glyphicon-tag function]
 
 Invokes asynchronously the webService. The optional `success`argument,
@@ -621,16 +671,16 @@ The list of valid options are:
 Example:
 
 ```hopscript
-var ws = hop.webService( "http://localhost:1337/api/oauth/token" );
+var ws = hop.webService("http://localhost:1337/api/oauth/token");
 
 ws()
   .postSync(
    { method: "POST",
     header: { "content-type": "application/x-www-form-urlencoded" },
-    body: "grant_type=password&client_id=android&client_secret=SomeRandomCharsAndNumbers&username=myapi&password=abc1234" } );
+    body: "grant_type=password&client_id=android&client_secret=SomeRandomCharsAndNumbers&username=myapi&password=abc1234" });
 ```
 
-### WebServiceFrame.postSync([ success [, fail-or-option]] ) ###
+### WebServiceFrame.postSync([ success [, fail-or-option]]) ###
 [:@glyphicon glyphicon-tag function]
 
 The synchronous version of `post`. Returns the value returned by the
@@ -667,7 +717,7 @@ The compilation policy. The possible values are:
 
 The number of pending background compilations.
 
-### hop.compilerDriver.addEventListener( eventName, handler [, options] ) ###
+### hop.compilerDriver.addEventListener(eventName, handler [, options]) ###
 [:@glyphicon glyphicon-tag function]
 
 This method is used to add an listener to the compiler driver. The known
@@ -682,7 +732,7 @@ events are
     fires, when the listener is added and when there is no pending
     compilation.
 
-### hop.compilerDrive.removeEventListener( eventName, handler ) ###
+### hop.compilerDrive.removeEventListener(eventName, handler) ###
 [:@glyphicon glyphicon-tag function]
 
 Removes an attached listener.
@@ -691,7 +741,7 @@ Removes an attached listener.
 Miscellaneous
 -------------
 
-### hop.charsetConvert( text, source, target ) ###
+### hop.charsetConvert(text, source, target) ###
 [:@glyphicon glyphicon-tag function]
 
 Converts the `text` string from charset `source` into charset `target`.
@@ -699,46 +749,46 @@ Converts the `text` string from charset `source` into charset `target`.
 ${ <span class="label label-info">url/url.js</span> }
 
 ```hopscript
-${ doc.include( doc.BUILDDIR + "/examples/url/url.js", 14 ) }
+${ doc.include(doc.BUILDDIR + "/examples/url/url.js", 14) }
 ```
 
-### hop.decodeHTML( string ) ###
+### hop.decodeHTML(string) ###
 [:@glyphicon glyphicon-tag function]
 
 Decodes an encoded HTML string.
 
 ```hopscript
-hop.decodeHTML( 'jean &lt;dupont&gt;' );
+hop.decodeHTML('jean &lt;dupont&gt;');
 // "jean <dupont>"
 ```
 
-### hop.decodeURIComponent( string ) ###
+### hop.decodeURIComponent(string) ###
 [:@glyphicon glyphicon-tag function]
 
 Decodes an encoded URI component.
 
 ```hopscript
-hop.encodeURIComponent( 'jean dupont' );
+hop.encodeURIComponent('jean dupont');
 // "jean%20dupont"
 ```
 
-### hop.encodeHTML( string ) ###
+### hop.encodeHTML(string) ###
 [:@glyphicon glyphicon-tag function]
 
 Encodes an HTML string into a textual string.
 
 ```hopscript
-hop.encodeHTML( 'jean <dupont>' );
+hop.encodeHTML('jean <dupont>');
 // "jean &lt;upont&gt;"
 ```
 
-### hop.encodeURIComponent( string ) ###
+### hop.encodeURIComponent(string) ###
 [:@glyphicon glyphicon-tag function]
 
 Encodes a string into a valid URI component.
 
 ```hopscript
-hop.encodeURIComponent( 'jean dupont' );
+hop.encodeURIComponent('jean dupont');
 // "jean%20dupont"
 ```
 
@@ -752,38 +802,38 @@ This function is a constructor to create native (Bigloo) objects.
 
 This function is a constructor to create native (Bigloo) objects. 
 
-### hop.md5sum( string ) ###
+### hop.md5sum(string) ###
 [:@glyphicon glyphicon-tag function]
 
 Computes the md5sum of a string.
 
 ```hopscript
-hop.md5sum( 'jean dupont' );
+hop.md5sum('jean dupont');
 // "b38bed581de7b86dd6fc8355c73cebf2"
 ```
 
-### hop.sha1sum( string ) ###
+### hop.sha1sum(string) ###
 [:@glyphicon glyphicon-tag function]
 
 Computes the sha1 sum of a string.
 
 ```hopscript
-hop.sha1sum( 'jean dupont' );
+hop.sha1sum('jean dupont');
 // "7461340811509ec24dd1c1a32504a01e24423768"
 ```
 
-### hop.base64encode( string ) ###
+### hop.base64encode(string) ###
 [:@glyphicon glyphicon-tag function]
 
 Encodes a string into base64.
 
-### hop.base64decode( string ) ###
+### hop.base64decode(string) ###
 [:@glyphicon glyphicon-tag function]
 
 Decodes a base64 string.
 
 
-### hop.compileXML( node [, ofile] [, backend] ) ###
+### hop.compileXML(node [, ofile] [, backend]) ###
 [:@glyphicon glyphicon-tag function]
 
 Compile a XML `node` into HTML. If no output file is specified,
@@ -792,8 +842,8 @@ optional `backend` argument is a string denoting the HTML version to be
 used for the compilation. 
 
 ```hopscript
-var node = <html><div onclick=~{alert( "clicked" )}>click me</div></html>
-console.log( hop.compileXML( node, false, "html5" ) );
+var node = <html><div onclick=~{alert("clicked")}>click me</div></html>
+console.log(hop.compileXML(node, false, "html5"));
 ```
 
 ${ <span class="label label-warning">Note:</span> }
@@ -810,8 +860,8 @@ The following properties lead to sub modules that can be loaded using
 the `require` function.
 
 ```hopscript
-var hop = require( 'hop' );
-var config = require( hop.config );
+var hop = require('hop');
+var config = require(hop.config);
 ```
 
 ### hop.config ###
@@ -823,6 +873,11 @@ Hop configutation. See [config](config.html).
 [:@glyphicon glyphicon-tag parameter]
 
 Efficient CSV parser. See [csv](csv.html).
+
+### hop.exit ###
+[:@glyphicon glyphicon-tag parameter]
+
+EXIF info decoding. See [exit](exif.html).
 
 ### hop.feed ###
 [:@glyphicon glyphicon-tag parameter]
@@ -869,6 +924,11 @@ Minimalist Openpgp binding. See [openpgp](openpgp.html).
 [:@glyphicon glyphicon-tag parameter]
 
 XML widget. See [spage](spage.html).
+
+### hop.sqlite ###
+[:@glyphicon glyphicon-tag parameter]
+
+Sqlite binding. See [sqlite](sqlite.html).
 
 ### hop.syslog ###
 [:@glyphicon glyphicon-tag parameter]

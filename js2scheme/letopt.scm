@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Sun Feb 27 12:34:18 2022 (serrano)                */
-;*    Copyright   :  2015-22 Manuel Serrano                            */
+;*    Last change :  Tue Jun 27 13:03:53 2023 (serrano)                */
+;*    Copyright   :  2015-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Let optimisation                                                 */
 ;*    -------------------------------------------------------------    */
@@ -764,15 +764,17 @@
 			     (else
 			      ;; do not optimize this variable and disable
 			      ;; the variables it uses
-			      (let ((decl (init-decl init))
-				    (used (get-used-decls rhs
-					     (append decls vars)))
-				    (disabled (get-used-deps used deps)))
-				 (liip (cdr inits)
-				    (remove-disabled! decls disabled)
-				    deps
-				    (cons (car n) res)
-				    #f))))))))))
+			      (with-access::J2SInit init (loc)
+				 (let ((decl (init-decl init))
+				       (used (get-used-decls rhs
+						(append decls vars)))
+				       (disabled (get-used-deps used deps))
+				       (stmt (J2SStmtExpr init)))
+				    (liip (cdr inits)
+				       (remove-disabled! decls disabled)
+				       deps
+				       (cons stmt res)
+				       #f)))))))))))
 	 ((null? (cdr n))
 	  ;; this is the last stmt which happens not to be a binding
 	  (reverse! (cons (car n) res)))
@@ -1010,6 +1012,27 @@
 	 ((isa? node J2SRef)
 	  (with-access::J2SRef node (decl)
 	     (memq decl env)))))
+
+   (define (builtin-prototype? obj clazz)
+      (when (isa? obj J2SAccess)
+	 (with-access::J2SAccess obj (obj field)
+	    (when (isa? obj J2SRef)
+	       (with-access::J2SRef obj (decl)
+		  (when (isa? decl J2SDeclExtern)
+		     (with-access::J2SDeclExtern decl (id)
+			(when (and (eq? id clazz) (decl-ronly? decl))
+			   (when (isa? field J2SString)
+			      (with-access::J2SString field (val)
+				 (string=? val "prototype")))))))))))
+	 
+   (define (builtin-prototype-method? node env::pair-nil)
+      (when (isa? node J2SAccess)
+	 (with-access::J2SAccess node (obj field)
+	    (when (isa? field J2SString)
+	       (with-access::J2SString field (val)
+		  (when (string=? val "slice")
+		     ;; needed for the argument optimization (see arguments.scm)
+		     (builtin-prototype? obj 'Array)))))))
    
    (define (letopt-literals literals)
       (when (pair? literals)
@@ -1054,7 +1077,8 @@
 			  (with-access::J2SDecl decl (binder scope %info)
 			     (if (and (eq? binder 'var)
 				      (memq scope '(%scope tls)))
-				 (if (literal? rhs env)
+				 (if (or (literal? rhs env)
+					 (builtin-prototype-method? rhs env))
 				     (let ((init expr))
 					(set! expr (J2SUndefined))
 					(loop (cdr n)

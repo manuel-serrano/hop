@@ -4,8 +4,8 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 13 14:06:56 2015                          */
-#*    Last change :  Thu Nov  3 08:07:30 2022 (serrano)                */
-#*    Copyright   :  2015-22 Manuel Serrano                            */
+#*    Last change :  Sun May 14 09:44:45 2023 (serrano)                */
+#*    Copyright   :  2015-23 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Nodejs compatible script engine                                  */
 #*=====================================================================*/
@@ -18,8 +18,9 @@ export DYLD_LIBRARY_PATH
 
 # default arguments
 server=--no-server
-debug=
+opt=
 rest=
+profexec=exec
 
 # command parsing
 while : ; do
@@ -29,7 +30,7 @@ while : ; do
 
     -p|--http-port)
       shift
-      server=-p $1
+      server="-p $1"
       break;;
 
     -h|--help)
@@ -40,7 +41,17 @@ while : ; do
       break;;
 
     -g)
-      debug=-g;;
+      opt=-g;;
+
+    -O)
+      opt="--so-policy aot --hopc-flags \"-Ox\"";;
+
+    --profile-mem)
+      profexec=hopmemrun
+      opt="--profile-mem $opt";;
+
+    --clear-cache)
+      opt="--clear-cache $opt";;
 
     *)
       rest="$rest $1";;
@@ -50,7 +61,7 @@ done
       
 
 if [ "$rest " = " " ]; then
-  exec @HOP@ $server $debug --repljs
+  $profexec @HOP@ $server $opt --repljs
 else
-  exec @HOP@ $server $debug -- $rest
+  $profexec @HOP@ $server $opt -- $rest
 fi

@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Jun 30 17:54:33 2015                          */
-/*    Last change :  Wed Jul  7 08:06:32 2021 (serrano)                */
-/*    Copyright   :  2015-21 Manuel Serrano                            */
+/*    Last change :  Thu Mar 16 07:31:05 2023 (serrano)                */
+/*    Copyright   :  2015-23 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript bigint                                        */
 /*=====================================================================*/
@@ -21,6 +21,7 @@ assert.equal(0n.toString(), "0", "toString");
 assert.ok(0n == 0, "==");
 assert.ok(1n == 1, "==");
 assert.ok(0xfn == 15, "==");
+assert.ok(-(-(2n ** 63n)) === (2n ** 63n), "-n");
 
 /*---------------------------------------------------------------------*/
 /*    mdn                                                              */
@@ -229,6 +230,7 @@ function kangaxe() {
    var buffer = new ArrayBuffer(64);
    var view = new BigInt64Array(buffer);
    view[0] = 0x8000000000000000n;
+   console.log("v0=", view[0]);
    return view[0] === -0x8000000000000000n;
 }
 

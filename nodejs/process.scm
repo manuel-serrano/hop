@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Fri Nov 11 08:39:24 2022 (serrano)                */
-;*    Copyright   :  2013-22 Manuel Serrano                            */
+;*    Last change :  Fri Oct 13 15:32:29 2023 (serrano)                */
+;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
 ;*=====================================================================*/
@@ -25,8 +25,7 @@
 
    (include "nodejs.sch"
 	    "nodejs_types.sch"
-	    "nodejs_debug.sch"
-	    "nodejs_async.sch")
+	    "nodejs_debug.sch")
 
    (import __nodejs__hop
 	   __nodejs__fs
@@ -57,12 +56,15 @@
 	      (buffer-binding (default #f))
 	      (using-domains::bool (default #f))
 	      (exiting::bool (default #f))
-	      (tick-callback (default #f)))
+	      (tick-callback (default #f))
+	      (slab read-only)
+	      (alloc::procedure read-only))
 
 	   (class JsHandle::JsObject
 	      (handle (default #f))
 	      (reqs::pair-nil (default '()))
-	      (flags::int (default 0))))
+	      (flags::int (default 0))
+	      (reader::obj (default #f))))
 
    (export (nodejs-compiler-options-add! ::keyword ::obj)
 	   (nodejs-process ::WorkerHopThread ::JsGlobalObject)
@@ -103,6 +105,9 @@
 	 (set! %process (new-process-object %worker %this))
 	 ;; bind process into %this
 	 (js-put! %this (& "process") %process #t %this)
+	 ;; hop binding
+	 (let ((hop (nodejs-require-core "hop" %worker %this)))
+	    (js-put! %process (& "hop") hop #f %this))
 	 ;; bind the process fatal error handler
 	 (js-worker-add-handler! %worker
 	    (js-make-function %this
@@ -143,8 +148,8 @@
 			 (if (eq? (car c) 'SIGTERM)
 			     (hop-sigterm-handler-set!
 				(lambda (n)
-				   (js-worker-push-thunk! %worker "SIGTERM"
-				      (lambda ()
+				   (js-worker-push! %worker "SIGTERM"
+				      (lambda (%this)
 					 (js-call0 %this proc this)))
 				   '(js-worker-tick %worker)))
 			     (signal (cdr c)
@@ -248,10 +253,14 @@
 ;*---------------------------------------------------------------------*/
 (define (new-process-object %worker::WorkerHopThread %this)
    (with-access::JsGlobalObject %this (js-object)
-      (let ((proc (instantiateJsProcess
-		     (cmap (js-make-jsconstructmap))
-		     (__proto__ (js-new %this js-object))
-		     (elements ($create-vector 64)))))
+      (let* ((slowbuffer (make-slowbuffer %this))
+	     (slab (make-slab-allocator %this slowbuffer))
+	     (proc (instantiateJsProcess
+		      (cmap (js-make-jsconstructmap))
+		      (__proto__ (js-new %this js-object))
+		      (alloc (lambda (obj size) (slab-allocate slab obj size)))
+		      (slab slab)
+		      (elements ($create-vector 64)))))
 
 	 (define (not-implemented name)
 	    (js-put! proc (js-ascii-name->jsstring name)
@@ -264,12 +273,6 @@
 
 	 (define prog-start-time::uint64 (nodejs-uptime %worker))
 
-	 (define slowbuffer
-	    (make-slowbuffer %this))
-
-	 (define slab
-	    (make-slab-allocator %this slowbuffer))
-
 	 (define (display-value o port)
 	    (if (isa? o JsTypedArray)
 		(with-access::JsTypedArray o (%data byteoffset length)
@@ -281,7 +284,7 @@
 	    (flush-output-port port))
 
 	 (define (domain-call this)
-	    (lambda (callback)
+	    (lambda (callback %this)
 	       ;; this is a transcription of the C++ nodejs MakeDomainCall
 	       ;; function (see node.cc)
 	       (let ((domainv (js-get this (& "domain") %this)))
@@ -290,17 +293,17 @@
 			 (unless (js-get domainv (& "_disposed") %this)
 			    (let ((enter (js-get domainv (& "enter") %this)))
 			       (js-call0 %this enter domainv)))
-			 (let ((ret (callback)))
+			 (let ((ret (callback %this)))
 			    (let ((exit (js-get domainv (& "exit") %this)))
 			       (js-call0 %this exit domainv)
 			       ret)))
-		      (callback)))))
+		      (callback %this)))))
 
 	 (define need-tick-cb #f)
 	 
 	 (define tick-from-spinner #f)
 
-	 (define (spinner status)
+	 (define (spinner tick-spinner)
 	    ;; see Spin, node.cc:184
 	    (when need-tick-cb
 	       (set! need-tick-cb #f)
@@ -308,10 +311,10 @@
 	       (unless tick-from-spinner
 		  (set! tick-from-spinner
 		     (js-get proc (& "_tickFromSpinner") %this)))
-	       (with-access::WorkerHopThread %worker (call state)
+	       (with-access::WorkerHopThread %worker (state)
 		  (if (eq? state 'error)
-		      (js-worker-push-thunk! %worker "spin"
-			 (lambda ()
+		      (js-worker-push! %worker "spin"
+			 (lambda (%this)
 			    (js-call0 %this tick-from-spinner (js-undefined))))
 		      (js-call0 %this tick-from-spinner (js-undefined))))))
 
@@ -320,8 +323,9 @@
 
 	 (define (need-tick-callback this)
 	    ;; see NeedTickCallback, node.cc:215
-	    (set! need-tick-cb #t)
-	    (nodejs-idle-start %worker %this tick-spinner))
+	    (unless need-tick-cb
+	       (set! need-tick-cb #t)
+	       (nodejs-idle-start %worker %this tick-spinner)))
 
 	 (define constant-binding #f)
 	 (define fs-binding #f)
@@ -452,6 +456,12 @@
 		 (zlib: . "-"))
 	       %this)
 	    #f %this)
+
+	 (js-put! proc (& "release")
+	    (js-alist->jsobject
+	       `((name: . "hop"))
+	       %this)
+	    #f %this)
 	 
 	 (js-put! proc (& "exit")
 	    (js-make-function %this
@@ -486,13 +496,13 @@
 			    (process-buffer %this slowbuffer)))
 			((string=? mod "tcp_wrap")
 			 (binding tcp-binding
-			    (process-tcp-wrap %worker %this proc slab slowbuffer)))
+			    (process-tcp-wrap %worker %this proc)))
 			((string=? mod "udp_wrap")
 			 (binding udp-binding
-			    (process-udp-wrap %worker %this proc slab slowbuffer)))
+			    (process-udp-wrap %worker %this proc)))
 			((string=? mod "pipe_wrap")
 			 (binding pipe-binding
-			    (process-pipe-wrap %worker %this proc slab)))
+			    (process-pipe-wrap %worker %this proc)))
 			((string=? mod "evals")
 			 (binding eval-binding
 			    (process-evals %worker %this)))
@@ -519,7 +529,7 @@
 			    (process-os %this)))
 			((string=? mod "tty_wrap")
 			 (binding tty-binding
-			    (process-tty-wrap %worker %this proc slab slowbuffer)))
+			    (process-tty-wrap %worker %this proc)))
 			((string=? mod "fs_event_wrap")
 			 (binding fs-event-binding
 			    (process-fs-event-wrap %worker %this proc)))
@@ -633,12 +643,13 @@
 	 (js-put! proc (& "_usingDomains")
 	    (js-make-function %this
 	       (lambda (this)
+		  (js-raise-type-error %this "_usingDomains is deprecated" (js-undefined))
 		  (with-access::JsProcess proc (using-domains tick-callback)
 		     (unless using-domains
 			(set! using-domains #t)
-			(with-access::WorkerHopThread %worker (call async)
+			(with-access::WorkerHopThread %worker (%call async)
 			   (set! async #t)
-			   (set! call (domain-call this)))
+			   (set! %call (domain-call this)))
 			(let ((tdc (js-get this (& "_tickDomainCallback") %this))
 			      (ndt (js-get this (& "_nextDomainTick") %this)))
 			   (unless (js-procedure? tdc)
@@ -884,19 +895,26 @@
 	 (unless fs-event-proto
 	    (set! fs-event-proto (create-fs-event-proto)))
 	 fs-event-proto))
+
+   (define fs-event-cmap #f)
    
-   (define (fs-event this)
+   (define (fs-event-ctor this)
+      (unless fs-event-cmap
+	 (set! fs-event-cmap (js-make-jsconstructmap :ctor fs-event)))
       (instantiateJsHandle
 	 (handle (nodejs-make-fs-event %worker))
 	 (__proto__ (get-fs-event-proto process))
-	 (cmap (js-make-jsconstructmap))))
+	 (cmap fs-event-cmap)))
+
+   (define fs-event
+      (js-make-function %this fs-event
+	 (js-function-arity 0 0)
+	 (js-function-info :name "FSEvent" :len 0)
+	 :alloc (lambda (%this o) #unspecified)))
    
    (with-access::JsGlobalObject %this (js-object)
       (js-alist->jsobject
-	 `((FSEvent . ,(js-make-function %this fs-event
-			  (js-function-arity 0 0)
-			  (js-function-info :name "FSEvent" :len 0)
-			  :alloc (lambda (%this o) #unspecified))))
+	 `((FSEvent . ,fs-event))
 	 %this)))
 
 ;*---------------------------------------------------------------------*/
@@ -1186,9 +1204,9 @@
       (unless (js-totest (js-get proc (& "_exiting") %this))
 	 (js-put! proc (& "_exiting") #t #f %this)
 	 (let ((emit (js-get proc (& "emit") %this)))
-	    (js-call2 %this emit proc (& "exit") r))
-	 (nodejs-compile-abort-all!)
-	 (exit r))))
+	    (js-call2 %this emit proc (& "exit") r)))
+      (nodejs-compile-abort-all!)
+      (exit r)))
 
 ;*---------------------------------------------------------------------*/
 ;*    &end!                                                            */

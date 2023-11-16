@@ -108,6 +108,20 @@ function makeCallback(cb) {
   };
 }
 
+// MS 15feb2023, from node v16.13.0
+function makeHopCallback(cb) {
+  if (typeof cb !== 'function') {
+    return rethrow();
+  }
+   
+  return cb;
+}
+
+// MS 15feb2023, from node v16.13.0
+function maybeReaddirCallback(cb) {
+  return cb;
+}
+
 function assertEncoding(encoding) {
   if (encoding && !Buffer.isEncoding(encoding)) {
     throw new Error('Unknown encoding: ' + encoding);
@@ -180,7 +194,10 @@ fs.existsSync = function(path) {
 };
 
 fs.readFile = function(path, options, callback_) {
-  var callback = maybeCallback(arguments[arguments.length - 1]);
+  // get rid of arguments
+  var callback = makeHopCallback(typeof options === "function" 
+      ? options : callback_);
+  // var callback = maybeCallback(arguments[arguments.length - 1]);
 
   if (typeof options === 'function' || !options) {
     options = { encoding: null, flag: 'r' };
@@ -401,7 +418,7 @@ Object.defineProperty(exports, '_stringToFlags', {
 // list to make the arguments clear.
 
 fs.close = function(fd, callback) {
-  binding.close(fd, makeCallback(callback));
+  binding.close(fd, makeHopCallback(callback));
 };
 
 fs.closeSync = function(fd) {
@@ -423,8 +440,11 @@ function modeNum(m, def) {
   }
 }
 
+// MS 17deb2023, getting rid of arguments
 fs.open = function(path, flags, mode, callback) {
-  callback = makeCallback(arguments[arguments.length - 1]);
+  callback = makeHopCallback(typeof flags === "function" 
+     ? flags
+     : (typeof mode === "function" ? mode : callback));
   mode = modeNum(mode, 438 /*=0666*/);
 
   if (!nullCheck(path, callback)) return;
@@ -433,6 +453,17 @@ fs.open = function(path, flags, mode, callback) {
                mode,
                callback);
 };
+/* fs.open = function(path, flags, mode, callback) {                   */
+/*   callback = makeCallback(arguments[arguments.length - 1]);         */
+/*   mode = modeNum(mode, 438 {*=0666*});                              */
+/*                                                                     */
+/*   if (!nullCheck(path, callback)) return;                           */
+/*   binding.open(pathModule._makeLong(path),                          */
+/*                stringToFlags(flags),                                */
+/*                mode,                                                */
+/*                callback);                                           */
+/* };                                                                  */
+
 
 fs.openSync = function(path, flags, mode) {
   mode = modeNum(mode, 438 /*=0666*/);
@@ -440,19 +471,16 @@ fs.openSync = function(path, flags, mode) {
   return binding.open(pathModule._makeLong(path), stringToFlags(flags), mode);
 };
 
+// MS 17deb2023, getting rid of arguments
 fs.read = function(fd, buffer, offset, length, position, callback) {
   if (!Buffer.isBuffer(buffer)) {
-    // legacy string interface (fd, length, position, encoding, callback)
-    var cb = arguments[4],
-        encoding = arguments[3];
-
+    const cb = position, encoding = length;
     assertEncoding(encoding);
 
-    position = arguments[2];
-    length = arguments[1];
+    position = offset;
+    length = buffer;
     buffer = new Buffer(length);
     offset = 0;
-
     callback = function(err, bytesRead) {
       if (!cb) return;
 
@@ -462,25 +490,53 @@ fs.read = function(fd, buffer, offset, length, position, callback) {
     };
   }
 
-  function wrapper(err, bytesRead) {
-    // Retain a reference to buffer so that it can't be GC'ed too soon.
-    callback && callback(err, bytesRead || 0, buffer);
-  }
-
-  binding.read(fd, buffer, offset, length, position, wrapper);
+  binding.read(fd, buffer, offset, length, position, callback);
 };
+/* fs.read = function(fd, buffer, offset, length, position, callback) { */
+/*   if (!Buffer.isBuffer(buffer)) {                                   */
+/*     // legacy string interface (fd, length, position, encoding, callback) */
+/*     var cb = arguments[4],                                          */
+/*         encoding = arguments[3];                                    */
+/*                                                                     */
+/*     assertEncoding(encoding);                                       */
+/*                                                                     */
+/*     position = arguments[2];                                        */
+/*     length = arguments[1];                                          */
+/*     buffer = new Buffer(length);                                    */
+/*     offset = 0;                                                     */
+/*                                                                     */
+/*     callback = function(err, bytesRead) {                           */
+/*       if (!cb) return;                                              */
+/*                                                                     */
+/*       var str = (bytesRead > 0) ? buffer.toString(encoding, 0, bytesRead) : ''; */
+/*                                                                     */
+/*       (cb)(err, str, bytesRead);                                    */
+/*     };                                                              */
+/*   }                                                                 */
+/*                                                                     */
+/*   function wrapper(err, bytesRead) {                                */
+/*     // Retain a reference to buffer so that it can't be GC'ed too soon. */
+/*     callback && callback(err, bytesRead || 0, buffer);              */
+/*   }                                                                 */
+/*                                                                     */
+/*   binding.read(fd, buffer, offset, length, position, wrapper);      */
+/* };                                                                  */
 
+// MS 17feb2023, because of the conservation collector, no need to 
+// use two callbacks as in the genuine code
+
+// MS 17deb2023, getting rid of arguments
 fs.readSync = function(fd, buffer, offset, length, position) {
   var legacy = false;
   if (!Buffer.isBuffer(buffer)) {
     // legacy string interface (fd, length, position, encoding, callback)
     legacy = true;
-    var encoding = arguments[3];
+    var encoding = length;
 
     assertEncoding(encoding);
 
-    position = arguments[2];
-    length = arguments[1];
+    position = offset;
+    length = buffer;
     buffer = new Buffer(length);
 
     offset = 0;
@@ -495,14 +551,40 @@ fs.readSync = function(fd, buffer, offset, length, position) {
   return [str, r];
 };
 
+/* fs.readSync = function(fd, buffer, offset, length, position) {      */
+/*   var legacy = false;                                               */
+/*   if (!Buffer.isBuffer(buffer)) {                                   */
+/*     // legacy string interface (fd, length, position, encoding, callback) */
+/*     legacy = true;                                                  */
+/*     var encoding = arguments[3];                                    */
+/*                                                                     */
+/*     assertEncoding(encoding);                                       */
+/*                                                                     */
+/*     position = arguments[2];                                        */
+/*     length = arguments[1];                                          */
+/*     buffer = new Buffer(length);                                    */
+/*                                                                     */
+/*     offset = 0;                                                     */
+/*   }                                                                 */
+/*                                                                     */
+/*   var r = binding.read(fd, buffer, offset, length, position);       */
+/*   if (!legacy) {                                                    */
+/*     return r;                                                       */
+/*   }                                                                 */
+/*                                                                     */
+/*   var str = (r > 0) ? buffer.toString(encoding, 0, r) : '';         */
+/*   return [str, r];                                                  */
+/* };                                                                  */
+
+// MS 7mar2023, getting rid of arguments
 fs.write = function(fd, buffer, offset, length, position, callback) {
   if (!Buffer.isBuffer(buffer)) {
     // legacy string interface (fd, data, position, encoding, callback)
-    callback = arguments[4];
-    position = arguments[2];
-    assertEncoding(arguments[3]);
+    callback = position;
+    position = offset;
+    assertEncoding(length);
 
-    buffer = new Buffer('' + arguments[1], arguments[3]);
+    buffer = new Buffer(typeof buffer === "string" ? buffer : '' + buffer, length);
     offset = 0;
     length = buffer.length;
   }
@@ -518,21 +600,52 @@ fs.write = function(fd, buffer, offset, length, position, callback) {
 
   callback = maybeCallback(callback);
 
-  function wrapper(err, written) {
-    // Retain a reference to buffer so that it can't be GC'ed too soon.
-    callback(err, written || 0, buffer);
-  }
-
-  binding.write(fd, buffer, offset, length, position, wrapper);
+/*   function wrapper(err, written) {                                  */
+/*     // Retain a reference to buffer so that it can't be GC'ed too soon. */
+/*     callback(err, written || 0, buffer);                            */
+/*   }                                                                 */
+  binding.write(fd, buffer, offset, length, position, callback);
 };
 
+/* fs.write = function(fd, buffer, offset, length, position, callback) { */
+/*   if (!Buffer.isBuffer(buffer)) {                                   */
+/*     // legacy string interface (fd, data, position, encoding, callback) */
+/*     callback = arguments[4];                                        */
+/*     position = arguments[2];                                        */
+/*     assertEncoding(arguments[3]);                                   */
+/*                                                                     */
+/*     buffer = new Buffer('' + arguments[1], arguments[3]);           */
+/*     offset = 0;                                                     */
+/*     length = buffer.length;                                         */
+/*   }                                                                 */
+/*                                                                     */
+/*   if (!length) {                                                    */
+/*     if (typeof callback == 'function') {                            */
+/*       process.nextTick(function() {                                 */
+/*         callback(undefined, 0);                                     */
+/*       });                                                           */
+/*     }                                                               */
+/*     return;                                                         */
+/*   }                                                                 */
+/*                                                                     */
+/*   callback = maybeCallback(callback);                               */
+/*                                                                     */
+/*   function wrapper(err, written) {                                  */
+/*     // Retain a reference to buffer so that it can't be GC'ed too soon. */
+/*     callback(err, written || 0, buffer);                            */
+/*   }                                                                 */
+/*                                                                     */
+/*   binding.write(fd, buffer, offset, length, position, wrapper);     */
+/* };                                                                  */
+
+// MS 7mar2023, getting rid of arguments
 fs.writeSync = function(fd, buffer, offset, length, position) {
   if (!Buffer.isBuffer(buffer)) {
     // legacy string interface (fd, data, position, encoding)
-    position = arguments[2];
-    assertEncoding(arguments[3]);
+    position = offset;
+    assertEncoding(length);
 
-    buffer = new Buffer('' + arguments[1], arguments[3]);
+    buffer = new Buffer(typeof buffer === "string" ? buffer : '' + buffer, length);
     offset = 0;
     length = buffer.length;
   }
@@ -540,6 +653,21 @@ fs.writeSync = function(fd, buffer, offset, length, position) {
 
   return binding.write(fd, buffer, offset, length, position);
 };
+
+/* fs.writeSync = function(fd, buffer, offset, length, position) {     */
+/*   if (!Buffer.isBuffer(buffer)) {                                   */
+/*     // legacy string interface (fd, data, position, encoding)       */
+/*     position = arguments[2];                                        */
+/*     assertEncoding(arguments[3]);                                   */
+/*                                                                     */
+/*     buffer = new Buffer('' + arguments[1], arguments[3]);           */
+/*     offset = 0;                                                     */
+/*     length = buffer.length;                                         */
+/*   }                                                                 */
+/*   if (!length) return 0;                                            */
+/*                                                                     */
+/*   return binding.write(fd, buffer, offset, length, position);       */
+/* };                                                                  */
 
 fs.rename = function(oldPath, newPath, callback) {
   callback = makeCallback(callback);
@@ -616,7 +744,7 @@ fs.ftruncateSync = function(fd, len) {
 
 // ms (26 nov 2022)
 fs.rmdir = function(path, opts, callback) {
-  callback = makeCallback(callback);
+  callback = makeHopCallback(callback);
   if (!nullCheck(path, callback)) return;
   if (callback) {
      binding.rmdir(pathModule._makeLong(path), opts.recursive === true, opts.force === true, callback);
@@ -670,29 +798,41 @@ fs.mkdirSync = function(path, mode) {
      		       typeof mode === 'object' ? mode.recursive : false);
 };
 
-fs.readdir = function(path, callback) {
-  callback = makeCallback(callback);
+// ms (18 Jan 2023) to accomodate recent node api 
+fs.readdir = function(path, options, callback) {
+  callback = maybeReaddirCallback(typeof options === 'function' ? options : callback);
   if (!nullCheck(path, callback)) return;
-  binding.readdir(pathModule._makeLong(path), callback);
+  
+  if (typeof options === 'function' || !options) {
+    options = { encoding: "utf8" };
+  } else if (typeof options === 'string') {
+    options = { encoding: options };
+  } else if (!options) {
+    options = { encoding: "utf8" };
+  } else if (typeof options !== 'object') {
+    throw new TypeError('Bad arguments');
+  }
+  
+  binding.readdir(pathModule._makeLong(path), options, callback);
 };
 
-fs.readdirSync = function(path) {
+fs.readdirSync = function(path, options) {
   nullCheck(path);
-  return binding.readdir(pathModule._makeLong(path));
+  return binding.readdir(pathModule._makeLong(path), options);
 };
 
 fs.fstat = function(fd, callback) {
-  binding.fstat(fd, makeCallback(callback));
+  binding.fstat(fd, makeHopCallback(callback));
 };
 
 fs.lstat = function(path, callback) {
-  callback = makeCallback(callback);
+  callback = makeHopCallback(callback);
   if (!nullCheck(path, callback)) return;
   binding.lstat(pathModule._makeLong(path), callback);
 };
 
 fs.stat = function(path, callback) {
-  callback = makeCallback(callback);
+  callback = makeHopCallback(callback);
   if (!nullCheck(path, callback)) return;
   binding.stat(pathModule._makeLong(path), callback);
 };
@@ -929,32 +1069,63 @@ fs.futimesSync = function(fd, atime, mtime) {
 };
 
 function writeAll(fd, buffer, offset, length, position, callback) {
-  callback = maybeCallback(arguments[arguments.length - 1]);
+  //callback = maybeCallback(arguments[arguments.length - 1]);
 
-  // write(fd, buffer, offset, length, position, callback)
-  fs.write(fd, buffer, offset, length, position, function(writeErr, written) {
-    if (writeErr) {
-      fs.close(fd, function() {
-        if (callback) callback(writeErr);
-      });
-    } else {
-      if (written === length) {
-        fs.close(fd, callback);
+   // write(fd, buffer, offset, length, position, callback)
+   function cb(writeErr, written) {
+      if (writeErr) {
+	 fs.close(fd, function() {
+            if (callback) callback(writeErr);
+	 });
       } else {
-        offset += written;
-        length -= written;
-        position += written;
-        writeAll(fd, buffer, offset, length, position, callback);
+	 if (written === length) {
+            fs.close(fd, callback);
+	 } else {
+            offset += written;
+            length -= written;
+            position += written;
+            writeAll(fd, buffer, offset, length, position, callback);
+	 }
       }
-    }
-  });
+   }
+
+   function loop(fd, buffer, offset, length, position, callback) {
+      fs.write(fd, buffer, offset, length, position, cb);
+   }
+
+   loop(fd, buffer, offset, length, position, callback);
 }
 
+/* function writeAll(fd, buffer, offset, length, position, callback) { */
+/*   //callback = maybeCallback(arguments[arguments.length - 1]);      */
+/*                                                                     */
+/*   // write(fd, buffer, offset, length, position, callback)          */
+/*   fs.write(fd, buffer, offset, length, position, function(writeErr, written) { */
+/*     if (writeErr) {                                                 */
+/*       fs.close(fd, function() {                                     */
+/*         if (callback) callback(writeErr);                           */
+/*       });                                                           */
+/*     } else {                                                        */
+/*       if (written === length) {                                     */
+/*         fs.close(fd, callback);                                     */
+/*       } else {                                                      */
+/*         offset += written;                                          */
+/*         length -= written;                                          */
+/*         position += written;                                        */
+/*         writeAll(fd, buffer, offset, length, position, callback);   */
+/*       }                                                             */
+/*     }                                                               */
+/*   });                                                               */
+/* }                                                                   */
+
+const defaultWriteFileOpts = { encoding: 'utf8', mode: 438 /*=0666*/, flag: 'w' };
+
 fs.writeFile = function(path, data, options, callback) {
-  var callback = maybeCallback(arguments[arguments.length - 1]);
+  var callback = makeHopCallback(typeof options === "function" 
+      ? options : callback);
 
   if (typeof options === 'function' || !options) {
-    options = { encoding: 'utf8', mode: 438 /*=0666*/, flag: 'w' };
+    options = defaultWriteFileOpts;
   } else if (typeof options === 'string') {
     options = { encoding: options, mode: 438, flag: 'w' };
   } else if (!options) {
@@ -970,7 +1141,7 @@ fs.writeFile = function(path, data, options, callback) {
     if (openErr) {
       if (callback) callback(openErr);
     } else {
-      var buffer = Buffer.isBuffer(data) ? data : new Buffer('' + data,
+       var buffer = Buffer.isBuffer(data) ? data : new Buffer(typeof data === "string" ? data : '' + data,
           options.encoding || 'utf8');
       var position = /a/.test(flag) ? null : 0;
       writeAll(fd, buffer, 0, buffer.length, position, callback);
@@ -980,7 +1151,7 @@ fs.writeFile = function(path, data, options, callback) {
 
 fs.writeFileSync = function(path, data, options) {
   if (!options) {
-    options = { encoding: 'utf8', mode: 438 /*=0666*/, flag: 'w' };
+    options = defaultWriteFileOpts;
   } else if (typeof options === 'string') {
     options = { encoding: options, mode: 438, flag: 'w' };
   } else if (typeof options !== 'object') {
@@ -992,7 +1163,7 @@ fs.writeFileSync = function(path, data, options) {
   var flag = options.flag || 'w';
   var fd = fs.openSync(path, flag, options.mode);
   if (!Buffer.isBuffer(data)) {
-    data = new Buffer('' + data, options.encoding || 'utf8');
+     data = new Buffer(typeof data === "string" ? data : '' + data, options.encoding || 'utf8');
   }
   var written = 0;
   var length = data.length;
@@ -1547,8 +1718,6 @@ ReadStream.prototype._read = function(n) {
     return;
 
   if (!pool || pool.length - pool.used < kMinPoolSpace) {
-    // discard the old pool.
-    pool = null;
     allocNewPool(this._readableState.highWaterMark);
   }
 
@@ -1585,9 +1754,13 @@ ReadStream.prototype._read = function(n) {
     } else {
       var b = null;
       if (bytesRead > 0)
-        b = thisPool.slice(start, start + bytesRead);
-
-      self.push(b);
+        // MS 7may2023
+        if (start > 0 || bytesRead < thisPool.length) {
+          b = thisPool.slice(start, start + bytesRead);
+	} else { 
+	  b = thisPool;
+	}
+        self.push(b);
     }
   }
 };

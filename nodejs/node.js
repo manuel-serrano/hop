@@ -247,7 +247,7 @@
           // If caught is false after this, then there's no need to exit()
           // the domain, because we're going to crash the process anyway.
           caught = domain.emit('error', er);
-
+#:tprint("DOMAIN.emit ", caught);
           // Exit all domains on the stack.  Uncaught exceptions end the
           // current tick and no domains should be left on the stack
           // between ticks.

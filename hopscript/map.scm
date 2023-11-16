@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 25 13:32:40 2019                          */
-;*    Last change :  Tue Oct 26 14:51:22 2021 (serrano)                */
-;*    Copyright   :  2019-21 Manuel Serrano                            */
+;*    Last change :  Fri Jul 21 14:29:34 2023 (serrano)                */
+;*    Copyright   :  2019-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript MAP object.                  */
 ;*    -------------------------------------------------------------    */
@@ -100,6 +100,8 @@
 			:size 64
 			:weak weak
 			:hash js-get-hashnumber
+			:bucket-expansion 2
+			:max-length 65535
 			:eqtest eqtest))
 	    (vec (if (eq? weak 'keys)
 		     '#()

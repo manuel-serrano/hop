@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Wed Apr 27 11:54:52 2022 (serrano)                */
-;*    Copyright   :  2013-22 Manuel Serrano                            */
+;*    Last change :  Mon Jun 26 10:25:29 2023 (serrano)                */
+;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript CPS transformation                                    */
 ;*    -------------------------------------------------------------    */
@@ -44,7 +44,9 @@
 		  (name::bstring read-only (default "")))
 	       (class KontStmt::Kont)
 	       (class KontExpr::Kont)
-	       (class KontExpr*::Kont))))
+	       (class KontExpr*::Kont)
+	       (class KontInit::Kont)
+   	       (class KontInit*::Kont))))
 
    (export j2s-cps-stage))
 
@@ -120,6 +122,34 @@
    (cond-expand
       (bigloo-debug
        `(instantiate::KontExpr*
+	   (proc ,proc)
+	   (node ,node)
+	   (link ,link)
+	   (name ,(if (pair? name) (string-append "[" (car name) "]") ""))))
+      (else
+       proc)))
+
+;*---------------------------------------------------------------------*/
+;*    KontInit ...                                                     */
+;*---------------------------------------------------------------------*/
+(define-macro (KontInit proc node link . name)
+   (cond-expand
+      (bigloo-debug
+       `(instantiate::KontInit
+	   (proc ,proc)
+	   (node ,node)
+	   (link ,link)
+	   (name ,(if (pair? name) (string-append "[" (car name) "]") ""))))
+      (else
+       proc)))
+
+;*---------------------------------------------------------------------*/
+;*    KontInit* ...                                                    */
+;*---------------------------------------------------------------------*/
+(define-macro (KontInit* proc node link . name)
+   (cond-expand
+      (bigloo-debug
+       `(instantiate::KontInit*
 	   (proc ,proc)
 	   (node ,node)
 	   (link ,link)
@@ -336,11 +366,6 @@
 			     (with-access::J2SDecl d (%info)
 				(set! %info (instantiate::KDeclInfo))))
 		   temps)
-;* 		(tprint name " used: "                                 */
-;* 		   (map (lambda (d)                                    */
-;* 			   (with-access::J2SDecl d (%info id)          */
-;* 			      id))                                     */
-;* 		      temps))                                          */
 		;; cps has introduced new closures, the variable "escape"
 		;; property must be recomputed.
 		(mark-free body '())
@@ -353,11 +378,6 @@
 			  (cons* decl thisp argumentsp params))
 		       ;; retain free variables
 		       (let ((frees (filter is-free? temps)))
-;* 			  (tprint name " free: "                       */
-;* 			     (map (lambda (d)                          */
-;* 				     (with-access::J2SDecl d (%info id) */
-;* 					id))                           */
-;* 				frees))                                */
 			  (let* ((temps (filter (lambda (d)
 						   (or (is-def? d)
 						       (if (decl-usage-has? d '(assig))
@@ -367,11 +387,6 @@
 							   #t)))
 					   frees))
 				 (sz (length temps)))
-;* 			     (tprint name " temps: "                   */
-;* 				(map (lambda (d)                       */
-;* 					(with-access::J2SDecl d (%info id) */
-;* 					   id))                        */
-;* 				   temps))                             */
 			     ;; color the continuation variables
 			     (set! constrsize (kont-color temps ydstar))
 			     ;; allocate temporaries
@@ -432,6 +447,16 @@
 	 n)))
 
 ;*---------------------------------------------------------------------*/
+;*    dup-access ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (dup-access this o f)
+   (let ((n (dup this)))
+      (with-access::J2SAccess n (obj field)
+	 (set! obj o)
+	 (set! field f)
+	 n)))
+
+;*---------------------------------------------------------------------*/
 ;*    blockify ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (blockify::J2SBlock block::J2SBlock stmt::J2SStmt)
@@ -446,13 +471,29 @@
 (define (cps*::J2SNode nodes::pair-nil k* r* kbreaks kcontinues fun conf)
    (assert-kont k* KontExpr* nodes)
    (let loop ((nodes nodes)
+              (knodes '()))
+      (if (null? nodes)
+          (kcall k* (reverse! knodes))
+          (cps (car nodes)
+             (KontExpr (lambda (kexpr::J2SExpr)
+                          (loop (cdr nodes)
+                             (cons kexpr knodes)))
+                nodes k*)
+             r* kbreaks kcontinues fun conf))))
+
+;*---------------------------------------------------------------------*/
+;*    cps-init* ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (cps-init*::J2SNode nodes::pair-nil k* r* kbreaks kcontinues fun conf)
+   (assert-kont k* KontInit* nodes)
+   (let loop ((nodes nodes)
 	      (knodes '()))
       (if (null? nodes)
 	  (kcall k* (reverse! knodes))
 	  (cps (car nodes)
-	     (KontExpr (lambda (kexpr::J2SExpr)
+	     (KontInit (lambda (kinit::J2SDataPropertyInit)
 			  (loop (cdr nodes)
-			     (cons kexpr knodes)))
+			     (cons kinit knodes)))
 		nodes k*)
 	     r* kbreaks kcontinues fun conf))))
 
@@ -463,6 +504,14 @@
 		   kbreaks::pair-nil kcontinues::pair-nil fun::J2SFun conf)
    (warning "cps: should not be here " (typeof this))
    (kcall k this))
+
+;*---------------------------------------------------------------------*/
+;*    cps ::J2SMeta ...                                                */
+;*---------------------------------------------------------------------*/
+(define-method (cps this::J2SMeta k r kbreaks kcontinues fun conf)
+   (with-access::J2SMeta this (stmt)
+      (duplicate::J2SMeta this
+	 (stmt (cps stmt k r kbreaks kcontinues fun conf)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    cps ::J2SYield ...                                               */
@@ -512,12 +561,28 @@
 	 r kbreaks kcontinues fun conf)))
 
 ;*---------------------------------------------------------------------*/
+;*    cps ::J2SDataPropertyInit ...                                    */
+;*---------------------------------------------------------------------*/
+(define-method (cps this::J2SDataPropertyInit k r kbreaks kcontinues fun conf)
+   (with-access::J2SDataPropertyInit this (loc val)
+      (if (yield-expr? val kbreaks kcontinues)
+	  (cps val
+	     (KontExpr (lambda (kval::J2SExpr)
+			  (set! val kval)
+			  (cps this k r kbreaks kcontinues fun conf))
+		val k)
+	     r kbreaks kcontinues fun conf)
+	  (begin
+	     (set! val (cps-fun! val r conf))
+	     (kcall k this)))))
+
+;*---------------------------------------------------------------------*/
 ;*    cps ::J2SExpr ...                                                */
 ;*---------------------------------------------------------------------*/
 (define-method (cps this::J2SExpr k r kbreaks kcontinues fun conf)
    (assert-kont k KontExpr this)
    (kcall k this))
-   
+
 ;*---------------------------------------------------------------------*/
 ;*    cps ::J2SLiteral ...                                             */
 ;*---------------------------------------------------------------------*/
@@ -538,6 +603,20 @@
 (define-method (cps this::J2SRef k r kbreaks kcontinues fun conf)
    (assert-kont k KontExpr this)
    (kcall k this))
+
+;*---------------------------------------------------------------------*/
+;*    cps ::J2SSpread ...                                              */
+;*---------------------------------------------------------------------*/
+(define-method (cps this::J2SSpread k r kbreaks kcontinues fun conf)
+   (assert-kont k KontExpr this)
+   (with-access::J2SSpread this (expr)
+      (cps expr
+	 (KontExpr (lambda (kexpr::J2SExpr)
+		      (kcall k
+			 (duplicate::J2SSpread this
+			    (expr kexpr))))
+	    this k)
+	 r kbreaks kcontinues fun conf)))
 
 ;*---------------------------------------------------------------------*/
 ;*    cps ::J2SParen ...                                               */
@@ -1157,6 +1236,22 @@
 	  (kcall k this)))))
 
 ;*---------------------------------------------------------------------*/
+;*    cps ::J2SAccess ...                                              */
+;*---------------------------------------------------------------------*/
+(define-method (cps this::J2SAccess k r kbreaks kcontinues fun conf)
+   (assert-kont k KontExpr this)
+   (with-access::J2SAccess this (obj field)
+      (cps obj
+	 (KontExpr (lambda (kobj::J2SExpr)
+		       (cps field
+			  (KontExpr (lambda (kfield::J2SExpr)
+				       (kcall k (dup-access this kobj kfield)))
+			     this k)
+			  r kbreaks kcontinues fun conf))
+	    this k)
+	 r kbreaks kcontinues fun conf)))
+
+;*---------------------------------------------------------------------*/
 ;*    cps ::J2SAssig ...                                               */
 ;*---------------------------------------------------------------------*/
 (define-method (cps this::J2SAssig k r kbreaks kcontinues fun conf)
@@ -1214,6 +1309,33 @@
 	  (kcall k this)))))
 
 ;*---------------------------------------------------------------------*/
+;*    cps ::J2SNew ...                                                 */
+;*---------------------------------------------------------------------*/
+(define-method (cps this::J2SNew k r kbreaks kcontinues fun conf)
+   (assert-kont k KontExpr this)
+   (with-access::J2SNew this ((callee clazz) args)
+      (cond
+	 ((yield-expr? callee kbreaks kcontinues)
+	  (cps callee
+	     (KontExpr (lambda (kfun::J2SExpr)
+			  (set! callee kfun)
+			  (cps this k r kbreaks kcontinues fun conf))
+		this k)
+	     r kbreaks kcontinues fun conf))
+	 ((any (lambda (e) (yield-expr? e kbreaks kcontinues)) args)
+	  (cps-fun! callee r conf)
+	  (cps* args
+	     (KontExpr* (lambda (kargs::pair-nil)
+			   (set! args kargs)
+			   (cps this k r kbreaks kcontinues fun conf))
+		args k)
+	     r kbreaks kcontinues fun conf))
+	 (else
+	  (cps-fun! callee r conf)
+	  (for-each (lambda (n) (cps-fun! n r conf)) args)
+	  (kcall k this)))))
+
+;*---------------------------------------------------------------------*/
 ;*    cps ::J2SArray ...                                               */
 ;*---------------------------------------------------------------------*/
 (define-method (cps this::J2SArray k r kbreaks kcontinues fun conf)
@@ -1227,9 +1349,26 @@
 		exprs k)
 	     r kbreaks kcontinues fun conf)
 	  (begin
-	     (set! exprs (map! (lambda (n) (cps-fun! n r conf)) exprs ))
+	     (set! exprs (map! (lambda (n) (cps-fun! n r conf)) exprs))
 	     (kcall k this)))))
 
+;*---------------------------------------------------------------------*/
+;*    cps ::J2SObjInit ...                                             */
+;*---------------------------------------------------------------------*/
+(define-method (cps this::J2SObjInit k r kbreaks kcontinues fun conf)
+   (assert-kont k KontExpr this)
+   (with-access::J2SObjInit this (inits)
+      (if (any (lambda (e) (yield-expr? e kbreaks kcontinues)) inits)
+	  (cps-init* inits
+	     (KontInit* (lambda (kinits::pair-nil)
+			   (set! inits kinits)
+			   (cps this k r kbreaks kcontinues fun conf))
+		inits k)
+	     r kbreaks kcontinues fun conf)
+	  (begin
+	     (set! inits (map! (lambda (n) (cps-fun! n r conf)) inits))
+	     (kcall k this)))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    cps ::J2SCond ...                                                */
 ;*---------------------------------------------------------------------*/
@@ -1758,7 +1897,7 @@
       (let* ((envp (map! mark-def! params))
 	     (enva (if argumentsp (cons (mark-def! argumentsp) envp) envp))
 	     (envt (if thisp (cons (mark-def! thisp) enva) enva))
-	     (nenv (if decl (cons (mark-def! decl) envt) envt)))
+	     (nenv (append (if decl (cons (mark-def! decl) envt) envt) env)))
 	 (mark-free body nenv))))
 
 ;*---------------------------------------------------------------------*/

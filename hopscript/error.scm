@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sat Mar  5 12:57:18 2022 (serrano)                */
-;*    Copyright   :  2013-22 Manuel Serrano                            */
+;*    Last change :  Mon Jul 10 09:08:20 2023 (serrano)                */
+;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
 ;*    -------------------------------------------------------------    */
@@ -40,6 +40,7 @@
    
    (export (js-init-error! ::JsGlobalObject)
 	   (js-type-error msg fname loc ::JsGlobalObject)
+	   (js-reference-error msg fname loc ::JsGlobalObject)
 	   (js-type-error2 msg fname ::JsGlobalObject)
 	   (js-type-error1 msg ::JsGlobalObject)))
 
@@ -138,7 +139,7 @@
 		   (display "The initial error was:" port)
 		   (newline port)
 		   (display "  " port)
-		   (display (js-toname name %this) port)
+		   (display (js-tostring name %this) port)
 		   (display " -- " port)
 		   (display (js-tostring msg %this) port)
 		   (newline port)
@@ -150,8 +151,8 @@
 		   (display "The reraise error is:" port)
 		   (newline port)
 		   (exception-notify e)))
-	     (let ((notify (lambda ()
-			      (let* ((name (js-jsstring->string name))
+	     (let ((notify (lambda (%this)
+			      (let* ((name (js-tostring name %this))
  				     (stk (js-get exc (& "stack") %this))
 				     (port (current-error-port)))
 				 (cond
@@ -175,9 +176,9 @@
 					(fprint port name ": " msg "\n")
 					(display-trace-stack stack port)))))))
 		(with-access::JsGlobalObject %this (worker)
-		   (if worker
-		       (js-worker-exec worker "error" #t notify)
-		       (notify))))))))
+		   (if (and worker (not (eq? worker (current-thread))))
+		       (js-worker-exec worker "error" notify)
+		       (notify %this))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    exception-notify ::obj ...                                       */
@@ -344,11 +345,15 @@
 		       (js-call2 %this prepare js-error
 			  o frames))
 		    (hop-stack->jsstring o stack)))
-	     stack))
+	     ;; always pretend a non-empty stack
+	     (js-get-stack o
+		'(("captureStackTrace" (at "." 0))
+		  ("hop" (at "." 0))
+		  ("main" (at "." 0))))))
 	 
       (define (capture-stack-trace err start-fun)
 	 (when (fixnum? js-stacktracelimit)
-	    (let ((stk (get-trace-stack js-stacktracelimit)))
+	    (let ((stk (js-get-trace-stack js-stacktracelimit)))
 	       (if (isa? err JsError)
 		   (with-access::JsError err (stack)
 		      (set! stack stk))
@@ -394,6 +399,14 @@
 		      (cadr loc) (caddr loc) 0)))
 	       ((eq? (car frame) 'hopscript)
 		(make-stack-frame "hopscript" "" "" 0 0))
+	       ((pair? (cadr frame))
+		(let ((fun (car frame))
+		      (loc (cadr frame)))
+		   (make-stack-frame (if (symbol? fun)
+					 (symbol->string! fun)
+					 fun)
+		      (apply format "~a:~a" (cdr loc))
+		      (cadr loc) (caddr loc) 0)))
 	       (else
 		#f))))
 	 
@@ -484,6 +497,7 @@
 	    :prototype js-error-prototype
 	    :size 5
 	    :alloc js-error-error-alloc))
+      
       
       (init-builtin-error-prototype! %this js-error js-error-prototype)
       (set! js-syntax-error
@@ -776,22 +790,33 @@
 ;*    js-type-error ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (js-type-error msg fname loc %this)
-   (with-access::JsGlobalObject %this (js-type-error)
-      (js-new3 %this js-type-error msg fname loc)))
+   ($hopscript-breakpoint
+      (with-access::JsGlobalObject %this (js-type-error)
+	 (js-new3 %this js-type-error msg fname loc))))
+
+;*---------------------------------------------------------------------*/
+;*    js-reference-error ...                                           */
+;*---------------------------------------------------------------------*/
+(define (js-reference-error msg fname loc %this)
+   ($hopscript-breakpoint
+      (with-access::JsGlobalObject %this (js-reference-error)
+	 (js-new3 %this js-reference-error msg fname loc))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-type-error2 ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (js-type-error2 msg fname %this)
-   (with-access::JsGlobalObject %this (js-type-error)
-      (js-new2 %this js-type-error msg fname)))
+   ($hopscript-breakpoint
+      (with-access::JsGlobalObject %this (js-type-error)
+	 (js-new2 %this js-type-error msg fname))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-type-error1 ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (js-type-error1 msg %this)
-   (with-access::JsGlobalObject %this (js-type-error)
-      (js-new1 %this js-type-error msg)))
+   ($hopscript-breakpoint
+      (with-access::JsGlobalObject %this (js-type-error)
+	 (js-new1 %this js-type-error msg))))
 
 ;*---------------------------------------------------------------------*/
 ;*    &end!                                                            */

@@ -3,23 +3,23 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb  7 09:48:34 2018                          */
-/*    Last change :  Thu Feb 24 12:31:17 2022 (serrano)                */
-/*    Copyright   :  2018-22 Manuel Serrano                            */
+/*    Last change :  Fri Jun 23 10:38:13 2023 (serrano)                */
+/*    Copyright   :  2018-23 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 2015+ destructuring function parameters       */
 /*=====================================================================*/
 "use strict";
 
-var assert = require( "assert" );
+var assert = require("assert");
 
 /*---------------------------------------------------------------------*/
 /*    hop                                                              */
 /*---------------------------------------------------------------------*/
-const hopa = ( {a, b}, res ) => {
+const hopa = ({a, b}, res) => {
    return a - b == res;
 };
 
-const hopb = ( {a: A, b: B}, res ) => {
+const hopb = ({a: A, b: B}, res) => {
    return A - B == res;
 };
 
@@ -58,28 +58,28 @@ function hopg(v, a = "a", { s = "s", d = "d", e = "e" } = {e:3}) {
    }
 }
 
-console.log( "hop" );
-console.log( "   hopa()"); assert.ok( hopa( {a: 1, b: 2}, -1 ), "hopa" );
-console.log( "   hopa()"); assert.ok( hopa( {b: 2, a: 1}, -1 ), "hopa" );
-console.log( "   hopb()"); assert.ok( hopb( {a: 1, b: 2}, -1 ), "hopb" );
-console.log( "   hopb()"); assert.ok( hopb( {b: 2, a: 1}, -1 ), "hopb" );
-console.log( "   hopc()"); assert.ok( hopc() === 11, "hopc" );
-console.log( "   hopd()"); assert.ok( hopd() === 30, "hopd" );
-console.log( "   hope()"); assert.ok( hope() === 123, "hope" );
-console.log( "   hopf()"); assert.ok( hopf(), "hopf" );
-console.log( "   hopg(1)"); assert.ok(hopg(1), "hopg.1");
-console.log( "   hopg(2)"); assert.ok(hopg(2, 1), "hopg.2");
-console.log( "   hopg(3)"); assert.ok(hopg(3, 1, 2), "hopg.3");
-console.log( "   hopg(4)"); assert.ok(hopg(4, 1, {}), "hopg.4");
-console.log( "   hopg(5)"); assert.ok(hopg(5, 1, {s: "S"}), "hopg.5");
-console.log( "   hopg(6)"); assert.ok(hopg(6, 1, {s: "S", d: "D"}), "hopg.6");
+console.log("hop");
+console.log("   hopa()"); assert.ok(hopa({a: 1, b: 2}, -1), "hopa");
+console.log("   hopa()"); assert.ok(hopa({b: 2, a: 1}, -1), "hopa");
+console.log("   hopb()"); assert.ok(hopb({a: 1, b: 2}, -1), "hopb");
+console.log("   hopb()"); assert.ok(hopb({b: 2, a: 1}, -1), "hopb");
+console.log("   hopc()"); assert.ok(hopc() === 11, "hopc");
+console.log("   hopd()"); assert.ok(hopd() === 30, "hopd");
+console.log("   hope()"); assert.ok(hope() === 123, "hope");
+console.log("   hopf()"); assert.ok(hopf(), "hopf");
+console.log("   hopg(1)"); assert.ok(hopg(1), "hopg.1");
+console.log("   hopg(2)"); assert.ok(hopg(2, 1), "hopg.2");
+console.log("   hopg(3)"); assert.ok(hopg(3, 1, 2), "hopg.3");
+console.log("   hopg(4)"); assert.ok(hopg(4, 1, {}), "hopg.4");
+console.log("   hopg(5)"); assert.ok(hopg(5, 1, {s: "S"}), "hopg.5");
+console.log("   hopg(6)"); assert.ok(hopg(6, 1, {s: "S", d: "D"}), "hopg.6");
 
 /*---------------------------------------------------------------------*/
 /*    kangax                                                           */
 /*---------------------------------------------------------------------*/
 function __createIterableObject(arr, methods) {
    methods = methods || {};
-   if( typeof Symbol !== 'function' || !Symbol.iterator ) {
+   if (typeof Symbol !== 'function' || !Symbol.iterator) {
       return {};
    }
    arr.length++;
@@ -111,8 +111,8 @@ function kangaxc() {
 }
 
 function kangaxd() {
-   var [c] = decodeURI( "%F0%A0%AE%B7%F0%A0%AE%B6" );
-   return c === decodeURI( "%F0%A0%AE%B7" );
+   var [c] = decodeURI("%F0%A0%AE%B7%F0%A0%AE%B6");
+   return c === decodeURI("%F0%A0%AE%B7");
 }
 
 function kangaxe() {
@@ -145,9 +145,9 @@ function kangaxi() {
 }
 
 function kangaxj() {
-   return function( {c, x: d, e} ) {
+   return function({c, x: d, e}) {
       return c === 7 && d === 8 && e === undefined;
-   }( {c:7, x:8} );
+   }({c:7, x:8});
 }
 
 function kangaxk() {
@@ -199,13 +199,13 @@ function kangaxp() {
 }
 
 function kangaxq() {
-   for(var [i, j, k] in { qux: 1 }) {
+   for (var [i, j, k] in { qux: 1 }) {
       return i === "q" && j === "u" && k === "x";
    }
 }
 
 function kangaxr() {
-   for(var [i, j, k] of [[1,2,3]]) {
+   for (var [i, j, k] of [[1,2,3]]) {
       return i === 1 && j === 2 && k === 3;
    }
 }
@@ -249,27 +249,178 @@ function kangaxv() {
    return a === 1 && b === 2;
 }
 
-console.log( "kangax" );
-console.log( "   kangaxa()"); assert.ok( kangaxa(), "kangaxa" );
-console.log( "   kangaxb()"); assert.ok( kangaxb(), "kangaxb" );
-console.log( "   kangaxc()"); assert.ok( kangaxc(), "kangaxc" );
-console.log( "   kangaxd()"); assert.ok( kangaxd(), "kangaxd" );
-console.log( "   kangaxe()"); assert.ok( kangaxe(), "kangaxe" );
-console.log( "   kangaxf()"); assert.ok( kangaxf(), "kangaxf" );
-console.log( "   kangaxg()"); assert.ok( kangaxg(), "kangaxg" );
-console.log( "   kangaxh()"); assert.ok( kangaxh(), "kangaxh" );
-console.log( "   kangaxi()"); assert.ok( kangaxi(), "kangaxi" );
-console.log( "   kangaxj()"); assert.ok( kangaxj(), "kangaxj" );
-console.log( "   kangaxk()"); assert.ok( kangaxk(), "kangaxk" );
-console.log( "   kangaxl()"); assert.ok( kangaxl(), "kangaxl" );
-console.log( "   kangaxm()"); assert.ok( kangaxm(), "kangaxm" );
-console.log( "   kangaxn()"); assert.ok( kangaxn(), "kangaxn" );
-console.log( "   kangaxo()"); assert.ok( kangaxo(), "kangaxo" );
-console.log( "   kangaxp()"); assert.ok( kangaxp(), "kangaxp" );
-console.log( "   kangaxq()"); assert.ok( kangaxq(), "kangaxq" );
-console.log( "   kangaxr()"); assert.ok( kangaxr(), "kangaxr" );
-console.log( "   kangaxs()"); assert.ok( kangaxs(), "kangaxs" );
-console.log( "   kangaxt()"); assert.ok( kangaxt(), "kangaxt" );
-console.log( "   kangaxu()"); assert.ok( kangaxu(), "kangaxu" );
-console.log( "   kangaxv()"); assert.ok( kangaxv(), "kangaxv" );
+console.log("kangax");
+console.log("   kangaxa()"); assert.ok(kangaxa(), "kangaxa");
+console.log("   kangaxb()"); assert.ok(kangaxb(), "kangaxb");
+console.log("   kangaxc()"); assert.ok(kangaxc(), "kangaxc");
+console.log("   kangaxd()"); assert.ok(kangaxd(), "kangaxd");
+console.log("   kangaxe()"); assert.ok(kangaxe(), "kangaxe");
+console.log("   kangaxf()"); assert.ok(kangaxf(), "kangaxf");
+console.log("   kangaxg()"); assert.ok(kangaxg(), "kangaxg");
+console.log("   kangaxh()"); assert.ok(kangaxh(), "kangaxh");
+console.log("   kangaxi()"); assert.ok(kangaxi(), "kangaxi");
+console.log("   kangaxj()"); assert.ok(kangaxj(), "kangaxj");
+console.log("   kangaxk()"); assert.ok(kangaxk(), "kangaxk");
+console.log("   kangaxl()"); assert.ok(kangaxl(), "kangaxl");
+console.log("   kangaxm()"); assert.ok(kangaxm(), "kangaxm");
+console.log("   kangaxn()"); assert.ok(kangaxn(), "kangaxn");
+console.log("   kangaxo()"); assert.ok(kangaxo(), "kangaxo");
+console.log("   kangaxp()"); assert.ok(kangaxp(), "kangaxp");
+console.log("   kangaxq()"); assert.ok(kangaxq(), "kangaxq");
+console.log("   kangaxr()"); assert.ok(kangaxr(), "kangaxr");
+console.log("   kangaxs()"); assert.ok(kangaxs(), "kangaxs");
+console.log("   kangaxt()"); assert.ok(kangaxt(), "kangaxt");
+console.log("   kangaxu()"); assert.ok(kangaxu(), "kangaxu");
+console.log("   kangaxv()"); assert.ok(kangaxv(), "kangaxv");
        
+/*---------------------------------------------------------------------*/
+/*    spread                                                           */
+/*---------------------------------------------------------------------*/
+function spreada() {
+   function FFF(a, b) {
+      return a + b;
+   }
+   
+   return FFF(...[1, 2]) === 3;
+}
+
+function spreadb() {
+   function FFF(a, b) {
+      return a + b;
+   }
+   
+   return [FFF][0](...[1, 2]) === 3;
+}
+
+function spreadc() {
+   function FFF(a, b) {
+      return a + b;
+   }
+   FFF.apply = (self, arr) => 10;
+   
+   return FFF(...[1, 2]) === 3;
+}
+
+function spreadd() {
+   function FFF(a, b) {
+      return a + b;
+   }
+   FFF.apply = (self, arr) => 10;
+   
+   return [FFF][0](...[1, 2]) === 3;
+}
+
+function spreade() {
+   function FFF(a, b) {
+      return a + b;
+   }
+   const apply = FFF.__proto__.apply;
+   
+   FFF.__proto__.apply = (self, arr) => 10;
+   
+   try {
+      return FFF(...[1, 2]) === 3;
+   } finally {
+      FFF.__proto__.apply = apply;
+   }
+}
+
+function spreadf() {
+   function FFF(a, b) {
+      return a + b;
+   }
+   const apply = FFF.__proto__.apply;
+   
+   FFF.__proto__.apply = (self, arr) => 10;
+   
+   try {
+      return [FFF][0](...[1, 2]) === 3;
+   } finally {
+      FFF.__proto__.apply = apply;
+   }
+}
+
+function spreadg() {
+   const o = {f: function(a, b) { return this.c + a + b; }, c: 10 };
+
+   return o.f(...[1, 2]) === 13;
+}
+
+function spreadA() {
+   function FFF(a, b) {
+      return a + b;
+   }
+   
+   return FFF(...arguments) === 3;
+}
+
+function spreadB() {
+   function FFF(a, b) {
+      return a + b;
+   }
+   
+   return [FFF][0](...arguments) === 3;
+}
+
+function spreadC() {
+   function FFF(a, b) {
+      return a + b;
+   }
+   FFF.apply = (self, arr) => 10;
+   
+   return FFF(...arguments) === 3;
+}
+
+function spreadD() {
+   function FFF(a, b) {
+      return a + b;
+   }
+   FFF.apply = (self, arr) => 10;
+   
+   return [FFF][0](...arguments) === 3;
+}
+
+function spreadE() {
+   function FFF(a, b) {
+      return a + b;
+   }
+   const apply = FFF.__proto__.apply;
+   
+   FFF.__proto__.apply = (self, arr) => 10;
+   
+   try {
+      return FFF(...arguments) === 3;
+   } finally {
+      FFF.__proto__.apply = apply;
+   }
+}
+
+function spreadF() {
+   function FFF(a, b) {
+      return a + b;
+   }
+   const apply = FFF.__proto__.apply;
+   
+   FFF.__proto__.apply = (self, arr) => 10;
+   
+   try {
+      return [FFF][0](...arguments) === 3;
+   } finally {
+      FFF.__proto__.apply = apply;
+   }
+}
+
+console.log("spread");
+console.log("   spreada()"); assert.ok(spreada(), "spreada");
+console.log("   spreadb()"); assert.ok(spreadb(), "spreadb");
+console.log("   spreadc()"); assert.ok(spreadc(), "spreadc");
+console.log("   spreadd()"); assert.ok(spreadd(), "spreadd");
+console.log("   spreade()"); assert.ok(spreade(), "spreade");
+console.log("   spreadf()"); assert.ok(spreadf(), "spreadf");
+console.log("   spreadg()"); assert.ok(spreadg(), "spreadg");
+console.log("   spreadA()"); assert.ok(spreadA(1, 2), "spreadA");
+console.log("   spreadB()"); assert.ok(spreadB(1, 2), "spreadB");
+console.log("   spreadC()"); assert.ok(spreadC(1, 2), "spreadC");
+console.log("   spreadD()"); assert.ok(spreadD(1, 2), "spreadD");
+console.log("   spreadE()"); assert.ok(spreadE(1, 2), "spreadE");
+console.log("   spreadF()"); assert.ok(spreadF(1, 2), "spreadF");

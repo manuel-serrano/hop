@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 10 06:46:43 2007                          */
 ;*    Last change :  Wed Oct 26 17:09:24 2022 (serrano)                */
-;*    Copyright   :  2007-22 Manuel Serrano                            */
+;*    Copyright   :  2007-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with charset.                              */
 ;*=====================================================================*/

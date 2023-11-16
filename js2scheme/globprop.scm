@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Tue Oct 26 15:04:52 2021 (serrano)                */
-;*    Copyright   :  2017-21 Manuel Serrano                            */
+;*    Last change :  Fri Oct  6 18:31:09 2023 (serrano)                */
+;*    Copyright   :  2017-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Global properties optimization (constant propagation).           */
 ;*                                                                     */
@@ -43,10 +43,12 @@
 ;*      1. the assignment is toplevel or EXPR is a constant            */
 ;*      2. G is a read-only variable, initialized, not used as value   */
 ;*      3. no setter and getter are used                               */
-;*      4. INIT must be a literal, a function, or a builtin object     */
-;*      5. there should be only one single PROP1 in G, in particular   */
+;*      4. never used in a delete op                                   */
+;*      5. INIT must be a literal, a function, or a builtin object     */
+;*      6. there should be only one single PROP1 in G, in particular   */
 ;*         there is no computed prop assigned to G                     */
-;*      6. there is no direct EVAL                                     */
+;*      7. there is no direct EVAL                                     */
+;*      8. PROP1 is never assigned                                     */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
@@ -84,19 +86,25 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-globprop! ::J2SProgram ...                                   */
 ;*---------------------------------------------------------------------*/
-(define (j2s-globprop! this args)
+(define (j2s-globprop! this conf)
    (when (isa? this J2SProgram)
       (with-access::J2SProgram this (nodes decls direct-eval)
 	 (unless direct-eval
-	    (let ((gcnsts (collect-globconst* this args)))
+	    (let ((gcnsts (collect-globconst* this conf)))
 	       (when (pair? gcnsts)
 		  ;; propagate the constants
-		  (collect-globprops this args)
-		  (collect-globprops-toplevel! this args)
+		  (when (>=fx (config-get conf :verbose 0) 3)
+		     (display " collect-this" (current-error-port)))
+		  (collect-globprops this conf)
+		  (when (>=fx (config-get conf :verbose 0) 3)
+		     (display " collect-toplevel" (current-error-port)))
+		  (collect-globprops-toplevel! this conf)
+		  (when (>=fx (config-get conf :verbose 0) 3)
+		     (display " rewrite-access" (current-error-port)))
 		  (rewrite-accesses! this)
 		  (let ((ndecls (append-map globprop-const gcnsts)))
 		     (set! decls (append decls ndecls))
-		     (when (>=fx (config-get args :verbose 0) 3)
+		     (when (>=fx (config-get conf :verbose 0) 3)
 			(globprop-verb gcnsts))))))))
    this)
 
@@ -170,7 +178,7 @@
       (if (isa? lhs J2SRef)
 	  (with-access::J2SRef lhs (decl)
 	     (with-access::J2SDecl decl (%info)
-		(if (and (not (decl-usage-has? decl '(assig uninit)))
+		(if (and (not (decl-usage-has? decl '(assig uninit delete)))
 			 (constant-object? rhs))
 		    (begin
 		       (set! %info (propinfo rhs '() #t))
@@ -183,7 +191,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (collect-globconst* this::J2SDeclInit ctx)
    (with-access::J2SDeclInit this (val %info)
-      (if (and (not (decl-usage-has? this '(assig))) (constant-object? val))
+      (if (and (not (decl-usage-has? this '(assig delete))) (constant-object? val))
 	  (begin
 	     (set! %info (propinfo val '() #f))
 	     (list this))
@@ -216,10 +224,15 @@
 		 (isa? field J2SString))
 	 (with-access::J2SString field (val)
 	    (let ((c (assoc val (propinfo-props %info))))
-	       (if (pair? c)
-		   (set-cdr! c #f)
+	       (cond
+		  ((pair? c)
+		   (set-cdr! c #f))
+		  ((or (isa? this J2SPostfix) (isa? this J2SPrefix) (isa? this J2SAssigOp))
 		   (propinfo-props-set! %info
-		      (cons (cons val #t) (propinfo-props %info))))))))
+		      (cons (cons val #f) (propinfo-props %info))))
+		  (else
+		   (propinfo-props-set! %info
+		      (cons (cons val #t) (propinfo-props %info)))))))))
    
    (with-access::J2SAssig this (lhs rhs loc)
       (cond
@@ -230,7 +243,7 @@
 		    (collect-globprops rhs ctx)
 		    (with-access::J2SDecl decl (%info)
 		       (or (collect-property %info field)
-			   (call-default-walker))))
+			   (collect-globprops lhs ctx))))
 		 (call-default-walker))))
 	 ((and (isa? lhs J2SRef) (isa? rhs J2SObjInit))
 	  (with-access::J2SObjInit rhs (inits loc)
@@ -244,9 +257,7 @@
 					      (collect-property %info name))))
 			      inits)
 			   (call-default-walker))))
-		 (begin
-		    (tprint "LARGE..." loc)
-		    (collect-globprops lhs ctx)))))
+		 (collect-globprops lhs ctx))))
 	 (else
 	  (call-default-walker)))))
 
@@ -332,24 +343,25 @@
    
    (define (collect-init! init::J2SDataPropertyInit %info)
       (with-access::J2SDataPropertyInit init (loc val name)
-	 (with-access::J2SString name ((str val))
-	    (let ((c (assoc str (propinfo-props %info))))
-	       (cond
-		  ((not (and (pair? c) (cdr c)))
-		   #f)
-		  ((isa? val J2SLiteralCnst)
-		   (let* ((ndecl (J2SLetOptRoGlobal '(ref init) (gensym str)
-				    val))
-			  (init (J2SInit (J2SRef ndecl) val)))
-		      (set-cdr! c (list ndecl))
-		      (set! val (J2SRef ndecl))
-		      init))
-		  (else
-		   (let* ((ndecl (J2SDeclGlobal 'let '(ref init) (gensym str)))
-			  (init (J2SInit (J2SRef ndecl) val)))
-		      (set-cdr! c (list ndecl))
-		      (set! val (J2SRef ndecl))
-		      init)))))))
+	 (when (isa? name J2SString)
+	    (with-access::J2SString name ((str val))
+	       (let ((c (assoc str (propinfo-props %info))))
+		  (cond
+		     ((not (and (pair? c) (cdr c)))
+		      #f)
+		     ((isa? val J2SLiteralCnst)
+		      (let* ((ndecl (J2SLetOptRoGlobal '(ref init) (gensym str)
+				       val))
+			     (init (J2SInit (J2SRef ndecl) val)))
+			 (set-cdr! c (list ndecl))
+			 (set! val (J2SRef ndecl))
+			 init))
+		     (else
+		      (let* ((ndecl (J2SDeclGlobal 'let '(ref init) (gensym str)))
+			     (init (J2SInit (J2SRef ndecl) val)))
+			 (set-cdr! c (list ndecl))
+			 (set! val (J2SRef ndecl))
+			 init))))))))
    
    (define (col init %info)
       (when (isa? init J2SDataPropertyInit)

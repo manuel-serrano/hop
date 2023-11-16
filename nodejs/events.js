@@ -18,6 +18,7 @@
 // DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 // USE OR OTHER DEALINGS IN THE SOFTWARE.
+"use strict";
 
 var domain;
 
@@ -98,22 +99,45 @@ EventEmitter.prototype.emit = function emit(type) {
         break;
       // slower
       default:
-        len = arguments.length;
-        args = new Array(len - 1);
-        for (i = 1; i < len; i++)
-          args[i - 1] = arguments[i];
-        handler.apply(this, args);
+/*         len = arguments.length;                                     */
+/*         args = new Array(len - 1);                                  */
+/*         for (i = 1; i < len; i++)                                   */
+/*           args[i - 1] = arguments[i];                               */
+/*         handler.apply(this, args);                                  */
+        handler.apply(this, Array.prototype.slice.call(arguments,1));	  
     }
   } else if (typeof handler === 'object') {
-    len = arguments.length;
-    args = new Array(len - 1);
-    for (i = 1; i < len; i++)
-      args[i - 1] = arguments[i];
-
-    listeners = handler.slice();
-    len = listeners.length;
-    for (i = 0; i < len; i++)
-      listeners[i].apply(this, args);
+/*     len = arguments.length;                                         */
+/*     args = new Array(len - 1);                                      */
+/*     for (i = 1; i < len; i++)                                       */
+/*       args[i - 1] = arguments[i];                                   */
+/*                                                                     */
+/*     listeners = handler.slice();                                    */
+/*     len = listeners.length;                                         */
+/*     for (i = 0; i < len; i++)                                       */
+/*       listeners[i].apply(this, args);                               */
+    len = handler.length;
+    listeners = len < 2 ? handler : handler.slice();
+    switch (arguments.length) {
+      // fast cases
+      case 1:
+        for (i = 0; i < len; i++)
+          listeners[i].call(this);
+        break;
+      case 2:
+        for (i = 0; i < len; i++)
+          listeners[i].call(this, arguments[1]);
+        break;
+      case 3:
+        for (i = 0; i < len; i++)
+          listeners[i].call(this, arguments[1], arguments[2]);
+        break;
+      // slower
+      default:
+        args = arguments.slice(1);
+        for (i = 1; i < len; i++)
+           listeners[i].apply(this, args);
+    }
   }
 
   if (this.domain && this !== process)

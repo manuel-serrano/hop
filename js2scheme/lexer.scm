@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:33:09 2013                          */
-;*    Last change :  Fri Oct  7 07:57:30 2022 (serrano)                */
-;*    Copyright   :  2013-22 Manuel Serrano                            */
+;*    Last change :  Mon Jun 26 11:49:07 2023 (serrano)                */
+;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript lexer                                                 */
 ;*=====================================================================*/
@@ -194,7 +194,7 @@
       ((or bom_utf16_le bom_utf16_be)
        (token 'ERROR (string-for-read (the-string)) 1))
 
-      ((: "#!/" (+ all))
+      ((: "#!" (* blank_no_lt) "/" (+ all))
        (ignore))
       
       ((or ls ps)
@@ -335,7 +335,8 @@
       ("|=" (token 'BIT_OR= "|=" 2))
       ((or #\< #\> "<=" ">=" "==" "!=" "===" "!==" #\+ #\- #\* #\% "**" "++" "--"
 	   "<<" ">>" ">>>" #\& #\^ #\! #\~ "&&" #\: #\= "+=" "-="  
-	   "*=" "%=" "<<=" ">>=" ">>>=" "&=" "^=" "/=" "**=" #\/ #\? "??" "?.")
+	   "*=" "%=" "<<=" ">>=" ">>>=" "&=" "^=" "/=" "**=" #\/ #\?
+	   "??" "?." "??=")
        (token (the-symbol) (the-string) (the-length)))
       ("=>" (token '=> "=>" 2))
       ("..." (token 'DOTS '|...| 3))
@@ -484,7 +485,8 @@
       ((or (: (* (out "`{")) "`")
 	   (: (* (out "`$")) "`")
 	   (: (* (or (out "`$") (: #\$ (out "`${")))) "`")
-	   (: (* (or (out "`$") (: #\$ (out "`${")))) "$`"))
+	   (: (* (or (out "`$") (: #\$ (out "`${")))) "$`")
+	   (: "$`"))
        ;; template string no escape
        (let ((str (the-substring 0 -1)))
 	  (token-string (pregexp-replace* "\r\n?" str "\n")
@@ -501,12 +503,12 @@
 		"\n")
 	     (the-length) 'TSTRING)))
       
-      ((: (* (or (out "`$") (: #\$ (out "${")))) "${")
+      ((: (* (or (out "`$") (: #\$ (or (out "${`") (: #\$ (out "{")))))) "${")
        ;; template string with escape sequence
        (rgc-buffer-unget-char (the-port) (char->integer #\{))
        (token 'TEMPLATE (pregexp-replace* "\r\n?" (the-substring 0 -1) "\n")
 	  (the-length)))
-      ((: (* (or (out "`$") "\\`" (: #\$ (out "${")))) "${")
+      ((: (* (or (out "`$") "\\`" (: #\$ (or (out "${`") (: #\$ (out "{")))))) "${")
        ;; template string with escape sequence
        (rgc-buffer-unget-char (the-port) (char->integer #\{))
        (token 'TEMPLATE
@@ -515,31 +517,13 @@
 	     "\n")
 	  (the-length)))
       
-      ((: (* (or (out "`$") (: #\$ (out "${")))) "$$")
-       ;; template string with escape, with double $$
-       (let ((str (the-substring 0 -1)))
-	  (rgc-buffer-unget-char (the-port) (char->integer #\$))
-	  (token-string (pregexp-replace "[$][$]" (pregexp-replace* "\r\n?" str "\n") "$")
-	     (the-length) 'TEMPLATE)))
-      ((: (* (or (out "`$") "\\`" (: #\$ (out "${")))) "$$")
-       ;; template string with escape, with double $$
-       (let ((str (the-substring 0 -1)))
-	  (rgc-buffer-unget-char (the-port) (char->integer #\$))
-	  (token-string
-	     (pregexp-replace "[$][$]"
-		(pregexp-replace* "\r\n?"
-		   (pregexp-replace* "\\\\" str "")
-		   "\n")
-		"$")
-	     (the-length) 'TEMPLATE)))
-      
-      ((: (* (or (out "`$") (: #\$ (out "${")))) "$${")
+      ((: (* (or (out "`$") (: #\$ (out "${`")))) "$${")
        ;; template string with escape, with double $$
        (let ((str (the-substring 0 -1)))
 	  (rgc-buffer-unget-char (the-port) (char->integer #\{))
 	  (token-string (pregexp-replace "[$][$]" (pregexp-replace* "\r\n?" str "\n") "$")
 	     (the-length) 'TEMPLATE)))
-      ((: (* (or (out "`$") "\\`" (: #\$ (out "${")))) "$${")
+      ((: (* (or (out "`$") "\\`" (: #\$ (out "${`")))) "$${")
        ;; template string with escape, with double $$
        (let ((str (the-substring 0 -1)))
 	  (rgc-buffer-unget-char (the-port) (char->integer #\{))
@@ -550,7 +534,7 @@
 		   "\n")
 		"$")
 	     (the-length) 'TEMPLATE)))
-      
+
       (else
        (let ((c (the-failure)))
 	  (cond
@@ -560,7 +544,7 @@
 	      (token 'PRAGMA #unspecified 1))
 	     (else
 	      (token 'ERROR c 1)))))))
-	 
+
 ;*---------------------------------------------------------------------*/
 ;*    no-line-terminator ...                                           */
 ;*    -------------------------------------------------------------    */
@@ -825,10 +809,10 @@
 			     (: "\xe2\x80" (out "\xa8\xa9"))))
 		     (nonsep (or (out lt) e2))
 		     (escape (: #\\ nonsep))
-		     (range (: #\[ (* (or (out lt #\]) e2)) #\]))
+		     (range (: #\[ (* (or (out lt #\] #\\) e2 escape)) #\]))
 		     (start (+ (or (out #\/ #\* #\\ #\[ lt) escape range e2)))
 		     (regexp (: start (* (or (out #\/ #\\ #\[ lt) e2 escape range)))))
-      ((: regexp "/" (+ (in "igm")))
+      ((: regexp "/" (+ (in "dgimsuvy")))
        (let* ((s (the-string))
 	      (l (the-length))
 	      (i (string-index-right s "/"))

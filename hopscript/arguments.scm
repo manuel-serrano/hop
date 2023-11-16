@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Mon Aug 30 16:51:21 2021 (serrano)                */
-;*    Copyright   :  2013-21 Manuel Serrano                            */
+;*    Last change :  Fri Jul 14 07:41:34 2023 (serrano)                */
+;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
 ;*=====================================================================*/
@@ -34,10 +34,8 @@
 
    (export (js-init-arguments! ::JsGlobalObject)
 	   (js-arguments-define-own-property ::JsArguments ::int ::JsPropertyDescriptor)
-	   (js-materialize-arguments ::JsGlobalObject ::vector ::obj)
-	   (js-arguments ::JsGlobalObject ::vector)
-	   (js-strict-arguments ::JsGlobalObject ::pair-nil)
-	   (js-strict-arguments-vector ::JsGlobalObject ::vector)
+	   (js-sloppy-arguments ::JsGlobalObject ::vector)
+	   (js-strict-arguments ::JsGlobalObject ::vector)
 	   (js-arguments->list ::JsArguments ::JsGlobalObject)
 	   (js-arguments->vector ::JsArguments ::JsGlobalObject)
 	   (js-arguments->jsarray ::JsArguments ::JsGlobalObject)
@@ -46,7 +44,9 @@
 	   (js-arguments-set! ::JsArguments ::obj ::JsGlobalObject ::obj)
 	   (js-arguments-index-set! ::JsArguments ::uint32 ::obj ::JsGlobalObject)
 	   (js-arguments-length::obj ::JsArguments ::JsGlobalObject)
-	   (js-arguments-slice ::JsArguments start end ::JsGlobalObject)))
+	   (js-arguments-slice ::JsArguments start end ::JsGlobalObject)
+	   (js-arguments-slice1 ::JsArguments start ::JsGlobalObject)
+	   (js-arguments-vector-slice ::vector start end ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
@@ -89,9 +89,8 @@
 ;*---------------------------------------------------------------------*/
 (define-method (hop->javascript o::JsArguments op compile isexpr ctx)
    (js-with-context ctx "hop->javascript"
-      (lambda ()
-	 (let* ((%this ctx)
-		(len::uint32 (js-touint32 (js-get o (& "length") %this) %this)))
+      (lambda (%this)
+	 (let ((len::uint32 (js-touint32 (js-get o (& "length") %this) %this)))
 	    (if (=u32 len (fixnum->uint32 0))
 		(display "sc_vector2array([])" op)
 		(begin
@@ -114,6 +113,15 @@
 (define-method (js-donate o::JsArguments worker::WorkerHopThread %_this)
    (with-access::WorkerHopThread worker (%this)
       (js-raise-type-error %this "[[DonationTypeError]] ~a" o)))
+
+;*---------------------------------------------------------------------*/
+;*    js-inspect-object ::JsArguments ...                              */
+;*---------------------------------------------------------------------*/
+(define-method (js-inspect-object obj::JsArguments #!optional (msg ""))
+   (call-next-method)
+   (with-access::JsArguments obj (vec)
+      (fprint (current-error-port)
+	 "   vec=" vec)))
 
 ;*---------------------------------------------------------------------*/
 ;*    properties                                                       */
@@ -341,12 +349,15 @@
 	       (unless (eq? v (js-absent))
 		  (if (isa? v JsPropertyDescriptor)
 		      v
-		      (instantiate::JsValueDescriptor
-			 (name (js-index-name (uint32->fixnum i)))
-			 (value v)
-			 (writable #t)
-			 (configurable #t)
-			 (enumerable #t)))))))))
+		      (let ((nv (instantiate::JsValueDescriptor
+				   (name (js-index-name (uint32->fixnum i)))
+				   (value v)
+				   (writable #t)
+				   (configurable #t)
+				   (enumerable #t))))
+			 ;; lazy creation of arguments property descriptor
+			 (u32vset! vec i nv)
+			 nv))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    function1->proc ...                                              */
@@ -471,7 +482,7 @@
 (define-method (js-get-own-property-descriptor o::JsArguments p %this)
    (let ((desc (get-mapped-property o p)))
       (if desc
-	  (js-from-property-descriptor %this o desc o)
+	  (js-from-property-descriptor %this p desc o)
 	  (call-next-method))))
 
 ;*---------------------------------------------------------------------*/
@@ -538,24 +549,11 @@
    (js-get o p %this))
 
 ;*---------------------------------------------------------------------*/
-;*    js-materialize-arguments ...                                     */
-;*---------------------------------------------------------------------*/
-(define (js-materialize-arguments %this::JsGlobalObject vec::vector target)
-   (if (object? target)
-       target
-       (let* ((nv (copy-vector vec (vector-length vec)))
-	      (arg (if (eq? target 'strict)
-		       (js-strict-arguments-vector %this vec)
-		       (js-arguments %this vec))))
-	  (vector-shrink! vec 0)
-	  arg)))
-
-;*---------------------------------------------------------------------*/
-;*    js-arguments ...                                                 */
+;*    js-sloppy-arguments ...                                          */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-10.6         */
 ;*---------------------------------------------------------------------*/
-(define (js-arguments %this::JsGlobalObject vec::vector)
+(define (js-sloppy-arguments %this::JsGlobalObject vec::vector)
    (with-access::JsGlobalObject %this (js-arguments-cmap)
       (instantiateJsArguments
 	 (vec vec)
@@ -566,32 +564,16 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-strict-arguments ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (js-strict-arguments %this::JsGlobalObject lst::pair-nil)
-   (js-strict-arguments-vector %this (apply vector lst)))
-
-;*---------------------------------------------------------------------*/
-;*    js-strict-arguments-vector ...                                   */
-;*---------------------------------------------------------------------*/
-(define (js-strict-arguments-vector %this::JsGlobalObject vec::vector)
-   
-   (define (value->descriptor v i)
-      (instantiate::JsValueDescriptor
-	 (name (js-integer->jsstring i))
-	 (value v)
-	 (writable #t)
-	 (configurable #t)
-	 (enumerable #t)))
-   
-   (let ((len (vector-length vec)))
-      ;; build the arguments object
-      (with-access::JsGlobalObject %this (js-strict-arguments-cmap)
-	 (instantiateJsArguments
-	    (vec vec)
-	    (cmap js-strict-arguments-cmap)
-	    (elements (vector (vector-length vec)
-			 strict-callee-property
-			 strict-caller-property))
-	    (__proto__ (js-object-proto %this))))))
+(define (js-strict-arguments %this::JsGlobalObject vec::vector)
+   ;; build the arguments object
+   (with-access::JsGlobalObject %this (js-strict-arguments-cmap)
+      (instantiateJsArguments
+	 (vec vec)
+	 (cmap js-strict-arguments-cmap)
+	 (elements (vector (vector-length vec)
+		      strict-callee-property
+		      strict-caller-property))
+	 (__proto__ (js-object-proto %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-arguments->vector..                                           */
@@ -645,8 +627,18 @@
       (let loop ((i (-fx (vector-length vec) 1)))
 	 (when (>=fx i 0)
 	    (let ((desc (vector-ref vec i)))
-	       (unless (eq? desc (js-absent))
-		  (js-freeze-property! desc)))
+	       (cond
+		  ((isa? desc JsPropertyDescriptor)
+		   (js-freeze-property! desc))
+		  ((not (eq? desc (js-absent)))
+		   (let ((desc (instantiate::JsValueDescriptor
+				  (enumerable #t)
+				  (writable #t)
+				  (configurable #t)
+				  (name (js-index-name i))
+				  (value (vector-ref vec i)))))
+		      (vector-set! vec i desc)
+		      (js-freeze-property! desc)))))
 	    (loop (-fx i 1))))
       (call-next-method)))
 
@@ -688,6 +680,24 @@
 			 (loop (+fx i 1))))))))))
 
 ;*---------------------------------------------------------------------*/
+;*    vector-slice! ...                                                */
+;*---------------------------------------------------------------------*/
+(define (vector-slice! o val::vector k::long final::long %this)
+   (let* ((len (fixnum->uint32 (-fx final k)))
+	  (arr (js-array-construct-alloc/lengthu32 %this len)))
+      (with-access::JsArray arr (vec ilen length)
+	 (vector-copy! vec 0 val k final)
+	 (set! ilen len)
+	 (set! length len)
+	 arr)))
+
+;*---------------------------------------------------------------------*/
+;*    js-arguments-slice1 ...                                          */
+;*---------------------------------------------------------------------*/
+(define (js-arguments-slice1 this::JsArguments start %this)
+   (js-arguments-slice this start (js-arguments-length this %this) %this))
+
+;*---------------------------------------------------------------------*/
 ;*    js-arguments-slice ...                                           */
 ;*    -------------------------------------------------------------    */
 ;*    Arguments slicing is optimized because the pattern               */
@@ -695,15 +705,6 @@
 ;*    frequent to extract optional arguments.                          */
 ;*---------------------------------------------------------------------*/
 (define (js-arguments-slice this::JsArguments start end %this)
-   
-   (define (vector-slice! o val::vector k::long final::long)
-      (let* ((len (fixnum->uint32 (-fx final k)))
-	     (arr (js-array-construct-alloc/lengthu32 %this len)))
-	 (with-access::JsArray arr (vec ilen length)
-	    (vector-copy! vec 0 val k final)
-	    (set! ilen len)
-	    (set! length len)
-	    arr)))
    
    (define (array-copy! o len::long arr k::obj final::obj)
       (let loop ((i len))
@@ -739,9 +740,9 @@
 		       ((<=fx final k)
 			(js-empty-vector->jsarray %this))
 		       ((<=fx final len)
-			(vector-slice! this vec k final))
+			(vector-slice! this vec k final %this))
 		       ((>fx len 0)
-			(let* ((arr (vector-slice! this vec k len))
+			(let* ((arr (vector-slice! this vec k len %this))
 			       (vlen (-fx len k)))
 			   (array-copy! this vlen arr (-fx len vlen) final)))
 		       (else
@@ -757,9 +758,9 @@
 		       ((<= final k)
 			(js-empty-vector->jsarray %this))
 		       ((<= final len)
-			(vector-slice! this vec (->fixnum k) (->fixnum final)))
+			(vector-slice! this vec (->fixnum k) (->fixnum final) %this))
 		       ((>fx len 0)
-			(let* ((arr (vector-slice! this vec (->fixnum k) len))
+			(let* ((arr (vector-slice! this vec (->fixnum k) len %this))
 			       (vlen (->fixnum (js-get-length arr %this))))
 			   (array-copy! this vlen arr (- len vlen) final)))
 		       (else
@@ -772,6 +773,46 @@
 	      (final (if (< relend 0) (max (+ len relend) 0) (min relend len))))
 	  (array-slice! this k final))))
 
+;*---------------------------------------------------------------------*/
+;*    js-arguments-vector-slice ...                                    */
+;*---------------------------------------------------------------------*/
+(define (js-arguments-vector-slice this::vector start end %this)
+   (let* ((vec this)
+	  (len (vector-length vec))
+	  (end (if (eq? end (js-undefined)) len end)))
+      (cond
+	 ((=fx len 0)
+	  (js-empty-vector->jsarray %this))
+	 ((and (fixnum? start) (fixnum? end))
+	  ;; optimal case, arguments is inlined
+	  ;; and indexes are all small integers
+	  (let* ((relstart start)
+		 (k (if (<fx relstart 0) (maxfx (+fx len relstart) 0) (minfx relstart len)))
+		 (relend end)
+		 (final (if (<fx relend 0) (maxfx (+fx len relend) 0) (minfx relend len))))
+	     (cond
+		((<=fx final k)
+		 (js-empty-vector->jsarray %this))
+		((<=fx final len)
+		 (vector-slice! this vec k final %this))
+		(else
+		 (vector-slice! this vec k len %this)))))
+	 (else
+	  ;; less optimized case, there is something
+	  ;; weird with the indexes that are not
+	  ;; small integers
+	  (let* ((relstart (if (fixnum? start) start (js-tointeger start %this)))
+		 (k (if (< relstart 0) (max (+ len relstart) 0) (min relstart len)))
+		 (relend (if (fixnum? end) end (js-tointeger end %this)))
+		 (final (if (< relend 0) (max (+ len relend) 0) (min relend len))))
+	     (cond
+		((<= final k)
+		 (js-empty-vector->jsarray %this))
+		((<= final len)
+		 (vector-slice! this vec (->fixnum k) (->fixnum final) %this))
+		(else
+		 (vector-slice! this vec (->fixnum k) len %this))))))))
+  
 ;*---------------------------------------------------------------------*/
 ;*    &end!                                                            */
 ;*---------------------------------------------------------------------*/

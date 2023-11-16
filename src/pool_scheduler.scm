@@ -3,15 +3,15 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb 26 07:03:15 2008                          */
-;*    Last change :  Mon Oct 17 17:00:24 2022 (serrano)                */
-;*    Copyright   :  2008-22 Manuel Serrano                            */
+;*    Last change :  Wed Feb 15 14:02:52 2023 (serrano)                */
+;*    Copyright   :  2008-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Pool scheduler                                                   */
 ;*    -------------------------------------------------------------    */
 ;*    The characteristics of this scheduler are:                       */
 ;*      - an accept is handled by a single thread extracted from the   */
 ;*        pool.                                                        */
-;*      - on competition the thread is stored in the pool.             */
+;*      - on completion the thread is stored in the pool.              */
 ;*      - on heavy load the new request waits for an old request to    */
 ;*        complete.                                                    */
 ;*    This scheduler is a little bit more complex and smarter than     */

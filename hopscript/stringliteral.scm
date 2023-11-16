@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Mon Sep 26 09:10:10 2022 (serrano)                */
-;*    Copyright   :  2014-22 Manuel Serrano                            */
+;*    Last change :  Sun Oct 22 18:54:47 2023 (serrano)                */
+;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
 ;*=====================================================================*/
@@ -33,7 +33,7 @@
    
    (export (js-init-stringliteral! ::JsGlobalObject)
 	   (&jsstring-init ::bstring)
-	   (js-debug-jsstring ::JsStringLiteral #!optional (msg ""))
+	   (js-inspect-jsstring ::JsStringLiteral #!optional (msg ""))
 	   (js-jsstring-for-in str ::procedure ::JsGlobalObject)
 	   (js-jsstring-for-of str ::procedure ::JsGlobalObject)
 	   (inline js-ascii->jsstring::JsStringLiteralASCII ::bstring)
@@ -141,6 +141,7 @@
 	   (js-jsstring-replace-regexp-string ::obj ::regexp ::long ::bool ::obj ::JsGlobalObject)
 	   (js-jsstring-replace-string ::obj ::bool ::obj ::obj ::JsGlobalObject)
 	   (js-jsstring-replace ::obj ::bool ::obj ::obj ::JsGlobalObject)
+	   (js-jsstring-prototype-repeat ::obj ::obj ::JsGlobalObject)
 	   (js-jsstring-prototype-replace ::obj ::obj ::obj ::JsGlobalObject)
 	   (js-jsstring-prototype-replace-all ::obj ::obj ::obj ::JsGlobalObject)
 	   (js-jsstring-maybe-replace ::obj ::bool ::obj ::obj ::JsGlobalObject ::obj)
@@ -309,9 +310,9 @@
       cnsts))
 
 ;*---------------------------------------------------------------------*/
-;*    js-debug-jsstring ...                                            */
+;*    js-inspect-jsstring ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (js-debug-jsstring obj #!optional (msg ""))
+(define (js-inspect-jsstring obj #!optional (msg ""))
    (let loop ((obj obj)
 	      (margin ""))
       (with-access::JsStringLiteral obj (left right length)
@@ -328,9 +329,9 @@
 	       (loop right nm))))))
    
 ;*---------------------------------------------------------------------*/
-;*    js-debug-object ::JsStringLiteral ...                            */
+;*    js-inspect-object ::JsStringLiteral ...                          */
 ;*---------------------------------------------------------------------*/
-(define-method (js-debug-object obj::JsStringLiteral #!optional (msg ""))
+(define-method (js-inspect-object obj::JsStringLiteral #!optional (msg ""))
    
    (define (excerpt str)
       (if (<fx (string-length str) 20)
@@ -758,7 +759,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-depth ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (_js-jsstring-depth s limit)
+(define (js-jsstring-depth s limit)
    (let loop ((s s)
 	      (d 0)
 	      (maxd 0))
@@ -774,13 +775,6 @@
 		(if (>=fx lmaxd limit)
 		    lmaxd
 		    (loop right (+fx d 1) (+fx lmaxd 1)))))))))
-
-(define (js-jsstring-depth s limit)
-   ;;(tprint ">>> js-jsstring-depth limit=" limit " len=" (js-jsstring-length s))
-   (let ((d (_js-jsstring-depth s limit)))
-      ;;(tprint "<<< js-jsstring-depth d=" d)
-      d))
-   
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-normalize-ASCII! ...                                 */
@@ -798,7 +792,7 @@
    (define (normalize-small! js::JsStringLiteral)
       ;; small strings, no need for tail recursion
       (let ((buffer (with-access::JsStringLiteral js (length)
-		       (make-string (uint32->fixnum length)))))
+		       ($make-string/wo-fill (uint32->fixnum length)))))
 	 (let loop ((i 0)
 		    (s js))
 	    (with-access::JsStringLiteral s (left right)
@@ -852,7 +846,7 @@
    (define (normalize-big! js::JsStringLiteral)
       ;; tail recursive with heap allocated stack
       (let ((buffer (with-access::JsStringLiteral js (length)
-		       (make-string (uint32->fixnum length)))))
+		       ($make-string/wo-fill (uint32->fixnum length)))))
 	 (let loop ((i 0)
 		    (s js)
 		    (stack '()))
@@ -965,12 +959,12 @@
    (define (blit-subbuffer!::long s::bstring buffer::bstring i::long start::long len::long)
       (blit-string! s start buffer i len)
       (+fx i len))
-   
+
    (define (normalize-small! js)
       (with-access::JsStringLiteralUTF8 js (length)
 	 ;; small strings, no need for tail recursion
 	 (let* ((len length)
-		(buffer (make-string (uint32->fixnum len))))
+		(buffer ($make-string/wo-fill (uint32->fixnum len))))
 	    (let ((ni (let loop ((i 0)
 				 (s js))
 			 (with-access::JsStringLiteral s (left right (llen length))
@@ -989,7 +983,7 @@
    (define (normalize-big! js::JsStringLiteral)
       ;; tail recursive with heap allocated stack
       (let ((buffer (with-access::JsStringLiteral js (length)
-		       (make-string (uint32->fixnum length)))))
+		       ($make-string/wo-fill (uint32->fixnum length)))))
 	 (let loop ((i 0)
 		    (s js)
 		    (stack '()))
@@ -1042,13 +1036,14 @@
 			 (loop (+fx i len) right stack))))
 		  (else
 		   (if (and (js-jsstring-normalized? right)
-			    (not (js-jsstring-utf8? left)))
+			    (not (js-jsstring-utf8? left))
+			    (null? stack))
 		       (with-access::JsStringLiteral right ((str left))
 			  ;; write the rhs in advance
 			  (with-access::JsStringLiteral left (length)
-			     (let ((ni (blit-utf8-buffer! str buffer
-					  (+fx i (uint32->fixnum length)))))
-				(loop i left stack))))
+			     (blit-utf8-buffer! str buffer
+				(+fx i (uint32->fixnum length)))
+			     (loop i left stack)))
 		       ;; full recursive call with pushed right
 		       (with-access::JsStringLiteral s (left)
 			  (loop i left (cons right stack))))))))))
@@ -1528,7 +1523,7 @@
 					   (rstart right))
 	 (let ((len (+u32 llen rlen)))
 	    (if (<u32 len (string-append-auto-normalize-threshold))
-		(let* ((buffer (make-string (uint32->fixnum len)))
+		(let* ((buffer ($make-string/wo-fill (uint32->fixnum len)))
 		       (s (instantiate::JsStringLiteralASCII
 			     (length len)
 			     (left buffer)
@@ -1701,7 +1696,7 @@
 			  (uint32->fixnum rlen))
 		       (set! llen nlen)
 		       left)
-		    (let ((nbuf (make-string (*fx (uint32->fixnum nlen) 2))))
+		    (let ((nbuf ($make-string/wo-fill (*fx (uint32->fixnum nlen) 2))))
 		       ;; enlarge the buffer
 		       (blit-string! buffer 0 nbuf 0 (uint32->fixnum llen))
 		       (blit-string! rright 0 nbuf (uint32->fixnum llen)
@@ -1725,7 +1720,7 @@
 			  (uint32->fixnum rlen))
 		       (set! llen nlen)
 		       left)
-		    (let ((nbuf (make-string (*fx (uint32->fixnum nlen) 2))))
+		    (let ((nbuf ($make-string/wo-fill (*fx (uint32->fixnum nlen) 2))))
 		       ;; enlarge the buffer
 		       (blit-string! buffer 0 nbuf 0 (uint32->fixnum llen))
 		       (blit-string! rright rstart nbuf (uint32->fixnum llen)
@@ -1753,7 +1748,7 @@
 	    (let ((len (+u32 llen (+u32 mlen rlen))))
 	       (cond
 		  ((<u32 len (string-append-auto-normalize-threshold))
-		   (let* ((buffer (make-string (uint32->fixnum len)))
+		   (let* ((buffer ($make-string/wo-fill (uint32->fixnum len)))
 			  (s (instantiate::JsStringLiteralASCII
 				(length len)
 				(left buffer)
@@ -3848,8 +3843,8 @@
 	   lastindex::long global::bool replacevalue %this)
    (cond
       ((js-procedure? replacevalue)
-       (with-access::JsProcedure replacevalue (procedure)
-	  (if (=fx ($procedure-arity procedure) 2)
+       (with-access::JsProcedure replacevalue (procedure arity)
+	  (if (=fx arity 2)
 	      (js-jsstring-replace-regexp-fun1 this rx
 		 lastindex global procedure %this)
 	      (js-jsstring-replace-regexp-funN this rx
@@ -4267,6 +4262,46 @@
 		 tail))))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-jsstring-repeat ...                                           */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-repeat this count %this)
+   
+   (define (string-repeat this count)
+      (with-access::JsStringLiteral this (left length)
+	 (let* ((olen (uint32->fixnum length))
+		(nlen (*fx olen count))
+		(buf ($make-string/wo-fill nlen)))
+	    (let loop ((w 0))
+	       (if (=fx w nlen)
+		   (if (js-jsstring-ascii? this)
+		       (js-ascii->jsstring buf)
+		       (js-utf8->jsstring buf))
+		   (begin
+		      (blit-string! left 0 buf w olen)
+		      (loop (+fx w olen))))))))
+   
+   (unless (js-jsstring-normalized? this)
+      (js-jsstring-normalize! this))
+   (string-repeat this count))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-prototype-repeat ...                                 */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-prototype-repeat this count %this)
+   ;; https://262.ecma-international.org/13.0/#sec-string.prototype.repeat
+   (let loop ((this this))
+      (cond
+	 ((js-jsstring? this)
+	  (js-jsstring-repeat this count %this))
+	 ((isa? this JsString)
+	  (with-access::JsString this (val)
+	     (loop val)))
+	 ((js-object? this)
+	  (loop (js-tojsstring this %this)))
+	 (else
+	  (loop (js-tojsstring (js-toobject %this this) %this))))))
+   
+;*---------------------------------------------------------------------*/
 ;*    js-jsstring-replace ...                                          */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.11    */
@@ -4275,8 +4310,8 @@
    
    (define (fun1? v)
       (when (js-procedure? v)
-	 (with-access::JsProcedure v (procedure)
-	    (correct-arity? procedure 2))))
+	 (with-access::JsProcedure v (arity)
+	    (=fx arity 2))))
    
    (define (fun1 v)
       (with-access::JsProcedure v (procedure)
@@ -4370,8 +4405,8 @@
    
    (define (fun1? v)
       (when (js-procedure? v)
-	 (with-access::JsProcedure v (procedure)
-	    (correct-arity? procedure 2))))
+	 (with-access::JsProcedure v (procedure arity)
+	    (=fx arity 2))))
    
    (define (fun1 v)
       (with-access::JsProcedure v (procedure)
@@ -4412,10 +4447,14 @@
    (with-access::JsGlobalObject %this (js-regexp js-array js-regexp-prototype js-string-pcache)
       (with-access::JsRegExp rx (flags)
 	 ;; 7
-	 (if (not (js-regexp-flags-global? flags))
+	 (cond
+	    ((js-regexp-flags-sticky? flags)
+	     (js-regexp-prototype-exec-sticky rx this %this))
+	    ((not (js-regexp-flags-global? flags))
 	     ;; match _always_ invoke the native exec, even if
 	     ;; RegExp.prototype.exec is modified
-	     (js-regexp-prototype-exec-no-global rx this %this)
+	     (js-regexp-prototype-exec-no-global rx this %this))
+	    (else
 	     ;; 8
 	     (let ((lastindex 0)
 		   (previousLastIndex 0)
@@ -4441,7 +4480,7 @@
 				(let ((matchStr (vector-ref vec 0)))
 				   (js-array-index-set! a (fixnum->uint32 n)
 				      matchStr #f %this)))
-			     (loop (+fx 1 n)))))))))))
+			     (loop (+fx 1 n))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-match-regexp-from-string ...                         */
@@ -4558,9 +4597,17 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.9     */
 ;*---------------------------------------------------------------------*/
 (define (js-jsstring-localecompare this that %this)
-   (let ((s (js-jsstring->string this))
-	 (t (js-tostring that %this)))
-      (utf8-string-locale-compare3 s t)))
+   (let ((s (js-jsstring->string this)))
+      (cond
+	 ((and (js-jsstring-ascii? this) (js-jsstring? that) (js-jsstring-ascii? that))
+	  (string-compare3 s (js-jsstring->string that)))
+	 ((eq? that (js-undefined))
+	  ;; needed for the overspecified test: 15.5.4.9_3.js
+	  (if (js-jsstring-ascii? this)
+	      (string-compare3 s "undefined")
+	      (utf8-string-locale-compare3 s "undefined")))
+	 (else
+	  (utf8-string-locale-compare3 s (js-tostring that %this))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-maybe-localecompare ...                              */
@@ -4951,7 +4998,10 @@
 ;*    js-jsstring-maybe-encodeuri ...                                  */
 ;*---------------------------------------------------------------------*/
 (define (js-jsstring-maybe-encodeuri this %this)
-   (js-jsstring-encodeuri (js-tojsstring this %this) %this))
+   (if (and (js-jsstring? this) (js-jsstring-ascii? this))
+       (let ((str (js-jsstring->string this)))
+	  (js-ascii->jsstring (uri-encode str)))
+       (js-jsstring-encodeuri (js-tojsstring this %this) %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-encodeuricomponent ...                               */

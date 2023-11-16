@@ -1,5 +1,5 @@
-${var hop = require( "hop" )}
-${var doc = require( "hopdoc" )}
+${var hop = require("hop")}
+${var doc = require("hopdoc")}
 
 
 Hopc Development
@@ -64,6 +64,23 @@ prefixed with `j2s:`, for instance `HOPTRACE=j2s:stage`, the compiler will
 dump its internal abstract syntax tree after executing each stage. These
 dumps will be located in `/tmp/$USER/J2S/your-source/...`.
 
+A dedicated syntax enables users to insert a custom stage in a predefined
+driver. The syntax is as follow
+
+```shell[:@shell]
+$ hopc --js-driver ...,ANCHOR,USER foo.js -v2
+```
+
+Using this syntax, `USER` stage will be executed after `ANCHOR` stage,
+found in the normal driver. For instance,
+
+```shell[:@shell]
+$ hopc -Ox --js-driver ...,arguments,stats.hop foo.js -v2
+```
+
+Will execute the `stats.hop` user stage after the `arguments` stage of
+the `optim` driver (because of the use of the `-Ox` option).
+
 
 External Compilation Stages
 ---------------------------
@@ -101,7 +118,7 @@ JavaScript. This modules maps all the Scheme class to JavaScript
 classes and it provides two functions used to import and export the
 AST.
 
-### hopc.intern( ast ) ###
+### hopc.intern(ast) ###
 [:@glyphicon glyphicon-tag function]
 
 This function accepts as input an AST as received by the service
@@ -113,10 +130,10 @@ A compilation *must* return an interned ast, so the simplest possible
 compilation stage is:
 
 ```hopscript[:@hop]
-const hopc = require( hop.hopc );
+const hopc = require(hop.hopc);
 
-service js2http( { ast, config } ) {
-    return hopc.intern( ast );
+service js2http({ ast, config }) {
+    return hopc.intern(ast);
 }	
 ```
 
@@ -124,7 +141,7 @@ A compilation stage can modify or annotate the ast it receives. These
 modifications will be visible to the following compilation stages.
 
 
-### hopc.extern( ast ) ###
+### hopc.extern(ast) ###
 [:@glyphicon glyphicon-tag function]
 
 Interned ast cannot be serialized into the JSON format using the
@@ -140,7 +157,7 @@ a json file and read it again for its return value.
 ${ <span class="label label-info">js2json.js</span> }
 
 ```hopscript[:@hop]
-${ doc.include( doc.BUILDDIR + "/doc/dev/js2json.js" ) }
+${ doc.include(doc.BUILDDIR + "/doc/dev/js2json.js") }
 ```
 
 Ast Walker
@@ -153,7 +170,7 @@ The `hop.hopc` module provides a facility for traversing ast.
 
 Builds an ast walker. 
 
-### walker.walk( prg ) ###
+### walker.walk(prg) ###
 [:@glyphicon glyphicon-tag function]
 
 Walks along the ast using the depth-first traversal. That is, this function
@@ -166,22 +183,22 @@ correspond to JavaScript object accesses:
 
 ```hopscript[:@hop]
 const w = new hopc.HopcAstWalker();
-w.J2SAccess = function( node ) {
-   console.log( "an access ", node.loc );
+w.J2SAccess = function(node) {
+   console.log("an access ", node.loc);
    return node;
 }
-w.walk( prg );
+w.walk(prg);
 ```
 
 A Complete Example
 ------------------
 
-${ doc.include( doc.BUILDDIR + "/examples/js2http/README.md" ) }
+${ doc.include(doc.BUILDDIR + "/examples/js2http/README.md") }
 
 ${ <span class="label label-info">js2http/js2http.js</span> }
 
 ```hopscript[:@hop]
-${ doc.include( doc.BUILDDIR + "/examples/js2http/js2http.js", 17 ) }
+${ doc.include(doc.BUILDDIR + "/examples/js2http/js2http.js", 17) }
 ```
 
 

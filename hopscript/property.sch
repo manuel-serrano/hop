@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Tue Sep 21 08:24:18 2021 (serrano)                */
-;*    Copyright   :  2016-21 Manuel Serrano                            */
+;*    Last change :  Thu Mar 30 13:26:17 2023 (serrano)                */
+;*    Copyright   :  2016-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
 ;*    -------------------------------------------------------------    */
@@ -39,6 +39,10 @@
    js-make-pcache-table-expander)
 (define-expander js-pcache-ref
    js-pcache-ref-expander)
+(define-expander js-pcache-rewrite-miss-label
+   js-pcache-rewrite-miss-label-expander)
+(define-expander js-pcache-rewrite-hit
+   js-pcache-rewrite-hit-expander)
 (define-expander js-pcache-imap
    js-pcache-imap-expander)
 (define-expander js-pcache-cmap
@@ -73,6 +77,11 @@
    js-pcache-owner-expander)
 (define-expander js-pcache-method
    js-pcache-method-expander)
+(define-expander js-pcache-function
+   js-pcache-function-expander)
+
+(define-expander js-pcache-point-set!
+   js-pcache-point-set-expander)
 
 (define-expander js-record-cache-check-proto-method
    js-record-cache-check-proto-method-expander)

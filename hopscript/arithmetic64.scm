@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Sat Aug 27 11:11:14 2022 (serrano)                */
-;*    Copyright   :  2017-22 Manuel Serrano                            */
+;*    Last change :  Thu Jul 20 17:45:47 2023 (serrano)                */
+;*    Copyright   :  2017-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on 64 bit platforms                        */
 ;*=====================================================================*/
@@ -28,7 +28,12 @@
 	   __hopscript_lib
 	   __hopscript_public)
    
-   (extern (macro $real64-set!::real (::real ::double) "BGL_REAL_SET"))
+   (extern (macro $real64-set!::real (::real ::double) "BGL_REAL_SET")
+	   (macro $+fx/ov53::obj (::bint ::bint ::bint) "BGL_ADDFX_OV53")
+	   (macro $-fx/ov53::obj (::bint ::bint ::bint) "BGL_SUBFX_OV53"))
+
+   (pragma ($+fx/ov53 nesting args-safe)
+	   ($-fx/ov53 nesting args-safe))
    
    (cond-expand
       ((or bint61 bint64)
@@ -41,6 +46,7 @@
 	  
 	  (inline overflowfx ::long)
 	  (inline overflow53::obj ::long)
+	  (inline overflowu64::obj ::uint64)
 	  
 	  (inline js-toint32::int32 ::obj ::JsGlobalObject)
 	  (js-toint32-slow::int32 ::obj ::JsGlobalObject)
@@ -61,6 +67,7 @@
 	  (inline js-int53-dec::long ::long)
 	  
 	  (inline +fx/overflow::obj ::long ::long)
+	  (inline +fx/overflow53::obj ::bint ::bint)
 	  (inline +s32/overflow::obj ::int32 ::int32)
 	  (inline +u32/overflow::obj ::uint32 ::uint32)
 	  (+/overflow::obj ::obj ::obj)
@@ -68,6 +75,7 @@
 	  (+/overflow!::obj ::obj ::obj)
 	  
 	  (inline -fx/overflow::obj ::long ::long)
+	  (inline -fx/overflow53::obj ::bint ::bint)
 	  (inline -s32/overflow::long ::int32 ::int32)
 	  (inline -u32/overflow::long ::uint32 ::uint32)
 	  (-/overflow::obj ::obj ::obj)
@@ -185,6 +193,14 @@
    (if (pragma::bool "(uint64_t)($1 - -9007199254740992) <= (uint64_t)18014398509481983" v)
        v
        (fixnum->flonum v)))
+
+;*---------------------------------------------------------------------*/
+;*    overflowu64 ...                                                  */
+;*---------------------------------------------------------------------*/
+(define-inline (overflowu64 v::uint64)
+   (if (pragma::bool "$1 < ((uint64_t)(1L << 53))" v)
+       (uint64->fixnum v)
+       (uint64->flonum v)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-toint32 ::obj ...                                             */
@@ -478,6 +494,11 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (+fx/overflow::obj x::long y::long)
    ;; see arithmetic.sch
+   ($let ((tmp::bint 0))
+      ($+fx/ov53 x y tmp)))
+
+(define-inline (+fx/overflow53::obj x::bint y::bint)
+   ;; see arithmetic.sch
    (overflow53 (+fx x y)))
 
 ;*---------------------------------------------------------------------*/
@@ -500,6 +521,7 @@
 ;*    be called.                                                       */
 ;*---------------------------------------------------------------------*/
 (define (+/overflow x::obj y::obj)
+   ;; (tprint "+/over x=" x " " (typeof x) " y=" y " " (typeof y))
    (let ((ll (tolong x)))
       (if ll
 	  (let ((rl (tolong y)))
@@ -541,6 +563,11 @@
 ;*    see +fx/overflow                                                 */
 ;*---------------------------------------------------------------------*/
 (define-inline (-fx/overflow::obj x::long y::long)
+   ($let ((tmp::bint 0))
+      ($-fx/ov53 x y tmp)))
+
+(define-inline (-fx/overflow53::obj x::bint y::bint)
+   ;; see arithmetic.sch
    (overflow53 (-fx x y)))
 
 ;*---------------------------------------------------------------------*/

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Sun Sep 26 18:54:10 2021 (serrano)                */
-;*    Copyright   :  2017-21 Manuel Serrano                            */
+;*    Last change :  Wed Mar 29 05:24:50 2023 (serrano)                */
+;*    Copyright   :  2017-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Math functions.             */
 ;*=====================================================================*/
@@ -14,6 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_scheme-math
 
+   (library hop)
+   
    (include "ast.sch")
    
    (import __js2scheme_ast
@@ -122,6 +124,10 @@
 		(when (=fx (length args) 1)
 		   (j2s-math-sign
 		      (car args) mode return conf)))
+	       ((string=? val "pow")
+		(when (=fx (length args) 2)
+		   (j2s-math-inline-pow
+		      (car args) (cadr args) mode return conf)))
 	       (else
 		#f))))))
 
@@ -301,6 +307,59 @@
 	   ,(j2s-scheme y mode return conf))
        `(js-math-atan2 ,(j2s-scheme x mode return conf)
 	   ,(j2s-scheme y mode return conf))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-math-inline-pow ...                                          */
+;*---------------------------------------------------------------------*/
+(define (j2s-math-inline-pow x y mode return conf)
+   
+   (define (number->flonum v)
+      (cond
+	 ((flonum? v) v)
+	 ((fixnum? v) (fixnum->flonum v))
+	 ((uint32? v) (uint32->flonum v))
+	 ((int32? v) (int32->flonum v))
+	 (else (error "Math.pow" "illegal number" v))))
+   
+   (let ((tyx (j2s-type x))
+	 (tyy (j2s-type y))
+	 (sx (j2s-scheme x mode return conf))
+	 (sy (j2s-scheme y mode return conf)))
+      (cond
+	 ((and (number? sx) (not (bignum? sx)) (number? sy) (not (bignum? sy)))
+	  (exptfl (number->flonum sx) (number->flonum sy)))
+	 ((eq? tyx 'real)
+	  (case tyy
+	     ((uint32)
+	      `(js-math-powfl ,sx (uint32->flonum ,sy)))
+	     ((int32)
+	      `(js-math-powfl ,sx (int32->flonum ,sy)))
+	     ((real)
+	      `(js-math-powfl ,sx ,sy))
+	     (else
+	      `(js-math-pow ,sx ,sy %this))))
+	 ((eq? tyx 'uint32)
+	  (case tyy
+	     ((uint32)
+	      `(js-math-powfl (uint32->flonum ,sx) (uint32->flonum ,sy)))
+	     ((int32)
+	      `(js-math-powfl (uint32->flonum ,sx) (int32->flonum ,sy)))
+	     ((real)
+	      `(js-math-powfl (uint32->flonum ,sx) ,sy))
+	     (else
+	      `(js-math-pow ,sx ,sy %this))))
+	 ((eq? tyx 'int32)
+	  (case tyy
+	     ((uint32)
+	      `(js-math-powfl (int32->flonum ,sx) (uint32->flonum ,sy)))
+	     ((int32)
+	      `(js-math-powfl (int32->flonum ,sx) (int32->flonum ,sy)))
+	     ((real)
+	      `(js-math-powfl (int32->flonum ,sx) ,sy))
+	     (else
+	      `(js-math-pow ,sx ,sy %this))))
+	 (else
+	  `(js-math-pow ,sx ,sy %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-math-sign ...                                                */

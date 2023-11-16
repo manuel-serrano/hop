@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Wed Dec 29 08:42:18 2021 (serrano)                */
-;*    Copyright   :  2015-21 Manuel Serrano                            */
+;*    Last change :  Thu Jun 22 09:10:01 2023 (serrano)                */
+;*    Copyright   :  2015-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Let function optimization. This optimization implements          */
 ;*    two transformations: letfun! and letfun-sa! that replaces        */
@@ -318,9 +318,11 @@
 	  (with-access::J2SRef lhs (decl)
 	     (with-access::J2SDecl decl (scope %info id)
 		(when (and (eq? %info #unspecified)
-			   (memq scope '(local inner)))
+			   (memq scope '(local inner))
+			   (not (decl-usage-has? decl '(assig))))
 		   (if (and (isa? rhs J2SFun)
-			    (with-access::J2SFun rhs (decl) (not decl)))
+			    (with-access::J2SFun rhs (decl) (not decl))
+			    (isa? this J2SInit))
 		       ;; optimize funtion expression only
 		       (begin
 			  (cell-set! env (cons decl (cell-ref env)))

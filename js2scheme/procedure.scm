@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 27 07:35:02 2019                          */
-;*    Last change :  Thu Nov 11 16:26:07 2021 (serrano)                */
-;*    Copyright   :  2019-21 Manuel Serrano                            */
+;*    Last change :  Thu Feb 23 09:20:10 2023 (serrano)                */
+;*    Copyright   :  2019-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Procedure optimization.                                          */
 ;*                                                                     */
@@ -212,7 +212,7 @@
 	  'top))))
 
 ;*---------------------------------------------------------------------*/
-;*    escape! ...                                                      */
+;*    escape! :: J2SFun ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-method (escape! this::J2SFun fix)
    (with-access::J2SFun this (params %info loc)
@@ -380,7 +380,8 @@
 	     (begin
 		(set! refinfo %info)
 		(node-procedure-info-vals %info))
-	     (let ((v (node-init-info! decl '() fix)))
+	     (let* ((t (if (isa? decl J2SDeclImport) 'top '()))
+		    (v (node-init-info! decl t fix)))
 		(set! refinfo %info)
 		v)))))
 
@@ -388,17 +389,21 @@
 ;*    eval-procedure ::J2SDeclFun ...                                  */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (eval-procedure this::J2SDeclFun fix)
-   (with-access::J2SDeclFun this (val %info id key id)
+   (with-access::J2SDeclFun this (val %info id key id export)
       (call-default-walker)
-      (decl-add-vals! this (eval-procedure val fix) fix)))
+      (let ((r (decl-add-vals! this (eval-procedure val fix) fix)))
+	 (when export (escape! val fix))
+	 r)))
 
 ;*---------------------------------------------------------------------*/
 ;*    eval-procedure ::J2SDeclInit ...                                 */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (eval-procedure this::J2SDeclInit fix)
-   (with-access::J2SDeclInit this (val %info id loc key)
+   (with-access::J2SDeclInit this (val %info id loc key export)
       (call-default-walker)
-      (decl-add-vals! this (eval-procedure val fix) fix)))
+      (let ((r (decl-add-vals! this (eval-procedure val fix) fix)))
+	 (when export (escape! val fix))
+	 r)))
 
 ;*---------------------------------------------------------------------*/
 ;*    eval-procedure ::J2SDeclExtern ...                               */
@@ -608,7 +613,7 @@
 (define-walk-method (optimize-procedure this::J2SDeclInit fix)
    (call-default-walker)
    (when (read-only-function? this)
-      (with-access::J2SDeclInit this (%info val id loc)
+      (with-access::J2SDeclInit this (%info val id loc export)
 	 (when (node-procedure-info-optimizablep %info)
 	    (let loop ((val val))
 	       (cond

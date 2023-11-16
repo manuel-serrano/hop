@@ -4,18 +4,16 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 13 14:06:56 2015                          */
-#*    Last change :  Tue Dec 20 19:25:06 2022 (serrano)                */
-#*    Copyright   :  2015-22 Manuel Serrano                            */
+#*    Last change :  Wed Jan  4 19:22:18 2023 (serrano)                */
+#*    Copyright   :  2015-23 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Hopc wrapper                                                     */
 #*=====================================================================*/
 
 LD_LIBRARY_PATH=@BUILDLIBDIR@:$LD_LIBRARY_PATH
 DYLD_LIBRARY_PATH=@BUILDLIBDIR@:$DYLD_LIBRARY_PATH
-BIGLOOLIB=@BUILDLIBDIR@
 
 export LD_LIBRARY_PATH
 export DYLD_LIBRARY_PATH
-export BIGLOOLIB
 
 exec @HOPC@ "$@"

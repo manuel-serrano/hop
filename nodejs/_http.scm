@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug  7 06:23:37 2014                          */
-;*    Last change :  Mon Apr 13 11:15:21 2020 (serrano)                */
-;*    Copyright   :  2014-20 Manuel Serrano                            */
+;*    Last change :  Tue May  9 11:32:04 2023 (serrano)                */
+;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HTTP bindings                                                    */
 ;*=====================================================================*/
@@ -117,10 +117,13 @@
 (define (reset-parser! p::JsHttpParser)
    (when (>fx debug-parser 0)
       (tprint "RESET-PARSER!"))
-   (with-access::JsHttpParser p (state buffer shift prevec)
+   (with-access::JsHttpParser p (state buffer shift prevec ip)
       (set! buffer #f)
       (set! shift 0)
       (set! prevec #f)
+      (when (input-port? ip)
+	 (close-input-port ip)
+	 (set! ip #f))
       (reset-parsing! p)))
 
 ;*---------------------------------------------------------------------*/
@@ -209,6 +212,7 @@
 	 `((HTTPParser . ,http))
 	 %this)))
 
+(define K 0)
 ;*---------------------------------------------------------------------*/
 ;*    exn ...                                                          */
 ;*---------------------------------------------------------------------*/
@@ -220,7 +224,7 @@
 ;*    http-parser-execute ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (http-parser-execute %this parser::JsHttpParser buf off len)
-
+   
    (define (execute vec::bstring offfx::long bufoff::long buflen::long)
       (when (>=fx debug-parser 2)
 	 (tprint ">>> http-parser-execute vlen="
@@ -258,10 +262,12 @@
 			     "")
 			 "}")
 		      ""))))
-	 (let ((ip (open-input-string! str stroff strend)))
+;* 	 (tprint "str=" (string-length str) " stroff=" stroff " strend=" strend " off=" off " len=" len) */
+	 (with-access::JsHttpParser parser (state parsemode errno buffer ip)
+	    (set! ip (open-input-string! str stroff strend))
 	    (let loop ((count 0)
 		       (avail (-fx strend stroff)))
-	       (with-access::JsHttpParser parser (state parsemode errno buffer)
+	       (with-access::JsHttpParser parser (state parsemode errno buffer ip)
 		  (multiple-value-bind (nstate nread)
 		     (state ip %this parser 0 avail)
 		     (when (>=fx debug-parser 2) 
@@ -334,7 +340,7 @@
 					 "")
 				     "}")))
 			    (loop byteparsed (-fx avail nread)))))))))))
-
+   
    (define (execute-safe vec::bstring bufoff::long buflen::long)
       (let ((offfx (->fixnum off))
 	    (lenfx (->fixnum len)))
@@ -358,7 +364,7 @@
 			     (js-put! e (& "code") errname #f %this)
 			     e))
 		       nparsed)))))))
-
+   
    (with-access::JsHttpParser parser (buffer state)
       (cond
 	 (buffer
@@ -1077,6 +1083,22 @@
 	 %this)))
 
 ;*---------------------------------------------------------------------*/
+;*    info-cmap ...                                                    */
+;*---------------------------------------------------------------------*/
+(define info-cmap #f)
+(define info-cmap-prop-names
+   '#("headers" "method" "url" "statusCode" "versionMajor"
+      "versionMinor" "shouldKeepAlive" "upgrade"))
+
+;*---------------------------------------------------------------------*/
+;*    make-info-cmap ...                                               */
+;*---------------------------------------------------------------------*/
+(define-inline (make-info-cmap)
+   (unless info-cmap
+      (set! info-cmap (js-strings->cmap info-cmap-prop-names)))
+   info-cmap)
+
+;*---------------------------------------------------------------------*/
 ;*    http-on-header-complete ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (http-on-header-complete %this parser::JsHttpParser)
@@ -1105,36 +1127,36 @@
 	    (let ((cb (js-get parser (& "onHeadersComplete") %this)))
 	       (when (js-procedure? cb)
 		  (with-access::JsGlobalObject %this (js-object)
-		     (let ((info (js-new0 %this js-object)))
+		     (let ((info (js-make-jsobject (vector-length info-cmap-prop-names)
+				    (make-info-cmap) (js-object-proto %this))))
 			;; upgrade
 			(unless (eq? parsemode 'upgrade)
-			   (when (and (string? method)
-				      (string=? method "CONNECT"))
+			   (when (and (string? method) (string=? method "CONNECT"))
 			      (set! parsemode 'upgrade)))
 			;; headers
-			(js-put! info (& "headers") jsheaders #f %this)
+			(js-object-inline-set! info 0 jsheaders)
 			;; request or resposne
 			(if (string? method)
 			    ;; request
 			    (begin
-			       (js-put! info (& "method")
-				  (js-string->jsstring method) #f %this)
-			       (js-put! info (& "url") jsurl #t %this))
+			       (js-object-inline-set! info 1 (js-string->jsstring method))
+			       (js-object-inline-set! info 2 jsurl))
 			    ;; response
-			    (js-put! info (& "statusCode") status-code #f %this))
+			    (js-object-inline-set! info 3 status-code))
 			;; http-version
-			(js-put! info (& "versionMajor") http-major #f %this)
-			(js-put! info (& "versionMinor") http-minor #f %this)
+			(js-object-inline-set! info 4 http-major)
+			(js-object-inline-set! info 5 http-minor)
 			;; keep-alive
 			(let ((kalive (should-keep-alive? parser)))
-			   (js-put! info (& "shouldKeepAlive") kalive #f %this))
+			   (js-object-inline-set! info 6 kalive))
 			;; upgrade
-			(js-put! info (& "upgrade") (eq? parsemode 'upgrade) #f %this)
+			(js-object-inline-set! info 7 (eq? parsemode 'upgrade))
 			;; invoke the callback
 			(let ((r (js-call2 %this cb parser info (js-undefined))))
 			   (when (js-totest r)
 			      (set! flags (cons 'skipbody flags)))
 			   r)))))))))
+
 ;*---------------------------------------------------------------------*/
 ;*    &end!                                                            */
 ;*---------------------------------------------------------------------*/

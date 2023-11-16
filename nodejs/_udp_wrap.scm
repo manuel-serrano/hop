@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 19 07:19:20 2014                          */
-;*    Last change :  Wed Apr 28 09:35:37 2021 (serrano)                */
-;*    Copyright   :  2014-21 Manuel Serrano                            */
+;*    Last change :  Sun May  7 14:11:41 2023 (serrano)                */
+;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs UDP bindings                                              */
 ;*=====================================================================*/
@@ -18,15 +18,14 @@
    
    (library hopscript)
 
-   (include "nodejs_async.sch" "nodejs_types.sch")
+   (include "nodejs_types.sch")
    
    (import  __nodejs_uv
 	    __nodejs_process
 	    __nodejs__buffer
 	    __nodejs__stream-wrap)
 
-   (export (process-udp-wrap ::WorkerHopThread ::JsGlobalObject 
-	      ::JsProcess ::obj ::JsObject)))
+   (export (process-udp-wrap ::WorkerHopThread ::JsGlobalObject ::JsProcess)))
 
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
@@ -36,7 +35,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    process-udp-wrap ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (process-udp-wrap %worker %this process::JsProcess slab slowbuffer::JsObject)
+(define (process-udp-wrap %worker %this process::JsProcess)
    
    (define (check-fail %this process r)
       (unless (=fx r 0)
@@ -98,7 +97,7 @@
 	    (js-put! obj (& "recvStart")
 	       (js-make-function %this
 		  (lambda (this)
-		     (udp-recv-start %worker %this process slab this))
+		     (udp-recv-start %worker %this process this))
 		  (js-function-arity 0 0)
 		  (js-function-info :name "recvStart" :len 0))
 	       #f %this)
@@ -215,20 +214,24 @@
 	 udp-proto))
    
    (define (udp-wrap hdl)
-      (with-access::JsGlobalObject %this (js-object)
-	 (let ((obj (instantiateJsHandle
-		       (handle hdl)
-		       (__proto__ (get-udp-proto))
-		       (cmap (js-make-jsconstructmap))
-		       (elements ($create-vector 1)))))
-	    (js-bind! %this obj (& "fd")
-	       :get (js-make-function %this
-		       (lambda (this)
-			  (nodejs-stream-fd %worker hdl))
-		       (js-function-arity 0 0)
-		       (js-function-info :name "GetFD" :len 0))
-	       :writable #f :configurable #f)
-	    obj)))
+      (with-access::JsGlobalObject %this (js-object js-udp-cmap)
+	 (with-access::JsProcess process (js-udp)
+	    (unless js-udp-cmap
+	       (set! js-udp-cmap (js-make-jsconstructmap :ctor js-udp)))
+	    (with-access::JsFunction js-udp (constrsize)
+	       (let ((obj (instantiateJsHandle
+			     (handle hdl)
+			     (__proto__ (get-udp-proto))
+			     (cmap js-udp-cmap)
+			     (elements ($create-vector constrsize)))))
+		  (js-bind! %this obj (& "fd")
+		     :get (js-make-function %this
+			     (lambda (this)
+				(nodejs-stream-fd %worker hdl))
+			     (js-function-arity 0 0)
+			     (js-function-info :name "GetFD" :len 0))
+		     :writable #f :configurable #f)
+		  obj)))))
    
    (define (UDP this)
       (udp-wrap (nodejs-udp-handle %worker)))
@@ -298,38 +301,40 @@
 ;*---------------------------------------------------------------------*/
 ;*    udp-recv-start ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (udp-recv-start %worker %this process slab this)
+(define (udp-recv-start %worker %this process this)
    (with-access::JsHandle this (handle)
-      (let ((r (nodejs-udp-recv-start %worker %this handle
-		  (lambda (obj size) (slab-allocate slab obj size))
-		  (lambda (status buf offset len addr)
-		     (with-trace 'nodejs-udp "recv-start-cb"
-			(trace-item "status=" status " buf=" (typeof buf)
-			   " offset=" offset " len=" len)
-			(cond
-			   ((=fx len 0)
-			    ;; nothing read
-			    (slab-shrink! slab buf offset 0))
-			   ((not status)
-			    ;; read error
-			    (slab-shrink! slab buf offset 0)
-			    (js-put! process (& "_errno") (nodejs-err-name len) #f %this)
-			    (let ((onmsg (js-get this (& "onmessage") %this)))
-			       (!js-callback0 "recv-start" %worker %this
-				  onmsg this)))
-			   (else
-			    ;; characters read
-			    (let ((b (slab-shrink! slab buf offset len)))
+      (with-access::JsProcess process (alloc slab)
+	 (let ((r (nodejs-udp-recv-start %worker %this handle
+		     alloc
+		     (lambda (status buf offset len addr)
+			(with-trace 'nodejs-udp "recv-start-cb"
+			   (trace-item "status=" status " buf=" (typeof buf)
+			      " offset=" offset " len=" len)
+			   (cond
+			      ((=fx len 0)
+			       ;; nothing read
+			       (slab-shrink! slab buf offset 0))
+			      ((not status)
+			       ;; read error
+			       (slab-shrink! slab buf offset 0)
+			       (js-put! process (& "_errno") (nodejs-err-name len)
+				  #f %this)
 			       (let ((onmsg (js-get this (& "onmessage") %this)))
-				  (!js-callback5 "recv-start" %worker %this
-				     onmsg this this b offset len
-				     (js-alist->jsobject addr %this))
-				  (js-undefined))))))))))
-	 (if (=fx r 0)
-	     #t
-	     (begin
-		(js-put! process (& "_errno") (nodejs-err-name r) #f %this)
-		#f)))))
+				  (!js-callback0 "recv-start" %worker %this
+				     onmsg this)))
+			      (else
+			       ;; characters read
+			       (let ((b (slab-shrink! slab buf offset len)))
+				  (let ((onmsg (js-get this (& "onmessage") %this)))
+				     (!js-callback5 "recv-start" %worker %this
+					onmsg this this b offset len
+					(js-alist->jsobject addr %this))
+				     (js-undefined))))))))))
+	    (if (=fx r 0)
+		#t
+		(begin
+		   (js-put! process (& "_errno") (nodejs-err-name r) #f %this)
+		   #f))))))
 		
 
 ;*---------------------------------------------------------------------*/

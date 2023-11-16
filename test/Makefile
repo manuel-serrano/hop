@@ -3,8 +3,8 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Fri Jun  4 13:20:46 2021 (serrano)                */
-#*    Copyright   :  2006-21 Manuel Serrano                            */
+#*    Last change :  Fri Oct  6 18:12:30 2023 (serrano)                */
+#*    Copyright   :  2006-23 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Example Makefile                                                 */
 #*=====================================================================*/
@@ -37,6 +37,7 @@ POPULATION = Makefile \
   hopjs/TEST.in \
   hopjs/passwd.hop \
   hopjs/noserv/optim.js \
+  hopjs/noserv/types.js \
   hopjs/noserv/cache.js \
   hopjs/noserv/array.js \
   hopjs/noserv/ecma51.js \

@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Sat Jan  1 06:38:34 2022 (serrano)                */
-/*    Copyright   :  2014-22 Manuel Serrano                            */
+/*    Last change :  Sat Jun 10 08:07:24 2023 (serrano)                */
+/*    Copyright   :  2014-23 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing basic ECMA 262, 5.1 features                             */
 /*=====================================================================*/
@@ -204,7 +204,7 @@ function bar5() {
 }
 
 function bar6() {
-   function setProto() {
+   function setProto2() {
       Object.defineProperty(arguments.__proto__, "2",
       	 { get: function(el) { this[ 1 ] = 23; return 0;} });
    }
@@ -213,7 +213,7 @@ function bar6() {
       return b;
    }
    
-   setProto();
+   setProto2();
    
    return arguments[ 2 ] + bar.apply(this, arguments);
 }
@@ -221,6 +221,19 @@ function bar6() {
 var xxxx = 4;
 if (xxxx > 10) {
    var yyyy = 3;
+}
+
+function bar7() {
+   function setProto100() {
+      Object.defineProperty(arguments.__proto__, "100",
+			    { get: function(el) { return 4;} });
+   }
+
+   const n = arguments[1];
+   const p = arguments[100];
+   setProto100();
+   const q = arguments[100];
+   return p === undefined && q + n === 5;
 }
 
 assert.equal(foo1(10), 55, "foo1");
@@ -231,6 +244,7 @@ assert.strictEqual(bar3(1, 2, 3, 4, 5, 6), true, "arguments.length");
 assert.strictEqual(bar4(10), 3, "arguments overriding");
 assert.strictEqual(bar5(), true, "arguments length");
 assert.strictEqual(bar6(1, 2), 23, "arguments.__proto__");
+assert.ok(bar7(1, 2), "arguments.__proto__ (2)");
 assert.equal(yyyy, undefined, "global lifting");
 
 /*---------------------------------------------------------------------*/

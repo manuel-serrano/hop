@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    /tmp/HOP/hop/hopscript/arithmetic32.scm                          */
+;*    serrano/prgm/project/hop/hop/hopscript/arithmetic32.scm          */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Sat Jun 25 17:18:32 2022 (serrano)                */
-;*    Copyright   :  2017-22 Manuel Serrano                            */
+;*    Last change :  Fri Mar 31 07:59:31 2023 (serrano)                */
+;*    Copyright   :  2017-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on 32bit and nan64 platforms               */
 ;*=====================================================================*/
@@ -41,6 +41,7 @@
 	  (inline negjs-int::obj ::obj)
 	  
 	  (inline overflowfx ::long)
+	  (inline overflowu64::obj ::uint64)
 	  (macro overflowu32?)
 	  
 	  (inline js-toint32::int32 ::obj ::JsGlobalObject)
@@ -127,6 +128,14 @@
        (if (or (>fx v (maxvalfx)) (<fx v (minvalfx)))
 	   (fixnum->flonum v)
 	   v))))
+
+;*---------------------------------------------------------------------*/
+;*    overflowu64 ...                                                  */
+;*---------------------------------------------------------------------*/
+(define-inline (overflowu64 v::uint64)
+   (if (pragma::bool "$1 < ((uint64_t)(1L << 29))" v)
+       (uint64->fixnum v)
+       (uint64->flonum v)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-number->jsnumber ...                                          */

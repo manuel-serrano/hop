@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Wed Oct  5 07:52:22 2022 (serrano)                */
-;*    Copyright   :  2004-22 Manuel Serrano                            */
+;*    Last change :  Tue Aug 22 14:55:47 2023 (serrano)                */
+;*    Copyright   :  2004-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
 ;*=====================================================================*/
@@ -70,6 +70,12 @@
 ;*    main ...                                                         */
 ;*---------------------------------------------------------------------*/
 (define (main args)
+   ;; gc traces
+   (let ((env (getenv "HOPTRACE")))
+      (when (and (string? env) (string-contains env "hopscript:gc"))
+	 (cond-expand
+	    (gc ($bgl-gc-verbose-set! #t))
+	    (else #unspecified))))
    ;; catch critical signals
    (signal-init!)
    ;; set the Hop cond-expand identification
@@ -119,7 +125,7 @@
 	 ;; start zeroconf
 	 (when (hop-enable-zeroconf) (init-zeroconf!))
 	 ;; create the scheduler (unless the rc file has already created one)
-	 (unless (isa? (hop-scheduler) scheduler)
+	 (unless (or (isa? (hop-scheduler) scheduler) (not (hop-run-server)))
 	    (hop-scheduler-set! (make-hop-scheduler)))
 	 ;; start the hop scheduler loop (i.e. the hop main loop)
 	 (with-handler
@@ -241,31 +247,31 @@
    (hopscript-install-expanders!)
    (multiple-value-bind (%worker %global %module)
       (js-main-worker! "main"
-	 (make-file-name (pwd) name)
+	 (format "hop-~a~a (~a)" (hop-version) (hop-minor-version) (hop-build-tag))
 	 (or (hop-run-server) (eq? (hop-enable-repl) 'js))
 	 nodejs-new-global-object nodejs-new-module)
       ;; js loader
       (hop-loader-add! "js"
 	 (lambda (path . test)
-	    (js-worker-exec %worker "hop-loader" #t
-	       (lambda ()
-		  (nodejs-load path path %global %module %worker :commonjs-export #t)))))
+	    (js-worker-exec %worker "hop-loader"
+	       (lambda (%this)
+		  (nodejs-load path path  %worker %global %module :commonjs-export #t)))))
       (hop-loader-add! "mjs"
 	 (lambda (path . test)
-	    (js-worker-exec %worker "hop-loader" #t
-	       (lambda ()
-		  (nodejs-load path path %global %module %worker :commonjs-export #t)))))
+	    (js-worker-exec %worker "hop-loader"
+	       (lambda (%this)
+		  (nodejs-load path path %worker %global %module :commonjs-export #t)))))
       (hop-loader-add! "ast.json"
 	 (lambda (path . test)
-	    (js-worker-exec %worker "hop-loader" #t
-	       (lambda ()
-		  (nodejs-load path path %global %module %worker :commonjs-export #t)))))
+	    (js-worker-exec %worker "hop-loader"
+	       (lambda (%this)
+		  (nodejs-load path path %worker %global %module :commonjs-export #t)))))
       ;; ts loader
       (hop-loader-add! "ts"
 	 (lambda (path . test)
-	    (js-worker-exec %worker "hop-loader" #t
-	       (lambda ()
-		  (nodejs-load path path %global %module %worker :lang "ts" :commonjs-export #t)))))
+	    (js-worker-exec %worker "hop-loader"
+	       (lambda (%this)
+		  (nodejs-load path path %worker %global %module :lang "ts" :commonjs-export #t)))))
       ;; profiling
       (when (hop-profile)
 	 (js-profile-init `(:server #t) #f #f))
@@ -290,8 +296,8 @@
    (javascript-init-hss %worker %global)
    ;; push user expressions
    (when (pair? exprs)
-      (js-worker-push-thunk! %worker "cmdline"
-	 (lambda ()
+      (js-worker-push! %worker "cmdline"
+	 (lambda (%this)
 	    (for-each (lambda (expr)
 			 (call-with-input-string (string-append expr "\n")
 			    (lambda (ip)
@@ -299,15 +305,18 @@
 				  (js-undefined) %global))))
 	       exprs))))
    ;; close user registration
-   (js-worker-push-thunk! %worker "jsinit"
-      (lambda ()
+   (js-worker-push! %worker "jsinit"
+      (lambda (%this)
 	 (synchronize jsmutex
 	    (unless jsinit
 	       (condition-variable-wait! jscondv jsmutex)))))
    ;; start the JS repl loop
    (when (eq? (hop-enable-repl) 'js)
-      (js-worker-push-thunk! %worker "repl"
-	 (lambda ()
+      (signal sigint
+	 (lambda (n)
+	    (thread-kill! %worker sigint)))
+      (js-worker-push! %worker "repl"
+	 (lambda (%this)
 	    (hopscript-repl (hop-scheduler) %global %worker))))
    ;; start the javascript loop
    (with-access::WorkerHopThread %worker (mutex condv module-cache)
@@ -333,8 +342,8 @@
       ;; set the preferred language
       (hop-preferred-language-set! "hopscript")
       ;; force the module initialization
-      (js-worker-push-thunk! %worker "rc"
-	 (lambda ()
+      (js-worker-push! %worker "rc"
+	 (lambda (%this)
 	    (let ((path (if (and (>fx (string-length path) 0)
 				 (char=? (string-ref path 0) (file-separator)))
 			    path
@@ -343,7 +352,8 @@
 	       (let ((oldload (hop-rc-loaded)))
 		  (hop-rc-loaded! #f)
 		  (unwind-protect
-		     (nodejs-load path path %global %module %worker :commonjs-export #t)
+		     ;;(nodejs-load path path %worker %global %module :commonjs-export #t)
+		     (nodejs-load-module path %worker %global %module :commonjs-export #t)
 		     (begin
 			(hop-rc-loaded! oldload)
 			(synchronize rcmutex
@@ -355,8 +365,8 @@
 	  (let ((path (string-append (prefix (hop-rc-file)) ".js")))
 	     (if (file-exists? path)
 		 (load-rc path)
-		 (js-worker-push-thunk! %worker "init"
-		    (lambda ()
+		 (js-worker-push! %worker "init"
+		    (lambda (%this)
 		       (synchronize rcmutex
 			  (condition-variable-broadcast! rccondv)))))))))
 
@@ -394,8 +404,8 @@
 		       :hopscript-header #f
 		       :filename "javascript-init-hss")))))
       ;; force the module initialization
-      (js-worker-push-thunk! %worker "hss"
-	 (lambda ()
+      (js-worker-push! %worker "hss"
+	 (lambda (%this)
 	    (let ((mod (nodejs-new-module "hss" "hss" %worker %global))
 		  (scope (nodejs-new-scope-object %global)))
 	       (js-put! scope (& "module") mod #f scope)
@@ -404,12 +414,10 @@
 		     (%js-eval in 'repl %global %global scope)))
 	       (hop-hss-foreign-eval-set!
 		  (lambda (ip)
-		     (js-worker-exec %worker "hss" #t
-			(lambda ()
-			   (js-put! mod (& "filename")
-			      (js-string->jsstring (input-port-name ip)) #f
-			      %global)
-			   (%js-eval-hss ip %global %worker scope))))))))))
+		     (js-put! mod (& "filename")
+			(js-string->jsstring (input-port-name ip)) #f
+			%global)
+		     (%js-eval-hss ip %global %worker scope))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    make-hop-scheduler ...                                           */
@@ -498,23 +506,26 @@
 	  ;; javascript
 	  (when %worker
 	     (with-access::WorkerHopThread %worker (%this prerun)
-		(js-worker-push-thunk! %worker "nodejs-load"
-		   (lambda ()
-		      (nodejs-load path path %global %module %worker :commonjs-export #t))))))
+		(js-worker-push! %worker (format "nodejs-load(~a)" path)
+		   (lambda (%this)
+		      ;(nodejs-load path path %worker %global %module :commonjs-export #t)
+		      (nodejs-load-module path %worker %global %module :commonjs-export #t))))))
 	 ((string-suffix? ".mjs" path)
 	  ;; javascript
 	  (when %worker
 	     (with-access::WorkerHopThread %worker (%this prerun)
-		(js-worker-push-thunk! %worker "nodejs-load"
-		   (lambda ()
-		      (nodejs-load path path %global %module %worker :commonjs-export #f))))))
+		(js-worker-push! %worker (format "nodejs-load(~a)" path)
+		   (lambda (%this)
+		      ;(nodejs-load path path %worker %global %module :commonjs-export #f)
+		      (nodejs-load-module path %worker %global %module :commonjs-export #f))))))
 	 ((string-suffix? ".ts" path)
 	  ;; typescript
 	  (when %worker
 	     (with-access::WorkerHopThread %worker (%this prerun)
-		(js-worker-push-thunk! %worker "nodejs-load"
-		   (lambda ()
-		      (nodejs-load path path %global %module %worker :lang "ts" :commonjs-export #t))))))
+		(js-worker-push! %worker (format "nodejs-load(~a)" path)
+		   (lambda (%this)
+		      ;(nodejs-load path path %worker  %global %module :lang "ts" :commonjs-export #t)
+		      (nodejs-load-module path %worker %global %module :lang "ts" :commonjs-export #t))))))
 	 ((string=? (basename path) "package.json")
 	  (load-package path))
 	 (else
@@ -526,38 +537,35 @@
 ;*    hop-repl ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (hop-repl scd)
-   (if (>fx (hop-max-threads) 1)
+   (cond
+      ((<=fx (hop-max-threads) 1)
+       (error "hop-repl"
+	  "not enough threads to start a REPL (see --threads-max option)"
+	  (hop-max-threads)))
+      ((isa? scd scheduler)
        (with-access::scheduler scd (size)
 	  (if (<=fx size 1)
 	      (error "hop-repl"
 		 "HOP REPL cannot be spawned without multi-threading"
 		 scd)
-	      (spawn0 scd (stage-repl repl))))
-       (error "hop-repl"
-	  "not enough threads to start a REPL (see --threads-max option)"
-	  (hop-max-threads))))
+	      (spawn0 scd (stage-repl repl)))))
+      (else
+       (thread-start!
+	  (instantiate::hopthread
+	     (body (lambda ()
+		      (stage-repl repl))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopscript-repl ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (hopscript-repl scd %global %worker)
-   (if (>fx (hop-max-threads) 1)
-       (if (isa? scd scheduler)
-	   (with-access::scheduler scd (size)
-	      (if (<=fx size 1)
-		  (error "hop-repl"
-		     "HOP REPL cannot be spawned without multi-threading"
-		     scd)
-		  (multiple-value-bind (%worker %global %module)
-		     (js-main-worker! "repl" (pwd) #f
-			nodejs-new-global-object nodejs-new-module)
-		     (js-worker-exec %worker "repl" #t
-			(lambda ()
-			   (repljs %global %worker))))))
-	   (repljs %global %worker))
+   (cond
+      ((<=fx (hop-max-threads) 1)
        (error "hop-repl"
 	  "not enough threads to start a REPL (see --threads-max option)"
-	  (hop-max-threads))))
+	  (hop-max-threads)))
+      (else
+       (repljs %global %worker))))
 
 ;*---------------------------------------------------------------------*/
 ;*    stage-repl ...                                                   */

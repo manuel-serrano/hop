@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 24 13:11:25 2019                          */
-;*    Last change :  Thu Apr 14 08:20:13 2022 (serrano)                */
-;*    Copyright   :  2019-22 Manuel Serrano                            */
+;*    Last change :  Tue Jun 27 12:23:28 2023 (serrano)                */
+;*    Copyright   :  2019-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Mark global variables potentially used before being initialized. */
 ;*=====================================================================*/
@@ -151,6 +151,12 @@
 	     env))))
 
 ;*---------------------------------------------------------------------*/
+;*    uninit* ::J2SLiteral ...                                         */
+;*---------------------------------------------------------------------*/
+(define-method (uninit* this::J2SLiteral env)
+   env)
+
+;*---------------------------------------------------------------------*/
 ;*    uninit* ::J2SDecl ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-method (uninit* this::J2SDecl env)
@@ -160,7 +166,7 @@
 ;*    uninit* ...                                                      */
 ;*---------------------------------------------------------------------*/
 (define-method (uninit* this::J2SDeclInit env)
-   (with-access::J2SDeclInit this (val)
+   (with-access::J2SDeclInit this (val loc)
       (uninit* val env)
       (decl-usage-add! this 'init)
       (cons this env)))

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 21 09:27:29 2017                          */
-;*    Last change :  Wed Dec 22 14:09:06 2021 (serrano)                */
-;*    Copyright   :  2017-21 Manuel Serrano                            */
+;*    Last change :  Mon Jun 26 10:20:25 2023 (serrano)                */
+;*    Copyright   :  2017-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    This optimization consists in "pre-initializating" variables     */
 ;*    declarations in order to improve the variable typing.            */
@@ -416,9 +416,15 @@
 			    o))))
 	       decls))
 	 (if (pair? olds)
-	     (set! nodes
-		(map! (lambda (n) (j2s-alpha (patchinit! n args) olds news))
-		   nodes))
+	     (begin
+		(set! nodes
+		   (map! (lambda (n) (j2s-alpha (patchinit! n args) olds news))
+		      nodes))
+		(for-each (lambda (d)
+			    (when (isa? d J2SDeclInit)
+			       (with-access::J2SDeclInit d (val)
+				  (set! val (j2s-alpha val olds news)))))
+		   decls))
 	     (set! nodes
 		(map! (lambda (n) (patchinit! n args))
 		   nodes)))

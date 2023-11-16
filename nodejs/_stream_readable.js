@@ -29,10 +29,6 @@ var StringDecoder;
 
 util.inherits(Readable, Stream);
 
-function console_error() {
-//   console.error.apply( this, arguments );
-}
-
 function ReadableState(options, stream) {
   options = options || {};
 
@@ -128,7 +124,6 @@ Readable.prototype.push = function(chunk, encoding) {
     }
   }
 
-   console_error( "---- push chunk state=", state.ended, " chunk=", typeof chunk );
   return readableAddChunk(this, state, chunk, encoding, false);
 };
 
@@ -136,14 +131,12 @@ Readable.prototype.push = function(chunk, encoding) {
 Readable.prototype.unshift = function(chunk) {
   var state = this._readableState;
 
-   console_error( "---- unshift state=", state.ended );
   return readableAddChunk(this, state, chunk, '', true);
 };
 
 var count = 0;
 
 function readableAddChunk(stream, state, chunk, encoding, addToFront) {
-   console_error( "---- readableAddChunk state=", state.ended );
   var er = chunkInvalid(state, chunk);
   if (er) {
     stream.emit('error', er);
@@ -159,23 +152,19 @@ function readableAddChunk(stream, state, chunk, encoding, addToFront) {
       var e = new Error('stream.unshift() after end event');
       stream.emit('error', e);
     } else {
-       console_error( "---- state.decoder=", state.decoder, " enc=", encoding );
       if (state.decoder && !addToFront && !encoding) {
         chunk = state.decoder.write(chunk);
       }
 
-       console_error( "---- addToFront=", addToFront );
       // update the buffer info.
       state.length += state.objectMode ? 1 : chunk.length;
       if (addToFront) {
         state.buffer.unshift(chunk);
       } else {
         state.reading = false;
-       console_error( "---- state.buffer.push=", state.buffer.push );
         state.buffer.push(chunk);
       }
 
-       console_error( "---- state.needReable=", state.needReadble );
       if (state.needReadable) {
         emitReadable(stream);
       }
@@ -266,7 +255,6 @@ function howMuchToRead(n, state) {
 
 // you can override either this method, or the async _read(n) below.
 Readable.prototype.read = function(n) {
-   console_error( "--- (_stream_readable.js) Readable.prototype.read n=", n );
   var state = this._readableState;
   state.calledRead = true;
   var nOrig = n;
@@ -278,21 +266,14 @@ Readable.prototype.read = function(n) {
   // if we're doing read(0) to trigger a readable event, but we
   // already have a bunch of data in the buffer, then just trigger
   // the 'readable' event and move on.
-   console_error( "(_stream_readable.js) Readable.prototype.read n="+ n+
-	     " needReable="+ state.needReadable+
-	     " state.length="+ state.length+
-	     " state.highWaterMark="+ state.highWaterMark+
-	     " state.ended="+ state.ended );
   if (n === 0 &&
       state.needReadable &&
       (state.length >= state.highWaterMark || state.ended)) {
-	 console_error( "emitReadable.2" );
     emitReadable(this);
     return null;
   }
 
   n = howMuchToRead(n, state);
-   console_error( "(_stream_readable.js) Readable.prototype.read howMuchToRead=", n );
 
   // if we've ended, and we're now clear, then finish it up.
   if (n === 0 && state.ended) {
@@ -354,7 +335,6 @@ Readable.prototype.read = function(n) {
   if (state.ended || state.reading)
     doRead = false;
 
-   console_error( "Readable.prototype.read doRead=", doRead );
   if (doRead) {
     state.reading = true;
     state.sync = true;
@@ -362,7 +342,6 @@ Readable.prototype.read = function(n) {
     if (state.length === 0)
       state.needReadable = true;
     // call internal read method
-     console_error( "calling _read=" );
     this._read(state.highWaterMark);
     state.sync = false;
   }
@@ -415,7 +394,6 @@ function chunkInvalid(state, chunk) {
 
 
 function onEofChunk(stream, state) {
-   console_error( "onEofChunk" );
   if (state.decoder && !state.ended) {
     var chunk = state.decoder.end();
     if (chunk && chunk.length) {
@@ -446,9 +424,7 @@ function emitReadable(stream) {
 
   state.emittedReadable = true;
    if (state.sync) {
-      console_error( "_stream_readable.js, process.nextTick" );
       process.nextTick(function() {
-	 console_error( "in next tick, emitReadable_" );
       emitReadable_(stream);
     });
    } else {
@@ -468,18 +444,15 @@ function emitReadable_(stream) {
 // However, if we're not ended, or reading, and the length < hwm,
 // then go ahead and try to read some more preemptively.
 function maybeReadMore(stream, state) {
-   console_error( "maybeReadMore state.readingMore=", state.readingMore );
   if (!state.readingMore) {
     state.readingMore = true;
     process.nextTick(function() {
-       console_error( "maybeReadMore nextTick... ");
       maybeReadMore_(stream, state);
     });
   }
 }
 
 function maybeReadMore_(stream, state) {
-   console_error( "maybeReadMore_ state.readingMore state=", state.buffer.length );
   var len = state.length;
   while (!state.reading && !state.flowing && !state.ended &&
          state.length < state.highWaterMark) {
@@ -525,9 +498,7 @@ Readable.prototype.pipe = function(dest, pipeOpts) {
   var endFn = doEnd ? onend : cleanup;
   if (state.endEmitted) {
     process.nextTick(endFn);
-     console_error( "_stream_readable _stread_readable process.nextTick" );
   } else {
-     console_error( "_stream_readable _stread_readable src.once end" );
     src.once('end', endFn);
   }
 
@@ -546,7 +517,6 @@ Readable.prototype.pipe = function(dest, pipeOpts) {
   // handler in flow(), but adding and removing repeatedly is
   // too slow.
   var ondrain = pipeOnDrain(src);
-   console_error( "_stream_readable _stread_readable ondrain" );
   dest.on('drain', ondrain);
 
   function cleanup() {
@@ -607,7 +577,6 @@ Readable.prototype.pipe = function(dest, pipeOpts) {
   dest.emit('pipe', src);
 
   // start the flow if it hasn't been started already.
-   console_error( "_stream_readable _stread_readable state.flowing=", state.flowing );
    
   if (!state.flowing) {
     // the handler that waits for readable events after all
@@ -750,7 +719,6 @@ Readable.prototype.on = function(ev, fn) {
   var res = Stream.prototype.on.call(this, ev, fn);
 
   if (ev === 'data' && !this._readableState.flowing) {
-     console_error( "Readable.prototype.on, emitDataEvents ev=", ev );
      emitDataEvents(this);
   }
 
@@ -763,7 +731,6 @@ Readable.prototype.on = function(ev, fn) {
       if (!state.reading) {
         this.read(0);
       } else if (state.length) {
-	 console_error( "emitReadable.4" );
         emitReadable(this, state);
       }
     }
@@ -782,14 +749,13 @@ Readable.prototype.resume = function() {
 };
 
 Readable.prototype.pause = function() {
-   console_error( "Readable.prototype.on, pause" );
   emitDataEvents(this, true);
   this.emit('pause');
 };
 
 function emitDataEvents(stream, startPaused) {
   var state = stream._readableState;
-console_error( "~~~~~~~~~~~~~ emitDataEvents startPaused=", startPaused );
+
   if (state.flowing) {
     // https://github.com/isaacs/readable-stream/issues/16
     throw new Error('Cannot switch to old mode now.');
@@ -804,7 +770,6 @@ console_error( "~~~~~~~~~~~~~ emitDataEvents startPaused=", startPaused );
   stream.on = stream.addListener = Stream.prototype.on;
 
   stream.on('readable', function() {
-     console_error( "stream.on readable..." );
     readable = true;
 
     var c;
@@ -823,7 +788,6 @@ console_error( "~~~~~~~~~~~~~ emitDataEvents startPaused=", startPaused );
   };
 
   stream.resume = function() {
-     console_error( "resume readable=", readable);
     paused = false;
     if (readable)
       process.nextTick(function() {
@@ -851,12 +815,10 @@ Readable.prototype.wrap = function(stream) {
     if (state.decoder && !state.ended) {
       var chunk = state.decoder.end();
       if (chunk && chunk.length) {
-	 console_error( "push.4" );
         self.push(chunk);
       }
     }
 
-	 console_error( "push.5" );
     self.push(null);
   });
 
@@ -871,7 +833,6 @@ Readable.prototype.wrap = function(stream) {
     else if (!state.objectMode && (!chunk || !chunk.length))
       return;
 
-	 console_error( "push.6" );
     var ret = self.push(chunk);
     if (!ret) {
        paused = true;
@@ -988,13 +949,54 @@ function endReadable(stream) {
 
   if (!state.endEmitted && state.calledRead) {
     state.ended = true;
-    process.nextTick(function() {
-      // Check that we didn't get one last unshift.
-      if (!state.endEmitted && state.length === 0) {
-        state.endEmitted = true;
-         stream.readable = false;
-        stream.emit('end');
-      }
-    });
+
+    // MS 2may2023
+    if (endReadableNextTickIndex === 0) {
+       process.nextTick(endReadableNextTick);
+    } else if (endReadableNextTickIndex === endReadableNextTickArray.length) {
+       endReadableNextTickArray = doubleArray(endReadableNextTickArray);
+    }
+
+    endReadableNextTickArray[endReadableNextTickIndex++] = stream;
+
+/*     process.nextTick(function() {                                   */
+/*       // Check that we didn't get one last unshift.                 */
+/*       if (!state.endEmitted && state.length === 0) {                */
+/*         state.endEmitted = true;                                    */
+/*          stream.readable = false;                                   */
+/*         stream.emit('end');                                         */
+/*       }                                                             */
+/*     });                                                             */
   }
 }
+
+// MS 2may2023
+let endReadableNextTickIndex = 0;
+let endReadableNextTickArray = new Array(64);
+
+function endReadableNextTick() {
+   for (let i = 0; i < endReadableNextTickIndex; i++) {
+      const stream = endReadableNextTickArray[i];
+      const state = stream._readableState;
+      // Check that we didn't get one last unshift.
+      if (!state.endEmitted && state.length === 0) {
+         state.endEmitted = true;
+         stream.readable = false;
+         stream.emit('end');
+	 endReadableNextTickArray[i] = undefined;
+      }
+   }
+   endReadableNextTickIndex = 0;
+}
+
+function doubleArray(o) {
+   const n = new Array(o.length * 2);
+
+   for (let i = o.length - 1; i >= 0; i--) {
+      n[i] = o[i];
+   }
+
+   return n;
+}
+
+

@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/3.2.x/examples/Makefile                 */
+#*    serrano/prgm/project/hop/hop/examples/Makefile                   */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Mon Jan 28 16:46:24 2019 (serrano)                */
-#*    Copyright   :  2006-21 Manuel Serrano                            */
+#*    Last change :  Thu Mar  9 15:14:36 2023 (serrano)                */
+#*    Copyright   :  2006-23 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Example Makefile                                                 */
 #*=====================================================================*/
@@ -53,6 +53,7 @@ POPULATION = Makefile \
   hss/hss.hss hss/hss.js hss/example.json hss/README.md \
   tree/tree.js tree/example.json tree/README.md \
   spage/spage.js spage/example.json spage/README.md \
+  readlines/readlines.js readlines/example.json readlines/README.md \
   tower/tower.js tower/example.json \
   dom/dom.js dom/example.json dom/README.md \
   jquery/jquery.js jquery/example.json \

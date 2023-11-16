@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 19 11:16:33 2015                          */
-/*    Last change :  Tue Apr 28 19:40:08 2020 (serrano)                */
-/*    Copyright   :  2015-20 Manuel Serrano                            */
+/*    Last change :  Fri May 12 18:46:30 2023 (serrano)                */
+/*    Copyright   :  2015-23 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ES6 promises.                                            */
 /*=====================================================================*/
@@ -20,7 +20,7 @@ assert.check = function( val, name ) {
    try {
       assert.ok( val, name );
    } catch( e ) {
-      #:exception-notify( e );
+      //#:exception-notify( e );
       console.log( "e=", e );
       throw( e );
    }
@@ -162,7 +162,7 @@ function mdnReject() {
    Promise.reject( new Error( "fail" ) ).then( function( error ) {
       assert.check( false, "reject: not called" );
    }, function( error ) {
-      assert.check( error instanceof Error, "instanceof Error" );
+      	 assert.check( error instanceof Error, "instanceof Error" );
    });
 }
 
@@ -173,9 +173,13 @@ function mdnAll() {
       setTimeout( resolve, 100, "foo" );
    } );
 
+   Promise.all( [] ).then( function( values ) {
+      assert.deepEqual( values, [] );
+   });
+   
    Promise.all( [p1, p2, p3]).then( function( values ) {
       assert.deepEqual( values, [3, 1337, "foo" ] );
-   }) ;
+   });
 
    var p1 = new Promise((resolve, reject) => {
       setTimeout(resolve, 1000, "one");
@@ -196,7 +200,7 @@ function mdnAll() {
    Promise.all([p1, p2, p3, p4, p5]).then(value => {
       assert.ok( false, "should reject" );
    }, reason => {
-      assert.check( reason == "reject" );
+      assert.check( reason == "reject", "Promise.all" );
    });
 }
 
@@ -513,3 +517,28 @@ function enqueue() {
 }
 
 enqueue();
+
+/*---------------------------------------------------------------------*/
+/*    chaining                                                         */
+/*---------------------------------------------------------------------*/
+let G = 0;
+
+const chain0 = new Promise((res, rej) => {
+   res(14);
+});
+
+const chain1 = new Promise((res, rej) => {
+   res(chain0);
+});
+
+function chainh(v) {
+   G = v;
+   return 23;
+}
+
+function chain() {
+   const p = chain1;
+   const q = p.then(chainh).then(x=> G += x).then(_ => assert.ok(G === 14 + 23));
+}
+
+chain();

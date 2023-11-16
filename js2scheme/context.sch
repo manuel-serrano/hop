@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Apr 12 08:09:48 2020                          */
-;*    Last change :  Thu Apr 14 07:17:42 2022 (serrano)                */
-;*    Copyright   :  2020-22 Manuel Serrano                            */
+;*    Last change :  Wed Feb 15 12:33:53 2023 (serrano)                */
+;*    Copyright   :  2020-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme compilation context                                       */
 ;*=====================================================================*/
@@ -19,7 +19,7 @@
 (define-struct context conf
    program
    %vectors
-   array string regexp math map weakmap set weakset bigint
+   array string regexp math map weakmap set weakset bigint promise
    object)
 
 ;*---------------------------------------------------------------------*/
@@ -63,6 +63,7 @@
 	    ((:weakset) (context-weakset-set! ctx (cadr vals)))
 	    ((:bigint) (context-bigint-set! ctx (cadr vals)))
 	    ((:object) (context-object-set! ctx (cadr vals)))
+	    ((:promise) (context-promise-set! ctx (cadr vals)))
 	    (else (error "compiler-context-set!" "unknown property" (car vals))))
 	 (loop (cddr vals))))
    ctx)
@@ -85,5 +86,6 @@
       ((:set) (error "context-get" "should use context-object" key))
       ((:weakset) (error "context-get" "should use context-object" key))
       ((:bigint) (error "context-get" "should use context-object" key))
+      ((:promise) (error "context-get" "should use context-object" key))
       (else (config-get (context-conf ctx) key default))))
 

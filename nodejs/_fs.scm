@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat May 17 06:10:40 2014                          */
-;*    Last change :  Sat Nov 26 10:29:04 2022 (serrano)                */
-;*    Copyright   :  2014-22 Manuel Serrano                            */
+;*    Last change :  Sun May  7 14:08:40 2023 (serrano)                */
+;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    File system bindings                                             */
 ;*=====================================================================*/
@@ -16,7 +16,7 @@
 
    (library hopscript)
 
-   (include "nodejs_async.sch" "nodejs_types.sch")
+   (include "nodejs_types.sch")
    (include "../hopscript/stringthread.sch")
    
    (import  __nodejs_uv
@@ -113,29 +113,32 @@
       ((and enable-libuv bigloo-c) (pragma::long "S_IFSOCK")) (else #o140000)))
 
 ;*---------------------------------------------------------------------*/
-;*    process-fs-stats ...                                             */
+;*    8bits-encode-utf8 ...                                            */
 ;*---------------------------------------------------------------------*/
-(define process-fs-stats #f)
-(define process-fs-fstats #f)
+(define (8bits-encode-utf8 str::bstring start end)
+   (let ((s (substring str start end)))
+      (if (utf8-string? str #t)
+	  s
+	  (iso-latin->utf8! s))))
 
 ;*---------------------------------------------------------------------*/
-;*    get-process-fs-stats ...                                         */
+;*    string->ucs2-string ...                                          */
+;*    -------------------------------------------------------------    */
+;*    Convert a LE 8bits strings into an equivalent UCS2 string.       */
 ;*---------------------------------------------------------------------*/
-(define (get-process-fs-stats %this)
-   (with-access::JsGlobalObject %this (js-object)
-      (unless process-fs-stats
-	 (set! process-fs-stats (js-new %this js-object)))
-      process-fs-stats))
-
-;*---------------------------------------------------------------------*/
-;*    get-process-fs-fstats ...                                        */
-;*---------------------------------------------------------------------*/
-(define (get-process-fs-fstats %this)
-   (with-access::JsGlobalObject %this (js-object)
-      (unless process-fs-fstats
-	 (set! process-fs-fstats (js-new %this js-object)))
-      process-fs-fstats))
-
+(define (string->ucs2-string string::bstring start end)
+   (let* ((len (*fx (/fx (-fx end start) 2) 2))
+	  (res (make-ucs2-string (/fx len 2))))
+      (let loop ((i 0))
+	 (if (=fx i len)
+	     res
+	     (let* ((j (+fx start i))
+		    (c0 (char->integer (string-ref string j)))
+		    (c1 (char->integer (string-ref string (+fx j 1))))
+		    (ucs2 (+fx (bit-lsh c1 8) c0)))
+		(ucs2-string-set! res (/fx i 2) (integer->ucs2 ucs2))
+		(loop (+fx i 2)))))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    process-fs ...                                                   */
 ;*    -------------------------------------------------------------    */
@@ -170,10 +173,49 @@
    (define (lchmod this path mod cb)
       (nodejs-lchmod %worker %this process path mod cb))
    
-   (define (readdir this jspath cb)
+   (define (readdir this jspath opt cb)
       (let* ((path (js-tostring jspath %this))
-	     (l (directory->list path)))
-	 (if (and (null? l) (not (directory? path)))
+	     (v (directory->vector path)))
+	 (when (js-jsobject? opt)
+	    (let ((enc (js-get-jsobject opt opt (& "encoding") %this)))
+	       (cond
+		  ((eq? enc (& "utf8"))
+		   (vector-map! (lambda (data)
+				   (multiple-value-bind (str enc)
+				      (utf8-normalize-utf16 data #t 0 (string-length data))
+				      str))
+		      v))
+		  ((eq? enc (& "binary"))
+		   (vector-map! (lambda (data)
+				   (8bits-encode-utf8 data 0 (string-length data)))
+		      v))
+		  ((eq? enc (& "ascii"))
+		   v)
+		  ((eq? enc (& "hex"))
+		   (vector-map! (lambda (data)
+				   (string-hex-intern data))
+		      v))
+		  ((eq? enc (& "ucs2"))
+		   (vector-map! (lambda (data)
+				   (ucs2-string->utf8-string
+				      (string->ucs2-string data 0 (string-length data))))
+		      v))
+		  ((eq? enc (& "latin1"))
+		   (vector-map! (lambda (data)
+				   (iso-latin->utf8 data))
+		      v))
+		  ((eq? enc (& "base64"))
+		   (vector-map! (lambda (data)
+				   (let ((ip (open-input-string! data 0 (string-length data)))
+					 (op (open-output-string)))
+				      (base64-encode-port ip op 0)
+				      (close-output-port op)))
+		      v))
+		  (else
+		   (js-raise-type-error %this
+		      (format "Bad encoding \"~a\"" enc)
+		      enc)))))
+	 (if (and (=fx (vector-length v) 0) (not (directory? path)))
 	     (let ((exn (with-access::JsGlobalObject %this (js-error)
 			   (let ((obj (js-new %this js-error
 					 (js-string->jsstring
@@ -183,28 +225,25 @@
 			      (js-put! obj (& "code") (js-string->jsstring "ENOTDIR") #f %this)
 			      obj))))
 		(if (js-procedure? cb)
-		    (js-worker-push-thunk! %worker "readdir"
-		       (lambda ()
+		    (js-worker-push! %worker "readdir"
+		       (lambda (%this)
 			  (js-call2-jsprocedure %this cb this exn (js-undefined))))
 		    (js-raise exn)))
-	     (let ((r (js-vector->jsarray (list->vector (map! js-string->jsstring l))  %this)))
+	     (let ((r (js-vector->jsarray (vector-map! js-string->jsstring v) %this)))
 		(if (js-procedure? cb)
-		    (js-worker-push-thunk! %worker "readdir"
-		       (lambda ()
+		    (js-worker-push! %worker "readdir"
+		       (lambda (%this)
 			  (js-call2-jsprocedure %this cb this #f r)))
 		    r)))))
    
    (define (fstat this fd callback)
-      (nodejs-fstat %worker %this process
-	 fd callback (get-process-fs-stats %this)))
+      (nodejs-fstat %worker %this process fd callback))
    
    (define (stat this path callback)
-      (nodejs-stat %worker %this process
-	 path callback (get-process-fs-stats %this)))
+      (nodejs-stat %worker %this process path callback))
    
    (define (lstat this path callback)
-      (nodejs-lstat %worker %this process
-	 path callback (get-process-fs-stats %this)))
+      (nodejs-lstat %worker %this process path callback))
    
    (define (link this src dst callback)
       (nodejs-link %worker %this process src dst callback))
@@ -275,7 +314,7 @@
 	 callback))
 
    (define (create-fs-watcher-proto)
-      (with-access::JsGlobalObject %this (js-object)
+      (with-access::JsGlobalObject %this (js-object js-stats-proto)
 	 (with-access::JsFunction js-object (prototype constrmap)
 	    (let ((obj (js-make-jsobject 2 constrmap prototype)))
 	       
@@ -283,7 +322,7 @@
 		  (js-make-function %this
 		     (lambda (this::JsHandle path options interval)
 			(with-access::JsHandle this (handle)
-			   (nodejs-fs-poll-start %this (get-process-fs-stats %this)
+			   (nodejs-fs-poll-start %this js-stats-proto
 			      handle
 			      (js-tostring path %this)
 			      (lambda (_ status prev curr)
@@ -322,113 +361,130 @@
 	 (unless fs-watcher-proto
 	    (set! fs-watcher-proto (create-fs-watcher-proto)))
 	 fs-watcher-proto))
+
+   (define fs-watcher-cmap #f)
    
-   (define (fs-watcher this)
-      (instantiateJsHandle
-	 (handle (nodejs-make-fs-poll %worker))
-	 (cmap (js-make-jsconstructmap))
-	 (__proto__ (get-fs-watcher-proto process))))
+   (define (fs-watcher-ctor this)
+      (unless fs-watcher-cmap
+	 (set! fs-watcher-cmap
+	    (js-make-jsconstructmap :ctor fs-watcher)))
+      (with-access::JsFunction fs-watcher (constrsize)
+	 (instantiateJsHandle
+	    (handle (nodejs-make-fs-poll %worker))
+	    (cmap fs-watcher-cmap)
+	    (__proto__ (get-fs-watcher-proto process))
+	    (elements ($create-vector constrsize)))))
+   
+   (define fs-watcher
+      (js-make-function %this fs-watcher-ctor
+	 (js-function-arity fs-watcher-ctor)
+	 (js-function-info :name "StatWatcher" :len 0)
+	 :alloc (lambda (%this o) #unspecified)))
 
    (set! __js_strings (&init!))
-   
-   (js-alist->jsobject
-      `((rename . ,(js-make-function %this rename
-		      (js-function-arity rename)
-		      (js-function-info :name "rename" :len 2)))
-	(ftruncate . ,(js-make-function %this ftruncate
-			 (js-function-arity ftruncate)
-			 (js-function-info :name "ftruncate" :len 2)))
-	(truncate . ,(js-make-function %this truncate
-			(js-function-arity truncate)
-			(js-function-info :name "truncate" :len 2)))
-	(chown . ,(js-make-function %this chown
-		     (js-function-arity chown)
-		     (js-function-info :name "chown" :len 3)))
-	(fchown . ,(js-make-function %this fchown
-		      (js-function-arity fchown)
-		      (js-function-info :name "fchown" :len 3)))
-	(lchown . ,(js-make-function %this lchown
-		      (js-function-arity lchown)
-		      (js-function-info :name "lchown" :len 3)))
-	(chmod . ,(js-make-function %this chmod
-		     (js-function-arity chmod)
-		     (js-function-info :name "chmod" :len 2)))
-	(fchmod . ,(js-make-function %this fchmod
-		      (js-function-arity fchmod)
-		      (js-function-info :name "fchmod" :len 2)))
-	(lchmod . ,(js-make-function %this lchmod
-		      (js-function-arity lchmod)
-		      (js-function-info :name "lchmod" :len 2)))
-	(fstat . ,(js-make-function %this fstat
-		     (js-function-arity fstat)
-		     (js-function-info :name "fstat" :len 2)))
-	(stat . ,(js-make-function %this stat
-		    (js-function-arity stat)
-		    (js-function-info :name "stat" :len 2)))
-	(lstat . ,(js-make-function %this lstat
-		     (js-function-arity lstat)
-		     (js-function-info :name "lstat" :len 2)))
-	(link . ,(js-make-function %this link
-		    (js-function-arity link)
-		    (js-function-info :name "link" :len 3)))
-	(symlink . ,(js-make-function %this symlink
-		       (js-function-arity symlink)
-		       (js-function-info :name "symlink" :len 4)))
-	(readlink . ,(js-make-function %this readlink
-			(js-function-arity readlink)
-			(js-function-info :name "readlink" :len 2)))
-	(unlink . ,(js-make-function %this unlink
-		      (js-function-arity unlink)
-		      (js-function-info :name "unlink" :len 2)))
-	(rmdir . ,(js-make-function %this rmdir
-		     (js-function-arity rmdir)
-		     (js-function-info :name "rmdir" :len 3)))
-	(fdatasync . ,(js-make-function %this fdatasync
-			 (js-function-arity fdatasync)
-			 (js-function-info :name "fdatasync" :len 2)))
-	(mkdir . ,(js-make-function %this mkdir
-		     (js-function-arity mkdir)
-		     (js-function-info :name "mkdir" :len 3)))
-	(readdir . ,(js-make-function %this readdir
-		       (js-function-arity readdir)
-		       (js-function-info :name "readdir" :len 1)))
-	(Stats . ,(js-make-function %this (lambda (this) this)
-		     (js-function-arity 0 0)
-		     (js-function-info :name "Stats" :len 0)
-		     :alloc (lambda (%this o) #unspecified)
-		     :prototype (get-process-fs-stats %this)))
-	(close . ,(js-make-function %this close
-		     (js-function-arity close)
-		     (js-function-info :name "close" :len 2)))
-	(copyFile . ,(js-make-function %this copyfile
-			(js-function-arity copyfile)
-			(js-function-info :name "copyFile" :len 5)))
-	(utimes . ,(js-make-function %this utimes
-		      (js-function-arity utimes)
-		      (js-function-info :name "utimes" :len 4)))
-	(futimes . ,(js-make-function %this futimes
-		       (js-function-arity futimes)
-		       (js-function-info :name "futimes" :len 4)))
-	(fsync . ,(js-make-function %this fsync
-		     (js-function-arity fsync)
-		     (js-function-info :name "fsync" :len 1)))
-	(write . ,(js-make-function %this write
-		     (js-function-arity write)
-		     (js-function-info :name "write" :len 5)))
-	(writeString . ,(js-make-function %this writeString
-			   (js-function-arity writeString)
-			   (js-function-info :name "writeString" :len 5)))
-	(open . ,(js-make-function %this open
-		    (js-function-arity open)
-		    (js-function-info :name "open" :len 4)))
-	(read . ,(js-make-function %this read
-		    (js-function-arity read)
-		    (js-function-info :name "read" :len 6)))
-	(StatWatcher . ,(js-make-function %this fs-watcher
-			   (js-function-arity fs-watcher)
-			   (js-function-info :name "StatWatcher" :len 0)
-			   :alloc (lambda (%this o) #unspecified))))
-      %this))
+
+   (with-access::JsGlobalObject %this (js-object js-stats-proto)
+      (set! js-stats-proto (js-new %this js-object))
+      (let ((proto (js-alist->jsobject
+		      `((rename . ,(js-make-function %this rename
+				      (js-function-arity rename)
+				      (js-function-info :name "rename" :len 2)))
+			(ftruncate . ,(js-make-function %this ftruncate
+					 (js-function-arity ftruncate)
+					 (js-function-info :name "ftruncate" :len 2)))
+			(truncate . ,(js-make-function %this truncate
+					(js-function-arity truncate)
+					(js-function-info :name "truncate" :len 2)))
+			(chown . ,(js-make-function %this chown
+				     (js-function-arity chown)
+				     (js-function-info :name "chown" :len 3)))
+			(fchown . ,(js-make-function %this fchown
+				      (js-function-arity fchown)
+				      (js-function-info :name "fchown" :len 3)))
+			(lchown . ,(js-make-function %this lchown
+				      (js-function-arity lchown)
+				      (js-function-info :name "lchown" :len 3)))
+			(chmod . ,(js-make-function %this chmod
+				     (js-function-arity chmod)
+				     (js-function-info :name "chmod" :len 2)))
+			(fchmod . ,(js-make-function %this fchmod
+				      (js-function-arity fchmod)
+				      (js-function-info :name "fchmod" :len 2)))
+			(lchmod . ,(js-make-function %this lchmod
+				      (js-function-arity lchmod)
+				      (js-function-info :name "lchmod" :len 2)))
+			(fstat . ,(js-make-function %this fstat
+				     (js-function-arity fstat)
+				     (js-function-info :name "fstat" :len 2)))
+			(stat . ,(js-make-function %this stat
+				    (js-function-arity stat)
+				    (js-function-info :name "stat" :len 2)))
+			(lstat . ,(js-make-function %this lstat
+				     (js-function-arity lstat)
+				     (js-function-info :name "lstat" :len 2)))
+			(link . ,(js-make-function %this link
+				    (js-function-arity link)
+				    (js-function-info :name "link" :len 3)))
+			(symlink . ,(js-make-function %this symlink
+				       (js-function-arity symlink)
+				       (js-function-info :name "symlink" :len 4)))
+			(readlink . ,(js-make-function %this readlink
+					(js-function-arity readlink)
+					(js-function-info :name "readlink" :len 2)))
+			(unlink . ,(js-make-function %this unlink
+				      (js-function-arity unlink)
+				      (js-function-info :name "unlink" :len 2)))
+			(rmdir . ,(js-make-function %this rmdir
+				     (js-function-arity rmdir)
+				     (js-function-info :name "rmdir" :len 3)))
+			(fdatasync . ,(js-make-function %this fdatasync
+					 (js-function-arity fdatasync)
+					 (js-function-info :name "fdatasync" :len 2)))
+			(mkdir . ,(js-make-function %this mkdir
+				     (js-function-arity mkdir)
+				     (js-function-info :name "mkdir" :len 3)))
+			(readdir . ,(js-make-function %this readdir
+				       (js-function-arity readdir)
+				       (js-function-info :name "readdir" :len 1)))
+			(Stats . ,(js-make-function %this (lambda (this) this)
+				     (js-function-arity 0 0)
+				     (js-function-info :name "Stats" :len 0)
+				     :alloc (lambda (%this o) #unspecified)
+				     :prototype js-stats-proto))
+			(close . ,(js-make-function %this close
+				     (js-function-arity close)
+				     (js-function-info :name "close" :len 2)))
+			(copyFile . ,(js-make-function %this copyfile
+					(js-function-arity copyfile)
+					(js-function-info :name "copyFile" :len 5)))
+			(utimes . ,(js-make-function %this utimes
+				      (js-function-arity utimes)
+				      (js-function-info :name "utimes" :len 4)))
+			(futimes . ,(js-make-function %this futimes
+				       (js-function-arity futimes)
+				       (js-function-info :name "futimes" :len 4)))
+			(fsync . ,(js-make-function %this fsync
+				     (js-function-arity fsync)
+				     (js-function-info :name "fsync" :len 1)))
+			(write . ,(js-make-function %this write
+				     (js-function-arity write)
+				     (js-function-info :name "write" :len 5)))
+			(writeString . ,(js-make-function %this writeString
+					   (js-function-arity writeString)
+					   (js-function-info :name "writeString" :len 5)))
+			(open . ,(js-make-function %this open
+				    (js-function-arity open)
+				    (js-function-info :name "open" :len 4)))
+			(read . ,(js-make-function %this read
+				    (js-function-arity read)
+				    (js-function-info :name "read" :len 6)))
+			(StatWatcher . ,fs-watcher))
+		      %this)))
+	 ;; Nodejs is compiled in -Os mode and in this optimization mode
+	 ;; function are only cached if found in the prototype object
+	 ;; then to get faster code, binding methods are stored in
+	 ;; its prototype.
+	 (js-make-jsobject 0 (js-make-jsconstructmap) proto))))
 
 ;*---------------------------------------------------------------------*/
 ;*    &end!                                                            */

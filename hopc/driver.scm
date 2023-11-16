@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Tue Dec 20 13:57:12 2022 (serrano)                */
-;*    Copyright   :  2014-22 Manuel Serrano                            */
+;*    Last change :  Wed Aug 30 16:45:13 2023 (serrano)                */
+;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
 ;*=====================================================================*/
@@ -87,18 +87,39 @@
 ;*    js-driver ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (js-driver)
-   (cond
-      ((string? (hopc-js-driver))
-       (j2s-make-driver (string-split (hopc-js-driver) ",")))
-      ((eq? (hopc-pass) 'client-js)
-       (cond
-	  ((eq? (hopc-js-target) 'es5) (j2s-ecmascript5-driver))
-	  ((>=fx (hopc-optim-level) 1) (j2s-javascript-optim-driver))
-	  (else (j2s-javascript-driver))))
-      ((>=fx (hopc-optim-level) 1)
-       (j2s-optim-driver))
-      (else
-       (j2s-plain-driver))))
+   
+   (define (builtin-driver)
+      (cond
+	 ((eq? (hopc-pass) 'client-js)
+	  (cond
+	     ((eq? (hopc-js-target) 'es5) (j2s-ecmascript5-driver))
+	     ((>=fx (hopc-optim-level) 1) (j2s-javascript-optim-driver))
+	     (else (j2s-javascript-driver))))
+	 ((>=fx (hopc-optim-level) 1)
+	  (j2s-optim-driver))
+	 (else
+	  (j2s-plain-driver))))
+   
+   (if (string? (hopc-js-driver))
+       ;; use defined driver
+       (let ((lst (string-split (hopc-js-driver) ",")))
+	  (match-case lst
+	     (("..." ?anchor ?userpass)
+	      (j2s-make-driver
+		 (let loop ((stages (builtin-driver)))
+		    (if (null? stages)
+			(error "Cannot find anchor stage" anchor
+			   (map (lambda (s)
+				   (with-access::J2SStage s (name) name))
+			      (builtin-driver)))
+			(with-access::J2SStage (car stages) (name)
+			   (if (string=? name anchor)
+			       (cons* (car stages) userpass (cdr stages))
+			       (cons (car stages) (loop (cdr stages)))))))))
+	     (else
+	      (j2s-make-driver lst))))
+       ;; builtin driver
+       (builtin-driver)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-driver-name ...                                               */
@@ -139,10 +160,11 @@
    
    (define (input-file->module-name path)
       (let* ((dir (dirname path))
-	     (mod (prefix (basename path))))
+	     (mod (prefix (basename path)))
+	     (sum (substring (md5sum path) 0 8)))
 	 (if (string=? dir ".")
-	     mod
-	     (format "%%~a_~a" dir mod))))
+	     (string-append mod "~" sum)
+	     (format "%%~a_~a~~~a" dir mod sum))))
    
    (define (compile-javascript p)
       (if (or (string-suffix? ".js" p) (string-suffix? ".mjs" p))
@@ -211,66 +233,79 @@
       (define (generate-hopscript out::output-port)
 	 (let ((mmap (when (and (string? fname) (file-exists? fname))
 			(open-mmap fname :read #t :write #f))))
-	    (for-each (lambda (exp) (pp exp out))
-	       (apply j2s-compile in
-		  :return-as-exit (hopc-js-return-as-exit)
-		  :filename fname
-		  :mmap-src mmap
-		  :driver (js-driver)
-		  :driver-name (js-driver-name)
-		  :worker (hopc-js-worker)
-		  :worker-slave (hopc-js-worker-slave)
-		  :module-main (if (boolean? (hopc-js-module-main))
-				   (hopc-js-module-main)
-				   (not (memq (hopc-pass) '(object so))))
-		  :module-name (or (hopc-js-module-name) 
-				   (input-file->module-name fname))
-		  :module-path (hopc-js-module-path)
-		  :hopscript-header (hopc-js-header)
-		  :type-annotations (hopc-js-type-annotations)
-		  :optim (hopc-optim-level)
-		  :verbose (hop-verbose)
-		  :long-size (hopc-long-size)
-		  :int-size (hopc-int-size)
-		  :plugins-loader (hopc-plugins-loader)
-		  :sofile-dir (hopc-sofile-dir)
-		  :debug (bigloo-debug)
-		  :warning (bigloo-warning)
-		  :node-modules-directory (hopc-node-modules-directory)
-		  (hopc-j2s-flags)))))
+	    (let ((o (apply j2s-compile in
+			:return-as-exit (hopc-js-return-as-exit)
+			:filename fname
+			:mmap-src mmap
+			:driver (js-driver)
+			:driver-name (js-driver-name)
+			:worker (hopc-js-worker)
+			:worker-slave (hopc-js-worker-slave)
+			:module-main (if (boolean? (hopc-js-module-main))
+					 (hopc-js-module-main)
+					 (not (memq (hopc-pass) '(object so))))
+			:module-name (or (hopc-js-module-name) 
+					 (input-file->module-name fname))
+			:module-path (hopc-js-module-path)
+			:hopscript-header (hopc-js-header)
+			:type-annotations (hopc-js-type-annotations)
+			:optim (hopc-optim-level)
+			:verbose (hop-verbose)
+			:long-size (hopc-long-size)
+			:int-size (hopc-int-size)
+			:plugins-loader (hopc-plugins-loader)
+			:sofile-dir (hopc-sofile-dir)
+			:debug (bigloo-debug)
+			:warning (bigloo-warning)
+			:node-modules-directory (hopc-node-modules-directory)
+			(hopc-j2s-flags))))
+	       (cond
+		  ((isa? o J2SNode)
+		   (pp (obj->string o) out))
+		  ((pair? o)
+		   (for-each (lambda (exp) (pp exp out)) o))
+		  (else
+		   (error "hopc" "wrong output format" (typeof o)))))))
       
       (define (generate-js out::output-port)
 	 (let ((mmap (when (and (string? fname) (file-exists? fname))
 			(open-mmap fname :read #t :write #f))))
-	    (for-each (lambda (exp)
-			 (unless (isa? exp J2SNode)
-			    (display exp out)))
-	       (apply j2s-compile in
-		  :return-as-exit (hopc-js-return-as-exit)
-		  :filename fname
-		  :mmap-src mmap
-		  :driver (js-driver)
-		  :driver-name (js-driver-name)
-		  :worker (hopc-js-worker)
-		  :worker-slave (hopc-js-worker-slave)
-		  :module-main (if (boolean? (hopc-js-module-main))
-				   (hopc-js-module-main)
-				   (not (memq (hopc-pass) '(object so))))
-		  :module-name (or (hopc-js-module-name)
-				   (input-file->module-name fname))
-		  :module-path (hopc-js-module-path)
-		  :hopscript-header (hopc-js-header)
-		  :type-annotations (hopc-js-type-annotations)
-		  :optim (hopc-optim-level)
-		  :verbose (hop-verbose)
-		  :long-size (hopc-long-size)
-		  :int-size (hopc-int-size)
-		  :sofile-dir (hopc-sofile-dir)
-		  :plugins-loader (hopc-plugins-loader)
-		  :debug (bigloo-debug)
-		  :warning (bigloo-warning)
-		  :node-modules-directory (hopc-node-modules-directory)
-		  (hopc-j2s-flags)))))
+	    (let ((o (apply j2s-compile in
+			:return-as-exit (hopc-js-return-as-exit)
+			:filename fname
+			:mmap-src mmap
+			:driver (js-driver)
+			:driver-name (js-driver-name)
+			:worker (hopc-js-worker)
+			:worker-slave (hopc-js-worker-slave)
+			:module-main (if (boolean? (hopc-js-module-main))
+					 (hopc-js-module-main)
+					 (not (memq (hopc-pass) '(object so))))
+			:module-name (or (hopc-js-module-name)
+					 (input-file->module-name fname))
+			:module-path (hopc-js-module-path)
+			:hopscript-header (hopc-js-header)
+			:type-annotations (hopc-js-type-annotations)
+			:optim (hopc-optim-level)
+			:verbose (hop-verbose)
+			:long-size (hopc-long-size)
+			:int-size (hopc-int-size)
+			:sofile-dir (hopc-sofile-dir)
+			:plugins-loader (hopc-plugins-loader)
+			:debug (bigloo-debug)
+			:warning (bigloo-warning)
+			:node-modules-directory (hopc-node-modules-directory)
+			(hopc-j2s-flags))))
+	       (cond
+		  ((isa? o J2SNode)
+		   (pp (obj->string o) out))
+		  ((pair? o)
+		   (for-each (lambda (exp)
+				(unless (isa? exp J2SNode)
+				   (display exp out)))
+		      o))
+		  (else
+		   (error "hopc" "wrong output format" (typeof o)))))))
       
       (define (generate out::output-port lang::symbol)
 	 (case lang
@@ -319,27 +354,27 @@
 	 (compile-file opts temp))
 
       (define (compile-temp-ast opts comp file temp)
-	 (call-with-output-file temp comp)
-	 (let* ((baseopts (cons "-fread-internal-src"
-			     (append (srfi-opts) opts)))
-		(opts (if (string? file)
-			  (cons* "-fread-internal-src-file-name" file baseopts)
-			  baseopts))
-		(proc (apply run-process (hopc-bigloo)
-			 "-suffix" "ast" temp
-			 opts))
-		(cmd (format "~a -suffix ast ~a ~l" (hopc-bigloo) temp opts))
-		(out (process-input-port proc)))
-	    (signal sigterm
-	       (lambda (sig)
-		  (process-kill proc)
-		  (exit 1)))
-	    (hop-verb 4 cmd "\n")
-	    (unwind-protect
-	       (begin
+	 (unwind-protect
+	    (begin
+	       (call-with-output-file temp comp)
+	       (let* ((baseopts (cons "-fread-internal-src"
+				   (append (srfi-opts) opts)))
+		      (opts (if (string? file)
+				(cons* "-fread-internal-src-file-name" file baseopts)
+				baseopts))
+		      (proc (apply run-process (hopc-bigloo)
+			       "-suffix" "ast" temp
+			       opts))
+		      (cmd (format "~a -suffix ast ~a ~l" (hopc-bigloo) temp opts))
+		      (out (process-input-port proc)))
+		  (signal sigterm
+		     (lambda (sig)
+			(process-kill proc)
+			(exit 1)))
+		  (hop-verb 4 cmd "\n")
 		  (process-wait proc)
-		  (process-exit-status proc))
-	       (delete-file temp))))
+		  (process-exit-status proc)))
+	    (delete-file temp)))
 
       (define (compile-pipe opts comp file)
          (let* ((baseopts (cons "-fread-internal-src"
@@ -445,10 +480,11 @@
 						    (prefix (basename path))
 						    ".scm"))))
 				     (obj (make-file-name (os-tmp)
-					      (string-append
-						 (prefix (basename path))
-						 ".o")))
-				     (opts (cons* "-c" "-o" obj (bigloo-options))))
+					     (string-append
+						(prefix (basename path))
+						".o")))
+				     (opts (append (bigloo-options)
+					      (list "-c" "-o" obj))))
 				 (call-with-input-file path
 				    (lambda (in)
 				       (compile-hop-with-deps in opts path temp '())))
@@ -488,43 +524,49 @@
 		     (display (format "~( )" (command-line)) out)
 		     (newline out))
 		  ;; compile
-		  (map (lambda (e)
-			  (if (string? temp)
-			      (pp e out)
-			      (write (obj->string e) out)))
-		     (apply j2s-compile in
-			:return-as-exit (hopc-js-return-as-exit)
-			:mmap-src mmap
-			:filename fname
-			:driver (js-driver)
-			:driver-name (js-driver-name)
-			:worker (hopc-js-worker)
-			:worker-slave (hopc-js-worker-slave)
-			:module-main (if (boolean? (hopc-js-module-main))
-					 (hopc-js-module-main)
-					 (not (memq (hopc-pass) '(object so))))
-			:module-name (or (hopc-js-module-name)
-					 (input-file->module-name fname))
-			:module-path (hopc-js-module-path)
-			:hopscript-header (hopc-js-header)
-			:type-annotations (hopc-js-type-annotations)
-			:optim (hopc-optim-level)
-			:verbose (hop-verbose)
-			:long-size (hopc-long-size)
-			:int-size (hopc-int-size)
-			:plugins-loader (hopc-plugins-loader)
-			:sofile-dir (hopc-sofile-dir)
-			:debug (bigloo-debug)
-			:warning (bigloo-warning)
-			:function-nice-name (string? temp)
-			:syntax syn
-			:node-modules-directory (hopc-node-modules-directory)
-			(hopc-j2s-flags))))
+		  (let ((o (apply j2s-compile in
+			      :return-as-exit (hopc-js-return-as-exit)
+			      :mmap-src mmap
+			      :filename fname
+			      :driver (js-driver)
+			      :driver-name (js-driver-name)
+			      :worker (hopc-js-worker)
+			      :worker-slave (hopc-js-worker-slave)
+			      :module-main (if (boolean? (hopc-js-module-main))
+					       (hopc-js-module-main)
+					       (not (memq (hopc-pass) '(object so))))
+			      :module-name (or (hopc-js-module-name)
+					       (input-file->module-name fname))
+			      :module-path (hopc-js-module-path)
+			      :hopscript-header (hopc-js-header)
+			      :type-annotations (hopc-js-type-annotations)
+			      :optim (hopc-optim-level)
+			      :verbose (hop-verbose)
+			      :long-size (hopc-long-size)
+			      :int-size (hopc-int-size)
+			      :plugins-loader (hopc-plugins-loader)
+			      :sofile-dir (hopc-sofile-dir)
+			      :debug (bigloo-debug)
+			      :warning (bigloo-warning)
+			      :function-nice-name (string? temp)
+			      :syntax syn
+			      :node-modules-directory (hopc-node-modules-directory)
+			      (hopc-j2s-flags))))
+		     (cond
+			((isa? o J2SNode)
+			 (pp (obj->string o) out))
+			((pair? o)
+			 (map (lambda (e)
+				 (if (string? temp)
+				     (pp e out)
+				     (write (obj->string e) out)))
+			    o))
+			(else
+			 (error "hopc" "wrong output format" (typeof o))))))
 	       file
 	       temp)))
 
       (define (compile-language lang in opts file exec temp)
-	 ;;(tprint "compile.lang.1: " (hopc-plugins-loader))
 	 (let* ((comp (hopc-language-loader))
 		(jsmain (if (boolean? (hopc-js-module-main))
 			    (hopc-js-module-main)
@@ -594,7 +636,7 @@
 		   (loop (cdr opts) o))))))
 
       (define (dest-opts dest opts)
-	 (cons* "-o" dest opts))
+	 (append opts (list "-o" dest)))
       
       (let* ((opts (bigloo-options))
 	     (file (when (and (pair? (hopc-sources))
@@ -818,16 +860,20 @@
 	 (hop-sofile-compile-policy-set! 'none)
 	 (unless (or nodejs-loaded (hopc-bootstrap-mode))
 	    (set! nodejs-loaded #t)
-	    (let ((lpath (if (hopc-hop-lib-dir)
-			     (cons (hopc-hop-lib-dir) (hop-library-path))
-			     (hop-library-path))))
-	       (when (library-load-init 'nodejs lpath)
-		  (library-load-init 'hopscript lpath)
-		  (apply library-load 'hopscript lpath)
-		  (apply library-load 'nodejs lpath)
-		  (eval '((@ hopscript-install-expanders! __hopscript_expanders)))
-		  (set! nodejs-plugins-loader
-		     (eval '((@ nodejs-plugins-toplevel-loader __nodejs_require)))))))
+	    (let* ((oldbglp (bigloo-library-path))
+		   (lpath (if (hopc-hop-lib-dir)
+			      (cons (hopc-hop-lib-dir) (hop-library-path))
+			      (hop-library-path))))
+	       (bigloo-library-path-set! lpath)
+	       (unwind-protect
+		  (when (library-load-init 'nodejs lpath)
+		     (library-load-init 'hopscript lpath)
+		     (apply library-load 'hopscript lpath)
+		     (apply library-load 'nodejs lpath)
+		     (eval '((@ hopscript-install-expanders! __hopscript_expanders)))
+		     (set! nodejs-plugins-loader
+			(eval '((@ nodejs-plugins-toplevel-loader __nodejs_require)))))
+		  (bigloo-library-path-set! oldbglp))))
 	 (let ((res #f))
 	    (for-each (lambda (b) (set! res (eval b))) bindings)
 	    res))))

@@ -13,6 +13,6 @@ setTimeout( function() {
       assert.ok( err, 1, "parseFailure2" );
    } catch( e ) {
       console.log( "e=", e.name );
-      #:js-debug-object( e, "e=" );
+      hop.inspect( e, "e=" );
    }
 }, 1000 );

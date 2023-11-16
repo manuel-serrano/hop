@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 15 15:16:16 2018                          */
-;*    Last change :  Fri Oct  7 07:56:57 2022 (serrano)                */
-;*    Copyright   :  2018-22 Manuel Serrano                            */
+;*    Last change :  Fri Oct 20 19:06:13 2023 (serrano)                */
+;*    Copyright   :  2018-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES6 Module handling                                              */
 ;*=====================================================================*/
@@ -154,6 +154,24 @@
 		      (set! ipath ip)
 		      (env-add! abspath (cons prgm ip) env)
 		      (list ip)))
+		  ((eq? protocol 'missing)
+		   (let* ((prgm (instantiate::J2SProgram
+				   (loc loc)
+				   (endloc loc)
+				   (path path)
+				   (nodes '())))
+			  (ip (instantiate::J2SImportPath
+				 (loc loc)
+				 (name path)
+				 (path path)
+				 (abspath abspath)
+				 (protocol protocol)
+				 (import this))))
+		      (set! iprgm prgm)
+		      (set! lang 'javascript)
+		      (set! ipath ip)
+		      (env-add! abspath (cons prgm ip) env)
+		      (list ip)))
 		  (else
 		   (let* ((prgm (instantiate::J2SProgram
 				   (loc loc)
@@ -201,18 +219,25 @@
 ;*---------------------------------------------------------------------*/
 (define-method (collect-decls* this::J2SImport env args)
    
-   (define (find-redirect id::symbol export import::J2SImport iprgm::J2SProgram)
-      (with-access::J2SRedirect export (loc import alias)
-	 (with-access::J2SImport import (iprgm path ipath)
-	    (let ((iname (instantiate::J2SImportName
-			    (loc loc)
-			    (id id)
-			    (alias alias)))
-		  (import (duplicate::J2SImport import
-			     (path path)
-			     (ipath ipath)
-			     (names (list id)))))
-	       (find-export id import iprgm loc)))))
+   (define (find-redirect id::symbol export import::J2SImport iprgm)
+      (cond
+	 (iprgm
+	  (with-access::J2SRedirect export (loc import alias)
+	     (with-access::J2SImport import (iprgm path ipath)
+		(let ((iname (instantiate::J2SImportName
+				(loc loc)
+				(id id)
+				(alias alias)))
+		      (import (duplicate::J2SImport import
+				 (path path)
+				 (ipath ipath)
+				 (names (list id)))))
+		   (find-export id import iprgm loc)))))
+	 ((config-get args :ignore-unresolved-modules #f)
+	  #f)
+	 (else
+	  (with-access::J2SImport import (path)
+	     (error "collect-decls" "wrong import" path)))))
    
    (define (find-export id::symbol import::J2SImport iprgm::J2SProgram loc)
       (with-access::J2SProgram iprgm (exports path)
@@ -243,19 +268,40 @@
    
    (define (import-binding name import::J2SImport)
       (with-access::J2SImport import (iprgm loc ipath)
+	 (unless iprgm
+	    (error (with-access::J2SImportName name (id) id)
+	       "Cannot find imported module"
+	       (with-access::J2SImportPath ipath (path) path)))
 	 (with-access::J2SImportName name (id alias)
 	    (multiple-value-bind (x i)
 	       (find-export id this iprgm loc)
 	       (if (not x)
-		   (with-access::J2SImportPath ipath (abspath)
-		      (raise
-			 (instantiate::&io-parse-error
-			    (proc "import")
-			    (msg (format "imported binding \"~a\" not exported by module ~s"
-				    id abspath))
-			    (obj id)
-			    (fname (cadr loc))
-			    (location (caddr loc))))   )
+		   (with-access::J2SImportPath ipath (protocol abspath)
+		      (if (or (eq? protocol 'missing)
+			      (config-get args :ignore-unresolved-modules #f))
+			  (let ((x (instantiate::J2SExport
+				      (loc loc)
+				      (id id)
+				      (alias id)
+				      (index 0))))
+			     (instantiate::J2SDeclImport
+				(loc loc)
+				(id alias)
+				(alias id)
+				(binder 'let)
+				(writable #f)
+				(vtype 'any)
+				(scope 'local)
+				(export x)
+				(import import)))
+			  (raise
+			     (instantiate::&io-parse-error
+				(proc "import")
+				(msg (format "imported binding \"~a\" not exported by module ~s"
+					id abspath))
+				(obj id)
+				(fname (cadr loc))
+				(location (caddr loc))))))
 		   (instantiate::J2SDeclImport
 		      (loc loc)
 		      (id alias)
@@ -268,7 +314,7 @@
 		      (import import)))))))
    
    (define (import-namespace name import::J2SImport)
-      (with-access::J2SImport import (iprgm loc)
+      (with-access::J2SImport import (loc)
 	 (with-access::J2SImportName name (alias)
 	    (instantiate::J2SDeclInit
 	       (loc loc)
@@ -354,15 +400,22 @@
 	 (let ((x (find-export id iprgm loc)))
 	    (if x
 		(set! export x)
-		(with-access::J2SImportPath ipath (abspath)
-		   (raise
-		      (instantiate::&io-parse-error
-			 (proc "export")
-			 (msg (format "imported binding \"~a\" not exported by module ~s"
-				 id abspath))
-			 (obj id)
-			 (fname (cadr loc))
-			 (location (caddr loc)))))))
+		(with-access::J2SImportPath ipath (abspath protocol)
+		   (if (eq? protocol 'missing)
+		       (let ((x (instantiate::J2SExport
+				   (loc loc)
+				   (id id)
+				   (alias id)
+				   (index 0))))
+			  (set! export x))
+		       (raise
+			  (instantiate::&io-parse-error
+			     (proc "export")
+			     (msg (format "imported binding \"~a\" not exported by module ~s"
+				     id abspath))
+			     (obj id)
+			     (fname (cadr loc))
+			     (location (caddr loc))))))))
 	 this)))
 
 ;*---------------------------------------------------------------------*/
@@ -485,13 +538,15 @@
 	 (resolve-path-file-or-directory path)))
    
    (define (resolve-error x)
-      (raise
-	 (instantiate::&io-file-not-found-error
-	    (proc "hopc:resolve")
-	    (msg (format "Cannot find module in ~s" dir))
-	    (obj name)
-	    (fname (cadr loc))
-	    (location (caddr loc)))))
+      (if (config-get args :ignore-unresolved-modules)
+	  (cons x 'missing)
+	  (raise
+	     (instantiate::&io-file-not-found-error
+		(proc "hopc:resolve")
+		(msg (format "Cannot find module in ~s" dir))
+		(obj name)
+		(fname (cadr loc))
+		(location (caddr loc))))))
 
    (define (core-module? name)
       (open-string-hashtable-get (get-core-modules) name))
@@ -519,10 +574,20 @@
 	 ((or (string-prefix? "http://" name)
 	      (string-prefix? "https://" name))
 	  (cons name 'http))
+	 ((string-prefix? "@hop/" name)
+	  (if (string=? "@hop/hop" name)
+	      (cons "hop" 'core)
+	      (let ((dir (or (config-get args :node-modules-directory)
+			     (hop-node-modules-dir))))
+		 (or (resolve-file-or-directory (substring name 5) dir)
+		     (resolve-modules name)
+		     (resolve-error name)))))
 	 ((string-prefix? "hop:" name)
 	  (let ((dir (or (config-get args :node-modules-directory)
 			 (hop-node-modules-dir))))
 	     (loop (make-file-path dir (substring name 4)))))
+	 ((string-prefix? "node:" name)
+	  (loop (substring name 5)))
 	 ((or (string-prefix? "./" name) (string-prefix? "../" name))
 	  (or (resolve-file-or-directory name dir)
 	      (resolve-modules name)
@@ -627,6 +692,7 @@
 					     :import-loc loc
 					     :commonjs-export #t
 					     :node-modules-directory (config-get args :node-modules-directory)
+					     :ignore-unresolved-modules (config-get args :ignore-unresolved-modules)
 					     :language (symbol->string lang)
 					     :plugins-loader (config-get args :plugins-loader #f))))))
 			    (module-cache-put! path iprgm))))))))))
@@ -660,36 +726,51 @@
 ;*    esimport-init-core-modules! ...                                  */
 ;*---------------------------------------------------------------------*/
 (define (esimport-init-core-modules!)
+   
+   (define (read-mo path)
+      (call-with-input-file path
+	 (lambda (ip)
+	    (string->obj (read ip)))))
+   
+   (define (init-coremodule! cm)
+      (let ((loc `(at ,(string-append cm ".js") 0))
+	    (mo (make-file-path (hop-lib-directory)
+		   "hop" (hop-version) "mo"
+		   (string-append cm ".mod.mo"))))
+	 (co-instantiate ((decl (instantiate::J2SDecl
+				   (id 'default)
+				   (loc loc)
+				   (vtype 'any)
+				   (export expo)
+				   (binder 'let-opt)
+				   (scope 'export)))
+			  (expo (instantiate::J2SExport
+				   (loc loc)
+				   (id 'default)
+				   (alias 'default)
+				   (index 0)
+				   (decl decl))))
+	    (let ((iprgm (if (file-exists? mo)
+			     (read-mo mo)
+			     (instantiate::J2SProgram
+				(loc loc)
+				(endloc loc)
+				(path cm)
+				(mode 'core)
+				(nodes '())
+				(exports (list expo))))))
+	    (hashtable-put! core-modules cm iprgm)
+	    (hashtable-put! core-modules (string-append "node:" cm) iprgm) ))))
+
    (set! core-modules   
       (create-hashtable
 	 :weak 'open-string
 	 :size 64
 	 :max-length 4096
 	 :max-bucket-length 10))
-   (for-each (lambda (cm)
-		(let ((loc `(at ,(string-append cm ".js") 0)))
-		   (co-instantiate ((decl (instantiate::J2SDecl
-					     (id 'default)
-					     (loc loc)
-					     (vtype 'any)
-					     (export expo)
-					     (binder 'let-opt)
-					     (scope 'export)))
-				    (expo (instantiate::J2SExport
-					     (loc loc)
-					     (id 'default)
-					     (alias 'default)
-					     (index 0)
-					     (decl decl))))
-		      (hashtable-put! core-modules cm
-			 (instantiate::J2SProgram
-			    (loc loc)
-			    (endloc loc)
-			    (path cm)
-			    (mode 'core)
-			    (nodes '())
-			    (exports (list expo)))))))
-      core-module-list))
+   (for-each init-coremodule! core-module-list)
+   ;; manually create the @hop/hop and hop alias
+   (hashtable-put! core-modules "@hop/hop" (hashtable-get core-modules "hop")))
 
 ;*---------------------------------------------------------------------*/
 ;*    path-lang ...                                                    */

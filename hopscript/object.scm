@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Tue Nov 23 08:49:06 2021 (serrano)                */
-;*    Copyright   :  2013-21 Manuel Serrano                            */
+;*    Last change :  Thu May 18 06:21:11 2023 (serrano)                */
+;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
 ;*                                                                     */
@@ -98,17 +98,6 @@
 	 (js-jsobject->plist obj %this)))
    (lambda (o)
       (error "string->obj" "Cannot unserialize JsResponse" o)))
-
-;*---------------------------------------------------------------------*/
-;*    object-print ::JsObject ...                                      */
-;*---------------------------------------------------------------------*/
-(define-method (object-print obj::JsObject op proc)
-   (display "#<JsObject " op)
-   (display (js-object-length obj) op)
-   (cond
-      ((js-object-mapped? obj) (display " mapped>" op))
-      ((js-object-hashed? obj) (display " hashed>" op))
-      (else (display ">" op))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-extensible? ...                                               */
@@ -212,26 +201,25 @@
 ;*---------------------------------------------------------------------*/
 (define-method (scheme->response obj::JsObject req ctx)
    
-   (define (responder ctx thunk)
-      (js-with-context ctx "response" thunk))
+   (define (responder ctx proc)
+      (js-with-context ctx "response" (lambda (%this) (proc))))
    
    (js-with-context ctx "scheme->response"
-      (lambda ()
-	 (let ((%this ctx))
-	    (with-access::JsGlobalObject %this (js-service-pcache)
-	       (let ((proc (js-get-jsobject-name/cache obj (& "toResponse") #f %this
-			      (js-pcache-ref js-service-pcache 0))))
-		  (if (js-procedure? proc)
-		      (scheme->response (js-call1 %this proc obj req) req ctx)
-		      (let ((rep (call-next-method)))
-			 (if (isa? rep http-response-hop)
-			     (with-access::http-response-hop rep ((rctx ctx))
-				(set! rctx ctx)
-				(instantiate::http-response-responder
-				   (ctx ctx)
-				   (response rep)
-				   (responder responder)))
-			     rep)))))))))
+      (lambda (%this)
+	 (with-access::JsGlobalObject %this (js-service-pcache)
+	    (let ((proc (js-get-jsobject-name/cache obj (& "toResponse") #f %this
+			   (js-pcache-ref js-service-pcache 0))))
+	       (if (js-procedure? proc)
+		   (scheme->response (js-call1 %this proc obj req) req ctx)
+		   (let ((rep (call-next-method)))
+		      (if (isa? rep http-response-hop)
+			  (with-access::http-response-hop rep ((rctx ctx))
+			     (set! rctx ctx)
+			     (instantiate::http-response-responder
+				(ctx ctx)
+				(response rep)
+				(responder responder)))
+			  rep))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    jsobject-fields ...                                              */
@@ -262,7 +250,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (hop->javascript o::JsObject op compile isexpr ctx)
    (js-with-context ctx "hop->javascript"
-      (lambda ()
+      (lambda (%this)
 	 (display "{" op)
 	 (let ((sep ""))
 	    (js-for-in o
@@ -292,15 +280,6 @@
 		    (cmap (js-make-jsconstructmap))
 		    (__proto__ %proto)
 		    (elements (make-vector size)))))
-;*       (tprint "THIS...")                                            */
-;*       (tprint "THIS=" (typeof (car (list %this)))                   */
-;* 	 " " (object-class (car (list %this))))                        */
-;*       (js-object-mode-set! %this (js-globalobject-default-mode))    */
-;*       (tprint "THIS=" (typeof (car (list %this)))                   */
-;* 	 " mode=" (js-object-mode %this) " " (js-globalobject-default-mode) */
-;* 	 " " (object-class %this))                                     */
-;*       (js-object-proto-set! %this %proto)                           */
-;*       (tprint "THIS=" (typeof (car (list %this))) " " (isa? (car (list %this)) JsGlobalObject)) */
       ;; local constant strings
       (js-init-names!)
       (unless (vector? __js_strings) (set! __js_strings (&init!)))
@@ -926,7 +905,8 @@
       ;; isFrozen
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.12
       (js-bind! %this js-object (& "isFrozen")
-	 :value (js-make-function %this (lambda (this o) (js-object-isfrozen o %this))
+	 :value (js-make-function %this
+		   (lambda (this o) (js-object-isfrozen o %this))
 		   (js-function-arity 1 0)
 		   (js-function-info :name "isFrozen" :len 1))
 	 :writable #t
@@ -1304,7 +1284,12 @@
        (with-access::JsObject o (cmap)
 	  (with-access::JsConstructMap cmap (props)
 	     (let ((ncmap (duplicate::JsConstructMap cmap
+			     (%id (gencmapid))
 			     (props (vector-map prop-seal props)))))
+		(js-object-for-each o
+		   (lambda (v)
+		      (when (isa? v JsPropertyDescriptor)
+			 (js-seal-property! v))))
 		(set! cmap ncmap)))))
       ((js-object-hashed? o)
        (with-access::JsObject o (elements)
@@ -1349,7 +1334,12 @@
 	 ((js-object-mapped? o)
 	  (with-access::JsConstructMap cmap (props)
 	     (let ((ncmap (duplicate::JsConstructMap cmap
+			     (%id (gencmapid))
 			     (props (vector-map prop-freeze props)))))
+		(js-object-for-each o
+		   (lambda (v)
+		      (when (isa? v JsPropertyDescriptor)
+			 (js-freeze-property! v))))
 		(set! cmap ncmap))))
 	 ((js-object-hashed? o)
 	  (with-access::JsObject o (elements)
@@ -1386,7 +1376,8 @@
 	      (with-access::JsConstructMap cmap (props)
 		 (vector-every (lambda (p)
 				  (let ((flags (prop-flags p)))
-				     (and (not (flags-writable? flags))
+				     (and (or (not (flags-writable? flags))
+					      (flags-accessor? flags))
 					  (not (flags-configurable? flags)))))
 		    props)))
 	     ((js-object-hashed? o)

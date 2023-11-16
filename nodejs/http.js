@@ -272,13 +272,16 @@ var continueExpression = /100-continue/i;
 
 var dateCache;
 function utcDate() {
-  if (!dateCache) {
-    var d = new Date();
-    dateCache = d.toUTCString();
-    timers.enroll(utcDate, 1000 - d.getMilliseconds());
-    timers._unrefActive(utcDate);
-  }
-  return dateCache;
+   // MS 7apr2023: utcDate is responsible for 10% of the run time of an 
+   // HTTP server so it is replaced with a faster Scheme implementation
+   return #:js-string->jsstring(#:date->rfc2822-date(#:current-date()));
+/*   if (!dateCache) {                                                 */
+/*     var d = new Date();                                             */
+/*     dateCache = d.toUTCString();                                    */
+/*     timers.enroll(utcDate, 1000 - d.getMilliseconds());             */
+/*     timers._unrefActive(utcDate);                                   */
+/*   }                                                                 */
+/*   return dateCache;                                                 */
 }
 utcDate._onTimeout = function() {
   dateCache = undefined;
@@ -590,8 +593,10 @@ OutgoingMessage.prototype._storeHeader = function(firstLine, headers) {
   }
 
   // Date header
-  if (this.sendDate == true && state.sentDateHeader == false) {
-    state.messageHeader += 'Date: ' + utcDate() + CRLF;
+   if (this.sendDate == true && state.sentDateHeader == false) {
+/*      const ud = ; */
+/*      state.messageHeader += 'Date: ' + ud + CRLF;                   */
+     state.messageHeader += 'Date: ' + utcDate() + CRLF;      
   }
 
   // Force the connection to close when the response is a 204 No Content or

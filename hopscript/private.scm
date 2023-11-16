@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Thu Feb 24 18:13:02 2022 (serrano)                */
-;*    Copyright   :  2013-22 Manuel Serrano                            */
+;*    Last change :  Mon Jul 10 09:10:30 2023 (serrano)                */
+;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Private (i.e., not exported by the lib) utilitary functions      */
 ;*=====================================================================*/
@@ -13,7 +13,7 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module __hopscript_private
-
+   
    (library hop)
    
    (import __hopscript_types
@@ -27,7 +27,7 @@
 	   __hopscript_worker
 	   __hopscript_json
 	   __hopscript_stringliteral)
-
+   
    (export (json-parser ::input-port ::JsGlobalObject)
 	   (x-javascript-parser ::input-port ::JsGlobalObject)
 	   
@@ -37,7 +37,7 @@
 	   (->flonum::double ::obj)
 	   
 	   (expander js-toprimitive)
-
+	   
 	   (=uint32 ::uint32 ::obj)
 	   (<uint32 ::uint32 ::obj)
 	   (<=uint32 ::uint32 ::obj)
@@ -50,10 +50,13 @@
 	   
 	   (js-seal-property! ::JsPropertyDescriptor)
 	   (js-freeze-property! ::JsPropertyDescriptor)
-
+	   
 	   (js-number->string ::obj)
 	   (js-serializer ::JsObject)
-	   (js-unserializer ::obj)))
+	   (js-unserializer ::obj)
+	   ($hopscript-breakpoint::obj ::obj))
+   
+   (extern (export $hopscript-breakpoint "hopjs_breakpoint")))
 
 ;*---------------------------------------------------------------------*/
 ;*    json-parser ...                                                  */
@@ -388,3 +391,11 @@
 (define (js-unserializer s)
    s)
 
+;*---------------------------------------------------------------------*/
+;*    $hopscript-breakpoint ...                                        */
+;*    -------------------------------------------------------------    */
+;*    This function, which is known in C, as hopjs_breakpoint enables  */
+;*    setting breakpoints under gdb. It is invoked by functions        */
+;*    defined in error.scm that trigger type errors.                   */
+;*---------------------------------------------------------------------*/
+(define ($hopscript-breakpoint x) x)

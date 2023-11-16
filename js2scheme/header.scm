@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.5.x/js2scheme/header.scm              */
+;*    serrano/prgm/project/hop/hop/js2scheme/header.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 29 06:46:36 2013                          */
-;*    Last change :  Tue Jan 18 15:14:32 2022 (serrano)                */
-;*    Copyright   :  2013-22 Manuel Serrano                            */
+;*    Last change :  Thu Feb 16 08:34:00 2023 (serrano)                */
+;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme compilation header stage                               */
 ;*=====================================================================*/
@@ -235,7 +235,8 @@
 		(type 'undefined)
 		(loc loc))
 	     (js-def-extern 'console #t #f
-		'(nodejs-require-core "console" %worker %this) :type 'object))
+		'(nodejs-require-core "console" %worker %this) :type 'object
+		:sweepable 'never))
 	 (if (string=? path "buffer")
 	     (instantiate::J2SUndefined
 		(type 'undefined)
@@ -273,10 +274,13 @@
 			,(& "setImmediate" prog)
 			,(& "setInterval" prog)
 			,(& "setTimeout" prog)))
-		,(unless (string=? path "console")
-		    `(nodejs-bind-export! %this %this
-			%scope
-			,(& "console" prog))))
+		)
+;* 		,(unless (string=? path "console")                     */
+;* 		    `(js-bind! %this %scope ,(& "console" prog)        */
+;* 			:value !console)))                             */
+;* {* 			(nodejs-require-core "console" %worker %this)  *} */
+;* {* {* 			%scope                                         *} *} */
+;* {* 			,(& "console" prog))))                         *} */
 	    :sweepable 'never)
 	 (instantiate::J2SUndefined
 	    (type 'undefined)

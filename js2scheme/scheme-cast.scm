@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Sat Aug 20 09:25:36 2022 (serrano)                */
-;*    Copyright   :  2017-22 Manuel Serrano                            */
+;*    Last change :  Sat Oct 21 12:53:50 2023 (serrano)                */
+;*    Copyright   :  2017-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Casting values from JS types to SCM implementation types.        */
 ;*=====================================================================*/
@@ -622,7 +622,7 @@
        `(js-toobject %this ,v)))
 
 (define (js-any->bool v expr ctx)
-   (j2s-totest v))
+   (j2s-totest v ctx))
 
 (define (js->number v expr ctx)
    (if (memq (j2s-type expr) '(uint32 int32 integer bint number))
@@ -984,7 +984,7 @@
 		  (case toid
 		     ((string) (tostring sexp))
 		     ((index uint32 length) (js-fixnum->uint32 sexp expr ctx))
-		     ((bool) (j2s-totest sexp))
+		     ((bool) (j2s-totest sexp ctx))
 		     (else sexp))))))))
 
    (j2s-cast/table cast-table sexp expr

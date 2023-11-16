@@ -1,32 +1,32 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.4.x/test/hopjs/noserv/regexp.js       */
+/*    serrano/prgm/project/hop/hop/test/hopjs/noserv/regexp.js         */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Wed Apr 21 19:16:57 2021 (serrano)                */
-/*    Copyright   :  2014-21 Manuel Serrano                            */
+/*    Last change :  Mon Oct 23 06:47:13 2023 (serrano)                */
+/*    Copyright   :  2014-23 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing REGEXP matching                                          */
 /*=====================================================================*/
 "use strict";
 									 
-var assert = require( "assert" );
+var assert = require("assert");
 
-assert.strictEqual( "toto\\tutu".match( /toto\\tutu/ )[ 0 ], "toto\\tutu" );
-assert.ok( /[\uD800-\uDBFF]/.test( 'foo' ) ? true: true );
+assert.strictEqual("toto\\tutu".match(/toto\\tutu/)[ 0 ], "toto\\tutu");
+assert.ok(/[\uD800-\uDBFF]/.test('foo') ? true: true);
 
 /*---------------------------------------------------------------------*/
 /*    test                                                             */
 /*---------------------------------------------------------------------*/
-function rxTest( rx ) {
-   return rx.test( "foobar" );
+function rxTest(rx) {
+   return rx.test("foobar");
 }
 
-console.log( "rxTest" ); 
-assert.ok( rxTest( /[bc]/ ), "rxText literal" );
+console.log("rxTest"); 
+assert.ok(rxTest(/[bc]/), "rxText literal");
 
-console.log( "rxTest" ); 
-assert.ok( rxTest( new RegExp( "[bc]" ), "rxText dynamic" ) );
+console.log("rxTest"); 
+assert.ok(rxTest(new RegExp("[bc]"), "rxText dynamic"));
 
 /*---------------------------------------------------------------------*/
 /*    exec ...                                                         */
@@ -47,38 +47,38 @@ function rxExecMDN() {
 }
 
 function rxExecProps() {
-   const r = /a(b)c/.exec( "abc" );
+   const r = /a(b)c/.exec("abc");
 		  
-   for( let k in r ) {
-      if( k !== "length" ) {
-      	 const p = Object.getOwnPropertyDescriptor( r, k );
+   for (let k in r) {
+      if (k !== "length") {
+      	 const p = Object.getOwnPropertyDescriptor(r, k);
 		
-      	 if( !(p.writable && p.enumerable && p.configurable) ) return false;
+      	 if (!(p.writable && p.enumerable && p.configurable)) return false;
       }
    }
 		  
    return true;
 }
 
-console.log( "rxExecMDN" ); 
-assert.ok( rxExecMDN(), "exec" );
+console.log("rxExecMDN"); 
+assert.ok(rxExecMDN(), "exec");
 
-console.log( "rxExecProps" ); 
-assert.ok( rxExecProps(), "exec result properties" );
+console.log("rxExecProps"); 
+assert.ok(rxExecProps(), "exec result properties");
 
 /*---------------------------------------------------------------------*/
 /*    rxReplace                                                        */
 /*---------------------------------------------------------------------*/
 function rxReplace() {
-   const regex ='^( *)((?:[*+-]|\\d+\\.)) [\\s\\S]+?(?:hr|def|\\n{2,}(?! )(?!\\1(?:[*+-]|\\d+\\.) )\\n*|\\s*$)';
+   const regex ='^(*)((?:[*+-]|\\d+\\.)) [\\s\\S]+?(?:hr|def|\\n{2,}(?!)(?!\\1(?:[*+-]|\\d+\\.))\\n*|\\s*$)';
    const name = 'hr';
    const val = '\\n+(?=\\1?(?:(?:- *){3,}|(?:_ *){3,}|(?:\\* *){3,})(?:\\n+|$))';
-   const val2 = val.replace( /(^|[^\[])\^/g, '$1');
+   const val2 = val.replace(/(^|[^\[])\^/g, '$1');
 
    const regex2 = regex.replace(name, val2);
 
    return val2 === "\\n+(?=\\1?(?:(?:- *){3,}|(?:_ *){3,}|(?:\\* *){3,})(?:\\n+|$))"
-      && regex2 === "^( *)((?:[*+-]|\\d+\\.)) [\\s\\S]+?(?:\\n+(?=\\1?(?:(?:- *){3,}|(?:_ *){3,}|(?:\\* *){3,})(?:\\n+|$))|def|\\n{2,}(?! )(?!\\1(?:[*+-]|\\d+\\.) )\\n*|\\s*$)";
+      && regex2 === "^(*)((?:[*+-]|\\d+\\.)) [\\s\\S]+?(?:\\n+(?=\\1?(?:(?:- *){3,}|(?:_ *){3,}|(?:\\* *){3,})(?:\\n+|$))|def|\\n{2,}(?!)(?!\\1(?:[*+-]|\\d+\\.))\\n*|\\s*$)";
 }
 
 function rxReplace2() {
@@ -107,23 +107,23 @@ function rxReplace4() {
       	 return '!' + c.charCodeAt(0) + '!'; });
    } 
    const enc = 
-      encodeURI( escCtrlChars( String.fromCharCode( 21,219,229,218,160 ) ) );
+      encodeURI(escCtrlChars(String.fromCharCode(21,219,229,218,160)));
    return enc === "%15%C3%9B%C3%A5%C3%9A!160!";
 }
 
 
 
-console.log( "rxReplace" );
-assert.ok( rxReplace(), "regexp replace" );
+console.log("rxReplace");
+assert.ok(rxReplace(), "regexp replace");
 
-console.log( "rxReplace2" );
-assert.ok( rxReplace2(), "regexp replace2" );
+console.log("rxReplace2");
+assert.ok(rxReplace2(), "regexp replace2");
 
-console.log( "rxReplace3" );
-assert.ok( rxReplace3(), "regexp replace3" );
+console.log("rxReplace3");
+assert.ok(rxReplace3(), "regexp replace3");
 
-console.log( "rxReplace4" );
-assert.ok( rxReplace4(), "regexp replace4" );
+console.log("rxReplace4");
+assert.ok(rxReplace4(), "regexp replace4");
 
 /*---------------------------------------------------------------------*/
 /*    properties                                                       */
@@ -131,14 +131,46 @@ assert.ok( rxReplace4(), "regexp replace4" );
 function rxProperties() {
    const rx = /foo|bar/;
    
-   return !Object.getOwnPropertyDescriptor( rx, "global" ) 
-      && !Object.getOwnPropertyDescriptor( rx, "source" )
-      && !Object.getOwnPropertyDescriptor( rx, "multiline" )
-      && !Object.getOwnPropertyDescriptor( rx, "ignoreCase" )
-      && Object.getOwnPropertyDescriptor( rx, "lastIndex" );
+   return !Object.getOwnPropertyDescriptor(rx, "global") 
+      && !Object.getOwnPropertyDescriptor(rx, "source")
+      && !Object.getOwnPropertyDescriptor(rx, "multiline")
+      && !Object.getOwnPropertyDescriptor(rx, "ignoreCase")
+      && Object.getOwnPropertyDescriptor(rx, "lastIndex");
 }
 
-console.log( "rxProperties" );
-assert.ok( rxProperties(), "regexp properties" );
+console.log("rxProperties");
+assert.ok(rxProperties(), "regexp properties");
 
+/*---------------------------------------------------------------------*/
+/*    rxSticky                                                         */
+/*---------------------------------------------------------------------*/
+function rxSticky() {
+   const re = /[a-z]+/y;
+   const buffer = "foo bar gee 0124";
+
+   const m1 = buffer.match(re);
+   if (!(m1[0] === "foo" && re.lastIndex === 3)) return "wrong.1";
+   
+   re.lastIndex = 4;
+   const m2 = buffer.match(re);
+   if (!(m2[0] === "bar" && re.lastIndex === 7)) return "wrong.2";
+   
+   re.lastIndex = 8;
+   const m3 = buffer.match(re);
+   if (!(m3[0] === "gee" && re.lastIndex === 11)) return "wrong.3";
+   
+   re.lastIndex = 13;
+   const m4 = buffer.match(re);
+   if (!(m4 === null && re.lastIndex === 0)) return "wrong.4";
+
+   re.lastIndex = 1000;
+   const m5 = buffer.match(re);
+   if (!(m5 === null && re.lastIndex === 0)) return "wrong.5";
+
+   return "good";
+}
+
+console.log("rxSticky");
+assert.strictEqual(rxSticky(), "good", "regexp sticky");
+   
 

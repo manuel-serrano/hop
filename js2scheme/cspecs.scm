@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Apr  2 19:46:13 2017                          */
-;*    Last change :  Sun Oct 17 10:58:13 2021 (serrano)                */
-;*    Copyright   :  2017-21 Manuel Serrano                            */
+;*    Last change :  Fri Feb 17 08:28:23 2023 (serrano)                */
+;*    Copyright   :  2017-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Annotate property accesses with cache level information          */
 ;*    This analysis scans the AST to find property assignments and     */
@@ -50,7 +50,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    cspecs ...                                                       */
 ;*---------------------------------------------------------------------*/
-(define-struct cspecs access assig assigop assignew call)
+(define-struct cspecs access assig assigop assignew call assigthis)
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-cspecs ...                                                   */
@@ -60,11 +60,12 @@
       (let ((csdef (if (config-get conf :optim-size)
 		       ;; small code
 		       (cspecs
-			  '(imap)
-			  '(imap nmap)
-			  '(imap cmap)
-			  '(emap)
-			  '(pmap))
+			  (config-get conf :cspecs-get '(imap cmap))
+			  (config-get conf :cspecs-put '(imap nmap))
+			  (config-get conf :cspecs-assigop '(imap cmap))
+			  (config-get conf :cspecs-assignew '(emap))
+			  (config-get conf :cspecs-call '(pmap))
+			  (config-get conf :cspecs-put '(imap nmap)))
 		       ;; fast code
 		       (cspecs
 			  ;; access
@@ -72,11 +73,13 @@
 			  ;; assig
 			  (config-get conf :cspecs-put '(imap emap cmap nmap amap vtable))
 			  ;; assiggop
-			  '(imap cmap)
+			  (config-get conf :cspecs-assigop '(imap cmap))
 			  ;; assignew
-			  '(emap)
+			  (config-get conf :cspecs-assignew '(emap imap cmap))
 			  ;; call
-			  '(pmap cmap vtable poly)))))
+			  (config-get conf :cspecs-call '(pmap nmap cmap vtable poly))
+			  ;; assigthis
+			  (config-get conf :cspecs-put '(imap emap cmap nmap amap vtable))))))
 	 (cspecs-default! this csdef)
 	 (when (or (config-get conf :optim-cspecs) (config-get conf :cspecs))
 	    (let loop ((log (config-get conf :profile-log #f)))
@@ -97,9 +100,7 @@
 				   ((pair? cspecs)  cspecs)
 				   ((symbol? cspecs) (list cspecs))
 				   (else (error "j2s-cspecs" "Illegal cspecs" cspecs)))))
-			 (cspecs-update this cs conf))))
-		  (else
-		   (cspecs-default! this csdef)))))))
+			 (cspecs-update this cs conf)))))))))
    this)
 
 ;*---------------------------------------------------------------------*/
@@ -641,10 +642,11 @@
        (with-access::J2SDeclFun this (val loc)
 	  (cspecs-update! val
 	     (cspecs (remq 'pmap (remq 'imap (cspecs-access cs)))
-		(cspecs-assignew cs)
+		(cspecs-assig cs)
 		(cspecs-assigop cs)
 		(cspecs-assignew cs)
-		(cspecs-call cs))))
+		(cspecs-call cs)
+		(cspecs-assignew cs))))
        (call-default-walker)))
 
 ;*---------------------------------------------------------------------*/
@@ -661,10 +663,11 @@
        (with-access::J2SDeclFun this (val c id)
 	  (cspecs-default! val
 	     (cspecs (cspecs-access csdef)
-		(cspecs-assignew csdef)
+		(cspecs-assig csdef)
 		(cspecs-assigop csdef)
 		(cspecs-assignew csdef)
-		(cspecs-call csdef)))
+		(cspecs-call csdef)
+		(cspecs-assignew csdef)))
 	  this)
        (call-default-walker)))
 
@@ -684,7 +687,9 @@
       (cspecs-default! rhs csdef)
       (if (isa? lhs J2SAccess)
 	  (with-access::J2SAccess lhs (cspecs obj field)
-	     (set! cspecs (cspecs-assig csdef))
+	     (set! cspecs (if (isa? lhs J2SThis)
+			      (cspecs-assig csdef)
+			      (cspecs-assigthis csdef)))
 	     (cspecs-default! obj csdef)
 	     (cspecs-default! field csdef)
 	     this)

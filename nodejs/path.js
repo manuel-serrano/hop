@@ -332,24 +332,55 @@ if (isWindows) {
 
   // path.normalize(path)
   // posix version
-  exports.normalize = function(path) {
-    var isAbsolute = path.charAt(0) === '/',
-        trailingSlash = path.substr(-1) === '/';
+   exports.normalize = function(_path) {
+      if (!_path.match(/[/][/]|[/].[/]|[/]..[/]|^.[/]/)) {
+	 return _path;
+      } else {
+	 // MS 18apr2013
+	 var isAbsolute = _path.charAt(0) === '/',
+         trailingSlash = _path.substr(-1) === '/';
+	 const arr = _path.split('/');
+	 
+	 // Normalize the path
+	 const narr = normalizeArray(arr.filter(function(p) {
+	    return !!p;
+	 }), !isAbsolute);
 
-    // Normalize the path
-    path = normalizeArray(path.split('/').filter(function(p) {
-      return !!p;
-    }), !isAbsolute).join('/');
+	 if (arr.length === (narr.length + (isAbsolute ? 1 : 0) + (trailingSlash ? 1 : 0))) {
+	    return _path;
+	 } else {
+	    let path = narr.join('/');
 
-    if (!path && !isAbsolute) {
-      path = '.';
-    }
-    if (path && trailingSlash) {
-      path += '/';
-    }
+	    if (!path && !isAbsolute) {
+	       path = '.';
+	    }
+	    if (path && trailingSlash) {
+	       path += '/';
+	    }
 
-    return (isAbsolute ? '/' : '') + path;
-  };
+	    return (isAbsolute ? '/' : '') + path;
+	 }
+      }
+   };
+
+/*   exports.normalize = function(path) {                              */
+/*     var isAbsolute = path.charAt(0) === '/',                        */
+/*         trailingSlash = path.substr(-1) === '/';                    */
+/*                                                                     */
+/*     // Normalize the path                                           */
+/*     path = normalizeArray(path.split('/').filter(function(p) {      */
+/*       return !!p;                                                   */
+/*     }), !isAbsolute).join('/');                                     */
+/*                                                                     */
+/*     if (!path && !isAbsolute) {                                     */
+/*       path = '.';                                                   */
+/*     }                                                               */
+/*     if (path && trailingSlash) {                                    */
+/*       path += '/';                                                  */
+/*     }                                                               */
+/*                                                                     */
+/*     return (isAbsolute ? '/' : '') + path;                          */
+/*   };                                                                */
 
 
   // posix version

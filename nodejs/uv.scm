@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Sat Nov 26 10:31:38 2022 (serrano)                */
-;*    Copyright   :  2014-22 Manuel Serrano                            */
+;*    Last change :  Fri Oct 13 08:37:25 2023 (serrano)                */
+;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
 ;*=====================================================================*/
@@ -25,16 +25,20 @@
       (enable-libuv
        (library libuv)))
 
-   (include "nodejs_debug.sch" "nodejs_async.sch" "uv.sch" "nodejs_types.sch")
+   (include "nodejs_debug.sch" "uv.sch" "nodejs_types.sch")
    (include "../hopscript/stringthread.sch")
 
    (cond-expand
       (enable-libuv
        (static (class JsLoop::UvLoop
 		  (async (default #f))
-		  (async-count::int (default 0))
-		  (async-count-debug::pair-nil (default '()))
-		  (actions::pair-nil (default '()))
+		  (actions-count::long (default 1)) ;; see js-worker-loop
+		  (actions::vector (default (make-vector 10)))
+		  (actions-name::vector (default (make-vector 10)))
+		  (%actions::vector (default (make-vector 10)))
+		  (%actions-name::vector (default (make-vector 10)))
+		  (mutex::mutex read-only (default (make-mutex)))
+		  (condv::condvar read-only (default (make-condition-variable)))
 		  (exiting::bool (default #f)))
 	  
 	  (class JsChild::UvProcess
@@ -57,13 +61,15 @@
 	  __nodejs__process-wrap
 	  __nodejs__pipe-wrap
 	  __nodejs__buffer)))
+
+   (import __nodejs)
    
-   (export (!js-callback0 ::obj ::WorkerHopThread ::JsGlobalObject ::JsFunction ::obj)
-	   (!js-callback1 ::obj ::WorkerHopThread ::JsGlobalObject ::JsFunction ::obj ::obj)
-	   (!js-callback2 ::obj ::WorkerHopThread ::JsGlobalObject ::JsFunction ::obj ::obj ::obj)
-	   (!js-callback3 ::obj ::WorkerHopThread ::JsGlobalObject ::JsFunction ::obj ::obj ::obj ::obj)
-	   (!js-callback4 ::obj ::WorkerHopThread ::JsGlobalObject ::JsFunction ::obj ::obj ::obj ::obj ::obj)
-	   (!js-callback5 ::obj ::WorkerHopThread ::JsGlobalObject ::JsFunction ::obj ::obj ::obj ::obj ::obj ::obj)
+   (export (!js-callback0 ::obj ::WorkerHopThread ::JsGlobalObject ::JsProcedure ::obj)
+	   (!js-callback1 ::obj ::WorkerHopThread ::JsGlobalObject ::JsProcedure ::obj ::obj)
+	   (!js-callback2 ::obj ::WorkerHopThread ::JsGlobalObject ::JsProcedure ::obj ::obj ::obj)
+	   (!js-callback3 ::obj ::WorkerHopThread ::JsGlobalObject ::JsProcedure ::obj ::obj ::obj ::obj)
+	   (!js-callback4 ::obj ::WorkerHopThread ::JsGlobalObject ::JsProcedure ::obj ::obj ::obj ::obj ::obj)
+	   (!js-callback5 ::obj ::WorkerHopThread ::JsGlobalObject ::JsProcedure ::obj ::obj ::obj ::obj ::obj ::obj)
 
 	   (nodejs-uv-version::bstring)
 	   (nodejs-err-name ::int)
@@ -98,7 +104,7 @@
 	   (nodejs-idle-start ::WorkerHopThread ::JsGlobalObject ::obj)
 	   (nodejs-idle-stop ::WorkerHopThread ::JsGlobalObject ::obj)
 	   
-	   (nodejs-check?::bool ::obj)
+	   (inline nodejs-check?::bool ::obj)
 	   (nodejs-make-check ::WorkerHopThread ::JsGlobalObject ::JsObject)
 	   (nodejs-check-stop ::WorkerHopThread ::JsGlobalObject ::obj)
 	   
@@ -122,9 +128,21 @@
 	   (nodejs-fchmod ::WorkerHopThread ::JsGlobalObject ::JsObject ::int ::int ::obj)
 	   (nodejs-chmod ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::int ::obj)
 	   (nodejs-lchmod ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::int ::obj)
-	   (nodejs-stat ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::obj ::obj)
-	   (nodejs-fstat ::WorkerHopThread ::JsGlobalObject ::JsObject ::int ::obj ::obj)
-	   (nodejs-lstat ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::obj ::obj)
+	   (nodejs-stat ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::obj)
+	   (nodejs-stat-sync-string ::JsStringLiteral ::JsGlobalObject)
+	   (inline nodejs-stat-sync-any ::obj ::JsGlobalObject)
+	   (nodejs-stat-sync-get-string ::JsStringLiteral ::int ::JsGlobalObject)
+	   (inline nodejs-stat-sync-get-any ::obj ::int ::JsGlobalObject)
+	   (nodejs-stat-sync-get-is-mode-string ::JsStringLiteral ::int ::JsGlobalObject)
+	   (inline nodejs-stat-sync-get-is-mode-any ::obj ::int ::JsGlobalObject)
+	   (nodejs-fstat ::WorkerHopThread ::JsGlobalObject ::JsObject ::int ::obj)
+	   (nodejs-lstat ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::obj)
+	   (nodejs-lstat-sync-string ::JsStringLiteral ::JsGlobalObject)
+	   (inline nodejs-lstat-sync-any ::obj ::JsGlobalObject)
+	   (nodejs-lstat-sync-get-string ::JsStringLiteral ::int ::JsGlobalObject)
+	   (inline nodejs-lstat-sync-get-any ::obj ::int ::JsGlobalObject)
+	   (nodejs-lstat-sync-get-is-mode-string ::JsStringLiteral ::int ::JsGlobalObject)
+	   (inline nodejs-lstat-sync-get-is-mode-any ::obj ::int ::JsGlobalObject)
 	   (nodejs-link ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::obj ::obj)
 	   (nodejs-symlink ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::obj ::obj)
 	   (nodejs-readlink ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::obj)
@@ -170,8 +188,8 @@
 	   (nodejs-udp-handle ::WorkerHopThread)
 	   (nodejs-udp-bind ::JsGlobalObject ::JsObject ::obj ::obj ::int ::int ::int)
 	   (nodejs-udp-send ::WorkerHopThread ::JsGlobalObject ::obj ::bstring ::long ::long ::long ::bstring ::int ::procedure)
-	   (nodejs-udp-recv-start ::WorkerHopThread ::JsGlobalObject ::obj ::procedure ::obj)
-	   (nodejs-udp-recv-stop ::obj)
+	   (inline nodejs-udp-recv-start ::WorkerHopThread ::JsGlobalObject ::obj ::procedure ::obj)
+	   (inline nodejs-udp-recv-stop ::obj)
 	   (nodejs-udp-getsockname ::JsGlobalObject ::obj)
 	   (nodejs-udp-set-ttl ::obj ::int)
 	   (nodejs-udp-set-multicast-ttl ::obj ::int)
@@ -179,11 +197,13 @@
 	   (nodejs-udp-set-broadcast ::obj ::obj)
 	   (nodejs-udp-set-membership ::obj ::bstring ::obj ::symbol)
 	   
-	   (nodejs-stream-write ::WorkerHopThread ::JsGlobalObject ::obj ::bstring ::long ::long ::procedure)
-	   (nodejs-stream-write2 ::WorkerHopThread ::JsGlobalObject ::obj ::bstring ::long ::long ::obj ::procedure)
-	   (nodejs-stream-read-start ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::procedure ::obj)
-	   (nodejs-stream-read-stop ::WorkerHopThread ::JsGlobalObject ::obj)
-	   (nodejs-stream-shutdown ::WorkerHopThread ::JsGlobalObject ::obj ::procedure)
+	   (inline nodejs-stream-write ::WorkerHopThread ::JsGlobalObject ::obj ::bstring ::long ::long
+	      #!key callback arg0 arg1 arg2 arg3 arg4)
+	   (inline nodejs-stream-write2 ::WorkerHopThread ::JsGlobalObject ::obj ::bstring ::long ::long ::obj
+	      #!key callback arg0 arg1 arg2 arg3 arg4)
+	   (inline nodejs-stream-read-start ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::procedure ::obj)
+	   (inline nodejs-stream-read-stop ::WorkerHopThread ::JsGlobalObject ::obj)
+	   (inline nodejs-stream-shutdown ::WorkerHopThread ::JsGlobalObject ::obj ::procedure)
 
 	   (nodejs-new-process)
 	   (nodejs-process-spawn ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::obj)
@@ -221,66 +241,100 @@
 ;*---------------------------------------------------------------------*/
 ;*    next-tick ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define (next-tick %worker %this)
-   (with-access::WorkerHopThread %worker (%process async)
-      (with-access::JsProcess %process (tick-callback)
-	 (unless tick-callback
-	    (set! tick-callback (js-get %process (& "_tickCallback") %this)))
-	 (js-call0 %this tick-callback (js-undefined)))))
+(define-inline (next-tick %this::JsGlobalObject)
+   (unless *nodejs-DEP0134*
+      (with-access::JsGlobalObject %this (worker)
+	 (with-access::WorkerHopThread worker (%process)
+	    (with-access::JsProcess %process (tick-callback)
+	       (unless tick-callback
+		  (set! tick-callback (js-get %process (& "_tickCallback") %this)))
+	       (js-call0 %this tick-callback (js-undefined)))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-worker-call ...                                               */
+;*---------------------------------------------------------------------*/
+(define-macro (js-worker-call worker proc %this)
+   (match-case proc
+      ((lambda (%this) ?expr)
+       expr)
+      (else
+       `(,proc ,%this))))
+
+(define-macro (js-worker-call-deprecated-9apr2023 worker proc %this)
+   (match-case proc
+      ((lambda (%this) ?expr)
+       `(with-access::WorkerHopThread ,worker (%call)
+	   (if %call
+	       (%call ,proc ,%this)
+	       ,expr)))
+      (else
+       `(with-access::WorkerHopThread ,worker (%call)
+	   (if %call
+	       (%call ,proc ,%this)
+	       (,proc ,%this))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    !js-callback0 ...                                                */
+;*    -------------------------------------------------------------    */
+;*    All these functions are invoked by libuv so they are all         */
+;*    executed inside the worker loop.                                 */
 ;*---------------------------------------------------------------------*/
 (define (!js-callback0 name %worker %this proc obj)
-   (with-access::WorkerHopThread %worker (call)
-      (let ((res (call (lambda () (js-call0 %this proc obj)))))
-	 (next-tick %worker %this)
-	 res)))
+   (js-worker-call %worker
+      (lambda (%this)
+	 (js-call0-jsprocedure %this proc obj))
+      %this)
+   (next-tick %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    !js-callback1 ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (!js-callback1 name %worker %this proc obj arg0)
-   (with-access::WorkerHopThread %worker (call)
-      (let ((res (call (lambda () (js-call1 %this proc obj arg0)))))
-	 (next-tick %worker %this)
-	 res)))
+   (js-worker-call %worker
+      (lambda (%this)
+	 (js-call1-jsprocedure %this proc obj arg0))
+      %this)
+   (next-tick %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    !js-callback2 ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (!js-callback2 name %worker %this proc obj arg0 arg1)
-   (with-access::WorkerHopThread %worker (call)
-      (let ((res (call (lambda () (js-call2 %this proc obj arg0 arg1)))))
-	 (next-tick %worker %this)
-	 res)))
+   (js-worker-call %worker
+      (lambda (%this)
+	 (js-call2-jsprocedure %this proc obj arg0 arg1))
+      %this)
+   (next-tick %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    !js-callback3 ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (!js-callback3 name %worker %this proc obj arg0 arg1 arg2)
-   (with-access::WorkerHopThread %worker (call)
-      (let ((res (call (lambda () (js-call3 %this proc obj arg0 arg1 arg2)))))
-	 (next-tick %worker %this)
-	 res)))
+   (js-worker-call %worker
+      (lambda (%this)
+	 (js-call3-jsprocedure %this proc obj arg0 arg1 arg2))
+      %this)
+   (next-tick %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    !js-callback4 ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (!js-callback4 name %worker %this proc obj arg0 arg1 arg2 arg3)
-   (with-access::WorkerHopThread %worker (call)
-      (let ((res (call (lambda () (js-call4 %this proc obj arg0 arg1 arg2 arg3)))))
-	 (next-tick %worker %this)
-	 res)))
+   (js-worker-call %worker
+      (lambda (%this)
+	 (js-call4-jsprocedure %this proc obj arg0 arg1 arg2 arg3))
+      %this)
+   (next-tick %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    !js-callback5 ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (!js-callback5 name %worker %this proc obj arg0 arg1 arg2 arg3 arg4)
-   (with-access::WorkerHopThread %worker (call)
-      (let ((res (call (lambda () (js-call5 %this proc obj arg0 arg1 arg2 arg3 arg4)))))
-	 (next-tick %worker %this)
-	 res)))
+   (js-worker-call %worker
+      (lambda (%this)
+	 (js-call5-jsprocedure %this proc obj arg0 arg1 arg2 arg3 arg4))
+      %this)
+   (next-tick %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    to-uint64 ...                                                    */
@@ -339,6 +393,14 @@
    (uv-set-process-title! str))
 
 ;*---------------------------------------------------------------------*/
+;*    thread-initialize! ::WorkerHopThread ...                         */
+;*---------------------------------------------------------------------*/
+(define-method (thread-initialize! th::WorkerHopThread)
+   (call-next-method)
+   (with-access::WorkerHopThread th (%loop)
+      (set! %loop (instantiate::JsLoop))))
+   
+;*---------------------------------------------------------------------*/
 ;*    worker-loop ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (worker-loop th::WorkerHopThread)
@@ -356,77 +418,59 @@
    #f)
 
 ;*---------------------------------------------------------------------*/
-;*    js-worker-tick ...                                               */
-;*---------------------------------------------------------------------*/
-(define-method (js-worker-tick th::WorkerHopThread)
-   (with-access::WorkerHopThread th (%loop %process %retval
-				       call keep-alive mutex)
-      (with-access::JsLoop %loop (async actions exiting)
-	 (let loop ((acts (synchronize mutex
-			     (let ((acts actions))
-				(set! actions '())
-				(reverse! acts)))))
-	    (with-handler
-	       (lambda (e)
-		  (let ((r (js-worker-exception-handler th e 8)))
-		     (if (=fx r 0)
-			 (begin
-			    (loop acts)
-			    (set! exiting #t))
-			 (begin
-			    (set! %retval r)
-			    (set! keep-alive #f)))))
-	       (let loop ()
-		  (when (pair? acts)
-		     (let* ((action (car acts))
-			    (actname (car action))
-			    (actproc (cdr action)))
-			(set! acts (cdr acts))
-			(with-trace 'nodejs-async actname
-			   (call actproc)))
-		     (loop))))))))
-
-;*---------------------------------------------------------------------*/
-;*    js-worker-init! ::WorkerHopThread ...                            */
-;*---------------------------------------------------------------------*/
-(define-method (js-worker-init! th::WorkerHopThread)
-   (with-access::WorkerHopThread th (%loop tqueue)
-      (set! %loop
-	 (instantiate::JsLoop
-	    (actions tqueue)))))
-   
-;*---------------------------------------------------------------------*/
 ;*    js-worker-loop ::WorkerHopThread ...                             */
 ;*    -------------------------------------------------------------    */
 ;*    Overrides the generic functions defined in hopscript/worker      */
 ;*    to let LIBUV manages the event loop.                             */
 ;*---------------------------------------------------------------------*/
-(define-method (js-worker-loop th::WorkerHopThread)
-   (with-access::WorkerHopThread th (mutex condv tqueue
+(define-method (js-worker-loop th::WorkerHopThread init::procedure)
+   (with-access::WorkerHopThread th (mutex condv %loop
 				       %process %this keep-alive services
-				       call %retval prerun %loop)
+				       call %retval prerun state)
+      ;; set thread name for better debugging
+      (thread-name-set! (current-thread) "hopjs")
+      ;; mimic nodejs file descriptor limit
+      (cond-expand
+	 (rlimit
+	  (multiple-value-bind (soft hard)
+	     (getrlimit 'NOFILE)
+	     (when (> hard 0)
+		(setrlimit! 'NOFILE hard hard)))))
+      ;; gc traces
+      (let ((env (getenv "HOPTRACE")))
+	 (when (and (string? env) (string-contains env "hopscript:gc"))
+	    (cond-expand
+	       (gc ($bgl-gc-verbose-set! #t))
+	       (else #unspecified))))
       (set! __js_strings (&init!))
       (letrec* ((loop %loop)
 		(async (instantiate::UvAsync
 			  (loop loop)
 			  (cb (lambda (a)
 				 (js-worker-tick th)
-				 (with-access::JsLoop loop (actions)
-				    (unless (or keep-alive
-						(pair? services)
-						(pair? actions)
-						(active-subworkers? th))
-				       (uv-unref async)
-				       (when (js-totest (js-get %process (& "_exiting") %this))
-					  (uv-stop loop)))))))))
+				 (with-access::JsLoop loop (exiting actions-count mutex)
+				    (synchronize mutex
+				       (when (and (null? services)
+						  (=fx actions-count 0)
+						  (not (active-subworkers? th))
+						  (or (not keep-alive)
+						      exiting))
+					  (uv-unref async)
+					  (when (and (or exiting
+							 (js-totest (js-get %process (& "_exiting") %this)))
+						     (not (uv-loop-alive? loop)))
+					     (uv-stop loop))))))))))
 	 (synchronize mutex
 	    (nodejs-process th %this)
-	    (with-access::JsLoop loop (actions)
-	       (set! actions tqueue))
 	    (condition-variable-broadcast! condv)
-	    (with-access::JsLoop loop ((lasync async))
-	       (set! lasync async))
-	    (when (pair? tqueue)
+	    (with-access::JsLoop loop ((lasync async) actions actions-name)
+	       (set! lasync async)
+	       (set! state 'running)
+	       ;; as actions-count is initialize with 1, the first vector
+	       ;; slot is always free for the the initialization
+	       (vector-set! actions 0 (lambda (%this) (init th)))
+	       (vector-set! actions-name 0 "init")
+	       (uv-ref async)
 	       (uv-async-send async)))
 	 (unwind-protect
 	    (with-access::WorkerHopThread th (onexit %process parent state)
@@ -441,10 +485,14 @@
 			;; run one more for nexttick
 			(with-access::JsLoop loop (exiting)
 			   (set! exiting (not (=fx %retval 0))))
-			(uv-async-send async)
-			;;(run)
-			)
-		     (uv-run loop)))
+			(uv-async-send async))
+		     (uv-run loop))
+		  (with-access::JsLoop loop (exiting)
+		     (when (and (not exiting) (eq? state 'error))
+			;; we reach that state when the error has been
+			;; caught by a domain
+			(set! state 'running)
+			(run))))
 	       ;; call the cleanup function
 	       (when (=fx %retval 0)
 		  (unless (js-totest (js-get %process (& "_exiting") %this))
@@ -467,8 +515,8 @@
 			    (with-access::WorkerHopThread w (mutex keep-alive)
 			       (synchronize mutex
 				  (set! keep-alive #f)
-				  (js-worker-push-thunk! w "ping"
-				     (lambda ()
+				  (js-worker-push! w "ping"
+				     (lambda (%this)
 					(uv-async-send async))))))
 		  subworkers))
 	    (with-access::WorkerHopThread th (mutex condv parent state)
@@ -477,6 +525,55 @@
 		  (synchronize mutex
 		     (set! state 'end)
 		     (condition-variable-broadcast! condv))))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-worker-tick ...                                               */
+;*---------------------------------------------------------------------*/
+(define-method (js-worker-tick th::WorkerHopThread)
+   (with-access::WorkerHopThread th (%loop %process %retval %this
+				       keep-alive)
+      (with-access::JsLoop %loop (actions-count actions actions-name
+				    %actions %actions-name
+				    exiting mutex async)
+	 (let (count acts nms)
+	    (synchronize mutex
+	       (set! count actions-count)
+	       (let ((len (vector-length actions)))
+		  (when (<fx (vector-length %actions) len)
+		     ;; reallocate %actions which has become too small
+		     (set! %actions (make-vector len))
+		     (set! %actions-name (make-vector len)))
+		  ;; swap actions and %actions
+		  (set! acts actions)
+		  (set! nms actions-name)
+		  (set! actions %actions)
+		  (set! actions-name %actions-name)
+		  (set! %actions acts)
+		  (set! %actions-name nms)
+		  (set! actions-count 0)))
+	    ;; execute the actions
+	    (let loop ((i 0))
+	       (with-handler
+		  (lambda (e)
+		     (let ((r (js-worker-exception-handler th e 8)))
+			(if (=fx r 0)
+			    (begin
+			       (loop (+fx i 1))
+			       (set! exiting #t))
+			    (begin
+			       (set! %retval r)
+			       (set! keep-alive #f)))))
+		  (let liip ()
+		     (when (<fx i count)
+			(let ((act (vector-ref acts i))
+			      (nm (vector-ref nms i)))
+			   ;; do not keep pointers to executed actions
+			   (vector-set! acts i #unspecified)
+			   (vector-set! nms i #unspecified)
+			   (with-trace 'nodejs-async nm
+			      (js-worker-call th act %this)))
+			(set! i (+fx i 1))
+			(liip)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    active-subworkers? ...                                           */
@@ -493,12 +590,12 @@
 ;*    js-worker-terminate! ::WorkerHopThread ...                       */
 ;*---------------------------------------------------------------------*/
 (define-method (js-worker-terminate! th::WorkerHopThread pred)
-   (js-worker-push-thunk! th "stop"
-      (lambda ()
+   (js-worker-push! th "stop"
+      (lambda (%this)
 	 (with-access::WorkerHopThread th (keep-alive parent exitlisteners)
 	    (when (pair? exitlisteners)
-	       (js-worker-push-thunk! parent "slave-terminate"
-		  (lambda ()
+	       (js-worker-push! parent "slave-terminate"
+		  (lambda (%this)
 		     (let ((e (instantiate::MessageEvent
 				 (name "exit")
 				 (target (js-undefined))
@@ -508,87 +605,101 @@
 	 (uv-stop (worker-loop th)))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-worker-push-thunk! ::WorkerHopThread ...                      */
+;*    js-worker-push-action! ...                                       */
+;*    -------------------------------------------------------------    */
+;*    This function assumes that the workerhopthread mutex is          */
+;*    acquired.                                                        */
 ;*---------------------------------------------------------------------*/
-(define-method (js-worker-push-thunk! th::WorkerHopThread name::bstring thunk::procedure)
-   
-   (define (worker-started? th)
-      (with-access::WorkerHopThread th (%loop mutex tqueue)
-	 (when %loop
-	    (with-access::JsLoop %loop (async)
-	       async))))
-   
+(define (js-worker-push-action! th::WorkerHopThread name::bstring proc::procedure)
+   (with-access::WorkerHopThread th (%loop)
+      (with-access::JsLoop %loop (actions actions-name actions-count async)
+	 (let ((cnt actions-count))
+	    (when (=fx cnt (vector-length actions))
+	       (set! actions (copy-vector actions (*fx 2 cnt)))
+	       (set! actions-name (copy-vector actions-name (*fx 2 cnt))))
+	    (vector-set! actions cnt proc)
+	    (vector-set! actions-name cnt name)
+	    (set! actions-count (+fx cnt 1))
+	    (when (=fx cnt 0)
+	       (uv-ref async)
+	       (uv-async-send async))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-worker-push! ::WorkerHopThread ...                            */
+;*---------------------------------------------------------------------*/
+(define-method (js-worker-push! th::WorkerHopThread name::bstring proc::procedure)
+   [assert (proc) (correct-arity? proc 1)]
    (with-trace 'nodejs-async "nodejs-async-push"
       (trace-item "name=" name)
       (trace-item "th=" th)
-      (with-access::WorkerHopThread th (%loop mutex tqueue)
-	 (synchronize mutex
-	    (let ((act (cons name thunk)))
-	       (if (worker-started? th)
-		   (with-access::JsLoop %loop (actions async exiting)
-		      (unless (pair? actions)
-			 (uv-ref async)
-			 (uv-async-send async))
-		      ;; push the action to be executed (with a debug name)
-		      (set! actions (cons act actions)))
-		   ;; the loop is not started yet (this might happend when
-		   ;; a master send a message (js-worker-post-master-message)
-		   ;; before the slave is fully initialized
-		   (with-access::WorkerHopThread th (tqueue)
-		      (set! tqueue (append (cons act tqueue))))))))))
+      (with-access::WorkerHopThread th (%loop)
+	 (with-access::JsLoop %loop (mutex)
+	    (synchronize mutex
+	       (js-worker-push-action! th name proc))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-worker-exec ...                                               */
 ;*---------------------------------------------------------------------*/
 (define-method (js-worker-exec th::WorkerHopThread
 		  name::bstring
-		  handleerror::bool
-		  thunk::procedure)
-   (cond
-      ((eq? (current-thread) th)
-       (thunk))
-      (handleerror
-       (let ((response #f)
-	     (mutex (make-mutex))
-	     (condv (make-condition-variable))
-	     (exn (make-cell #f)))
-	  (synchronize mutex
-	     (js-worker-push-thunk! th name
-		(lambda ()
-		   (set! response (thunk))
-		   (synchronize mutex
-		      (condition-variable-signal! condv))))
-	     (condition-variable-wait! condv mutex)
-	     response)))
-      (else
-       (let ((response #f)
-	     (mutex (make-mutex))
-	     (condv (make-condition-variable))
-	     (exn (make-cell #f)))
-	  (synchronize mutex
-	     (js-worker-push-thunk! th name
-		(lambda ()
-		   (set! response
-		      (with-handler
-			 (lambda (e)
-			    (cell-set! exn e)
-			    exn)
-			 (thunk)))
-		   (synchronize mutex
-		      (condition-variable-signal! condv))))
-	     (condition-variable-wait! condv mutex)
-	     (if (eq? response exn)
-		 (raise (cell-ref exn))
-		 response))))))
+		  proc::procedure)
+   [assert (proc) (correct-arity? proc 1)]
+   [assert (th name) (not (eq? (current-thread) th))]
+   (with-access::WorkerHopThread th (%this %loop mutex condv)
+      (let ((loop %loop))
+	 (with-access::JsLoop loop (mutex condv)
+	    (let ((response 'unassigned))
+	       (synchronize mutex
+		  (js-worker-push-action! th name
+		     (lambda (%this)
+			(set! response (proc %this))
+			(synchronize mutex
+			   (condition-variable-broadcast! condv))))
+		  (let loop ()
+		     (condition-variable-wait! condv mutex)
+		     (when (eq? response 'unassigned)
+			(loop))))
+	       response)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-worker-exec-throws ...                                        */
+;*---------------------------------------------------------------------*/
+(define-method (js-worker-exec-throws th::WorkerHopThread
+		  name::bstring
+		  proc::procedure)
+   [assert (proc) (correct-arity? proc 1)]
+   [assert (th name) (not (eq? (current-thread) th))]
+   (with-access::WorkerHopThread th (%this %loop mutex condv)
+      (let ((loop %loop))
+	 (with-access::JsLoop loop (mutex condv)
+	    (let ((response (cons 'unassigned #f)))
+	       (synchronize mutex
+		  (js-worker-push-action! th name
+		     (lambda (%this)
+			(with-handler
+			   (lambda (exn)
+			      (exception-notify exn)
+			      (set-cdr! response #t)
+			      (set-car! response exn))
+			   (set-car! response (proc %this)))
+			(synchronize mutex
+			   (condition-variable-broadcast! condv))))
+		  (let loop ()
+		     (condition-variable-wait! condv mutex)
+		     (when (eq? (car response) 'unassigned)
+			(loop))))
+	       (if (cdr response)
+		   (raise (car response))
+		   (car response)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-now ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-now %worker)
    (uv-update-time (worker-loop %worker))
-   (uint64->flonum (uv-now (worker-loop %worker))))
+   (overflowu64 (uv-now (worker-loop %worker))))
 
-(define close-stack '())
+;; (define close-stack '())
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-close ...                                                 */
@@ -599,11 +710,11 @@
 	 ((or (not (isa? handle JsPipe))
 	      (with-access::JsPipe handle (econnreset)
 		 (not econnreset)))
-	  (set! close-stack (cons this close-stack))
+	  ;;(set! close-stack (cons this close-stack))
 	  (with-access::UvHandle handle (onclose)
 	     (uv-close handle
 		(lambda ()
-		   (set! close-stack (remq! this close-stack))
+		   ;; (set! close-stack (remq! this close-stack))
 		   (when (and (=fx (bit-and flags 1) 1)
 			      (js-procedure? callback))
 		      (!js-callback0 "close" %worker %this
@@ -632,16 +743,18 @@
 (define (nodejs-make-timer %worker %this process obj)
    
    (define (timer-body timer status)
-      (with-access::UvTimer timer (repeat)
-	 (with-trace 'nodejs-async "nodejs-timer-callback"
-	    (trace-item "timer-"
-	       (integer->string (uv-id timer) 16)
-	       " repeat=" repeat)
-	    (let ((proc (js-get obj (& "ontimeout") %this)))
-	       (when (js-procedure? proc)
-		  (js-worker-push-thunk! %worker "tick-spinner"
-                     (lambda ()
-                        (js-call1-jsprocedure %this proc obj status))))))))
+      (with-access::JsGlobalObject %this (worker js-nodejs-pcache)
+	 (with-access::UvTimer timer (repeat)
+	    (with-trace 'nodejs-async "nodejs-timer-callback"
+	       (trace-item "timer-"
+		  (integer->string (uv-id timer) 16)
+		  " repeat=" repeat)
+	       (let ((proc (js-get-jsobject-name/cache obj (& "ontimeout")
+			      #f %this (js-pcache-ref js-nodejs-pcache 24))))
+		  (when (js-procedure? proc)
+		     (js-worker-push! worker "tick-spinner"
+			(lambda (%this)
+			   (js-call1-jsprocedure %this proc obj status)))))))))
 
    (instantiate::UvTimer
       (loop (worker-loop %worker))
@@ -771,7 +884,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-check? ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-check?::bool obj)
+(define-inline (nodejs-check?::bool obj)
    (isa? obj UvCheck))
 
 ;*---------------------------------------------------------------------*/
@@ -914,10 +1027,10 @@
 	 (js-put! err (& "errno") EBADF #f %this)
 	 (js-put! err (& "code")  (js-string->jsstring "EBADF") #f %this)
 	 (if (js-procedure? callback)
-	     (js-worker-push-thunk! %worker name
-		(lambda ()
+	     (js-worker-push! %worker name
+		(lambda (%this)
 		   (js-apply %this callback (js-undefined) (cons err args))
-		   (next-tick %worker %this)))
+		   (next-tick %this)))
 	     (js-raise err)))))
        
 ;*---------------------------------------------------------------------*/
@@ -1105,12 +1218,30 @@
 	     (js-put! exn (& "path") path #f %this)
 	     (!js-callback2 'open %worker %this
 		callback (js-undefined) exn #f))))
+
+   (define (open-callback4 res callback path %worker %this)
+      (if (isa? res UvFile)
+	  (!js-callback2 'open %worker %this callback (js-undefined) #f
+	     (uvfile->int %worker res))
+	  (let ((exn (fs-errno-exn
+			(format "open '~a'" (js-jsstring->string path))
+			res %this)))
+	     (js-put! exn (& "path") path #f %this)
+	     (!js-callback2 'open %worker %this
+		callback (js-undefined) exn #f))))
    
    (let ((name (js-tostring path %this)))
       (if (js-procedure? callback)
-	  (uv-fs-open name flags :mode mode
-	     :loop (worker-loop %worker)
-	     :callback open-callback)
+	  (cond-expand
+	     (libuv-vec
+	      (uv-fs-open4 name flags :mode mode
+		 :loop (worker-loop %worker)
+		 :callback open-callback4
+		 :arg0 callback :arg1 path :arg2 %worker :arg3 %this))
+	     (else
+	      (uv-fs-open name flags :mode mode
+		 :loop (worker-loop %worker)
+		 :callback open-callback)))
 	  (let ((res (uv-fs-open name flags :mode mode)))
 	     (if (isa? res UvFile)
 		 (uvfile->int %worker res)
@@ -1127,14 +1258,24 @@
    (let ((file (int->uvhandle %worker %this fd)))
       (if file
 	  (begin
-	     (close-uvfile %worker fd)
+	     (unstore-stream-fd! %worker file fd)
 	     (if (js-procedure? callback)
-		 (uv-fs-close file
-		    :loop (worker-loop %worker)
-		    :callback
-		    (lambda (val)
-		       (!js-callback1 'close %worker %this
-			  callback (js-undefined) val)))
+		 (cond-expand
+ 		    (libuv-vec
+		     (uv-fs-close2 file
+			:loop (worker-loop %worker)
+			:callback
+			(lambda (val callback %this)
+			   (!js-callback1 'close %worker %this
+			      callback (js-undefined) val))
+			:arg0 callback :arg1 %this))
+		    (else
+		     (uv-fs-close file
+			:loop (worker-loop %worker)
+			:callback
+			(lambda (val)
+			   (!js-callback1 'close %worker %this
+			      callback (js-undefined) val)))))
 		 (uv-fs-close file)))
 	  (fs-callback-error %worker %this callback "close"))))
 
@@ -1154,109 +1295,556 @@
 	  (uv-fs-copyfile bsrc bdest bmode))))
 
 ;*---------------------------------------------------------------------*/
-;*    stat-date ...                                                    */
+;*    *stat-cmap* ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (stat-date stat %this)
-   (let ((ms (filter-map (lambda (k)
-			    (let ((c (assq k stat)))
-			       (when (pair? c)
-				  (let ((v (cdr c)))
-				     (set-cdr! c
-					(js-date->jsdate
-					   (seconds->date (cdr c)) %this))
-				     (cons (symbol-append k 'Ms) (* v 100))))))
-		'(mtime atime ctime))))
-      (append stat ms)))
+(define *stat-cmap* #f)
+(define *stat-cmap-noinline* #f)
+(define *stat-ctime-accessor* #f)
+(define *stat-mtime-accessor* #f)
+(define *stat-atime-accessor* #f)
+(define *stat-birthtime-accessor* #f)
+
+(define *libuv-ctime-offset* -1)
+(define *libuv-mtime-offset* -1)
+(define *libuv-atime-offset* -1)
+(define *libuv-birthtime-offset* -1)
+(define *libuv-ctime-ns-offset* -1)
+(define *libuv-mtime-ns-offset* -1)
+(define *libuv-atime-ns-offset* -1)
+(define *libuv-birthtime-ns-offset* -1)
+(define *libuv-mode-offset* -1)
+
+;*---------------------------------------------------------------------*/
+;*    stat-field-name ...                                              */
+;*---------------------------------------------------------------------*/
+(define (stat-field-name s)
+   (cond
+      ((string=? s "ctime") "#ctime")
+      ((string=? s "mtime") "#mtime")
+      ((string=? s "atime") "#atime")
+      ((string=? s "birthtime") "#birthtime")
+      ((string=? s "ctime-ns") "ctimeMs")
+      ((string=? s "mtime-ns") "mtimeMs")
+      ((string=? s "atime-ns") "atimeMs")
+      ((string=? s "birthtime-ns") "birthtimeMs")
+      (else s)))
+
+;*---------------------------------------------------------------------*/
+;*    uv-fs-stat-cb-vector-props                                       */
+;*---------------------------------------------------------------------*/
+(cond-expand
+   ((not libuv-vec)
+    (define (uv-fs-stat-cb-vector-props)
+       '#())))
+
+;*---------------------------------------------------------------------*/
+;*    stat-cmap ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (stat-cmap)
+   
+   (define (js-stat-time-getter obj owner::JsObject propname %this)
+      (let* ((idx (cond
+		     ((eq? propname (& "ctime")) *libuv-ctime-offset*)
+		     ((eq? propname (& "mtime")) *libuv-mtime-offset*)
+		     ((eq? propname (& "atime")) *libuv-atime-offset*)
+		     ((eq? propname (& "birthtime")) *libuv-birthtime-offset*)
+		     (else (js-raise-type-error %this
+			      "Illegal property name" propname))))
+	     (ref (js-object-ref obj idx)))
+	 (if (number? ref)
+	     (let ((val (js-date->jsdate
+			   (cond
+			      ((fixnum? ref)
+			       (seconds->date (fixnum->elong ref)))
+			      ((int64? ref)
+			       (seconds->date (int64->elong ref)))
+			      (else
+			       (seconds->date ref)))
+			   %this)))
+		(js-object-set! obj idx val)
+		val)
+	     ref)))
+   
+   (if *stat-cmap*
+      *stat-cmap*
+      (let ((cmap (js-strings->cmap
+		     (vector-append
+			(vector-map stat-field-name
+			   (uv-fs-stat-cb-vector-props))
+			'#("ctime" "mtime" "atime""birthtime")))))
+	 (set! *stat-cmap* cmap)
+	 ;; stat offsets
+	 (let loop ((i (-fx (vector-length (uv-fs-stat-cb-vector-props)) 1)))
+	    (when (>=fx i 0)
+	       (let ((s (vector-ref (uv-fs-stat-cb-vector-props) i)))
+		  (cond
+		     ((string=? s "ctime")
+		      (set! *libuv-ctime-offset* i))
+		     ((string=? s "mtime")
+		      (set! *libuv-mtime-offset* i))
+		     ((string=? s "atime")
+		      (set! *libuv-atime-offset* i))
+		     ((string=? s "birthtime")
+		      (set! *libuv-birthtime-offset* i))
+		     ((string=? s "ctime-ns")
+		      (set! *libuv-ctime-ns-offset* i))
+		     ((string=? s "mtime-ns")
+		      (set! *libuv-mtime-ns-offset* i))
+		     ((string=? s "atime-ns")
+		      (set! *libuv-atime-ns-offset* i))
+		     ((string=? s "birthtime-ns")
+		      (set! *libuv-birthtime-ns-offset* i))
+		     ((string=? s "mode")
+		      (set! *libuv-mode-offset* i)))
+		  (loop (-fx i 1)))))
+	 ;; virtual getters
+	 (set! *stat-ctime-accessor*
+	    (instantiate::JsWrapperDescriptor
+	       (name (& "ctime"))
+	       (%get js-stat-time-getter)
+	       (%set list)
+	       (enumerable #t)
+	       (configurable #f)))
+	 (set! *stat-mtime-accessor*
+	    (instantiate::JsWrapperDescriptor
+	       (name (& "mtime"))
+	       (%get js-stat-time-getter)
+	       (%set list)
+	       (enumerable #t)
+	       (configurable #f)))
+	 (set! *stat-atime-accessor*
+	    (instantiate::JsWrapperDescriptor
+	       (name (& "atime"))
+	       (%get js-stat-time-getter)
+	       (%set list)
+	       (enumerable #t)
+	       (configurable #f)))
+	 (set! *stat-birthtime-accessor*
+	    (instantiate::JsWrapperDescriptor
+	       (name (& "birthtime"))
+	       (%get js-stat-time-getter)
+	       (%set list)
+	       (enumerable #t)
+	       (configurable #f)))
+	 (set! *stat-cmap-noinline*
+	    (duplicate::JsConstructMap *stat-cmap*
+	       (%id (gencmapid))))
+	 cmap)))
+
+;*---------------------------------------------------------------------*/
+;*    stat-cmap-noinline ...                                           */
+;*---------------------------------------------------------------------*/
+(define (stat-cmap-noinline)
+   (if *stat-cmap-noinline*
+       *stat-cmap-noinline*
+       (begin
+	  (stat-cmap)
+	  *stat-cmap-noinline*)))
+
+;*---------------------------------------------------------------------*/
+;*    ms ...                                                           */
+;*---------------------------------------------------------------------*/
+(define-macro (ms val)
+   (cond-expand
+      ((or bint61 bint64) `(fixnum->flonum ,val))
+      (else `(elong->flonum ,val))))
+
+;*---------------------------------------------------------------------*/
+;*    ns ...                                                           */
+;*---------------------------------------------------------------------*/
+(define (ns sec nsec)
+   (cond-expand
+      ((or bint61 bint64)
+       (+fl (fixnum->flonum (*fx 1000 sec))
+	  (/fl (fixnum->flonum nsec) 1000000.)))
+      (else
+       (+fl (*fl 1000. (elong->flonum sec))
+	  (/fl (elong->flonum nsec) 1000000.)))))
+
+;*---------------------------------------------------------------------*/
+;*    stat->jsobj! ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (stat->jsobj! %this vec::vector)
+   (let ((l (vector-length (uv-fs-stat-cb-vector-props))))
+      ;; lazy date values
+      (vector-set! vec (+fx l 0) *stat-ctime-accessor*)
+      (vector-set! vec (+fx l 1) *stat-mtime-accessor*)
+      (vector-set! vec (+fx l 2) *stat-atime-accessor*)
+      (vector-set! vec (+fx l 3) *stat-birthtime-accessor*)
+      ;; MS dates
+      (vector-set! vec *libuv-ctime-ns-offset*
+	 (ns (vector-ref vec *libuv-ctime-offset*)
+	    (vector-ref vec *libuv-ctime-ns-offset*)))
+      (vector-set! vec *libuv-mtime-ns-offset*
+	 (ns (vector-ref vec *libuv-mtime-offset*)
+	    (vector-ref vec *libuv-mtime-ns-offset*)))
+      (vector-set! vec *libuv-atime-ns-offset*
+	 (ns (vector-ref vec *libuv-atime-offset*)
+	    (vector-ref vec *libuv-atime-ns-offset*)))
+      (vector-set! vec *libuv-birthtime-ns-offset*
+	 (ns (vector-ref vec *libuv-birthtime-offset*)
+	    (vector-ref vec *libuv-birthtime-ns-offset*)))
+      ;; normal values
+      (cond-expand
+	 ((or bint61 bint64)
+	  #unspecified)
+	 (else
+	  (let loop ((i (-fx l 1)))
+	     (when (>=fx i 4)
+		(vector-set! vec i (js-obj->jsobject (vector-ref vec i) %this))
+		(loop (-fx i 1))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    stat->jsobj ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (stat->jsobj %this proto res)
-   (let ((stat (js-alist->jsobject (stat-date res %this) %this)))
-      (js-object-proto-set! stat proto)
-      stat))
    
+   (define (stat-date stat %this)
+      (let ((ms (filter-map (lambda (k)
+			       (let ((c (assq k stat)))
+				  (when (pair? c)
+				     (let ((v (cdr c)))
+					(set-cdr! c
+					   (js-date->jsdate
+					      (seconds->date (cdr c)) %this))
+					(cons (symbol-append k 'Ms) (* v 1000))))))
+		   '(mtime atime ctime birthtime))))
+	 (append stat ms)))
+
+   (if (vector? res)
+      (let ((stat (instantiateJsObject
+		     (cmap (stat-cmap-noinline))
+		     (__proto__ proto)
+		     (elements res))))
+	 (stat->jsobj! %this res)
+	 stat)
+      (let ((stat (js-alist->jsobject (stat-date res %this) %this)))
+	 (js-object-proto-set! stat proto)
+	 stat)))
+
 ;*---------------------------------------------------------------------*/
 ;*    stat-cb ...                                                      */
 ;*---------------------------------------------------------------------*/
-(define (stat-cb %worker %this process callback name obj proto lbl path)
+(define (stat-cb %this callback proto obj)
    (lambda (res)
-      (if (integer? res)
-	  (!js-callback2 'stat %worker %this
-	     callback (js-undefined)
-	     (fs-errno-path-exn
-		(format "~a: cannot stat ~a -- ~~s" name obj)
-		res %this path)
-	     #f)
-	  (let ((jsobj (stat->jsobj %this proto res)))
-	     (!js-callback2 'stat %worker %this
-		callback (js-undefined) #f jsobj)))))
+      (with-access::JsGlobalObject %this (worker)
+	 (if (fixnum? res)
+	     (!js-callback2 'stat worker %this
+		callback (js-undefined)
+		(fs-errno-path-exn
+		   (format "cannot stat \"~a\"" (js-tostring obj %this))
+		   res %this obj)
+		#f)
+	     (let ((jsobj (stat->jsobj %this proto res)))
+		(!js-callback2 'stat worker %this
+		   callback (js-undefined) '() jsobj))))))
+
+;*---------------------------------------------------------------------*/
+;*    stat-vec-cb ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (stat-vec-cb status vec)
+   (let* ((base (vector-length (uv-fs-stat-cb-vector-props)))
+	  (%this (vector-ref vec base))
+	  (callback (vector-ref vec (+fx base 1))))
+      (with-access::JsGlobalObject %this (worker)
+	 (if (<fx status 0)
+	     (let ((path (vector-ref vec (+fx base 3))))
+		(!js-callback2 'stat worker %this
+		   callback (js-undefined)
+		   (fs-errno-path-exn
+		      (format "cannot stat \"~a\"" (js-tostring path %this))
+		      status %this path)
+		   #f))
+	     (let* ((proto (vector-ref vec (+fx base 2)))
+		    (res (stat->jsobj %this proto vec)))
+		(!js-callback2 'stat worker %this
+		   callback (js-undefined) '() res))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-fstat ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-fstat %worker %this process fd callback proto)
-   (let ((file (int->uvhandle %worker %this fd)))
-      (if file
-	  (if (js-procedure? callback)
-	      (let ((lbl (string-append "fstat:" (integer->string fd))))
-		 (uv-fs-fstat file
-		    :loop (worker-loop %worker)
-		    :callback (stat-cb %worker %this process callback
-				 "fstat" fd proto lbl #f)))
-	      (let ((res (uv-fs-fstat file)))
-		 (if (integer? res)
-		     (js-raise
-			(fs-errno-exn
-			   (format "stat: cannot stat ~a -- ~~s" fd)
-			   res %this))
-		     (stat->jsobj %this proto res))))
-	  (fs-callback-error %worker %this callback "fstat" #f))))
+(define (nodejs-fstat %worker %this process fd callback)
+   (with-access::JsGlobalObject %this (js-stats-proto)
+      (let ((file (int->uvhandle %worker %this fd)))
+	 (if file
+	     (if (js-procedure? callback)
+		 (cond-expand
+		    (libuv-vec
+		     (let* ((base (vector-length (uv-fs-stat-cb-vector-props)))
+			    (vec ($create-vector (+fx 4 base))))
+			(vector-set! vec base %this)
+			(vector-set! vec (+fx base 1) callback)
+			(vector-set! vec (+fx base 2) js-stats-proto)
+			(vector-set! vec (+fx base 3) fd)
+			(uv-fs-fstat file
+			   :loop (worker-loop %worker)
+			   :callback stat-vec-cb
+			   :vector vec)))
+		    (else
+		     (uv-fs-fstat file
+			:loop (worker-loop %worker)
+			:callback (stat-cb %this callback js-stats-proto fd))))
+		 (cond-expand
+		    (libuv-vec
+		     (let ((obj (js-make-jsobject
+				   (+fx 4 (vector-length (uv-fs-stat-cb-vector-props)))
+				   (stat-cmap)
+				   js-stats-proto)))
+			(let ((res (uv-fs-fstat file
+				      :vector (js-object-inline-elements obj))))
+			   (if (integer? res)
+			       (js-raise
+				  (fs-errno-exn
+				     (format "fstat: cannot stat ~a -- ~~s" fd)
+				     res %this))
+			       (begin
+				  (stat->jsobj! %this (js-object-inline-elements obj))
+				  obj)))))
+		    (else
+		     (let ((res (uv-fs-fstat file)))
+			(if (integer? res)
+			    (js-raise
+			       (fs-errno-exn
+				  (format "fstat: cannot stat ~a -- ~~s" fd)
+				  res %this))
+			    (stat->jsobj %this js-stats-proto res))))))
+	     (fs-callback-error %worker %this callback "fstat" #f)))))
 
+;*---------------------------------------------------------------------*/
+;*    nodejs-stat-sync-string ...                                      */
+;*---------------------------------------------------------------------*/
+(define (nodejs-stat-sync-string path %this)
+   (with-access::JsGlobalObject %this (js-stats-proto)
+      (cond-expand
+	 (libuv-vec
+	  (let ((obj (js-make-jsobject
+			(+fx 4 (vector-length (uv-fs-stat-cb-vector-props)))
+			(stat-cmap)
+			js-stats-proto))
+		(str (js-jsstring->string path)))
+	     (let ((res (uv-fs-stat str
+			   :vector (js-object-inline-elements obj))))
+		(if (integer? res)
+		    (js-raise
+		       (fs-errno-exn
+			  (format "stat: cannot stat ~a -- ~~s" str)
+			  res %this))
+		    (begin
+		       (stat->jsobj! %this (js-object-inline-elements obj))
+		       obj)))))
+	 (else
+	  (let* ((str (js-jsstring->string path))
+		 (res (uv-fs-stat str)))
+	     (if (integer? res)
+		 (js-raise
+		    (fs-errno-exn
+		       (format "stat: cannot stat ~a -- ~~s" str)
+		       res %this))
+		 (stat->jsobj %this js-stats-proto res)))))))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-stat-sync-any ...                                         */
+;*---------------------------------------------------------------------*/
+(define-inline (nodejs-stat-sync-any path %this)
+   (if (js-jsstring? path)
+       (nodejs-stat-sync-string path %this)
+       (js-raise-type-error %this "Path not an string" path)))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-stat-sync-get-string ...                                  */
+;*---------------------------------------------------------------------*/
+(define (nodejs-stat-sync-get-string path index %this)
+   (with-access::JsGlobalObject %this (js-stats-proto)
+      (cond-expand
+	 (libuv-vec
+	  (js-call-with-stack-vector
+	     (make-vector (+fx 4 (vector-length (uv-fs-stat-cb-vector-props))))
+	     (lambda (v)
+		(let ((str (js-jsstring->string path)))
+		   (let ((res (uv-fs-stat str :vector v)))
+		      (if (integer? res)
+			  (js-raise
+			     (fs-errno-exn
+				(format "stat: cannot stat ~a -- ~~s" str)
+				res %this))
+			  (begin
+			     (stat-cmap)
+			     (stat->jsobj! %this v)
+			     (vector-ref v index))))))))
+	 (else
+	  (error "nodejs-stat-sync-get-string" "not implemented" path)))))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-stat-sync-get-any ...                                     */
+;*---------------------------------------------------------------------*/
+(define-inline (nodejs-stat-sync-get-any path index %this)
+   (if (js-jsstring? path)
+       (nodejs-stat-sync-get-string path index %this)
+       (js-raise-type-error %this "Path not an string" path)))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-stat-sync-get-is-mode-string ...                          */
+;*---------------------------------------------------------------------*/
+(define (nodejs-stat-sync-get-is-mode-string path mode %this)
+   (stat-cmap)
+   (=fx (bit-and (nodejs-stat-sync-get-string path *libuv-mode-offset* %this) mode)
+      mode))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-stat-sync-get-is-mode-any ...                             */
+;*---------------------------------------------------------------------*/
+(define-inline (nodejs-stat-sync-get-is-mode-any path mode %this)
+   (if (js-jsstring? path)
+       (nodejs-stat-sync-get-is-mode-string path mode %this)
+       (js-raise-type-error %this "Path not an string" path)))
+   
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-stat ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-stat %worker %this process path callback proto)
-   (cond
-      ((not (js-jsstring? path))
-       (js-raise-type-error %this "Path not an string" path))
-      ((js-procedure? callback)
-       (let ((lbl (string-append "stat:" (js-jsstring->string path))))
-	  (uv-fs-stat (js-jsstring->string path)
-	     :loop (worker-loop %worker)
-	     :callback (stat-cb %worker %this process callback "stat"
-			  (js-jsstring->string path) proto lbl path))))
-      (else
-       (let ((res (uv-fs-stat (js-jsstring->string path))))
-	  (if (integer? res)
-	      (js-raise
-		 (fs-errno-path-exn
-		    (format "stat: cannot stat ~a -- ~~s"
-		       (js-jsstring->string path))
-		    res %this path))
-	      (stat->jsobj %this proto res))))))
+(define (nodejs-stat %worker %this process path callback)
+   (with-access::JsGlobalObject %this (js-stats-proto)
+      (cond
+	 ((not (js-jsstring? path))
+	  (js-raise-type-error %this "Path not an string" path))
+	 ((js-procedure? callback)
+	  (cond-expand
+	     (libuv-vec
+	      (let* ((str (js-jsstring->string path))
+		     (base (vector-length (uv-fs-stat-cb-vector-props)))
+		     (vec ($create-vector (+fx 4 base))))
+		 (vector-set! vec base %this)
+		 (vector-set! vec (+fx base 1) callback)
+		 (vector-set! vec (+fx base 2) js-stats-proto)
+		 (vector-set! vec (+fx base 3) path)
+		 (uv-fs-stat str
+		    :loop (worker-loop %worker)
+		    :callback stat-vec-cb
+		    :vector vec)))
+	     (else
+	      (let ((str (js-jsstring->string path)))
+		 (uv-fs-stat str
+		    :loop (worker-loop %worker)
+		    :callback (stat-cb %this callback js-stats-proto path))))))
+	 (else
+	  (nodejs-stat-sync-string path %this)))))
 
+;*---------------------------------------------------------------------*/
+;*    nodejs-lstat-sync-string ...                                     */
+;*---------------------------------------------------------------------*/
+(define (nodejs-lstat-sync-string path %this)
+   (with-access::JsGlobalObject %this (js-stats-proto)
+      (cond-expand
+	 (libuv-vec
+	  (let ((obj (js-make-jsobject
+			(+fx 4 (vector-length (uv-fs-stat-cb-vector-props)))
+			(stat-cmap)
+			js-stats-proto))
+		(str (js-jsstring->string path)))
+	     (let ((res (uv-fs-lstat str
+			   :vector (js-object-inline-elements obj))))
+		(if (integer? res)
+		    (js-raise
+		       (fs-errno-exn
+			  (format "lstat: cannot stat ~a -- ~~s" str)
+			  res %this))
+		    (begin
+		       (stat->jsobj! %this (js-object-inline-elements obj))
+		       obj)))))
+	 (else
+	  (let* ((str (js-jsstring->string path))
+		 (res (uv-fs-lstat str)))
+	     (if (integer? res)
+		 (js-raise
+		    (fs-errno-exn
+		       (format "lstat: cannot stat ~a -- ~~s" str)
+		       res %this))
+		 (stat->jsobj %this js-stats-proto res)))))))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-lstat-sync-any ...                                        */
+;*---------------------------------------------------------------------*/
+(define-inline (nodejs-lstat-sync-any path %this)
+   (if (js-jsstring? path)
+       (nodejs-lstat-sync-string path %this)
+       (js-raise-type-error %this "Path not an string" path)))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-lstat-sync-get-string ...                                 */
+;*---------------------------------------------------------------------*/
+(define (nodejs-lstat-sync-get-string path index %this)
+   (with-access::JsGlobalObject %this (js-stats-proto)
+      (cond-expand
+	 (libuv-vec
+	  (js-call-with-stack-vector
+	     (make-vector (+fx 4 (vector-length (uv-fs-stat-cb-vector-props))))
+	     (lambda (v)
+		(let ((str (js-jsstring->string path)))
+		   (let ((res (uv-fs-lstat str :vector v)))
+		      (if (integer? res)
+			  (js-raise
+			     (fs-errno-exn
+				(format "lstat: cannot stat ~a -- ~~s" str)
+				res %this))
+			  (begin
+			     (stat-cmap)
+			     (stat->jsobj! %this v)
+			     (vector-ref v index))))))))
+	 (else
+	  (error "nodejs-lstat-sync-get-string" "not implemented" path)))))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-lstat-sync-get-any ...                                    */
+;*---------------------------------------------------------------------*/
+(define-inline (nodejs-lstat-sync-get-any path index %this)
+   (if (js-jsstring? path)
+       (nodejs-lstat-sync-get-string path index %this)
+       (js-raise-type-error %this "Path not an string" path)))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-lstat-sync-get-is-mode-string ...                         */
+;*---------------------------------------------------------------------*/
+(define (nodejs-lstat-sync-get-is-mode-string path mode %this)
+   (stat-cmap)
+   (=fx (bit-and (nodejs-lstat-sync-get-string path *libuv-mode-offset* %this) mode)
+      mode))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-lstat-sync-get-is-mode-any ...                            */
+;*---------------------------------------------------------------------*/
+(define-inline (nodejs-lstat-sync-get-is-mode-any path mode %this)
+   (if (js-jsstring? path)
+       (nodejs-lstat-sync-get-is-mode-string path mode %this)
+       (js-raise-type-error %this "Path not an string" path)))
+   
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-lstat ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-lstat %worker %this process path callback proto)
+(define (nodejs-lstat %worker %this process path callback)
    (cond
       ((not (js-jsstring? path))
        (js-raise-type-error %this "Path not an string" path))
       ((js-procedure? callback)
-       (let ((lbl (string-append "lstat:" (js-jsstring->string path))))
-	  (uv-fs-lstat (js-jsstring->string path)
-	     :loop (worker-loop %worker)
-	     :callback (stat-cb %worker %this process callback "lstat"
-			  path proto lbl path))))
+       (with-access::JsGlobalObject %this (js-stats-proto)
+	  (cond-expand
+	     (libuv-vec
+	      (let* ((str (js-jsstring->string path))
+		     (base (vector-length (uv-fs-stat-cb-vector-props)))
+		     (vec ($create-vector (+fx 4 base))))
+		 (vector-set! vec base %this)
+		 (vector-set! vec (+fx base 1) callback)
+		 (vector-set! vec (+fx base 2) js-stats-proto)
+		 (vector-set! vec (+fx base 3) path)
+		 (uv-fs-lstat str
+		    :loop (worker-loop %worker)
+		    :callback stat-vec-cb
+		    :vector vec)))
+	     (else
+	      (let ((str (js-jsstring->string path)))
+		 (uv-fs-lstat str
+		    :loop (worker-loop %worker)
+		    :callback (stat-cb %this callback js-stats-proto path)))))))
       (else
-       (let ((res (uv-fs-lstat (js-jsstring->string path))))
-	  (if (integer? res)
-	      (js-raise
-		 (fs-errno-exn (format "lstat: cannot stat ~a -- ~~s"
-				  (js-jsstring->string path))
-		    res %this))
-	      (stat->jsobj %this proto res))))))
+       (nodejs-lstat-sync-string path %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-link ...                                                  */
@@ -1441,7 +2029,7 @@
 	     :loop (worker-loop %worker)
 	     :callback (if (or mode recursive)
 			   (lambda (res) (rmdir-callback-recursive name res))
-			   rmdir-callback)))
+			   (lambda (res) (rmdir-callback name res)))))
 	 (mode
 	  (rmdir-or-file name))
 	 (else
@@ -1542,8 +2130,8 @@
       (if file
 	  (if (js-procedure? callback)
 	      (with-access::JsArrayBufferView buffer (%data byteoffset)
-		 (uv-fs-write (int->uvhandle %worker %this fd) %data length
-		    :callback (lambda (obj)
+		 (uv-fs-write3 (int->uvhandle %worker %this fd) %data length
+		    :callback (lambda (obj callback buffer %this)
 				 (if (<fx obj 0)
 				     (!js-callback3 'write %worker %this
 					callback (js-undefined)
@@ -1553,6 +2141,7 @@
 					#f obj buffer)))
 		    :offset (+fx offset (uint32->fixnum byteoffset))
 		    :position (to-int64 %this "write" position #s64:-1)
+		    :arg0 callback arg1: buffer :arg2 %this
 		    :loop (worker-loop %worker)))
 	      (with-access::JsArrayBufferView buffer (%data byteoffset)
 		 (uv-fs-write (int->uvhandle %worker %this fd) %data length
@@ -1562,18 +2151,18 @@
 	  (fs-callback-error %worker %this "write" callback #f buffer))))
 
 ;*---------------------------------------------------------------------*/
-;*    nodejs-write ...                                                 */
+;*    nodejs-write-string ...                                          */
 ;*    -------------------------------------------------------------    */
 ;*    MS addition on 30apr2019 to avoid allocating buffers when        */
-;*    display JS strings.                                              */
+;*    displaying JS strings.                                           */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-write-string %worker %this process fd string offset length position callback)
    (let ((file (int->uvhandle %worker %this fd))
 	 (str (js-jsstring->string string)))
       (if file
 	  (if (js-procedure? callback)
-	      (uv-fs-write (int->uvhandle %worker %this fd) str (string-length str)
-		 :callback (lambda (obj)
+	      (uv-fs-write3 (int->uvhandle %worker %this fd) str (string-length str)
+		 :callback (lambda (obj callback string %this)
 			      (if (<fx obj 0)
 				  (!js-callback3 'write %worker %this
 				     callback (js-undefined)
@@ -1583,6 +2172,7 @@
 				     #f obj string)))
 		 :offset offset
 		 :position (to-int64 %this "write" position #s64:-1)
+		 :arg0 callback arg1: string arg2: %this
 		 :loop (worker-loop %worker))
 	      (uv-fs-write (int->uvhandle %worker %this fd) str (string-length str)
 		 :offset offset
@@ -1594,24 +2184,44 @@
 ;*    nodejs-read ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-read %worker %this process fd buffer offset length position callback)
-   (let ((file (int->uvhandle %worker %this fd)))
+   (let ((file (int->uvhandle %worker %this fd :uvfile #t)))
       (if file
 	  (with-access::JsArrayBufferView buffer (%data byteoffset)
 	     (if (js-procedure? callback)
-		 (uv-fs-read file %data length
-		    :callback
-		    (lambda (obj)
-		       (if (<fx obj 0)
-			   (!js-callback2 'read %worker %this
-			      callback (js-undefined) obj #f)
-			   (!js-callback2 'read %worker %this
-			      callback (js-undefined) #f obj)))
-		    :offset (+fx offset (uint32->fixnum byteoffset))
-		    :position (to-int64 %this "read" position #s64:-1)
-		    :loop (worker-loop %worker))
-		 (uv-fs-read file %data length
+		 (cond-expand
+		    (libuv-vec
+		     (uv-fs-read3 file %data length
+			:callback
+			(lambda (obj callback buffer %this)
+			   (with-access::JsGlobalObject %this (worker)
+			      (if (<fx obj 0)
+				  (!js-callback3 'read worker %this
+				     callback (js-undefined) obj #f buffer)
+				  (!js-callback3 'read worker %this
+				     callback (js-undefined) #f obj buffer))))
+			:offset (+fx offset (uint32->fixnum byteoffset))
+			:position (to-int64 %this "read" position #s64:-1)
+			:loop (worker-loop %worker)
+			:arg0 callback :arg1 buffer :arg2 %this))
+		    (else
+		     (uv-fs-read file %data length
+			:callback
+			(lambda (obj)
+			   (if (<fx obj 0)
+			       (!js-callback3 'read %worker %this
+				  callback (js-undefined) obj #f buffer)
+			       (!js-callback3 'read %worker %this
+				  callback (js-undefined) #f obj buffer)))
+			:offset (+fx offset (uint32->fixnum byteoffset))
+			:position (to-int64 %this "read" position #s64:-1)
+			:loop (worker-loop %worker))))
+		 (let ((r (uv-fs-read file %data length
 			     :offset (+fx offset (uint32->fixnum byteoffset))
 			     :position (to-int64 %this "read" position #s64:-1))))
+		    (if (<fx r 0)
+			(js-raise-error %this
+			   (string-append "~a: " (uv-strerror r)) r)
+			r))))
 	  (fs-callback-error %worker %this "read" callback #f))))
 
 ;*---------------------------------------------------------------------*/
@@ -1793,8 +2403,8 @@
       :loop (worker-loop %worker)
       :callback (lambda (status handle)
 		   ;; (tprint "tcp-connect, AfterConnect status=" status)
-		   (js-worker-push-thunk! %worker "tcp-connect"
-		      (lambda ()
+		   (js-worker-push! %worker "tcp-connect"
+		      (lambda (%this)
 			 (callback status handle))))))
 
 ;*---------------------------------------------------------------------*/
@@ -1856,9 +2466,7 @@
 ;*    nodejs-tcp-listen ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-tcp-listen %worker %this process this handle backlog tcp-wrap)
-   ;; (tprint "tcp-listen")
    (let ((r (uv-listen handle backlog
-	       :loop (worker-loop %worker)
 	       :callback
 	       (lambda (server status)
 		  ;; (tprint "tcp-listen, OnConnection status=" status)
@@ -1931,16 +2539,15 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-udp-recv-start ...                                        */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-udp-recv-start %worker %this handle onalloc callback)
+(define-inline (nodejs-udp-recv-start %worker %this handle onalloc callback)
    (uv-udp-recv-start handle
       :onalloc onalloc
-      :loop (worker-loop %worker)
       :callback callback))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-udp-recv-stop ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-udp-recv-stop handle)
+(define-inline (nodejs-udp-recv-stop handle)
    (uv-udp-recv-stop handle))
 
 ;*---------------------------------------------------------------------*/
@@ -1985,41 +2592,54 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-stream-write ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-stream-write %worker %this handle buffer offset length callback)
-;*    (tprint "WriteBuffer offset=" offset " length=" length)          */
-   (uv-stream-write handle buffer offset length
-      :loop (worker-loop %worker)
-      :callback callback))
+(define-inline (nodejs-stream-write %worker %this handle buffer offset length 
+		  #!key callback arg0 arg1 arg2 arg3 arg4)
+   (uv-stream-write handle buffer offset length 
+      :callback callback
+      :arg0 arg0 :arg1 arg1 :arg2 arg2 :arg3 arg3 :arg4 arg4))
    
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-stream-write2 ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-stream-write2 %worker %this handle buffer offset length sendhandle callback)
+(define-inline (nodejs-stream-write2 %worker %this handle buffer offset length sendhandle 
+		  #!key callback arg0 arg1 arg2 arg3 arg4)
    (uv-stream-write2 handle buffer offset length sendhandle
-      :loop (worker-loop %worker)
-      :callback callback))
+      :callback callback
+      :arg0 arg0 :arg1 arg1 :arg2 arg2 :arg3 arg3 :arg4 arg4))
+   
+;* {*---------------------------------------------------------------------*} */
+;* {*    nodejs-stream-write ...                                          *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define-inline (nodejs-stream-write %worker %this handle buffer offset length callback) */
+;*    (uv-stream-write handle buffer offset length                     */
+;*       :callback callback))                                          */
+;*                                                                     */
+;* {*---------------------------------------------------------------------*} */
+;* {*    nodejs-stream-write2 ...                                         *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define-inline (nodejs-stream-write2 %worker %this handle buffer offset length sendhandle callback) */
+;*    (uv-stream-write2 handle buffer offset length sendhandle         */
+;*       :callback callback))                                          */
    
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-stream-read-start ...                                     */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-stream-read-start %worker %this process handle onalloc callback)
+(define-inline (nodejs-stream-read-start %worker %this process handle onalloc callback)
    (uv-stream-read-start handle
       :onalloc onalloc
-      :loop (worker-loop %worker)
       :callback callback))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-stream-read-stop ...                                      */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-stream-read-stop %worker %this handle)
+(define-inline (nodejs-stream-read-stop %worker %this handle)
    (uv-stream-read-stop handle))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-stream-shutdown ...                                       */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-stream-shutdown %worker %this handle callback)
+(define-inline (nodejs-stream-shutdown %worker %this handle callback)
    (uv-stream-shutdown handle
-      :loop (worker-loop %worker)
       :callback callback))
 
 ;*---------------------------------------------------------------------*/
@@ -2028,10 +2648,25 @@
 (define (store-stream-fd! %worker hdl fd::int)
    (with-access::WorkerHopThread %worker (uvhandles)
       (when (>=fx fd (vector-length uvhandles))
-	 (let ((new (make-vector (*fx 2 fd))))
-	    (vector-copy! new 0 uvhandles)
+	 (let ((new (copy-vector uvhandles (*fx 2 fd))))
+	    (let loop ((i (vector-length uvhandles)))
+	       (when (<fx i (*fx 2 fd))
+		  (vector-set! new i (cons #unspecified #unspecified))
+		  (loop (+fx i 1))))
 	    (set! uvhandles new)))
-      (vector-set! uvhandles fd hdl)))
+      (if (isa? hdl UvFile)
+	  (vector-set! uvhandles fd (cons hdl hdl))
+	  (let ((ref (vector-ref uvhandles fd)))
+	     (set-cdr! ref hdl)))))
+
+;*---------------------------------------------------------------------*/
+;*    unstore-stream-fd! ...                                           */
+;*---------------------------------------------------------------------*/
+(define (unstore-stream-fd! %worker hdl fd::int)
+   (with-access::WorkerHopThread %worker (uvhandles)
+      (let ((p (vector-ref uvhandles fd)))
+	 (set-car! p #unspecified)
+	 (set-cdr! p #unspecified))))
    
 ;*---------------------------------------------------------------------*/
 ;*    uvfile->int ...                                                  */
@@ -2044,13 +2679,14 @@
 ;*---------------------------------------------------------------------*/
 ;*    int->uvhandle ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (int->uvhandle %worker %this fd::int)
+(define (int->uvhandle %worker %this fd::int #!key uvfile)
    (with-access::WorkerHopThread %worker (uvhandles)
       (cond
 	 ((<fx fd 0) #f)
 	 ((>fx fd (vector-length uvhandles)) #f)
 	 (else
-	  (let ((hdl (vector-ref uvhandles fd)))
+	  (let* ((ref (vector-ref uvhandles fd))
+		 (hdl (if uvfile (car ref) (cdr ref))))
 	     (cond
 		((and hdl (not (eq? hdl (js-undefined))))
 		 hdl)
@@ -2070,13 +2706,6 @@
 				(path ""))))
 		    (store-stream-fd! %worker file fd)
 		    file))))))))
-
-;*---------------------------------------------------------------------*/
-;*    close-uvfile ...                                                 */
-;*---------------------------------------------------------------------*/
-(define (close-uvfile %worker fd::int)
-   (with-access::WorkerHopThread %worker (uvhandles)
-      (vector-set! uvhandles fd #f)))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-new-process ...                                           */
@@ -2185,10 +2814,11 @@
 	    ;; options.args
 	    (let ((args (js-get options (& "args") %this)))
 	       (when (js-array? args)
-		  (trace-item "args=" args)
-		  (set! oargs
-		     (vector-map! (lambda (o) (js-tostring o %this))
-			(jsarray->vector args %this)))))
+		  (let ((vec (jsarray->vector args %this)))
+		     (trace-item "args=" vec)
+		     (set! oargs
+			(vector-map! (lambda (o) (js-tostring o %this))
+			   vec)))))
 	    
 	    ;; options.cwd
 	    (let ((cwd (js-get options (& "cwd") %this)))
@@ -2242,8 +2872,8 @@
 			 0))
 		     (else
 		      (process-fail %this %process r)
-		      (js-worker-push-thunk! %worker "spawn-failure"
-			 (lambda ()
+		      (js-worker-push! %worker "spawn-failure"
+			 (lambda (%this)
 			    (onexit process (fixnum->int64 r) 0)))
 		      0))))))))
 
@@ -2343,7 +2973,6 @@
 (define (nodejs-pipe-listen %worker %this process this handle backlog)
    ;; rint "pipe-listen...")
    (let ((r (uv-listen handle backlog
-	       :loop (worker-loop %worker)
 	       :callback
 	       (lambda (server status)
 		  ;; (tprint "pipe-listen listen status=" status)

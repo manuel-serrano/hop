@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    /tmp/HOP/hop/runtime/read.scm                                    */
+;*    serrano/prgm/project/hop/hop/runtime/read.scm                    */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Sat Jun 25 16:25:03 2022 (serrano)                */
-;*    Copyright   :  2005-22 Manuel Serrano                            */
+;*    Last change :  Wed Sep 13 16:34:57 2023 (serrano)                */
+;*    Copyright   :  2005-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
 ;*    js-expressions. Js-expressions starts with { and ends with }.    */
@@ -560,6 +560,8 @@
        (if (=fx (the-length) 2)
 	   (the-symbol)
 	   (string->symbol (the-escape-substring 1 (-fx (the-length) 1) #f))))
+      ("||"
+       '||)
       
       ;; quotations 
       ("'"

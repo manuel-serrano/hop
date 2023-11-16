@@ -3,18 +3,29 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Sun Aug 21 08:29:33 2022 (serrano)                */
-/*    Copyright   :  2016-22 Manuel Serrano                            */
+/*    Last change :  Tue May  9 12:04:31 2023 (serrano)                */
+/*    Copyright   :  2016-23 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
 /*    JsObject and cache implementations.                              */
 /*=====================================================================*/
-#include <stdio.h>
+#define _GNU_SOURCE
+#include <pthread.h>
 #include <bigloo.h>
 #include "bglhopscript.h"
 #include "bglhopscript_types.h"
 #include "bglhopscript_malloc.h"
-#include <pthread.h>
+#if BGL_HAS_THREAD_SETNAME
+#  define _PTHREAD_SETNAME(t, n) pthread_setname_np(t, n)
+#else
+#  define _PTHREAD_SETNAME(t, n)
+#endif
+#include <stdio.h>
+
+/*---------------------------------------------------------------------*/
+/*    Bmem config                                                      */
+/*---------------------------------------------------------------------*/
+#define BMEM_CONFIG 0
 
 /*---------------------------------------------------------------------*/
 /*    Bigloo backward compatibility                                    */
@@ -24,15 +35,6 @@
 #  define FILLER_COMMA 
 #else
 #  define FILLER_COMMA ,
-#endif
-
-/*---------------------------------------------------------------------*/
-/*    BHOPOBJECT                                                       */
-/*---------------------------------------------------------------------*/
-#if (defined(TAG_RESERVED))
-#  define BHOPOBJECT(o) BRESERVEDOBJECT(o)
-#else
-#  define BHOPOBJECT(o) BNANOBJECT(o)
 #endif
 
 /*---------------------------------------------------------------------*/
@@ -47,6 +49,7 @@ extern obj_t BGl_JsProcedurez00zz__hopscript_typesz00;
 extern obj_t BGl_JsStringLiteralASCIIz00zz__hopscript_typesz00;
 extern obj_t BGl_JsGeneratorz00zz__hopscript_typesz00;
 extern obj_t BGl_JsYieldz00zz__hopscript_typesz00;
+extern obj_t BGl_JsDatez00zz__hopscript_typesz00;
 
 extern obj_t string_append(obj_t, obj_t);
 
@@ -92,6 +95,11 @@ extern obj_t string_append(obj_t, obj_t);
 #define JSGENERATOR_CLASS_NUM \
    BGL_CLASS_NUM(BGl_JsGeneratorz00zz__hopscript_typesz00)
 
+#define JSDATE_SIZE \
+   sizeof(struct BgL_jsdatez00_bgl)
+#define JSDATE_CLASS_NUM \
+   BGL_CLASS_NUM(BGl_JsDatez00zz__hopscript_typesz00)
+
 extern obj_t bgl_js_profile_allocs;
 obj_t bgl_profile_pcache_tables = BNIL;
 extern int GC_pthread_create();
@@ -111,6 +119,8 @@ static uint32_t jsmethod_mode;
 
 static uint32_t jsprocedure_mode;
 static BgL_jsconstructmapz00_bglt jsprocedure_cmap;
+
+static uint32_t jsdate_mode;
 
 static uint32_t jsstringliteralascii_mode, jsstringliteralascii_normmode;
 static obj_t jsstringliteralascii_not_a_string_cache;
@@ -143,17 +153,21 @@ typedef struct BgL_jspropertycachez00_bgl pcache_t;
 #  endif
 #endif
 
-/* #undef HOP_ALLOC_POLICY                                             */
-/* #define HOP_ALLOC_POLICY HOP_ALLOC_CLASSIC                          */
+#if BMEM_CONFIG
+#  undef HOP_ALLOC_POLICY
+#  define HOP_ALLOC_POLICY HOP_ALLOC_CLASSIC
+#endif
 
 #define HOP_ALLOC_JSOBJECT_POLICY HOP_ALLOC_POLICY
 #define HOP_ALLOC_JSPROXY_POLICY HOP_ALLOC_POLICY
 #define HOP_ALLOC_JSFUNCTION_POLICY HOP_ALLOC_POLICY
 #define HOP_ALLOC_JSMETHOD_POLICY HOP_ALLOC_POLICY
 #define HOP_ALLOC_JSPROCEDURE_POLICY HOP_ALLOC_POLICY
-//#define HOP_ALLOC_JSSTRINGLITERALASCII_POLICY HOP_ALLOC_POLICY
-#define HOP_ALLOC_JSSTRINGLITERALASCII_POLICY HOP_ALLOC_CLASSIC
+#define HOP_ALLOC_JSSTRINGLITERALASCII_POLICY HOP_ALLOC_POLICY
+#define HOP_ALLOC_JSDATE_POLICY HOP_ALLOC_POLICY
 
+#undef HOP_ALLOC_JSSTRINGLITERALASCII_POLICY
+#define HOP_ALLOC_JSSTRINGLITERALASCII_POLICY HOP_ALLOC_POLICY
 #undef HOP_ALLOC_JSFUNCTION_POLICY
 #define HOP_ALLOC_JSFUNCTION_POLICY HOP_ALLOC_CLASSIC
 #undef HOP_ALLOC_JSMETHOD_POLICY
@@ -194,6 +208,10 @@ static obj_t bgl_make_jsprocedure_sans(obj_t procedure, long arity, obj_t __prot
 static obj_t bgl_make_jsstringliteralascii_sans(uint32_t len, obj_t left, obj_t right);
 #endif
 
+#if HOP_ALLOC_JSDATE_POLICY != HOP_ALLOC_CLASSIC
+static obj_t bgl_make_jsdate_sans(BgL_jsconstructmapz00_bglt cmap, obj_t __proto__);
+#endif
+
 #define POOLSZ(sz)				\
    ((sz == 0) ? 0 :				\
     ((sz == 1) ? 512 :				\
@@ -211,6 +229,7 @@ static obj_t bgl_make_jsstringliteralascii_sans(uint32_t len, obj_t left, obj_t 
 #define JSMETHOD_POOLSZ POOLSZ(4)
 #define JSPROCEDURE_POOLSZ POOLSZ(4)
 #define JSSTRINGLITERALASCII_POOLSZ POOLSZ(3)
+#define JSDATE_POOLSZ POOLSZ(2)
 #define WORK_NUMBER 1
 
 /*---------------------------------------------------------------------*/
@@ -234,6 +253,7 @@ static pthread_spinlock_t lockfunction;
 static pthread_spinlock_t lockmethod;
 static pthread_spinlock_t lockprocedure;
 static pthread_spinlock_t lockstringliteralascii;
+static pthread_spinlock_t lockdate;
 
 #  define alloc_spin_init(x, attr) pthread_spin_init(x, attr)
 #  define alloc_spin_lock(x) pthread_spin_lock(x)
@@ -279,6 +299,7 @@ static void jsfunction_fill_buffer(apool_t *pool, void *arg);
 static void jsmethod_fill_buffer(apool_t *pool, void *arg);
 static void jsprocedure_fill_buffer(apool_t *pool, void *arg);
 static void jsstringliteralascii_fill_buffer(apool_t *pool, void *arg);
+static void jsdate_fill_buffer(apool_t *pool, void *arg);
 
 /*---------------------------------------------------------------------*/
 /*    alloc pools                                                      */
@@ -345,6 +366,15 @@ static pthread_cond_t alloc_pool_cond;
    .payload = { .dummy = 0 } \
 };
 
+#define APOOL_JSDATE_INIT(pool_num) { \
+   .fill_buffer = &jsdate_fill_buffer,	\
+   .buffer = 0L, \
+   .idx = JSDATE_POOLSZ, \
+   .pool_number = pool_num, \
+   .size = JSDATE_POOLSZ, \
+   .payload = { .dummy = 0 } \
+};
+
 static HOP_ALLOC_THREAD_DECL apool_t pool1 = APOOL_JSOBJECT_INIT(0, 1);
 static HOP_ALLOC_THREAD_DECL apool_t npool1 = APOOL_JSOBJECT_INIT(0, 1);
 
@@ -384,6 +414,9 @@ static HOP_ALLOC_THREAD_DECL apool_t npoolprocedure = APOOL_JSPROCEDURE_INIT(11)
 static HOP_ALLOC_THREAD_DECL apool_t poolstringliteralascii = APOOL_JSSTRINGLITERALASCII_INIT(12);
 static HOP_ALLOC_THREAD_DECL apool_t npoolstringliteralascii = APOOL_JSSTRINGLITERALASCII_INIT(12);
 
+static HOP_ALLOC_THREAD_DECL apool_t pooldate = APOOL_JSDATE_INIT(8);
+static HOP_ALLOC_THREAD_DECL apool_t npooldate = APOOL_JSDATE_INIT(8);
+
 long inl1 = 0, snd1 = 0, slow1 = 1;
 long inl2 = 0, snd2 = 0, slow2 = 1;
 long inl3 = 0, snd3 = 0, slow3 = 1;
@@ -398,6 +431,7 @@ long inlfunction = 0, sndfunction = 0, slowfunction = 1;
 long inlmethod = 0, sndmethod = 0, slowmethod = 1;
 long inlprocedure = 0, sndprocedure = 0, slowprocedure = 1;
 long inlstringliteralascii = 0, sndstringliteralascii = 0, slowstringliteralascii = 1;
+long inldate = 0, snddate = 0, slowdate = 1;
 
 /*---------------------------------------------------------------------*/
 /*    void                                                             */
@@ -427,6 +461,8 @@ alloc_stats_dump(int _) {
    fprintf(stderr, "jsstring...\n");
    fprintf(stderr, "    (%4d): slow=%d outbuf=%d inl=%d %d%%\n", poolstringliteralascii.size, slowstringliteralascii, sndstringliteralascii, inlstringliteralascii, (inlstringliteralascii * 100) / (inlstringliteralascii + slowstringliteralascii));
 #endif   
+   fprintf(stderr, "jsdate...\n");
+   fprintf(stderr, "    (%4d): slow=%d outbuf=%d inl=%d %d%%\n", pooldate.size, slowdate, snddate, inldate, (inldate * 100) / (inldate + slowdate));
 }
 #endif
 
@@ -574,6 +610,23 @@ jsstringliteralascii_fill_buffer(apool_t *pool, void *arg) {
 }
      
 /*---------------------------------------------------------------------*/
+/*    static void                                                      */
+/*    jsdate_buffer_fill ...                                           */
+/*---------------------------------------------------------------------*/
+static void
+jsdate_fill_buffer(apool_t *pool, void *arg) {
+#if HOP_ALLOC_JSDATE_POLICY != HOP_ALLOC_CLASSIC
+   int i;
+   obj_t *buffer = pool->buffer;
+   const uint32_t size = pool->size;
+
+   for (i = 0; i < size; i++) {
+      buffer[i] = bgl_make_jsdate_sans(0L, 0L);
+   }
+#endif   
+}
+     
+/*---------------------------------------------------------------------*/
 /*    void                                                             */
 /*    bgl_init_jsalloc_locks ...                                       */
 /*    -------------------------------------------------------------    */
@@ -582,6 +635,10 @@ jsstringliteralascii_fill_buffer(apool_t *pool, void *arg) {
 /*---------------------------------------------------------------------*/
 void
 bgl_init_jsalloc_locks() {
+#if BMEM_CONFIG
+   fprintf(stderr, "hop alloc using bmem configuration...\n");
+#endif   
+
    pthread_mutex_init(&alloc_pool_mutex, 0L);
    pthread_cond_init(&alloc_pool_cond, 0L);
    
@@ -598,6 +655,7 @@ bgl_init_jsalloc_locks() {
    alloc_spin_init(&lockmethod, 0L);
    alloc_spin_init(&lockprocedure, 0L);
    alloc_spin_init(&lockstringliteralascii, 0L);
+   alloc_spin_init(&lockdate, 0L);
 
    empty_vector = create_vector_uncollectable(0);
 
@@ -637,6 +695,7 @@ int bgl_init_jsalloc(uint32_t md) {
       pthread_attr_init(&thattr);
       pthread_attr_setdetachstate(&thattr, PTHREAD_CREATE_DETACHED);
       GC_pthread_create(&th, &thattr, thread_alloc_worker, (void *)(long)md);
+      _PTHREAD_SETNAME(th, "hopjs-alloc");
    }
 
    return 0;
@@ -758,6 +817,22 @@ bgl_init_jsalloc_stringliteralascii(uint32_t mode, uint32_t normmode, obj_t not_
    jsstringliteralascii_normmode = normmode;
    jsstringliteralascii_not_a_string_cache = not_a_string_cache;
    jsstringliteralascii_normalize_threshold = threshold;
+}
+
+/*---------------------------------------------------------------------*/
+/*    int                                                              */
+/*    bgl_init_jsalloc_date ...                                        */
+/*---------------------------------------------------------------------*/
+int
+bgl_init_jsalloc_date(uint32_t mode) {
+   static int jsinit = 0;
+   int i;
+
+   if (jsinit) return 1;
+
+   jsinit = 1;
+
+   jsdate_mode = mode;
 }
 
 /*---------------------------------------------------------------------*/
@@ -1043,7 +1118,7 @@ bgl_make_jsproxy(obj_t target, obj_t handler,
 /*      (instantiate::JsFunction                                       */
 /*         (__proto__ __proto__)                                       */
 /*         (cmap constrmap)                                            */
-/*         (elements proxy-elements))                                  */
+/*         (elements function-elements))                               */
 /*---------------------------------------------------------------------*/
 #if HOP_ALLOC_JSFUNCTION_POLICY != HOP_ALLOC_CLASSIC
 #   define BGL_MAKE_JSFUNCTION_SANS static obj_t bgl_make_jsfunction_sans
@@ -1179,7 +1254,7 @@ bgl_make_jsfunction(obj_t procedure,
 /*      (instantiate::JsMethod                                         */
 /*         (__proto__ __proto__)                                       */
 /*         (cmap constrmap)                                            */
-/*         (elements proxy-elements))                                  */
+/*         (elements method-elements))                                 */
 /*---------------------------------------------------------------------*/
 #if HOP_ALLOC_JSMETHOD_POLICY != HOP_ALLOC_CLASSIC
 #   define BGL_MAKE_JSMETHOD_SANS static obj_t bgl_make_jsmethod_sans
@@ -1576,6 +1651,110 @@ bgl_jsstring_append_ascii(obj_t left, obj_t right) {
 }
 
 /*---------------------------------------------------------------------*/
+/*    obj_t                                                            */
+/*    bgl_make_jsdate_sans ...                                         */
+/*    -------------------------------------------------------------    */
+/*    Fast C allocation, equivalent to                                 */
+/*                                                                     */
+/*      (instantiate::JsDate                                           */
+/*         (__proto__ __proto__)                                       */
+/*         (cmap constrmap))                                           */
+/*---------------------------------------------------------------------*/
+#if HOP_ALLOC_JSDATE_POLICY != HOP_ALLOC_CLASSIC
+#  define BGL_MAKE_JSDATE_SANS static obj_t bgl_make_jsdate_sans
+#else   
+#  define BGL_MAKE_JSDATE_SANS obj_t bgl_make_jsdate
+#endif
+   
+BGL_MAKE_JSDATE_SANS(BgL_jsconstructmapz00_bglt cmap, obj_t __proto__) {
+   long bsize = JSDATE_SIZE;
+   BgL_jsdatez00_bglt o = (BgL_jsdatez00_bglt)HOP_MALLOC(bsize);
+
+   // class initialization
+   BGL_OBJECT_CLASS_NUM_SET(BHOPOBJECT(o), JSDATE_CLASS_NUM);
+   
+   // fields init
+   HOP_OBJECT_HEADER_SIZE_SET(BHOPOBJECT(o), (long)jsdate_mode);
+   BGL_OBJECT_WIDENING_SET(BHOPOBJECT(o), __proto__);
+   
+   o->BgL_timez00 = BFALSE;
+   o->BgL_z52valz52 = BFALSE;
+   
+   o->BgL_cmapz00 = cmap;
+   o->BgL_elementsz00 = empty_vector;
+   
+   return BHOPOBJECT(o);
+}
+
+/*---------------------------------------------------------------------*/
+/*    obj_t                                                            */
+/*    bgl_make_jsdate ...                                              */
+/*    -------------------------------------------------------------    */
+/*    Fast C allocation, equivalent to                                 */
+/*                                                                     */
+/*      (instantiate::JsDate                                           */
+/*         (__proto__ __proto__)                                       */
+/*         (cmap constrmap))                                           */
+/*---------------------------------------------------------------------*/
+#if HOP_ALLOC_JSDATE_POLICY != HOP_ALLOC_CLASSIC
+obj_t
+bgl_make_jsdate(BgL_jsconstructmapz00_bglt cmap, obj_t __proto__) {
+   alloc_spin_lock(&lockdate); 
+   if (pooldate.idx < JSDATE_POOLSZ) { 
+      obj_t o = pooldate.buffer[pooldate.idx]; 
+      pooldate.buffer[pooldate.idx++] = 0; 
+      alloc_spin_unlock(&lockdate);
+      
+      BGL_OBJECT_WIDENING_SET(o, __proto__);
+      ((BgL_jsdatez00_bglt)(COBJECT(o)))->BgL_cmapz00 = cmap; 
+      ((BgL_jsdatez00_bglt)(COBJECT(o)))->BgL_timez00 = BFALSE; 
+      ((BgL_jsdatez00_bglt)(COBJECT(o)))->BgL_z52valz52 = BFALSE;
+      ALLOC_STAT(inldate++);
+      return o; 
+   } else if (npooldate.idx == 0) { 
+      /* swap the two pools */ 
+      obj_t *buffer = pooldate.buffer; 
+      obj_t o = npooldate.buffer[0]; 
+      
+      pooldate.buffer = npooldate.buffer; 
+      pooldate.buffer[0] = 0; 
+      pooldate.idx = 1; 
+      
+      npooldate.buffer = buffer; 
+      npooldate.idx = npooldate.size; 
+      
+      /* add the pool to the pool queue */ 
+      pool_queue_add(&npooldate); 
+      
+      BGL_OBJECT_WIDENING_SET(o, __proto__);
+      ((BgL_jsdatez00_bglt)(COBJECT(o)))->BgL_cmapz00 = cmap; 
+      ((BgL_jsdatez00_bglt)(COBJECT(o)))->BgL_timez00 = BFALSE;
+      ((BgL_jsdatez00_bglt)(COBJECT(o)))->BgL_z52valz52 = BFALSE;
+      
+      ALLOC_STAT(snddate++); 
+      alloc_spin_unlock(&lockdate); 
+      return o; 
+   } else { 
+      /* initialize the two alloc pools */ 
+      if (!pooldate.buffer) { 
+	 pooldate.buffer = 
+	    (obj_t *)GC_MALLOC_UNCOLLECTABLE(sizeof(obj_t)*JSDATE_POOLSZ); 
+	 pooldate.idx = JSDATE_POOLSZ; 
+	 npooldate.buffer = 
+	    (obj_t *)GC_MALLOC_UNCOLLECTABLE(sizeof(obj_t)*JSDATE_POOLSZ); 
+	 npooldate.idx = JSDATE_POOLSZ; 
+	 pool_queue_add(&npooldate); 
+      } 
+      
+      /* default slow alloc */ 
+      ALLOC_STAT(slowdate++); 
+      alloc_spin_unlock(&lockdate);
+      return bgl_make_jsdate_sans(cmap, __proto__); 
+   } 
+}
+#endif
+
+/*---------------------------------------------------------------------*/
 /*    static obj_t                                                     */
 /*    empty_vector ...                                                 */
 /*---------------------------------------------------------------------*/
@@ -1595,15 +1774,6 @@ static obj_t empty_vector = BVECTOR(&(_empty_vector.length));
 /*---------------------------------------------------------------------*/
 /*    BGL_MAKE_JSARRAY_SANS_INIT                                       */
 /*---------------------------------------------------------------------*/
-#if (!defined(TAG_VECTOR))
-#define BGL_TAG_VECTOR(_vec) \
-   _vec->vector.header = MAKE_HEADER(VECTOR_TYPE, 0)
-#else
-#define BGL_TAG_VECTOR(_vec) \
-   0
-#endif
-
-
 #define BGL_MAKE_JSARRAY_SANS_INIT(o, size, len, ilen, constrmap, __proto___, mode) \
    long bsize = JSARRAY_SIZE + VECTOR_SIZE + ((size-1) * OBJ_SIZE); \
    BgL_jsarrayz00_bglt o = (BgL_jsarrayz00_bglt)HOP_MALLOC(bsize);  \
@@ -1684,6 +1854,9 @@ bgl_jsarray_shift_builtin(obj_t array) {
    long size = VECTOR_LENGTH(BVECTOR(vec));
    obj_t nvec = (obj_t)(((obj_t *)vec) + 1);
 
+   // avoid memory leaks
+   VECTOR_SET(BVECTOR(vec), 0, BUNSPEC);
+   
    BGL_TAG_VECTOR(nvec);
    nvec->vector.length = size - 1;
    nvec = BVECTOR(nvec);
@@ -1722,18 +1895,8 @@ bgl_init_vector(obj_t vector, long len, obj_t init) {
 /*---------------------------------------------------------------------*/
 obj_t
 bgl_init_vector_sans_fill(obj_t vector, long len) {
-#if ( VECTOR_SIZE_TAG_NB_BIT != 0)
-   if (len & ~(VECTOR_LENGTH_MASK)) {
-      C_FAILURE("create_vector", "vector too large", BINT(len));
-      return BUNSPEC;
-   } else
-#endif
-   {
-      BGL_TAG_VECTOR(vector);
-      vector->vector.length = len;
-
-      return BVECTOR(vector);
-   }
+   // see bglhopscript.h
+   return BGL_INIT_VECTOR_SANS_FILL(vector, len);
 }
 
 /*---------------------------------------------------------------------*/

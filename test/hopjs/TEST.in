@@ -87,7 +87,7 @@ run() {
     
     if [ "$verb " != " " ]; then
       echo ""
-      echo -n "$hop $oflags $* ..."
+      echo -n "$hop $oflags $* ... "
     fi
     $hop $oflags $* > $TMP/TEST-HOPJS.out 2>&1 
     lastres=$?
@@ -112,10 +112,9 @@ run() {
   fi
 }
 
-/bin/rm -f $TMP/TEST-HOPJS-ALL.out
-touch $TMP/TEST-HOPJS-ALL.out
+noserv() {
+  path=$1
 
-for path in noserv/*.js; do
   if [ "$test " = " " -o "$test " = "$path " ]; then
     if [ -f $path.rc.js ]; then
       lbl="(debug)"
@@ -124,6 +123,8 @@ for path in noserv/*.js; do
       run $path $rflags --no-server --rc-file $path.rc.js
       lbl="(opt) "
       run $path --no-server --rc-file $path.rc.js
+      lbl="(optx) "
+      run $path -Ox --no-cache -q --no-server --rc-file $path.rc.js
     else
       lbl="(debug)"
       run $path $gflags -q --no-server
@@ -131,11 +132,14 @@ for path in noserv/*.js; do
       run $path $rflags -q --no-server
       lbl="(opt) "
       run $path -q --no-server
+      lbl="(optx) "
+      run $path -Ox --no-cache -q --no-server
     fi
   fi
-done
+}
 
-for path in serv/*.js; do
+serv() {
+  path=$1
   if [ "$test " = " " -o "$test " = "$path " ]; then
     if [ -f $path.rc.js ]; then
 	if [ -f $path.args ]; then
@@ -145,6 +149,8 @@ for path in serv/*.js; do
 	    run $path $rflags -p 0 `cat $path.args` --rc-file $path.rc.js
             lbl="(opt) "
 	    run $path -p 0 `cat $path.args` --rc-file $path.rc.js
+            lbl="(optx) "
+	    run $path -Ox --no-cache -p 0 `cat $path.args` --rc-file $path.rc.js
 	else
 	    lbl="(debug)"
 	    run $path $gflags -p 0 --rc-file $path.rc.js
@@ -152,6 +158,8 @@ for path in serv/*.js; do
 	    run $path $rflags -p 0 --rc-file $path.rc.js
             lbl="(opt) "
 	    run $path -p 0 --rc-file $path.rc.js
+            lbl="(optx) "
+	    run $path -Ox --no-cache -p 0 --rc-file $path.rc.js
 	fi
     else       
 	if [ -f $path.args ]; then
@@ -161,6 +169,8 @@ for path in serv/*.js; do
 	    run $path $rflags -p 0 `cat $path.args` --rc-file passwd.hop
             lbl="(opt) "
 	    run $path -p 0 `cat $path.args` --rc-file passwd.hop
+            lbl="(optx) "
+	    run $path -Ox --no-cache -p 0 `cat $path.args` --rc-file passwd.hop
 	else
 	    lbl="(debug)"
 	    run $path $gflags -p 0 --rc-file passwd.hop
@@ -168,9 +178,55 @@ for path in serv/*.js; do
 	    run $path $rflags -p 0 --rc-file passwd.hop
             lbl="(opt) "
 	    run $path -p 0 --rc-file passwd.hop
+            lbl="(optx) "
+	    run $path -Ox --no-cache -p 0 --rc-file passwd.hop
 	fi
     fi
   fi   
+}
+
+strict() {
+  path=$1
+
+  grep $path STRICT.list > /dev/null 2> /dev/null
+  if [ "$?" = "0" ]; then
+    strict="`dirname $path`/`basename $path .js`.strict.js"
+    echo "// !!! generated file, don't edit" > "$strict"
+    echo "'use strict'" >> "$strict"
+    cat $path >> "$strict"
+    echo $strict
+  else
+    echo ""
+  fi
+}
+  
+/bin/rm -f $TMP/TEST-HOPJS-ALL.out
+touch $TMP/TEST-HOPJS-ALL.out
+
+for path in noserv/*.js; do
+  echo $path | grep .strict.js > /dev/null 2> /dev/null
+
+  if [ "$?" != "0" ]; then
+    noserv $path
+    strict=`strict $path`
+
+    if [ "$strict " != " " ]; then
+      noserv $strict
+    fi
+  fi
+done
+
+for path in serv/*.js; do
+  echo $path | grep .strict.js > /dev/null 2> /dev/null
+
+  if [ "$?" != "0" ]; then
+    serv $path
+    strict=`strict $path`
+
+    if [ "$strict " != " " ]; then
+      serv $strict
+    fi
+  fi
 done
 
 echo "`expr $success + $failure` executed"

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 19 07:19:20 2014                          */
-;*    Last change :  Wed Apr 28 09:35:25 2021 (serrano)                */
-;*    Copyright   :  2014-21 Manuel Serrano                            */
+;*    Last change :  Sun May  7 11:52:56 2023 (serrano)                */
+;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs TCP bindings                                              */
 ;*=====================================================================*/
@@ -23,10 +23,9 @@
 	    __nodejs__buffer
 	    __nodejs__stream-wrap)
 
-   (include "nodejs_async.sch" "nodejs_types.sch")
+   (include "nodejs_types.sch")
    
-   (export (process-tcp-wrap ::WorkerHopThread ::JsGlobalObject 
-	      ::JsProcess ::obj ::JsObject)))
+   (export (process-tcp-wrap ::WorkerHopThread ::JsGlobalObject ::JsProcess)))
 
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
@@ -36,7 +35,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    process-tcp-wrap ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (process-tcp-wrap %worker %this process::JsProcess slab slowbuffer::JsObject)
+(define (process-tcp-wrap %worker %this process::JsProcess)
    
    (define (->fixnum n)
       (cond
@@ -47,11 +46,11 @@
    (define reqs '())
    
    (define (connect family)
-      (with-access::JsGlobalObject %this (js-object)
+      (with-access::JsGlobalObject %this (js-object js-tcp-cmap)
 	 (lambda (this host port callback)
 	    (with-access::JsHandle this (handle)
 	       (let ((req (js-new %this js-object)))
-		  (set! reqs (cons req reqs))
+		  ;;(set! reqs (cons req reqs))
 		  (nodejs-tcp-connect %worker %this handle host
 		     (->fixnum (js-tointeger port %this)) family
 		     (lambda (status handle)
@@ -61,7 +60,7 @@
 			(let ((oncomp (js-get req (& "oncomplete") %this)))
 			   (!js-callback5 "connect" %worker %this oncomp
 			      req status this req #t #t)
-			   (set! reqs (remq req reqs))
+			   ;; (set! reqs (remq req reqs))
 			   (js-undefined))))
 		  req)))))
 
@@ -152,7 +151,7 @@
 	    (js-put! obj (& "readStart")
 	       (js-make-function %this
 		  (lambda (this)
-		     (stream-read-start %worker %this process slab this))
+		     (stream-read-start %worker %this process this))
 		  (js-function-arity 0 0)
 		  (js-function-info :name "readStart" :len 0))
 	       #f %this)
@@ -269,22 +268,26 @@
 	 tcp-proto))
 
    (define (tcp-wrap hdl)
-      (with-access::JsGlobalObject %this (js-object)
-	 (let ((obj (instantiateJsHandle
-		       (handle hdl)
-		       (cmap (js-make-jsconstructmap))
-		       (__proto__ (get-tcp-proto))
-		       (elements ($create-vector 2)))))
-	    (js-bind! %this obj (& "fd")
-	       :get (js-make-function %this
-		       (lambda (this)
-			  (nodejs-stream-fd %worker hdl))
-		       (js-function-arity 0 0)
-		       (js-function-info :name "getGD" :len 0))
-	       :writable #f :configurable #f)
-	    (js-put! obj (& "writeQueueSize")
-	       (nodejs-stream-write-queue-size hdl) #f %this)
-	    obj)))
+      (with-access::JsProcess process (js-tcp)
+	 (with-access::JsGlobalObject %this (js-object js-tcp-cmap)
+	    (unless js-tcp-cmap
+	       (set! js-tcp-cmap (js-make-jsconstructmap :ctor js-tcp)))
+	    (with-access::JsFunction js-tcp (constrsize)
+	       (let ((obj (instantiateJsHandle
+			     (handle hdl)
+			     (cmap js-tcp-cmap)
+			     (__proto__ (get-tcp-proto))
+			     (elements ($create-vector constrsize)))))
+		  (js-bind! %this obj (& "fd")
+		     :get (js-make-function %this
+			     (lambda (this)
+				(nodejs-stream-fd %worker hdl))
+			     (js-function-arity 0 0)
+			     (js-function-info :name "getGD" :len 0))
+		     :writable #f :configurable #f)
+		  (js-put! obj (& "writeQueueSize")
+		     (nodejs-stream-write-queue-size hdl) #f %this)
+		  obj)))))
    
    (define (TCP this)
       (tcp-wrap (nodejs-tcp-handle %worker)))

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 25 15:52:55 2017                          */
-;*    Last change :  Sun Sep 25 17:09:43 2022 (serrano)                */
-;*    Copyright   :  2017-22 Manuel Serrano                            */
+;*    Last change :  Wed Mar 29 18:23:08 2023 (serrano)                */
+;*    Copyright   :  2017-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Types Companion macros                                           */
 ;*=====================================================================*/
@@ -305,6 +305,36 @@
 		    e))
 		(else
 		 (error "def-jsgenerator" "bad form" x)))))
+
+      (define (def-jsdate)
+	 `(define (js-instantiate-JsDate-expander x e)
+	     
+	     (define (epairify nx x)
+		(if (epair? x)
+		    (econs (car nx) (cdr nx) (cer x))
+		    nx))
+	     
+	     (match-case x
+		((instantiateJsDate
+		    (cmap ?cmap)
+		    (__proto__ ?proto))
+		 (let ((nx `($js-make-jsdate ,cmap ,proto)))
+		    (e (epairify nx x) e)))
+		((instantiateJsDate
+		    (%val ?vl)
+		    (time ?tm)
+		    (cmap ?cmap)
+		    (__proto__ ?proto)
+		    (elements ?els))
+		 (let ((nx `(let ((o ($js-make-jsdate ,cmap ,proto)))
+			       (with-access::JsDate o (%val time elements)
+				  (set! %val ,vl)
+				  (set! time ,tm)
+				  (set! elements ,els)
+				  o))))
+		    (e (epairify nx x) e)))
+		(else
+		 (error "def-jsdate" "bad form" x)))))
       
       (define (def clazz)
 	 (cond
@@ -312,6 +342,8 @@
 	     (def-jsobject))
 	    ((eq? clazz 'JsGenerator)
 	     (def-jsgenerator))
+	    ((eq? clazz 'JsDate)
+	     (def-jsdate))
 	    (else
 	     (def-default clazz))))
 

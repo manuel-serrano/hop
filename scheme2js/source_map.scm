@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/scheme2js/source_map.scm          */
+;*    serrano/prgm/project/hop/hop/scheme2js/source_map.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jul 26 17:18:45 2013                          */
-;*    Last change :  Fri Jul 11 09:17:57 2014 (serrano)                */
-;*    Copyright   :  2013-14 Manuel Serrano                            */
+;*    Last change :  Thu Nov  2 14:56:26 2023 (serrano)                */
+;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript source map generation                                 */
 ;*=====================================================================*/
@@ -95,12 +95,12 @@
 			      ;; 1. zero-based starting colum
 			      (if (or (not pseg) (>fx dstline pdstline))
 				  (begin
-				     ;; write as many semi-coma as we have skipped lines
+				     ;; write as many semi-comas as we have skipped lines
 				     (when (>fx dstline pdstline)
 					(display (make-string (-fx dstline pdstline) #\;) p)
 					(set! pdstline dstline))
 				     (display (base64-vlq-encode dstcol) p)
-				     ;; reset the dst colume counter
+				     ;; reset the dst column counter
 				     (set! pdstcol dstcol))
 				  (begin
 				     (display "," p)

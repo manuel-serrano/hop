@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 19 07:19:20 2014                          */
-;*    Last change :  Wed Apr 28 09:33:54 2021 (serrano)                */
-;*    Copyright   :  2014-21 Manuel Serrano                            */
+;*    Last change :  Sun May  7 14:10:13 2023 (serrano)                */
+;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs PIPE bindings                                             */
 ;*=====================================================================*/
@@ -23,9 +23,9 @@
 	    __nodejs__buffer
 	    __nodejs__stream-wrap)
 
-   (include "nodejs_types.sch" "nodejs_async.sch")
+   (include "nodejs_types.sch")
    
-   (export (process-pipe-wrap ::WorkerHopThread ::JsGlobalObject ::JsProcess ::obj)))
+   (export (process-pipe-wrap ::WorkerHopThread ::JsGlobalObject ::JsProcess)))
 
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
@@ -35,7 +35,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    process-pipe-wrap ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (process-pipe-wrap %worker %this process slab)
+(define (process-pipe-wrap %worker %this process)
 
    (define (->fixnum n)
       (cond
@@ -82,7 +82,7 @@
    (js-put! pipe-prototype (& "readStart")
       (js-make-function %this
 	 (lambda (this)
-	    (stream-read-start %worker %this process slab this))
+	    (stream-read-start %worker %this process this))
 	 (js-function-arity 0 0)
 	 (js-function-info :name "readStart" :len 0))
       #f %this)
@@ -203,30 +203,34 @@
 
    ;; pipe
    (define (pipe this #!optional val)
-      (with-access::JsGlobalObject %this (js-object js-new-target)
-	 (if (eq? js-new-target (js-undefined))
-	     (js-raise-type-error %this
-		"Pipe can only be used as a constructor" this)
-	     (set! js-new-target (js-undefined)))
-	 (let* ((hdl (nodejs-new-pipe %worker val))
-		(obj (instantiateJsHandle
-			(handle hdl)
-			(__proto__ pipe-prototype)
-			(cmap (js-make-jsconstructmap))
-			(elements ($create-vector 1)))))
-	    ;; fd
-	    (js-bind! %this obj (& "fd")
-	       :get (js-make-function %this
-		       (lambda (this)
-			  (with-access::JsHandle this (handle)
-			     (nodejs-stream-fd %worker handle)))
-		       (js-function-arity 0 0)
-		       (js-function-info :name "getGD" :len 0))
-	       :writable #f :configurable #f)
-	    ;; writeQueueSize
-	    (js-put! obj (& "writeQueueSize")
-	       (nodejs-stream-write-queue-size hdl) #f %this)
-	    obj)))
+      (with-access::JsGlobalObject %this (js-object js-new-target js-pipe-cmap)
+	 (with-access::JsProcess process (js-pipe)
+	    (unless js-pipe-cmap
+	       (set! js-pipe-cmap (js-make-jsconstructmap :ctor js-pipe)))
+	    (if (eq? js-new-target (js-undefined))
+		(js-raise-type-error %this
+		   "Pipe can only be used as a constructor" this)
+		(set! js-new-target (js-undefined)))
+	    (with-access::JsFunction js-pipe (constrsize)
+	       (let* ((hdl (nodejs-new-pipe %worker val))
+		      (obj (instantiateJsHandle
+			      (handle hdl)
+			      (__proto__ pipe-prototype)
+			      (cmap js-pipe-cmap)
+			      (elements ($create-vector constrsize)))))
+		  ;; fd
+		  (js-bind! %this obj (& "fd")
+		     :get (js-make-function %this
+			     (lambda (this)
+				(with-access::JsHandle this (handle)
+				   (nodejs-stream-fd %worker handle)))
+			     (js-function-arity 0 0)
+			     (js-function-info :name "getGD" :len 0))
+		     :writable #f :configurable #f)
+		  ;; writeQueueSize
+		  (js-put! obj (& "writeQueueSize")
+		     (nodejs-stream-write-queue-size hdl) #f %this)
+		  obj)))))
    
    (with-access::JsGlobalObject %this (js-object)
       (with-access::JsProcess process (js-pipe)
@@ -239,6 +243,7 @@
 		  :alloc js-no-alloc/new-target))
 	    (js-put! obj (& "Pipe") js-pipe #t %this)
 	    obj))))
+
 ;*---------------------------------------------------------------------*/
 ;*    &end!                                                            */
 ;*---------------------------------------------------------------------*/

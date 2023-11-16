@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Sat Feb 12 12:27:35 2022 (serrano)                */
-;*    Copyright   :  2013-22 Manuel Serrano                            */
+;*    Last change :  Fri Oct  6 18:37:13 2023 (serrano)                */
+;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
 ;*=====================================================================*/
@@ -26,6 +26,7 @@
 	   (config-get ::pair-nil ::keyword #!optional def)
 	   (config-get-mmap ::pair-nil path)
 	   (config-put! ::pair-nil ::keyword ::obj)
+	   (config-add::pair-nil ::pair-nil ::keyword ::obj)
 	   (this?::bool ::J2SNode)
 	   
 	   (j2s-expression-src loc ::pair-nil ::bstring)
@@ -43,6 +44,7 @@
 	   (type-integer?::bool ::obj)
 	   (type-number?::bool ::obj)
 	   (type-object?::bool ::obj)
+	   (type-array-like?::bool ::obj)
 	   (type-maybe?::bool ::obj ::pair-nil)
 	   (type-cannot?::bool ::obj ::pair-nil)
 	   (type-subtype?::bool ::obj ::obj)
@@ -154,6 +156,12 @@
       (if (pair? l)
 	  (set-car! (cdr l) val)
 	  (error "config-put!" (format "entry `~a' not in conf" k) conf))))
+
+;*---------------------------------------------------------------------*/
+;*    config-add ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (config-add conf k val)
+   (cons* k val conf))
 
 ;*---------------------------------------------------------------------*/
 ;*    this? ...                                                        */
@@ -289,6 +297,12 @@
        (isa? type J2SClass)))
 
 ;*---------------------------------------------------------------------*/
+;*    type-array-like? ...                                             */
+;*---------------------------------------------------------------------*/
+(define (type-array-like? type)
+   (memq type '(string array jsvector vector)))
+
+;*---------------------------------------------------------------------*/
 ;*    type-maybe? ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (type-maybe? type types::pair-nil)
@@ -411,7 +425,7 @@
 	  ((string buffer) 'JsStringLiteral)
 	  ((null) 'nil)
 	  ((String) 'JsString)
-	  ((Promise) 'JsPromise)
+	  ((promise) 'JsPromise)
 	  ((class) 'JsFunction)
 	  ((arguments) 'JsArguments)
 	  ((real) 'double)
@@ -843,7 +857,7 @@
 	("log" . (real undefined real))
 	("max" . (anumber undefined number))
 	("min" . (anumber undefined number))
-	("pow" . (number undefined number))
+	("pow" . (number undefined real))
 	("random" . (ureal1 undefined))
 	("round" . (number undefined real))
 	("sin" . (real1 undefined real))

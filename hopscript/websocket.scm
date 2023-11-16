@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu May 15 05:51:37 2014                          */
-;*    Last change :  Sat Aug 28 09:26:28 2021 (serrano)                */
-;*    Copyright   :  2014-21 Manuel Serrano                            */
+;*    Last change :  Mon Feb 13 17:11:07 2023 (serrano)                */
+;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSockets                                                   */
 ;*=====================================================================*/
@@ -241,8 +241,8 @@
 		     (cons "onclose" #f)
 		     (cons "onerror" #f)))
 	       ;; connect the socket to the server
-	       (js-worker-push-thunk! worker "ws-listener"
-		  (lambda ()
+	       (js-worker-push! worker "ws-listener"
+		  (lambda (%this)
 		     (with-handler
 			(lambda (e)
 			   (with-access::&error e (msg)
@@ -253,9 +253,9 @@
 						(target ws)
 						(data msg)
 						(value msg))))
-				    (js-worker-push-thunk! worker
+				    (js-worker-push! worker
 				       "wesbsocket-client"
-				       (lambda ()
+				       (lambda (%this)
 					  (apply-listeners onerrors evt)))))))
 			(websocket-connect! ws))))
 	       obj)))
@@ -270,8 +270,8 @@
 				(__proto__ js-websocket-client-prototype))))
 		     ;; trigger an onconnect event
 		     (with-access::JsWebSocketServer wss (conns worker)
-			(js-worker-push-thunk! worker "wss-onconnect"
-			   (lambda ()
+			(js-worker-push! worker "wss-onconnect"
+			   (lambda (%this)
 			      ;; listeners
 			      (for-each (lambda (act)
 					   (bind-websocket-client-listener! %this
@@ -288,8 +288,8 @@
 				 ;; start the client-server-loop
 				 ;; on JavaScript completion
 				 (with-access::JsWebSocketServer wss (worker)
-				    (js-worker-push-thunk! worker "wss-onconnect"
-				       (lambda ()
+				    (js-worker-push! worker "wss-onconnect"
+				       (lambda (%this)
 					  (websocket-server-read-loop
 					     %this request wss ws id))))))))
 		     ;; returns the new client socket
@@ -313,14 +313,14 @@
 		      (if (and (>=fx status 100) (<=fx status 299))
 			  (cond
 			     ((isa? handler JsPromise)
-			      (js-worker-push-thunk! worker "ws-listener"
-				 (lambda ()
+			      (js-worker-push! worker "ws-listener"
+				 (lambda (%this)
 				    (js-promise-async handler
-				       (lambda ()
+				       (lambda (%this)
 					  (js-promise-resolve handler val))))))
 			     ((and (pair? handler) (procedure? (car handler)))
-			      (js-worker-push-thunk! worker "ws-listener"
-				 (lambda ()
+			      (js-worker-push! worker "ws-listener"
+				 (lambda (%this)
 				    ((car handler) val))))
 			     ((and (pair? handler) (condition-variable? (car handler)))
 			      (synchronize (cdr handler)
@@ -330,14 +330,14 @@
 				    (condition-variable-signal! cv)))))
 			  (cond
 			     ((isa? handler JsPromise)
-			      (js-worker-push-thunk! worker "ws-listener"
-				 (lambda ()
+			      (js-worker-push! worker "ws-listener"
+				 (lambda (%this)
 				    (js-promise-async handler
-				       (lambda ()
+				       (lambda (%this)
 					  (js-promise-reject handler val))))))
 			     ((and (pair? handler) (procedure? (cdr handler)))
-			      (js-worker-push-thunk! worker "ws-listener"
-				 (lambda ()
+			      (js-worker-push! worker "ws-listener"
+				 (lambda (%this)
 				    ((cdr handler) val))))
 			     ((and (pair? handler) (condition-variable? (car handler)))
 			      (synchronize (cdr handler)
@@ -516,8 +516,8 @@
 ;*---------------------------------------------------------------------*/
 (define (proc->listener worker %this proc::procedure this)
    (lambda (evt)
-      (js-worker-push-thunk! worker "ws-listener"
-	 (lambda ()
+      (js-worker-push! worker "ws-listener"
+	 (lambda (%this)
 	    (js-call1-procedure proc this evt)))))
 
 ;*---------------------------------------------------------------------*/
@@ -526,8 +526,8 @@
 (define (action->listener worker %this action::pair this)
    (lambda (evt)
       (let ((g (gensym)))
-	 (js-worker-push-thunk! worker "ws-listener"
-	    (lambda ()
+	 (js-worker-push! worker "ws-listener"
+	    (lambda (%this)
 	       (when (js-procedure? (cdr action))
 		  (js-call1-jsprocedure %this (cdr action) this evt)))))))
 
@@ -611,8 +611,8 @@
 					  (name "connection")
 					  (target this)
 					  (value this))))
-			       (js-worker-push-thunk! worker "wss-onclose"
-				  (lambda ()
+			       (js-worker-push! worker "wss-onclose"
+				  (lambda (%this)
 				     (apply-listeners closes evt))))))))
 		(js-function-arity 0 0)
 		(js-function-info :name "close" :len 0))
@@ -643,9 +643,9 @@
 			   (target ws)
 			   (data val)
 			   (value val))))
-	       (js-worker-push-thunk! worker
+	       (js-worker-push! worker
 		  "wesbsocket-client"
-		  (lambda ()
+		  (lambda (%this)
 		     (apply-listeners onmessages evt)))))))
    
    (define (onclose)
@@ -661,9 +661,9 @@
 				(target ws)
 				(data (js-undefined))
 				(value (js-undefined)))))
-		     (js-worker-push-thunk! worker
+		     (js-worker-push! worker
 			"wesbsocket-client"
-			(lambda ()
+			(lambda (%this)
 			   (apply-listeners oncloses evt)))))))))
    
    (define (onerror)
@@ -679,9 +679,9 @@
 				(target ws)
 				(data (js-undefined))
 				(value (js-undefined)))))
-		     (js-worker-push-thunk! worker
+		     (js-worker-push! worker
 			"wesbsocket-client"
-			(lambda ()
+			(lambda (%this)
 			   (apply-listeners onerrors evt)))))))))
    
    (define (eof-error? e)
@@ -817,8 +817,8 @@
 			    (set! socket #f)
 			    (set! state (js-websocket-state-closed))
 			    (with-access::JsWebSocketServer wss (worker)
-			       (js-worker-push-thunk! worker "ws-onclose"
-				  (lambda ()
+			       (js-worker-push! worker "ws-onclose"
+				  (lambda (%this)
 				     (when (pair? oncloses)
 					;; invoke the onclose listener
 					(let ((evt (instantiate::server-event
@@ -918,7 +918,7 @@
 	    (js-make-function %this
 	       (lambda (this result)
 		  (js-promise-async resp
-		     (lambda ()
+		     (lambda (%this)
 			(http-ws-response result req socket
 			   content-type 200 header %this))))
 	       (js-function-arity 1 0)
@@ -926,7 +926,7 @@
 	    (js-make-function %this
 	       (lambda (this rej)
 		  (js-promise-async resp
-		     (lambda ()
+		     (lambda (%this)
 			(http-ws-response rej req socket
 			   content-type 500 header %this))))
 	       (js-function-arity 1 0)
@@ -1009,14 +1009,14 @@
 	       (reason (js-ascii->jsstring "connection closed")))
 	    (cond
 	       ((isa? handler JsPromise)
-		(js-worker-push-thunk! worker "ws-listener"
-		   (lambda ()
+		(js-worker-push! worker "ws-listener"
+		   (lambda (%this)
 		      (js-promise-async handler
-			 (lambda ()
+			 (lambda (%this)
 			    (js-promise-reject handler reason))))))
 	       ((procedure? (cdr handler))
-		(js-worker-push-thunk! worker "ws-listener"
-		   (lambda ()
+		(js-worker-push! worker "ws-listener"
+		   (lambda (%this)
 		      ((cdr handler) reason)))))))
       
       (with-access::websocket ws (%socket onopens oncloses)

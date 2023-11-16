@@ -44,6 +44,17 @@ Node.js, use the `--no-server` option to disable the launch of the
 Hop.js built-in server, and automatically terminate the process when
 all events are processed.
 
+Process
+-------
+
+The Hop core module `hop` can be accessed as `process.hop`. This enables
+writing compatible programs. For instance, the following expression can
+be evalued by any standard JavaScript engine:
+
+```hopscript 
+console.log(process.hop?.version)
+```
+
 Eval
 ----
 Hop.js `eval` function does not access the lexical scope surrounding

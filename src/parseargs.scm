@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Fri Jun  3 11:42:42 2022 (serrano)                */
-;*    Copyright   :  2004-22 Manuel Serrano                            */
+;*    Last change :  Fri May 19 08:25:52 2023 (serrano)                */
+;*    Copyright   :  2004-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
 ;*=====================================================================*/
@@ -90,6 +90,11 @@
 	     (exit 0))
 	    (("--default-so-dir" (help "Display default so dir"))
 	     (print (dirname (hop-sofile-path "dummy.hop"))))
+	    (("-O" (help "Optimization mode (eq. to \"--so-policy aot\")"))
+	     (hop-sofile-compile-policy-set! 'aot))
+	    (("-Ox" (help "Experimal optimization mode"))
+	     (hop-hopc-flags-set! "-Ox")
+	     (hop-sofile-compile-policy-set! 'aot))
 	    
 	    ;; RC
 	    (section "RC & Autoload")
@@ -128,7 +133,7 @@
 	     (set! clear-so #f))
 	    (("--no-so" (help "Disable loading pre-compiled file"))
 	     (hop-sofile-enable-set! #f))
-	    (("--so-policy" ?policy (help "Sofile compile policy [none, aot, nte, nte1, nte+]"))
+	    (("--so-policy" ?policy (help "Sofile compile policy [none, aot, aot+, nte, nte1, nte+]"))
 	     (hop-sofile-compile-policy-set! (string->symbol policy)))
 	    (("--sofile-policy" ?policy (help "Deprecated, use \"--so-policy\" instead"))
 	     (hop-sofile-compile-policy-set! (string->symbol policy)))
@@ -212,6 +217,8 @@
 		    (set! clientc-type-check #t)
 		    (bigloo-debug-set! l)
 		    (hop-clientc-debug-unbound-set! l)))))
+	    (("-cg" (help "C debug compilation"))
+	     (hop-hopc-flags-set! (string-append "-cg " (hop-hopc-flags))))
 	    (("--client-output" ?file (help "Client output port [stderr]"))
 	     (if (string=? file "-")
 		 (hop-client-output-port-set! (current-output-port))
@@ -368,7 +375,9 @@
 	     (set! commonjs-export #f))
 	    (("--profile" (help "Profiling mode (see HOPTRACE)"))
 	     (hop-profile-set! #t))
-	    
+	    (("--profile-mem" (help "Memory profiling mode"))
+	     (hop-hopc-flags-set!
+		(string-append "--profile-mem2 " (hop-hopc-flags))))
 	    ;; Internals
 	    (section "Internals")
 	    (("--configure" ?config (help "Report HOP configuration"))
@@ -671,7 +680,7 @@
    (print "   - HOPTRACE: hop internal trace [HOPTRACE=\"key1, key2, ...\"]")
    (print "      j2s:info, j2s:type, j2s:utype, j2s:hint, j2s:usage, j2s:key")
    (print "      j2s:dump, nodejs:compile, hopscript:cache, hopscript:hint")
-   (print "      j2s:scope")
+   (print "      j2s:scope hopscript:gc")
    (print "   - HOPVERBOSE: an integer")
    (print "   - HOPCFLAGS: hopc compilation flags")
    (print "   - NODE_DEBUG: nodejs internal debugging [NODE_DEBUG=key]")

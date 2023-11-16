@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Dec  7 06:32:41 2019                          */
-;*    Last change :  Tue May 10 13:13:42 2022 (serrano)                */
-;*    Copyright   :  2019-22 Manuel Serrano                            */
+;*    Last change :  Mon Jul 24 16:24:39 2023 (serrano)                */
+;*    Copyright   :  2019-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function macros for js2scheme                                    */
 ;*=====================================================================*/
@@ -12,23 +12,106 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-function-apply-arguments ...                                  */
 ;*---------------------------------------------------------------------*/
-(define-macro (js-function-apply-arguments %this this thisarg vec arguments cache)
-   `(if (and (or (not (js-object? ,this)) (js-object-mode-plain? ,this))
-	     (not (object? ,arguments)))
-	(js-function-apply-vec ,%this ,this ,thisarg ,vec (fixnum->uint32 (vector-length ,vec)))
-	(begin
-	   (set! ,arguments (js-materialize-arguments ,%this ,vec ,arguments))
-	   (js-function-apply %this ,this ,thisarg ,arguments ,cache))))
+(define-macro (js-function-apply-arguments %this fun thisarg vec %arguments mode cache)
+   `(with-access::JsGlobalObject %this (js-function-prototype)
+       (cond
+	  (,%arguments
+	   (js-function-apply ,%this ,fun ,thisarg ,%arguments ,cache))
+	  ((and (js-object-mode-plain? ,fun)
+		(js-object-mode-plain? js-function-prototype))
+	   (js-function-apply-vec ,%this ,fun ,thisarg
+	      ,vec #u32:0 (fixnum->uint32 (vector-length ,vec))))
+	  (else
+	   (set! ,%arguments 
+	      ,(if (eq? mode 'strict)
+		   `(js-strict-arguments ,%this (vector-copy ,vec))
+		   `(js-sloppy-arguments ,%this (vector-copy ,vec))))
+	   (js-function-apply %this ,fun ,thisarg ,%arguments ,cache)))))
+	   
+;*---------------------------------------------------------------------*/
+;*    js-function-spread-arguments ...                                 */
+;*---------------------------------------------------------------------*/
+(define-macro (js-function-spread-arguments %this fun thisarg vec %arguments)
+   `(with-access::JsGlobalObject %this (js-function-prototype)
+       (cond
+	  (%arguments
+	   (js-apply-array ,%this ,fun ,thisarg %arguments))
+	  (else
+	   (js-function-apply-vec ,%this ,fun ,thisarg
+	      ,vec #u32:0 (fixnum->uint32 (vector-length ,vec)))))))
 	   
 ;*---------------------------------------------------------------------*/
 ;*    js-function-maybe-apply-arguments ...                            */
 ;*---------------------------------------------------------------------*/
-(define-macro (js-function-maybe-apply-arguments %this this thisarg vec arguments cache)
-   `(if (js-function? ,this)
-	(js-function-apply-arguments ,%this ,this ,thisarg ,vec ,arguments ,cache)
-	(begin
-	   (set! ,arguments (js-materialize-arguments ,%this ,vec ,arguments))
-	   (js-function-maybe-apply %this ,this ,thisarg ,arguments ,cache))))
+(define-macro (js-function-maybe-apply-arguments %this fun thisarg vec %arguments mode cache)
+   (if (symbol? fun)
+       (if (symbol? thisarg)
+	   `(if (js-function? ,fun)
+		(js-function-apply-arguments ,%this ,fun ,thisarg ,vec ,%arguments mode ,cache)
+		(begin
+		   (set! %arguments 
+		      ,(if (eq? mode 'strict)
+			   `(js-strict-arguments %this (vector-copy ,vec))
+			   `(js-sloppy-arguments %this (vector-copy ,vec))))
+		   (js-function-maybe-apply %this ,fun ,thisarg ,%arguments ,cache)))
+	   (let ((tmpt (gensym 'tmpt)))
+	      `(let ((,tmpt ,thisarg))
+		  (js-function-maybe-apply-arguments ,%this ,fun ,tmpt
+		     ,vec ,%arguments ,mode ,cache))))
+       (let ((tmpf (gensym 'tmpf)))
+	  `(let ((,tmpf ,fun))
+	      (js-function-maybe-apply-arguments ,%this ,tmpf ,thisarg
+		 ,vec ,%arguments ,mode ,cache)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-function-maybe-apply-arguments-slice ...                      */
+;*---------------------------------------------------------------------*/
+(define-macro (js-function-maybe-apply-arguments-slice %this this thisarg vec offset len %arguments mode cache)
+   `(with-access::JsGlobalObject ,%this (js-function-prototype)
+      (cond
+	 (,%arguments
+	  (js-function-maybe-apply ,%this ,this ,thisarg
+	     (js-arguments-slice ,%arguments ,offset ,len ,%this)
+	     ,cache))
+	 ((and (js-procedure? ,this)
+	       (js-object-mode-plain? ,this)
+	       (js-object-mode-plain? js-function-prototype))
+	  (js-function-apply-vec ,%this ,this ,thisarg ,vec ,offset ,len))
+	 (else
+	  (set! ,%arguments 
+	     ,(if (eq? mode 'strict)
+		  `(js-strict-arguments ,%this (vector-copy ,vec))
+		  `(js-sloppy-arguments ,%this (vector-copy ,vec))))
+	  (js-function-maybe-apply ,%this ,this ,thisarg
+	     (js-arguments-vector-slice ,vec ,offset ,len ,%this)
+	     ,cache)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-function-spread-arguments-slice ...                           */
+;*---------------------------------------------------------------------*/
+(define-macro (js-function-spread-arguments-slice %this this thisarg vec offset len %arguments mode cache)
+   `(with-access::JsGlobalObject %this (js-function-prototype)
+       (cond
+	  (,%arguments
+	   (js-apply-array ,%this ,this ,thisarg
+	      (js-arguments-slice ,%arguments ,offset ,len ,%this)))
+	  ((js-procedure? ,this) 
+	   (js-function-apply-vec ,%this ,this ,thisarg ,vec ,offset ,len))
+	  (else
+	   (set! ,%arguments 
+	      ,(if (eq? mode 'strict)
+		   `(js-strict-arguments ,%this (vector-copy ,vec))
+		   `(js-sloppy-arguments ,%this (vector-copy ,vec))))
+	   (js-apply-array ,%this ,this ,thisarg
+	      (js-arguments-vector-slice ,vec ,offset ,len ,%this))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-function-maybe-spread-arguments ...                           */
+;*---------------------------------------------------------------------*/
+(define-macro (js-function-maybe-spread-arguments %this fun thisarg vec %arguments)
+   `(if (js-function? ,fun)
+	(js-function-spread-arguments ,%this ,fun ,thisarg ,vec ,%arguments)
+	(js-raise-type-error ,%this "spread: this is not a function ~s" ,fun)))
    
 ;*---------------------------------------------------------------------*/
 ;*    js-function-info ...                                             */
@@ -123,6 +206,8 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    js-function-arity ...                                            */
+;*    -------------------------------------------------------------    */
+;*    See also function.scm                                            */
 ;*---------------------------------------------------------------------*/
 (define-macro (js-function-arity req . opt-protocol)
    (if (null? opt-protocol)
@@ -139,12 +224,17 @@
 		  (match-case (car protocol)
 		     (((kwote quote) arguments-lazy)
 		      -2047)
-		     (((kwote quote) arguments-eager)
+		     (((kwote quote) arguments-stack)
 		      -2047)
 		     (((kwote quote) arguments-eager)
 		      -2048)
+		     (((kwote quote) arguments-lonly)
+		      (-fx -8192 req))
 		     (((kwote quote) arguments)
-		      0)
+		      -2048)
+		     (((kwote quote) rest-stack)
+		      (let ((offset (if (=fx opt 0) 2049 4049)))
+			 (negfx (+fx offset (-fx req 1)))))
 		     (((kwote quote) rest-lazy)
 		      (let ((offset (if (=fx opt 0) 2049 4049)))
 			 (negfx (+fx offset (-fx req 1)))))

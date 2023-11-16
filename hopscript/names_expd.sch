@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  1 08:50:34 2019                          */
-;*    Last change :  Wed Jun  5 19:57:02 2019 (serrano)                */
-;*    Copyright   :  2019-20 Manuel Serrano                            */
+;*    Last change :  Sat May 20 16:13:42 2023 (serrano)                */
+;*    Copyright   :  2019-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript name expanders                                         */
 ;*    -------------------------------------------------------------    */
@@ -27,7 +27,7 @@
 	 "default" "exports" "filename" "get" "global"
 	 "hop" "length" "module" "process" "prototype"
 	 "readable" "require" "set" "setImmediate" "setInterval" "setTimeout"
-	 "toString" "value" "write" "writable"))
+	 "toString" "value" "write" "writable" "emit" "exit" "_exiting"))
    
    (define (vector-index val vector)
       (let loop ((i (-fx (vector-length vector) 1)))

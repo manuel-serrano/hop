@@ -9,6 +9,7 @@
 *.o
 **/o/
 **/.libs/
+nodejs/modules/mo
 
 # Env dev
 *.afile
@@ -42,6 +43,7 @@ nodejs/_crypto.sch
 test/nodejs/HOP.exe
 test/nodejs/log.*
 test/nodejs/LOG
+test/hopjs/*/*.strict.js
 
 # hopscript
 hopscript/hopscript.sch
@@ -51,6 +53,11 @@ hopscript/bglhopscript_types.h
 node_modules/hopc/lib/ast.js
 node_modules/hopc/lib/walk.js
 node_modules/hopdroid/lib/Makefile
+node_modules/hopc/node/ast2js
+node_modules/hopc/node/hop2js
+node_modules/hopc/node/parser.js
+node_modules/hopc/node/parser.mjs
+node_modules/hopc/node/j2sast.mjs
 
 # js2scheme
 js2scheme/hopc_config.sch

@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue May 15 11:33:27 2018                          */
-/*    Last change :  Wed Apr 27 11:40:40 2022 (serrano)                */
-/*    Copyright   :  2018-22 Manuel Serrano                            */
+/*    Last change :  Wed Apr 19 07:11:35 2023 (serrano)                */
+/*    Copyright   :  2018-23 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 1.6 async functions                           */
 /*=====================================================================*/
@@ -48,8 +48,18 @@ async function asyncYield(x) {
    return yield a + 20;
 }
 
+function asyncAccess(file) {
+   function lstatPromise(file) {
+      return new Promise((res, rej) => res({size: 23}));
+   }
+   return new Promise(async (res, rej) => {
+      (await lstatPromise(file)).size
+   });
+}
+
 asyncAwait(10).then(v => { assert.ok(v, 40, "await parsing") });
 asyncYield(10).then(v => { assert.ok(typeof v, "string", "yield parsing") });
+asyncAccess(module.filename).then(v => assert.ok(v, 23, "await access"));
 
 /*---------------------------------------------------------------------*/
 /*    this                                                             */
@@ -124,3 +134,21 @@ assert.ok(ares, true, "async function expression");
 assert.ok(ha3(55) instanceof Promise, "async function expression"); 
 assert.ok(ares, true, "async function expression");
 	  
+/*---------------------------------------------------------------------*/
+/*    bugs                                                             */
+/*---------------------------------------------------------------------*/
+const bug_12jan2022_8a299e658 = async(x) => {
+   const g = y => {
+      const h = () => { 
+	 return x + y;
+      }
+      return h;
+   };
+
+   const g10 = g(10);
+   const g100 = g(100);
+   return g10()+g100();
+}
+
+bug_12jan2022_8a299e658(2).then(v => assert.ok(v === 114, "closure optim"));
+

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 19 07:19:20 2014                          */
-;*    Last change :  Wed Apr 28 09:35:31 2021 (serrano)                */
-;*    Copyright   :  2014-21 Manuel Serrano                            */
+;*    Last change :  Sun May  7 14:11:21 2023 (serrano)                */
+;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs TTY bindings                                              */
 ;*=====================================================================*/
@@ -25,8 +25,7 @@
 	    __nodejs__buffer
 	    __nodejs__stream-wrap)
 
-   (export (process-tty-wrap ::WorkerHopThread ::JsGlobalObject ::JsProcess
-	      ::obj ::JsObject)))
+   (export (process-tty-wrap ::WorkerHopThread ::JsGlobalObject ::JsProcess)))
 
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
@@ -36,7 +35,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    process-tty-wrap ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (process-tty-wrap %worker %this process::JsProcess slab slowbuffer::JsObject)
+(define (process-tty-wrap %worker %this process::JsProcess)
    
    (define (create-tty-proto)
       (with-access::JsGlobalObject %this (js-object)
@@ -61,7 +60,7 @@
 	    (js-put! obj (& "readStart")
 	       (js-make-function %this
 		  (lambda (this)
-		     (stream-read-start %worker %this process slab this))
+		     (stream-read-start %worker %this process this))
 		  (js-function-arity 0 0)
 		  (js-function-info :name "readStart" :len 0))
 	       #f %this)
@@ -141,20 +140,24 @@
 	 tty-proto))
    
    (define (tty-wrap hdl)
-      (with-access::JsGlobalObject %this (js-object)
-	 (let ((obj (instantiateJsHandle
-		       (handle hdl)
-		       (__proto__ (get-tty-proto))
-		       (cmap (js-make-jsconstructmap))
-		       (elements ($create-vector 1)))))
-	    (js-bind! %this obj (& "fd")
-	       :get (js-make-function %this
-		       (lambda (this)
-			  (nodejs-stream-fd %worker hdl))
-		       (js-function-arity 0 0)
-		       (js-function-info :name "GetFD" :len 0))
-	       :writable #f :configurable #f)
-	    obj)))
+      (with-access::JsGlobalObject %this (js-object js-tty-cmap)
+	 (with-access::JsProcess process (js-tty)
+	    (unless js-tty-cmap
+	       (set! js-tty-cmap (js-make-jsconstructmap :ctor js-tty)))
+	    (with-access::JsFunction js-tty (constrsize)
+	       (let ((obj (instantiateJsHandle
+			     (handle hdl)
+			     (__proto__ (get-tty-proto))
+			     (cmap js-tty-cmap)
+			     (elements ($create-vector constrsize)))))
+		  (js-bind! %this obj (& "fd")
+		     :get (js-make-function %this
+			     (lambda (this)
+				(nodejs-stream-fd %worker hdl))
+			     (js-function-arity 0 0)
+			     (js-function-info :name "GetFD" :len 0))
+		     :writable #f :configurable #f)
+		  obj)))))
    
    (define (TTY this fd readable)
       (tty-wrap (nodejs-tty-handle %worker fd readable)))

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/nodejs/nodejs.scm                 */
+;*    serrano/prgm/project/hop/hop/nodejs/nodejs.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 18 16:19:42 2013                          */
-;*    Last change :  Wed Mar 11 15:27:08 2015 (serrano)                */
-;*    Copyright   :  2013-17 Manuel Serrano                            */
+;*    Last change :  Thu Feb 23 14:40:43 2023 (serrano)                */
+;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    nodejs boot                                                      */
 ;*=====================================================================*/
@@ -21,6 +21,7 @@
    (import __nodejs_require
 	   __nodejs_process
 	   __nodejs__buffer
+	   ;; nodejs builtin common modules
 	   (__nodejs_console "| echo \"(module __nodejs_console (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
 	   (__nodejs_constants "| echo \"(module __nodejs_constants (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
 	   (__nodejs_util "| echo \"(module __nodejs_util (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
@@ -63,9 +64,18 @@
 	   (__nodejs_node_stdio "| echo \"(module __nodejs_node_stdio (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
 	   (__nodejs_node_proc "| echo \"(module __nodejs_node_proc (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
 	   (__nodejs_node_timers "| echo \"(module __nodejs_node_timers (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
-	   (__nodejs_node_cluster "| echo \"(module __nodejs_node_cluster (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\""))
+	   (__nodejs_node_cluster "| echo \"(module __nodejs_node_cluster (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
+	   ;; nodejs builtin es6 modules
+	   (__nodejs_mod_hop "| echo \"(module __nodejs_mod_hop (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
+	   (__nodejs_mod_path "| echo \"(module __nodejs_mod_path (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
+	   (__nodejs_mod_fs "| echo \"(module __nodejs_mod_fs (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
+	   (__nodejs_mod_http "| echo \"(module __nodejs_mod_http (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
+	   (__nodejs_mod_https "| echo \"(module __nodejs_mod_https (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\""))
 
-   (export (core-module-table)))
+
+   (export (core-module-table)
+	   (nodejs-deprecation-config! #!key (DEP0134 #t))
+	   *nodejs-DEP0134*))
 
 ;*---------------------------------------------------------------------*/
 ;*    make-core-module-table :: ...                                    */
@@ -73,8 +83,7 @@
 (define-macro (make-core-module-table . modules)
    `(list
        ,@(map (lambda (m)
-		 (let ((s (string->symbol (format "__nodejs_~a" m))))
-		    `(cons ',m (@ hopscript ,s))))
+		 `(cons ,(car m) (@ hopscript ,(cadr m))))
 	    modules)))
 
 ;*---------------------------------------------------------------------*/
@@ -86,51 +95,71 @@
       ;; does not allocate a plain JsObject (see _buffer.scm)
       (cons "buffer" (@ hopscript __nodejs__buffer))
       (make-core-module-table
-	 "console"
-	 "constants"
-	 "util"
-	 "sys"
-	 "path"
-	 "_linklist"
-	 "events"
-	 "assert"
-	 "_stream_readable"
-	 "_stream_writable"
-	 "_stream_duplex"
-	 "_stream_transform"
-	 "_stream_passthrough"
-	 "stream"
-	 "fs"
-	 "punycode"
-	 "dgram"
-	 "vm"
-	 "timers"
-	 "net"
-	 "querystring"
-	 "string_decoder"
-	 "child_process"
-	 "cluster"
-	 "crypto"
-	 "dns"
-	 "domain"
-	 "freelist"
-	 "url"
-	 "tls"
-	 "tty"
-	 "http"
-	 "https"
-	 "zlib"
-	 "os"
-	 "hop"
-	 "hophz"
-	 "node_tick"
-	 "node_stdio"
-	 "node_proc"
-	 "node_timers"
-	 "node_cluster")))
+	 ("console" __nodejs_console)
+	 ("constants" __nodejs_constants)
+	 ("util" __nodejs_util)
+	 ("sys" __nodejs_sys)
+	 ("path" __nodejs_path)
+	 ("path.mod" __nodejs_mod_path)
+	 ("_linklist" __nodejs__linklist)
+	 ("events" __nodejs_events)
+	 ("assert" __nodejs_assert)
+	 ("_stream_readable" __nodejs__stream_readable)
+	 ("_stream_writable" __nodejs__stream_writable)
+	 ("_stream_duplex" __nodejs__stream_duplex)
+	 ("_stream_transform" __nodejs__stream_transform)
+	 ("_stream_passthrough" __nodejs__stream_passthrough)
+	 ("stream" __nodejs_stream)
+	 ("fs" __nodejs_fs)
+	 ("fs.mod" __nodejs_mod_fs)
+	 ("punycode" __nodejs_punycode)
+	 ("dgram" __nodejs_dgram)
+	 ("vm" __nodejs_vm)
+	 ("timers" __nodejs_timers)
+	 ("net" __nodejs_net)
+	 ("querystring" __nodejs_querystring)
+	 ("string_decoder" __nodejs_string_decoder)
+	 ("child_process" __nodejs_child_process)
+	 ("cluster" __nodejs_cluster)
+	 ("crypto" __nodejs_crypto)
+	 ("dns" __nodejs_dns)
+	 ("domain" __nodejs_domain)
+	 ("freelist" __nodejs_freelist)
+	 ("url" __nodejs_url)
+	 ("tls" __nodejs_tls)
+	 ("tty" __nodejs_tty)
+	 ("http" __nodejs_http)
+	 ("http.mod" __nodejs_mod_http)
+	 ("https" __nodejs_https)
+	 ("https.mod" __nodejs_mod_https)
+	 ("zlib" __nodejs_zlib)
+	 ("os" __nodejs_os)
+	 ("hop" __nodejs_hop)
+	 ("hop.mod" __nodejs_mod_hop)
+	 ("hophz" __nodejs_hophz)
+	 ("node_tick" __nodejs_node_tick)
+	 ("node_stdio" __nodejs_node_stdio)
+	 ("node_proc" __nodejs_node_proc)
+	 ("node_timers" __nodejs_node_timers)
+	 ("node_cluster" __nodejs_node_cluster))))
 
 ;*---------------------------------------------------------------------*/
 ;*    core-module-table ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (core-module-table)
    module-table)
+
+;*---------------------------------------------------------------------*/
+;*    deprecations ...                                                 */
+;*---------------------------------------------------------------------*/
+;; https://nodejs.org/dist/latest-v18.x/docs/api/deprecations.html#DEP0134   
+(define *nodejs-DEP0134* #t)
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-deprecation-config! ...                                   */
+;*    -------------------------------------------------------------    */
+;*    This function is currently never invoked but it should be        */
+;*    when Hop or an Hop application starts.                           */
+;*---------------------------------------------------------------------*/
+(define (nodejs-deprecation-config! #!key (DEP0134 #t))
+   (set! *nodejs-DEP0134* DEP0134))

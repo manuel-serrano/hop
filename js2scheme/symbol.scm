@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Thu Dec 22 06:30:11 2022 (serrano)                */
-;*    Copyright   :  2013-22 Manuel Serrano                            */
+;*    Last change :  Sun Jul  2 06:36:39 2023 (serrano)                */
+;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
 ;*    -------------------------------------------------------------    */
@@ -354,7 +354,8 @@
 				 (argid (gensym 'arguments))
 				 (vtype (if (eq? fmode 'normal) 'any 'arguments))
 				 (mode mode)
-				 (loc loc)))
+				 (loc loc)
+				 (fun this)))
 		   (envl (append decls params))
 		   (env1 (append envl env0))
 		   (ldecls (with-access::J2SBlock body (nodes)
@@ -596,7 +597,7 @@
    (define (mark-decls-loop! decls)
       (for-each (lambda (decl::J2SDecl)
 		   (with-access::J2SDecl decl (scope _scmid id binder)
-		      (set! _scmid (symbol-append '%I id))
+		      (set! _scmid (symbol-append '%for_ id))
 		      (set! binder 'let-opt)
 		      (set! scope 'loop)))
 	 decls))
@@ -620,26 +621,33 @@
 	 (with-access::J2SVarDecls init (loc decls)
 	    (mark-decls-loop! decls)
 	    (with-access::J2SLoop for (body)
-	       ;; create local variables for the loop body
-	       (let ((inits (map let->init decls)))
-		  (set! body
-		     (instantiate::J2SBlock
-			(endloc loc)
-			(loc loc)
-			(nodes (list
-				  (instantiate::J2SVarDecls
-				     (loc loc)
-				     (decls inits))
-				  body
-				  (instantiate::J2SSeq
-				     (loc loc)
-				     (nodes (map reassign! decls inits)))))))))
-	    (let ((lift init))
-	       (set! init (instantiate::J2SNop (loc loc)))
-	       (instantiate::J2SBlock
-		  (endloc loc)
-		  (loc loc)
-		  (nodes (list lift for)))))))
+	       (if (closure? body decls)
+		   ;; create local variables for the loop body
+		   (let ((inits (map let->init decls)))
+		      (set! body
+			 (instantiate::J2SBlock
+			    (endloc loc)
+			    (loc loc)
+			    (nodes (list
+				      (instantiate::J2SVarDecls
+					 (loc loc)
+					 (decls inits))
+				      body
+				      (instantiate::J2SSeq
+					 (loc loc)
+					 (nodes (map reassign! decls inits)))))))
+		      (let ((lift init))
+			 (set! init (instantiate::J2SNop (loc loc)))
+			 (instantiate::J2SBlock
+			    (endloc loc)
+			    (loc loc)
+			    (nodes (list lift for)))))
+		   (let ((lift init))
+		      (set! init (instantiate::J2SNop (loc loc)))
+		      (instantiate::J2SBlock
+			 (endloc loc)
+			 (loc loc)
+			 (nodes (list lift for)))))))))
    
    (define (for-var for)
       (with-access::J2SFor for (init)
@@ -1012,7 +1020,7 @@
    (with-access::J2SClassElement this (prop static clazz)
       (cond
 	 (static
-	  (set! prop (resolve! prop env mode withs withs genv ctx conf)))
+	  (set! prop (resolve! prop env mode withs withs genv 'static conf)))
 	 ((not (isa? prop J2SDataPropertyInit))
 	  (set! prop (resolve! prop env mode withs withs genv 'class conf)))
 	 (else
@@ -1198,7 +1206,8 @@
 	 (raise
 	    (instantiate::&io-parse-error
 	       (proc "hopc (symbol)")
-	       (msg (format "`super' call unexpected in context (~a)" (typeof ctx)))
+	       (msg (format "`super' call unexpected in context (~a)"
+		       (if (symbol? ctx) ctx (typeof ctx))))
 	       (obj (j2s-expression-src loc conf "super"))
 	       (fname (cadr loc))
 	       (location (caddr loc))))))
@@ -1272,7 +1281,8 @@
 	  (raise
 	     (instantiate::&io-parse-error
 		(proc "hopc (symbol)")
-		(msg (format "`super' keyword unexpected in context (~a)" (typeof ctx)))
+		(msg (format "`super' keyword unexpected in context (~a)"
+			(if (symbol? ctx) ctx (typeof ctx))))
 		(obj (j2s-expression-src loc conf "super"))
 		(fname (cadr loc))
 		(location (caddr loc))))
@@ -1629,3 +1639,53 @@
 				   (fname (cadr loc))
 				   (location (caddr loc)))))))))
 	 exports)))
+
+;*---------------------------------------------------------------------*/
+;*    closure? ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (closure? body decls)
+   (let ((cell (make-cell #f)))
+      (closure-using? body decls cell)
+      (cell-ref cell)))
+
+;*---------------------------------------------------------------------*/
+;*    closure-using? ::J2SNode ...                                     */
+;*---------------------------------------------------------------------*/
+(define-walk-method (closure-using? this::J2SNode decls cell)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    closure-using? ::J2SFun ...                                      */
+;*---------------------------------------------------------------------*/
+(define-walk-method (closure-using? this::J2SFun decls cell)
+   (with-access::J2SFun this (body)
+      (if (using? body decls)
+	  (cell-set! cell #t)
+	  (call-default-walker))))
+
+;*---------------------------------------------------------------------*/
+;*    using? ...                                                       */
+;*---------------------------------------------------------------------*/
+(define (using? body decls)
+   (let ((cell (make-cell #f)))
+      (body-using? body
+	 (map (lambda (d) (with-access::J2SDecl d (id) id)) decls)
+	 cell)
+      (cell-ref cell)))
+
+;*---------------------------------------------------------------------*/
+;*    body-using? ::J2SNode ...                                        */
+;*---------------------------------------------------------------------*/
+(define-walk-method (body-using? this::J2SNode ids cell)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    body-using? ::J2SUnknowRef ...                                   */
+;*---------------------------------------------------------------------*/
+(define-walk-method (body-using? this::J2SUnresolvedRef ids cell)
+   (with-access::J2SUnresolvedRef this (id)
+      (when (memq id ids)
+	 (cell-set! cell #t))))
+
+
+   

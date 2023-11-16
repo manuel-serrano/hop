@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Sat Jan  1 07:21:31 2022 (serrano)                */
-;*    Copyright   :  2017-22 Manuel Serrano                            */
+;*    Last change :  Thu Mar 30 08:41:27 2023 (serrano)                */
+;*    Copyright   :  2017-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function->method transformation                                  */
 ;*    -------------------------------------------------------------    */
@@ -164,6 +164,7 @@
 	    ;; (set! utype 'object)
 	    (set! vtype 'object)
 	    (let ((m (duplicate::J2SFun this
+			(decl #f) ;; MS 30mar2023, I'm not sure about this one!
 			(optimize #t)
 			(name (when (symbol? name) (symbol-append name '&)))
 			(params nparams)

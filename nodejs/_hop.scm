@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Mon Dec 26 12:19:31 2022 (serrano)                */
-;*    Copyright   :  2014-22 Manuel Serrano                            */
+;*    Last change :  Fri Jul 14 07:45:37 2023 (serrano)                */
+;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
 ;*=====================================================================*/
@@ -110,8 +110,8 @@
 		  (obj (instantiate::server
 			  (ctx %this)
 			  (trigger (lambda (thunk)
-				      (js-worker-push-thunk! (js-current-worker)
-					 "server" thunk)))
+				      (js-worker-push! (js-current-worker)
+					 "server" (lambda (%this) (thunk)))))
 			  (ssl (js-toboolean ssl))
 			  (host (if (eq? host (js-undefined))
 				    "localhost"
@@ -134,8 +134,8 @@
 	       (f (lambda (evt)
 		     (if (eq? (hop-sofile-compile-policy) 'aot)
 			 (js-call1 %this proc this evt)
-			 (js-worker-push-thunk! (js-current-worker) "server"
-			    (lambda ()
+			 (js-worker-push! (js-current-worker) "server"
+			    (lambda (%this)
 			       (js-call1 %this proc this evt)))))))
 	    (nodejs-compile-add-event-listener! e f (when (pair? cap) cap))))
 
@@ -226,8 +226,8 @@
 		   (lambda (this::JsServer event proc . capture)
 		      (with-access::JsServer this (obj data)
 			 (let ((f (lambda (evt)
-				     (js-worker-push-thunk! (js-current-worker) "server"
-					(lambda ()
+				     (js-worker-push! (js-current-worker) "server"
+					(lambda (%this)
 					   (js-call1 %this proc this evt))))))
 			    (set! data (cons (cons (cons event proc) f) data))
 			    (when (isa? obj server)
@@ -312,6 +312,21 @@
 	       `(isWorker . ,(not (js-main-worker? %worker)))
 	       `(loginCookieCryptKey . ,(hop-login-cookie-crypt-key))
 	       `(charset . ,(js-string->jsstring (symbol->string! (hop-charset))))
+
+	       ;; loadPath
+	       (define-js loadPathGet 0
+		  (lambda (this)
+		     (js-vector->jsarray
+			(list->vector (map js-string->jsstring (hop-path)))
+			%this)))
+
+	       (define-js loadPathSet 1
+		  (lambda (this path)
+		     (if (not (js-array? (car path)))
+			 (js-raise-type-error %this "not an array" path)
+			 (hop-path-set!
+			    (map (lambda (o) (js-tostring o %this))
+			       (jsarray->list (car path) %this))))))
 
 	       ;; server configuration
 	       (define-js httpAuthenticationMethodGet 0
@@ -399,6 +414,42 @@
 		  (lambda (this proc req)
 		     (hopjs-response-async this proc req %this %worker)))
 
+	       ;; log
+	       (define-js log -2
+		  (lambda (this . args)
+		     (let ((p (current-error-port)))
+			(for-each (lambda (a) (display a p)) args)
+			(newline p))))
+	       
+	       ;; inspect
+	       (define-js inspect 2
+		  (lambda (this obj msg)
+		     (let ((p (current-error-port)))
+			(if (eq? msg (js-undefined))
+			    (js-inspect-object obj)
+			    (js-inspect-object obj msg)))))
+	       
+	       ;; inspectCmap
+	       (define-js imspectCmap 2
+		  (lambda (this obj msg)
+		     (with-access::JsObject obj (cmap)
+			(let ((p (current-error-port)))
+			   (if (eq? msg (js-undefined))
+			       (js-inspect-cmap cmap)
+			       (js-inspect-cmap cmap msg))))))
+	       
+	       ;; typeName
+	       (define-js typeName 1
+		  (lambda (this arg)
+		     (js-string->jsstring (typeof arg))))
+	       
+	       ;; gc
+	       (define-js gc 0
+		  (lambda (this)
+		     (cond-expand
+			(gc (gc))
+			(else #unspecified))))
+	       
 	       ;; request
 	       (define-js isLocalRequest 1
 		  (lambda (this req)
@@ -424,22 +475,22 @@
 		  (lambda (this proc)
 		     (hop-filter-add!
 			(lambda (req)
-			   (js-worker-exec (js-current-worker) "request" #t
-			      (lambda ()
+			   (js-worker-exec (js-current-worker) "request"
+			      (lambda (%this)
 				 (js-call1 %this proc this req)))))))
 	       (define-js addRequestFilterFirst 1
 		  (lambda (this proc)
 		     (hop-filter-add-always-first!
 			(lambda (req)
-			   (js-worker-exec (js-current-worker) "request" #t
-			      (lambda ()
+			   (js-worker-exec (js-current-worker) "request"
+			      (lambda (%this)
 				 (js-call1 %this proc this req)))))))
 	       (define-js addRequestFilterLast 1
 		  (lambda (this proc)
 		     (hop-filter-add-always-last!
 			(lambda (req)
-			   (js-worker-exec (js-current-worker) "request" #t
-			      (lambda ()
+			   (js-worker-exec (js-current-worker) "request"
+			      (lambda (%this)
 				 (js-call1 %this proc this req)))))))
 	       
 	       ;; events
@@ -455,8 +506,8 @@
 		  (lambda (this name proc capture)
 		     (add-event-listener! (& "hop") (js-tostring name %this)
 			(lambda (evt)
-			   (js-worker-push-thunk! (js-current-worker) "hop"
-			      (lambda ()
+			   (js-worker-push! (js-current-worker) "hop"
+			      (lambda (%this)
 				 (js-call1 %this proc this evt))))
 			(js-toboolean capture))))
 	       
@@ -686,14 +737,14 @@
 			 (body (lambda ()
 				  (post
 				     (lambda (x)
-					(js-worker-exec (js-current-worker) "post" #t
-					   (lambda ()
+					(js-worker-exec (js-current-worker) "post"
+					   (lambda (%this)
 					      (uv-idle-stop h)
 					      (js-call1-jsprocedure %this success %this
 						 (scheme->js x)))))
 				     (lambda (x)
-					(js-worker-exec (js-current-worker) "post" #t
-					   (lambda ()
+					(js-worker-exec (js-current-worker) "post"
+					   (lambda (%this)
 					      (uv-idle-stop h)
 					      (fail x))))))))))))
 	  (js-undefined))
@@ -714,18 +765,18 @@
 						 (body (lambda ()
 							  (post
 							     (lambda (x)
-								(js-worker-exec (js-current-worker) "post" #t
-								   (lambda ()
+								(js-worker-exec (js-current-worker) "post"
+								   (lambda (%this)
 								      (js-promise-async p
-									 (lambda ()
+									 (lambda (%this)
 									    (uv-idle-stop h)
 									    (js-promise-resolve p
 									       (scheme->js x)))))))
 							     (lambda (x)
-								(js-worker-exec (js-current-worker) "post" #t
-								   (lambda ()
+								(js-worker-exec (js-current-worker) "post"
+								   (lambda (%this)
 								      (js-promise-async p
-									 (lambda ()
+									 (lambda (%this)
 									    (uv-idle-stop h)
 									    (js-promise-reject p x)))))))))))))))
 			       (js-function-arity 2 0)
@@ -740,6 +791,17 @@
       (cond
 	 ((eq? v (js-undefined)) def)
 	 ((js-jsstring? v) (js-jsstring->string v))
+	 ((js-object? v) (js-jsobject->alist v this))
+	 (else v))))
+
+;*---------------------------------------------------------------------*/
+;*    get-symbol/default ...                                           */
+;*---------------------------------------------------------------------*/
+(define (get-symbol/default obj key this def)
+   (let ((v (js-get obj key this)))
+      (cond
+	 ((eq? v (js-undefined)) def)
+	 ((js-jsstring? v) (string->symbol (js-jsstring->string v)))
 	 ((js-object? v) (js-jsobject->alist v this))
 	 (else v))))
 
@@ -803,6 +865,7 @@
 			      (mime-type path "text/plain")))
 	     (content-length (get/default req (& "contentLength") %this #e-1))
 	     (header (get/list req (& "header") %this '()))
+	     (connection (get-symbol/default req (& "connection") %this #f))
 	     (file path))
 	  (instantiate::http-response-file
 	     (file path)
@@ -852,8 +915,8 @@
    (define (async-proc req)
       (if (isa? req http-request)
 	  (lambda (k)
-	     (js-worker-push-thunk! %worker "hopjs-response-async"
-		(lambda ()
+	     (js-worker-push! %worker "hopjs-response-async"
+		(lambda (%this)
 		   (with-handler
 		      (lambda (e)
 			 (cond

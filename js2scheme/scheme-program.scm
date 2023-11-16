@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Sun Nov 27 08:59:19 2022 (serrano)                */
-;*    Copyright   :  2018-22 Manuel Serrano                            */
+;*    Last change :  Thu Jun 22 14:49:00 2023 (serrano)                */
+;*    Copyright   :  2018-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
 ;*=====================================================================*/
@@ -82,6 +82,8 @@
 		   (define %cnst-table ,cnsttable)
 		   ,@(js-define-tls this ctx)
 		   ,@(j2s-tls-headers scmheaders)
+		   (cond-expand
+		      ((not bigloo-eval) (pragma "HOP_REWRITE_INIT($1)" ,pcache-size)))
 		   (letrec* ,(j2s-let-headers scmheaders)
 		      ,@(j2s-expr-headers scmheaders)
 		      ;;,@globals
@@ -139,6 +141,8 @@
 		    (define %cnst-table ,cnsttable)
 		    ,@(js-define-tls this ctx)
 		    ,@(j2s-tls-headers scmheaders)
+		    (cond-expand
+		       ((not bigloo-eval) (pragma "HOP_REWRITE_INIT($1)" ,pcache-size)))
 		    (letrec* ,(j2s-let-headers scmheaders)
 		       ,@(j2s-expr-headers scmheaders)
 		       ;;,@globals
@@ -225,6 +229,7 @@
 		      :weakset (j2s-find-extern-decl headers 'WeakSet)
 		      :object (j2s-find-extern-decl headers 'Object)
 		      :bigint (j2s-find-extern-decl headers 'BigInt)
+		      :promise (j2s-find-extern-decl headers 'Promise)
 		      :program this))
 	     (esimports (j2s-module-imports this nctx))
 	     (esredirects (j2s-module-redirects this nctx))
@@ -324,7 +329,7 @@
       (let* ((jsmod (js-module/main this ctx))
 	     (jsthis `(with-access::JsGlobalObject %this (js-object)
 			 (js-new0 %this js-object)))
-	     (thunk `(lambda ()
+	     (thunk `(lambda (%this)
 			(define-tls %this %t)
 			(define-tls %module %m)
 			(let* ((_ (set! __js_strings ,(j2s-jsstring-init this)))
@@ -391,10 +396,12 @@
 	      (hop-port-set! -1)
 	      (hop-ssl-port-set! -1)
 	      (hopscript-install-expanders!)
+	      (cond-expand
+		 ((not bigloo-eval) (pragma "HOP_REWRITE_INIT($1)" ,pcache-size)))
 	      (multiple-value-bind (%worker %t %m)
 		 (js-main-worker! ,name ,(absolute path) #f
 		    nodejs-new-global-object nodejs-new-module)
-		 (js-worker-push-thunk! %worker "nodejs-toplevel"
+		 (js-worker-push! %worker "nodejs-toplevel"
 		    ,(if (context-get ctx :function-nice-name #f)
 			 (let ((id (string->symbol "#main")))
 			    `(let ((,id ,thunk))
@@ -455,6 +462,9 @@
 		   (nodejs-new-module ,(basename path) ,(absolute path)
 		      %worker %this))
 		(define %cnst-table ,cnsttable)
+		(define !process #f)
+		(define %import-meta #unspecified)
+		(define %filename #unspecified)
 		,esexports
 		,@esimports
 		,@esredirects
@@ -475,8 +485,10 @@
 		   (hop-port-set! -1)
 		   (hop-ssl-port-set! -1)
 		   (bigloo-library-path-set! ',(bigloo-library-path))
+		   (cond-expand
+		      ((not bigloo-eval) (pragma "HOP_REWRITE_INIT($1)" ,pcache-size)))
 		   (set! !process (nodejs-process %worker %this))
-		   ,@(exit-body ctx (filter nofundef? body))))))))
+		      ,@(exit-body ctx (filter nofundef? body))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-module-imports ...                                           */
@@ -487,6 +499,7 @@
       (let ((impid (importpath-var im)))
 	 (with-access::J2SImportPath im (abspath path protocol import loc)
 	    (with-access::J2SImport import (iprgm)
+	       (unless iprgm (tprint "pas iprgm abpath=" abspath " path=" path))
 	       `(define ,impid
 		   (nodejs-import-module %worker %this %module
 		      ,(if (char=? (string-ref path 0) #\.)
@@ -596,23 +609,16 @@
 		    (with-access::J2SRedirect x ((rindex index) export import ( id2 id))
 		       (with-access::J2SImport import (ipath)
 			  (with-access::J2SImportPath ipath ((iindex index))
-			     '(tprint "redirect "
-				id " " id2 " rifx=" rindex
-				" iindex=" iindex
-				 " (" (export-from x) ")")
 			     (loop export
 				(cons rindex rindexes)
 				(cons iindex iindexes)))))
 		    (with-access::J2SExport x ((rindex index) decl)
-		       (with-access::J2SExport x ((id2 id))
-			  '(tprint "export " id " " id2 " "
-			     "ridx=" (reverse (cons rindex rindexes))
-			     " idx=" (reverse iindexes)
-			     " (" (export-from x) ")"))
+		       ;; when :ignore-unresolved-modules is #t,
+		       ;; decl might be false
 		       `(js-evar-info ,(& alias this)
 			   ',(reverse (cons rindex rindexes))
 			   ',(reverse iindexes)
-			   ,(decl-usage-has? decl '(assig))))))))))
+			   ,(when decl (decl-usage-has? decl '(assig)))))))))))
    
    (with-access::J2SProgram this (exports imports path checksum)
       (let ((cs (j2s-program-checksum! this)))

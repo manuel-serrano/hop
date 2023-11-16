@@ -3,8 +3,8 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Mar 15 07:22:39 2006                          */
-#*    Last change :  Tue Jun  2 08:15:44 2020 (serrano)                */
-#*    Copyright   :  2006-20 Manuel Serrano                            */
+#*    Last change :  Sat Feb 25 06:43:51 2023 (serrano)                */
+#*    Copyright   :  2006-23 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The common Makefile for building libraries                       */
 #*=====================================================================*/
@@ -233,7 +233,7 @@ distclean: cleanall
 
 install-library: install-$(BACKEND)
 
-install-native: install-native-heap install-native-libs
+install-native: install-native-heap install-native-libs install-native-includes
 
 install-native-heap:
 	$(INSTALL) $(BUILDLIBDIR)/$(TARGETNAME).heap $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME).heap
@@ -272,8 +272,13 @@ install-native-libs-version:
                 LIBDIR=$(HOPLIBDIR) \
                 LIB=lib$(TARGETNAME)_eu$(LIBSUFFIXTHREAD)-$(HOPRELEASE)
 
+install-native-includes:
+	for i in $(C_INCLUDES); do \
+	   $(INSTALL) $$i $(DESTDIR)$(HOPINCDIR)/$(HOPFILDIR)/$$i; \
+	   chmod $(MODFILE) $(DESTDIR)$(HOPINCDIR)/$(HOPFILDIR)/$$i; \
+	done
 
-uninstall: uninstall-native-heap uninstall-native-libs
+uninstall: uninstall-native-heap uninstall-native-libs uninstall-native-includes
 
 uninstall-native-heap:
 	-$(RM) -f $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME).heap
@@ -290,6 +295,11 @@ uninstall-native-libs-version:
 	-$(MAKE) uninstall-lib LIB=lib$(TARGETNAME)_u$(LIBSUFFIXTHREAD)-$(HOPRELEASE)
 	-$(MAKE) uninstall-lib LIB=lib$(TARGETNAME)_es$(LIBSUFFIXTHREAD)-$(HOPRELEASE)
 	-$(MAKE) uninstall-lib LIB=lib$(TARGETNAME)_eu$(LIBSUFFIXTHREAD)-$(HOPRELEASE)
+
+uninstall-native-includes:
+	for i in $(C_INCLUDES); do \
+	   $(RM) -f $(DESTDIR)$(HOPINCDIR)/$(HOPFILDIR)/$$i; \
+	done
 
 #*---------------------------------------------------------------------*/
 #*    dep                                                              */

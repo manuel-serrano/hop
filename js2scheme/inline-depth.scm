@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Fri Jun  3 17:58:34 2022 (serrano)                */
-;*    Copyright   :  2017-22 Manuel Serrano                            */
+;*    Last change :  Thu Jun 22 15:54:42 2023 (serrano)                */
+;*    Copyright   :  2017-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function/Method inlining optimization                            */
 ;*    -------------------------------------------------------------    */
@@ -315,16 +315,31 @@
 ;*    inline-function-call ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (inline-function-call val::J2SFun thisargs args::pair-nil loc)
-   (with-access::J2SFun val (%info thisp params (floc loc))
-      (let* ((body (funinfo-initial-body %info))
-	     (vals (inline-args (cons thisp params)
-		      (if (pair? thisargs)
-			  (append thisargs args)
-			  (cons (J2SUndefined) args))
-		      loc))
-	     (nbody (j2s-alpha body (cons thisp params) vals)))
-	 (LetBlock floc (filter (lambda (b) (isa? b J2SDecl)) vals)
-	    nbody))))
+   
+   (define (function-call)
+      (with-access::J2SFun val (%info thisp params (floc loc))
+	 (let* ((body (funinfo-initial-body %info))
+		(vals (inline-args (cons thisp params)
+			 (if (pair? thisargs)
+			     (append thisargs args)
+			     (cons (J2SUndefined) args))
+			 loc))
+		(nbody (j2s-alpha body (cons thisp params) vals)))
+	    (LetBlock floc (filter (lambda (b) (isa? b J2SDecl)) vals)
+	       nbody))))
+   
+   (define (arrow-call)
+      (with-access::J2SFun val (%info thisp params (floc loc))
+	 (let* ((body (funinfo-initial-body %info))
+		(vals (inline-args params args loc))
+		(nbody (j2s-alpha body params vals)))
+	    (LetBlock floc (filter (lambda (b) (isa? b J2SDecl)) vals)
+	       nbody))))
+   
+   (with-access::J2SFun val (thisp)
+      (if thisp
+	  (function-call)
+	  (arrow-call))))
 
 ;* {*---------------------------------------------------------------------*} */
 ;* {*    inline-unknown-call ...                                          *} */
@@ -536,17 +551,20 @@
 (define (inline-args params args loc)
    (let ((lena (length args))
 	 (lenp (length params)))
-      (map (lambda (p a)
-	      (cond
-		 ((and (ronly-variable? p) (simple-argument? a))
-		  a)
-		 (else
-		  (with-access::J2SDecl p ((_usage usage) id writable)
-		     (with-access::J2SNode a (loc)
-			(let ((d (J2SLetOpt _usage (gensym id) a)))
-			   (with-access::J2SDecl d ((w writable))
-			      (set! w writable))
-			   d))))))
+      (filter-map (lambda (p a)
+		     (cond
+			((and (ronly-variable? p) (simple-argument? a))
+			 a)
+			((not (isa? p J2SDecl))
+			 (error "inline-args" "Illegal this arguments"
+			    (j2s->sexp a)))
+			(else
+			 (with-access::J2SDecl p ((_usage usage) id writable)
+			    (with-access::J2SNode a (loc)
+			       (let ((d (J2SLetOpt _usage (gensym id) a)))
+				  (with-access::J2SDecl d ((w writable))
+				     (set! w writable))
+				  d))))))
 	 params
 	 (if (<fx lena lenp)
 	     (append args

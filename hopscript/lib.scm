@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Tue Oct 25 20:35:05 2022 (serrano)                */
-;*    Copyright   :  2013-22 Manuel Serrano                            */
+;*    Last change :  Tue Jun 20 14:09:17 2023 (serrano)                */
+;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
 ;*=====================================================================*/
@@ -50,9 +50,11 @@
 	   (js-dsssl-args->jsargs ::pair ::JsGlobalObject)
 	   (js-object->keyword-arguments*::pair-nil ::JsObject ::JsGlobalObject)
 	   (js-iterable->list::pair-nil ::obj ::JsGlobalObject)
+	   (js-jsobject-spread ::JsObject ::vector ::JsGlobalObject)
 	   (generic js-jsobject->jsarray ::obj ::JsGlobalObject)
 	   (inline fixnums?::bool ::obj ::obj)
 	   (js-tls-gc-mark! ::obj)))
+
 
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
@@ -185,10 +187,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-with-context ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (js-with-context ctx::obj ctxname::bstring thunk::procedure)
+(define (js-with-context ctx::obj ctxname::bstring proc::procedure)
+   [assert (proc) (correct-arity? proc 1)]
    (if (isa? ctx JsGlobalObject)
        (with-access::JsGlobalObject ctx (worker name)
-	  (js-worker-exec worker name #t thunk))
+	  (if (eq? worker (current-thread))
+	      (proc ctx)
+	      (js-worker-exec worker name proc)))
        (error ctxname "Not a JavaScript context" ctx)))
 
 ;*---------------------------------------------------------------------*/
@@ -492,6 +497,29 @@
       (else
        (error "js-iterable->list"
 	  (format "not implemented yet \"~a\"" (typeof obj)) obj))))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsobject-spread ...                                           */
+;*---------------------------------------------------------------------*/
+(define (js-jsobject-spread o::JsObject keys::vector %this::JsGlobalObject)
+
+   (define (vector-member k v)
+      (let loop ((i (-fx (vector-length v) 1)))
+	 (unless (=fx i -1)
+	    (or (string=? (vector-ref v i) k)
+		(loop (-fx i 1))))))
+   
+   (let ((no (instantiateJsObject
+		(__proto__ (js-object-proto %this))
+		(elements '#()))))
+      (js-for-in o
+	 (lambda (k %this)
+	    (let ((s (js-tostring k %this)))
+	       (unless (vector-member s keys)
+		  (let ((v (js-get o k %this)))
+		     (js-put! no k v #f %this)))))
+	 %this)
+      no))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsobject->jsarray ::obj ...                                   */

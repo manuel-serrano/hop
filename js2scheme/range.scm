@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Mon May  2 15:30:00 2022 (serrano)                */
-;*    Copyright   :  2016-22 Manuel Serrano                            */
+;*    Last change :  Thu Jun 22 15:05:40 2023 (serrano)                */
+;*    Copyright   :  2016-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
 ;*=====================================================================*/
@@ -357,7 +357,8 @@
 	  (let ((nr (interval-merge range rng)))
 	     (unless (equal? nr range)
 		(unfix! fix
-		   (format "J2SExpr.add(~a) range=~a/~a -> ~a" loc range rng nr))
+		   (format "J2SExpr.add(~a@~a) range=~a/~a -> ~a"
+		      (typeof this) loc range rng nr))
 		(set! range nr))
 	     (return nr env))
 	  (return rng env))))
@@ -507,6 +508,8 @@
 ;*---------------------------------------------------------------------*/
 (define (interval-merge left right)
    (cond
+      ((or (eq? left 'any) (eq? right 'any))
+       'any)
       ((not (interval? left))
        right)
       ((not (interval? right))
@@ -678,8 +681,8 @@
 		    ((<= oa *max-int30*)
 		     (let ((max *max-int30*))
 			(interval (min oi max) max)))
-		    ((<= oa (- *max-index* #l10))
-		     (let ((max (- *max-index* #l10)))
+		    ((<= oa (-llong *max-index* #l10))
+		     (let ((max (-llong *max-index* #l10)))
 			(interval (min oi max) max)))
 		    ((<= oa *max-index*)
 		     (let ((max *max-index*))
@@ -1657,13 +1660,13 @@
 (define-walk-method (node-range this::J2SNew env::pair-nil conf mode::symbol fix::cell)
    (with-access::J2SNew this (clazz args loc)
       (when *indebug*
-	 (tprint "... J2SCall.1 env=" (dump-env env)))
+	 (tprint "... J2SNew.1 env=" (dump-env env)))
       (multiple-value-bind (_ env)
 	 (node-range clazz env conf mode fix)
 	 (multiple-value-bind (_ env)
 	    (node-range-call clazz args env conf mode fix)
 	    (when *indebug*
-	       (tprint "... J2SCall.2 env=" (dump-env env)))
+	       (tprint "... J2SNew env=" (dump-env env)))
 	    (expr-range-add! this env fix *infinity-intv*)))))
 
 ;*---------------------------------------------------------------------*/
@@ -1769,7 +1772,7 @@
 	 (multiple-value-bind (intff envf)
 	    (node-range field envo conf mode fix)
 	    (with-access::J2SExpr obj (type)
-	       (if (and (memq type '(string array jsvector)) (j2s-field-length? field))
+	       (if (and (type-array-like? type) (j2s-field-length? field))
 		   (expr-range-add! this envf fix *length-intv*)
 		   (expr-range-add! this envf fix *infinity-intv*)))))))
 

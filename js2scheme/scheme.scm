@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Copyright   :  2013-22 Manuel Serrano                            */
+;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
 ;*=====================================================================*/
@@ -16,7 +16,7 @@
    (include "ast.sch"
 	    "usage.sch"
 	    "context.sch")
-   
+
    (import __js2scheme_ast
 	   __js2scheme_dump
 	   __js2scheme_utils
@@ -43,17 +43,18 @@
 	   __js2scheme_scheme-symbol
 	   __js2scheme_scheme-math
 	   __js2scheme_scheme-date
+	   __js2scheme_scheme-promise
 	   __js2scheme_scheme-array
 	   __js2scheme_scheme-arguments
 	   __js2scheme_scheme-spread
 	   __js2scheme_scheme-bexit
 	   __js2scheme_scheme-try
 	   __js2scheme_scheme-constant
-	   __js2scheme_scheme-record)
+	   __js2scheme_scheme-record
+	   __js2scheme_scheme-nodejs)
    
    (export j2s-scheme-stage
 	   j2s-scheme-eval-stage
-	   (j2s-scheme-box ::obj ::symbol ::procedure ::struct)
 	   (generic j2s-scheme ::obj ::symbol ::procedure ::struct)))
 
 ;*---------------------------------------------------------------------*/
@@ -132,13 +133,6 @@
 		(else
 		 (epairify loc
 		    (cons sexp (loop (cdr nodes)))))))))))
-
-;*---------------------------------------------------------------------*/
-;*    j2s-scheme-box ...                                               */
-;*---------------------------------------------------------------------*/
-(define (j2s-scheme-box this mode return::procedure ctx)
-   (j2s-as (j2s-scheme this mode return ctx)
-      this (j2s-type this) 'any ctx))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::obj ...                                             */
@@ -457,6 +451,12 @@
 	    ((and export (or (not (decl-ronly? decl)) (not (j2s-let-opt? decl))))
 	     (with-access::J2SExport export (index decl)
 		`(vector-ref %evars ,index)))
+	    ((decl-stack-vararg? decl)
+	     (j2s-arguments-stack-id))
+	    ((decl-lazy-vararg? decl)
+	     `(or ,(j2s-arguments-object-id) ,(j2s-arguments-stack-id)))
+	    ((isa? decl J2SDeclArguments)
+	     (j2s-arguments-object-id))
 	    ((j2s-let-opt? decl)
 	     (j2s-decl-scm-id decl ctx))
 	    ((j2s-let? decl)
@@ -492,7 +492,9 @@
 	  (let ((super (j2s-class-super-val (j2s-vtype this))))
 	     (if (isa? super J2SRecord)
 		 (class-prototype-id super)
-		 (j2s-error "super" "Illegal context" this))))
+		 (j2s-scheme-error "super" "Illegal context" this))))
+	 ((eq? context 'static)
+	  '%super)
 	  (else
 	   '%super-prototype))))
 
@@ -627,7 +629,7 @@
 	 ((eq? type 'uint32)
 	  (cond
 	     ((flonum? val) (flonum->uint32 val))
-	     ((uint32? val) (int32->uint32 val))
+	     ((int32? val) (int32->uint32 val))
 	     ((uint32? val) val)
 	     (else (fixnum->uint32 val))))
 	 ((fixnum? val)
@@ -923,7 +925,7 @@
 			  '())
 		    ,@(if export
 			  (with-access::J2SExport export (index)
-			     `((vector-set! %evars ,index ,id)))
+			     `((vector-set! %evars ,index ,^id)))
 			  '())))))
 	 ((decl-usage-has? d '(call))
 	  (with-access::J2SFun val (generator)
@@ -945,7 +947,8 @@
 			`(define ,id
 			    ,(jsfun->lambda val mode return ctx #f))
 			,(with-access::J2SExport export (index)
-			    `(vector-set! %evars ,index ,id))))
+			    `(vector-set! %evars ,index
+				(j2sfun->scheme val ,id #f mode return ctx)))))
 		   (else
 		    `(define ,id
 			,(jsfun->lambda val mode return ctx #f)))))))
@@ -1604,13 +1607,11 @@
 	     (with-access::J2SKontRef lhs (index gen loc)
 		'#unspecified))
 	    (else
-	     (j2s-error "js2scheme" "Illegal lhs" this)))))
+	     (j2s-scheme-error "js2scheme" "Illegal lhs" this 'js-reference-error)))))
    
    (with-access::J2SForIn this (loc lhs obj body op
 				  need-bind-exit-break need-bind-exit-continue)
       (cond
-;* 	 ((eq? (j2s-type obj) 'array)                                  */
-;* 	  (tprint "ICI"))                                              */
 	 ((and (isa? lhs J2SRef)
 	       (with-access::J2SRef lhs (decl)
 		  (with-access::J2SDecl decl (binder)
@@ -1670,52 +1671,75 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SAssig mode return ctx)
 
-   (define (maybe-array-set lhs::J2SAccess rhs::J2SExpr)
+   (define (check-array-set lhs::J2SAccess rhs::J2SExpr)
       (with-access::J2SAccess lhs (obj field cache loc)
-	 (if (isa? lhs J2SRef)
-	     `(if (js-array? ,(j2s-scheme obj mode return ctx))
-		  ,(j2s-array-set! this mode return ctx)
-		  ,(j2s-put! loc (j2s-scheme obj mode return ctx)
-		      field
-		      (typeof-this obj ctx)
-		      (j2s-scheme field mode return ctx)
-		      (j2s-type field)
-		      (j2s-scheme rhs mode return ctx)
-		      (j2s-type rhs)
-		      (strict-mode? mode)
-		      ctx
-		      cache
-		      :optim #f
-		      :cachefun (or (is-function? rhs) (is-prototype? obj))))
-	     (let* ((tmp (gensym 'assigtmp))
-		    (access (duplicate::J2SAccess lhs (obj (J2SHopRef tmp))))
-		    (tyo (j2s-type obj)))
-		(cond
-		   ((eq? tyo 'array)
-		    (j2s-array-set! this mode return ctx))
-		   ((memq tyo '(int8array uint8array))
-		    (j2s-tarray-set! this mode return ctx))
-		   (else
-		    `(let ((,tmp ,(j2s-scheme obj mode return ctx)))
-			(if (js-array? ,tmp)
-			    ,(j2s-array-set!
-				(duplicate::J2SAssig this
-				   (lhs (duplicate::J2SAccess lhs
-					   (obj (J2SHopRef tmp)))))
-				mode return ctx)
-			    ,(j2s-put! loc tmp
-				field
-				(typeof-this obj ctx)
-				(j2s-scheme field mode return ctx)
-				(j2s-type field)
-				(j2s-scheme rhs mode return ctx)
-				(j2s-type rhs)
-				(strict-mode? mode)
-				ctx
-				cache
-				:optim #f
-				:cachefun (or (is-function? rhs)
-					      (is-prototype? obj)))))))))))
+	 `(if (js-array? ,(j2s-scheme obj mode return ctx))
+	      ,(j2s-array-set! this mode return ctx)
+	      ,(j2s-put! loc (j2s-scheme obj mode return ctx)
+		  field
+		  (typeof-this obj ctx)
+		  (j2s-scheme field mode return ctx)
+		  (j2s-type field)
+		  (j2s-scheme rhs mode return ctx)
+		  (j2s-type rhs)
+		  (strict-mode? mode)
+		  ctx
+		  cache
+		  :optim #f
+		  :cachefun (or (is-function? rhs) (is-prototype? obj))))))
+   
+   (define (maybe-array-set lhs::J2SAccess rhs::J2SExpr)
+      (let loop ((lhs lhs))
+	 (with-access::J2SAccess lhs (obj field cache loc)
+	    (cond
+	       ((not (or (isa? field J2SNumber)
+			 (isa? field J2SString)
+			 (isa? field J2SRef)
+			 (isa? field J2SHopRef)))
+		(let* ((tmpf (gensym 'tmpf))
+		       (nfield (J2SHopRef/type tmpf (j2s-type field))))
+		   `(let ((,tmpf ,(j2s-scheme field mode return ctx)))
+		       ,(loop (duplicate::J2SAccess lhs
+				 (field nfield))))))
+	       ((isa? lhs J2SRef)
+		(if (or (isa? rhs J2SRef) (isa? rhs J2SLiteral))
+		    (check-array-set lhs rhs)
+		    (let ((id (gensym 'rhs)))
+		       `(let ((,id (j2s-scheme rhs mode return ctx)))
+			   (check-array-set lhs (J2SHopRef id))))))
+	       (else
+		(let* ((tmp (gensym 'assigtmp))
+		       (access (duplicate::J2SAccess lhs (obj (J2SHopRef tmp))))
+		       (tyo (j2s-type obj)))
+		   (cond
+		      ((eq? tyo 'array)
+		       (j2s-array-set! this mode return ctx))
+		      ((memq tyo '(int8array uint8array))
+		       (j2s-tarray-set! this mode return ctx))
+		      (else
+		       (let ((tmpr (gensym 'rhs)))
+			  `(let ((,tmp ,(j2s-scheme obj mode return ctx))
+				 (,tmpr ,(j2s-scheme rhs mode return ctx)))
+			      (if (js-array? ,tmp)
+				  ,(j2s-array-set!
+				      (duplicate::J2SAssig this
+					 (lhs (duplicate::J2SAccess lhs
+						 (obj (J2SHopRef tmp))))
+					 (rhs (J2SHopRef/type tmpr (j2s-type rhs))))
+				      mode return ctx)
+				  ,(j2s-put! loc tmp
+				      field
+				      (typeof-this obj ctx)
+				      (j2s-scheme field mode return ctx)
+				      (j2s-type field)
+				      (j2s-scheme (J2SHopRef tmpr) mode return ctx)
+				      (j2s-type rhs)
+				      (strict-mode? mode)
+				      ctx
+				      cache
+				      :optim #f
+				      :cachefun (or (is-function? rhs)
+						    (is-prototype? obj))))))))))))))
 
    (define (j2s-record-set! this idx mode return ctx)
       (with-access::J2SAssig this (lhs rhs)
@@ -1830,7 +1854,7 @@
 		    ,(j2s-scheme rhs mode return ctx)
 		    ,(symbol->string! id))))
 	    (else
-	     (j2s-error "assignment" "Illegal assignment" this))))))
+	     (j2s-scheme-error "assignment" "Illegal assignment" this 'js-reference-error))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme-postpref ...                                          */
@@ -2354,7 +2378,7 @@
 	       ((isa? lhs J2SKontRef)
 		(kontref-inc op lhs (if (eq? op '++) 1 -1)))
 	       (else
-		(j2s-error "j2sscheme"
+		(j2s-scheme-error "j2sscheme"
 		   (format "Illegal expression \"~a\"" op)
 		   this)))))))
 	   
@@ -2559,8 +2583,22 @@
 	       ((isa? lhs J2SKontRef)
 		(kontref-assigop op lhs rhs))
 	       (else
-		(j2s-error "j2sscheme" "Illegal assignment"
-		   (j2s->sexp this))))))))
+		(j2s-scheme-error "j2sscheme" "Illegal assignment" this 'js-reference-error)))))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-function-prototype-get ...                                   */
+;*---------------------------------------------------------------------*/
+(define (j2s-function-prototype-get obj mode return ctx)
+   (let ((sobj (j2s-scheme obj mode return ctx)))
+      (if (isa? obj J2SRef)
+	  `(js-function-prototype-get
+	      ,sobj ,sobj
+	      ,(& "prototype" (context-program ctx)) %this)
+	  (let ((tmp (gensym 'obj)))
+	     `(let ((,tmp ,sobj))
+		 (js-function-prototype-get
+		    ,tmp ,tmp
+		    ,(& "prototype" (context-program ctx)) %this))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SAccess ...                                       */
@@ -2684,15 +2722,13 @@
 	  (with-access::J2SUnresolvedRef obj (id)
 	     (eq? id 'Symbol)))))
    
+
    (define (get-builtin-object obj field mode return ctx)
       (when (isa? field J2SString)
 	 (with-access::J2SString field (val)
 	    (cond
 	       ((string=? val "prototype")
-		`(js-function-prototype-get
-		    (js-undefined)
-		    ,(j2s-scheme obj mode return ctx)
-		    ,(& "prototype" (context-program ctx)) %this))
+		(j2s-function-prototype-get obj mode return ctx))
 	       (else
 		#f)))))
    
@@ -2792,10 +2828,7 @@
 		  (isa? field J2SString)
 		  (with-access::J2SString field (val)
 		     (string=? val "prototype")))
-	     `(js-function-prototype-get
-		 (js-undefined)
-		 ,(j2s-scheme obj mode return ctx)
-		 ,(& "prototype" (context-program ctx)) %this))
+	     (j2s-function-prototype-get obj mode return ctx))
 	    ((and (mightbe-number? field)
 		  (or (mightbe-array? obj) (mightbe-string? obj)))
 	     (index-ref obj field cache cspecs loc))
@@ -2815,6 +2848,11 @@
 		  (j2s-symbol-object-get obj field mode return ctx))
 	     =>
 	     (lambda (sexp) sexp))
+	    ((and (stat-call? obj) (stat-field field))
+	     =>
+	     (lambda (index)
+		(with-access::J2SCall obj (fun args)
+		   (j2s-stat-access obj index mode return ctx))))
 	    (else
 	     (get loc obj (j2s-scheme obj mode return ctx)
 		field cache cspecs
@@ -3293,6 +3331,9 @@
    (define (new-typeerror? clazz)
       (new-builtin? clazz 'TypeError))
 
+   (define (new-promise? clazz)
+      (new-builtin? clazz 'Promise))
+
    (define (new-record? clazz)
       (when (isa? clazz J2SRef)
 	 (with-access::J2SRef clazz (decl)
@@ -3429,6 +3470,10 @@
 	  (lambda (sexp)
 	     (epairify loc sexp)))
 	 ((and (new-regexp? clazz) (j2s-new-regexp this mode return ctx))
+	  =>
+	  (lambda (sexp)
+	     (epairify loc sexp)))
+	 ((and (new-promise? clazz) (j2s-new-promise this mode return ctx))
 	  =>
 	  (lambda (sexp)
 	     (epairify loc sexp)))

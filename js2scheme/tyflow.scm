@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Sun Mar  6 16:55:10 2022 (serrano)                */
-;*    Copyright   :  2016-22 Manuel Serrano                            */
+;*    Last change :  Fri Jul  7 16:49:17 2023 (serrano)                */
+;*    Copyright   :  2016-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
 ;*    -------------------------------------------------------------    */
@@ -185,6 +185,9 @@
 ;*    return ...                                                       */
 ;*---------------------------------------------------------------------*/
 (define (return ty env::pair-nil bk::pair-nil)
+   (unless (every (lambda (s) (isa? s J2SStmt)) bk)
+      (tprint "PAS BON " (map j2s->sexp bk))
+      (error 1 2 3))
    (values ty env bk))
 
 ;*---------------------------------------------------------------------*/
@@ -561,13 +564,13 @@
 	 ((eq? lang 'scheme)
 	  (if (eq? type 'unknown)
 	      (expr-type-add! this env ctx 'any)
-	      (return type env env)))
+	      (return type env '())))
 	 ((isa? expr J2SNode)
 	  (multiple-value-bind (_ _ bk)
 	     (node-type expr env ctx)
 	     (if (eq? type 'unknown)
 		 (expr-type-add! this env ctx 'any bk)
-		 (return type env env))))
+		 (return type env '()))))
 	 (else
 	  (expr-type-add! this env ctx 'any)))))
 	  
@@ -727,17 +730,25 @@
 ;*    node-type ::J2SSuper ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-method (node-type  this::J2SSuper env::pair-nil ctx::pair)
+   
+   (define (class-super-val obj)
+      ;; because of :ignore-unresolved-modules super-val may be
+      ;; J2SUndefined values
+      (let ((supv (j2s-class-super-val obj)))
+	 (unless (isa? supv J2SUndefined)
+	    supv)))
+   
    (with-trace 'j2s-tyflow (format "node-type ::J2SSuper ~a" (cdr ctx))
       (with-access::J2SSuper this (decl loc super context)
 	 (cond
 	    ((isa? super J2SClass)
 	     (expr-type-add! this env ctx super))
 	    ((isa? context J2SClass)
-	     (expr-type-add! this env ctx (or (j2s-class-super-val context) 'any)))
+	     (expr-type-add! this env ctx (or (class-super-val context) 'any)))
 	    (else
 	     (let ((ty (env-lookup env decl)))
 		(if (isa? ty J2SClass)
-		    (expr-type-add! this env ctx (or (j2s-class-super-val ty) 'any))
+		    (expr-type-add! this env ctx (or (class-super-val ty) 'any))
 		    (expr-type-add! this env ctx 'any))))))))
 
 ;*---------------------------------------------------------------------*/
@@ -1492,6 +1503,7 @@
 		((WeakMap) 'weakmap)
 		((Set) 'set)
 		((WeakSet) 'weakset)
+		((Promise) 'promise)
 		(else 'object))))
 	 ((isa? clazz J2SRef)
 	  (with-access::J2SRef clazz (decl)
@@ -1510,6 +1522,7 @@
 			  ((WeakMap) 'weakmap)
 			  ((Set) 'set)
 			  ((WeakSet) 'weakset)
+			  ((Promise) 'promise)
 			  (else 'object)))))
 		((isa? decl J2SDeclClass)
 		 (with-access::J2SDeclClass decl (val)
@@ -1527,7 +1540,36 @@
 	    (node-type clazz env ctx)
 	    (multiple-value-bind (_ env bk)
 	       (node-type-call clazz protocol 'object args env ctx)
-	       (expr-type-add! this env ctx (class-type clazz) bk))))))
+	       (let ((tyz (class-type clazz)))
+		  (when (eq? tyz 'promise)
+		     (node-type-new-promise this env ctx))
+		  (expr-type-add! this env ctx tyz bk)))))))
+
+;*---------------------------------------------------------------------*/
+;*    node-type-new-promise ...                                        */
+;*---------------------------------------------------------------------*/
+(define (node-type-new-promise this::J2SNew env::pair-nil ctx::pair)
+   (with-access::J2SNew this (args loc)
+      (when (and (pair? args) (null? (cdr args)) (isa? (car args) J2SFun))
+	 (with-access::J2SFun (car args) (params)
+	    (when (=fx (length params) 2)
+	       ;; this is a form: 
+	       ;;    new Promise((res, rej) => ...)
+	       ;; res and rej are two special values created by the rts
+	       (let ((res (car params))
+		     (rej (cadr params)))
+		  (unless (decl-usage-has? res '(assig))
+		     (with-access::J2SDecl res (ctype vtype)
+			(unless (eq? ctype 'arrow)
+			   (set! ctype 'arrow)
+			   (set! vtype 'arrow)
+			   (unfix! ctx "promise.arrow"))))
+		  (unless (decl-usage-has? rej '(assig))
+		     (with-access::J2SDecl rej (ctype vtype)
+			(unless (eq? ctype 'arrow)
+			   (set! ctype 'arrow)
+			   (set! vtype 'arrow)
+			   (unfix! ctx "promise.arrow"))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SUnary ...                                         */
@@ -1696,7 +1738,8 @@
 	 (multiple-value-bind (tyf envf bkf)
 	    (node-type field envo ctx)
 	    (cond
-	       ((and (memq tyo '(array string jsvector)) (j2s-field-length? field))
+	       ((and (memq tyo '(array string jsvector))
+		     (j2s-field-length? field))
 		(with-access::J2SString field (val)
 		   (expr-type-add! this envf ctx 'integer (append bko bkf))))
 	       ((and (eq? tyo 'arguments)
@@ -1705,8 +1748,7 @@
 		     (with-access::J2SRef obj (decl)
 			;; MS 13may2021: because of the new arguments
 			;; optimization, alias arguments are optimized too
-			(and ;; (isa? decl J2SDeclArguments)
-			     (not (decl-usage-has? decl '(set ref))))))
+			(and (not (decl-usage-has? decl '(set ref))))))
 		;; The length field of a arguments is not necessarily
 		;; an number (when assigned a random value, see
 		;; S10.6_A5_T4.js test.
@@ -2298,6 +2340,8 @@
 			(call-default-walker))
 		       ((and (eq? type 'number) (memq typ '(integer index)))
 			(call-default-walker))
+		       ((or (type-subtype? type typ) (type-subtype? typ type))
+			(call-default-walker))
 		       (else
 			(unfix! ctx "resolve.J2SBinary")
 			(J2SBool #f)))))
@@ -2310,6 +2354,8 @@
 		       ((memq type '(unknown any))
 			(call-default-walker))
 		       ((and (eq? type 'number) (memq typ '(integer index)))
+			(call-default-walker))
+		       ((or (type-subtype? type typ) (type-subtype? typ type))
 			(call-default-walker))
 		       (else
 			(unfix! ctx "resolve.J2SBinary")

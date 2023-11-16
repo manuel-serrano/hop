@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sun Oct 16 08:24:00 2022 (serrano)                */
-;*    Copyright   :  2013-22 Manuel Serrano                            */
+;*    Last change :  Sat Mar 18 19:25:31 2023 (serrano)                */
+;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
 ;*=====================================================================*/
@@ -173,6 +173,15 @@
 		   (js-function-arity 1 0)
 		   (js-function-info :name "isInteger" :len 1))
 	 :writable #f :configurable #f :enumerable #f :hidden-class #f)
+      (js-bind! %this js-number (& "isNaN")
+	 :value (js-make-function %this
+		   (lambda (this val)
+		      (when (number? val)
+			 (js-isnan? val %this)))
+		   (js-function-arity 1 0)
+		   (js-function-info :name "isNaN" :len 1)
+		   :prototype (js-undefined))
+	 :enumerable #f :configurable #t :writable #t :hidden-class #f)
       ;; bind the builtin prototype properties
       (init-builtin-number-prototype! %this js-number js-number-prototype)
       ;; bind Number in the global object

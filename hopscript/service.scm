@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Fri Nov 18 07:59:39 2022 (serrano)                */
-;*    Copyright   :  2013-22 Manuel Serrano                            */
+;*    Last change :  Fri Mar  3 14:17:52 2023 (serrano)                */
+;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
 ;*=====================================================================*/
@@ -600,7 +600,8 @@
 	       (args (map multipart-form-arg args))
 	       (receiver (lambda (ctx thunk)
 			    (with-access::JsGlobalObject ctx (worker)
-			       (js-worker-exec worker path #t thunk)))))
+			       (js-worker-exec worker path
+				  (lambda (%this) (thunk)))))))
 	    (thread-start!
 	       (instantiate::hopthread
 		  (name name)
@@ -609,8 +610,8 @@
 			      (lambda (e)
 				 (exception-notify e)
 				 (with-access::JsGlobalObject %this (worker)
-				    (js-worker-exec worker path #t
-				       (lambda ()
+				    (js-worker-exec worker path
+				       (lambda (%this)
 					  (fail e)))))
 			      (with-hop-remote path callback fail
 				 :scheme scheme
@@ -630,11 +631,11 @@
       (with-access::JsGlobalObject %this (js-promise)
 	 (letrec* ((callback (lambda (x)
 				(js-promise-async p
-				   (lambda ()
+				   (lambda (%this)
 				      (js-promise-resolve p x)))))
 		   (fail (lambda (x)
 			    (js-promise-async p
-			       (lambda ()
+			       (lambda (%this)
 				  (js-promise-reject p x)))))
 		   (p (js-new %this js-promise
 			 (js-make-function %this
@@ -662,7 +663,8 @@
       (with-access::JsHopFrame this (path args header options)
 	 (let ((receiver (lambda (ctx thunk)
 			    (with-access::JsGlobalObject ctx (worker)
-			       (js-worker-exec worker path #t thunk)))))
+			       (js-worker-exec worker path
+				  (lambda (%this) (thunk)))))))
 	    (with-hop-remote path (lambda (x) x) #f
 	       :scheme scheme
 	       :host host :port port 
@@ -704,13 +706,13 @@
       (with-access::JsHopFrame this (path)
 	 (let ((callback (when (js-procedure? success)
 			    (lambda (x)
-			       (js-worker-push-thunk! (js-current-worker) path
-				  (lambda ()
+			       (js-worker-push! (js-current-worker) path
+				  (lambda (%this)
 				     (js-call1 %this success %this x))))))
 	       (fail (when (js-procedure? failure)
 			(lambda (obj)
-			   (js-worker-push-thunk! (js-current-worker) path
-			      (lambda ()
+			   (js-worker-push! (js-current-worker) path
+			      (lambda (%this)
 				 (js-call1 %this failure %this obj)))))))
 	    (with-access::JsWebSocket srv (ws recvqueue)
 	       (with-access::websocket ws (%mutex)
@@ -794,8 +796,8 @@
 	  (set! fail
 	     (if asynchronous
 		 (lambda (obj)
-		    (js-worker-push-thunk! worker svc
-		       (lambda ()
+		    (js-worker-push! worker svc
+		       (lambda (%this)
 			  (js-call1 %this opt %this obj))))
 		 (lambda (obj)
 		    (js-call1 %this opt %this obj)))))
@@ -834,8 +836,8 @@
 		(set! fail
 		   (lambda (obj)
 		      (if asynchronous
-			  (js-worker-push-thunk! worker svc
-			     (lambda ()
+			  (js-worker-push! worker svc
+			     (lambda (%this)
 				(js-call1 %this f %this obj)))
 			  (js-call1 %this f %this obj)))))
 	     (when (js-object? r)
@@ -847,7 +849,8 @@
       (define (post-request callback)
 	 (let ((receiver (lambda (ctx thunk)
 			    (with-access::JsGlobalObject ctx (worker)
-			       (js-worker-exec worker svc #t thunk)))))
+			       (js-worker-exec worker svc
+				  (lambda (%this) (thunk)))))))
 	    (with-hop-remote svc callback fail
 	       :scheme scheme
 	       :host host :port port 
@@ -868,8 +871,8 @@
 			   (lambda (e)
 			      (exception-notify e)
 			      (if failjs
-				  (js-worker-push-thunk! worker svc
-				     (lambda ()
+				  (js-worker-push! worker svc
+				     (lambda (%this)
 					(js-call1 %this failjs %this e)))
 				  (begin
 				     (exception-notify e)
@@ -937,8 +940,8 @@
 
    (define (service-debug id::symbol proc)
       (if (>fx (bigloo-debug) 0)
-	  (lambda ()
-	     (js-service/debug id loc proc))
+	  (lambda (%this)
+	     (js-service/debug id loc proc %this))
 	  proc))
 
    (define (js-service-parse-request svc req)
@@ -958,7 +961,8 @@
 			    (with-access::JsService svcjs (svc)
 			       (with-access::hop-service svc (path)
 				  (js-make-hopframe %this this path vals)))))
-		   (svcjs (js-make-service %this svcp (symbol->string! id)
+		   (svcn (symbol->string! id))
+		   (svcjs (js-make-service %this svcp svcn
 			     register import
 			     (js-function-arity svcp) worker
 			     (instantiate::hop-service
@@ -969,10 +973,9 @@
 					  (lambda (this . args)
 					     (js-undefined))))
 				(handler (lambda (svc req)
-					    (js-worker-exec worker
-					       (symbol->string! id) #f
+					    (js-worker-exec-throws worker svcn
 					       (service-debug id
-						  (lambda ()
+						  (lambda (%this)
 						     (service-invoke svc req
 							(js-service-parse-request svc req)))))))
 				(javascript "HopService( ~s, ~s )")

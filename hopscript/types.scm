@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Mon Sep 26 09:09:49 2022 (serrano)                */
-;*    Copyright   :  2013-22 Manuel Serrano                            */
+;*    Last change :  Fri Oct 20 13:52:31 2023 (serrano)                */
+;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
 ;*    -------------------------------------------------------------    */
@@ -57,6 +57,8 @@
 	      "bgl_init_jsalloc_procedure")
 	   ($js-init-jsalloc-stringliteralascii::int (::uint32 ::uint32 ::obj ::uint32)
 	      "bgl_init_jsalloc_stringliteralascii")
+	   ($js-init-jsalloc-date::int (::uint32)
+	      "bgl_init_jsalloc_date")
 	   ($js-make-jsobject::JsObject (::int ::JsConstructMap ::obj ::uint32)
 	      "bgl_make_jsobject")
 	   ($js-make-jsproxy::JsProxy (::obj ::obj ::obj ::obj ::obj ::uint32)
@@ -75,6 +77,8 @@
 	      "bgl_make_jsstringliteralascii")
 	   ($js-make-jsgenerator::JsGenerator (::obj ::obj ::long ::obj ::uint32)
 	      "bgl_make_jsgenerator")
+	   ($js-make-jsdate::JsDate (::obj ::obj)
+	      "bgl_make_jsdate")
 	   (macro $js-object-inline-elements::vector (::JsObject)
 		  "HOP_JSOBJECT_INLINE_ELEMENTS")
 	   (macro $js-object-inline-elements-length::long (::JsObject)
@@ -96,8 +100,12 @@
 		  "HOP_JSARRAYP")
 	   (macro $js-jsstring?::bool (::obj ::uint32)
 		  "HOP_JSSTRINGP")
+	   (macro $js-object-jsstring?::bool (::obj ::uint32)
+		  "HOP_OBJECT_JSSTRINGP")
 	   (macro $js-procedure?::bool (::obj ::uint32)
 		  "HOP_JSPROCEDUREP")
+	   (macro $js-object-procedure?::bool (::obj ::uint32)
+		  "HOP_OBJECT_JSPROCEDUREP")
 	   (macro $js-object-mode-inline?::bool (::JsObject ::uint32)
 		  "HOP_JSOBJECT_MODE_INLINEP"))
    
@@ -108,7 +116,6 @@
 	      (condv::condvar read-only (default (make-condition-variable)))
 	      (prehook (default #f))
 	      (alivep (default #f))
-	      (tqueue::pair-nil (default '()))
 	      (listeners::pair-nil (default '()))
 	      (exitlisteners::pair-nil (default '()))
 	      (errorlisteners::pair-nil (default '()))
@@ -122,12 +129,12 @@
 	      (module-cache::obj (default #f))
 	      (parent::obj (default #f))
 	      (subworkers::pair-nil (default '()))
-	      (uvhandles::vector (default (make-vector 32)))
-	      (call::procedure (default (lambda (cb) (cb))))
+	      (uvhandles::vector (default (vector (cons #unspecified #unspecified) (cons #unspecified #unspecified) (cons #unspecified #unspecified)))) 
+	      (%call (default #f))
 	      (handlers::pair-nil (default '()))
 	      (services::pair-nil (default '()))
 	      (%exn (default #unspecified)))
-	   
+
 	   (class MessageEvent::event
 	      data::obj)
 	   
@@ -188,7 +195,10 @@
 	      (lock read-only (default (make-spinlock "JsConstructMap")))
 	      (props::vector (default '#()))
 	      (methods::vector (default '#()))
-	      (transitions::pair-nil (default '()))
+	      ;; list for all non __proto__ transitions
+	      (rtransitions::pair-nil (default '()))
+	      ;; hashtable for __proto__ transitions
+	      (ptransitions::obj (default #f))
 	      (detachcnt::long (default 0))
 	      (detachlocs::pair-nil (default '()))
 	      (ctor::obj (default #f))
@@ -341,7 +351,8 @@
 	      (location (default #f)))
 	   
 	   (class JsDate::JsObject
-	      (val (default #f)))
+	      (time (default #f))
+	      (%val (default #f)))
 	   
 	   (class JsJSON::JsObject)
 	   
@@ -431,7 +442,6 @@
 	      (js-bigint-prototype::JsBigInt (default (class-nil JsBigInt)))
 	      (js-function::JsFunction (default (class-nil JsFunction)))
 	      (js-function-prototype::JsFunction (default (class-nil JsFunction)))
-	      (js-function-strict-prototype::JsObject (default (class-nil JsObject)))
 	      (js-math::JsObject (default (class-nil JsObject)))
 	      (js-regexp::JsFunction (default (class-nil JsFunction)))
 	      (js-regexp-prototype::JsRegExp (default (class-nil JsRegExp)))
@@ -451,12 +461,14 @@
 	      (js-reference-error::JsFunction (default (class-nil JsFunction)))
 	      (js-worker::JsFunction (default (class-nil JsFunction)))
 	      (js-promise (default (class-nil JsFunction)))
+	      (js-promise-prototype::JsPromise (default (class-nil JsPromise)))
 	      (js-proxy (default (class-nil JsFunction)))
 	      (js-worker-prototype::JsWorker (default (class-nil JsWorker)))
 	      (js-generator-prototype::JsObject (default (class-nil JsObject)))
 	      (js-generatorfunction-prototype::JsObject (default (class-nil JsObject)))
 	      (js-buffer-proto (default #f))
 	      (js-slowbuffer-proto (default #f))
+	      (js-stats-proto (default #f))
 	      (js-symbol-ctor::procedure (default list))
 	      (js-symbol-table read-only (default (js-symbol-table)))
 	      (js-symbol-iterator (default (js-undefined)))
@@ -496,7 +508,14 @@
 	      (js-json-pcache::vector (default '#()))
 	      (js-proxy-pcache::vector (default '#()))
 	      (js-generator-pcache::vector (default '#()))
+	      (js-promise-pcache::vector (default '#()))
 	      ;; cmaps
+	      (js-tcp-cmap (default #f))
+	      (js-udp-cmap (default #f))
+	      (js-pipe-cmap (default #f))
+	      (js-tty-cmap (default #f))
+	      (js-buffer-cmap (default #f))
+	      (js-slowbuffer-cmap (default #f))
 	      (js-initial-cmap (default (class-nil JsConstructMap)))
 	      (js-arguments-cmap (default (class-nil JsConstructMap)))
 	      (js-strict-arguments-cmap (default (class-nil JsConstructMap)))
@@ -514,6 +533,7 @@
 	      (js-regexp-exec-cmap (default (class-nil JsConstructMap)))
 	      (js-scope-cmap (default (class-nil JsConstructMap)))
 	      (js-date-cmap (default (class-nil JsConstructMap)))
+	      (js-promise-cmap (default (class-nil JsConstructMap)))
 	      (js-property-descriptor-value-cmap (default (class-nil JsConstructMap)))
 	      (js-property-descriptor-getter-cmap (default (class-nil JsConstructMap))))
 
@@ -636,11 +656,19 @@
 	   (inline JS-REGEXP-FLAG-MULTILINE::uint32)
 	   (inline JS-REGEXP-FLAG-GLOBAL::uint32)
 	   (inline JS-REGEXP-FLAG-UNICODE::uint32)
+	   (inline JS-REGEXP-FLAG-INDICES::uint32)
+	   (inline JS-REGEXP-FLAG-DOTALL::uint32)
+	   (inline JS-REGEXP-FLAG-UNICODESETS::uint32)
+	   (inline JS-REGEXP-FLAG-STICKY::uint32)
 
 	   (inline js-regexp-flags-ignorecase?::bool ::uint32)
 	   (inline js-regexp-flags-multiline?::bool ::uint32)
 	   (inline js-regexp-flags-global?::bool ::uint32)
 	   (inline js-regexp-flags-unicode?::bool ::uint32)
+	   (inline js-regexp-flags-indices?::bool ::uint32)
+	   (inline js-regexp-flags-dotall?::bool ::uint32)
+	   (inline js-regexp-flags-unicodesets?::bool ::uint32)
+	   (inline js-regexp-flags-sticky?::bool ::uint32)
 
 	   (inline js-object-inline-elements::vector ::JsObject)
 	   (inline js-object-inline-elements-length::long ::JsObject)
@@ -657,6 +685,8 @@
 	   (inline js-object-noinline-set! ::JsObject ::long ::obj)
 	   (inline js-object-ref ::JsObject ::long)
 	   (inline js-object-set! ::JsObject ::long ::obj)
+
+	   (js-object-for-each ::JsObject ::procedure)
 
 	   (inline js-vector-inline-ref ::JsArray ::long)
 	   (inline js-vector-inline-set! ::JsArray ::long ::obj)
@@ -701,6 +731,7 @@
 	   
 	   (inline js-number?::bool ::obj)
 	   (inline js-jsstring?::bool ::obj)
+	   (inline js-object-jsstring?::bool ::obj)
 	   (inline js-jsstring-ascii?::bool ::JsStringLiteral)
 	   (inline js-jsstring-index?::bool ::JsStringLiteral)
 	   (inline js-jsstring-substring?::bool  ::JsStringLiteral)
@@ -715,6 +746,7 @@
 	   (inline js-method?::bool ::obj)
 	   (inline js-procedure-proxy?::bool ::obj)
 	   (inline js-procedure?::bool ::obj)
+	   (inline js-object-procedure?::bool ::obj)
 	   (inline js-callable?::bool ::obj)
 	   (inline js-service?::bool ::obj)
 	   (inline js-symbol?::bool ::obj)
@@ -736,6 +768,7 @@
 	   (inline js-object-mode::uint32 ::object)
 	   (inline js-object-mode-set! ::object ::uint32)
 
+	   (inline js-object-procedure-tag?::bool ::obj)
 	   (inline js-object-function-tag?::bool ::obj)
 	   
 	   (inline js-procedure-arity::int ::JsProcedure)
@@ -765,6 +798,11 @@
    (cond-expand
       ((not |bigloo4.3a|)
        (pragma (gencmapid default-inline)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-worker-init! ...                                              */
+;*---------------------------------------------------------------------*/
+(define-generic (js-worker-init! o::WorkerHopThread))
 
 ;*---------------------------------------------------------------------*/
 ;*    cache-mutex ...                                                  */
@@ -1200,6 +1238,10 @@
 (define-inline (JS-REGEXP-FLAG-MULTILINE) #u32:2)
 (define-inline (JS-REGEXP-FLAG-GLOBAL) #u32:4)
 (define-inline (JS-REGEXP-FLAG-UNICODE) #u32:8)
+(define-inline (JS-REGEXP-FLAG-INDICES) #u32:16)
+(define-inline (JS-REGEXP-FLAG-DOTALL) #u32:32)
+(define-inline (JS-REGEXP-FLAG-UNICODESETS) #u32:64)
+(define-inline (JS-REGEXP-FLAG-STICKY) #u32:128)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-regexp-flags-XXX ...                                          */
@@ -1212,6 +1254,14 @@
    (>u32 (bit-andu32 flags (JS-REGEXP-FLAG-GLOBAL)) #u32:0))
 (define-inline (js-regexp-flags-unicode? flags)
    (>u32 (bit-andu32 flags (JS-REGEXP-FLAG-UNICODE)) #u32:0))
+(define-inline (js-regexp-flags-indices? flags)
+   (>u32 (bit-andu32 flags (JS-REGEXP-FLAG-INDICES)) #u32:0))
+(define-inline (js-regexp-flags-dotall? flags)
+   (>u32 (bit-andu32 flags (JS-REGEXP-FLAG-DOTALL)) #u32:0))
+(define-inline (js-regexp-flags-unicodesets? flags)
+   (>u32 (bit-andu32 flags (JS-REGEXP-FLAG-UNICODESETS)) #u32:0))
+(define-inline (js-regexp-flags-sticky? flags)
+   (>u32 (bit-andu32 flags (JS-REGEXP-FLAG-STICKY)) #u32:0))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-inline-elements ...                                    */
@@ -1252,7 +1302,7 @@
       ((and bigloo-c (not disable-inline))
        ($js-object-inline-elements o))
       (else
-       (js-object-elements o))))
+       (js-object-noinline-elements o))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-inline-length ...                                      */
@@ -1288,7 +1338,7 @@
 	   ($js-object-inline-elements-ref o idx)
 	   (begin
 	      (tprint "*** ASSERT ERROR:js-object-inline-ref idx=" idx)
-	      (js-debug-object o))))
+	      (js-inspect-object o))))
       ((and bigloo-c (not disable-inline))
        ;; (pragma::obj "VECTOR_REF( BVECTOR( (obj_t)(( ((obj_t *)(&(((BgL_jsobjectz00_bglt)(COBJECT($1)))->BgL_elementsz00))) + 1))), $2 )" o idx)
        ($js-object-inline-elements-ref o idx))
@@ -1306,7 +1356,7 @@
 	   ($js-object-inline-elements-set! o idx val)
 	   (begin
 	      (tprint "*** ASSERT ERROR:js-object-inline-set! idx=" idx)
-	      (js-debug-object o))))
+	      (js-inspect-object o))))
       ((and bigloo-c (not disable-inline))
        ;; (pragma::obj "VECTOR_SET( BVECTOR( (obj_t)(( ((obj_t *)(&(((BgL_jsobjectz00_bglt)(COBJECT($1)))->BgL_elementsz00))) + 1))), $2, $3 )" o idx val)
        ($js-object-inline-elements-set! o idx val))
@@ -1366,6 +1416,19 @@
        (js-object-noinline-relative-set! o idx val)))
 
 ;*---------------------------------------------------------------------*/
+;*    js-object-for-each ...                                           */
+;*---------------------------------------------------------------------*/
+(define (js-object-for-each o::JsObject proc)
+   (when (js-object-mode-inline? o)
+      (let ((ilen (js-object-inline-elements-length o)))
+	 (let loop ((i 0))
+	    (when (<fx i ilen)
+	       (proc (js-object-inline-ref o i))
+	       (loop (+fx i 1))))))
+   (with-access::JsObject o (elements)
+      (vector-for-each proc elements)))
+   
+;*---------------------------------------------------------------------*/
 ;*    js-vector-inline-ref ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-vector-inline-ref o::JsArray idx::long)
@@ -1409,39 +1472,52 @@
       (xml-write-attribute obj id p backend)))
 
 ;*---------------------------------------------------------------------*/
-;*    object-print ...                                                 */
+;*    object-print ::JsObject ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-method (object-print obj::JsObject port print-slot::procedure)
-   
-   (define (class-field-write/display field)
-      (let* ((name (class-field-name field))
-	     (get-value (class-field-accessor field)))
-	 (display " [" port)
-	 (display name port)
-	 (display #\: port)
-	 (display #\space port)
-	 (if (memq name '(__proto__ elements cmap))
-	     (let ((val (get-value obj)))
-		(if (vector? val)
-		    (display (format "vector[~a]" (vector-length val)) port)
-		    (display (typeof val) port)))
-	     (print-slot (get-value obj) port))
-	 (display #\] port)))
+(define-method (object-print obj::JsObject op proc)
+   (display "#<" op)
+   (display (class-name (object-class obj)) op)
+   (display " " op)
+   (display (js-object-length obj) op)
+   (cond
+      ((js-object-mapped? obj) (display " mapped>" op))
+      ((js-object-hashed? obj) (display " hashed>" op))
+      (else (display ">" op))))
 
-   (let* ((class (object-class obj))
-	  (class-name (class-name class))
-	  (fields (class-all-fields class))
-	  (len (vector-length fields)))
-      (display "#|" port)
-      (display class-name port)
-      (if (nil? obj)
-	  (display " nil|" port)
-	  (let loop ((i 0))
-	     (if (=fx i len)
-		 (display #\| port)
-		 (begin
-		    (class-field-write/display (vector-ref fields i))
-		    (loop (+fx i 1))))))))
+;* {*---------------------------------------------------------------------*} */
+;* {*    object-print ...                                                 *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define-method (object-print obj::JsObject port print-slot::procedure) */
+;*                                                                     */
+;*    (define (class-field-write/display field)                        */
+;*       (let* ((name (class-field-name field))                        */
+;* 	     (get-value (class-field-accessor field)))                 */
+;* 	 (display " [" port)                                           */
+;* 	 (display name port)                                           */
+;* 	 (display #\: port)                                            */
+;* 	 (display #\space port)                                        */
+;* 	 (if (memq name '(__proto__ elements cmap))                    */
+;* 	     (let ((val (get-value obj)))                              */
+;* 		(if (vector? val)                                      */
+;* 		    (display (format "vector[~a]" (vector-length val)) port) */
+;* 		    (display (typeof val) port)))                      */
+;* 	     (print-slot (get-value obj) port))                        */
+;* 	 (display #\] port)))                                          */
+;*                                                                     */
+;*    (let* ((class (object-class obj))                                */
+;* 	  (class-name (class-name class))                              */
+;* 	  (fields (class-all-fields class))                            */
+;* 	  (len (vector-length fields)))                                */
+;*       (display "#|" port)                                           */
+;*       (display class-name port)                                     */
+;*       (if (nil? obj)                                                */
+;* 	  (display " nil|" port)                                       */
+;* 	  (let loop ((i 0))                                            */
+;* 	     (if (=fx i len)                                           */
+;* 		 (display #\| port)                                    */
+;* 		 (begin                                                */
+;* 		    (class-field-write/display (vector-ref fields i))  */
+;* 		    (loop (+fx i 1))))))))                             */
 
 ;*---------------------------------------------------------------------*/
 ;*    object-print ::JsPropertyDescriptor ...                          */
@@ -1510,6 +1586,50 @@
 	 writable)))
 
 ;*---------------------------------------------------------------------*/
+;*    object-equal? ::JsPropertyDescriptor ...                         */
+;*---------------------------------------------------------------------*/
+(define-method (object-equal?::bool x::JsPropertyDescriptor y::obj)
+   (when (and (object? y) (eq? (object-class x) (object-class y)))
+      (with-access::JsPropertyDescriptor x ((xname name)
+					    (xconfigurable configurable)
+					    (xenumerable enumerable))
+	 (with-access::JsPropertyDescriptor y ((yname name)
+					       (yconfigurable configurable)
+					       (yenumerable enumerable))
+	    (and (eq? xconfigurable yconfigurable)
+		 (eq? xenumerable yenumerable)
+		 (equal? xname yname))))))
+
+;*---------------------------------------------------------------------*/
+;*    object-equal? ::JsDataDescriptor ...                             */
+;*---------------------------------------------------------------------*/
+(define-method (object-equal?::bool x::JsDataDescriptor y::obj)
+   (when (call-next-method)
+      (with-access::JsDataDescriptor x ((xwritable writable))
+	 (with-access::JsDataDescriptor y ((ywritable writable))
+	    (eq? xwritable ywritable)))))
+
+;*---------------------------------------------------------------------*/
+;*    object-equal? ::JsValueDescriptor ...                            */
+;*---------------------------------------------------------------------*/
+(define-method (object-equal?::bool x::JsValueDescriptor y::obj)
+   (when (call-next-method)
+      (with-access::JsValueDescriptor x ((xvalue value))
+	 (with-access::JsValueDescriptor y ((yvalue value))
+	    (equal? xvalue yvalue)))))
+
+;*---------------------------------------------------------------------*/
+;*    object-equal? ::JsAccessorDescriptor ...                         */
+;*---------------------------------------------------------------------*/
+(define-method (object-equal?::bool x::JsAccessorDescriptor y::obj)
+   (when (call-next-method)
+      (with-access::JsAccessorDescriptor x ((xget get)
+					    (xset set))
+	 (with-access::JsAccessorDescriptor y ((yget get)
+					       (yset set))
+	    (and (eq? xget yget) (eq? xset yset))))))
+
+;*---------------------------------------------------------------------*/
 ;*    thread-specific ::WorkerHopThread ...                            */
 ;*---------------------------------------------------------------------*/
 (define-method (thread-specific obj::WorkerHopThread)
@@ -1563,6 +1683,7 @@
        obj
        (with-access::JsConstructMap obj (props)
 	  (duplicate::JsConstructMap obj
+	     (%id (gencmapid))
 	     (props (vector-copy props))))))
 
 ;*---------------------------------------------------------------------*/
@@ -1814,6 +1935,17 @@
 	       (bit-andu32 (js-object-mode o) (JS-OBJECT-MODE-JSSTRINGTAG)))))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-object-jsstring? ...                                          */
+;*---------------------------------------------------------------------*/
+(define-inline (js-object-jsstring? o)
+   (cond-expand
+      (bigloo-c
+       ($js-object-jsstring? o (JS-OBJECT-MODE-JSSTRINGTAG)))
+      (else
+       (=u32 (JS-OBJECT-MODE-JSSTRINGTAG)
+	  (bit-andu32 (js-object-mode o) (JS-OBJECT-MODE-JSSTRINGTAG))))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-jsstring-ascii? ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-jsstring-ascii? o)
@@ -1930,6 +2062,17 @@
        (and (%object? o)
 	    (=u32 (JS-OBJECT-MODE-JSPROCEDURETAG)
 	       (bit-andu32 (js-object-mode o) (JS-OBJECT-MODE-JSPROCEDURETAG)))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-procedure? ...                                         */
+;*---------------------------------------------------------------------*/
+(define-inline (js-object-procedure? o)
+   (cond-expand
+      (bigloo-c
+       ($js-object-procedure? o (JS-OBJECT-MODE-JSPROCEDURETAG)))
+      (else
+       (=u32 (JS-OBJECT-MODE-JSPROCEDURETAG)
+	  (bit-andu32 (js-object-mode o) (JS-OBJECT-MODE-JSPROCEDURETAG))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-callable? ...                                                 */
@@ -2052,6 +2195,13 @@
 (define-inline (js-object-function-tag? o)
    (=u32 (JS-OBJECT-MODE-JSFUNCTIONTAG)
       (bit-andu32 (js-object-mode o) (JS-OBJECT-MODE-JSFUNCTIONTAG))))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-procedure-tag? ...                                     */
+;*---------------------------------------------------------------------*/
+(define-inline (js-object-procedure-tag? o)
+   (=u32 (JS-OBJECT-MODE-JSPROCEDURETAG)
+      (bit-andu32 (js-object-mode o) (JS-OBJECT-MODE-JSPROCEDURETAG))))
 
 ;*---------------------------------------------------------------------*/
 ;*    jsindex12-max ...                                                */
