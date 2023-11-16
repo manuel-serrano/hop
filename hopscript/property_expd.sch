@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Wed Nov 15 11:55:44 2023 (serrano)                */
+;*    Last change :  Thu Nov 16 11:41:41 2023 (serrano)                */
 ;*    Copyright   :  2016-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -248,15 +248,11 @@
 	 ((js-pcache-rewrite-miss-label (js-pcache-ref %pcache ?idx) ?obj)
 	  (cond-expand
 	     ((and bigloo-c (not hop-eval) (not hopjs-worker-slave))
-	      `(pragma::obj "HOP_REWRITE_CACHE_MISS(&(__bgl_pcache[((long) $1)]), $2)" ,idx ,obj))
+	      `(pragma::obj "HOP_REWRITE_CACHE_MISS($1, $2)" ,idx ,obj))
 	     (else
 	      #unspecified)))
-	 ((js-pcache-rewrite-miss-label ?cache ?obj)
-	  (cond-expand
-	     ((and bigloo-c (not hop-eval) (not hopjs-worker-slave))
-	      `(pragma::obj "HOP_REWRITE_CACHE_MISS($1, $2)" ,cache ,obj))
-	     (else
-	      #unspecified)))
+	 ((js-pcache-rewrite-miss-label ?- ?obj)
+	  #unspecified)
 	 (else
 	  (error "js-pcache-rewrite-miss-label" "bad syntax" x)))
       e))
