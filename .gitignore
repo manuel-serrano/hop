@@ -150,3 +150,5 @@ test/hopts/TEST
 README.hg
 .git.*.tgz
 
+# Npm packages
+npm
