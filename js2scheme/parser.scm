@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Fri Oct 27 16:48:36 2023 (serrano)                */
+;*    Last change :  Fri Nov 17 14:30:39 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -2571,7 +2571,7 @@
 		    (instantiate::J2SAssigOp
 		       (loc (token-loc op))
 		       (lhs lhs)
-		       (op (with-out-= (car op)))
+		       (op (with-out-= (token-type op)))
 		       (rhs rhs)))))
 	     lhs)))
    
