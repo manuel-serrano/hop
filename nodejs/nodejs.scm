@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 18 16:19:42 2013                          */
-;*    Last change :  Thu Feb 23 14:40:43 2023 (serrano)                */
+;*    Last change :  Sun Nov 19 09:52:47 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    nodejs boot                                                      */
@@ -70,7 +70,9 @@
 	   (__nodejs_mod_path "| echo \"(module __nodejs_mod_path (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
 	   (__nodejs_mod_fs "| echo \"(module __nodejs_mod_fs (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
 	   (__nodejs_mod_http "| echo \"(module __nodejs_mod_http (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
-	   (__nodejs_mod_https "| echo \"(module __nodejs_mod_https (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\""))
+	   (__nodejs_mod_https "| echo \"(module __nodejs_mod_https (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
+	   (__nodejs_mod_url "| echo \"(module __nodejs_mod_url (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
+)
 
 
    (export (core-module-table)
@@ -126,6 +128,7 @@
 	 ("domain" __nodejs_domain)
 	 ("freelist" __nodejs_freelist)
 	 ("url" __nodejs_url)
+	 ("url.mod" __nodejs_mod_url)
 	 ("tls" __nodejs_tls)
 	 ("tty" __nodejs_tty)
 	 ("http" __nodejs_http)

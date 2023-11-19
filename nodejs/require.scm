@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Fri Oct 27 18:10:29 2023 (serrano)                */
+;*    Last change :  Sun Nov 19 08:42:51 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -879,6 +879,7 @@
    
    (define (bind-export! modobj mod id export margin)
       (with-access::JsModule mod (evars imports redirects)
+	 (tprint "NS export=" export)
 	 (let* ((idx (js-evar-info-index export))
 		(redirect (js-evar-info-redirect export))
 		(writable (js-evar-info-writable export)))
@@ -2469,34 +2470,38 @@
 		#f))))
    
    (define (resolve-package pkg dir)
-      (call-with-input-file pkg
-	 (lambda (ip)
-	    (let* ((o (json-parse ip
-			 :array-alloc (lambda ()
-					 (make-cell '()))
-			 :array-set (lambda (a i val)
-				       (cell-set! a (cons val (cell-ref a))))
-			 :array-return (lambda (a i)
-					  (reverse! (cell-ref a)))
-			 :object-alloc (lambda () (make-cell '()))
-			 :object-set (lambda (o p val)
-					(cell-set! o
-					   (cons (cons p val)
-					      (cell-ref o))))
-			 :object-return (lambda (o) (cell-ref o))
-			 :parse-error (lambda (msg path loc)
-					 (js-raise-syntax-error/loc %this
-					    `(at ,path ,loc)
-					    msg path))))
-		   (m (cond
-			 ((eq? mode 'head) (assoc "client" o))
-			 ((assoc "server" o) => (lambda (m) m))
-			 (else (assoc "main" o)))))
-	       (if (pair? m)
-		   (cdr m)
-		   (let ((idx (make-file-name dir "index.js")))
-		      (when (file-exists? idx)
-			 idx)))))))
+      (with-trace 'require "resolve-package"
+	 (trace-item "pkg=" pkg)
+	 (trace-item "dir=" dir)
+	 (call-with-input-file pkg
+	    (lambda (ip)
+	       (let* ((o (json-parse ip
+			    :array-alloc (lambda ()
+					    (make-cell '()))
+			    :array-set (lambda (a i val)
+					  (cell-set! a (cons val (cell-ref a))))
+			    :array-return (lambda (a i)
+					     (reverse! (cell-ref a)))
+			    :object-alloc (lambda () (make-cell '()))
+			    :object-set (lambda (o p val)
+					   (cell-set! o
+					      (cons (cons p val)
+						 (cell-ref o))))
+			    :object-return (lambda (o) (cell-ref o))
+			    :parse-error (lambda (msg path loc)
+					    (js-raise-syntax-error/loc %this
+					       `(at ,path ,loc)
+					       msg path))))
+		      (m (cond
+			    ((eq? mode 'head) (assoc "client" o))
+			    ((assoc "server" o) => (lambda (m) m))
+			    (else (assoc "main" o)))))
+		  (trace-item "m=" m)
+		  (if (pair? m)
+		      (cdr m)
+		      (let ((idx (make-file-name dir "index.js")))
+			 (when (file-exists? idx)
+			    idx))))))))
    
    (define (resolve-directory x)
       (with-trace 'require "nodejs-resolve.resolve-directory"
@@ -2534,9 +2539,12 @@
 	    (js-raise exn))))
    
    (define (resolve-modules mod x)
-      (any (lambda (dir)
-	      (resolve-file-or-directory x dir))
-	 (node-modules-path mod)))
+      (with-trace 'require "resolve-modules"
+	 (trace-item "x=" x)
+	 (trace-item "path=" (node-modules-path mod))
+	 (any (lambda (dir)
+		 (resolve-file-or-directory x dir))
+	    (node-modules-path mod))))
    
    (define (node-modules-path mod)
       (let ((paths (js-get mod (& "paths") %this)))
