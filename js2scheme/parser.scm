@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/parser.scm                */
+;*    serrano/prgm/project/hop/3.7.x/js2scheme/parser.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Fri Nov 17 14:30:39 2023 (serrano)                */
+;*    Last change :  Sun Nov 19 06:56:21 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1220,7 +1220,7 @@
 			 (proc "hopc")
 			 (msg "generic functions require at least one argument")
 			 (obj id)
-			 (fname (cadr loc))
+			 (fname (loc-filename loc))
 			 (location (loc-offset loc))))
 		   (let* ((endloc (node-endloc body))
 			  (nparams (map (lambda (p)
@@ -1269,7 +1269,7 @@
 			 (proc "hopc")
 			 (msg "methods require at least one argument")
 			 (obj id)
-			 (fname (cadr loc))
+			 (fname (loc-filename loc))
 			 (location (loc-offset loc)))))
 		  ((with-access::J2SDecl (car params) (utype)
 		      (eq? utype 'unknown))
@@ -1278,7 +1278,7 @@
 			 (proc "hopc")
 			 (msg "methods require a typed first argument")
 			 (obj id)
-			 (fname (cadr loc))
+			 (fname (loc-filename loc))
 			 (location (loc-offset loc)))))
 		  (else
 		   (with-access::J2SDecl (car params) (utype)
@@ -1541,7 +1541,7 @@
 	    'rest)))
    
    (define (loc->funname pref loc)
-      (string->symbol (format "~a@~a:~a" pref (cadr loc) (loc-offset loc))))
+      (string->symbol (format "~a@~a:~a" pref (loc-filename loc) (loc-offset loc))))
    
    (define (function declaration? token #!optional methodof)
       (let ((loc (token-loc token)))
@@ -3918,7 +3918,7 @@
 	       (proc "js-symbol")
 	       (msg "Octal literals are not allowed in strict mode")
 	       (obj val)
-	       (fname (cadr loc))
+	       (fname (loc-filename loc))
 	       (location (loc-offset loc))))))
    
    (define (check-octal-string n)
@@ -4333,7 +4333,7 @@
 	    (proc "js-parser")
 	    (msg "arrow function disabled")
 	    (obj '=>)
-	    (fname (cadr loc))
+	    (fname (loc-filename loc))
 	    (location (loc-offset loc))))))
 
 ;*---------------------------------------------------------------------*/
@@ -4362,7 +4362,7 @@
 		  (proc "js-parser")
 		  (msg "default parameter values disabled")
 		  (obj id)
-		  (fname (cadr loc))
+		  (fname (loc-filename loc))
 		  (location (loc-offset loc))))))))
 
 ;*---------------------------------------------------------------------*/
@@ -4382,7 +4382,7 @@
 		(proc "js-parser")
 		(msg "rest arguments values disabled")
 		(obj name)
-		(fname (cadr loc))
+		(fname (loc-filename loc))
 		(location (loc-offset loc))))
 	  (call-default-walker))))
 
@@ -4458,7 +4458,7 @@
 	       (proc "js-parser")
 	       (msg "Unexpected strict mode reserved word")
 	       (obj id)
-	       (fname (cadr loc))
+	       (fname (loc-filename loc))
 	       (location (loc-offset loc)))))))
 
 ;*---------------------------------------------------------------------*/
@@ -4479,7 +4479,7 @@
 	       (proc "js-parser")
 	       (msg "Unexpected strict mode reserved word")
 	       (obj id)
-	       (fname (cadr loc))
+	       (fname (loc-filename loc))
 	       (location (loc-offset loc)))))))
 
 ;*---------------------------------------------------------------------*/
