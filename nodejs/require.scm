@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Sun Nov 19 08:42:51 2023 (serrano)                */
+;*    Last change :  Sun Nov 19 09:56:05 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -879,7 +879,6 @@
    
    (define (bind-export! modobj mod id export margin)
       (with-access::JsModule mod (evars imports redirects)
-	 (tprint "NS export=" export)
 	 (let* ((idx (js-evar-info-index export))
 		(redirect (js-evar-info-redirect export))
 		(writable (js-evar-info-writable export)))
