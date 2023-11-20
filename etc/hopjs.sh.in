@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 13 14:06:56 2015                          */
-#*    Last change :  Sun May 14 09:44:45 2023 (serrano)                */
+#*    Last change :  Sun Nov 19 09:55:07 2023 (serrano)                */
 #*    Copyright   :  2015-23 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Nodejs compatible script engine                                  */
@@ -52,6 +52,10 @@ while : ; do
 
     --clear-cache)
       opt="--clear-cache $opt";;
+
+    --version)
+      hop --version
+      exit 0;;
 
     *)
       rest="$rest $1";;

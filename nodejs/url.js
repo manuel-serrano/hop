@@ -28,6 +28,9 @@ exports.format = urlFormat;
 
 exports.Url = Url;
 
+exports.fileURLToPath = fileURLToPath;
+exports.pathToFileURL = pathToFileURL;
+
 function Url() {
   this.protocol = null;
   this.slashes = null;
@@ -696,3 +699,17 @@ Url.prototype.parseHost = function() {
   }
   if (host) this.hostname = host;
 };
+
+/*---------------------------------------------------------------------*/
+/*    Nodejs 18 compatibility                                          */
+/*---------------------------------------------------------------------*/
+function fileURLToPath(url) {
+   return url.path;
+}
+
+function pathToFileURL(path) {
+   const url = new Url();
+   url.path = path;
+   url.prootocol = "file";
+   return url;
+}

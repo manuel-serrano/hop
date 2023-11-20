@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Thu Jun 22 14:49:00 2023 (serrano)                */
+;*    Last change :  Sun Nov 19 09:42:30 2023 (serrano)                */
 ;*    Copyright   :  2018-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -87,6 +87,7 @@
 		   (letrec* ,(j2s-let-headers scmheaders)
 		      ,@(j2s-expr-headers scmheaders)
 		      ;;,@globals
+		      "master"
 		      ,esexports
 		      ,@esimports
 		      ,@esredirects
@@ -146,10 +147,10 @@
 		    (letrec* ,(j2s-let-headers scmheaders)
 		       ,@(j2s-expr-headers scmheaders)
 		       ;;,@globals
+		       "slave"
 		       ,esexports
 		       ,@esimports
 		       ,@esredirects
-		       ,esexports
 		       ,@(exit-body ctx scmrecords
 			    (filter fundef? body) (filter nofundef? body)))))
 	    ;; for dynamic loading

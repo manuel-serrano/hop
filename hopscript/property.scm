@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sun Oct 22 08:44:03 2023 (serrano)                */
+;*    Last change :  Fri Nov 17 17:48:01 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -904,7 +904,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Used to get a direct object property.                            */
 ;*---------------------------------------------------------------------*/
-(define (js-pcache-update-get-direct! pcache::JsPropertyCache i o::JsObject PROP)
+(define (js-pcache-update-get-direct! pcache::JsPropertyCache i o::JsObject prop)
    
    (define (update-inline! pcache omap)
       (with-access::JsPropertyCache pcache (imap iindex)
