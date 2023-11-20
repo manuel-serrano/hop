@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Sun Apr 30 18:15:44 2023 (serrano)                */
+#*    Last change :  Sun Nov 19 08:57:22 2023 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the NODEJS library.                        */
 #*=====================================================================*/
@@ -44,7 +44,8 @@ _JS_OBJECTS = console constants util sys path stream events fs \
   freelist http https tls tty zlib url os hop hophz \
   node_tick node_stdio node_proc node_timers node_cluster
 
-_MOD_OBJECTS = hop path fs http https 
+# see nodejs/modules AND nodejs/nodejs.scm
+_MOD_OBJECTS = hop path fs http https url
 
 _C_OBJECTS = _napi
 
