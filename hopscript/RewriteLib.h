@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Nov 17 17:27:07 2023                          */
-/*    Last change :  Fri Nov 17 17:44:49 2023 (serrano)                */
+/*    Last change :  Mon Nov 20 08:14:58 2023 (serrano)                */
 /*    Copyright   :  2023 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    RewriteLib.h sample. Compile as follows:                         */
@@ -38,9 +38,9 @@ typedef struct BgL_threadz00_bgl {
 #  define HOP_REWRITE_CACHE_HIT(n) \
      BINREWRITELIB_EXPAND_LABEL(n):
 #  define BINREWRITELIB_CACHE_MISS_32(n, cache, obj, loc) \
-   ((((struct BgL_jsobjectz00_bgl *)obj)->BgL_cmapz00 == (cache)->BgL_imapz00) \
+   ((((struct BgL_jsobjectz00_bgl *)COBJECT(obj))->BgL_cmapz00 == (cache)->BgL_imapz00) \
    ? binrewritelib_cache_miss_32(n, cache, obj, loc) \
-   : 0)
+    : 0)
 
 #define BINREWRITELIB_EXPAND_LABEL(n) \
   LBL_HOPC ## n ## ___
@@ -50,7 +50,7 @@ typedef struct BgL_threadz00_bgl {
 /*    init_rewite_lib ...                                              */
 /*---------------------------------------------------------------------*/
 static int init_rewrite_lib(long n) {
-   fprintf(stderr, "init_rewrite_lib, n=%d\n", n);
+   fprintf(stderr, "============ init_rewrite_lib, n=%d\n", n);
 }
 
 /*---------------------------------------------------------------------*/
@@ -59,9 +59,9 @@ static int init_rewrite_lib(long n) {
 /*---------------------------------------------------------------------*/
 static int binrewritelib_cache_miss_32(long n, void *cache, void *obj, void *loc) {
    static long cnt = 0;
-   struct BgL_jsobjectz00_bgl *o = (struct BgL_jsobjectz00_bgl *)obj;
+   struct BgL_jsobjectz00_bgl *o = (struct BgL_jsobjectz00_bgl *)COBJECT(obj);
    struct BgL_jspropertycachez00_bgl *c = (struct BgL_jspropertycachez00_bgl *)cache;
    
-   fprintf(stderr, "%d rewrite n=%d cache=%p obj=%p MATCH=%d\n", cnt++, n, cache, obj, o->BgL_cmapz00 == c->BgL_imapz00);
+   fprintf(stderr, "------------ rewrite #%d loc=%d cache=%p obj=%p MATCH=%d\n", cnt++, c->BgL_pointz00, cache, obj, o->BgL_cmapz00 == c->BgL_imapz00);
 }
 
