@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Nov 17 17:27:07 2023                          */
-/*    Last change :  Mon Nov 20 08:14:58 2023 (serrano)                */
+/*    Last change :  Mon Nov 20 10:43:51 2023 (serrano)                */
 /*    Copyright   :  2023 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    RewriteLib.h sample. Compile as follows:                         */
@@ -31,13 +31,7 @@ typedef struct BgL_threadz00_bgl {
 /*---------------------------------------------------------------------*/
 /*    Macro definitions (checking imap hit)                            */
 /*---------------------------------------------------------------------*/
-#  define HOP_REWRITE_LOCATIONS(n) \
-   static char *hop_rewrite_locations[n] = { NULL }
-#  define HOP_REWRITE_INIT(n) \
-     init_rewrite_lib(n);
-#  define HOP_REWRITE_CACHE_HIT(n) \
-     BINREWRITELIB_EXPAND_LABEL(n):
-#  define BINREWRITELIB_CACHE_MISS_32(n, cache, obj, loc) \
+#define BINREWRITELIB_CACHE_MISS_32(n, cache, obj, loc) \
    ((((struct BgL_jsobjectz00_bgl *)COBJECT(obj))->BgL_cmapz00 == (cache)->BgL_imapz00) \
    ? binrewritelib_cache_miss_32(n, cache, obj, loc) \
     : 0)
