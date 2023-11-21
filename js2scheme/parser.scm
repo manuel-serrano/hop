@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Sun Nov 19 06:56:21 2023 (serrano)                */
+;*    Last change :  Tue Nov 21 10:46:20 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -77,6 +77,11 @@
 	     token)))
    
    (define (parse-token-error msg token::pair)
+	  (raise
+	     (instantiate::&io-parse-error
+		(proc "GLOP!!!")
+		(obj token)
+		(msg msg)))
       (match-case (token-loc token)
 	 ((at ?fname ?loc)
 	  (raise
