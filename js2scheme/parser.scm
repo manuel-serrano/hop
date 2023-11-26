@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Tue Nov 21 10:46:20 2023 (serrano)                */
+;*    Last change :  Sun Nov 26 10:24:45 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -77,26 +77,21 @@
 	     token)))
    
    (define (parse-token-error msg token::pair)
-	  (raise
-	     (instantiate::&io-parse-error
-		(proc "GLOP!!!")
-		(obj token)
-		(msg msg)))
       (match-case (token-loc token)
 	 ((at ?fname ?loc)
 	  (raise
 	     (instantiate::&io-parse-error
 		(proc (format "hopc (~a)" lang))
-		(msg (if (eq? (token-type token) 'BAD) (cadr token) msg))
-		(obj (if (eq? (token-type token) 'BAD) (cddr token) (token-value token)))
+		(msg msg)
+		(obj (token-value token))
 		(fname fname)
 		(location loc))))
 	 (else
 	  (raise
 	     (instantiate::&io-parse-error
 		(proc (format "hopc (~a)" lang))
-		(msg (if (eq? (token-type token) 'BAD) (cadr token) msg))
-		(obj (if (eq? (token-type token) 'BAD) (cddr token) (token-value token))))))))
+		(msg msg)
+		(obj (token-value token)))))))
    
    (define (parse-token-warning msg token)
       (with-handler
