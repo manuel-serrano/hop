@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    /tmp/HOPNEW/hop/hopscript/pair.scm                               */
+;*    serrano/prgm/project/hop/3.7.x/hopscript/pair.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat May 24 07:51:25 2014                          */
-;*    Last change :  Sun Feb 23 14:50:20 2020 (serrano)                */
-;*    Copyright   :  2014-20 Manuel Serrano                            */
+;*    Last change :  Mon Nov 27 18:07:47 2023 (serrano)                */
+;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript JS/Hop pair binding                                    */
 ;*=====================================================================*/
@@ -120,8 +120,7 @@
 	 ((eq? n (& "cer"))
 	  (if (epair? o)
 	      (js-obj->jsobject (cer o) %this)
-	      (js-raise-type-error %this
-		 (format "get: no such field \"~a\" ~~a" n) o)))
+	      (js-undefined)))
 	 ((eq? n (& "length"))
 	  (js-make-function %this length
 	     (js-function-arity length)
@@ -199,9 +198,7 @@
 	 ((eq? n (& "childNodes"))
 	  (js-vector->jsarray (list->vector o) %this))
 	 (else
-	  (js-raise-type-error %this
-	     (format "get: no such field \"~a\" ~~a" n)
-	     o)))))
+	  (js-undefined)))))
    
 ;*---------------------------------------------------------------------*/
 ;*    js-get-null ...                                                  */

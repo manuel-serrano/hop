@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/sourcemap.scm             */
+;*    serrano/prgm/project/hop/3.7.x/js2scheme/sourcemap.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jul 11 10:52:32 2014                          */
-;*    Last change :  Fri Jun 23 16:09:11 2023 (serrano)                */
+;*    Last change :  Tue Nov 28 14:43:29 2023 (serrano)                */
 ;*    Copyright   :  2014-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript source map generation                                 */
@@ -82,7 +82,8 @@
 ;*---------------------------------------------------------------------*/
 (define (decode-mappings! mappings::bstring srcs::vector positions::vector
 	   translations::vector)
-   (let ((len (string-length mappings)))
+   (let ((len (string-length mappings))
+	 (lenpos (vector-length positions)))
       (let loop ((i 0)
 		 (lnum 0)
 		 (pgcol 0)
@@ -90,7 +91,7 @@
 		 (psline 0)
 		 (pscol 0)
 		 (pname 0))
-	 (when (<fx i len)
+	 (when (and (<fx i len) (<fx lnum lenpos))
 	    (multiple-value-bind (status ni gcol findex sline scol name)
 	       (source-map-decode-segment mappings i)
 	       (if (eq? status 'newline)
