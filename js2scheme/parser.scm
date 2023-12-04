@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Sun Nov 26 10:24:45 2023 (serrano)                */
+;*    Last change :  Mon Dec  4 13:53:19 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -3329,8 +3329,8 @@
 	     (let ((token (consume-any!)))
 		(instantiate::J2SRegExp
 		   (loc (token-loc token))
-		   (val (car (cdr pattern)))
-		   (flags (cdr (cdr pattern)))))))
+		   (val (car (token-value pattern)))
+		   (flags (cdr (token-value pattern)))))))
 	 ((OTAG)
 	  (xml-expression (consume-any!) #f))
 	 ((HTML)
