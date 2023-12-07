@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Tue Nov 28 14:02:05 2023 (serrano)                */
+;*    Last change :  Thu Dec  7 09:02:24 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for client side code).                                   */
@@ -1453,10 +1453,14 @@
    
    (with-access::J2SClassElement this (static prop)
       (let ((m (cond
+		  ((isa? prop J2SMethodPropertyInit)
+		   (with-access::J2SMethodPropertyInit prop (name val)
+		      (append (j2s-js-name name tildec dollarc mode evalp ctx)
+			 (j2s-js-fun val tildec dollarc mode evalp ctx "" ""))))
 		  ((isa? prop J2SDataPropertyInit)
 		   (with-access::J2SDataPropertyInit prop (name val)
 		      (append (j2s-js-name name tildec dollarc mode evalp ctx)
-			 (j2s-js-fun val tildec dollarc mode evalp ctx "" ""))))
+			 (j2s-js val tildec dollarc mode evalp ctx))))
 		  ((isa? prop J2SAccessorPropertyInit)
 		   (with-access::J2SAccessorPropertyInit prop (name get set)
 		      (let ((nm (j2s-js-name name tildec dollarc mode evalp ctx)))
