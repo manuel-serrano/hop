@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/hop/test/hopjs/noserv/ecma51.js         */
+/*    serrano/prgm/project/hop/3.7.x/test/hopjs/noserv/ecma51.js       */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Sat Jun 10 08:07:24 2023 (serrano)                */
+/*    Last change :  Fri Dec  8 07:36:23 2023 (serrano)                */
 /*    Copyright   :  2014-23 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing basic ECMA 262, 5.1 features                             */
@@ -766,3 +766,19 @@ function fin3() {
 assert.ok(fin1() === 6699, "fin.1");
 assert.throws(function() { fin2() }, Error, "fin.2");
 assert.ok(fin3() === 9, "fin.3");
+
+/*---------------------------------------------------------------------*/
+/*    typeof                                                           */
+/*---------------------------------------------------------------------*/
+assert.ok((typeof "foo") === "string", "typeof string.1");
+assert.ok((typeof "") === "string", "typeof string.2");
+assert.ok((typeof 3) === "number", "typeof number.1");
+assert.ok((typeof 3.14) === "number", "typeof number.2");
+assert.ok((typeof [1, 2]) === "object", "typeof object");
+assert.ok((typeof {}) === "object", "typeof object.2");
+assert.ok((typeof {a: 1}) === "object", "typeof object.3");
+assert.ok((typeof null) === "object", "typeof object.4");
+assert.ok((typeof undefined) === "undefined", "typeof undefined.1");
+assert.ok((typeof window) === "undefined", "typeof undefined.2");
+assert.ok((typeof ((() => 1))) === "function", "typeof function.1");
+
