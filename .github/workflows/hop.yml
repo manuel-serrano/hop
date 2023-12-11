@@ -21,7 +21,6 @@ jobs:
       - run: (cd /tmp && tar xfz /tmp/bigloo-unstable.tar.gz)
       - run: (cd /tmp/bigloo-unstable && ./configure && make && sudo make install)
 
-      - run: ./configure
-      - run: sudo make install
+      - run: ./configure && make && sudo make install
       - run: (cd test/hopjs; ./TEST)
 
