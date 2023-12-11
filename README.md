@@ -1,7 +1,7 @@
 Hop -- Multitier JavaScript
 ===========================
 
-![branch workflow](https://github.com/manuel-serrano/bigloo/actions/workflows/bigloo.yml/badge.svg)
+![branch workflow](https://github.com/manuel-serrano/hop/actions/workflows/hop.yml/badge.svg)
 
 ### To build:
 
