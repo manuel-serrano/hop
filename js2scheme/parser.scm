@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Mon Dec  4 13:53:19 2023 (serrano)                */
+;*    Last change :  Thu Dec 14 18:20:51 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -172,7 +172,7 @@
    
    (define (pop-open-token token)
       (if (queue-empty? *open-tokens*)
-	  (error "js2scheme" (format "cannot pop token \"~s\"" (token-value token))
+	  (error "js2scheme" (format "Cannot pop token \"~s\"." (token-value token))
 	     (token-loc token))
 	  (set! *open-tokens* (queue-pop *open-tokens*)))
       token)
@@ -182,7 +182,7 @@
 	 (if (eq? (token-type token) type)
 	     token
 	     (parse-token-error 
-		(format "Expected \"~a\" got \"~a\"" type (token-type token))
+		(format "Expecting \"~a\" got \"~a\"." type (token-type token))
 		token))))
    
    (define (consume! type)
