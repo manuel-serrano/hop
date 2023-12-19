@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Tue Jul 18 09:27:50 2023 (serrano)                */
+;*    Last change :  Tue Dec 19 12:18:42 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -394,7 +394,7 @@
       (set! js-function-pcache
 	 ((@ js-make-pcache-table __hopscript_property) 6 "function"))
       
-      (let ((proc (lambda l (js-undefined)))
+      (let ((proc (lambda (%this) (js-undefined)))
 	    (js-object-prototype (js-object-proto %this)))
 	 (set! js-function-prototype
 	    (instantiateJsFunction
@@ -402,7 +402,7 @@
 	       (cmap (js-make-jsconstructmap))
 	       (alloc js-not-a-constructor-alloc)
 	       (info (js-function-info :name "" :len 0))
-	       (arity (js-function-arity 0 0))
+	       (arity (js-function-arity proc))
 	       (prototype js-object-prototype)
 	       (__proto__ js-object-prototype)
 	       (elements ($create-vector 10)))))
