@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Tue Mar 28 15:54:38 2023 (serrano)                */
+#*    Last change :  Tue Dec 19 05:10:30 2023 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the JS2SCHEME library.                     */
 #*=====================================================================*/
@@ -41,7 +41,7 @@ _OBJECTS = lexer header parser hopscript html ast usage dump utils freevars \
   inline inline-common inline-profile inline-depth inline-breadth \
   instanceof hintnum pce callapply multivar module checksum classutils \
   newtarget objinit arguments procedure cnstlift hop-module cse strbuffer \
-  loopcnst var2let record genyield testreduce \
+  loopcnst var2let record genyield testreduce topfun \
   scheme scheme-utils scheme-program \
   scheme-fun scheme-ops scheme-test scheme-class scheme-string scheme-math \
   scheme-date scheme-array scheme-regexp scheme-cast scheme-arguments \

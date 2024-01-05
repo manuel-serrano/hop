@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Thu Nov 16 08:53:53 2023 (serrano)                */
+#*    Last change :  Mon Dec 11 08:44:03 2023 (serrano)                */
 #*    Copyright   :  2004-23 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -1488,15 +1488,6 @@ cat $docker.in \
 	-e "s|@HOPMINORVERSION@|$minorversion|" \
 	-e "s|@BIGLOOVERSION@|$bglversion|" \
     >> $docker
-
-# travis.yml.in
-travis=.travis.yml
-rm -f $travis 2> /dev/null
-cat $travis.in \
-  | sed -e "s|@HOPVERSION@|$version|" \
-	-e "s|@HOPMINORVERSION@|$minorversion|" \
-	-e "s|@BIGLOOVERSION@|$bglversion|" \
-    >> $travis
 
 # lib/hop.init
 init=lib/hop/$version/hop.init

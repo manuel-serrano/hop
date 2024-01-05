@@ -1,17 +1,17 @@
 Hop -- Multitier JavaScript
 ===========================
 
-[![Travis](https://api.travis-ci.com/manuel-serrano/hop.svg)](https://travis-ci.com/manuel-serrano/hop/builds)
+![branch workflow](https://github.com/manuel-serrano/hop/actions/workflows/hop.yml/badge.svg)
 
 ### To build:
 
 Prerequisites:
 
  * GCC
- * Bigloo 4.3f or newer <http://www-sop.inria.fr/indes/fp/Bigloo>
+ * Bigloo 4.5b or newer <http://www-sop.inria.fr/indes/fp/Bigloo>
  * GNU Make 3.81 or newer
  * Autoconf/Automake/Libtool
- * OpenSSL 1.0.0 or newer
+ * OpenSSL 1.1 or newer
 
 Unix/Machintosh:
 

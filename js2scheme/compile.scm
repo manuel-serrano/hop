@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Tue Jun 20 07:47:47 2023 (serrano)                */
+;*    Last change :  Tue Dec 19 05:05:51 2023 (serrano)                */
 ;*    Copyright   :  2013-23 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -48,6 +48,7 @@
 	   __js2scheme_cast
 	   __js2scheme_vector
 	   __js2scheme_array
+	   __js2scheme_topfun
 	   __js2scheme_letfun
 	   __js2scheme_letclass
 	   __js2scheme_letfusion
@@ -212,6 +213,7 @@
       j2s-globprop-stage
       j2s-uninit-globprop-stage
       j2s-globvar-stage
+      j2s-topfun-stage
       j2s-testreduce-stage
       j2s-cspecs-stage
       j2s-method-stage
@@ -613,7 +615,9 @@
  	 (unless (memq :optim-sweep o)
 	    (set! o (cons* :optim-sweep #t o)))
 	 (unless (memq :optim-arguments o)
-	    (set! o (cons* :optim-arguments #t o))))
+	    (set! o (cons* :optim-arguments #t o)))
+	 (unless (memq :optim-topfun o)
+	    (set! o (cons* :optim-topfun #t o))))
       (when (>=fx l 1)
 	 (unless (memq :optim-tyflow o)
 	    (set! o (cons* :optim-tyflow #t o))))
