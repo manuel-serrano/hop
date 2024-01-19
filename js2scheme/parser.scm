@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Mon Jan  8 18:30:13 2024 (serrano)                */
+;*    Last change :  Fri Jan 19 08:20:19 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -3888,7 +3888,7 @@
 ;*    j2s-tag->expr ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (j2s-tag->expr tag::pair force-case)
-   (let ((s (symbol->string! (cdr tag))))
+   (let ((s (symbol->string! (token-value tag))))
       (let loop ((type (substring s 1 (-fx (string-length s) 1)))
 		 (fc force-case))
 	 (let ((i (string-index-right type #\.)))
