@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/ast.scm                   */
+;*    serrano/prgm/project/hop/3.7.x/js2scheme/ast.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Sat May 20 09:39:57 2023 (serrano)                */
-;*    Copyright   :  2013-23 Manuel Serrano                            */
+;*    Last change :  Tue Jan 23 18:54:13 2024 (serrano)                */
+;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
 ;*=====================================================================*/
@@ -489,7 +489,8 @@
 	      stmt::J2SStmt)
 	   
 	   (final-class J2SDollar::J2SExpr
-	      (node::J2SNode (info '("ast"))))
+	      (node::J2SNode (info '("ast")))
+	      (context::bstring read-only))
 	   
 	   (final-class J2SNew::J2SExpr
 	      (caches (default '()))

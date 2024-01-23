@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Fri Jan 19 08:20:19 2024 (serrano)                */
+;*    Last change :  Tue Jan 23 18:53:57 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1723,6 +1723,7 @@
 		       (values
 			  ""
 			  (instantiate::J2SDollar
+			     (context (config-get conf :parser "standard"))
 			     (loc (token-loc ignore))
 			     (node expr))))))
 	      (parse-token-error "Illegal import path" (consume-any!))))
@@ -3369,6 +3370,7 @@
 			   (expr (expression #f #f)))
 		       (pop-open-token (consume-token! 'RBRACE))
 		       (instantiate::J2SDollar
+			  (context (config-get conf :parser "standard"))
 			  (loc (token-loc ignore))
 			  (node expr)))))
 	      (parse-token-error
