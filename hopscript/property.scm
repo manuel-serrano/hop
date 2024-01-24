@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/hopscript/property.scm              */
+;*    serrano/prgm/project/hop/3.7.x/hopscript/property.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Fri Nov 17 17:48:01 2023 (serrano)                */
-;*    Copyright   :  2013-23 Manuel Serrano                            */
+;*    Last change :  Wed Jan 24 20:39:56 2024 (serrano)                */
+;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
 ;*    deleting).                                                       */
@@ -2245,7 +2245,7 @@
    
    (define (js-has-own-property/cache o pname cache)
       (with-access::JsObject o ((omap cmap))
-	 (with-access::JsPropertyCache cache (imap cmap xmap)
+	 (with-access::JsPropertyCache cache (imap cmap xmap iindex cindex)
 	    (cond
 	       ((eq? imap omap) #t)
 	       ((eq? cmap omap) #t)
@@ -2254,9 +2254,13 @@
 		(jsobject-find o o pname
 		   ;; cmap search
 		   (lambda (owner i)
-		      (if (<fx i (js-object-inline-length o))
-			  (set! imap omap)
-			  (set! cmap omap))
+		      (if (<fx i (js-object-inline-length owner))
+			  (begin
+			     (set! imap omap)
+			     (set! iindex i))
+			  (begin
+			     (set! cmap omap)
+			     (set! cindex i)))
 		      #t)
 		   ;; hash search
 		   (lambda (owner e)

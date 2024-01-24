@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/hopscript/types.scm                 */
+;*    serrano/prgm/project/hop/3.7.x/hopscript/types.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Fri Oct 20 13:52:31 2023 (serrano)                */
-;*    Copyright   :  2013-23 Manuel Serrano                            */
+;*    Last change :  Wed Jan 24 18:18:45 2024 (serrano)                */
+;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
 ;*    -------------------------------------------------------------    */
@@ -107,7 +107,9 @@
 	   (macro $js-object-procedure?::bool (::obj ::uint32)
 		  "HOP_OBJECT_JSPROCEDUREP")
 	   (macro $js-object-mode-inline?::bool (::JsObject ::uint32)
-		  "HOP_JSOBJECT_MODE_INLINEP"))
+		  "HOP_JSOBJECT_MODE_INLINEP")
+
+	   ($$hopscript-breakpoint::obj (::obj) "hopjs_breakpoint"))
    
    (export (class WorkerHopThread::hopthread
 	      (%loop (default #f))
@@ -1338,7 +1340,8 @@
 	   ($js-object-inline-elements-ref o idx)
 	   (begin
 	      (tprint "*** ASSERT ERROR:js-object-inline-ref idx=" idx)
-	      (js-inspect-object o))))
+	      (js-inspect-object o)
+	      ($$hopscript-breakpoint "js-object-inline-ref"))))
       ((and bigloo-c (not disable-inline))
        ;; (pragma::obj "VECTOR_REF( BVECTOR( (obj_t)(( ((obj_t *)(&(((BgL_jsobjectz00_bglt)(COBJECT($1)))->BgL_elementsz00))) + 1))), $2 )" o idx)
        ($js-object-inline-elements-ref o idx))
@@ -1356,7 +1359,8 @@
 	   ($js-object-inline-elements-set! o idx val)
 	   (begin
 	      (tprint "*** ASSERT ERROR:js-object-inline-set! idx=" idx)
-	      (js-inspect-object o))))
+	      (js-inspect-object o)
+	      ($$hopscript-breakpoint "js-object-inline-set!"))))
       ((and bigloo-c (not disable-inline))
        ;; (pragma::obj "VECTOR_SET( BVECTOR( (obj_t)(( ((obj_t *)(&(((BgL_jsobjectz00_bglt)(COBJECT($1)))->BgL_elementsz00))) + 1))), $2, $3 )" o idx val)
        ($js-object-inline-elements-set! o idx val))
