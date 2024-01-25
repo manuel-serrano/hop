@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Tue May  9 12:04:31 2023 (serrano)                */
-/*    Copyright   :  2016-23 Manuel Serrano                            */
+/*    Last change :  Thu Jan 25 13:25:10 2024 (serrano)                */
+/*    Copyright   :  2016-24 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
 /*    JsObject and cache implementations.                              */

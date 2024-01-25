@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Thu Jan 25 08:58:52 2024 (serrano)                */
+;*    Last change :  Thu Jan 25 09:30:05 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -47,7 +47,9 @@
 	   __hopscript_arraybufferview)
 
    (extern ($js-make-pcache-table::obj (::obj ::int ::obj ::obj ::JsPropertyCache)
-	      "bgl_make_pcache_table"))
+	      "bgl_make_pcache_table")
+	   (macro $hop-rewrite-cache-miss!::int (::obj ::int ::obj)
+	      "HOP_REWRITE_CACHE_MISS"))
 
    (export (js-init-property! ::JsGlobalObject)
 	   (js-inspect-object-cmap-id ::JsObject)
@@ -909,7 +911,10 @@
    (define (update-inline! pcache omap)
       (with-access::JsPropertyCache pcache (imap iindex)
 	 (set! imap omap)
-	 (set! iindex i)))
+	 (set! iindex i)
+	 (cond-expand
+	    (bigloo-c
+	     ($hop-rewrite-cache-miss! o i pcache)))))
 
    (define (update-noinline! pcache omap)
       (with-access::JsPropertyCache pcache (cmap cindex)

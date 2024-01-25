@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Fri Oct 20 13:52:31 2023 (serrano)                */
-;*    Copyright   :  2013-23 Manuel Serrano                            */
+;*    Last change :  Thu Jan 25 09:56:18 2024 (serrano)                */
+;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
 ;*    -------------------------------------------------------------    */
@@ -188,7 +188,8 @@
 	      (cntnmap::uint32 (default #u32:0))
 	      (cntamap::uint32 (default #u32:0))
 	      (cntxmap::uint32 (default #u32:0))
-	      (cntvtable::uint32 (default #u32:0)))
+	      (cntvtable::uint32 (default #u32:0))
+	      (rewriteinfo::obj (default #unspecified)))
 	   
 	   (final-class JsConstructMap
 	      (%id::uint32 read-only)

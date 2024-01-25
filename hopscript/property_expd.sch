@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Thu Nov 16 11:41:41 2023 (serrano)                */
-;*    Copyright   :  2016-23 Manuel Serrano                            */
+;*    Last change :  Thu Jan 25 10:10:32 2024 (serrano)                */
+;*    Copyright   :  2016-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
 ;*    -------------------------------------------------------------    */
@@ -241,37 +241,20 @@
       e))
 
 ;*---------------------------------------------------------------------*/
-;*    js-pcache-rewrite-miss-label-expander ...                        */
+;*    js-pcache-rewrite-imap-cache-hit-expander ...                    */
 ;*---------------------------------------------------------------------*/
-(define (js-pcache-rewrite-miss-label-expander x e)
+(define (js-pcache-rewrite-imap-cache-hit-expander x e)
    (e (match-case x
-	 ((js-pcache-rewrite-miss-label (js-pcache-ref %pcache ?idx) ?obj)
+	 ((js-pcache-rewrite-imap-cache-hit (js-pcache-ref %pcache ?idx))
 	  (cond-expand
 	     ((and bigloo-c (not hop-eval) (not hopjs-worker-slave))
-	      `(pragma::obj "HOP_REWRITE_CACHE_MISS($1, $2)" ,idx ,obj))
+	      `(pragma::obj "HOP_REWRITE_IMAP_CACHE_HIT($1)" ,idx))
 	     (else
 	      #unspecified)))
-	 ((js-pcache-rewrite-miss-label ?- ?obj)
+	 ((js-pcache-rewrite-imap-cache-hit ?-)
 	  #unspecified)
 	 (else
-	  (error "js-pcache-rewrite-miss-label" "bad syntax" x)))
-      e))
-
-;*---------------------------------------------------------------------*/
-;*    js-pcache-rewrite-hit-expander ...                               */
-;*---------------------------------------------------------------------*/
-(define (js-pcache-rewrite-hit-expander x e)
-   (e (match-case x
-	 ((js-pcache-rewrite-hit (js-pcache-ref %pcache ?idx))
-	  (cond-expand
-	     ((and bigloo-c (not hop-eval) (not hopjs-worker-slave))
-	      `(pragma::obj "HOP_REWRITE_CACHE_HIT($1)" ,idx))
-	     (else
-	      #unspecified)))
-	 ((js-pcache-rewrite-hit ?-)
-	  #unspecified)
-	 (else
-	  (error "js-pcache-rewrite-hit" "bad syntax" x)))
+	  (error "js-pcache-rewrite-imap-cache-hit" "bad syntax" x)))
       e))
 
 ;*---------------------------------------------------------------------*/
@@ -452,13 +435,28 @@
 	 ((js-pcache-point-set! (and ?c (js-pcache-ref %pcache ?idx)) ?p)
 	  (cond-expand
 	     ((and bigloo-c (not hop-eval) (not hopjs-worker-slave))
-	      `(free-pragma::obj "(__bgl_pcache[$1].BgL_pointz00 = ($2)) " ,idx ,p))
+	      `(pragma::obj "(__bgl_pcache[$1].BgL_pointz00 = ($2)) " ,idx ,p))
 	     (else
 	      `(with-access::JsPropertyCache ,c (point) (set! point ,p)))))
 	 ((js-pcache-point-set! ?c ?p)
 	  `(with-access::JsPropertyCache ,c (point) (set! point ,p)))
 	 (else
 	  (error "js-pcache-point-set!" "bad syntax" x)))
+      e))
+
+;*---------------------------------------------------------------------*/
+;*    js-pcache-rewriteinfo-set-expander ...                           */
+;*---------------------------------------------------------------------*/
+(define (js-pcache-rewriteinfo-set-expander x e)
+   (e (match-case x
+	 ((js-pcache-rewriteinfo-set! (and ?c (js-pcache-ref %pcache ?idx)))
+	  (cond-expand
+	     ((and bigloo-c (not hop-eval) (not hopjs-worker-slave))
+	      `(pragma::obj "HOP_REWRITE_INFO_SET(__bgl_pcache[$1], $2) " ,idx ,idx))
+	     (else
+	      #unspecified)))
+	 (else
+	  (error "js-pcache-rewriteinfo-set!" "bad syntax" x)))
       e))
 
 ;*---------------------------------------------------------------------*/
@@ -594,11 +592,13 @@
 	    (cond
 	       ((null? cs)
 		;; cache miss
-		`(let ((m ((@ js-get-proxy-name/cache-miss __hopscript_proxy)
-			   ,obj ,prop ,throw ,%this ,cache)))
+		`(begin
 		    (js-pcache-point-set! ,cache ,loc)
-		    ,(when rewrite `(js-pcache-rewrite-miss-label ,cache ,obj))
-		    m))
+		    ,@(if rewrite
+			 `((js-pcache-rewriteinfo-set! ,cache))
+			 '())
+		    ((@ js-get-proxy-name/cache-miss __hopscript_proxy)
+		     ,obj ,prop ,throw ,%this ,cache)))
 	       ((eq? cs 'imap)
 		`(let ((idx (js-pcache-iindex ,cache)))
 		    (js-profile-log-cache ,cache :imap #t)
@@ -638,15 +638,20 @@
 		    (loop 'cmap rewrite))
 		   ((imap imap+)
 		    ;; direct inlined property get
-		    `(if (eq? %cmap (js-pcache-imap ,cache))
-			 (begin
-			    (js-pcache-rewrite-hit ,cache)
-			    ,(loop 'imap rewrite))
-			 ,(if (eq? (car cs) 'imap)
-			      (loop (cdr cs) #t)
-			      `((@ js-get-jsobject-name/cache-imap+
-				   __hopscript_property)
-				,obj ,prop ,throw ,%this ,cache ,loc ',cspecs))))
+		    (let ((rewrite (match-case cache
+				      ((js-pcache-ref %pcache ?-) #t)
+				      (else #f))))
+		       `(if (eq? %cmap (js-pcache-imap ,cache))
+			    (begin
+			       ,@(if rewrite
+				     `((js-pcache-rewrite-imap-cache-hit ,cache))
+				     '())
+			       ,(loop 'imap rewrite))
+			    ,(if (eq? (car cs) 'imap)
+				 (loop (cdr cs) rewrite)
+				 `((@ js-get-jsobject-name/cache-imap+
+				      __hopscript_property)
+				   ,obj ,prop ,throw ,%this ,cache ,loc ',cspecs)))))
 		   ((emap)
 		    (loop (cdr cs) rewrite))
 		   ((cmap cmap+)
