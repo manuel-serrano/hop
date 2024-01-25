@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed Jan 24 21:03:30 2024 (serrano)                */
+;*    Last change :  Thu Jan 25 08:58:52 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -2198,19 +2198,64 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-8.12.6       */
 ;*---------------------------------------------------------------------*/
-(define-method (js-has-property::bool o::JsObject prop::obj %this)
-   (let ((name (js-toname prop %this)))
-      (jsobject-find o o name
-	 ;; cmap search
-	 (lambda (owner i) #t)
-	 ;; hash search
-	 (lambda (owner e) #t)
-	 ;; property search
-	 (lambda (owner d i) #t)
-	 ;; failure
-	 (lambda (o) #f)
-	 ;; prototype search
-	 (lambda (__proto__) (js-has-property __proto__ name %this)))))
+(define-method (js-has-property::bool o::JsObject p::obj %this)
+
+   (define (js-has-property/w-cache o p)
+      (let ((name (js-toname p %this)))
+	 (jsobject-find o o name
+	    ;; cmap search
+	    (lambda (owner i) #t)
+	    ;; hash search
+	    (lambda (owner e) #t)
+	    ;; property search
+	    (lambda (owner d i) #t)
+	    ;; failure
+	    (lambda (o) #f)
+	    ;; prototype search
+	    (lambda (__proto__) (js-has-property __proto__ name %this)))))
+
+   (define (js-has-property/cache o pname cache)
+      (with-access::JsObject o ((omap cmap))
+	 (with-access::JsPropertyCache cache (imap cmap xmap iindex cindex)
+	    (cond
+	       ((eq? imap omap) #t)
+	       ((eq? cmap omap) #t)
+	       ((eq? xmap omap) #f)
+	       (else
+		(jsobject-find o o pname
+		   ;; cmap search
+		   (lambda (owner i)
+		      (when (eq? o owner)
+			 (if (<fx i (js-object-inline-length owner))
+			     (begin
+				(set! imap omap)
+				(set! iindex i))
+			     (begin
+				(set! cmap omap)
+				(set! cindex i))))
+		      #t)
+		   ;; hash search
+		   (lambda (owner e)
+		      #t)
+		   ;; property search
+		   (lambda (owner d i)
+		      #t)
+		   ;; failure
+		   (lambda (o)
+		      (set! xmap omap)
+		      #f)
+		   ;; prototype search
+		   (lambda (__proto__)
+		      (js-has-property __proto__ pname %this))))))))
+
+   (if (js-jsstring? p)
+       (let ((pname (synchronize-name
+		       (js-jsstring-toname-unsafe p))))
+	  (let ((cacher (js-name-pcacher pname)))
+	     (if cacher
+		 (js-has-property/cache o pname cacher)
+		 (js-has-property/w-cache o pname))))
+       (js-has-property/w-cache o p)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-has-own-property ...                                          */
@@ -2270,7 +2315,6 @@
 		      #t)
 		   ;; not found
 		   (lambda (o)
-		      (set! xmap omap)
 		      #f)))))))
 
    (if (js-jsstring? p)
