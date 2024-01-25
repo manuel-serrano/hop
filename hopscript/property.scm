@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Thu Jan 25 09:30:05 2024 (serrano)                */
+;*    Last change :  Thu Jan 25 15:16:12 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -1535,41 +1535,40 @@
 (define-macro (jsobject-find o base name foundinmap foundinhash foundinprop notfound . loop)
 
    (define (find obj name)
-      `(with-access::JsObject ,obj (cmap)
-	  (cond
-	     ((js-object-mapped? ,obj)
-	      (jsobject-map-find ,obj ,name ,foundinmap
-		 (lambda ()
-		    ,(if (pair? loop)
-			 `(let ((__proto__ (js-object-proto ,obj)))
-			     (if (js-object? __proto__)
-				 (begin
-				    (js-object-mode-isprotoof-set! __proto__ #t)
-				    (,(car loop) __proto__))
-				 (,notfound ,base)))
-			 `(,notfound ,base)))))
-	     ((js-object-hashed? ,obj)
-	      (jsobject-hash-find ,obj ,name ,foundinhash
-		 (lambda ()
-		    ,(if (pair? loop)
-			 `(let ((__proto__ (js-object-proto ,obj)))
-			     (if (js-object? __proto__)
-				 (begin
-				    (js-object-mode-isprotoof-set! __proto__ #t)
-				    (,(car loop) __proto__))
-				 (,notfound ,base)))
-			 `(,notfound ,base)))))
-	     (else
-	      (jsobject-properties-find ,obj ,name ,foundinprop
-		 (lambda ()
-		    ,(if (pair? loop)
-			 `(let ((__proto__ (js-object-proto ,obj)))
-			     (if (js-object? __proto__)
-				 (begin
-				    (js-object-mode-isprotoof-set! __proto__ #t)
-				    (,(car loop) __proto__))
-				 (,notfound ,base)))
-			 `(,notfound ,base))))))))
+      `(cond
+	  ((js-object-mapped? ,obj)
+	   (jsobject-map-find ,obj ,name ,foundinmap
+	      (lambda ()
+		 ,(if (pair? loop)
+		      `(let ((__proto__ (js-object-proto ,obj)))
+			  (if (js-object? __proto__)
+			      (begin
+				 (js-object-mode-isprotoof-set! __proto__ #t)
+				 (,(car loop) __proto__))
+			      (,notfound ,base)))
+		      `(,notfound ,base)))))
+	  ((js-object-hashed? ,obj)
+	   (jsobject-hash-find ,obj ,name ,foundinhash
+	      (lambda ()
+		 ,(if (pair? loop)
+		      `(let ((__proto__ (js-object-proto ,obj)))
+			  (if (js-object? __proto__)
+			      (begin
+				 (js-object-mode-isprotoof-set! __proto__ #t)
+				 (,(car loop) __proto__))
+			      (,notfound ,base)))
+		      `(,notfound ,base)))))
+	  (else
+	   (jsobject-properties-find ,obj ,name ,foundinprop
+	      (lambda ()
+		 ,(if (pair? loop)
+		      `(let ((__proto__ (js-object-proto ,obj)))
+			  (if (js-object? __proto__)
+			      (begin
+				 (js-object-mode-isprotoof-set! __proto__ #t)
+				 (,(car loop) __proto__))
+			      (,notfound ,base)))
+		      `(,notfound ,base)))))))
 
    (if (and (symbol? o) (symbol? base))
        (let ((obj (gensym 'obj)))
@@ -1589,44 +1588,43 @@
 (define-macro (jsobject-find/w-proxy o base name foundinmap foundinhash foundinprop notfound . loop)
 
    (define (find obj name)
-      `(with-access::JsObject ,obj (cmap)
-	  (cond
-	     ((js-object-mapped? ,obj)
-	      (jsobject-map-find ,obj ,name ,foundinmap
-		 (lambda ()
-		    ,(if (pair? loop)
-			 `(let ((__proto__ (js-object-proto ,obj)))
-			     (if (js-object? __proto__)
-				 (begin
-				    (js-object-mode-isprotoof-set! __proto__ #t)
-				    (,(car loop) __proto__))
-				 (,notfound ,base)))
-			 `(,notfound ,base)))
-		 #f))
-	     ((js-object-hashed? ,obj)
-	      (jsobject-hash-find ,obj ,name ,foundinhash
-		 (lambda ()
-		    ,(if (pair? loop)
-			 `(let ((__proto__ (js-object-proto ,obj)))
-			     (if (js-object? __proto__)
-				 (begin
-				    (js-object-mode-isprotoof-set! __proto__ #t)
-				    (,(car loop) __proto__))
-				 (,notfound ,base)))
-			 `(,notfound ,base)))
-		 #f))
-	     (else
-	      (jsobject-properties-find ,obj ,name ,foundinprop
-		 (lambda ()
-		    ,(if (pair? loop)
-			 `(let ((__proto__ (js-object-proto ,obj)))
-			     (if (js-object? __proto__)
-				 (begin
-				    (js-object-mode-isprotoof-set! __proto__ #t)
-				    (,(car loop) __proto__))
-				 (,notfound ,base)))
-			 `(,notfound ,base)))
-		 #f)))))
+      `(cond
+	  ((js-object-mapped? ,obj)
+	   (jsobject-map-find ,obj ,name ,foundinmap
+	      (lambda ()
+		 ,(if (pair? loop)
+		      `(let ((__proto__ (js-object-proto ,obj)))
+			  (if (js-object? __proto__)
+			      (begin
+				 (js-object-mode-isprotoof-set! __proto__ #t)
+				 (,(car loop) __proto__))
+			      (,notfound ,base)))
+		      `(,notfound ,base)))
+	      #f))
+	  ((js-object-hashed? ,obj)
+	   (jsobject-hash-find ,obj ,name ,foundinhash
+	      (lambda ()
+		 ,(if (pair? loop)
+		      `(let ((__proto__ (js-object-proto ,obj)))
+			  (if (js-object? __proto__)
+			      (begin
+				 (js-object-mode-isprotoof-set! __proto__ #t)
+				 (,(car loop) __proto__))
+			      (,notfound ,base)))
+		      `(,notfound ,base)))
+	      #f))
+	  (else
+	   (jsobject-properties-find ,obj ,name ,foundinprop
+	      (lambda ()
+		 ,(if (pair? loop)
+		      `(let ((__proto__ (js-object-proto ,obj)))
+			  (if (js-object? __proto__)
+			      (begin
+				 (js-object-mode-isprotoof-set! __proto__ #t)
+				 (,(car loop) __proto__))
+			      (,notfound ,base)))
+		      `(,notfound ,base)))
+	      #f))))
 
    (if (and (symbol? o) (symbol? base))
        (let ((obj (gensym 'obj)))
@@ -2437,13 +2435,14 @@
 	 (let ((d (cell-ref e)))
 	    (if (isa? d JsPropertyDescriptor)
 		(js-from-property-descriptor %this p d o)
-		(with-access::JsConstructMap cmap (props)
-		   (let ((name (js-toname p %this)))
-		      (js-property-descriptor %this #t
-			 :writable #t
-			 :enumerable #t
-			 :configurable #t
-			 :value d))))))
+		(with-access::JsObject o (cmap)
+		   (with-access::JsConstructMap cmap (props)
+		      (let ((name (js-toname p %this)))
+			 (js-property-descriptor %this #t
+			    :writable #t
+			    :enumerable #t
+			    :configurable #t
+			    :value d)))))))
       ;; property search
       (lambda (owner d i)
 	 (js-from-property-descriptor %this p d o))
