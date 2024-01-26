@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Fri Oct 15 14:00:36 2021 (serrano)                */
-;*    Copyright   :  2017-21 Manuel Serrano                            */
+;*    Last change :  Fri Jan 26 09:11:22 2024 (serrano)                */
+;*    Copyright   :  2017-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript string functions.           */
 ;*=====================================================================*/
@@ -108,11 +108,19 @@
 ;*    fresh-string? ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (fresh-string? this self)
+   
+   (define (empty-string? x)
+      (when (isa? x J2SString)
+	 (with-access::J2SString x (val)
+	    (=fx (string-length val) 0))))
+   
    ;; self is used to ensure that no optimization removes the creation
    ;; of a new string
    (cond
       ((isa? this J2SBinary)
-       (with-access::J2SBinary this (op) (and (eq? op '+) (pair? self))))
+       (with-access::J2SBinary this (op lhs rhs)
+	  (when (and (eq? op '+) (pair? self))
+	     (not (or (empty-string? lhs) (empty-string? rhs))))))
       ((isa? this J2SParen)
        (with-access::J2SParen this (expr) (fresh-string? expr self)))
       (else

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Fri Jul 14 07:41:34 2023 (serrano)                */
-;*    Copyright   :  2013-23 Manuel Serrano                            */
+;*    Last change :  Fri Jan 26 11:06:51 2024 (serrano)                */
+;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
 ;*=====================================================================*/
@@ -701,7 +701,7 @@
 ;*    js-arguments-slice ...                                           */
 ;*    -------------------------------------------------------------    */
 ;*    Arguments slicing is optimized because the pattern               */
-;*    Array.prototype.slice.call( arguments, ... ) is very             */
+;*    Array.prototype.slice.call(arguments, ... ) is very              */
 ;*    frequent to extract optional arguments.                          */
 ;*---------------------------------------------------------------------*/
 (define (js-arguments-slice this::JsArguments start end %this)
@@ -724,7 +724,9 @@
       (let ((arr (js-array-construct-alloc/lengthu32 %this
 		    (fixnum->uint32 (- final k)))))
 	 (array-copy! o 0 arr k final)))
-   
+
+   (tprint "js-argumentsslice start=" start " end=" end
+      " " (js-object-mode-inline? this) " " (typeof this))
    (if (js-object-mode-inline? this)
        (with-access::JsArguments this (vec)
 	  (let* ((len (vector-length vec))
