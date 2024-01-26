@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Thu Jan 25 09:56:18 2024 (serrano)                */
+;*    Last change :  Fri Jan 26 10:01:15 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -1351,7 +1351,7 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-object-inline-set! o::JsObject idx::long val::obj)
    (cond-expand
-      ((and bigloo-c debug (not disable-inline))
+      ((and bigloo-c (not disable-inline) debug)
        (if (<fx idx (vector-length (js-object-inline-elements o)))
 	   ;; (pragma::obj "VECTOR_SET( BVECTOR( (obj_t)(( ((obj_t *)(&(((BgL_jsobjectz00_bglt)(COBJECT($1)))->BgL_elementsz00))) + 1))), $2, $3 )" o idx val)
 	   ($js-object-inline-elements-set! o idx val)

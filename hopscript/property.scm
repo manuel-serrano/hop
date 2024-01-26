@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Thu Jan 25 15:16:12 2024 (serrano)                */
+;*    Last change :  Fri Jan 26 07:47:10 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -2235,7 +2235,7 @@
 				(set! iindex i))
 			     (begin
 				(set! cmap omap)
-				(set! cindex i))))
+				(set! cindex (-fx i (js-object-inline-length owner))))))
 		      #t)
 		   ;; hash search
 		   (lambda (owner e)
@@ -2308,7 +2308,7 @@
 			     (set! iindex i))
 			  (begin
 			     (set! cmap omap)
-			     (set! cindex i)))
+			     (set! cindex (-fx i (js-object-inline-length owner)))))
 		      #t)
 		   ;; hash search
 		   (lambda (owner e)
@@ -2753,8 +2753,8 @@
 		     =>
 		     (lambda (cache)
 			(js-get-jsobject-name/cache o pname #f
-			   %this
-			   cache -2 '(imap emap cmap pmap amap xmap vtable))))
+				    %this
+				    cache -2 '(imap emap cmap pmap amap xmap vtable))))
 		    ((js-jsstring-index? pname)
 		     (js-get o prop %this))
 		    (else
@@ -3189,6 +3189,7 @@
       (js-property-value-set! o propobj prop desc v %this))
    
    (define (update-mapped-object-value! obj cmap i v)
+      
       (with-access::JsObject obj (cmap)
 	 (with-access::JsConstructMap cmap (nextmap methods props)
 	    (cond
@@ -3205,16 +3206,8 @@
 		    v)
 		   (else
 		    ;; invalidate cache method and re-cache
-		    (cond
-		       ((js-object-mode-isprotoof? obj)
-			;; MS: 31mar2023, I'm not totally sure about this one as pmap
-			;; cache entries are used to search the prototype chain and also
-			;; to implement cached fast method calls.
-			(js-invalidate-cache-pmap-method! %this cmap i
-			   "update-mapped with new function" name))
-		       (cache
-			(with-access::JsPropertyCache cache (pmap)
-			   (set! pmap (js-not-a-pmap)))))
+		    (js-invalidate-cache-pmap-method! %this cmap i
+		       "update-mapped with new function" name)
 		    (reset-cmap-vtable! cmap "update-mapped" name)
 		    (when cache
 		       (js-pcache-update-put-direct! cache i obj))

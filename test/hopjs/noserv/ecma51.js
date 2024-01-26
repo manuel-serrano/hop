@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Sat Jun 10 08:07:24 2023 (serrano)                */
-/*    Copyright   :  2014-23 Manuel Serrano                            */
+/*    Last change :  Fri Jan 26 11:35:27 2024 (serrano)                */
+/*    Copyright   :  2014-24 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing basic ECMA 262, 5.1 features                             */
 /*=====================================================================*/
@@ -236,6 +236,18 @@ function bar7() {
    return p === undefined && q + n === 5;
 }
 
+function createUTCDate(y) {
+   var date, args;
+   if (y < 100 && y >= 0) {
+      args = Array.prototype.slice.call(arguments);
+      date = new Date(Date.UTC.apply(null, args));
+   } else {
+      date = new Date(Date.UTC.apply(null, arguments));
+   }
+   
+   return date;
+}
+
 assert.equal(foo1(10), 55, "foo1");
 assert.equal(foo2(10), 10, "foo2");
 assert.equal(bar1(10), 55, "bar1");
@@ -246,6 +258,10 @@ assert.strictEqual(bar5(), true, "arguments length");
 assert.strictEqual(bar6(1, 2), 23, "arguments.__proto__");
 assert.ok(bar7(1, 2), "arguments.__proto__ (2)");
 assert.equal(yyyy, undefined, "global lifting");
+assert.ok(createUTCDate(98) instanceof  Date);
+assert.ok(createUTCDate(198) instanceof  Date);
+assert.ok(({f: createUTCDate}.f(30)) instanceof  Date);
+assert.ok(({f: createUTCDate}.f(2000)) instanceof  Date);
 
 /*---------------------------------------------------------------------*/
 /*    undefined                                                        */

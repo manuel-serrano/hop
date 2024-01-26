@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Dec 14 07:04:23 2019                          */
-;*    Last change :  Sun Jul 23 08:39:26 2023 (serrano)                */
-;*    Copyright   :  2019-23 Manuel Serrano                            */
+;*    Last change :  Fri Jan 26 11:30:42 2024 (serrano)                */
+;*    Copyright   :  2019-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Ast node usage API                                               */
 ;*=====================================================================*/
@@ -44,6 +44,7 @@
 	   
 	   (ref-lonly-vararg?::bool ::obj)
 	   (ref-stack-vararg?::bool ::obj)
+	   (ref-lazy-vararg?::bool ::obj)
 	   
 	   (fun-lonly-vararg?::bool ::J2SFun)
 	   (fun-stack-vararg?::bool ::J2SFun)
@@ -184,6 +185,14 @@
    (when (isa? this J2SRef)
       (with-access::J2SRef this (decl)
 	 (decl-lonly-vararg? decl))))
+
+;*---------------------------------------------------------------------*/
+;*    ref-lazy-vararg? ...                                             */
+;*---------------------------------------------------------------------*/
+(define (ref-lazy-vararg? this)
+   (when (isa? this J2SRef)
+      (with-access::J2SRef this (decl)
+	 (decl-lazy-vararg? decl))))
 
 ;*---------------------------------------------------------------------*/
 ;*    ref-stack-vararg? ...                                            */

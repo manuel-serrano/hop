@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Mon Jul 24 07:29:13 2023 (serrano)                */
-;*    Copyright   :  2018-23 Manuel Serrano                            */
+;*    Last change :  Fri Jan 26 11:29:31 2024 (serrano)                */
+;*    Copyright   :  2018-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
 ;*=====================================================================*/
@@ -531,15 +531,27 @@
 		 (js-jsstring-lengthfx ,o)
 		 ,%this))))
       ((arguments)
-       (if (ref-stack-vararg? (car args))
+       (cond
+	  ((ref-stack-vararg? (car args))
 	   `(js-arguments-vector-slice ,obj ,arg
 	       ,(j2s-arguments-length-id)
-	       ,%this)
+	       ,%this))
+	  ((ref-lazy-vararg? (car args))
+	   (let ((a (gensym '%a)))
+	      `(if %arguments
+		   (let ((,a ,obj))
+		      (js-arguments-slice ,a ,arg
+			 (js-arguments-length ,a %this)
+			 ,%this))
+		   (js-arguments-vector-slice &arguments ,arg
+		      &len
+		      ,%this))))
+	  (else
 	   (let ((a (gensym '%a)))
 	      `(let ((,a ,obj))
 		  (js-arguments-slice ,a ,arg
 		     (js-arguments-length ,a %this)
-		     ,%this)))))
+		     ,%this))))))
       (else
        `(js-array-prototype-maybe-slice1 ,obj ,arg ,%this))))
 

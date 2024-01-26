@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Sun Oct 22 18:54:47 2023 (serrano)                */
-;*    Copyright   :  2014-23 Manuel Serrano                            */
+;*    Last change :  Fri Jan 26 07:45:07 2024 (serrano)                */
+;*    Copyright   :  2014-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
 ;*=====================================================================*/
@@ -4451,7 +4451,7 @@
 	    ((js-regexp-flags-sticky? flags)
 	     (js-regexp-prototype-exec-sticky rx this %this))
 	    ((not (js-regexp-flags-global? flags))
-	     ;; match _always_ invoke the native exec, even if
+	     ;; match _always_ invokes the native exec, even if
 	     ;; RegExp.prototype.exec is modified
 	     (js-regexp-prototype-exec-no-global rx this %this))
 	    (else
@@ -5190,7 +5190,7 @@
       ((js-jsstring? this)
        (js-jsstring-slice this start (js-jsstring-lengthfx this) %this))
       ((js-array? this)
-       (js-array-maybe-slice1 this %this cache start))
+       (js-array-maybe-slice1 this start %this cache))
       (else
        (with-access::JsGlobalObject %this (js-string-pcache)
 	  (let ((slice (js-get-name/cache this (& "slice") #f %this
