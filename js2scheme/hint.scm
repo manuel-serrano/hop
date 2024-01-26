@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Fri Jun 23 16:52:00 2023 (serrano)                */
-;*    Copyright   :  2016-23 Manuel Serrano                            */
+;*    Last change :  Fri Jan 26 11:54:18 2024 (serrano)                */
+;*    Copyright   :  2016-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
 ;*=====================================================================*/
@@ -941,18 +941,20 @@
    
    (define (param-best-hint-type p::J2SDecl)
       (with-access::J2SDecl p (hint usecnt useinloop vtype id)
-	 (let ((hint (filter interesting-hint-type? hint)))
-	    (cond
-	       ((null? hint)
-		'(any 0 0))
-	       ((megamorphic-hint? hint)
-		;; a megamorphic parameter, don't specialize it
-		'(any 0 0))
-	       (else
-		(multiple-value-bind (bt bc)
-		   (best-hint-type p #t)
-		   (let ((c (if useinloop (*fx 2 (* bc usecnt)) (* bc usecnt))))
-		      (list bt c usecnt))))))))
+	 (if (and (<=fx usecnt 1) (not useinloop))
+	     '(any 0 0)
+	     (let ((hint (filter interesting-hint-type? hint)))
+		(cond
+		   ((null? hint)
+		    '(any 0 0))
+		   ((megamorphic-hint? hint)
+		    ;; a megamorphic parameter, don't specialize it
+		    '(any 0 0))
+		   (else
+		    (multiple-value-bind (bt bc)
+		       (best-hint-type p #t)
+		       (let ((c (if useinloop (*fx 2 (* bc usecnt)) (* bc usecnt))))
+			  (list bt c usecnt)))))))))
    
    (define (score-duplicate? score besthints body)
       (or (>fx score (*fx 5 (length besthints)))
