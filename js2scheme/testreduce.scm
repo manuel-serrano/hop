@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Nov 21 06:50:42 2021                          */
-;*    Last change :  Sun Nov 21 07:22:50 2021 (serrano)                */
-;*    Copyright   :  2021 Manuel Serrano                               */
+;*    Last change :  Fri Jan 26 15:28:47 2024 (serrano)                */
+;*    Copyright   :  2021-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Static tests reduction                                           */
 ;*    -------------------------------------------------------------    */
@@ -107,7 +107,7 @@
 		    (with-access::J2SCase (car cases) (body cascade loc)
 		       (if cascade
 			   (cases->statement body (cdr cases) loc)
-			   body))
+			   (remove-break! body this)))
 		    this))))))
 		       
 ;*---------------------------------------------------------------------*/
@@ -151,3 +151,17 @@
    (with-access::J2SLiteralValue this (val)
       val))
 
+;*---------------------------------------------------------------------*/
+;*    remove-break ...                                                 */
+;*---------------------------------------------------------------------*/
+(define-walk-method (remove-break! this::J2SNode tgt)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    remove-break ::J2SBreak ...                                      */
+;*---------------------------------------------------------------------*/
+(define-walk-method (remove-break! this::J2SBreak tgt)
+   (with-access::J2SBreak this (target loc)
+      (if (eq? target tgt)
+	  (J2SNop)
+	  (call-default-walker))))
