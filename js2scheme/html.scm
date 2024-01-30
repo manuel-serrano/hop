@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/html.scm                  */
+;*    serrano/prgm/project/hop/3.7.x/js2scheme/html.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jul 23 17:15:52 2015                          */
-;*    Last change :  Fri Oct  1 07:00:29 2021 (serrano)                */
-;*    Copyright   :  2015-21 Manuel Serrano                            */
+;*    Last change :  Tue Jan 30 11:00:46 2024 (serrano)                */
+;*    Copyright   :  2015-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    J2S Html parser                                                  */
 ;*=====================================================================*/
@@ -110,8 +110,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    html-property-script? ...                                        */
 ;*---------------------------------------------------------------------*/
-(define (html-property-script? prop)
-   (and prop (memq :script prop)))
+(define (html-property-script? type attributes)
+   (eq? type 'script))
 
 ;*---------------------------------------------------------------------*/
 ;*    html-property-empty? ...                                         */
@@ -322,7 +322,7 @@
 		(let ((tag (token type sym (the-length))))
 		   (push-node-ignore
 		      (make-dom-create tag attributes '() lang conf))))
-	       ((html-property-script? prop)
+	       ((html-property-script? type attributes)
 		(let ((tag (token type sym (the-length))))
 		   (push-node-ignore
 		      (make-dom-create tag attributes
