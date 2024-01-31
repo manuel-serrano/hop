@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/hop/share/hop-serialize.js              */
+/*    serrano/prgm/project/hop/3.7.x/share/hop-serialize.js            */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:55:51 2007                          */
-/*    Last change :  Sun Apr  2 16:34:14 2023 (serrano)                */
-/*    Copyright   :  2007-23 Manuel Serrano                            */
+/*    Last change :  Wed Jan 31 11:50:59 2024 (serrano)                */
+/*    Copyright   :  2007-24 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP serialization (Bigloo compatible).                           */
 /*=====================================================================*/
@@ -12,12 +12,12 @@
 /*---------------------------------------------------------------------*/
 /*    defining                                                         */
 /*---------------------------------------------------------------------*/
-var defining = -1;
+let defining = -1;
 
 /*---------------------------------------------------------------------*/
 /*    hop_serialize_context ...                                        */
 /*---------------------------------------------------------------------*/
-var hop_serialize_context = {
+let hop_serialize_context = {
    def: 0,
    ref: 0,
    active: false,
@@ -46,7 +46,7 @@ function hop_bigloo_serialize(item) {
       hop_serialize_context.key++;
       hop_serialize_context.objects = {};
 
-      var str = hop_bigloo_serialize_context(item);
+      let str = hop_bigloo_serialize_context(item);
 
       hop_serialize_context.active = false;
 
@@ -105,7 +105,7 @@ function hop_serialize_context_key_set(item) {
 /*    hop_bigloo_serialize_context ...                                 */
 /*---------------------------------------------------------------------*/
 function hop_bigloo_serialize_context(item) {
-   var tname = typeof item;
+   let tname = typeof item;
 
    if ((item instanceof String) || (tname == "string")) {
       if (sc_isSymbol(item)) {
@@ -190,7 +190,7 @@ function hop_bigloo_serialize_context(item) {
 /*    hop_bigloo_serialize_custom ...                                  */
 /*---------------------------------------------------------------------*/
 function hop_bigloo_serialize_custom(item) {
-   var ctxdef = hop_serialize_context_key_set(item);
+   let ctxdef = hop_serialize_context_key_set(item);
 
    return "=" + hop_serialize_word(ctxdef) + item.hop_bigloo_serialize();
 }
@@ -199,15 +199,15 @@ function hop_bigloo_serialize_custom(item) {
 /*    hop_bigloo_serialize_object ...                                  */
 /*---------------------------------------------------------------------*/
 function hop_bigloo_serialize_object() {
-   var item = this;
-   var classname = hop_demangle(item.hop_classname);
-   var classfields = item.hop_classfields;
-   var str = "|" + "%27" + hop_serialize_string(classname);
-   var args = "";
-   var len = 1;
-   var ctxdef = hop_serialize_context_key_set(item);
+   let item = this;
+   let classname = hop_demangle(item.hop_classname);
+   let classfields = item.hop_classfields;
+   let str = "|" + "%27" + hop_serialize_string(classname);
+   let args = "";
+   let len = 1;
+   let ctxdef = hop_serialize_context_key_set(item);
 
-   for (var p in item) {
+   for (let p in item) {
       if (p !== "hop_bigloo_serialize" &&
 	  p !== "hop_classname" &&
 	  p !== "hop_circle_forced" &&
@@ -231,15 +231,15 @@ function hop_bigloo_serialize_object() {
 /*    hop_bigloo_serialize_custom_object ...                           */
 /*---------------------------------------------------------------------*/
 function hop_bigloo_serialize_custom_object() {
-   var item = this;
-   var hash = item.hop_classhash;
+   let item = this;
+   let hash = item.hop_classhash;
    
-   var classfields = item.hop_classfields;
-   var str = "O("
+   let classfields = item.hop_classfields;
+   let str = "O("
        + hop_serialize_word(2)
        + hop_serialize_word(0);
 
-   var ctxdef = hop_serialize_context_key_set(item);
+   let ctxdef = hop_serialize_context_key_set(item);
 
    str += hop_bigloo_serialize_as_plist(item, item.__class__);
    str += hop_serialize_word(hash);
@@ -253,17 +253,17 @@ function hop_bigloo_serialize_custom_object() {
 /*    hop_bigloo_serialize_custom_object_debug ...                     */
 /*---------------------------------------------------------------------*/
 function hop_bigloo_serialize_custom_object_debug() {
-   var item = this;
-   var hash = item.hop_classhash;
+   let item = this;
+   let hash = item.hop_classhash;
    
-   var classfields = item.hop_classfields;
-   var classname = sc_symbol2jsstring(sc_class_name(clazz));
-   var str = "G("
+   let classfields = item.hop_classfields;
+   let classname = sc_symbol2jsstring(sc_class_name(clazz));
+   let str = "G("
       + hop_serialize_string(classname)
       + hop_serialize_word(2)
       + hop_serialize_word(0);
 
-   var ctxdef = hop_serialize_context_key_set(item);
+   let ctxdef = hop_serialize_context_key_set(item);
 
    str += hop_bigloo_serialize_as_plist(item, item.__class__);
    str += hop_serialize_word(hash);
@@ -277,17 +277,17 @@ function hop_bigloo_serialize_custom_object_debug() {
 /*    hop_bigloo_serialize_sc_object ...                               */
 /*---------------------------------------------------------------------*/
 function hop_bigloo_serialize_sc_object() {
-   var item = this;
-   var clazz = sc_object_class(item);
-   var classname = sc_symbol2jsstring(sc_class_name(clazz));
-   var str = "|" + "%27" + hop_serialize_string(classname);
-   var args = "";
-   var fields = sc_class_all_fields(clazz);
-   var len = 1 + fields.length;
+   let item = this;
+   let clazz = sc_object_class(item);
+   let classname = sc_symbol2jsstring(sc_class_name(clazz));
+   let str = "|" + "%27" + hop_serialize_string(classname);
+   let args = "";
+   let fields = sc_class_all_fields(clazz);
+   let len = 1 + fields.length;
 
-   var ctxdef = hop_serialize_context_key_set(item);
+   let ctxdef = hop_serialize_context_key_set(item);
 
-   for (var i = 0; i < fields.length; i++) {
+   for (let i = 0; i < fields.length; i++) {
       args += hop_bigloo_serialize_context(fields[i].sc_getter(item));
    }
 
@@ -305,14 +305,14 @@ function hop_bigloo_serialize_sc_object() {
 /*    hop_bigloo_serialize_hopframe ...                                */
 /*---------------------------------------------------------------------*/
 function hop_bigloo_serialize_hopframe() {
-   var item = this;
-   var classname = "JsHopFrame";
-   var hash = HopFrame.prototype.hash;
-   var str = "G" + hop_serialize_string(JsHopFrame);
+   let item = this;
+   let classname = "JsHopFrame";
+   let hash = HopFrame.prototype.hash;
+   let str = "G" + hop_serialize_string(JsHopFrame);
 
-   var ctxdef = hop_serialize_context_key_set(item);
+   let ctxdef = hop_serialize_context_key_set(item);
 
-   var obj = [this.srv, this.path, this.args, this.options, this.header];
+   let obj = [this.srv, this.path, this.args, this.options, this.header];
    str += hop_bigloo_serialize_context(sc_cons(hash, obj));
    str += hop_bigloo_serialize_context(0);
 
@@ -325,12 +325,12 @@ function hop_bigloo_serialize_hopframe() {
 /*    hop_bigloo_serialize_service ...                                 */
 /*---------------------------------------------------------------------*/
 function hop_bigloo_serialize_service() {
-   var item = this;
-   var classname = "JsService";
-   var hash = HopService.prototype.hash;
-   var str = "G" + hop_serialize_string("JsService");
+   let item = this;
+   let classname = "JsService";
+   let hash = HopService.prototype.hash;
+   let str = "G" + hop_serialize_string("JsService");
 
-   var ctxdef = hop_serialize_context_key_set(item);
+   let ctxdef = hop_serialize_context_key_set(item);
 
    console.log("serialize_svc=", this);
    str += hop_bigloo_serialize_context(sc_cons(hash, [this.base]));
@@ -346,19 +346,19 @@ function hop_bigloo_serialize_service() {
 /*    -------------------------------------------------------------    */
 /*    See share/hop_u.js                                               */
 /*---------------------------------------------------------------------*/
-var hop_error_hash = 0;
+let hop_error_hash = 0;
 
 /*---------------------------------------------------------------------*/
 /*    hop_bigloo_serialize_error ...                                   */
 /*---------------------------------------------------------------------*/
 function hop_bigloo_serialize_error(item) {
-   var classname = "JsError";
-   var hash = hop_error_hash;
-   var str = "G" + hop_serialize_string("JsError");
+   let classname = "JsError";
+   let hash = hop_error_hash;
+   let str = "G" + hop_serialize_string("JsError");
 
-   var ctxdef = hop_serialize_context_key_set(item);
+   let ctxdef = hop_serialize_context_key_set(item);
 
-   var obj = [item.constructor.name.toString(),
+   let obj = [item.constructor.name.toString(),
 	       item.message.toString(),
 	       hop_bigloo_serialize_context(item.stack),
 	       "fileName" in item ? item.fileName.toString() : "",
@@ -376,7 +376,7 @@ function hop_bigloo_serialize_error(item) {
 /*---------------------------------------------------------------------*/
 #if HOP_SCHEME
 function hop_bigloo_serialize_sc_class(clazz) {
-   var classname = sc_symbol2jsstring(sc_class_name(clazz));
+   let classname = sc_symbol2jsstring(sc_class_name(clazz));
    return "k" + hop_serialize_string(classname);
 }
 #endif
@@ -385,7 +385,7 @@ function hop_bigloo_serialize_sc_class(clazz) {
 /*    hop_size_of_word ...                                             */
 /*---------------------------------------------------------------------*/
 function hop_size_of_word(word) {
-   var s = 0;
+   let s = 0;
 
    while (word > 0) {
       s++;
@@ -399,10 +399,10 @@ function hop_size_of_word(word) {
 /*    hop_serialize_bytes ...                                          */
 /*---------------------------------------------------------------------*/
 function hop_serialize_bytes(word, size) {
-   var rw = "";
+   let rw = "";
 
    while (--size >= 0) {
-      var c = ((word >> (size << 3)) & 0xff);
+      let c = ((word >> (size << 3)) & 0xff);
 
       if ((c >= 46) && (c < 127)) {
 	 if (c == 92)
@@ -417,10 +417,10 @@ function hop_serialize_bytes(word, size) {
 	 else
 	    rw += String.fromCharCode(c);
       } else {
-         var i1 = (c >> 4);
-         var i2 = (c & 0xf);
-         var c1 = i1 + ((i1 < 10) ? 48 : 55);
-         var c2 = i2 + ((i2 < 10) ? 48 : 55);
+         let i1 = (c >> 4);
+         let i2 = (c & 0xf);
+         let c1 = i1 + ((i1 < 10) ? 48 : 55);
+         let c2 = i2 + ((i2 < 10) ? 48 : 55);
          
          rw += String.fromCharCode(37, c1, c2);
       }
@@ -437,15 +437,15 @@ function hop_serialize_word_size(word, size) {
    if (size == 0) {
       return "%00";
    } else {
-      var i1 = (size >> 4);
-      var i2 = (size & 0xf);
-      var c1 = i1 + ((i1 < 10) ? 48 : 55);
-      var c2 = i2 + ((i2 < 10) ? 48 : 55);
-      var rw = String.fromCharCode(37, c1, c2);
+      let i1 = (size >> 4);
+      let i2 = (size & 0xf);
+      let c1 = i1 + ((i1 < 10) ? 48 : 55);
+      let c2 = i2 + ((i2 < 10) ? 48 : 55);
+      let rw = String.fromCharCode(37, c1, c2);
 
       size--;
       while (size >= 0) {
-         var c = ((word >> (size << 3)) & 0xff);
+         let c = ((word >> (size << 3)) & 0xff);
 
          if ((c >= 46) && (c < 127)) {
 	    if (c == 92)
@@ -460,10 +460,10 @@ function hop_serialize_word_size(word, size) {
 	    else
 	       rw += String.fromCharCode(c);
          } else {
-            var i1 = (c >> 4);
-            var i2 = (c & 0xf);
-            var c1 = i1 + ((i1 < 10) ? 48 : 55);
-            var c2 = i2 + ((i2 < 10) ? 48 : 55);
+            let i1 = (c >> 4);
+            let i2 = (c & 0xf);
+            let c1 = i1 + ((i1 < 10) ? 48 : 55);
+            let c2 = i2 + ((i2 < 10) ? 48 : 55);
             
             rw += String.fromCharCode(37, c1, c2);
          }
@@ -487,13 +487,13 @@ function hop_serialize_word(word) {
 /*---------------------------------------------------------------------*/
 /*** META ((export ucs2-string->utf8-string) (arity #t)) */
 function ucs2_to_utf8(s) {
-   var len = s.length;
+   let len = s.length;
 
-   for (var i = 0; i < len; i++) {
-      var c = s.charCodeAt(i);
+   for (let i = 0; i < len; i++) {
+      let c = s.charCodeAt(i);
       if (c >= 128) {
 	 /* we got one non-ascii, we have to convert */
-	 var utf = s.substring(0, i);
+	 let utf = s.substring(0, i);
 
 	 for (; i< len; i++, c = s.charCodeAt(i)) {
 	    if (c < 128) {
@@ -521,11 +521,11 @@ function ucs2_to_utf8(s) {
 /*    utf_length ...                                                   */
 /*---------------------------------------------------------------------*/
 function utf_length(s) {
-   var len = s.length;
-   var res = len;
+   let len = s.length;
+   let res = len;
 
-   for (var i = 0; i < len; i++) {
-      var c = s.charCodeAt(i);
+   for (let i = 0; i < len; i++) {
+      let c = s.charCodeAt(i);
       
       if (c >= 128) {
 	 if ((c > 127) && (c < 2048)) {
@@ -543,10 +543,10 @@ function utf_length(s) {
 /*    hop_serialize_string ...                                         */
 /*---------------------------------------------------------------------*/
 function hop_serialize_string(item) {
-   var url = encodeURIComponent(item);
+   let url = encodeURIComponent(item);
 
    if (url.length > item.length) {
-      var enc = encodeURIComponent(url);
+      let enc = encodeURIComponent(url);
       
       return '%25' + hop_serialize_word(url.length) + enc;
    } else {
@@ -562,7 +562,7 @@ function hop_serialize_number(item) {
       return mark + hop_serialize_word(sitem.length) + sitem;
    }
    
-   var sitem = item + "";
+   let sitem = item + "";
 
    if (sitem.indexOf(".") == -1) {
       if (item < 0) {
@@ -600,11 +600,11 @@ function hop_serialize_boolean(item) {
 /*    hop_serialize_array ...                                          */
 /*---------------------------------------------------------------------*/
 function hop_serialize_array(item) {
-   var l = item.length;
-   var ra = '[' + hop_serialize_word(l);
-   var i = 0;
+   let l = item.length;
+   let ra = '[' + hop_serialize_word(l);
+   let i = 0;
 
-   var ctxdef = hop_serialize_context_key_set(item);
+   let ctxdef = hop_serialize_context_key_set(item);
 
    for (i = 0; i < l; i++) {
       ra += hop_bigloo_serialize_context(item[i]);
@@ -617,11 +617,11 @@ function hop_serialize_array(item) {
 /*    hop_bigloo_serialize_hvector ...                                 */
 /*---------------------------------------------------------------------*/
 function hop_bigloo_serialize_hvector(item, tag, size) {
-   var l = item.length;
-   var ra = 'h' + hop_serialize_word(l) + hop_serialize_word(size) + hop_serialize_string(tag);
-   var i;
+   let l = item.length;
+   let ra = 'h' + hop_serialize_word(l) + hop_serialize_word(size) + hop_serialize_string(tag);
+   let i;
 
-   var ctxdef = hop_serialize_context_key_set(item);
+   let ctxdef = hop_serialize_context_key_set(item);
 
    for (i = 0; i < l; i++) {
       ra += hop_serialize_bytes(item[i], size);
@@ -634,14 +634,14 @@ function hop_bigloo_serialize_hvector(item, tag, size) {
 /*    hop_bigloo_serialize_fvector ...                                 */
 /*---------------------------------------------------------------------*/
 function hop_bigloo_serialize_fvector(item, tag, size) {
-   var l = item.length;
-   var ra = 'h' + hop_serialize_word(l) + hop_serialize_word(size) + hop_serialize_string(tag);
-   var i;
+   let l = item.length;
+   let ra = 'h' + hop_serialize_word(l) + hop_serialize_word(size) + hop_serialize_string(tag);
+   let i;
 
-   var ctxdef = hop_serialize_context_key_set(item);
+   let ctxdef = hop_serialize_context_key_set(item);
 
    for (i = 0; i < l; i++) {
-      var s = item[i].toString();
+      let s = item[i].toString();
       ra += hop_serialize_word(s.length) + s;
    }
 
@@ -722,13 +722,13 @@ function hop_bigloo_serialize_f64vector() {
 /*    hop_serialize_date ...                                           */
 /*---------------------------------------------------------------------*/
 function hop_serialize_date(item) {
-   var utc = Date.UTC(item.getUTCFullYear(),
+   let utc = Date.UTC(item.getUTCFullYear(),
 		       item.getUTCMonth(),
 		       item.getUTCDate(),
 		       item.getUTCHours(),
 		       item.getUTCMinutes(),
 		       item.getUTCSeconds()) + "";
-   var ms = utc.substring(0, utc.length - 3);
+   let ms = utc.substring(0, utc.length - 3);
 
    return 'd' + hop_serialize_word(ms.length) + encodeURIComponent(ms);
 }
@@ -742,7 +742,7 @@ function hop_serialize_html(item) {
       return hop_serialize_string(item.outerHTML);
    } else {
       if (item.nodeType == 1) {
-	 var str = "<" + item.tagName + " id='" + item.id + "' "
+	 let str = "<" + item.tagName + " id='" + item.id + "' "
 	    + (item.className ? ("class='" + item.className + "'") : "")
 	    + ">" + item.innerHTML + "</" + item.tagName + ">";
 	 return hop_serialize_string(str);
@@ -761,8 +761,8 @@ function hop_serialize_html(item) {
 /*    hop_bigloo_serialize_as_plist ...                                */
 /*---------------------------------------------------------------------*/
 function hop_bigloo_serialize_as_plist(item, clazz) {
-   var res = "";
-   var len = 0;
+   let res = "";
+   let len = 0;
 
 
    if (clazz) {
@@ -771,7 +771,7 @@ function hop_bigloo_serialize_as_plist(item, clazz) {
       len = 2;
    }
       
-   for (var p in item) {
+   for (let p in item) {
       res += "%3a" + hop_serialize_string(p)
 	 + hop_bigloo_serialize_context(item[p]);
       len += 2;
@@ -788,9 +788,9 @@ function hop_bigloo_serialize_as_plist(item, clazz) {
 /*    hop_bigloo_serialize_arguments ...                               */
 /*---------------------------------------------------------------------*/
 function hop_bigloo_serialize_arguments() {
-   var res = "";
-   var i;
-   var args = this.args;
+   let res = "";
+   let i;
+   let args = this.args;
 
    for (i = 0; i < args.length; i++) {
       res += hop_bigloo_serialize_context(args[i]);
@@ -828,12 +828,12 @@ function safe_decode_uri(s) {
       return decodeURIComponent(s);
    } catch(e) {
       /* decoding has hitted an illegal UTF-8 surrogate, decode by hand */
-      var i = 0;
-      var l = s.length;
-      var r = "";
+      let i = 0;
+      let l = s.length;
+      let r = "";
 
       while (i < l) {
-	 var j = s.indexOf('%', i);
+	 let j = s.indexOf('%', i);
 
 	 if (j == -1) {
 	    return r + s.substring(i);
@@ -868,10 +868,10 @@ function hop_obj_to_string(item) {
 /*---------------------------------------------------------------------*/
 /*** META ((export string->obj) (arity -2)) */
 function hop_string_to_obj(s, extension) {
-   var a = hop_config.uint8array ?
+   let a = hop_config.uint8array ?
       new Uint8Array(s.length) : new Array(s.length);
 
-   for (var i = 0, len = s.length; i < len; ++i) {
+   for (let i = 0, len = s.length; i < len; ++i) {
       a[i] = (s.charCodeAt(i)) & 0xff;
    }
 
@@ -895,10 +895,10 @@ function hop_url_encoded_to_obj(s) {
       }
    }
       
-   var len = s.length;
+   let len = s.length;
    
    /* compute the destination length */
-   for (var i = 0; i < s.length; ++i) {
+   for (let i = 0; i < s.length; ++i) {
       if (s.charCodeAt(i) == 0x25) {
 	 i += 2;
 	 len -= 2;
@@ -906,12 +906,12 @@ function hop_url_encoded_to_obj(s) {
    }
 
    /* create the temporary byte array */
-   var a = hop_config.uint8array ? new Uint8Array(len) : new Array(len);
+   let a = hop_config.uint8array ? new Uint8Array(len) : new Array(len);
 
-   for (var i = 0, j = 0, len = s.length; i < len; ++i, ++j) {
+   for (let i = 0, j = 0, len = s.length; i < len; ++i, ++j) {
       if (s.charCodeAt(i) == 0x25) {
-	 var n1 = hex_to_dec(s.charCodeAt(++i));
-	 var n2 = hex_to_dec(s.charCodeAt(++i));
+	 let n1 = hex_to_dec(s.charCodeAt(++i));
+	 let n2 = hex_to_dec(s.charCodeAt(++i));
 
 	 a[j] = (n1 << 4) + n2;
       } else {
@@ -927,8 +927,8 @@ function hop_url_encoded_to_obj(s) {
 /*    hop_bytearray_to_obj ...                                         */
 /*---------------------------------------------------------------------*/
 function hop_bytearray_to_obj(s, extension, cset) {
-   var pointer = 0;
-   var definitions = [];
+   let pointer = 0;
+   let definitions = [];
 
    function substring(s, beg, end) {
       if (s instanceof Array) {
@@ -939,26 +939,26 @@ function hop_bytearray_to_obj(s, extension, cset) {
    }
 
    function utf8substring(s, end) {
-      var res = "";
-      var start = pointer;
+      let res = "";
+      let start = pointer;
 
       while (pointer < end) {
-	 var code = s[pointer++];
+	 let code = s[pointer++];
 	 if (code < 128) {
 	    res += String.fromCharCode(code);
 	 } else {
-	    var code2 = s[pointer++];
+	    let code2 = s[pointer++];
 	    if (code < 224) {
 	       code2 = ((code - 192) << 6) + (code2 - 128);
 	       res += String.fromCharCode(code2);
 	    } else {
-	       var code3 = s[pointer++];
+	       let code3 = s[pointer++];
 	       if (code < 240) {
 		  code3 = ((code - 224) << 12)
 		     + ((code2 - 128) << 6) + (code3 - 128);
 		  res += String.fromCharCode(code3);
 	       } else {
-		  var code4 = s[pointer++];
+		  let code4 = s[pointer++];
 		  code4 = ((code - 240) << 18)
 		     + ((code2 - 128) << 12)
 		     + ((code3 - 128) << 6)
@@ -975,7 +975,7 @@ function hop_bytearray_to_obj(s, extension, cset) {
 	 res = "";
 	 
 	 while (pointer < end) {
-	    var code = s[pointer++];
+	    let code = s[pointer++];
 	    if (code < 128) {
 	       res += String.fromCharCode(code);
 	    } else {
@@ -988,7 +988,7 @@ function hop_bytearray_to_obj(s, extension, cset) {
    }
 
    function asciisubstring(s, end) {
-      var res = substring(s, pointer, end);
+      let res = substring(s, pointer, end);
       pointer = end;
       
       return res;
@@ -999,8 +999,8 @@ function hop_bytearray_to_obj(s, extension, cset) {
    }
 
    function read_float(s) {
-      var szf = read_size(s);
-      var res = substring(s, pointer, pointer + szf);
+      let szf = read_size(s);
+      let res = substring(s, pointer, pointer + szf);
       
       pointer += szf;
 
@@ -1012,9 +1012,9 @@ function hop_bytearray_to_obj(s, extension, cset) {
    }
 
    function read_word(s, sz) {
-      var acc = 0;
+      let acc = 0;
 
-      for (var iw = 0; iw < sz; iw++) {
+      for (let iw = 0; iw < sz; iw++) {
 	 acc = (256 * acc) + s[pointer++];
       }
 
@@ -1026,14 +1026,14 @@ function hop_bytearray_to_obj(s, extension, cset) {
    }
 
    function read_size(s) {
-      var szs = s[pointer++];
+      let szs = s[pointer++];
       return read_word(s, szs);
    }
    
    function read_string(s) {
-      var ulen = read_size(s);
-      var sz = ((ulen + pointer) > s.length) ? s.length - pointer : ulen;
-      var res = (cset === "utf8")
+      let ulen = read_size(s);
+      let sz = ((ulen + pointer) > s.length) ? s.length - pointer : ulen;
+      let res = (cset === "utf8")
 	 ? utf8substring(s, pointer + sz)
 	 : asciisubstring(s, pointer + sz);
 
@@ -1063,7 +1063,7 @@ function hop_bytearray_to_obj(s, extension, cset) {
    }
 
    function read_cnst() {
-      var i = read_integer(s);
+      let i = read_integer(s);
 
       switch(i) {
 	 case 30: return "#!key";
@@ -1072,14 +1072,14 @@ function hop_bytearray_to_obj(s, extension, cset) {
    }
 
    function read_vector(sz) {
-      var res = sc_makeVector(sz);
+      let res = sc_makeVector(sz);
 
       if (defining >= 0) {
 	 definitions[defining] = res;
 	 defining = -1;
       }
 
-      for (var iv = 0; iv < sz; iv++) {
+      for (let iv = 0; iv < sz; iv++) {
 	 res[iv] = read_item();
       }
 
@@ -1087,15 +1087,15 @@ function hop_bytearray_to_obj(s, extension, cset) {
    }
 
    function read_list(sz) {
-      var res = sc_cons(null, null);
-      var hd = res;
+      let res = sc_cons(null, null);
+      let hd = res;
 
       if (defining >= 0) {
 	 definitions[defining] = res;
 	 defining = -1;
       }
 
-      for (var i = 0; i < (sz - 2); i++, hd = hd.__hop_cdr) {
+      for (let i = 0; i < (sz - 2); i++, hd = hd.__hop_cdr) {
 	 hd.__hop_car = read_item();
 	 hd.__hop_cdr = sc_cons(null, null);
       }
@@ -1107,15 +1107,15 @@ function hop_bytearray_to_obj(s, extension, cset) {
    }
 
    function read_extended_list(sz) {
-      var res = sc_cons(null, null);
-      var hd = res;
+      let res = sc_cons(null, null);
+      let hd = res;
 
       if (defining >= 0) {
 	 definitions[defining] = res;
 	 defining = -1;
       }
 
-      for (var i = 0; i < (sz - 2); i++, hd = hd.__hop_cdr) {
+      for (let i = 0; i < (sz - 2); i++, hd = hd.__hop_cdr) {
 	 hd.__hop_car = read_item();
 	 // skip the cer
 	 read_item();
@@ -1131,8 +1131,8 @@ function hop_bytearray_to_obj(s, extension, cset) {
    }
 
    function read_structure() {
-      var old_defining = defining;
-      var key, sz, res;
+      let old_defining = defining;
+      let key, sz, res;
       
       defining = -1;
       
@@ -1143,7 +1143,7 @@ function hop_bytearray_to_obj(s, extension, cset) {
       if (old_defining >= 0)
 	 definitions[old_defining] = res;
 
-      for (var i = 0; i < sz; i++) {
+      for (let i = 0; i < sz; i++) {
 	 sc_setStructFieldBang(res, key, i, read_item());
       }
 
@@ -1151,9 +1151,9 @@ function hop_bytearray_to_obj(s, extension, cset) {
    }
 
    function read_object() {
-      var old_defining = defining;
-      var key, sz, clazz, fields, cinfo;
-      var res;
+      let old_defining = defining;
+      let key, sz, clazz, fields, cinfo;
+      let res;
       
       defining = -1;
       
@@ -1170,7 +1170,7 @@ function hop_bytearray_to_obj(s, extension, cset) {
 	 if (old_defining >= 0)
 	    definitions[old_defining] = res;
 
-	 for (var i = 0; i < sz; i++) {
+	 for (let i = 0; i < sz; i++) {
 	    fields[i].sc_setter(res, read_item());
 	 }
 
@@ -1187,8 +1187,8 @@ function hop_bytearray_to_obj(s, extension, cset) {
 	 if (old_defining >= 0)
 	    definitions[old_defining] = res;
 
-	 for (var i = 0; i < sz; i++) {
-	    var k = sc_keyword2jsstring(cinfo[i]);
+	 for (let i = 0; i < sz; i++) {
+	    let k = sc_keyword2jsstring(cinfo[i]);
 	    
 	    res[k] = read_item();
 	 }
@@ -1205,7 +1205,7 @@ function hop_bytearray_to_obj(s, extension, cset) {
    }
 
    function read_extension() {
-      var item = read_item();
+      let item = read_item();
       if (extension) {
 	 return extension(item);
       } else {
@@ -1214,9 +1214,9 @@ function hop_bytearray_to_obj(s, extension, cset) {
    }
 
    function read_custom_object() {
-      var old_defining = defining;
-      var obj, hashobj, hash_, hash, unserializer, clazz;
-      var res;
+      let old_defining = defining;
+      let obj, hashobj, hash_, hash, unserializer, clazz;
+      let res;
       
       defining = -1;
       
@@ -1245,9 +1245,9 @@ function hop_bytearray_to_obj(s, extension, cset) {
    }
    
    function read_custom_object_debug() {
-      var old_defining = defining;
-      var obj, hashobj, hash_, hash, unserializer, clazz;
-      var res;
+      let old_defining = defining;
+      let obj, hashobj, hash_, hash, unserializer, clazz;
+      let res;
       
       defining = -1;
 
@@ -1299,18 +1299,18 @@ function hop_bytearray_to_obj(s, extension, cset) {
    }
 
    function read_class() {
-      var cname = read_symbol();
-      var cinfo = read_item();
+      let cname = read_symbol();
+      let cinfo = read_item();
      
       return sc_class_exists(cname) || cinfo;
    }
 
    function read_hvector() {
-      var len = read_size(s);
-      var bsize = read_size(s);
-      var sym = read_item();
-      var res;
-      var cntr;
+      let len = read_size(s);
+      let bsize = read_size(s);
+      let sym = read_item();
+      let res;
+      let cntr;
 
       switch(sym) {
         case "s8": cntr = Int8Array; break;
@@ -1325,19 +1325,19 @@ function hop_bytearray_to_obj(s, extension, cset) {
       }
       
       res = new cntr(len);
-      for (var i = 0; i < len; i++) {
+      for (let i = 0; i < len; i++) {
 	 res[i] = read_word(s, bsize);
       }
       return res;
    }
 
    function read_procedure() {
-      var svc = read_item();
+      let svc = read_item();
 
       if (svc === undefined) {
 	 return undefined;
       } else {
-	 var rsc = svc.resource ? svc.resource : "/hop";
+	 let rsc = svc.resource ? svc.resource : "/hop";
 	 if (svc.javascript) {
 	    return eval(sc_format(svc.javascript, svc.path, rsc));
 	 } else {
@@ -1405,8 +1405,8 @@ function hop_bytearray_to_obj(s, extension, cset) {
 /*    hop_dom_unserialize ...                                          */
 /*---------------------------------------------------------------------*/
 function hop_dom_unserialize(obj) {
-   var el = document.createElement(sc_symbol2jsstring(obj.tag));
-   var attrs = obj.attributes;
+   let el = document.createElement(sc_symbol2jsstring(obj.tag));
+   let attrs = obj.attributes;
    
    if (defining >= 0) {
       definitions[defining] = el;
@@ -1414,8 +1414,8 @@ function hop_dom_unserialize(obj) {
    }
 
    while (sc_isPair(attrs)) {
-      var k = sc_symbol2jsstring(sc_car(attrs));
-      var v = sc_cadr(attrs);
+      let k = sc_symbol2jsstring(sc_car(attrs));
+      let v = sc_cadr(attrs);
       attrs = sc_cddr(attrs);
       
       switch(k) {
@@ -1428,11 +1428,11 @@ function hop_dom_unserialize(obj) {
 	    
 	 default:
 	    if (k[0] !== "%") {
-	       var m = k.match("^on(.*)");
+	       let m = k.match("^on(.*)");
 	       if (m) {
 		  if (v !== false && v !== undefined) {
 		     try {
-		     	var fun = (typeof v === "string") 
+		     	let fun = (typeof v === "string") 
 			   ? new Function("event", v) 
 			   : v;
 		     	hop_add_event_listener(el, m[1], fun, true);
@@ -1453,7 +1453,7 @@ function hop_dom_unserialize(obj) {
 	    if (n) {
 	       if (n instanceof Object && "__class__" in n) {
 		  if (n.__class__ in hop_builtin_class_unserializer) {
-		     var c = hop_builtin_class_unserializer[n.__class__](n);
+		     let c = hop_builtin_class_unserializer[n.__class__](n);
 		     dom_add_child(el, c);
 		  } else {
 		     dom_add_child(el, n);
@@ -1485,7 +1485,7 @@ function hop_tilde_unserialize(obj) {
 /*---------------------------------------------------------------------*/
 /*    hop_builtin_class_unserializer ...                               */
 /*---------------------------------------------------------------------*/
-var hop_builtin_class_unserializer = {};
+let hop_builtin_class_unserializer = {};
 
 function hop_builtin_class_register_unserializer(key, unserializer) {
    hop_builtin_class_unserializer[key] = unserializer;
@@ -1506,7 +1506,7 @@ hop_builtin_class_register_unserializer(
 /*    See HOP_CREATE_ENCODED_ELEMENT (hop-dom.js).                     */
 /*---------------------------------------------------------------------*/
 #if HOP_SCHEME
-var hop_custom_object_regexp =
+let hop_custom_object_regexp =
    new RegExp("hop_create_encoded_element[(][]*\"([^\"]*)\"[]*[)]");
 #endif
 
@@ -1519,7 +1519,7 @@ function hop_class_register_serializer(clazz, serializer, unserializer) {
    
    function makeUnserializer(fun) {
       return function(o) {
-	 var jso = unserializer(o);
+	 let jso = unserializer(o);
 
 	 if (jso instanceof Object) {
 	    jso.__proto__ = clazz.prototype;
@@ -1527,7 +1527,7 @@ function hop_class_register_serializer(clazz, serializer, unserializer) {
 	 return jso;
       }
    }
-   var hop_bigloo_unserialize_custom_object =
+   let hop_bigloo_unserialize_custom_object =
        makeUnserializer(hop_plist2jsobject);
    
    if (serializer === undefined && unserializer === undefined) {
@@ -1558,14 +1558,14 @@ function hop_class_register_serializer(clazz, serializer, unserializer) {
 /*    sc__class__ ...                                                  */
 /*---------------------------------------------------------------------*/
 #if HOP_SCHEME
-var sc__class__ = sc_string2keyword("__class__");
+let sc__class__ = sc_string2keyword("__class__");
 #endif
 
 /*---------------------------------------------------------------------*/
 /*    hop_find_class_unserializer ...                                  */
 /*---------------------------------------------------------------------*/
 function hop_find_class_unserializer(hash) {
-   var custom = hop_class_serializers[hash];
+   let custom = hop_class_serializers[hash];
 
    if (custom) {
       return custom.unserializer;
@@ -1573,7 +1573,7 @@ function hop_find_class_unserializer(hash) {
 #if HOP_SCHEME
       return function(o) {
 	 if (typeof(o) === "string") {
-	    var m = o.match(hop_custom_object_regexp);
+	    let m = o.match(hop_custom_object_regexp);
 
 	    if (m) {
 	       /* kind of specialized eval */
@@ -1586,7 +1586,7 @@ function hop_find_class_unserializer(hash) {
 	    }
 	 } else {
 	    if (sc_isPair(o) && sc_car(o) == sc__class__) {
-	       var clazz = { sc_hash: hash, prototype: {} };
+	       let clazz = { sc_hash: hash, prototype: {} };
 	       hop_class_register_serializer(clazz, true, hop_plist2jsobject);
 	       return hop_find_class_unserializer(hash)(o);
 	    } else {
@@ -1608,11 +1608,11 @@ function hop_find_class_unserializer(hash) {
 /*---------------------------------------------------------------------*/
 #if HOP_SCHEME
 function hop_js_to_object(cname, hash, o) {
-   var clazz = sc_string2symbol(sc_jsstring2string(cname));
-   var klass = sc_class_exists(clazz);
+   let clazz = sc_string2symbol(sc_jsstring2string(cname));
+   let klass = sc_class_exists(clazz);
 
    if (!klass) {
-      var custom = hop_class_serializers[hash];
+      let custom = hop_class_serializers[hash];
 
       Object.defineProperty(o, "hop_bigloo_serialize" , {
 	 value: (custom && custom.serializer)
@@ -1656,8 +1656,8 @@ function hop_js_to_object(cname, hash, o) {
 /*    hop_hextobuf ...                                                 */
 /*---------------------------------------------------------------------*/
 function hop_hextobuf(str) {
-   var buf = new Uint8Array(str.length / 2);
-   for (var i = 0; i < str.length; i += 2) {
+   let buf = new Uint8Array(str.length / 2);
+   for (let i = 0; i < str.length; i += 2) {
       buf[i / 2] = parseInt(str.substr(i, 2), 16);
    }
    return buf;

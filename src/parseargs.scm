@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/src/parseargs.scm                   */
+;*    serrano/prgm/project/hop/3.7.x/src/parseargs.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Fri May 19 08:25:52 2023 (serrano)                */
-;*    Copyright   :  2004-23 Manuel Serrano                            */
+;*    Last change :  Tue Jan 30 16:35:52 2024 (serrano)                */
+;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
 ;*=====================================================================*/

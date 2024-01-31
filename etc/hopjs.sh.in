@@ -1,11 +1,11 @@
 #!/bin/sh
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/hop/etc/hopjs.sh.in                     */
+#*    serrano/prgm/project/hop/3.7.x/etc/hopjs.sh.in                   */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 13 14:06:56 2015                          */
-#*    Last change :  Sun Nov 19 09:55:07 2023 (serrano)                */
-#*    Copyright   :  2015-23 Manuel Serrano                            */
+#*    Last change :  Tue Jan 30 16:33:13 2024 (serrano)                */
+#*    Copyright   :  2015-24 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Nodejs compatible script engine                                  */
 #*=====================================================================*/
@@ -30,8 +30,7 @@ while : ; do
 
     -p|--http-port)
       shift
-      server="-p $1"
-      break;;
+      server="-p $1";;
 
     -h|--help)
       echo "Usage: hopjs [-p PORT] [--http-port PORT] [-g] prog.js arg1 arg2 ..."
@@ -41,17 +40,20 @@ while : ; do
       break;;
 
     -g)
-      opt=-g;;
+      opt="-g $opt";;
 
     -O)
-      opt="--so-policy aot --hopc-flags \"-Ox\"";;
+      opt="--so-policy aot --hopc-flags \"-Ox\" $opt";;
 
     --profile-mem)
       profexec=hopmemrun
       opt="--profile-mem $opt";;
 
     --clear-cache)
-      opt="--clear-cache $opt";;
+      opt="--clear-cache --clear-so $opt";;
+
+    --clear-so)
+      opt="--clear-so $opt";;
 
     --version)
       hop --version

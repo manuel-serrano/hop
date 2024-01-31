@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jul 23 17:15:52 2015                          */
-;*    Last change :  Tue Jan 30 11:00:46 2024 (serrano)                */
+;*    Last change :  Tue Jan 30 16:16:34 2024 (serrano)                */
 ;*    Copyright   :  2015-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    J2S Html parser                                                  */
@@ -110,8 +110,22 @@
 ;*---------------------------------------------------------------------*/
 ;*    html-property-script? ...                                        */
 ;*---------------------------------------------------------------------*/
-(define (html-property-script? type attributes)
-   (eq? type 'script))
+(define (html-property-script? prop attributes)
+   (when (and prop (memq :script prop))
+      (let loop ((attributes attributes))
+	 (or (null? attributes)
+	     (let ((attr (car attributes)))
+		(if (isa? attr J2SDataPropertyInit)
+		    (with-access::J2SDataPropertyInit attr (name val)
+		       (if (isa? name J2SString)
+			   (with-access::J2SString name ((str val))
+			      (if (string=? str "type")
+				  (or (not (isa? val J2SString))
+				      (with-access::J2SString val (val)
+					 (member val '("javascript" "module"))))
+				  (loop (cdr attributes))))
+			   (loop (cdr attributes))))
+		    (loop (cdr attributes))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    html-property-empty? ...                                         */
@@ -316,13 +330,13 @@
          ;;; handle opening tags
 	 (let ((prop (html-element-properties sym)))
 	    (when debug
-	       (tprint "open " sym " " (dump-stack stack)))
+	       (tprint "open " sym " " type " " (dump-stack stack)))
 	    (cond
 	       ((html-property-empty? prop)
 		(let ((tag (token type sym (the-length))))
 		   (push-node-ignore
 		      (make-dom-create tag attributes '() lang conf))))
-	       ((html-property-script? type attributes)
+	       ((html-property-script? prop attributes)
 		(let ((tag (token type sym (the-length))))
 		   (push-node-ignore
 		      (make-dom-create tag attributes
