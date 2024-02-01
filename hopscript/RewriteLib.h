@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/hop/hopscript/RewriteLib.h              */
+/*    serrano/prgm/project/hop/3.7.x/hopscript/RewriteLib.h            */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Nov 17 17:27:07 2023                          */
-/*    Last change :  Thu Jan 25 10:51:11 2024 (serrano)                */
+/*    Last change :  Thu Feb  1 11:01:16 2024 (serrano)                */
 /*    Copyright   :  2023-24 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    RewriteLib.h sample. Compile as follows:                         */
@@ -43,7 +43,7 @@ struct hop_rewriteinfo {
   LBL_HOPC ## n ## ___
 
 #define BINREWRITELIB_REWRITEINFO(n) \
-   (hop_rewriteinfo[n].labeladdr = &&BINREWRITELIB_EXPAND_LABEL(n), (obj_t)(&(hop_rewriteinfo[n])))
+   ((hop_rewriteinfo[n].labeladdr = &&BINREWRITELIB_EXPAND_LABEL(n)), (obj_t)(&(hop_rewriteinfo[n])))
    
 /*---------------------------------------------------------------------*/
 /*    static int                                                       */

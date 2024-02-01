@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Tue Jan 23 18:53:57 2024 (serrano)                */
+;*    Last change :  Thu Feb  1 14:33:00 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -72,9 +72,9 @@
    
    (define (parse-eof-error token)
       (parse-token-error "Unexpected end of file"
-	 (if (pair? *open-tokens*)
-	     (car (last-pair *open-tokens*))
-	     token)))
+	 (if (queue-empty? *open-tokens*)
+	     token
+	     (queue-peek *open-tokens*))))
    
    (define (parse-token-error msg token::pair)
       (match-case (token-loc token)
@@ -2964,8 +2964,11 @@
 				      (loc (token-loc tok)))
 				   (assig-expr #f #f #t))))
 		       (loop (cons arg rev-args)))))
+		((EOF)
+		 (parse-eof-error (peek-token)))
 		(else
-		 (parse-token-error "Illegal argument expression" (peek-token)))))))
+		 (parse-token-error "Illegal argument expression"
+		    (peek-token)))))))
 
    (define (xml-expression tag delim)
       (html-parser input-port
