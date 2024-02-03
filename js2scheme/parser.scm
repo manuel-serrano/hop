@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Thu Feb  1 14:33:00 2024 (serrano)                */
+;*    Last change :  Sat Feb  3 14:21:58 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -2121,38 +2121,43 @@
 	     (pop-open-token (consume-token! 'RPAREN))
 	     (values (list param) '(#f))))
 	 (else
-	  (multiple-value-bind (param arg)
-	     (consume-param! 0 maybe-expr?)
-	     (let loop ((rev-params (list param))
-			(rev-args (list arg))
-			(idx 1))
-		(if (eq? (peek-token-type) 'COMMA)
-		    (begin
-		       (consume-any!)
-		       (case (peek-token-type)
-			  ((DOTS)
-			   (consume-any!)
-			   (let ((param (consume-rest-param!)))
+	  (let ((token (peek-token)))
+	     (multiple-value-bind (param arg)
+		(consume-param! 0 maybe-expr?)
+		(if (not param)
+		    (parse-token-error "Illegal parameter" token)
+		    (let loop ((rev-params (list param))
+			       (rev-args (list arg))
+			       (idx 1))
+		       (if (eq? (peek-token-type) 'COMMA)
+			   (let* ((command (consume-any!))
+				  (token (peek-token)))
+			      (case (peek-token-type)
+				 ((DOTS)
+				  (consume-any!)
+				  (let ((param (consume-rest-param!)))
+				     (pop-open-token (consume-token! 'RPAREN))
+				     (values
+					(reverse! (cons param rev-params))
+					(reverse! (cons #f rev-args)))))
+				 ((RPAREN)
+				  (pop-open-token (consume-token! 'RPAREN))
+				  (values
+				     (reverse! rev-params)
+				     (reverse! rev-args)))
+				 (else
+				  (multiple-value-bind (param arg)
+				     (consume-param! idx maybe-expr?)
+				     (if (not param)
+					 (parse-token-error "Illegal parameter" token)
+					 (loop (cons param rev-params)
+					    (cons arg rev-args)
+					    (+fx idx 1)))))))
+			   (begin
 			      (pop-open-token (consume-token! 'RPAREN))
 			      (values
-				 (reverse! (cons param rev-params))
-				 (reverse! (cons #f rev-args)))))
-			  ((RPAREN)
-			   (pop-open-token (consume-token! 'RPAREN))
-			   (values
-			      (reverse! rev-params)
-			      (reverse! rev-args)))
-			  (else
-			   (multiple-value-bind (param arg)
-			      (consume-param! idx maybe-expr?)
-			      (loop (cons param rev-params)
-				 (cons arg rev-args)
-				 (+fx idx 1))))))
-		    (begin
-		       (pop-open-token (consume-token! 'RPAREN))
-		       (values
-			  (reverse! rev-params)
-			  (reverse! rev-args)))))))))
+				 (reverse! rev-params)
+				 (reverse! rev-args)))))))))))
 
    (define (param-defval p::J2SDecl)
       ;; generate (if (eq? id undefined) (set! id defval))
