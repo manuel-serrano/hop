@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Sat Feb  3 14:21:58 2024 (serrano)                */
+;*    Last change :  Sat Feb  3 14:45:46 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -104,15 +104,17 @@
 	 (parse-token-error msg token)))
    
    (define (parse-error msg obj)
-      (let ((fname (input-port-name input-port))
-	    (loc (input-port-position input-port)))
-	 (raise
-	    (instantiate::&io-parse-error
-	       (proc "hopscript")
-	       (msg msg)
-	       (obj (read-line input-port))
-	       (fname fname)
-	       (location loc)))))
+      (if (token? obj)
+	  (parse-token-error msg obj)
+	  (let ((fname (input-port-name input-port))
+		(loc (input-port-position input-port)))
+	     (raise
+		(instantiate::&io-parse-error
+		   (proc "hopscript")
+		   (msg msg)
+		   (obj (read-line input-port))
+		   (fname fname)
+		   (location loc))))))
 
    (define (parse-node-error msg node)
       (with-access::J2SNode node (loc)
