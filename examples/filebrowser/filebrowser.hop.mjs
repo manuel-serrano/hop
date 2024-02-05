@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Feb  3 11:25:48 2024                          */
-/*    Last change :  Mon Feb  5 07:32:30 2024 (serrano)                */
+/*    Last change :  Mon Feb  5 10:14:51 2024 (serrano)                */
 /*    Copyright   :  2024 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Basic multi-tier file browser using Hop.js.                      */
@@ -125,9 +125,9 @@ async function file(o) {
 }
    
 const filebrowser = new hop.Service(dir, "/filebrowser");
+const filebrowserPlain = new hop.Service(dirPlain, "/filebrowserPlain");
 const filecontent = new hop.Service(file, "/filecontent");
 
-console.error("waiting for connection...");
 console.error("http://localhost:8888/filebrowser");
 console.error("config=", hop.config);
 
