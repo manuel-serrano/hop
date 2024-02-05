@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Feb  3 11:25:48 2024                          */
-/*    Last change :  Sat Feb  3 16:22:40 2024 (serrano)                */
+/*    Last change :  Mon Feb  5 07:32:30 2024 (serrano)                */
 /*    Copyright   :  2024 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Basic multi-tier file browser using Hop.js.                      */
@@ -23,9 +23,9 @@ const R = new hop.Resolver(import.meta.url);
 /*---------------------------------------------------------------------*/
 /*    dir ...                                                          */
 /*---------------------------------------------------------------------*/
-async function dir(o) {
+async function dirPlain(o) {
    console.log("dir o=", o);
-   const dir = o.path;
+   const dir = o?.path || "/tmp";
    const files = await readdir(dir);
    return <html>
          <head>
@@ -50,6 +50,50 @@ async function dir(o) {
    
          <script type="module">
             import * as hop from "@hop/hop";
+            window.filebrowser = ${filebrowser};
+            window.filecontent = ${filecontent};
+         </script>
+      </head>
+      <div>
+         <span class="dir" onclick=~{location = filebrowser({path: ${dirname(dir)}})}>..</span>      
+         <table>
+      ${files.filter(p => !p.match(ignoreRx))
+	    .sort((x, y) => x >= y)
+	    .map(p => {
+	       const ap = join(dir, p);
+               return <tr><td>
+                  ${stat(ap).isDirectory()
+                     ? <span class="dir" onclick=~{location = filebrowser({path: ${ap}})}>${p}/</span>
+                     : <span class="file" onclick=~{location = filecontent({path: ${ap}})}>${p}</span>}
+               </td></tr>
+	    })}
+         </table>
+      </div>
+   </html>;
+}
+
+/*---------------------------------------------------------------------*/
+/*    dir ...                                                          */
+/*---------------------------------------------------------------------*/
+async function dir(o) {
+   console.log("dir o=", o);
+   const dir = o?.path || "/tmp";
+   const files = await readdir(dir);
+   return <html>
+         <head>
+            <style>
+               .dir {
+	          text-decoration: underline;
+	          color: blue;
+	          cursor: default;
+               }
+               .file {
+	          color: #333;
+	          cursor: default;
+               }
+            </style>
+   
+         <script type="hop">
             window.filebrowser = ${filebrowser};
             window.filecontent = ${filecontent};
          </script>

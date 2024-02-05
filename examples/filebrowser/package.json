@@ -1,5 +1,8 @@
 {
   "dependencies": {
     "@hop/hop": "https://www-sop.inria.fr/members/Manuel.Serrano/software/npmx/hop.tgz"
+  },
+  "scripts": {
+    "server": "NODE_OPTIONS=\"--enable-source-maps --no-warnings --loader ./node_modules/@hop/hop/lib/hop-loader.mjs\" node filebrowser.hop.mjs -- -p 8888"
   }
 }
