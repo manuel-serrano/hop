@@ -2,7 +2,7 @@
   {
     "name":"foo",
     "password":"65c3d9a6c38738d995b9f67a0c6b10fa",
-    "services": ["/filebrowser"],
+    "services": ["/filebrowser", "/filebrowser/file"],
     "directories": "*"
   }
 ]

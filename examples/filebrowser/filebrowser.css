@@ -1,0 +1,9 @@
+.dir {
+   text-decoration: underline;
+   color: blue;
+   cursor: default;
+}
+.file {
+   color: #333;
+   cursor: default;
+}
