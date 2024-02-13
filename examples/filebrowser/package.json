@@ -7,6 +7,6 @@
   },
   "scripts": {
     "server": "NODE_OPTIONS=\"--enable-source-maps --no-warnings --loader ./node_modules/@hop/hop/lib/hop-loader.mjs\" node filebrowser.hop.mjs -p 8888 --userdb ./users.json",
-    "serverts": "NODE_OPTIONS=\"--enable-source-maps --no-warnings --loader ./node_modules/@hop/hop/lib/hop-loader.mjs\" node filebrowser.hop.ts -p 8888 --userdb ./users.json"
+    "serverts": "NODE_OPTIONS=\"--enable-source-maps --no-warnings --loader ./node_modules/@hop/hop/lib/hop-loader.mjs --loader ./node_modules/@hop/hop/lib/ts-loader.mjs\" node filebrowser.hop.ts -p 8888 --userdb ./users.json"
   }
 }
