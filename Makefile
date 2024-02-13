@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Wed Jan 31 08:55:43 2024 (serrano)                */
+#*    Last change :  Tue Feb 13 11:25:03 2024 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -524,7 +524,8 @@ npm-module-sans-rm:
 	mkdir -p npm/$(MODULEDIR)
 	mkdir -p npm/$(MODULEDIR)/lib
 	cp node_modules/$(MODULE)/package.json npm/$(MODULEDIR)
-	cp node_modules/$(MODULE)/lib/*.*s npm/$(MODULEDIR)
+	cp node_modules/$(MODULE)/lib/*.js npm/$(MODULEDIR)
+	cp node_modules/$(MODULE)/lib/*.d.ts npm/$(MODULEDIR)/lib
 	cp -r node_modules/$(MODULE)/test npm/$(MODULEDIR)
 	cp node_modules/$(MODULE)/node/*.*s npm/$(MODULEDIR)/lib
 	if [ -f node_modules/$(MODULE)/node/Makefile ]; then \
