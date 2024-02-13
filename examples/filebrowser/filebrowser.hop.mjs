@@ -1,16 +1,16 @@
 /*=====================================================================*/
-/*    .../hop/3.7.x/examples/filebrowser/filebrowser.hop.mjs           */
+/*    /tmp/TBR/filebrowser/filebrowser.hop.mjs                         */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Feb  3 11:25:48 2024                          */
-/*    Last change :  Mon Feb 12 09:47:58 2024 (serrano)                */
+/*    Last change :  Tue Feb 13 08:06:02 2024 (serrano)                */
 /*    Copyright   :  2024 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Basic multi-tier file browser using Hop.js.                      */
 /*=====================================================================*/
 import * as hop from "@hop/hop";
 import { readdir } from "node:fs/promises";
-import { statSync as stat } from "node:fs";
+import { statSync } from "node:fs";
 import { join, dirname } from "node:path";
 
 const ignoreRx = /^\.|^#.*#$/;
@@ -31,21 +31,27 @@ async function dir(o) {
        <head>
          <link rel="stylesheet" href=${await R.resolve("./filebrowser.css")}>
          <script type="hop">
+      console.log("ici", hop.server);
             window.filebrowser = ${filebrowser};
             window.filecontent = ${filecontent};
+            window.filestat = ${filestat};
+            window.stat = file => {
+	       filestat(file).post().then(v => document.getElementById("stat").innerHTML = v);
+	    }
          </script>
       </head>
       <div>
-         <span class="dir" onclick=~{location = filebrowser({path: ${dirname(dir)}})}>..</span>      
+         <span class="dir" onclick=~{location = filebrowser({path: ${dirname(dir)}})}>..</span>
+         <div id="stat">&nbsp;</div>
          <table>
       ${files.filter(p => !p.match(ignoreRx))
 	    .sort((x, y) => x >= y)
 	    .map(p => {
 	       const ap = join(dir, p);
                return <tr><td>
-                  ${stat(ap).isDirectory()
+                  ${statSync(ap).isDirectory()
                      ? <span class="dir" onclick=~{location = filebrowser({path: ${ap}})}>${p}/</span>
-                     : <span class="file" onclick=~{location = filecontent({path: ${ap}})}>${p}</span>}
+                     : <div><span class="file" onclick=~{location = filecontent({path: ${ap}})}>${p}</span> <button onclick=~{stat(${ap})}>stat</button></div>}
                </td></tr>
 	    })}
          </table>
@@ -56,8 +62,21 @@ async function dir(o) {
 /*---------------------------------------------------------------------*/
 /*    file ...                                                         */
 /*---------------------------------------------------------------------*/
-async function file(o) {
+function file(o) {
+   console.log("file o=", o);
    return hop.HTTPResponseFile(o.path);
+}
+
+/*---------------------------------------------------------------------*/
+/*    stat ...                                                         */
+/*---------------------------------------------------------------------*/
+function stat(p) {
+   console.log("stat p=", p);
+   const { size, ctime } = statSync(p);
+   return <table>
+      <tr><th>size</th><td>${(size/1024).toFixed(2)}kb</td></tr>
+      <tr><th>ctime</th><td>${ctime}</td></tr>
+   </table>;
 }
 
 /*---------------------------------------------------------------------*/
@@ -65,6 +84,7 @@ async function file(o) {
 /*---------------------------------------------------------------------*/
 const filebrowser = new hop.Service(dir, "/filebrowser");
 const filecontent = new hop.Service(file, "/filebrowser/file");
+const filestat = new hop.Service(stat, "/filebrowser/stat");
 
 console.error("http://localhost:8888/filebrowser");
 console.error("config=", hop.config);

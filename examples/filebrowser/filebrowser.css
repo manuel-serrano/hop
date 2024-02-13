@@ -3,7 +3,17 @@
    color: blue;
    cursor: default;
 }
+
 .file {
    color: #333;
    cursor: default;
+}
+
+#stat {
+    position: fixed;
+    right: 50px;
+    top: 50px;
+    opacity: 0.8;
+    background: #ffe;
+    border: 2px solid #333;
 }
