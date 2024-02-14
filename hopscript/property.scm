@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/hopscript/property.scm              */
+;*    serrano/prgm/project/hop/3.6.x/hopscript/property.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed Jan 31 10:27:24 2024 (serrano)                */
+;*    Last change :  Wed Feb 14 13:36:05 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -48,7 +48,7 @@
 
    (extern ($js-make-pcache-table::obj (::obj ::int ::obj ::obj ::JsPropertyCache)
 	      "bgl_make_pcache_table")
-	   (macro $hop-rewrite-cache-miss!::void (::obj ::int ::obj)
+	   (macro $hop-rewrite-cache-miss!::int (::obj ::int ::obj)
 	      "HOP_REWRITE_CACHE_MISS"))
 
    (export (js-init-property! ::JsGlobalObject)
@@ -914,8 +914,7 @@
 	 (set! iindex i)
 	 (cond-expand
 	    (bigloo-c
-	     ($hop-rewrite-cache-miss! o i pcache)
-	     #unspecified))))
+	     ($hop-rewrite-cache-miss! o i pcache)))))
 
    (define (update-noinline! pcache omap)
       (with-access::JsPropertyCache pcache (cmap cindex)

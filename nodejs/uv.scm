@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Fri Oct 13 08:37:25 2023 (serrano)                */
-;*    Copyright   :  2014-23 Manuel Serrano                            */
+;*    Last change :  Wed Feb 14 18:06:37 2024 (serrano)                */
+;*    Copyright   :  2014-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
 ;*=====================================================================*/
@@ -46,10 +46,10 @@
 	     (detached (default #f)))
 	  
 	  (class JsPipe::UvPipe
-	     ;; count are used to decrement the uv-async globa counter
+	     ;; count are used to decrement the uv-async global counter
 	     ;; because when uv-close is invoked with an input pipe
 	     ;; the read-start called is never invoked and then, it
-	     ;; has not chance to decrement the counter for itself.
+	     ;; has no chance to decrement the counter for itself.
 	     (count::int (default 0))
 	     (econnreset::bool (default #f)))))
       (else
@@ -712,6 +712,9 @@
 		 (not econnreset)))
 	  ;;(set! close-stack (cons this close-stack))
 	  (with-access::UvHandle handle (onclose)
+	     (when (isa? handle JsPipe)
+		(with-access::JsPipe handle (econnreset)
+		   (set! econnreset #t)))
 	     (uv-close handle
 		(lambda ()
 		   ;; (set! close-stack (remq! this close-stack))

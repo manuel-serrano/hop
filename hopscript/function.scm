@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/hopscript/function.scm              */
+;*    serrano/prgm/project/hop/3.6.x/hopscript/function.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Tue Dec 19 12:18:42 2023 (serrano)                */
-;*    Copyright   :  2013-23 Manuel Serrano                            */
+;*    Last change :  Wed Feb 14 13:09:52 2024 (serrano)                */
+;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
 ;*    -------------------------------------------------------------    */
@@ -923,9 +923,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-function-prototype-get ...                                    */
 ;*    -------------------------------------------------------------    */
-;*    Function uses there Prototype accessor property differently      */
-;*    from standard object. The owner is the OBJ arguments, while      */
-;*    for standard objects it is the OWNER argements. This save        */
+;*    Functions use there prototype accessor property differently      */
+;*    than standard objects. The owner is the OBJ arguments, while     */
+;*    for standard objects it is the OWNER argement. This saves        */
 ;*    CMAP allocations.                                                */
 ;*                                                                     */
 ;*    In order to apply the standard schema where OWNER is used,       */
@@ -934,7 +934,9 @@
 ;*    object.                                                          */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-function-prototype-get obj owner::JsFunction propname %this)
-   (let ((function-owner obj))
+   ;; MS 14feb2024
+   ;; (let ((function-owner obj))
+   (let ((function-owner owner))
       (with-access::JsFunction function-owner (prototype alloc name src)
 	 (when (eq? prototype #\F)
 	    (js-function-setup-prototype! %this function-owner))
@@ -950,7 +952,9 @@
 	 (cond
 	    ((js-function? o)
 	     ;; see JS-FUNCTION-PROTOTYPE-GET
-	     (js-function-prototype-get o owner propname %this))
+	     ;; MS 14feb2024
+	     ;; (js-function-prototype-get o owner propname %this)
+	     (js-function-prototype-get o o propname %this))
 	    ((js-proxy-function? o)
 	     (loop (js-proxy-target o)))
 	    (else
@@ -972,7 +976,9 @@
 		      (loop (+fx i 1))))))))
 
    ;; see JS-FUNCTION-PROTOTYPE-GET
-   (let ((function-owner obj))
+   ;; MS 14feb2024
+   ;; (let ((function-owner obj))
+   (let ((function-owner owner))
       (with-access::JsFunction function-owner (constrmap %prototype prototype elements cmap)
 	 ;; as the prototype property is not configurable,
 	 ;; it is always owned by the object
