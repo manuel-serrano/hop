@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Fri Oct 13 15:32:29 2023 (serrano)                */
-;*    Copyright   :  2013-23 Manuel Serrano                            */
+;*    Last change :  Wed Feb 14 19:06:06 2024 (serrano)                */
+;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
 ;*=====================================================================*/
@@ -907,7 +907,7 @@
 	 (cmap fs-event-cmap)))
 
    (define fs-event
-      (js-make-function %this fs-event
+      (js-make-function %this fs-event-ctor
 	 (js-function-arity 0 0)
 	 (js-function-info :name "FSEvent" :len 0)
 	 :alloc (lambda (%this o) #unspecified)))
