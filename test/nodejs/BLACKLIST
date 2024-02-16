@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/3.0.x/test/nodejs/BLACKLIST             */
+#*    serrano/prgm/project/hop/hop/test/nodejs/BLACKLIST               */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Oct 24 07:32:52 2014                          */
-#*    Last change :  Fri Feb  6 12:23:24 2015 (serrano)                */
-#*    Copyright   :  2014-15 Manuel Serrano                            */
+#*    Last change :  Thu Feb 15 11:06:46 2024 (serrano)                */
+#*    Copyright   :  2014-24 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    nodejs blacklisted tests                                         */
 #*=====================================================================*/
@@ -47,9 +47,6 @@ message/undefined_reference_in_new_context.js
 message/throw_non_error.js
 message/timeout_throw.js
 
-# nodejs hangs
-simple/test-https-no-reader.js
-
 # EADDRINUSE
 simple/test-net-pingpong.js
 simple/test-http-client-pipe-end.js
@@ -62,8 +59,8 @@ simple/test-net-pipe-connect-errors.js
 simple/test-cluster-eaddrinuse.js
 simple/test-tls-connect-pipe.js
 
-# Bad crypto key
-simple/test-crypto.js
+# nodejs hangs
+simple/test-https-no-reader.js
 
 # openssl-1.1 incompatibilies
 simple/test-tls-set-ciphers.js
@@ -84,6 +81,7 @@ simple/test-domain.js # the hop error messages differ from nodejs
 simple/test-setproctitle.js
 simple/test-module-loading.js # uses deprecated require.extensions
 simple/test-fs-null-bytes.js # uses keyword async
+simple/test-sys.js # function toString differ
 
 # imccompatible command line options
 simple/test-cli-eval.js

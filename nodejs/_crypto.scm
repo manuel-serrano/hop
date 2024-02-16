@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.5.x/nodejs/_crypto.scm                */
+;*    serrano/prgm/project/hop/hop/nodejs/_crypto.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 23 08:47:08 2014                          */
-;*    Last change :  Sun Jan 23 08:36:45 2022 (serrano)                */
-;*    Copyright   :  2014-22 Manuel Serrano                            */
+;*    Last change :  Thu Feb 15 07:40:47 2024 (serrano)                */
+;*    Copyright   :  2014-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Crypto native bindings                                           */
 ;*=====================================================================*/

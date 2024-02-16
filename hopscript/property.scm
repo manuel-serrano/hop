@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed Feb 14 13:36:05 2024 (serrano)                */
+;*    Last change :  Thu Feb 15 11:55:38 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -773,8 +773,8 @@
 ;*---------------------------------------------------------------------*/
 (define (function0->proc fun %this::JsGlobalObject)
    (if (js-procedure? fun)
-       (with-access::JsProcedure fun (procedure)
-	  (if (correct-arity? procedure 1)
+       (with-access::JsProcedure fun (procedure arity)
+	  (if (=fx arity 1)
 	      procedure
 	      (lambda (this)
 		 (js-call0 %this fun this))))
@@ -786,8 +786,8 @@
 ;*---------------------------------------------------------------------*/
 (define (function1->proc fun %this::JsGlobalObject)
    (if (js-procedure? fun)
-       (with-access::JsProcedure fun (procedure)
-	  (if (correct-arity? procedure 2)
+       (with-access::JsProcedure fun (procedure arity)
+	  (if (=fx arity 2)
 	      procedure
 	      (lambda (this v)
 		 (js-call1 %this fun this v))))

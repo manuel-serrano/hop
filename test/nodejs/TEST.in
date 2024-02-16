@@ -10,6 +10,7 @@ hopargs="-g --no-zeroconf --no-server"
 hopexec=$PWD/HOP.exe
 errorstop=
 fullname=
+timeout=10s
 
 while : ; do
 
@@ -60,6 +61,10 @@ while : ; do
   shift
 done   
 
+trap "exit" SIGINT
+trap "echo SIGSEGV trapped...exiting...; exit" SIGSEGV
+trap "echo SIGILL trapped...exiting...; exit" SIGILL
+
 if [ "$chapters " = " " ]; then
   chapters="simple"
 fi
@@ -108,17 +113,35 @@ for chapter in $chapters; do
 
     if [ $? != 0  ]; then
 	
+      grep "^$chapter/`basename $path`" FAILURE 2> /dev/null > /dev/null
+
+      shouldfail=$?
+      
       echo -n "$i. $fname ... "
       echo -n "$i. $fname ... " >> /tmp/TEST-NODEJS.out
       
       rm -rf $basedir/tmp/a
       echo "(cd $basedir; $hopexec $path)" >> /tmp/TEST-NODEJS.out
-      (cd $basedir; timeout 20s $hopexec $path > /tmp/TEST-NODEJS.out.tmp 2>&1)
-  
-      if [ $? = 0 ]; then
+      (cd $basedir; timeout $timeout $hopexec $path > /tmp/TEST-NODEJS.out.tmp 2>&1)
+      status=$?
+
+      # cleanup all the possibility remaining processes
+      procs=`ps -u $USER -o pid,command | grep HOP.exe | grep nodejs/ | awk '{print $1}'`
+      for p in $procs; do
+	kill -9 $p
+      done
+
+      if [ $status = 0 -a $shouldfail != 0 ]; then
         success=`expr $success + 1`
         echo "ok."
         echo "ok. ($success)" >> /tmp/TEST-NODEJS.out
+        if [ "$verb " != " " ]; then
+          cat /tmp/TEST-NODEJS.out.tmp >> /tmp/TEST-NODEJS.out
+        fi
+      elif [ $status != 0 -a $shouldfail = 0 ]; then
+        success=`expr $success + 1`
+        echo "ok!"
+        echo "ok! ($success)" >> /tmp/TEST-NODEJS.out
         if [ "$verb " != " " ]; then
           cat /tmp/TEST-NODEJS.out.tmp >> /tmp/TEST-NODEJS.out
         fi

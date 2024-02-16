@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.6.x/hopscript/function.scm            */
+;*    serrano/prgm/project/hop/hop/hopscript/function.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Wed Feb 14 13:09:52 2024 (serrano)                */
+;*    Last change :  Thu Feb 15 13:26:28 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -978,7 +978,7 @@
    ;; see JS-FUNCTION-PROTOTYPE-GET
    ;; MS 14feb2024
    ;; (let ((function-owner obj))
-   (let ((function-owner owner))
+   (let ((function-owner obj))
       (with-access::JsFunction function-owner (constrmap %prototype prototype elements cmap)
 	 ;; as the prototype property is not configurable,
 	 ;; it is always owned by the object

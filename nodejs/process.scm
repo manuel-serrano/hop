@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Wed Feb 14 19:06:06 2024 (serrano)                */
+;*    Last change :  Thu Feb 15 08:58:16 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -643,7 +643,7 @@
 	 (js-put! proc (& "_usingDomains")
 	    (js-make-function %this
 	       (lambda (this)
-		  (js-raise-type-error %this "_usingDomains is deprecated" (js-undefined))
+		  ;; (js-raise-type-error %this "_usingDomains is deprecated" (js-undefined))
 		  (with-access::JsProcess proc (using-domains tick-callback)
 		     (unless using-domains
 			(set! using-domains #t)
