@@ -333,7 +333,7 @@ if (isWindows) {
   // path.normalize(path)
   // posix version
    exports.normalize = function(_path) {
-      if (!_path.match(/[/][/]|[/].[/]|[/]..[/]|^.[/]/)) {
+      if (typeof _path === "string" && !_path.match(/[/][/]|[/]\.[/]|\/\.\.[/]|^\.[/]|\/\.\.$|/)) {
 	 return _path;
       } else {
 	 // MS 18apr2013
