@@ -1,11 +1,11 @@
 #!/bin/sh
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/hop/configure                           */
+#*    serrano/prgm/project/hop/3.7.x/configure                         */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Mon Dec 11 08:44:03 2023 (serrano)                */
-#*    Copyright   :  2004-23 Manuel Serrano                            */
+#*    Last change :  Fri Feb 16 13:22:38 2024 (serrano)                */
+#*    Copyright   :  2004-24 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
 #*=====================================================================*/
@@ -68,9 +68,8 @@ cssmimetype="text/css"
 
 libraries="hop hopwidget web hopscheme scheme2js multimedia sqlite js2scheme hopscript nodejs openpgp"
 bglcloselibs="web multimedia openpgp"
-bglextracloselibs=
 
-extralibs=
+extralibs=$EXTRALIBS
 bglextralibs="biglooweb bigloomultimedia biglooopenpgp"
 hopapplibs=
 
@@ -926,7 +925,6 @@ else
   hopsrfis="$hopsrfis enable-libuv"
   libraries="$libraries libuv"
   bglcloselibs="$bglcloselibs libuv"
-  bglextracloselibs="-luv"
   
   extralibs="-luv $extralibs"
   bglextralibs="$bglextralibs bigloolibuv"
