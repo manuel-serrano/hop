@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Sat Feb  3 14:45:46 2024 (serrano)                */
+;*    Last change :  Thu Feb 15 12:55:20 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -733,16 +733,23 @@
 	 (case (token-type id)
 	    ((ID)
 	     (consume-any!)
-	     (let ((ty (opt-type)))
+	     (let loop ((ty #f))
 		(if (or (eq? (token-type id) 'ID) (eq? current-mode 'normal))
 		    (case (peek-token-type)
+		       ((:)
+			(if (and (config-get conf :typescript) (not ty))
+			    (let* ((tok (consume-any!)))
+			       (loop (typescript-type)))
+			    (parse-token-error "unexpected token" (peek-token))))
 		       ((=)
 			(let* ((token (consume-any!))
 			       (expr (assig-expr in-for-init? #f #f)))
 			   (list
-			      (constrinit (token-loc token) (token-value id) expr ty))))
+			      (constrinit (token-loc token) (token-value id) expr
+				 (or ty (opt-type))))))
 		       (else
-			(list (constr (token-loc id) (token-value id) ty))))
+			(list (constr (token-loc id) (token-value id)
+				 (or ty (opt-type))))))
 		    (parse-token-error "Illegal lhs" id))) )
 	    ((undefined NaN Infinity)
 	     (consume-any!)
@@ -1505,7 +1512,7 @@
 					      (decls (cons decl (cddr decls))))
 					args)))))))))))
    
-   (define (arrow-function args::pair-nil loc)
+   (define (arrow-function rt args::pair-nil loc)
       ;; ES6 arrow functions
       (consume-any!)
       (let ((params (arrow-params args)))
@@ -1515,13 +1522,17 @@
 	    (name '||)
 	    (mode (if (eq? current-mode 'hopscript) 'hopscript 'strict))
 	    (params params)
+	    (rutype rt)
 	    (body (arrow-body params args))
 	    (vararg (rest-params params)))))
 
    (define (arrow-typescript-function token expr)
+      ;; remove the : symbol
+      (consume-any!)
       (if (isa? expr J2SUnresolvedRef)
 	  (with-access::J2SUnresolvedRef expr (id loc)
-	     (let ((id (make-token 'ID id loc)))
+	     (let ((id (make-token 'ID id loc))
+		   (rt (typescript-type)))
 		(token-push-back! id)
 		(token-push-back! (pop-open-token token))
 		(multiple-value-bind (params args)
@@ -1534,6 +1545,7 @@
 		      (mode 'strict)
 		      (params params)
 		      (body (arrow-body params args))
+		      (rutype rt)
 		      (vararg (rest-params params))))))
 	  (parse-node-error "identifier expected" expr)))
 
@@ -1734,8 +1746,12 @@
    
    (define (import token)
       (set! es-module #t)
-      (let loop ((first #t))
+      (let loop ((first #t)
+		 (types #f))
 	 (case (peek-token-type)
+	    ((type)
+	     (consume-any!)
+	     (loop first #t))
 	    ((LBRACE)
 	     (let ((lst (import-name-list)))
 		(if (null? lst)
@@ -1748,7 +1764,8 @@
 				 (loc (token-loc token))
 				 (names lst)
 				 (path path)
-				 (dollarpath dollarpath)))
+				 (dollarpath dollarpath)
+				 (types types)))
 			   (parse-token-error
 			      "Illegal import, \"from\" expected"
 			      fro))))))
@@ -1762,7 +1779,8 @@
 		       (names '())
 		       (loc loc)
 		       (path (token-value path))
-		       (dollarpath (instantiate::J2SUndefined (loc loc)))))))
+		       (dollarpath (instantiate::J2SUndefined (loc loc)))
+		       (types types)))))
 	    ((*)
 	     (consume-any!)
 	     (if (peek-token-id? 'as)
@@ -1780,7 +1798,8 @@
 				 (loc (token-loc token))
 				 (names (list impns))
 				 (path path)
-				 (dollarpath dollarpath))))
+				 (dollarpath dollarpath)
+				 (types types))))
 			(parse-token-error "Illegal import, \"from\" expected"
 			   fro)))
 		 (parse-token-error "Illegal import, \"as\" expected"
@@ -1817,9 +1836,10 @@
 			      (loc loc)
 			      (names (list impnm))
 			      (path (token-value path))
-			      (dollarpath (instantiate::J2SUndefined (loc loc))))))
+			      (dollarpath (instantiate::J2SUndefined (loc loc)))
+			      (types types))))
 		       ((eq? (token-type sep) 'COMMA)
-			(let ((imp (loop #f))
+			(let ((imp (loop #f types))
 			      (impnm (instantiate::J2SImportName
 					(loc (token-loc sep))
 				       (id 'default)
@@ -1830,7 +1850,8 @@
 					      (loc loc)
 					      (names (list impnm))
 					      (dollarpath dollarpath)
-					      (path path))))
+					      (path path)
+					      (types types))))
 				 (instantiate::J2SSeq
 				    (loc loc)
 				    (nodes (list defi imp)))))))
@@ -3091,7 +3112,7 @@
    (define (id-sans-async token)
       (cond
 	 ((eq? (peek-token-type) '=>)
-	  (arrow-function (list token) (token-loc token)))
+	  (arrow-function 'unknown (list token) (token-loc token)))
 	 ((eq? (token-value token) 'import)
 	  (case (peek-token-type)
 	     ((LPAREN)
@@ -3233,31 +3254,39 @@
 		    (pop-open-token tok)
 		    (if (eq? (peek-token-type) '=>)
 			;; zero-argument arrow function
-			(arrow-function '() (token-loc token))
+			(arrow-function 'unknown '() (token-loc token))
 			(parse-token-error "Unexpected token" tok)))
 		 (let ((expr (expression #f #t)))
 		    (if (eq? (peek-token-type) ':)
 			(arrow-typescript-function token expr)
 			(begin
 			   (pop-open-token (consume-token! 'RPAREN))
-			   (if (eq? (peek-token-type) '=>)
-			       (cond
-				  ((isa? expr J2SAssig)
-				   (arrow-function (list expr) (token-loc token)))
-				  ((isa? expr J2SUnresolvedRef)
-				   (arrow-function (list expr) (token-loc token)))
-				  ((isa? expr J2SSequence)
-				   (with-access::J2SSequence expr (exprs)
-				      (arrow-function exprs (token-loc token))))
-				  ((or (isa? expr J2SObjInit) (isa? expr J2SArray) (isa? expr J2SBindExit))
-				   (arrow-function (list expr) (token-loc token)))
-				  ((isa? expr J2SDecl)
-				   (arrow-function (list expr) (token-loc token)))
-				  (else
-				   (parse-node-error "bad arrow parameter" expr)))
-			       (instantiate::J2SParen
-				  (loc (token-loc token))
-				  (expr expr)))))))))
+			   (let ((rt (if (and #f (eq? (peek-token-type) ':) (config-get conf :typescript))
+					 (let ((tok (consume-any!)))
+					    (if (eq? (peek-token-type) '=>)
+						(typescript-type)
+						(begin
+						   (token-push-back! tok)
+						   'unknown)))
+					 'unknown)))
+			      (if (eq? (peek-token-type) '=>)
+				  (cond
+				     ((isa? expr J2SAssig)
+				      (arrow-function rt (list expr) (token-loc token)))
+				     ((isa? expr J2SUnresolvedRef)
+				      (arrow-function rt (list expr) (token-loc token)))
+				     ((isa? expr J2SSequence)
+				      (with-access::J2SSequence expr (exprs)
+					 (arrow-function rt exprs (token-loc token))))
+				     ((or (isa? expr J2SObjInit) (isa? expr J2SArray) (isa? expr J2SBindExit))
+				      (arrow-function rt (list expr) (token-loc token)))
+				     ((isa? expr J2SDecl)
+				      (arrow-function rt (list expr) (token-loc token)))
+				     (else
+				      (parse-node-error "bad arrow parameter" expr)))
+				  (instantiate::J2SParen
+				     (loc (token-loc token))
+				     (expr expr))))))))))
 	 ((LBRACKET)
 	  (array-literal destructuring? #t 'array))
 	 ((SHARP)
