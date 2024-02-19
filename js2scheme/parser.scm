@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.7.x/js2scheme/parser.scm              */
+;*    serrano/prgm/project/hop/hop/js2scheme/parser.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Thu Feb 15 12:55:20 2024 (serrano)                */
+;*    Last change :  Mon Feb 19 14:24:07 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -732,25 +732,25 @@
       (let ((id (peek-token)))
 	 (case (token-type id)
 	    ((ID)
-	     (consume-any!)
-	     (let loop ((ty #f))
-		(if (or (eq? (token-type id) 'ID) (eq? current-mode 'normal))
-		    (case (peek-token-type)
-		       ((:)
-			(if (and (config-get conf :typescript) (not ty))
-			    (let* ((tok (consume-any!)))
-			       (loop (typescript-type)))
-			    (parse-token-error "unexpected token" (peek-token))))
-		       ((=)
-			(let* ((token (consume-any!))
-			       (expr (assig-expr in-for-init? #f #f)))
-			   (list
-			      (constrinit (token-loc token) (token-value id) expr
-				 (or ty (opt-type))))))
-		       (else
-			(list (constr (token-loc id) (token-value id)
-				 (or ty (opt-type))))))
-		    (parse-token-error "Illegal lhs" id))) )
+	     (let ((tid (consume-any!)))
+		(let loop ((ty #f))
+		   (if (or (eq? (token-type id) 'ID) (eq? current-mode 'normal))
+		       (case (peek-token-type)
+			  ((:)
+			   (if (and (config-get conf :typescript) (not ty))
+			       (let* ((tok (consume-any!)))
+				  (loop (typescript-type)))
+			       (parse-token-error "unexpected token" (peek-token))))
+			  ((=)
+			   (let* ((token (consume-any!))
+				  (expr (assig-expr in-for-init? #f #f)))
+			      (list
+				 (constrinit (token-loc tid) (token-value id) expr
+				    (or ty (opt-type))))))
+			  (else
+			   (list (constr tid (token-value id)
+				    (or ty (opt-type))))))
+		       (parse-token-error "Illegal lhs" id))) ))
 	    ((undefined NaN Infinity)
 	     (consume-any!)
 	     (case (peek-token-type)
