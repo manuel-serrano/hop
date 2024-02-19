@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Tue Jan 23 18:54:13 2024 (serrano)                */
+;*    Last change :  Thu Feb 15 15:46:05 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -567,7 +567,9 @@
 	      dollarpath::J2SExpr
 	      (names::pair-nil (default '()) (info '("notraverse")))
 	      (iprgm (default #f) (info '("notraverse")))
-	      (lang (default #f)))
+	      (lang (default #f))
+	      ;; true for typescript type import
+	      (types (default #f)))
 
 	   (final-class J2SImportName
 	      (loc read-only)
