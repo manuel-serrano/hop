@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/hopscript/stringliteral.scm         */
+;*    serrano/prgm/project/hop/3.7.x/hopscript/stringliteral.scm       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Fri Jan 26 07:45:07 2024 (serrano)                */
+;*    Last change :  Sat Feb 17 06:54:29 2024 (serrano)                */
 ;*    Copyright   :  2014-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -275,7 +275,7 @@
 (define (&jsstring-init str::bstring)
    (js-init-names!)
    (let ((cnsts (string->obj str)))
-      ;; start fill at index 1 because of the C declaration
+      ;; start filling at index 1 because of the C declaration
       ;; of the constant vector (see constants_expd.sch)
       (let loop ((i (-fx (vector-length cnsts) 1)))
 	 (when (>=fx i 0)
