@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Mon Feb 19 14:24:07 2024 (serrano)                */
+;*    Last change :  Tue Feb 20 10:05:22 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -748,7 +748,7 @@
 				 (constrinit (token-loc tid) (token-value id) expr
 				    (or ty (opt-type))))))
 			  (else
-			   (list (constr tid (token-value id)
+			   (list (constr (token-loc tid) (token-value id)
 				    (or ty (opt-type))))))
 		       (parse-token-error "Illegal lhs" id))) ))
 	    ((undefined NaN Infinity)
