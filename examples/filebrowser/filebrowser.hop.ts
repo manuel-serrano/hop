@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Feb  3 11:25:48 2024                          */
-/*    Last change :  Mon Feb 19 11:44:24 2024 (serrano)                */
+/*    Last change :  Wed Feb 21 13:47:04 2024 (serrano)                */
 /*    Copyright   :  2024 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Basic multi-tier file browser using Hop.js.                      */
@@ -19,7 +19,6 @@ const ignoreRx = /^\.|^#.*#$/;
 /*    R ...                                                            */
 /*---------------------------------------------------------------------*/
 const R = new hop.Resolver(import.meta.url);
-const L : string = 3;
 
 /*---------------------------------------------------------------------*/
 /*    dir ...                                                          */
@@ -88,7 +87,7 @@ const filecontent = new hop.Service(file, "/filebrowser/file");
 const filestat = new hop.Service(stat, "/filebrowser/stat");
 
 console.error("http://localhost:8888/filebrowser");
-console.error("config=", hop.config);
+console.error("config=", hop.init());
 
 // node_modules/@hop/hop/bin/hopc.mjs ./filebrowser.hop.js
 // node --no-warnings --enable-source-maps --loader ./node_modules/@hop/hop/lib/hop-loader.mjs ./filebrowser.hop.js
