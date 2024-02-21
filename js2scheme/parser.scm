@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Tue Feb 20 10:05:22 2024 (serrano)                */
+;*    Last change :  Wed Feb 21 18:31:16 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -43,6 +43,7 @@
    (define fun-src (config-get conf :fun-src #t))
    (define interfaces '())
    (define types '())
+   (define typescript (or (string=? lang "typescript") (config-get conf :typescript)))
 
    (define es-module #f)
    
@@ -717,10 +718,10 @@
 	     ty))))
    
    (define (opt-type)
-      (when (and (eq? (peek-token-type) '?) (string=? lang "typescript"))
+      (when (and (eq? (peek-token-type) '?) typescript)
 	 (consume-any!))
       (cond
-	 ((and (eq? (peek-token-type) ':) (string=? lang "typescript"))
+	 ((and (eq? (peek-token-type) ':) typescript)
 	  (consume-any!)
 	  (typescript-type))
 	 ((eq? (peek-token-type) 'type)
@@ -737,7 +738,7 @@
 		   (if (or (eq? (token-type id) 'ID) (eq? current-mode 'normal))
 		       (case (peek-token-type)
 			  ((:)
-			   (if (and (config-get conf :typescript) (not ty))
+			   (if (and typescript (not ty))
 			       (let* ((tok (consume-any!)))
 				  (loop (typescript-type)))
 			       (parse-token-error "unexpected token" (peek-token))))
@@ -1341,7 +1342,7 @@
 	 (cond
 	    ((and (not (config-get conf :es2017-async))
 		  (not (string=? lang "hopscript"))
-		  (not (string=? lang "typescript"))
+		  (not typescript)
 		  (not (memq current-mode '(hopscript strict))))
 	     (parse-node-error
 		"async function requires hopscript or ecmascript2017 mode" fun))
@@ -2651,7 +2652,7 @@
 		(let* ((typ (peek-token-type))
 		       (new-level (op-level typ)))
 		   (cond
-		      ((and (eq? typ 'as) (string=? lang "typescript"))
+		      ((and (eq? typ 'as) typescript)
 		       (consume-any!)
 		       (typescript-type)
 		       expr)
@@ -3261,7 +3262,7 @@
 			(arrow-typescript-function token expr)
 			(begin
 			   (pop-open-token (consume-token! 'RPAREN))
-			   (let ((rt (if (and #f (eq? (peek-token-type) ':) (config-get conf :typescript))
+			   (let ((rt (if (and #f (eq? (peek-token-type) ':) typescript)
 					 (let ((tok (consume-any!)))
 					    (if (eq? (peek-token-type) '=>)
 						(typescript-type)
