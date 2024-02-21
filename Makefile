@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/3.7.x/Makefile                          */
+#*    serrano/prgm/project/hop/hop/Makefile                            */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Tue Feb 13 11:25:03 2024 (serrano)                */
+#*    Last change :  Tue Feb 20 18:47:20 2024 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -63,7 +63,7 @@ hopsh-bin: lib
 hopreplay-bin: lib
 	$(MAKE) -C hopreplay build
 
-hophz-bin: lib hopc-bin widget
+hophz-bin: lib hopc-bin widget weblets
 	$(MAKE) -C hophz build
 
 lib: libdir scheme2js hopscript
