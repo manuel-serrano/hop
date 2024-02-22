@@ -1,0 +1,8 @@
+{
+  "ports": { "http": 8888, "https": 4000 },
+  "motd": "Filebrowser ready http=%s https=%s",
+  "credentials": { 
+    "key": "key.pem",
+    "cert": "cert.pem"
+  }
+}
