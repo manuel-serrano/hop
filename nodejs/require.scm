@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Sun Nov 19 09:56:05 2023 (serrano)                */
-;*    Copyright   :  2013-23 Manuel Serrano                            */
+;*    Last change :  Thu Feb 22 10:32:06 2024 (serrano)                */
+;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
 ;*=====================================================================*/
@@ -60,7 +60,8 @@
 	   (nodejs-worker ::JsGlobalObject ::JsObject ::JsObject)
 	   (nodejs-plugins-toplevel-loader)
 	   (nodejs-language-toplevel-loader)
-	   (nodejs-language-notify-error ::bstring ::bstring)))
+	   (nodejs-language-notify-error ::bstring ::bstring)
+	   (nodejs-register-user-loader! ::JsGlobalObject ::bstring)))
 
 ;*---------------------------------------------------------------------*/
 ;*    env-debug ...                                                    */
@@ -2943,6 +2944,43 @@
 			     (obj err))))))
 	 errs)))
 
+;*---------------------------------------------------------------------*/
+;*    loader-worker ...                                                */
+;*---------------------------------------------------------------------*/
+(define loader-worker #f)
+(define loader-mutex (make-mutex))
+(define loader-condv (make-condition-variable))
+
+;*---------------------------------------------------------------------*/
+;*    js-loader-worker ...                                             */
+;*---------------------------------------------------------------------*/
+(define (js-loader-worker)
+   (let ((ctor nodejs-new-global-object)
+	 (ctormod nodejs-new-module))
+      (set! %worker
+	    (instantiate::WorkerHopThread
+	       (name (string-append "%worker@" name))
+	       (onexit #f)
+	       (keep-alive keep-alive)
+	       (body (lambda ()
+			(setup-worker! %worker)
+			(synchronize mutex
+			   (condition-variable-broadcast! condv))
+			(js-worker-loop %worker (lambda (th) th))))))
+	 (thread-start-joinable! %worker)
+	 (condition-variable-wait! condv mutex))
+      #t))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-register-user-loader! ...                                 */
+;*---------------------------------------------------------------------*/
+(define (nodejs-register-user-loader! %this module)
+   (synchronize loader-mutex
+      (unless loader-worker
+	 (tprint "nodejs-register-user-loader...")
+	 (set! loader-worker (js-loader-worker))))
+   #unspecified)
+   
 ;*---------------------------------------------------------------------*/
 ;*    Bind the nodejs require functions                                */
 ;*---------------------------------------------------------------------*/

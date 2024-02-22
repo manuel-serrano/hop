@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Tue Sep 12 23:33:07 2023 (serrano)                */
-;*    Copyright   :  2014-23 Manuel Serrano                            */
+;*    Last change :  Thu Feb 22 11:15:59 2024 (serrano)                */
+;*    Copyright   :  2014-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
 ;*    -------------------------------------------------------------    */
@@ -237,6 +237,7 @@
 				       (setup)
 				       (synchronize mutex
 					  (condition-variable-broadcast! condv))
+				       (tprint "WORKER loop..." src)
 				       (js-worker-loop thread proc)))
 			      (cleanup (lambda (thread)
 					  (when (isa? parent WorkerHopThread)
@@ -246,8 +247,10 @@
 	       (add-subworker! parent thread))
 
 	    ;; start the worker thread
+	    (tprint "worker started...")
 	    (thread-start! thread)
 	    (condition-variable-wait! condv mutex)
+	    (tprint "worker ready...")
 	       
 	    ;; create the worker object
 	    (let ((worker (instantiateJsWorker

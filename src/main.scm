@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Tue Aug 22 14:55:47 2023 (serrano)                */
-;*    Copyright   :  2004-23 Manuel Serrano                            */
+;*    Last change :  Thu Feb 22 10:40:50 2024 (serrano)                */
+;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
 ;*=====================================================================*/
@@ -96,7 +96,7 @@
       (make-hop-module-resolver (bigloo-module-resolver)))
    (let ((jsctx #f))
       ;; parse the command line
-      (multiple-value-bind (files exprs exprsjs)
+      (multiple-value-bind (files exprs exprsjs loadersjs)
 	 (parse-args args)
 	 ;; extent the require search path to the Hop autoload directories
 	 (nodejs-resolve-extend-path! (hop-autoload-directories))
@@ -108,7 +108,7 @@
 	     (set! jsctx
 		(javascript-init
 		   (if (pair? files) (car files) ".")
-		   args exprsjs))
+		   args exprsjs loadersjs))
 	     (users-close!))
 	 ;; when debugging, init the debugger runtime
 	 (hop-debug-init! (hop-client-output-port))
@@ -242,9 +242,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    javascript-init ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (javascript-init name args exprs)
+(define (javascript-init name args exprs loaders)
    ;; install the hopscript expanders
    (hopscript-install-expanders!)
+   ;; start the main JS loop
    (multiple-value-bind (%worker %global %module)
       (js-main-worker! "main"
 	 (format "hop-~a~a (~a)" (hop-version) (hop-minor-version) (hop-build-tag))
@@ -283,9 +284,15 @@
 		(javascript-rc %global %module %worker rcmutex rccondv)
 		(javascript-init-main-loop exprs %global %module %worker)
 		(condition-variable-wait! rccondv rcmutex)
+		;; install the command line loaders
+		(for-each (lambda (m) (nodejs-register-user-loader! %global m))
+		   loaders)
 		(jsctx %global %module %worker)))
 	  (begin
 	     (javascript-init-main-loop exprs %global %module %worker)
+	     ;; install the command line loaders
+	     (for-each (lambda (m) (nodejs-register-user-loader! %global m))
+		loaders)
 	     (jsctx %global %module %worker)))))
 
 ;*---------------------------------------------------------------------*/

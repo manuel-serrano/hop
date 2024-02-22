@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.7.x/src/parseargs.scm                 */
+;*    serrano/prgm/project/hop/hop/src/parseargs.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Tue Jan 30 16:35:52 2024 (serrano)                */
+;*    Last change :  Thu Feb 22 10:29:06 2024 (serrano)                */
 ;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -68,7 +68,8 @@
 	 (clientc-use-strict #t)
 	 (sofile-dir #f)
 	 (cache-dir #f)
-	 (commonjs-export #t))
+	 (commonjs-export #t)
+	 (jsloaders '()))
       
       (bigloo-debug-set! 0)
 
@@ -341,6 +342,8 @@
 	     (hop-javascript-set! #t))
 	    (("--no-js" (help "Disable JavaScript"))
 	     (hop-javascript-set! #f))
+	    (("--loader" ?module (help "Specify the module to use a custom module loader"))
+	     (set! jsloaders (cons module jsloaders)))
 	    (("--js-return-as-exit" (help "Consider toplevel returns as exits"))
 	     (nodejs-compiler-options-add! :return-as-exit #t)) 
 	    (("--no-js-return-as-exit" (help "Do not consider toplevel returns as exits"))
@@ -378,6 +381,7 @@
 	    (("--profile-mem" (help "Memory profiling mode"))
 	     (hop-hopc-flags-set!
 		(string-append "--profile-mem2 " (hop-hopc-flags))))
+	    
 	    ;; Internals
 	    (section "Internals")
 	    (("--configure" ?config (help "Report HOP configuration"))
@@ -595,7 +599,8 @@
 				  (hop-process-key-delete (hop-default-port))
 				  ret))
 
-      (values (reverse files) (reverse! exprs) (reverse! exprsjs))))
+      (values (reverse files) (reverse! exprs)
+	 (reverse! exprsjs) (reverse! jsloaders))))
 
 ;*---------------------------------------------------------------------*/
 ;*    set-hop-owner! ...                                               */
