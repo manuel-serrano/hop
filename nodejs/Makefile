@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Fri Feb 23 08:11:11 2024 (serrano)                */
+#*    Last change :  Fri Feb 23 17:09:55 2024 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the NODEJS library.                        */
 #*=====================================================================*/
@@ -42,10 +42,10 @@ _JS_OBJECTS = console constants util sys path stream events fs fs_promises \
   child_process string_decoder _linklist _stream_readable _stream_writable \
   _stream_duplex _stream_transform _stream_passthrough crypto dns domain \
   freelist http https tls tty zlib url os process hop hophz \
-  node_tick node_stdio node_proc node_timers node_cluster
+  node_tick node_stdio node_proc node_timers node_cluster _module
 
 # see nodejs/modules AND nodejs/nodejs.scm
-_MOD_OBJECTS = fs fs_promises hop http https path process url
+_MOD_OBJECTS = fs fs_promises hop http https module path process url
 
 _C_OBJECTS = _napi
 

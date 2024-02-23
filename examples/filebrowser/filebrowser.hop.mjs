@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Feb  3 11:25:48 2024                          */
-/*    Last change :  Thu Feb 22 09:14:49 2024 (serrano)                */
+/*    Last change :  Fri Feb 23 17:18:18 2024 (serrano)                */
 /*    Copyright   :  2024 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Basic multi-tier file browser using Hop.js.                      */
@@ -31,7 +31,6 @@ async function dir(o) {
        <head>
          <link rel="stylesheet" href=${await R.resolve("./filebrowser.css")}>
          <script type="hop">
-      console.log("ici", hop.server);
             window.filebrowser = ${filebrowser};
             window.filecontent = ${filecontent};
             window.filestat = ${filestat};
@@ -85,9 +84,6 @@ function stat(p) {
 const filebrowser = new hop.Service(dir, "/filebrowser");
 const filecontent = new hop.Service(file, "/filebrowser/file");
 const filestat = new hop.Service(stat, "/filebrowser/stat");
-
-console.error("http://localhost:8888/filebrowser");
-console.error("config=", hop.init());
 
 const config = hop.init();
 

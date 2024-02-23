@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Mon Jun 26 10:25:29 2023 (serrano)                */
-;*    Copyright   :  2013-23 Manuel Serrano                            */
+;*    Last change :  Fri Feb 23 14:55:32 2024 (serrano)                */
+;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript CPS transformation                                    */
 ;*    -------------------------------------------------------------    */
@@ -650,11 +650,15 @@
 	 ((OR OR*)
 	  (cps lhs
 	     (KontExpr (lambda (klhs::J2SExpr)
-			  (cps (J2SCond klhs klhs rhs)
-			     (KontExpr (lambda (krhs::J2SExpr)
-					  (kcall k krhs))
-				this k)
-			     r kbreaks kcontinues fun conf))
+			  (let* ((endloc (node-endloc this))
+				 (name (gensym '%kor))
+				 (tmp (J2SLetOpt '(ref) name klhs)))
+			     (J2SLetBlock (list tmp)
+				(cps (J2SCond (J2SRef tmp) (J2SRef tmp) rhs)
+				   (KontExpr (lambda (krhs::J2SExpr)
+						(kcall k krhs))
+				      this k)
+				   r kbreaks kcontinues fun conf))))
 		this k)
 	     r kbreaks kcontinues fun conf))
 	 ((&&)

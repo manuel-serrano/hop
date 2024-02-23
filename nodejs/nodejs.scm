@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 18 16:19:42 2013                          */
-;*    Last change :  Fri Feb 23 08:08:10 2024 (serrano)                */
+;*    Last change :  Fri Feb 23 17:09:06 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    nodejs boot                                                      */
@@ -67,6 +67,7 @@
 	   (__nodejs_node_proc "| echo \"(module __nodejs_node_proc (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
 	   (__nodejs_node_timers "| echo \"(module __nodejs_node_timers (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
 	   (__nodejs_node_cluster "| echo \"(module __nodejs_node_cluster (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
+	   (__nodejs__module "| echo \"(module __nodejs__module (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
 	   ;; nodejs builtin es6 modules
 	   (__nodejs_mod_hop "| echo \"(module __nodejs_mod_hop (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
 	   (__nodejs_mod_path "| echo \"(module __nodejs_mod_path (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
@@ -76,6 +77,7 @@
 	   (__nodejs_mod_https "| echo \"(module __nodejs_mod_https (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
 	   (__nodejs_mod_url "| echo \"(module __nodejs_mod_url (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
 	   (__nodejs_mod_process "| echo \"(module __nodejs_mod_process (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
+	   (__nodejs_mod_module "| echo \"(module __nodejs_mod_module (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
 )
 
 
@@ -155,7 +157,9 @@
 	 ("node_stdio" __nodejs_node_stdio)
 	 ("node_proc" __nodejs_node_proc)
 	 ("node_timers" __nodejs_node_timers)
-	 ("node_cluster" __nodejs_node_cluster))))
+	 ("node_cluster" __nodejs_node_cluster)
+	 ("module" __nodejs__module)
+	 ("module.mod" __nodejs_mod_module))))
 
 ;*---------------------------------------------------------------------*/
 ;*    core-module-table ...                                            */

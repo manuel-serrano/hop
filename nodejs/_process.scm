@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Fri Feb 23 09:01:15 2024 (serrano)                */
+;*    Last change :  Fri Feb 23 09:56:38 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -556,7 +556,7 @@
 		 (tls_npn . #t)
 		 (tls_sni . #t)
 		 (tls . #t)
-		 (engine . ,(js-string->jsstring "hop")))
+		 (hop . #t))
 	       %this)
 	    #f %this)
 	 (let ((check #f)

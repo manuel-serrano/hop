@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Thu Feb 22 17:34:09 2024 (serrano)                */
+;*    Last change :  Fri Feb 23 09:52:35 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -2428,6 +2428,45 @@
 ;*    http://nodejs.org/api/modules.html#modules_all_together          */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-resolve name::bstring %this::JsGlobalObject %module mode::symbol)
+   (with-trace 'require "nodejs-resolve"
+      (trace-item "name=" name)
+      (trace-item "%module=" (typeof %module))
+      (trace-item "thread=" (current-thread))
+      (with-access::JsGlobalObject %this (worker)
+	 (if (eq? worker loader-worker)
+	     (builtin-resolve name %this %module mode)
+	     (loader-resolve name %this %module mode)))))
+
+;*---------------------------------------------------------------------*/
+;*    loader-resolve ...                                               */
+;*    -------------------------------------------------------------    */
+;*    See nodejs-register-user-loader!                                 */
+;*---------------------------------------------------------------------*/
+(define (loader-resolve name::bstring %this::JsGlobalObject %module mode::symbol)
+   (if (null? loader-resolvers)
+       (builtin-resolve name %this %module mode)
+       (js-worker-exec-promise loader-worker "resolve"
+	  (lambda (this)
+	     (let ((ctx (js-alist->jsobject `((parent . ,(js-undefined))) %this)))
+		(let loop ((resolvers loader-resolvers))
+		   (if (null? resolvers)
+		       (builtin-resolve name %this %module mode)
+		       (js-call3 this (car resolvers) (js-undefined)
+			  name ctx 
+			  (js-make-function this
+			     (lambda (this specifier context)
+				(loop (cdr resolvers)))
+			     (js-function-arity 2 0)
+			     (js-function-info :name "resolver" :len 2))))))))))
+   
+;*---------------------------------------------------------------------*/
+;*    builtin-resolve ...                                              */
+;*    -------------------------------------------------------------    */
+;*    Resolve the path name according to the current module path.      */
+;*    -------------------------------------------------------------    */
+;*    http://nodejs.org/api/modules.html#modules_all_together          */
+;*---------------------------------------------------------------------*/
+(define (builtin-resolve name::bstring %this::JsGlobalObject %module mode::symbol)
    
    (define (resolve-file x)
       (cond
@@ -2558,7 +2597,10 @@
 	    (else
 	     nodejs-env-path))))
    
-   (define (resolve name)
+   (with-trace 'require "builtin-resolve"
+      (trace-item "name=" name)
+      (trace-item "%module=" (typeof %module))
+      (trace-item "thread=" (current-thread))
       (let* ((mod %module)
 	     (filename (js-jsstring->string (js-get mod (& "filename") %this)))
 	     (dir (dirname filename)))
@@ -2629,15 +2671,7 @@
 		    (resolve-error name dir)))
 	       (else
 		(or (resolve-modules mod name)
-		    (resolve-error name dir)))))))
-   
-   (with-trace 'require "nodejs-resolve"
-      (trace-item "name=" name)
-      (trace-item "%module=" (typeof %module))
-      (trace-item "thread=" (current-thread))
-      (if loader-worker
-	  (resolve name)
-	  (resolve name))))
+		    (resolve-error name dir))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-env-path ...                                              */
@@ -2956,6 +2990,7 @@
 (define loader-mutex (make-mutex))
 (define loader-condv (make-condition-variable))
 (define loader-module #f)
+(define loader-resolvers '())
 
 ;*---------------------------------------------------------------------*/
 ;*    js-loader-worker ...                                             */
@@ -2993,27 +3028,32 @@
 ;*---------------------------------------------------------------------*/
 ;*    load-loader ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (load-loader this module)
+(define (load-loader this path)
    (with-access::WorkerHopThread loader-worker (%this)
-      (let* ((path (nodejs-resolve module %this loader-module 'import))
-	     (mod (nodejs-import-module loader-worker %this loader-module
-		     module 0 #t #unspecified))
+      (let* ((mod (nodejs-load-module path loader-worker %this loader-module
+		     :commonjs-export #f))
 	     (res (nodejs-module-namespace mod loader-worker %this)))
-	 (tprint "res=" res)
-	 )))
+	 (let ((resolve (js-get res (& "resolve") %this))
+	       (load (js-get res (& "load") %this)))
+	    (cons resolve load)))))
       
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-register-user-loader! ...                                 */
+;*    -------------------------------------------------------------    */
+;*    This implements the Nodejs module API as described at:           */
+;*      https://nodejs.org/docs/latest/api/module.html                 */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-register-user-loader! %this module)
    (synchronize loader-mutex
       (unless loader-worker
-	 (tprint ">>> nodejs-register-user-loader...")
 	 (set! loader-worker (js-loader-worker))))
-   (js-worker-exec-throws loader-worker "load"
-      (lambda (this)
-	 (load-loader this module)))
-   #unspecified)
+   (let ((res (js-worker-exec-throws loader-worker "load"
+		 (lambda (this)
+		    (load-loader this module)))))
+      (synchronize loader-mutex
+	 (when (car res)
+	    (set! loader-resolvers (append loader-resolvers (list (car res))))))
+      #unspecified))
    
 ;*---------------------------------------------------------------------*/
 ;*    Bind the nodejs require functions                                */

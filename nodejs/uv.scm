@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Fri Feb 23 08:42:38 2024 (serrano)                */
+;*    Last change :  Fri Feb 23 15:25:00 2024 (serrano)                */
 ;*    Copyright   :  2014-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -655,6 +655,42 @@
 			(set! response (proc %this))
 			(synchronize mutex
 			   (condition-variable-broadcast! condv))))
+		  (let loop ()
+		     (condition-variable-wait! condv mutex)
+		     (when (eq? response 'unassigned)
+			(loop))))
+	       response)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-worker-exec-promise ...                                       */
+;*    -------------------------------------------------------------    */
+;*    Used by asynchronous loaders.                                    */
+;*---------------------------------------------------------------------*/
+(define-method (js-worker-exec-promise th::WorkerHopThread
+		  name::bstring
+		  proc::procedure)
+   [assert (proc) (correct-arity? proc 1)]
+   [assert (th name) (not (eq? (current-thread) th))]
+   (with-access::WorkerHopThread th (%this %loop mutex condv)
+      (let ((loop %loop))
+	 (with-access::JsLoop loop (mutex condv)
+	    (let ((response 'unassigned))
+	       (synchronize mutex
+		  (js-worker-push-action! th name
+		     (lambda (%this)
+			(let ((promise (proc %this)))
+			   (if (isa? promise JsPromise)
+			       (let ((then (js-get promise (& "then") %this)))
+				  (js-call2 %this then
+				     promise
+				     (js-make-procedure %this
+					(lambda (_ val)
+					   (set! response val)
+					   (synchronize mutex
+					      (condition-variable-broadcast! condv)))
+					2)
+				     (js-undefined)))
+			       (js-raise-type-error %this "Not a promise" promise)))))
 		  (let loop ()
 		     (condition-variable-wait! condv mutex)
 		     (when (eq? response 'unassigned)

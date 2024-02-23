@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 15 15:16:16 2018                          */
-;*    Last change :  Fri Feb 23 08:28:32 2024 (serrano)                */
+;*    Last change :  Fri Feb 23 09:38:51 2024 (serrano)                */
 ;*    Copyright   :  2018-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES6 Module handling                                              */
@@ -685,6 +685,7 @@
 					     :driver (j2s-export-driver)
 					     :warning 0
 					     :module-import #t
+					     :es2017-async #t
 					     :verbose (if (<=fx verb 2) 0 verb)
 					     :verbmargin margin
 					     :module-env env
@@ -705,11 +706,13 @@
 (define core-module-list
    '("console" "constants" "util" "sys" "path" "_linklist" "events"
      "assert" "_stream_readable" "_stream_writable" "_stream_duplex"
-     "_stream_transform" "_stream_passthrough" "stream" "fs" "fs/promises"
+     "_stream_transform" "_stream_passthrough" "stream" "fs"
+     ("fs/promises" . "fs_promises")
      "punycode" "process" "dgram" "vm" "timers" "net" "querystring"
      "string_decoder" "child_process" "cluster" "crypto" "dns" "domain"
      "freelist" "url" "tls" "tty" "http" "https" "zlib" "os" "hop" "hophz"
-     "node_tick" "node_stdio" "node_proc" "node_timers" "node_cluster"))
+     "node_tick" "node_stdio" "node_proc" "node_timers" "node_cluster"
+     "module"))
 
 ;*---------------------------------------------------------------------*/
 ;*    core-modules ...                                                 */
@@ -735,10 +738,12 @@
 	    (string->obj (read ip)))))
    
    (define (init-coremodule! cm)
-      (let ((loc `(at ,(string-append cm ".js") 0))
-	    (mo (make-file-path (hop-lib-directory)
-		   "hop" (hop-version) "mo"
-		   (string-append cm ".mod.mo"))))
+      (let* ((name (if (pair? cm) (car cm) cm))
+	     (base (if (pair? cm) (cdr cm) cm))
+	     (loc `(at ,(string-append name ".js") 0))
+	     (mo (make-file-path (hop-lib-directory)
+		    "hop" (hop-version) "mo"
+		    (string-append base ".mod.mo"))))
 	 (co-instantiate ((decl (instantiate::J2SDecl
 				   (id 'default)
 				   (loc loc)
@@ -761,8 +766,8 @@
 				(mode 'core)
 				(nodes '())
 				(exports (list expo))))))
-	    (hashtable-put! core-modules cm iprgm)
-	    (hashtable-put! core-modules (string-append "node:" cm) iprgm) ))))
+	    (hashtable-put! core-modules name iprgm)
+	    (hashtable-put! core-modules (string-append "node:" name) iprgm) ))))
 
    (set! core-modules   
       (create-hashtable

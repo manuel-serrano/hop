@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Feb 20 20:10:40 2023                          */
-/*    Last change :  Fri Feb 23 08:24:02 2024 (serrano)                */
+/*    Last change :  Fri Feb 23 09:17:11 2024 (serrano)                */
 /*    Copyright   :  2023-24 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    fs.js es6 module                                                 */
@@ -16,11 +16,21 @@
 const fs = require("node:fs/promises");
 
 const appendFile = fs.appendFile;
+const lstat = fs.lstat;
+const readdir = fs.readdir;
+const readFile = fs.readFile;
+const rename = fs.rename;
+const writeFile = fs.writeFile;
 
 /*---------------------------------------------------------------------*/
 /*    exports ...                                                      */
 /*---------------------------------------------------------------------*/
 module.exports = fs;
 export {
-   appendFile
-}
+   appendFile,
+   lstat,
+   readdir,
+   readFile,
+   rename,
+   writeFile
+};
