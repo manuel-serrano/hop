@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Thu Feb 22 10:29:06 2024 (serrano)                */
+;*    Last change :  Thu Feb 22 17:58:15 2024 (serrano)                */
 ;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -690,6 +690,7 @@
    (print "   - HOPCFLAGS: hopc compilation flags")
    (print "   - NODE_DEBUG: nodejs internal debugging [NODE_DEBUG=key]")
    (print "   - NODE_PATH: nodejs require path")
+   (print "   - HOP_OPTIONS: additional command line options")
    (newline)
    (print "Runtime Command file:")
    (print "   - rc-dir: " (hop-rc-directory))

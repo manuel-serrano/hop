@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Thu Feb 22 10:40:50 2024 (serrano)                */
+;*    Last change :  Thu Feb 22 18:07:27 2024 (serrano)                */
 ;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -97,7 +97,15 @@
    (let ((jsctx #f))
       ;; parse the command line
       (multiple-value-bind (files exprs exprsjs loadersjs)
-	 (parse-args args)
+	 (parse-args
+	    (let ((env (getenv "HOP_OPTIONS")))
+	       (if (string? env)
+		   (let ((opts (call-with-input-string env
+				  (lambda (ip)
+				     (port->list read-of-strings ip)))))
+		      (cons (car args)
+			 (append opts (cdr args))))
+		   args)))
 	 ;; extent the require search path to the Hop autoload directories
 	 (nodejs-resolve-extend-path! (hop-autoload-directories))
 	 ;; install the builtin filters

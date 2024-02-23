@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug  9 14:00:32 2013                          */
-;*    Last change :  Fri Feb 24 16:13:23 2023 (serrano)                */
-;*    Copyright   :  2013-23 Manuel Serrano                            */
+;*    Last change :  Fri Feb 23 08:40:17 2024 (serrano)                */
+;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    THe module used to build the nodejs heap file.                   */
 ;*=====================================================================*/
@@ -18,7 +18,7 @@
    
    (import __nodejs
 	   __nodejs_require
-	   __nodejs_process
+	   __nodejs__process
 	   __nodejs_repl
 	   __nodejs_uv
 	   __nodejs_napi

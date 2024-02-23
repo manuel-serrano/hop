@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Sun Nov 19 08:57:22 2023 (serrano)                */
+#*    Last change :  Fri Feb 23 08:11:11 2024 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the NODEJS library.                        */
 #*=====================================================================*/
@@ -34,18 +34,18 @@ BHOPCFLAGS += --bootstrap-mode
 #*---------------------------------------------------------------------*/
 #*    Scheme extended objects                                          */
 #*---------------------------------------------------------------------*/
-_OBJECTS = nodejs require process repl _hop uv _fs _http _crypto \
+_OBJECTS = nodejs require _process repl _hop uv _fs _http _crypto \
   _buffer _process_wrap _stream_wrap _tcp_wrap _pipe_wrap _udp_wrap \
   _tty_wrap _timer_wrap _evals _zlib syncg napi
-_JS_OBJECTS = console constants util sys path stream events fs \
+_JS_OBJECTS = console constants util sys path stream events fs fs_promises \
   punycode assert buffer dgram net timers vm querystring cluster \
   child_process string_decoder _linklist _stream_readable _stream_writable \
   _stream_duplex _stream_transform _stream_passthrough crypto dns domain \
-  freelist http https tls tty zlib url os hop hophz \
+  freelist http https tls tty zlib url os process hop hophz \
   node_tick node_stdio node_proc node_timers node_cluster
 
 # see nodejs/modules AND nodejs/nodejs.scm
-_MOD_OBJECTS = hop path fs http https url
+_MOD_OBJECTS = fs fs_promises hop http https path process url
 
 _C_OBJECTS = _napi
 

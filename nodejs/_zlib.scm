@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec 27 19:12:38 2015                          */
-;*    Last change :  Mon Feb 20 07:43:37 2023 (serrano)                */
-;*    Copyright   :  2015-23 Manuel Serrano                            */
+;*    Last change :  Fri Feb 23 08:42:46 2024 (serrano)                */
+;*    Copyright   :  2015-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Zlib bindings                                                    */
 ;*=====================================================================*/
@@ -21,7 +21,7 @@
    (static  (class JsZlib::JsObject))
    
    (import  __nodejs_uv
-	    __nodejs_process)
+	    __nodejs__process)
 
    (export  (process-zlib ::WorkerHopThread ::JsGlobalObject ::JsObject)))
 

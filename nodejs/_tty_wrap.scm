@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 19 07:19:20 2014                          */
-;*    Last change :  Sun May  7 14:11:21 2023 (serrano)                */
-;*    Copyright   :  2014-23 Manuel Serrano                            */
+;*    Last change :  Fri Feb 23 08:42:27 2024 (serrano)                */
+;*    Copyright   :  2014-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs TTY bindings                                              */
 ;*=====================================================================*/
@@ -21,7 +21,7 @@
    (include "nodejs_types.sch")
    
    (import  __nodejs_uv
-	    __nodejs_process
+	    __nodejs__process
 	    __nodejs__buffer
 	    __nodejs__stream-wrap)
 

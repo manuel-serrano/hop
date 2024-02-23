@@ -6,7 +6,8 @@
     "@types/node": "*"
   },
   "scripts": {
-    "server": "NODE_OPTIONS=\"--enable-source-maps --no-warnings --loader ./node_modules/@hop/hopc/lib/hop-loader.mjs\" node filebrowser.hop.mjs -p 8888 --userdb ./users.json",
-    "serverts": "NODE_OPTIONS=\"--enable-source-maps --no-warnings --loader ./node_modules/@hop/hopc/lib/hop-loader.mjs --loader ./node_modules/@hop/hopc/lib/ts-loader.mjs\" node filebrowser.hop.ts -s 4000 --config-dir . --userdb ./users.json"
+    "server": "NODE_OPTIONS=\"--enable-source-maps --no-warnings --loader ./node_modules/@hop/hopc/lib/hop-loader.mjs\" node filebrowser.hop.mjs --userdb ./users.json",
+    "serverts": "NODE_OPTIONS=\"--enable-source-maps --no-warnings --loader ./node_modules/@hop/hopc/lib/hop-loader.mjs --loader ./node_modules/@hop/hopc/lib/ts-loader.mjs\" node filebrowser.hop.ts -s 4000 --config-dir . --userdb ./users.json",
+    "serverhop": "HOP_OPTIONS=\"--loader ./node_modules/@hop/hopc/lib/hop-loader.mjs --loader ./node_modules/@hop/hopc/lib/ts-loader.mjs\" hop filebrowser.hop.ts -- -s 4000 --config-dir . --userdb ./users.json"
   }
 }

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Wed Feb 21 18:31:16 2024 (serrano)                */
+;*    Last change :  Fri Feb 23 07:58:01 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -2025,6 +2025,18 @@
 	  (type-decl-list)
 	  (instantiate::J2SNop
 	     (loc (token-loc token))))
+	 ((ID)
+	  (let* ((tok (consume-any!))
+		 (next (peek-token-type)))
+	     (if (eq? (token-value tok) 'async)
+		 (cond
+		    ((eq? next 'function)
+		     (export-decl (async-declaration token)))
+		    ((eq? next '=>)
+		     (export-decl (async-declaration token)))
+		    (else
+		     (parse-token-error "Illegal export declaration" next)))
+		 (parse-token-error "Illegal export declaration" next))))
 	 (else
 	  (parse-token-error "Illegal export declaration" (peek-token)))))
 
@@ -2149,7 +2161,7 @@
 	     (multiple-value-bind (param arg)
 		(consume-param! 0 maybe-expr?)
 		(if (not param)
-		    (parse-token-error "Illegal parameter" token)
+		    (parse-token-error "Illegal function parameter" token)
 		    (let loop ((rev-params (list param))
 			       (rev-args (list arg))
 			       (idx 1))

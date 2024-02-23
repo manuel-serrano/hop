@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 19 07:19:20 2014                          */
-;*    Last change :  Sun May  7 14:10:13 2023 (serrano)                */
-;*    Copyright   :  2014-23 Manuel Serrano                            */
+;*    Last change :  Fri Feb 23 08:40:54 2024 (serrano)                */
+;*    Copyright   :  2014-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs PIPE bindings                                             */
 ;*=====================================================================*/
@@ -19,7 +19,7 @@
    (library hopscript)
 
    (import  __nodejs_uv
-	    __nodejs_process
+	    __nodejs__process
 	    __nodejs__buffer
 	    __nodejs__stream-wrap)
 

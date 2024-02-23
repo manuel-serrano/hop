@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Wed Feb 14 18:06:37 2024 (serrano)                */
+;*    Last change :  Fri Feb 23 08:42:38 2024 (serrano)                */
 ;*    Copyright   :  2014-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -57,7 +57,7 @@
 
    (cond-expand
       (enable-libuv
-       (import __nodejs_process
+       (import __nodejs__process
 	  __nodejs__process-wrap
 	  __nodejs__pipe-wrap
 	  __nodejs__buffer)))

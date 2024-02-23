@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat May 17 06:10:40 2014                          */
-;*    Last change :  Thu Feb 15 11:11:02 2024 (serrano)                */
+;*    Last change :  Fri Feb 23 08:40:12 2024 (serrano)                */
 ;*    Copyright   :  2014-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    File system bindings                                             */
@@ -20,7 +20,7 @@
    (include "../hopscript/stringthread.sch")
    
    (import  __nodejs_uv
-	    __nodejs_process)
+	    __nodejs__process)
 
    (export O_RDONLY
 	   O_WRONLY

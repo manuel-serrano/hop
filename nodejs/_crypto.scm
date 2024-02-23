@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 23 08:47:08 2014                          */
-;*    Last change :  Thu Feb 15 07:40:47 2024 (serrano)                */
+;*    Last change :  Fri Feb 23 08:40:05 2024 (serrano)                */
 ;*    Copyright   :  2014-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Crypto native bindings                                           */
@@ -63,7 +63,7 @@
 	     (frame-len::long (default 0))
 	     (conn::JsSSLConnection (default (class-nil JsSSLConnection)))))))
 	       
-   (import  __nodejs_process
+   (import  __nodejs__process
 	    __nodejs__buffer
 	    __nodejs_uv)
    

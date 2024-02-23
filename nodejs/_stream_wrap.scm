@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 20 12:31:24 2014                          */
-;*    Last change :  Sun May  7 10:52:55 2023 (serrano)                */
-;*    Copyright   :  2014-23 Manuel Serrano                            */
+;*    Last change :  Fri Feb 23 08:42:12 2024 (serrano)                */
+;*    Copyright   :  2014-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Common stream functions                                          */
 ;*=====================================================================*/
@@ -19,7 +19,7 @@
    (library hopscript)
 
    (import  __nodejs_uv
-	    __nodejs_process
+	    __nodejs__process
 	    __nodejs__buffer)
 
    (export (stream-shutdown ::WorkerHopThread ::JsGlobalObject

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 15 15:16:16 2018                          */
-;*    Last change :  Fri Oct 20 19:06:13 2023 (serrano)                */
-;*    Copyright   :  2018-23 Manuel Serrano                            */
+;*    Last change :  Fri Feb 23 08:28:32 2024 (serrano)                */
+;*    Copyright   :  2018-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES6 Module handling                                              */
 ;*=====================================================================*/
@@ -699,15 +699,17 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    core-module-list ...                                             */
+;*    -------------------------------------------------------------    */
+;*    See nodejs/nodejs.scm where the same table is duplicated.        */
 ;*---------------------------------------------------------------------*/
 (define core-module-list
    '("console" "constants" "util" "sys" "path" "_linklist" "events"
      "assert" "_stream_readable" "_stream_writable" "_stream_duplex"
-     "_stream_transform" "_stream_passthrough" "stream" "fs"
-     "punycode" "dgram" "vm" "timers" "net" "querystring" "string_decoder"
-     "child_process" "cluster" "crypto" "dns" "domain" "freelist" "url"
-     "tls" "tty" "http" "https" "zlib" "os" "hop" "hophz" "node_tick"
-     "node_stdio" "node_proc" "node_timers" "node_cluster"))
+     "_stream_transform" "_stream_passthrough" "stream" "fs" "fs/promises"
+     "punycode" "process" "dgram" "vm" "timers" "net" "querystring"
+     "string_decoder" "child_process" "cluster" "crypto" "dns" "domain"
+     "freelist" "url" "tls" "tty" "http" "https" "zlib" "os" "hop" "hophz"
+     "node_tick" "node_stdio" "node_proc" "node_timers" "node_cluster"))
 
 ;*---------------------------------------------------------------------*/
 ;*    core-modules ...                                                 */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Thu Feb 22 10:32:06 2024 (serrano)                */
+;*    Last change :  Thu Feb 22 17:34:09 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -21,7 +21,7 @@
 
    (import __nodejs
 	   __nodejs__hop
-	   __nodejs_process
+	   __nodejs__process
 	   __nodejs_syncg)
 
    (export (nodejs-hop-debug)
@@ -2445,7 +2445,7 @@
 		   (if (and (file-exists? src) (not (directory? src)))
 		       (file-name-canonicalize src)
 		       (loop (cdr sufs)))))))))
-
+   
    (define (resolve-autoload-hz hz)
       (with-trace 'require "nodejs-resolve.resolve-autoload-hz"
 	 (trace-item "hz=" hz)
@@ -2557,19 +2557,16 @@
 		   nodejs-env-path)))
 	    (else
 	     nodejs-env-path))))
-
-   (with-trace 'require "nodejs-resolve"
-      (trace-item "name=" name)
-      (trace-item "%module=" (typeof %module))
-      (trace-item "thread=" (current-thread))
+   
+   (define (resolve name)
       (let* ((mod %module)
 	     (filename (js-jsstring->string (js-get mod (& "filename") %this)))
 	     (dir (dirname filename)))
 	 (trace-item "dir=" dir)
 	 (trace-item "paths=" (let ((paths (js-get mod (& "paths") %this)))
-				(if (js-array? paths)
-				    (jsarray->vector paths %this)
-				    paths)))
+				 (if (js-array? paths)
+				     (jsarray->vector paths %this)
+				     paths)))
 	 (let loop ((name name))
 	    (cond
 	       ((core-module? name)
@@ -2632,7 +2629,15 @@
 		    (resolve-error name dir)))
 	       (else
 		(or (resolve-modules mod name)
-		    (resolve-error name dir))))))))
+		    (resolve-error name dir)))))))
+   
+   (with-trace 'require "nodejs-resolve"
+      (trace-item "name=" name)
+      (trace-item "%module=" (typeof %module))
+      (trace-item "thread=" (current-thread))
+      (if loader-worker
+	  (resolve name)
+	  (resolve name))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-env-path ...                                              */
@@ -2950,35 +2955,64 @@
 (define loader-worker #f)
 (define loader-mutex (make-mutex))
 (define loader-condv (make-condition-variable))
+(define loader-module #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-loader-worker ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (js-loader-worker)
-   (let ((ctor nodejs-new-global-object)
-	 (ctormod nodejs-new-module))
-      (set! %worker
-	    (instantiate::WorkerHopThread
-	       (name (string-append "%worker@" name))
-	       (onexit #f)
-	       (keep-alive keep-alive)
-	       (body (lambda ()
-			(setup-worker! %worker)
-			(synchronize mutex
-			   (condition-variable-broadcast! condv))
-			(js-worker-loop %worker (lambda (th) th))))))
-	 (thread-start-joinable! %worker)
-	 (condition-variable-wait! condv mutex))
-      #t))
+   
+   (define (setup-worker! w)
+      (let ((global (nodejs-new-global-object :name "loader"))
+	    (path (pwd)))
+	 (with-access::JsGlobalObject global (js-object worker js-function-sans-prototype-cmap)
+	    (set! worker w)
+	    (set! loader-module (nodejs-new-module (basename path)
+				   (string-append path "/.") w global))
+	    (with-access::WorkerHopThread worker (%this module-cache %loop)
+	       ;; module-cache is used in src/main to check
+	       ;; where the worker is running or not
+	       (set! module-cache (js-new0 %this js-object))
+	       (set! %this global)
+	       (js-put! module-cache (js-string->jsstring path)
+		  loader-module #f global)))))
+   
+   (letrec ((worker (instantiate::WorkerHopThread
+		       (name "loader")
+		       (onexit #f)
+		       (keep-alive #t)
+		       (body (lambda ()
+				(setup-worker! worker)
+				(synchronize loader-mutex
+				   (condition-variable-broadcast! loader-condv))
+				(js-worker-loop worker (lambda (th) th)))))))
+      (thread-start-joinable! worker)
+      (condition-variable-wait! loader-condv loader-mutex)
+      worker))
 
+;*---------------------------------------------------------------------*/
+;*    load-loader ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (load-loader this module)
+   (with-access::WorkerHopThread loader-worker (%this)
+      (let* ((path (nodejs-resolve module %this loader-module 'import))
+	     (mod (nodejs-import-module loader-worker %this loader-module
+		     module 0 #t #unspecified))
+	     (res (nodejs-module-namespace mod loader-worker %this)))
+	 (tprint "res=" res)
+	 )))
+      
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-register-user-loader! ...                                 */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-register-user-loader! %this module)
    (synchronize loader-mutex
       (unless loader-worker
-	 (tprint "nodejs-register-user-loader...")
+	 (tprint ">>> nodejs-register-user-loader...")
 	 (set! loader-worker (js-loader-worker))))
+   (js-worker-exec-throws loader-worker "load"
+      (lambda (this)
+	 (load-loader this module)))
    #unspecified)
    
 ;*---------------------------------------------------------------------*/

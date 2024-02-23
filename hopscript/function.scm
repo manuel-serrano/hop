@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Thu Feb 15 13:26:28 2024 (serrano)                */
+;*    Last change :  Fri Feb 23 07:13:53 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -426,7 +426,6 @@
 			     "[[ThrowTypeError]] ~a" o)))
 	     (thrower (js-make-function %this
 			 (lambda (o v)
-			    (tprint "ICI")
 			    (js-raise-type-error %this
 			       "[[ThrowTypeError]] ~a" o))
 			 (js-function-arity 1 0)

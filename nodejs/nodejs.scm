@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 18 16:19:42 2013                          */
-;*    Last change :  Sun Nov 19 09:52:47 2023 (serrano)                */
-;*    Copyright   :  2013-23 Manuel Serrano                            */
+;*    Last change :  Fri Feb 23 08:08:10 2024 (serrano)                */
+;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    nodejs boot                                                      */
 ;*=====================================================================*/
@@ -19,7 +19,7 @@
    (library hopscript)
 
    (import __nodejs_require
-	   __nodejs_process
+	   __nodejs__process
 	   __nodejs__buffer
 	   ;; nodejs builtin common modules
 	   (__nodejs_console "| echo \"(module __nodejs_console (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
@@ -27,6 +27,7 @@
 	   (__nodejs_util "| echo \"(module __nodejs_util (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
 	   (__nodejs_sys "| echo \"(module __nodejs_sys (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
 	   (__nodejs_path "| echo \"(module __nodejs_path (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
+	   (__nodejs_process "| echo \"(module __nodejs_process (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
 	   (__nodejs__linklist "| echo \"(module __nodejs__linklist (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
 	   (__nodejs_events "| echo \"(module __nodejs_events (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
 	   (__nodejs_assert "| echo \"(module __nodejs_assert (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
@@ -37,6 +38,7 @@
 	   (__nodejs__stream_passthrough "| echo \"(module __nodejs__stream_passthrough (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
 	   (__nodejs_stream "| echo \"(module __nodejs_stream (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
 	   (__nodejs_fs "| echo \"(module __nodejs_fs (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
+	   (__nodejs_fs_promises "| echo \"(module __nodejs_fs_promises (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
 	   (__nodejs_punycode "| echo \"(module __nodejs_punycode (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
 	   (__nodejs_buffer "| echo \"(module __nodejs_buffer (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
 	   (__nodejs_dgram "| echo \"(module __nodejs_dgram (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
@@ -69,9 +71,11 @@
 	   (__nodejs_mod_hop "| echo \"(module __nodejs_mod_hop (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
 	   (__nodejs_mod_path "| echo \"(module __nodejs_mod_path (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
 	   (__nodejs_mod_fs "| echo \"(module __nodejs_mod_fs (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
+	   (__nodejs_mod_fs_promises "| echo \"(module __nodejs_mod_fs_promises (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
 	   (__nodejs_mod_http "| echo \"(module __nodejs_mod_http (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
 	   (__nodejs_mod_https "| echo \"(module __nodejs_mod_https (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
 	   (__nodejs_mod_url "| echo \"(module __nodejs_mod_url (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
+	   (__nodejs_mod_process "| echo \"(module __nodejs_mod_process (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
 )
 
 
@@ -90,6 +94,9 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    module-table ...                                                 */
+;*    -------------------------------------------------------------    */
+;*    See also js2scheme/module.scm where the table is duplicated      */
+;*    and should be maintained in sync.                                */
 ;*---------------------------------------------------------------------*/
 (define module-table
    (cons
@@ -114,7 +121,11 @@
 	 ("stream" __nodejs_stream)
 	 ("fs" __nodejs_fs)
 	 ("fs.mod" __nodejs_mod_fs)
+	 ("fs/promises" __nodejs_fs_promises)
+	 ("fs/promises.mod" __nodejs_mod_fs_promises)
 	 ("punycode" __nodejs_punycode)
+	 ("process" __nodejs_process)
+	 ("process.mod" __nodejs_mod_process)
 	 ("dgram" __nodejs_dgram)
 	 ("vm" __nodejs_vm)
 	 ("timers" __nodejs_timers)
