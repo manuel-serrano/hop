@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Fri Feb 23 15:25:00 2024 (serrano)                */
+;*    Last change :  Thu Feb 29 10:11:18 2024 (serrano)                */
 ;*    Copyright   :  2014-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -424,11 +424,11 @@
 ;*    to let LIBUV manages the event loop.                             */
 ;*---------------------------------------------------------------------*/
 (define-method (js-worker-loop th::WorkerHopThread init::procedure)
-   (with-access::WorkerHopThread th (mutex condv %loop
+   (with-access::WorkerHopThread th (mutex condv %loop name
 				       %process %this keep-alive services
 				       call %retval prerun state)
       ;; set thread name for better debugging
-      (thread-name-set! (current-thread) "hopjs")
+      (thread-name-set! (current-thread) (or name "hopjs"))
       ;; mimic nodejs file descriptor limit
       (cond-expand
 	 (rlimit
@@ -674,18 +674,25 @@
    (with-access::WorkerHopThread th (%this %loop mutex condv)
       (let ((loop %loop))
 	 (with-access::JsLoop loop (mutex condv)
-	    (let ((response 'unassigned))
+	    (let ((resolve 'unassigned)
+		  (reject 'unassigned))
 	       (synchronize mutex
 		  (js-worker-push-action! th name
 		     (lambda (%this)
 			(let ((promise (proc %this)))
 			   (if (isa? promise JsPromise)
 			       (let ((then (js-get promise (& "then") %this)))
-				  (js-call2 %this then
+				  (js-call3 %this then
 				     promise
 				     (js-make-procedure %this
 					(lambda (_ val)
-					   (set! response val)
+					   (set! resolve val)
+					   (synchronize mutex
+					      (condition-variable-broadcast! condv)))
+					2)
+				     (js-make-procedure %this
+					(lambda (_ val)
+					   (set! reject val)
 					   (synchronize mutex
 					      (condition-variable-broadcast! condv)))
 					2)
@@ -693,9 +700,10 @@
 			       (js-raise-type-error %this "Not a promise" promise)))))
 		  (let loop ()
 		     (condition-variable-wait! condv mutex)
-		     (when (eq? response 'unassigned)
+		     (when (and (eq? resolve 'unassigned)
+				(eq? reject 'unassigned))
 			(loop))))
-	       response)))))
+	       (values resolve reject))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-worker-exec-throws ...                                        */

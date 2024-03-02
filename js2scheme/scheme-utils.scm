@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Copyright   :  2017-23 Manuel Serrano                            */
+;*    Copyright   :  2017-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
 ;*=====================================================================*/
@@ -1540,7 +1540,7 @@
 	     ((js-ascii->jsstring (? string?)) #t)
 	     ((js-utf8->jsstring (? string?)) #t)
 	     (else #f))))
-   
+
    (let* ((scmlhs (j2s-scheme lhs mode return ctx))
 	  (scmrhs (j2s-scheme rhs mode return ctx))
 	  (ultrasimplelhs (ultrasimple? lhs))

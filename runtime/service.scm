@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Thu May 21 09:25:53 2020 (serrano)                */
-;*    Copyright   :  2006-21 Manuel Serrano                            */
+;*    Last change :  Fri Mar  1 07:57:36 2024 (serrano)                */
+;*    Copyright   :  2006-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
 ;*=====================================================================*/
@@ -840,7 +840,7 @@
 ;*---------------------------------------------------------------------*/
 (define (service-filter req)
    (when (isa? req http-server-request)
-      (with-access::http-server-request req (abspath service method)
+      (with-access::http-server-request req (abspath)
 	 (when (hop-service-path? abspath)
 	    (let loop ((svc (synchronize *service-mutex*
 			       (hashtable-get *service-table* abspath))))

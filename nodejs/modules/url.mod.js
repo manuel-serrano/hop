@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Nov 19 08:48:52 2023                          */
-/*    Last change :  Sun Nov 19 09:37:05 2023 (serrano)                */
-/*    Copyright   :  2023 Manuel Serrano                               */
+/*    Last change :  Thu Feb 29 11:44:55 2024 (serrano)                */
+/*    Copyright   :  2023-24 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    url es6 module                                                   */
 /*=====================================================================*/
@@ -20,6 +20,7 @@ const resolve = url.resolve;
 const resolveObject = url.resolveObject;
 const format = url.format;
 const Url = url.Url;
+const URL = url.Url;
 
 const fileURLToPath = url.fileURLToPath;
 const pathToFileURL = url.pathToFileURL; 
@@ -34,6 +35,7 @@ export {
    resolveObject,
    format,
    Url,
+   URL,
    fileURLToPath,
    pathToFileURL
 };

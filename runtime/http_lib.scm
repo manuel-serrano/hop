@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/runtime/http_lib.scm              */
+;*    serrano/prgm/project/hop/hop/runtime/http_lib.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  6 09:04:30 2004                          */
-;*    Last change :  Wed Jul 24 15:20:40 2013 (serrano)                */
-;*    Copyright   :  2004-13 Manuel Serrano                            */
+;*    Last change :  Fri Mar  1 12:35:05 2024 (serrano)                */
+;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple HTTP lib                                                  */
 ;*=====================================================================*/
@@ -293,10 +293,12 @@
 		   (if (pair? h)
 		       (let ((k (car h))
 			     (v (cdr h)))
-			  (trace-item (keyword->string! k) ": " v)
-			  (http-write-line p (keyword->string! k) ": " v))
+			  (trace-item k " " v)
+			  (if (string? k)
+			      (http-write-line p k ": " v)
+			      (http-write-line p (keyword->string! k) ": " v)))
 		       (http-write-line p h)))
-		header)
+	 header)
       (flush-output-port p)))
 
 ;*---------------------------------------------------------------------*/

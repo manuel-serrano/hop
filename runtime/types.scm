@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Wed Feb 22 17:27:31 2023 (serrano)                */
-;*    Copyright   :  2004-23 Manuel Serrano                            */
+;*    Last change :  Fri Mar  1 12:05:26 2024 (serrano)                */
+;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
 ;*=====================================================================*/
@@ -107,7 +107,7 @@
 	   
 	   (abstract-class %http-response-server::%http-response
 	      (server::bstring (default (hop-server-name)))
- 	      (start-line::bstring read-only (default "HTTP/1.1 200 Ok")))
+ 	      (start-line::bstring (default "HTTP/1.1 200 Ok")))
 	   
 	   (class http-response-autoload::%http-response-server
 	      (request::http-request read-only))
@@ -144,6 +144,10 @@
 	   
 	   (class http-response-string::%http-response-server
 	      (body::bstring read-only (default "")))
+	   
+	   (class http-response-file-and-string::%http-response-server
+	      (file (default #f))
+	      (string (default #f)))
 	   
 	   (class http-response-authentication::http-response-string)
 	   

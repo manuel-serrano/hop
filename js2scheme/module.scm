@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 15 15:16:16 2018                          */
-;*    Last change :  Fri Feb 23 09:38:51 2024 (serrano)                */
+;*    Last change :  Wed Feb 28 13:10:44 2024 (serrano)                */
 ;*    Copyright   :  2018-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES6 Module handling                                              */
@@ -425,6 +425,65 @@
    this)
 
 ;*---------------------------------------------------------------------*/
+;*    json-table ...                                                   */
+;*---------------------------------------------------------------------*/
+(define json-table (make-hashtable))
+
+;*---------------------------------------------------------------------*/
+;*    load-package-json ...                                            */
+;*---------------------------------------------------------------------*/
+(define (load-package-json file loc)
+   (let ((old (hashtable-get json-table file)))
+      (if old
+	  old
+	  (call-with-input-file file
+	     (lambda (ip)
+		(let ((o (json-parse ip
+			    :array-alloc (lambda ()
+					    (make-cell '()))
+			    :array-set (lambda (a i val)
+					  (cell-set! a (cons val (cell-ref a))))
+			    :array-return (lambda (a i)
+					     (reverse! (cell-ref a)))
+			    :object-alloc (lambda () (make-cell '()))
+			    :object-set (lambda (o p val)
+					   (cell-set! o
+					      (cons (cons p val)
+						 (cell-ref o))))
+			    :object-return (lambda (o) (cell-ref o))
+			    :parse-error (lambda (msg path loc)
+					    (raise
+					       (instantiate::&io-parse-error
+						  (proc "resolve")
+						  (msg msg)
+						  (obj path)
+						  (fname (cadr loc))
+						  (location (caddr loc))))))))
+		   (hashtable-put! json-table file o)
+		   o))))))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-file->paths ...                                           */
+;*---------------------------------------------------------------------*/
+(define (nodejs-filename->paths file::bstring)
+   (cond
+      ((string-null? file)
+       '("."))
+      ((char=? (string-ref file 0) #\/)
+       (let loop ((dir (dirname file))
+		  (acc '()))
+	  (cond
+	     ((string=? dir "/")
+	      (reverse! (cons "/node_modules" acc)))
+	     ((string-suffix? "/node_modules" dir)
+	      (loop (dirname dir) acc))
+	     (else
+	      (loop (dirname dir)
+		 (cons (make-file-name dir "node_modules") acc))))))
+      (else
+       '())))
+
+;*---------------------------------------------------------------------*/
 ;*    resolve-module-file ...                                          */
 ;*    -------------------------------------------------------------    */
 ;*    Almost similar to nodejs's resolve method (see                   */
@@ -481,6 +540,18 @@
 		       (cons (file-name-canonicalize src) 'file)
 		       (loop (cdr sufs)))))))))
 
+   (define (resolve-package-exports file)
+      (let* ((dir (dirname file))
+	     (json (make-file-name dir "package.json")))
+	 (when (file-exists? json)
+	    (let* ((o (load-package-json json loc))
+		   (e (assoc "exports" o)))
+	       (when (pair? e)
+		  (let ((c (assoc (string-append "./" (basename file))
+			      (cdr e))))
+		     (when (pair? c)
+			(cons (make-file-path dir (cdr c)) 'file))))))))
+
    (define (resolve-package pkg dir)
       (with-handler
 	 (lambda (e)
@@ -489,35 +560,13 @@
 		  (set! fname (cadr loc))
 		  (set! location (caddr loc)))
 	       (raise e)))
-	 (call-with-input-file pkg
-	    (lambda (ip)
-	       (let* ((o (json-parse ip
-			    :array-alloc (lambda ()
-					    (make-cell '()))
-			    :array-set (lambda (a i val)
-					  (cell-set! a (cons val (cell-ref a))))
-			    :array-return (lambda (a i)
-					     (reverse! (cell-ref a)))
-			    :object-alloc (lambda () (make-cell '()))
-			    :object-set (lambda (o p val)
-					   (cell-set! o
-					      (cons (cons p val)
-						 (cell-ref o))))
-			    :object-return (lambda (o) (cell-ref o))
-			    :parse-error (lambda (msg path loc)
-					    (raise
-					       (instantiate::&io-parse-error
-						  (proc "resolve")
-						  (msg msg)
-						  (obj path)
-						  (fname (cadr loc))
-						  (location (caddr loc)))))))
-		      (m (assoc "main" o)))
-		  (if (pair? m)
-		      (cdr m)
-		      (let ((idx (make-file-name dir "index.js")))
-			 (when (file-exists? idx)
-			    idx))))))))
+	 (let* ((o (load-package-json pkg loc))
+		(m (assoc "main" o)))
+	    (if (pair? m)
+		(cdr m)
+		(let ((idx (make-file-name dir "index.js")))
+		   (when (file-exists? idx)
+		      idx))))))
    
    (define (resolve-directory x)
       (let ((json (make-file-name x "package.json")))
@@ -530,7 +579,8 @@
 		   (cons (file-name-canonicalize p) 'file))))))
 
    (define (resolve-path-file-or-directory path)
-      (or (resolve-file path)
+      (or (resolve-package-exports path)
+	  (resolve-file path)
 	  (resolve-directory path)))
    
    (define (resolve-file-or-directory x dir)
@@ -557,9 +607,8 @@
 		       name
 		       (file-name-canonicalize (make-file-name (pwd) name))))
 	     (dir (if (string? file) (dirname file) (pwd))))
-	 (cons* dir
-	    (make-file-name dir "node_modules")
-	    (config-get args :hop-library-path ".")
+	 (append (nodejs-filename->paths file)
+	    (list (config-get args :hop-library-path "."))
 	    (list (config-get args :node-modules-directory ".")))))
    
    (define (resolve-modules name)
@@ -574,12 +623,20 @@
 	 ((or (string-prefix? "http://" name)
 	      (string-prefix? "https://" name))
 	  (cons name 'http))
-	 ((string-prefix? "@hop/" name)
-	  (if (string=? "@hop/hop" name)
+;* 	 ((string-prefix? "@hop/" name)                                */
+;* 	  (if (string=? "@hop/hop" name)                               */
+;* 	      (cons "hop" 'core)                                       */
+;* 	      (let ((dir (or (config-get args :node-modules-directory) */
+;* 			     (hop-node-modules-dir))))                 */
+;* 		 (or (resolve-file-or-directory (substring name 5) dir) */
+;* 		     (resolve-modules name)                            */
+;* 		     (resolve-error name)))))                          */
+	 ((string-prefix? "hop:" name)
+	  (if (string=? "hop:hop" name)
 	      (cons "hop" 'core)
 	      (let ((dir (or (config-get args :node-modules-directory)
 			     (hop-node-modules-dir))))
-		 (or (resolve-file-or-directory (substring name 5) dir)
+		 (or (resolve-file-or-directory (substring name 4) dir)
 		     (resolve-modules name)
 		     (resolve-error name)))))
 	 ((string-prefix? "hop:" name)

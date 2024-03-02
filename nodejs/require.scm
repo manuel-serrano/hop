@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Fri Feb 23 09:52:35 2024 (serrano)                */
+;*    Last change :  Wed Feb 28 13:11:35 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -25,6 +25,7 @@
 	   __nodejs_syncg)
 
    (export (nodejs-hop-debug)
+	   (nodejs-file-paths::JsObject ::JsString ::JsGlobalObject)
 	   (nodejs-new-module::JsObject ::bstring ::bstring ::WorkerHopThread ::JsGlobalObject)
 	   (nodejs-require ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring)
 	   (nodejs-import-module::JsModule ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring ::long ::bool ::obj)
@@ -95,21 +96,41 @@
    (max env-debug (bigloo-debug)))
 
 ;*---------------------------------------------------------------------*/
+;*    &paths                                                           */
+;*    -------------------------------------------------------------    */
+;*    Because the loaders execute in another threads, they have        */
+;*    to use the key property of the main thread.                      */
+;*---------------------------------------------------------------------*/
+(define &paths
+   (begin
+      (js-init-names!)
+      (js-string->name "paths")))
+
+;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
 (define __js_strings (&begin!))
+
+;*---------------------------------------------------------------------*/
+;*    require-mutex ...                                                */
+;*---------------------------------------------------------------------*/
+(define require-mutex (make-mutex))
+(define require-init #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-init-require! ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (js-init-require! %this)
    (unless (vector? __js_strings)
-      (set! __js_strings (&init!))
-      (when (memq (hop-sofile-compile-policy) '(nte nte1 nte+))
-	 (nodejs-compile-workers-inits!))
-      (unless (or (and (<=fx (hop-port) -1) (<=fx (hop-ssl-port) -1))
-		  *resolve-service*)
-	 (set! *resolve-service* (nodejs-make-resolve-service %this)))))
+      (set! __js_strings (&init!)))
+   (synchronize require-mutex
+      (unless require-init
+	 (set! require-init #t)
+	 (when (memq (hop-sofile-compile-policy) '(nte nte1 nte+))
+	    (nodejs-compile-workers-inits!))
+	 (unless (or (and (<=fx (hop-port) -1) (<=fx (hop-ssl-port) -1))
+		     *resolve-service*)
+	    (set! *resolve-service* (nodejs-make-resolve-service %this))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    builtin-language? ...                                            */
@@ -199,8 +220,10 @@
 	    (json->file str lang %this))))
 
    (let ((worker (js-current-worker)))
+      (tprint ">>> ndoejs-compile-file-lang " (current-thread))
       (js-worker-exec worker "nodejs-compile-file-lang"
 	 (lambda (%this)
+	    (tprint "!!! ndoejs-compile-file-lang " (current-thread))
 	    (with-access::JsGlobalObject %ctxthis (js-object js-symbol)
 	       (let* ((exp (nodejs-require-module lang worker %ctxthis %ctxmodule))
 		      (key (js-get js-symbol (& "compiler") %ctxthis))
@@ -507,6 +530,12 @@
    (if (> (nodejs-hop-debug) 0) (j2s-debug-driver) (j2s-optim-driver)))
 
 ;*---------------------------------------------------------------------*/
+;*    nodejs-file-paths ...                                            */
+;*---------------------------------------------------------------------*/
+(define (nodejs-file-paths filename %this)
+   (js-vector->jsarray (nodejs-filename->paths (js-tostring filename %this)) %this))
+
+;*---------------------------------------------------------------------*/
 ;*    nodejs-file->paths ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-filename->paths::vector file::bstring)
@@ -553,7 +582,7 @@
 	    ;; children
 	    (js-put! m (& "children") (js-vector->jsarray '#() %this) #f %this)
 	    ;; paths
-	    (js-put! m (& "paths")
+	    (js-put! m &paths
 	       (js-vector->jsarray (nodejs-filename->paths filename) %this)
 	       #f %this))))
 
@@ -1116,7 +1145,7 @@
 	    ;; filename
 	    (js-put! mod (& "filename") (js-string->jsstring filename) #f %this)
 	    ;; paths
-	    (js-put! mod (& "paths")
+	    (js-put! mod &paths
 	       (js-vector->jsarray (nodejs-filename->paths filename) %this)
 	       #f %this)
 	    ;; the resolution
@@ -1647,6 +1676,7 @@
       (instantiate::hopthread
 	 (name "socompile-orchestrator")
 	 (body (lambda ()
+		  (thread-name-set! (current-thread) "socompile")
 		  (with-handler
 		     (lambda (e)
 			(exception-notify e))
@@ -2445,20 +2475,61 @@
 (define (loader-resolve name::bstring %this::JsGlobalObject %module mode::symbol)
    (if (null? loader-resolvers)
        (builtin-resolve name %this %module mode)
-       (js-worker-exec-promise loader-worker "resolve"
-	  (lambda (this)
-	     (let ((ctx (js-alist->jsobject `((parent . ,(js-undefined))) %this)))
-		(let loop ((resolvers loader-resolvers))
-		   (if (null? resolvers)
-		       (builtin-resolve name %this %module mode)
-		       (js-call3 this (car resolvers) (js-undefined)
-			  name ctx 
-			  (js-make-function this
-			     (lambda (this specifier context)
-				(loop (cdr resolvers)))
-			     (js-function-arity 2 0)
-			     (js-function-info :name "resolver" :len 2))))))))))
-   
+       (multiple-value-bind (resolve reject)
+	  (js-worker-exec-promise loader-worker "resolve"
+	     (lambda (this)
+		(with-access::WorkerHopThread loader-worker (%this)
+		   (let ((ctx (js-alist->jsobject `((parent . ,(js-undefined))) %this)))
+		      (let loop ((resolvers loader-resolvers)
+				 (name name)
+				 (ctx ctx))
+			 (if (null? resolvers)
+			     (builtin-resolve name %this %module mode)
+			     (js-call3 this (car resolvers) (js-undefined)
+				name ctx 
+				(js-make-function this
+				   (lambda (this specifier context)
+				      (loop (cdr resolvers) specifier context))
+				   (js-function-arity 2 0)
+				   (js-function-info :name "resolver" :len 2)))))))))
+	  (if (symbol? reject)
+	      resolve
+	      (js-raise-uri-error %this "resolve error (~s)" name)))))
+
+;*---------------------------------------------------------------------*/
+;*    json-table ...                                                   */
+;*---------------------------------------------------------------------*/
+(define json-table (make-hashtable))
+
+;*---------------------------------------------------------------------*/
+;*    load-package-json ...                                            */
+;*---------------------------------------------------------------------*/
+(define (load-package-json file %this)
+   (let ((old (hashtable-get json-table file)))
+      (if old
+	  old
+	  (call-with-input-file file
+	     (lambda (ip)
+		(let ((o (json-parse ip
+			    :array-alloc (lambda ()
+					    (make-cell '()))
+			    :array-set (lambda (a i val)
+					  (cell-set! a (cons val (cell-ref a))))
+			    :array-return (lambda (a i)
+					     (reverse! (cell-ref a)))
+			    :object-alloc (lambda () (make-cell '()))
+			    :object-set (lambda (o p val)
+					   (cell-set! o
+					      (cons (cons p val)
+						 (cell-ref o))))
+			    :object-return (lambda (o) (cell-ref o))
+			    :parse-error (lambda (msg path loc)
+					    (js-raise-syntax-error/loc %this
+					       `(at ,path ,loc)
+					       msg path)))))
+		   (hashtable-put! json-table file o)
+		   o))))))
+
 ;*---------------------------------------------------------------------*/
 ;*    builtin-resolve ...                                              */
 ;*    -------------------------------------------------------------    */
@@ -2508,39 +2579,36 @@
 		(resolve-directory dir)
 		#f))))
    
+   (define (resolve-package-exports file)
+      (with-trace 'require "resolve-package-exports"
+	 (trace-item "file=" file)
+	 (let* ((dir (dirname file))
+		(json (make-file-name dir "package.json")))
+	    (when (file-exists? json)
+	       (let* ((o (load-package-json json %this))
+		      (e (assoc "exports" o)))
+		  (trace-item "m=" e)
+		  (when (pair? e)
+		     (let ((c (assoc (string-append "./" (basename file))
+				 (cdr e))))
+			(when (pair? c)
+			   (make-file-path dir (cdr c))))))))))
+
    (define (resolve-package pkg dir)
       (with-trace 'require "resolve-package"
 	 (trace-item "pkg=" pkg)
 	 (trace-item "dir=" dir)
-	 (call-with-input-file pkg
-	    (lambda (ip)
-	       (let* ((o (json-parse ip
-			    :array-alloc (lambda ()
-					    (make-cell '()))
-			    :array-set (lambda (a i val)
-					  (cell-set! a (cons val (cell-ref a))))
-			    :array-return (lambda (a i)
-					     (reverse! (cell-ref a)))
-			    :object-alloc (lambda () (make-cell '()))
-			    :object-set (lambda (o p val)
-					   (cell-set! o
-					      (cons (cons p val)
-						 (cell-ref o))))
-			    :object-return (lambda (o) (cell-ref o))
-			    :parse-error (lambda (msg path loc)
-					    (js-raise-syntax-error/loc %this
-					       `(at ,path ,loc)
-					       msg path))))
-		      (m (cond
-			    ((eq? mode 'head) (assoc "client" o))
-			    ((assoc "server" o) => (lambda (m) m))
-			    (else (assoc "main" o)))))
-		  (trace-item "m=" m)
-		  (if (pair? m)
-		      (cdr m)
-		      (let ((idx (make-file-name dir "index.js")))
-			 (when (file-exists? idx)
-			    idx))))))))
+	 (let* ((o (load-package-json pkg %this))
+		(m (cond
+		      ((eq? mode 'head) (assoc "client" o))
+		      ((assoc "server" o) => (lambda (m) m))
+		      (else (assoc "main" o)))))
+	    (trace-item "m=" m)
+	    (if (pair? m)
+		(cdr m)
+		(let ((idx (make-file-name dir "index.js")))
+		   (when (file-exists? idx)
+		      idx))))))
    
    (define (resolve-directory x)
       (with-trace 'require "nodejs-resolve.resolve-directory"
@@ -2564,7 +2632,8 @@
    
    (define (resolve-file-or-directory x dir)
       (let ((file (make-file-name dir x)))
-	 (or (resolve-file file)
+	 (or (resolve-package-exports file)
+	     (resolve-file file)
 	     (resolve-directory file))))
    
    (define (resolve-error x dir)
@@ -2586,7 +2655,7 @@
 	    (node-modules-path mod))))
    
    (define (node-modules-path mod)
-      (let ((paths (js-get mod (& "paths") %this)))
+      (let ((paths (js-get mod &paths %this)))
 	 (cond
 	    ((pair? paths)
 	     (append (map js-jsstring->string paths) nodejs-env-path))
@@ -2605,7 +2674,7 @@
 	     (filename (js-jsstring->string (js-get mod (& "filename") %this)))
 	     (dir (dirname filename)))
 	 (trace-item "dir=" dir)
-	 (trace-item "paths=" (let ((paths (js-get mod (& "paths") %this)))
+	 (trace-item "paths=" (let ((paths (js-get mod &paths %this)))
 				 (if (js-array? paths)
 				     (jsarray->vector paths %this)
 				     paths)))
@@ -2629,7 +2698,7 @@
 		    (string-prefix? "https://" dir))
 		(multiple-value-bind (scheme uinfo host port path)
 		   (url-parse filename)
-		   (let* ((paths (js-get mod (& "paths") %this))
+		   (let* ((paths (js-get mod &paths %this))
 			  (abspath (hop-apply-url
 				      (string-append "/hop/" *resolve-url-path*)
 				      (list name path)
@@ -2642,16 +2711,24 @@
 			 (lambda (x) #f)
 			 :host host
 			 :port port))))
-	       ((string-prefix? "@hop/" name)
-		(if (string=? "@hop/hop" name)
+;* 	       ((string-prefix? "@hop/" name)                          */
+;* 		(if (string=? "@hop/hop" name)                         */
+;* 		    "hop.mod"                                          */
+;* 		    (or (resolve-file-or-directory                     */
+;* 			   (substring name 5)                          */
+;* 			   (nodejs-node-modules-directory))            */
+;* 			(resolve-modules mod name)                     */
+;* 			(resolve-error name dir))))                    */
+	       ((string-prefix? "hop:" name)
+		(if (string=? "hop:hop" name)
 		    "hop.mod"
 		    (or (resolve-file-or-directory
-			   (substring name 5)
+			   (substring name 4)
 			   (nodejs-node-modules-directory))
 			(resolve-modules mod name)
 			(resolve-error name dir))))
 	       ((string-prefix? "hop:" name)
-		(or (resolve-file-or-directory
+ 		(or (resolve-file-or-directory
 		       (substring name 4)
 		       (nodejs-node-modules-directory))
 		    (resolve-error name dir)))
@@ -3021,7 +3098,7 @@
 				(synchronize loader-mutex
 				   (condition-variable-broadcast! loader-condv))
 				(js-worker-loop worker (lambda (th) th)))))))
-      (thread-start-joinable! worker)
+      (thread-start! worker)
       (condition-variable-wait! loader-condv loader-mutex)
       worker))
 

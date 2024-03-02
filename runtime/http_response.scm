@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Wed Feb 22 17:28:16 2023 (serrano)                */
-;*    Copyright   :  2004-23 Manuel Serrano                            */
+;*    Last change :  Fri Mar  1 12:25:56 2024 (serrano)                */
+;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
 ;*=====================================================================*/
@@ -464,6 +464,45 @@
 		   (flush-output-port p)
 		   connection))
 	     (http-response (http-file-not-found file) request socket)))))
+
+;*---------------------------------------------------------------------*/
+;*    http-response ::http-response-file-and-string ...                */
+;*---------------------------------------------------------------------*/
+(define-method (http-response r::http-response-file-and-string request socket)
+   (with-trace 'hop-response "http-response::http-response-string"
+      (with-access::http-response-file-and-string r (start-line
+						       header
+						       content-type charset
+						       server content-length
+						       bodyp
+						       file string
+						       timeout)
+	 (let* ((p (socket-output socket))
+		(connection (with-access::http-request request (connection)
+			       connection))
+		(ssize (if (string? string) (string-length string) 0))
+		(fsize (if (string? file) (file-size file) 0))
+		(clen (if (=elong content-length #e-1)
+			  (+ ssize fsize)
+			  content-length)))
+	    (tprint "sl=" start-line)
+	    (tprint "hd=" header)
+	    (tprint "string=" string " file=" file)
+	    (when (>=fx timeout 0) (output-timeout-set! p timeout))
+	    (http-write-line-string p start-line)
+	    (http-write-header p header)
+	    (if (>= clen 0)
+		(http-write-line p "Content-Length: " clen)
+		(set! connection 'close))
+	    (http-write-line p "Connection: " connection)
+	    (http-write-content-type p content-type charset)
+	    (http-write-line-string p "Server: " server)
+	    (http-write-line p)
+	    (when bodyp
+	       (when string (display string p))
+	       (when file (send-file file p fsize 0)))
+	    (flush-output-port p)
+	    connection))))
 
 ;*---------------------------------------------------------------------*/
 ;*    directory->response ...                                          */

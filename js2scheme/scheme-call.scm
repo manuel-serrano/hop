@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Fri Jan 26 11:29:31 2024 (serrano)                */
+;*    Last change :  Thu Feb 29 09:46:08 2024 (serrano)                */
 ;*    Copyright   :  2018-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -1820,12 +1820,15 @@
 		=>
 		(lambda (axs)
 		   (with-access::J2SAccess fun (obj)
-		      (with-access::J2SUnary obj (expr)
-			 (if (is-builtin-ref? expr 'hop)
-			     ;; "hop" is always bound when hop is the compiler
-			     (loop (duplicate::J2SAccess fun
-				      (obj expr)))
-			     (call-optional-chaining this axs))))))
+		      (if (isa? obj J2SUnary)
+			  (with-access::J2SUnary obj (expr)
+			     (if (is-builtin-ref? expr 'hop)
+				 ;; "hop" is always bound when
+				 ;; hop is the compiler
+				 (loop (duplicate::J2SAccess fun
+					  (obj expr)))
+				 (call-optional-chaining this axs)))
+			  (call-optional-chaining this axs)))))
 	       ((eq? protocol 'spread)
 		(j2s-scheme-call-spread this mode return ctx))
 	       ((eq? (j2s-type fun) 'procedure)

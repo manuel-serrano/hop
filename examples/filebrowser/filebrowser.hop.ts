@@ -3,12 +3,12 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Feb  3 11:25:48 2024                          */
-/*    Last change :  Thu Feb 22 09:13:44 2024 (serrano)                */
+/*    Last change :  Tue Feb 27 15:40:32 2024 (serrano)                */
 /*    Copyright   :  2024 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Basic multi-tier file browser using Hop.js.                      */
 /*=====================================================================*/
-import * as hop from "@hop/hop";
+import * as hop from "@hop/hop/lib/hop.mjs";
 import { readdir } from "node:fs/promises";
 import { statSync } from "node:fs";
 import { join, dirname } from "node:path";

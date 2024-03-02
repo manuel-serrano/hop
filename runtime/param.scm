@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Fri Jun  3 11:41:42 2022 (serrano)                */
-;*    Copyright   :  2004-22 Manuel Serrano                            */
+;*    Last change :  Fri Mar  1 08:08:22 2024 (serrano)                */
+;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
 ;*=====================================================================*/
@@ -673,7 +673,8 @@
 ;*---------------------------------------------------------------------*/
 (define (hop-filters-close!)
    (synchronize (hop-filter-mutex)
-      (set! *hop-filters-open* #f)))
+      (tprint "hop-filters-close disabled...")
+      '(set! *hop-filters-open* #f)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-filters-open? ...                                            */
