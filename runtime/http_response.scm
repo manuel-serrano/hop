@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Fri Mar  1 12:25:56 2024 (serrano)                */
+;*    Last change :  Sat Mar  2 06:45:05 2024 (serrano)                */
 ;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -485,9 +485,6 @@
 		(clen (if (=elong content-length #e-1)
 			  (+ ssize fsize)
 			  content-length)))
-	    (tprint "sl=" start-line)
-	    (tprint "hd=" header)
-	    (tprint "string=" string " file=" file)
 	    (when (>=fx timeout 0) (output-timeout-set! p timeout))
 	    (http-write-line-string p start-line)
 	    (http-write-header p header)
