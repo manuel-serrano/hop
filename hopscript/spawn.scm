@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct  7 09:04:09 2016                          */
-;*    Last change :  Thu Feb 29 10:50:24 2024 (serrano)                */
+;*    Last change :  Sun Mar  3 10:43:53 2024 (serrano)                */
 ;*    Copyright   :  2016-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Spawn implementation as defined in                               */
@@ -52,7 +52,7 @@
 
    (library hop)
 
-   (include "names.sch" "types_expd.sch")
+   (include "names.sch" "types_expd.sch" "stringthread.sch")
    
    (import __hopscript_types
 	   __hopscript_property
@@ -122,7 +122,7 @@
       (js-new1 %this js-promise
 	 (js-make-function %this 
 	    (lambda (this resolve reject)
-	       
+
 	       (define gen (call genF self))
 	       
 	       (define (step nextF::procedure)
@@ -152,7 +152,8 @@
 				     (lambda ()
 					(invoke 6 gen (& "throw") e))))))))))
 	       
-	       (step (lambda () (invoke 7 gen (& "next") (js-undefined)))))
+	       (step (lambda ()
+			(invoke 7 gen (& "next") (js-undefined)))))
 	    (js-function-arity 2 0)
 	    (js-function-info
 	       :name (string-append (js-function-name genF) "-spawn")

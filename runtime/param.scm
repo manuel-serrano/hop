@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Fri Mar  1 08:08:22 2024 (serrano)                */
+;*    Last change :  Mon Mar  4 08:29:06 2024 (serrano)                */
 ;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -672,9 +672,9 @@
 ;*    hop-filters-close! ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (hop-filters-close!)
-   (synchronize (hop-filter-mutex)
-      (tprint "hop-filters-close disabled...")
-      '(set! *hop-filters-open* #f)))
+   (when (>fx (hop-security) 0)
+      (synchronize (hop-filter-mutex)
+	 (set! *hop-filters-open* #f))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-filters-open? ...                                            */

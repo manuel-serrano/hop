@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Fri Mar  1 12:05:26 2024 (serrano)                */
+;*    Last change :  Sun Mar  3 07:44:13 2024 (serrano)                */
 ;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -145,7 +145,7 @@
 	   (class http-response-string::%http-response-server
 	      (body::bstring read-only (default "")))
 	   
-	   (class http-response-file-and-string::%http-response-server
+	   (class http-response-file+::%http-response-server
 	      (file (default #f))
 	      (string (default #f)))
 	   

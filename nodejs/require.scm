@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Wed Feb 28 13:11:35 2024 (serrano)                */
+;*    Last change :  Sun Mar  3 11:42:00 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -27,6 +27,7 @@
    (export (nodejs-hop-debug)
 	   (nodejs-file-paths::JsObject ::JsString ::JsGlobalObject)
 	   (nodejs-new-module::JsObject ::bstring ::bstring ::WorkerHopThread ::JsGlobalObject)
+	   (node-module-paths ::JsModule ::JsGlobalObject)
 	   (nodejs-require ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring)
 	   (nodejs-import-module::JsModule ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring ::long ::bool ::obj)
 	   (nodejs-import-module-core::JsModule ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring ::long ::bool ::obj ::vector)
@@ -52,7 +53,7 @@
 	   (nodejs-compile-pending::int)
 	   (nodejs-compile-add-event-listener! ::bstring ::procedure ::bool)
 	   (nodejs-compile-remove-event-listener! ::bstring ::procedure)
-	   (nodejs-resolve ::bstring ::JsGlobalObject ::obj ::symbol)
+	   (nodejs-resolve ::bstring ::JsGlobalObject ::obj ::pair-nil ::symbol)
 	   (nodejs-resolve-extend-path! ::pair-nil)
 	   (nodejs-new-global-object::JsGlobalObject #!key name)
 	   (nodejs-new-scope-object ::JsGlobalObject)
@@ -743,13 +744,22 @@
    ;; require.resolve
    (js-bind! this require (& "resolve")
       :value (js-make-function this
-		(lambda (_ name)
+		(lambda (_ name opts)
 		   (let ((name (js-tostring name this)))
 		      (if (core-module? name)
 			  (js-string->jsstring name)
-			  (js-string->jsstring (nodejs-resolve name this %module 'body)))))
-		(js-function-arity 1 0)
-		(js-function-info :name "resolve" :len 1))
+			  (let ((paths (when (js-object? opts)
+					  (js-get opts (& "paths") this))))
+			     (js-string->jsstring
+				(nodejs-resolve name this %module
+				   (if (js-array? paths)
+				       (map! (lambda (v)
+						(js-tostring v this))
+					  (jsarray->list paths this))
+				       (node-module-paths %module this))
+				   'body))))))
+		(js-function-arity 2 0)
+		(js-function-info :name "resolve" :len 2))
       :configurable #t :writable #t :enumerable #t)
 
    ;; require.cache
@@ -776,6 +786,39 @@
    require)
 
 ;*---------------------------------------------------------------------*/
+;*    node-module-paths ...                                            */
+;*---------------------------------------------------------------------*/
+(define (node-module-paths mod %this)
+   (let ((paths (js-get mod &paths %this)))
+      (cond
+	 ((pair? paths)
+	  (append (map js-jsstring->string paths)) nodejs-env-path)
+	 ((js-array? paths)
+	  (with-access::JsArray paths (vec)
+	     (append (map! js-jsstring->string (vector->list vec))
+		nodejs-env-path)))
+	 (else
+	  nodejs-env-path))))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-env-path ...                                              */
+;*---------------------------------------------------------------------*/
+(define nodejs-env-path
+   (let* ((sys-path (nodejs-modules-directory))
+	  (home-path (let ((home (getenv "HOME")))
+			(if (string? home)
+			    (list (make-file-name home ".node_modules")
+			       (make-file-name home ".node_libraries")
+			       sys-path)
+			    (list sys-path)))))
+      (let ((env (getenv "NODE_PATH")))
+	 (if (string? env)
+	     (append (unix-path->list env)
+		(cons (hop-weblets-directory)
+		   home-path))
+	     home-path))))
+
+;*---------------------------------------------------------------------*/
 ;*    nodejs-import-module ...                                         */
 ;*    -------------------------------------------------------------    */
 ;*    ES6 module import.                                               */
@@ -783,7 +826,7 @@
 (define (nodejs-import-module::JsModule worker::WorkerHopThread
 	   %this::JsGlobalObject %module::JsObject
 	   path::bstring checksum::long commonjs-export::bool loc)
-   (let* ((respath (nodejs-resolve path %this %module 'import))
+   (let* ((respath (nodejs-resolve path %this %module (node-module-paths %module %this) 'import))
 	  (mod (nodejs-load-module respath worker %this %module
 		  :commonjs-export commonjs-export :loc loc)))
       (with-access::JsModule mod ((mc checksum))
@@ -872,7 +915,8 @@
 		  (with-handler
 		     (lambda (exn)
 			(js-call1 %this reject (js-undefined) exn))
-		     (let* ((path (nodejs-resolve name %this %module 'import))
+		     (let* ((path (nodejs-resolve name %this %module
+				     (node-module-paths %module %this) 'import))
 			    (mod (nodejs-import-module worker %this %module
 				    path 0 commonjs-export loc)))
 			(js-call1 %this resolve (js-undefined)
@@ -1149,7 +1193,7 @@
 	       (js-vector->jsarray (nodejs-filename->paths filename) %this)
 	       #f %this)
 	    ;; the resolution
-	    (nodejs-resolve name %this mod 'body)))))
+	    (nodejs-resolve name %this mod (node-module-paths mod %this) 'body)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-init-v8-global-object! ...                                */
@@ -2300,7 +2344,7 @@
 (define (nodejs-require-module name::bstring worker::WorkerHopThread
 	   %this %module #!optional (lang "hopscript") compiler copts)
    (with-trace 'require (format "nodejs-require-module ~a" name)
-      (let* ((path (nodejs-resolve name %this %module 'body))
+      (let* ((path (nodejs-resolve name %this %module (node-module-paths %module %this) 'body))
 	     (mod (nodejs-load-module path worker %this %module
 		     :lang lang :compiler compiler :config copts))
 	     (exports (js-get mod (& "exports") %this)))
@@ -2457,24 +2501,24 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://nodejs.org/api/modules.html#modules_all_together          */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-resolve name::bstring %this::JsGlobalObject %module mode::symbol)
+(define (nodejs-resolve name::bstring %this::JsGlobalObject %module paths::pair-nil mode::symbol)
    (with-trace 'require "nodejs-resolve"
       (trace-item "name=" name)
       (trace-item "%module=" (typeof %module))
       (trace-item "thread=" (current-thread))
       (with-access::JsGlobalObject %this (worker)
 	 (if (eq? worker loader-worker)
-	     (builtin-resolve name %this %module mode)
-	     (loader-resolve name %this %module mode)))))
+	     (builtin-resolve name %this %module paths mode)
+	     (loader-resolve name %this %module paths mode)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    loader-resolve ...                                               */
 ;*    -------------------------------------------------------------    */
 ;*    See nodejs-register-user-loader!                                 */
 ;*---------------------------------------------------------------------*/
-(define (loader-resolve name::bstring %this::JsGlobalObject %module mode::symbol)
+(define (loader-resolve name::bstring %this::JsGlobalObject %module paths::pair-nil mode::symbol)
    (if (null? loader-resolvers)
-       (builtin-resolve name %this %module mode)
+       (builtin-resolve name %this %module paths mode)
        (multiple-value-bind (resolve reject)
 	  (js-worker-exec-promise loader-worker "resolve"
 	     (lambda (this)
@@ -2484,7 +2528,7 @@
 				 (name name)
 				 (ctx ctx))
 			 (if (null? resolvers)
-			     (builtin-resolve name %this %module mode)
+			     (builtin-resolve name %this %module paths mode)
 			     (js-call3 this (car resolvers) (js-undefined)
 				name ctx 
 				(js-make-function this
@@ -2523,10 +2567,9 @@
 					      (cons (cons p val)
 						 (cell-ref o))))
 			    :object-return (lambda (o) (cell-ref o))
-			    :parse-error (lambda (msg path loc)
+			    :parse-error (lambda (msg obj loc)
 					    (js-raise-syntax-error/loc %this
-					       `(at ,path ,loc)
-					       msg path)))))
+					       loc msg obj)))))
 		   (hashtable-put! json-table file o)
 		   o))))))
 
@@ -2537,7 +2580,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://nodejs.org/api/modules.html#modules_all_together          */
 ;*---------------------------------------------------------------------*/
-(define (builtin-resolve name::bstring %this::JsGlobalObject %module mode::symbol)
+(define (builtin-resolve name::bstring %this::JsGlobalObject %module paths::pair-nil mode::symbol)
    
    (define (resolve-file x)
       (cond
@@ -2645,26 +2688,14 @@
 	    (js-put! exn (& "code") (js-string->jsstring "MODULE_NOT_FOUND")
 	       #f %this)
 	    (js-raise exn))))
-   
-   (define (resolve-modules mod x)
+
+   (define (resolve-modules mod x paths)
       (with-trace 'require "resolve-modules"
 	 (trace-item "x=" x)
-	 (trace-item "path=" (node-modules-path mod))
+	 (trace-item "paths=" paths)
 	 (any (lambda (dir)
 		 (resolve-file-or-directory x dir))
-	    (node-modules-path mod))))
-   
-   (define (node-modules-path mod)
-      (let ((paths (js-get mod &paths %this)))
-	 (cond
-	    ((pair? paths)
-	     (append (map js-jsstring->string paths) nodejs-env-path))
-	    ((js-array? paths)
-	     (with-access::JsArray paths (vec)
-		(append (map! js-jsstring->string (vector->list vec))
-		   nodejs-env-path)))
-	    (else
-	     nodejs-env-path))))
+	    paths)))
    
    (with-trace 'require "builtin-resolve"
       (trace-item "name=" name)
@@ -2698,11 +2729,10 @@
 		    (string-prefix? "https://" dir))
 		(multiple-value-bind (scheme uinfo host port path)
 		   (url-parse filename)
-		   (let* ((paths (js-get mod &paths %this))
-			  (abspath (hop-apply-url
-				      (string-append "/hop/" *resolve-url-path*)
-				      (list name path)
-				      %this)))
+		   (let ((abspath (hop-apply-url
+				     (string-append "/hop/" *resolve-url-path*)
+				     (list name path)
+				     %this)))
 		      (with-hop-remote abspath
 			 (lambda (x)
 			    (if uinfo
@@ -2725,7 +2755,7 @@
 		    (or (resolve-file-or-directory
 			   (substring name 4)
 			   (nodejs-node-modules-directory))
-			(resolve-modules mod name)
+			(resolve-modules mod name paths)
 			(resolve-error name dir))))
 	       ((string-prefix? "hop:" name)
  		(or (resolve-file-or-directory
@@ -2736,37 +2766,19 @@
 		    (string-prefix? "../" name)
 		    (string=? ".." name))
 		(or (resolve-file-or-directory name dir)
-		    (resolve-modules mod name)
+		    (resolve-modules mod name paths)
 		    (resolve-error name dir)))
 	       ((string-prefix? "/" name)
 		(or (resolve-file-or-directory name "/")
-		    (resolve-modules mod name)
+		    (resolve-modules mod name paths)
 		    (resolve-error name dir)))
 	       ((string-suffix? ".hz" name)
 		(or (resolve-hz name)
-		    (resolve-modules mod name)
+		    (resolve-modules mod name paths)
 		    (resolve-error name dir)))
 	       (else
-		(or (resolve-modules mod name)
+		(or (resolve-modules mod name paths)
 		    (resolve-error name dir))))))))
-
-;*---------------------------------------------------------------------*/
-;*    nodejs-env-path ...                                              */
-;*---------------------------------------------------------------------*/
-(define nodejs-env-path
-   (let* ((sys-path (nodejs-modules-directory))
-	  (home-path (let ((home (getenv "HOME")))
-			(if (string? home)
-			    (list (make-file-name home ".node_modules")
-			       (make-file-name home ".node_libraries")
-			       sys-path)
-			    (list sys-path)))))
-      (let ((env (getenv "NODE_PATH")))
-	 (if (string? env)
-	     (append (unix-path->list env)
-		(cons (hop-weblets-directory)
-		   home-path))
-	     home-path))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-resolve-extend-path! ...                                  */

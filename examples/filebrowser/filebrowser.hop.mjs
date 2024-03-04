@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Feb  3 11:25:48 2024                          */
-/*    Last change :  Fri Feb 23 17:18:18 2024 (serrano)                */
+/*    Last change :  Sun Mar  3 13:59:10 2024 (serrano)                */
 /*    Copyright   :  2024 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Basic multi-tier file browser using Hop.js.                      */
@@ -24,9 +24,9 @@ const R = new hop.Resolver(import.meta.url);
 /*    dir ...                                                          */
 /*---------------------------------------------------------------------*/
 async function dir(o) {
-   console.log("dir o=", o);
    const dir = o?.path || "/tmp";
    const files = await readdir(dir);
+
    return <html>
        <head>
          <link rel="stylesheet" href=${await R.resolve("./filebrowser.css")}>

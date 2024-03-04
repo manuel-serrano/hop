@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul  9 17:41:45 2017                          */
-;*    Last change :  Tue Apr  7 05:20:59 2020 (serrano)                */
-;*    Copyright   :  2017-20 Manuel Serrano                            */
+;*    Last change :  Sun Mar  3 15:08:24 2024 (serrano)                */
+;*    Copyright   :  2017-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ScmObject binding                                                */
 ;*=====================================================================*/
@@ -80,6 +80,7 @@
 ;*    js-has-property ::object ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-method (js-has-property o::object name::obj %this)
+   (tprint "js-has-propert o=" (typeof o) " " name)
    (let ((n (js-toname o %this))
 	 (k (object-class o)))
       (find-class-field k n)))

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 19 08:19:19 2015                          */
-;*    Last change :  Fri May 12 08:58:14 2023 (serrano)                */
-;*    Copyright   :  2015-23 Manuel Serrano                            */
+;*    Last change :  Sun Mar  3 15:45:53 2024 (serrano)                */
+;*    Copyright   :  2015-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript promises                     */
 ;*    -------------------------------------------------------------    */
@@ -133,7 +133,7 @@
 					  (ctx %this)))))))
 			2)
 		     obj))))))
-   
+
    (with-access::JsPromise obj (worker)
       (with-access::WorkerHopThread worker (%this)
 	 (instantiate::http-response-async

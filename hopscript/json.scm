@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.7.x/hopscript/json.scm                */
+;*    serrano/prgm/project/hop/hop/hopscript/json.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Thu Oct 12 13:19:11 2023 (serrano)                */
-;*    Copyright   :  2013-23 Manuel Serrano                            */
+;*    Last change :  Mon Mar  4 08:42:31 2024 (serrano)                */
+;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Json                         */
 ;*    -------------------------------------------------------------    */

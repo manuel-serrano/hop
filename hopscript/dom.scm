@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 19 13:51:54 2015                          */
-;*    Last change :  Thu May  7 13:59:44 2020 (serrano)                */
-;*    Copyright   :  2015-20 Manuel Serrano                            */
+;*    Last change :  Sun Mar  3 15:07:30 2024 (serrano)                */
+;*    Copyright   :  2015-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Server-side DOM API implementation                               */
 ;*=====================================================================*/

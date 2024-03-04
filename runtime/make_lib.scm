@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 10:49:38 2006                          */
-;*    Last change :  Fri Mar  1 13:32:53 2024 (serrano)                */
+;*    Last change :  Sun Mar  3 07:45:18 2024 (serrano)                */
 ;*    Copyright   :  2006-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The module used to build the HOP heap file.                      */
@@ -101,7 +101,7 @@
 	   (class http-response-async)
 	   (class http-response-put)
 	   (class http-response-websocket)
-	   (class http-response-file-and-string)
+	   (class http-response-file+)
 	   
 	   (class hop-service)
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Sat Mar  2 06:45:05 2024 (serrano)                */
+;*    Last change :  Sun Mar  3 07:44:23 2024 (serrano)                */
 ;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -466,17 +466,17 @@
 	     (http-response (http-file-not-found file) request socket)))))
 
 ;*---------------------------------------------------------------------*/
-;*    http-response ::http-response-file-and-string ...                */
+;*    http-response ::http-response-file+ ...                          */
 ;*---------------------------------------------------------------------*/
-(define-method (http-response r::http-response-file-and-string request socket)
+(define-method (http-response r::http-response-file+ request socket)
    (with-trace 'hop-response "http-response::http-response-string"
-      (with-access::http-response-file-and-string r (start-line
-						       header
-						       content-type charset
-						       server content-length
-						       bodyp
-						       file string
-						       timeout)
+      (with-access::http-response-file+ r (start-line
+					     header
+					     content-type charset
+					     server content-length
+					     bodyp
+					     file string
+					     timeout)
 	 (let* ((p (socket-output socket))
 		(connection (with-access::http-request request (connection)
 			       connection))
@@ -495,6 +495,10 @@
 	    (http-write-content-type p content-type charset)
 	    (http-write-line-string p "Server: " server)
 	    (http-write-line p)
+;* 	    (tprint "REP+ " clen " " string)                           */
+;* 	    (tprint "start=" start-line)                               */
+;* 	    (tprint "ctype=" content-type)                             */
+;* 	    (tprint "header=" header)                                  */
 	    (when bodyp
 	       (when string (display string p))
 	       (when file (send-file file p fsize 0)))

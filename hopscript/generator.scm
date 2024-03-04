@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 29 21:14:17 2015                          */
-;*    Last change :  Sat May 21 09:41:14 2022 (serrano)                */
-;*    Copyright   :  2015-22 Manuel Serrano                            */
+;*    Last change :  Sun Mar  3 11:19:46 2024 (serrano)                */
+;*    Copyright   :  2015-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript generators                   */
 ;*    -------------------------------------------------------------    */
@@ -177,7 +177,7 @@
 
       (set! js-generator-pcache
 	 ((@ js-make-pcache-table __hopscript_property) 7 "generator"))
-      
+
       (js-bind! %this js-gen-proto (& "next")
 	 :configurable #f :enumerable #f
 	 :value (js-make-function %this

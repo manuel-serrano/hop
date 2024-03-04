@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Thu Feb 22 17:58:15 2024 (serrano)                */
+;*    Last change :  Mon Mar  4 08:32:16 2024 (serrano)                */
 ;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -768,6 +768,6 @@
    (cond
       ((or (string-suffix? ".js" name) (not (string? ctx)))
        (when module
-	  (nodejs-resolve name ctx module 'head)))
+	  (nodejs-resolve name ctx module (node-module-paths module ctx) 'head)))
       (else
        (find-file/path name ctx))))
