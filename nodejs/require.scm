@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Sun Mar  3 11:42:00 2024 (serrano)                */
+;*    Last change :  Tue Mar  5 10:07:05 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -27,7 +27,7 @@
    (export (nodejs-hop-debug)
 	   (nodejs-file-paths::JsObject ::JsString ::JsGlobalObject)
 	   (nodejs-new-module::JsObject ::bstring ::bstring ::WorkerHopThread ::JsGlobalObject)
-	   (node-module-paths ::JsModule ::JsGlobalObject)
+	   (node-module-paths ::JsObject ::JsGlobalObject)
 	   (nodejs-require ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring)
 	   (nodejs-import-module::JsModule ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring ::long ::bool ::obj)
 	   (nodejs-import-module-core::JsModule ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring ::long ::bool ::obj ::vector)
@@ -1053,9 +1053,10 @@
    (define head
       (js-make-function %this
 	 (lambda (this attrs . nodes)
-	    (let ((rts (if (js-object? attrs)
-			   (js-get attrs (& "rts") %scope)
-			   #t)))
+	    (let ((rts (if (and (js-object? attrs)
+				(js-has-property attrs (& "rts") %this))
+			   (js-toboolean (js-get attrs (& "rts") %scope))
+			   (hop-runtime-client))))
 	       (apply <HEAD> :idiom "javascript" :%context %scope
 		  (unless (eq? rts #f)
 		     (<SCRIPT>
@@ -1081,7 +1082,7 @@
 ;*    (see hopscript/public.scm).                                      */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-script worker::WorkerHopThread %this::JsGlobalObject %scope::JsObject %module)
-
+   
 ;*    (define (ast->string ast lang %this)                             */
 ;*       (j2s-compile ast                                              */
 ;* 	 :%this %this                                                  */
@@ -1113,39 +1114,86 @@
 ;* 	    (json->string str lang %this))))                           */
    
    (define (script-language-header attrs nodes)
-      (let ((lang (when (js-object? attrs)
-		     (js-get attrs (& "lang") %this))))
-	 (when (js-jsstring? lang)
-	    (let ((comp (language-script lang %this %module worker)))
-	       (when (js-procedure? comp)
-		  (let ((obj (js-call1-jsprocedure %this comp
-				(js-undefined)
-				attrs)))
-		     (when (js-object? obj)
-			(let* ((ty (js-tostring (js-get obj (& "type") %this) %this))
-			       (val (js-get obj (& "value") %this)))
-			   (cond
+      (when (js-object? attrs)
+	 (let ((lang (js-get attrs (& "lang") %this)))
+	    (if (js-jsstring? lang)
+		(let ((comp (language-script lang %this %module worker)))
+		   (when (js-procedure? comp)
+		      (let ((obj (js-call1-jsprocedure %this comp
+				    (js-undefined)
+				    attrs)))
+			 (when (js-object? obj)
+			    (let* ((ty (js-get obj (& "type") %this))
+				   (val (js-get obj (& "value") %this)))
+			       (cond
 ;* 			      ((string=? ty "ast")                     */
 ;* 			       (ast->string val lang %this))           */
-			      ((string=? ty "string")
-			       (js-tostring val %this))
-			      (else
-			       (js-raise-error %this
-				  "Wrong language compiler output format ~s"
-				  lang)))))))))))
+				  ((eq? ty (& "string"))
+				   (js-tostring val %this))
+				  (else
+				   (js-raise-error %this
+				      "Wrong language compiler output format ~s"
+				      lang))))))))
+		(let ((ty (js-get attrs (& "type") %this)))
+		   (when (eq? ty (& "hop"))
+		      (js-put! attrs (& "type") (& "module") #f %this)
+		      "import * as hop from '/hop/0/hop-client.mjs';"))))))
+   
+   (define (script-lang attrs nodes lang)
+      (let* ((comp (language-script lang %this %module worker))
+	     (hd (when (js-procedure? comp)
+		    (let ((obj (js-call1-jsprocedure %this comp
+				  (js-undefined)
+				  attrs)))
+		       (when (js-object? obj)
+			  (let* ((ty (js-get obj (& "type") %this))
+				 (val (js-get obj (& "value") %this)))
+			     (cond
+				((eq? ty (& "string"))
+				 (js-tostring val %this))
+				(else
+				 (js-raise-error %this
+				    "Wrong language compiler output format ~s"
+				    lang)))))))))
+	 (as-array %this
+	    (apply <SCRIPT> :idiom "javascript"
+	       :%context %scope :module %module
+	       (js-object->keyword-arguments* attrs %this)
+	       (if hd (cons hd nodes) nodes)))))
+   
+   (define (script-hop attrs nodes)
+      (as-array %this
+	 (apply <SCRIPT> :idiom "javascript"
+	    :%context %scope :module %module
+	    (js-object->keyword-arguments* attrs %this)
+	    (cons* :type "module"
+	       "import * as hop from '/hop/0/hop-client.mjs';"
+	       nodes))))
+   
+   (define (as-array %this tmp)
+      (if (pair? tmp)
+	  (js-vector->jsarray (list->vector tmp) %this)
+	  tmp))
    
    (define script
       (js-make-function %this
 	 (lambda (this attrs . nodes)
-	    (let* ((hd (script-language-header attrs nodes))
-		   (tmp (apply <SCRIPT> :idiom "javascript"
-			  :%context %scope :module %module
-			  (when (js-object? attrs)
-			     (js-object->keyword-arguments* attrs %this))
-			  (if hd (cons hd nodes) nodes))))
-	       (if (pair? tmp)
-		   (js-vector->jsarray (list->vector tmp) %this)
-		   tmp)))
+	    (if (not (js-object? attrs))
+		(as-array %this
+		   (apply <SCRIPT> :idiom "javascript"
+		      :%context %scope :module %module
+		      nodes))
+		(let ((lang (js-get attrs (& "lang") %this)))
+		   (if (js-jsstring? lang)
+		       (as-array %this (script-lang attrs nodes lang))
+		       (let ((ty (js-get attrs (& "type") %this)))
+			  (if (eq? ty (& "hop"))
+			      (as-array %this (script-hop attrs nodes))
+			      (as-array %this
+				 (apply <SCRIPT> :idiom "javascript"
+				    :%context %scope :module %module
+				    (js-object->keyword-arguments* attrs %this)
+				    nodes))))))))
 	 (js-function-arity 1 -1 'scheme)
 	 (js-function-info :name "SCRIPT" :len -1)))
    

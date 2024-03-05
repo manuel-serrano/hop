@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Mon Mar  4 08:29:06 2024 (serrano)                */
+;*    Last change :  Tue Mar  5 09:59:52 2024 (serrano)                */
 ;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -358,6 +358,9 @@
 	    (hop-hz-repositories::pair-nil)
 	    (hop-hz-repositories-set! ::pair-nil)
 	    (hop-hz-repositories-add! ::bstring)
+
+	    (hop-runtime-client::bool)
+	    (hop-runtime-client-set! ::bool)
 	    
 	    (hop-runtime-extra::pair-nil)
 	    (hop-runtime-extra-set! ::pair-nil)
@@ -1470,6 +1473,12 @@
 
 (define (hop-hz-repositories-add! v)
    (hop-hz-repositories-set! (cons v (hop-hz-repositories))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-runtime-client ...                                           */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-runtime-client
+   #t)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-runtime-extra ...                                            */

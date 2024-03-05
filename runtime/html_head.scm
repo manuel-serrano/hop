@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Wed Dec 29 17:47:08 2021 (serrano)                */
-;*    Copyright   :  2005-21 Manuel Serrano                            */
+;*    Last change :  Tue Mar  5 10:00:01 2024 (serrano)                */
+;*    Copyright   :  2005-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
 ;*=====================================================================*/
@@ -467,7 +467,7 @@ function hop_realm() {return \"" (hop-realm) "\";}"))))
 
    (let loop ((a args)
 	      (mode #f)
-	      (rts #t)
+	      (rts (hop-runtime-client))
 	      (dir #f)
 	      (path '())
 	      (base #f)

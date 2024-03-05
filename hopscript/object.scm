@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Thu Feb 22 18:49:27 2024 (serrano)                */
+;*    Last change :  Tue Mar  5 10:43:18 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -176,7 +176,12 @@
 ;*---------------------------------------------------------------------*/
 (define-method (xml-unpack o::JsObject ctx)
    (if (isa? ctx JsGlobalObject)
-       (js-jsobject->keyword-plist o ctx)
+       (with-access::JsGlobalObject ctx (js-object-pcache)
+	  (let ((proc (js-get-jsobject-name/cache o (& "dollar") #f ctx
+			 (js-pcache-ref js-object-pcache 2))))
+	     (if (js-function? proc)
+		 (xml-unpack (js-call0 ctx proc o) ctx)
+		 (js-jsobject->keyword-plist o ctx))))
        o))
 
 ;*---------------------------------------------------------------------*/
@@ -295,7 +300,7 @@
       ;; pcache for object
       (with-access::JsGlobalObject %this (js-object-pcache)
 	 (set! js-object-pcache
-	    ((@ js-make-pcache-table __hopscript_property) 2 "object")))
+	    ((@ js-make-pcache-table __hopscript_property) 3 "object")))
       
       ;; init the builtin function class
       (js-init-function! %this)

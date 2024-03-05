@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Mon Mar  4 08:32:16 2024 (serrano)                */
+;*    Last change :  Tue Mar  5 10:02:24 2024 (serrano)                */
 ;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -340,6 +340,8 @@
 	    (section "JavaScript")
 	    (("--js" (help "Enable JavaScript (default)"))
 	     (hop-javascript-set! #t))
+	    (("--js-node" (help "Enable Nodejs compatiblity"))
+	     (hop-runtime-client-set! #f))
 	    (("--no-js" (help "Disable JavaScript"))
 	     (hop-javascript-set! #f))
 	    (("--loader" ?module (help "Specify the module to use a custom module loader"))
