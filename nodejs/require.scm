@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Tue Mar  5 18:48:32 2024 (serrano)                */
+;*    Last change :  Thu Mar  7 18:23:42 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -25,7 +25,7 @@
 	   __nodejs_syncg)
 
    (export (nodejs-hop-debug)
-	   (nodejs-file-paths::JsObject ::JsString ::JsGlobalObject)
+	   (nodejs-file-paths::JsObject ::JsStringLiteral ::JsGlobalObject)
 	   (nodejs-new-module::JsObject ::bstring ::bstring ::WorkerHopThread ::JsGlobalObject)
 	   (node-module-paths ::JsObject ::JsGlobalObject)
 	   (nodejs-require ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring)
