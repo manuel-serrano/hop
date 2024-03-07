@@ -704,7 +704,11 @@ Url.prototype.parseHost = function() {
 /*    Nodejs 18 compatibility                                          */
 /*---------------------------------------------------------------------*/
 function fileURLToPath(url) {
-   return url.path;
+   if (typeof url === "string") {
+      return url;
+   } else {
+      return url.path;
+   }
 }
 
 function pathToFileURL(path) {

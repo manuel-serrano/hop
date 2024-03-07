@@ -8,7 +8,7 @@
   "scripts": {
     "server": "NODE_OPTIONS=\"--enable-source-maps --no-warnings --loader ./node_modules/@hop/hopc/lib/hop-loader.mjs\" node filebrowser.hop.mjs --userdb ./users.json",
     "serverts": "NODE_OPTIONS=\"--enable-source-maps --no-warnings --loader ./node_modules/@hop/hopc/lib/hop-loader.mjs --loader ./node_modules/@hop/hopc/lib/ts-loader.mjs\" node filebrowser.hop.ts -s 4000 --config-dir . --userdb ./users.json",
-    "serverhop": "HOP_OPTIONS=\"--loader ./node_modules/@hop/hopc/lib/hop-loader.mjs\" hop -p 4000 -- filebrowser.hop.mjs --config-dir . --userdb ./users.json",
-    "serverhopts": "HOP_OPTIONS=\"--js-node --loader ./node_modules/@hop/hopc/lib/hop-loader.mjs --loader ./node_modules/@hop/hopc/lib/ts-loader.mjs\" hop -s0 -p 8888 -- filebrowser.hop.ts --config-dir . --userdb ./users.json"
+    "serverhop": "HOP_OPTIONS=\"--js-node -s0 --loader ./node_modules/@hop/hopc/lib/hop-loader.mjs\" hop -p 8888 -- filebrowser.hop.mjs --config-dir . --userdb ./users.json",
+    "serverhopts": "HOP_OPTIONS=\"--js-node -s0 --loader ./node_modules/@hop/hopc/lib/hop-loader.mjs --loader ./node_modules/@hop/hopc/lib/ts-loader.mjs\" hop -p 8888 -- filebrowser.hop.ts --config-dir . --userdb ./users.json"
   }
 }

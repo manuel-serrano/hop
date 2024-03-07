@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Tue Mar  5 10:07:05 2024 (serrano)                */
+;*    Last change :  Tue Mar  5 18:48:32 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -102,10 +102,12 @@
 ;*    Because the loaders execute in another threads, they have        */
 ;*    to use the key property of the main thread.                      */
 ;*---------------------------------------------------------------------*/
-(define &paths
-   (begin
-      (js-init-names!)
-      (js-string->name "paths")))
+(define-expander &&
+   (lambda (x e)
+      (e `(begin
+	     '(tprint "& paths " (current-thread) " " ',(cer x))
+	     (& "paths"))
+	 e)))
 
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
@@ -554,11 +556,12 @@
 	      (loop (dirname dir) acc))
 	     (else
 	      (loop (dirname dir)
-		 (cons
+		 (cons*
+		    (js-string->jsstring dir)
 		    (js-string->jsstring (make-file-name dir "node_modules"))
 		    acc))))))
       (else
-       '#())))
+       (nodejs-filename->paths (file-name-canonicalize (make-file-name (pwd) file))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-new-module-sans-cache ...                                 */
@@ -583,7 +586,7 @@
 	    ;; children
 	    (js-put! m (& "children") (js-vector->jsarray '#() %this) #f %this)
 	    ;; paths
-	    (js-put! m &paths
+	    (js-put! m (&& "paths")
 	       (js-vector->jsarray (nodejs-filename->paths filename) %this)
 	       #f %this))))
 
@@ -749,7 +752,7 @@
 		      (if (core-module? name)
 			  (js-string->jsstring name)
 			  (let ((paths (when (js-object? opts)
-					  (js-get opts (& "paths") this))))
+					  (js-get opts (&& "paths") this))))
 			     (js-string->jsstring
 				(nodejs-resolve name this %module
 				   (if (js-array? paths)
@@ -789,7 +792,7 @@
 ;*    node-module-paths ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (node-module-paths mod %this)
-   (let ((paths (js-get mod &paths %this)))
+   (let ((paths (js-get mod (&& "paths") %this)))
       (cond
 	 ((pair? paths)
 	  (append (map js-jsstring->string paths)) nodejs-env-path)
@@ -1237,7 +1240,7 @@
 	    ;; filename
 	    (js-put! mod (& "filename") (js-string->jsstring filename) #f %this)
 	    ;; paths
-	    (js-put! mod &paths
+	    (js-put! mod (&& "paths")
 	       (js-vector->jsarray (nodejs-filename->paths filename) %this)
 	       #f %this)
 	    ;; the resolution
@@ -2119,7 +2122,7 @@
 ;*---------------------------------------------------------------------*/
 (define (nodejs-load src filename worker::WorkerHopThread %ctxthis %ctxmodule
 	   #!key lang srcalias (commonjs-export #unspecified))
-
+   
    (define (loadso-or-compile filename lang worker-slave)
       (with-trace 'require "loadso-or-compile"
 	 (trace-item "filename=" filename " lang=" lang
@@ -2157,8 +2160,8 @@
 		(nodejs-compile src filename %ctxthis %ctxmodule
 		   :lang lang :commonjs-export commonjs-export
 		   :worker-slave worker-slave))))))
-
-   (define (load-module-js lang)
+   
+   (define (load-module-js filename lang)
       (with-trace 'require "require@load-module-js"
 	 (with-access::WorkerHopThread worker (%this prehook parent)
 	    (with-access::JsGlobalObject %this (js-object js-main)
@@ -2186,7 +2189,7 @@
 		  ;; return the newly created module
 		  (trace-item "mod=" (typeof mod) " filename=" filename)
 		  mod)))))
-
+   
    (define (load-module-html)
       (with-trace 'require "require@load-module-html"
 	 (with-access::WorkerHopThread worker (%this prehook)
@@ -2219,7 +2222,7 @@
 		  ;; return the newly created module
 		  (trace-item "mod=" (typeof mod))
 		  mod)))))
-
+   
    (define (hop-eval filename ws)
       (let ((old (hashtable-get hop-load-cache filename)))
 	 (if old
@@ -2237,14 +2240,14 @@
 		       (values init v)))
 		   (else
 		    (values #f #f)))))))
-
+   
    (define (read-module-name filename)
       (call-with-input-file filename
 	 (lambda (proc)
 	    (match-case (read proc)
 	       ((module ?mod . ?-) mod)
 	       (else #f)))))
-	 
+   
    (define (compiled-module filename)
       (let ((mod (read-module-name filename)))
 	 (when mod
@@ -2277,7 +2280,7 @@
 			(hop-sofile-enable))
 		(nodejs-socompile-queue-push filename lang worker-slave))
 	     (hop-eval filename worker-slave)))))
-
+   
    (define (load-module-hop)
       (with-access::WorkerHopThread worker (%this parent)
 	 (with-access::JsGlobalObject %this (js-object)
@@ -2311,7 +2314,7 @@
       (js-raise-error %ctxthis
 	 (format "don't know how to load module ~s" filename)
 	 filename))
-
+   
    (define (mime-html? url)
       (multiple-value-bind (scheme userinfo host port path)
 	 (url-parse url)
@@ -2330,7 +2333,7 @@
 		     (when (pair? ct)
 			(string-prefix? "text/html"
 			   (cdr ct)))))))))
-
+   
    (define (compiler-available? filename)
       (js-worker-exec-throws worker "language-loader"
 	 (lambda (%this)
@@ -2340,15 +2343,15 @@
 		      (key (js-get js-symbol (& "compiler") %ctxthis))
 		      (comp (js-get langmode key %ctxthis)))
 		  (isa? comp JsFunction))))))
-      
-   (define (load-module)
+   
+   (define (builtin-load-module filename)
       (cond
 	 ((or (string-suffix? ".js" filename) (string-suffix? ".mjs" filename))
-	  (load-module-js lang))
+	  (load-module-js filename lang))
 	 ((string-suffix? ".ts" filename)
-	  (load-module-js "typescript"))
+	  (load-module-js filename "typescript"))
 	 ((string-suffix? ".ast.json" filename)
-	  (load-module-js lang))
+	  (load-module-js filename lang))
 	 ((string-suffix? ".html" filename)
 	  (load-module-html))
 	 ((string-suffix? ".hop" filename)
@@ -2367,13 +2370,37 @@
 	     ((mime-html? filename)
 	      (load-module-html))
 	     (else
-	      (load-module-js lang))))
+	      (load-module-js filename lang))))
 	 ((not (string-index (basename filename) #\.))
-	  (load-module-js lang))
+	  (load-module-js filename lang))
 	 ((compiler-available? filename)
-	  (load-module-js lang))
+	  (load-module-js filename lang))
 	 (else
 	  (not-found filename))))
+
+   (define (loader-load-module)
+      (if (null? loader-loaders)
+	  (builtin-load-module filename)
+	  (multiple-value-bind (resolve reject)
+	     (js-worker-exec-promise loader-worker "resolve"
+		(lambda (this)
+		   (with-access::WorkerHopThread loader-worker (%this)
+		      (let ((ctx (js-alist->jsobject `((parent . ,(js-undefined))) %this)))
+			 (let loop ((loaders loader-loaders)
+				    (url (js-string->jsstring filename))
+				    (ctx ctx))
+			    (if (null? loaders)
+				(js-jsstring->string url)
+				(js-call3 this (car loaders) (js-undefined)
+				   url ctx 
+				   (js-make-function this
+				      (lambda (this specifier context)
+					 (loop (cdr loaders) specifier context))
+				      (js-function-arity 2 0)
+				      (js-function-info :name "loader" :len 2)))))))))
+	     (if (symbol? reject)
+		 (builtin-load-module resolve)
+		 (js-raise-uri-error %ctxthis "loader error (~s)" filename)))))
 
    (with-trace 'require (format "nodejs-load ~a" filename)
       (when (eq? commonjs-export #unspecified)
@@ -2381,7 +2408,10 @@
 	    (if (and (pair? cj) (pair? (cdr cj)))
 		(set! commonjs-export (cadr cj))
 		(set! commonjs-export #t))))
-      (with-loading-file filename load-module)))
+      (with-loading-file filename
+	 (if (eq? worker loader-worker)
+	     (lambda () (builtin-load-module filename))
+	     loader-load-module))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-require-module ...                                        */
@@ -2573,10 +2603,10 @@
 		(with-access::WorkerHopThread loader-worker (%this)
 		   (let ((ctx (js-alist->jsobject `((parent . ,(js-undefined))) %this)))
 		      (let loop ((resolvers loader-resolvers)
-				 (name name)
+				 (name (js-string->jsstring name))
 				 (ctx ctx))
 			 (if (null? resolvers)
-			     (builtin-resolve name %this %module paths mode)
+			     (builtin-resolve (js-tostring name %this) %this %module paths mode)
 			     (js-call3 this (car resolvers) (js-undefined)
 				name ctx 
 				(js-make-function this
@@ -2753,7 +2783,7 @@
 	     (filename (js-jsstring->string (js-get mod (& "filename") %this)))
 	     (dir (dirname filename)))
 	 (trace-item "dir=" dir)
-	 (trace-item "paths=" (let ((paths (js-get mod &paths %this)))
+	 (trace-item "paths=" (let ((paths (js-get mod (&& "paths") %this)))
 				 (if (js-array? paths)
 				     (jsarray->vector paths %this)
 				     paths)))
@@ -3128,6 +3158,7 @@
 (define loader-condv (make-condition-variable))
 (define loader-module #f)
 (define loader-resolvers '())
+(define loader-loaders '())
 
 ;*---------------------------------------------------------------------*/
 ;*    js-loader-worker ...                                             */
@@ -3139,8 +3170,7 @@
 	    (path (pwd)))
 	 (with-access::JsGlobalObject global (js-object worker js-function-sans-prototype-cmap)
 	    (set! worker w)
-	    (set! loader-module (nodejs-new-module (basename path)
-				   (string-append path "/.") w global))
+	    (set! loader-module (nodejs-new-module (basename path) path w global))
 	    (with-access::WorkerHopThread worker (%this module-cache %loop)
 	       ;; module-cache is used in src/main to check
 	       ;; where the worker is running or not
@@ -3189,7 +3219,9 @@
 		    (load-loader this module)))))
       (synchronize loader-mutex
 	 (when (car res)
-	    (set! loader-resolvers (append loader-resolvers (list (car res))))))
+	    (set! loader-resolvers (append loader-resolvers (list (car res)))))
+	 (when (cdr res)
+	    (set! loader-loaders (append loader-loaders (list (cdr res))))))
       #unspecified))
    
 ;*---------------------------------------------------------------------*/

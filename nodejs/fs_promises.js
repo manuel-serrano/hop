@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 23 08:17:55 2024                          */
-/*    Last change :  Fri Feb 23 09:18:00 2024 (serrano)                */
+/*    Last change :  Wed Mar  6 08:52:06 2024 (serrano)                */
 /*    Copyright   :  2024 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    FS promise wrappers                                              */
@@ -21,8 +21,9 @@ exports.appendFile = function(path, data, options) {
 }
 
 exports.lstat = function(path, options) {
+   // the options is ignored until Hop supports a newer Nodejs runtime
    return new Promise((res, rej) => {
-      fs.lstat(path, options, (err, stats) => err ? rej(err) : res(stats));
+      fs.lstat(path, (err, stats) => err ? rej(err) : res(stats));
    });
 }
 

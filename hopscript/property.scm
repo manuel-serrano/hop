@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.7.x/hopscript/property.scm            */
+;*    serrano/prgm/project/hop/hop/hopscript/property.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Thu Feb 15 11:55:38 2024 (serrano)                */
+;*    Last change :  Wed Mar  6 09:10:44 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -3319,6 +3319,10 @@
 	       (with-access::JsConstructMap nextmap (ctor methods props detachcnt detachlocs)
 		  (cond
 		     ((or (not cachefun) (not (js-function? v)))
+		      (unless (<fx index (vector-length methods))
+			 (tprint "ERROR..." prop " index=" index)
+			 (js-inspect-object o)
+			 (js-inspect-cmap nextmap))
 		      (when (js-function? (vector-ref methods index))
 			 ;; invalidate cache method and cache
 			 (cond
