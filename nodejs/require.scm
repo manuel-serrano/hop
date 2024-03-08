@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Thu Mar  7 18:23:42 2024 (serrano)                */
+;*    Last change :  Fri Mar  8 10:12:42 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -2390,7 +2390,7 @@
 				    (url (js-string->jsstring filename))
 				    (ctx ctx))
 			    (if (null? loaders)
-				(js-jsstring->string url)
+				(js-alist->jsobject `((source . ,(js-jsstring->string url))) %this)
 				(js-call3 this (car loaders) (js-undefined)
 				   url ctx 
 				   (js-make-function this

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Tue Mar  5 10:02:24 2024 (serrano)                */
+;*    Last change :  Fri Mar  8 10:14:37 2024 (serrano)                */
 ;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -602,7 +602,7 @@
 				  ret))
 
       (values (reverse files) (reverse! exprs)
-	 (reverse! exprsjs) (reverse! jsloaders))))
+	 (reverse! exprsjs) jsloaders)))
 
 ;*---------------------------------------------------------------------*/
 ;*    set-hop-owner! ...                                               */
