@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Wed Mar  6 20:41:02 2024 (serrano)                */
+;*    Last change :  Sat Mar  9 06:48:54 2024 (serrano)                */
 ;*    Copyright   :  2014-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -516,6 +516,7 @@
 			   (js-put! %process (& "_exiting") #t #f %this)
 			   (js-call1-jsprocedure %this onexit %process %retval)))))
 	       ;; when the parent died, kill the application
+	       (tprint "EXIT..." %retval)
 	       (unless parent
 		  (exit %retval)))
 	    (with-access::WorkerHopThread th (services subworkers)
@@ -680,10 +681,12 @@
 ;*---------------------------------------------------------------------*/
 (define-method (js-worker-exec-promise th::WorkerHopThread
 		  name::bstring
-		  proc::procedure)
+		  proc::procedure
+		  res::procedure
+		  rej::procedure)
    [assert (proc) (correct-arity? proc 1)]
    [assert (th name) (not (eq? (current-thread) th))]
-   (with-access::WorkerHopThread th (%this %loop mutex condv)
+   (with-access::WorkerHopThread th (%this %loop mutex condv keep-alive)
       (let ((loop %loop))
 	 (with-access::JsLoop loop (mutex condv)
 	    (let ((resolve 'unassigned)
@@ -698,13 +701,13 @@
 				     promise
 				     (js-make-procedure %this
 					(lambda (_ val)
-					   (set! resolve val)
+					   (set! resolve (res val))
 					   (synchronize mutex
 					      (condition-variable-broadcast! condv)))
 					2)
 				     (js-make-procedure %this
 					(lambda (_ val)
-					   (set! reject val)
+					   (set! reject (rej val))
 					   (synchronize mutex
 					      (condition-variable-broadcast! condv)))
 					2)

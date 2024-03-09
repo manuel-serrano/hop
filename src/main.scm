@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Thu Feb 22 18:07:27 2024 (serrano)                */
+;*    Last change :  Sat Mar  9 09:51:13 2024 (serrano)                */
 ;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -523,7 +523,6 @@
 	     (with-access::WorkerHopThread %worker (%this prerun)
 		(js-worker-push! %worker (format "nodejs-load(~a)" path)
 		   (lambda (%this)
-		      ;(nodejs-load path path %worker %global %module :commonjs-export #t)
 		      (nodejs-load-module path %worker %global %module :commonjs-export #t))))))
 	 ((string-suffix? ".mjs" path)
 	  ;; javascript
@@ -531,7 +530,6 @@
 	     (with-access::WorkerHopThread %worker (%this prerun)
 		(js-worker-push! %worker (format "nodejs-load(~a)" path)
 		   (lambda (%this)
-		      ;(nodejs-load path path %worker %global %module :commonjs-export #f)
 		      (nodejs-load-module path %worker %global %module :commonjs-export #f))))))
 	 ((string-suffix? ".ts" path)
 	  ;; typescript
@@ -539,7 +537,6 @@
 	     (with-access::WorkerHopThread %worker (%this prerun)
 		(js-worker-push! %worker (format "nodejs-load(~a)" path)
 		   (lambda (%this)
-		      ;(nodejs-load path path %worker  %global %module :lang "ts" :commonjs-export #t)
 		      (nodejs-load-module path %worker %global %module :lang "ts" :commonjs-export #t))))))
 	 ((string=? (basename path) "package.json")
 	  (load-package path))

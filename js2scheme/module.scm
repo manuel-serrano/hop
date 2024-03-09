@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 15 15:16:16 2018                          */
-;*    Last change :  Wed Feb 28 13:10:44 2024 (serrano)                */
+;*    Last change :  Sat Mar  9 09:39:09 2024 (serrano)                */
 ;*    Copyright   :  2018-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES6 Module handling                                              */
@@ -834,7 +834,8 @@
 	 :max-bucket-length 10))
    (for-each init-coremodule! core-module-list)
    ;; manually create the @hop/hop and hop alias
-   (hashtable-put! core-modules "@hop/hop" (hashtable-get core-modules "hop")))
+   ;(hashtable-put! core-modules "@hop/hop" (hashtable-get core-modules "hop"))
+   )
 
 ;*---------------------------------------------------------------------*/
 ;*    path-lang ...                                                    */

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.7.x/js2scheme/js.scm                  */
+;*    serrano/prgm/project/hop/hop/js2scheme/js.scm                    */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Thu Dec  7 09:02:24 2023 (serrano)                */
-;*    Copyright   :  2013-23 Manuel Serrano                            */
+;*    Last change :  Sat Mar  9 06:19:19 2024 (serrano)                */
+;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for client side code).                                   */
 ;*=====================================================================*/
@@ -1225,18 +1225,21 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-js-attribute-tilde this::J2STilde tildec dollarc mode evalp ctx)
    (with-access::J2STilde this (loc stmt)
-      (let* ((temp (gensym))
-	     (assign (j2s-stmt-assign stmt temp))
-	     (id (gensym "$"))
-	     (env (cons 0 '()))
-	     (ndollarc (j2s-js-client-dollar-env dollarc id env))
-	     (body (j2s-js assign tildec ndollarc mode evalp ctx)))
-	 (cons* this (format "new hop_xml_tilde( function( event, ~a ) { var " id)
-	    (symbol->string! temp) "; "
-	    (append body
-	       (list (format "\nreturn ~a}, [" temp))
-	       (join "," (reverse! (cdr env)))
-	       '("])"))))))
+      (if (context-get ctx :hopjs-client)
+	  (let ((stmt (j2s-js stmt tildec dollarc mode evalp ctx)))
+	     (cons* this "TILDE(undefined, `" (append stmt (list "`)"))))
+	  (let* ((temp (gensym))
+		 (assign (j2s-stmt-assign stmt temp))
+		 (id (gensym "$"))
+		 (env (cons 0 '()))
+		 (ndollarc (j2s-js-client-dollar-env dollarc id env))
+		 (body (j2s-js assign tildec ndollarc mode evalp ctx)))
+	     (cons* this (format "new hop_xml_tilde( function( event, ~a ) { var " id)
+		(symbol->string! temp) "; "
+		(append body
+		   (list (format "\nreturn ~a}, [" temp))
+		   (join "," (reverse! (cdr env)))
+		   '("])")))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SDollar ...                                           */

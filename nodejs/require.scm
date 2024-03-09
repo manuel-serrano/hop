@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Fri Mar  8 10:12:42 2024 (serrano)                */
+;*    Last change :  Sat Mar  9 06:41:28 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -223,10 +223,8 @@
 	    (json->file str lang %this))))
 
    (let ((worker (js-current-worker)))
-      (tprint ">>> ndoejs-compile-file-lang " (current-thread))
       (js-worker-exec worker "nodejs-compile-file-lang"
 	 (lambda (%this)
-	    (tprint "!!! ndoejs-compile-file-lang " (current-thread))
 	    (with-access::JsGlobalObject %ctxthis (js-object js-symbol)
 	       (let* ((exp (nodejs-require-module lang worker %ctxthis %ctxmodule))
 		      (key (js-get js-symbol (& "compiler") %ctxthis))
@@ -1459,30 +1457,35 @@
       (with-trace 'require "compile-file"
 	 (trace-item "filename=" filename)
 	 (or (load-cache filename)
-	     (store-cache filename
-		(call-with-input-file filename
-		   (lambda (in)
-		      (debug-compile-trace "compile-file" filename)
-		      (let ((m (open-mmap filename read: #t :write #f)))
-			 (unwind-protect
-			    (j2s-compile in
-			       :driver (nodejs-driver)
-			       :driver-name "nodejs-driver"
-			       :filename filename
-			       :source src
-			       :language (or lang "hopscript")
-			       :node-modules-directory (nodejs-node-modules-directory)
-			       :mmap-src m
-			       :module-main #f
-			       :module-name (symbol->string mod)
-			       :worker-slave worker-slave
-			       :verbose (if (>=fx (hop-verbose) 10) (-fx (hop-verbose) 10) 0)
-			       :plugins-loader (make-plugins-loader %ctxthis %ctxmodule (js-current-worker))
-			       :commonjs-export commonjs-export
-			       :es6-module-client #t
-			       :warning-global warning-global
-			       :debug (nodejs-hop-debug))
-			    (close-mmap m)))))))))
+	     (with-handler
+		(lambda (e)
+		   (when (>=fx (nodejs-hop-debug) 1)
+		      (exception-notify e))
+		   (raise e))
+		(store-cache filename
+		   (call-with-input-file filename
+		      (lambda (in)
+			 (debug-compile-trace "compile-file" filename)
+			 (let ((m (open-mmap filename read: #t :write #f)))
+			    (unwind-protect
+			       (j2s-compile in
+				  :driver (nodejs-driver)
+				  :driver-name "nodejs-driver"
+				  :filename filename
+				  :source src
+				  :language (or lang "hopscript")
+				  :node-modules-directory (nodejs-node-modules-directory)
+				  :mmap-src m
+				  :module-main #f
+				  :module-name (symbol->string mod)
+				  :worker-slave worker-slave
+				  :verbose (if (>=fx (hop-verbose) 10) (-fx (hop-verbose) 10) 0)
+				  :plugins-loader (make-plugins-loader %ctxthis %ctxmodule (js-current-worker))
+				  :commonjs-export commonjs-export
+				  :es6-module-client #t
+				  :warning-global warning-global
+				  :debug (nodejs-hop-debug))
+			       (close-mmap m))))))))))
    
    (define (compile-url url::bstring mod)
       (with-trace 'require "compile-url"
@@ -1554,17 +1557,20 @@
 	     (error lang "don't know what to do with" obj)))))
    
    (define (compile src mod lang)
-      (cond
-	 ((isa? src J2SProgram)
-	  (compile-ast src mod))
-	 ((not (string? src))
-	  (bigloo-type-error "nodejs-compile" "string or J2SProgram" src))
-	 ((and (string? lang) (not (builtin-language? lang)))
-	  (compile-lang src mod lang))
-	 ((file-exists? filename)
-	  (compile-file filename mod))
-	 (else
-	  (compile-url filename mod))))
+      (with-trace 'require "compile"
+	 (trace-item "src=" src)
+	 (trace-item "lang=" lang)
+	 (cond
+	    ((isa? src J2SProgram)
+	     (compile-ast src mod))
+	    ((not (string? src))
+	     (bigloo-type-error "nodejs-compile" "string or J2SProgram" src))
+	    ((and (string? lang) (not (builtin-language? lang)))
+	     (compile-lang src mod lang))
+	    ((file-exists? filename)
+	     (compile-file filename mod))
+	    (else
+	     (compile-url filename mod)))))
    
    (unless nodejs-debug-compile
       (set! nodejs-debug-compile
@@ -1575,6 +1581,7 @@
    (synchronize compile-mutex
       (with-trace 'require "nodejs-compile"
 	 (trace-item "filename=" filename)
+	 (trace-item "lang=" lang)
 	 (let ((key (if worker-slave
 			(string-append filename "_w")
 			filename))
@@ -2334,17 +2341,23 @@
 			(string-prefix? "text/html"
 			   (cdr ct)))))))))
    
-   (define (compiler-available? filename)
-      (js-worker-exec-throws worker "language-loader"
-	 (lambda (%this)
-	    (with-access::JsGlobalObject %ctxthis (js-object js-symbol)
-	       (let* ((langmode (nodejs-require-module lang worker
-				   %ctxthis %ctxmodule))
-		      (key (js-get js-symbol (& "compiler") %ctxthis))
-		      (comp (js-get langmode key %ctxthis)))
-		  (isa? comp JsFunction))))))
+   (define (worker-compiler-available? %this filename)
+      (with-access::JsGlobalObject %this (js-object js-symbol)
+	 (let* ((langmode (nodejs-require-module lang worker
+			     %this %ctxmodule))
+		(key (js-get js-symbol (& "compiler") %this))
+		(comp (js-get langmode key %this)))
+	    (isa? comp JsFunction))))
    
-   (define (builtin-load-module filename)
+   (define (compiler-available? filename)
+      (if (eq? worker (current-thread))
+	  (with-access::JsGlobalObject %ctxthis (js-object js-symbol)
+	     (worker-compiler-available? %ctxthis filename))
+	  (js-worker-exec-throws worker "language-loader"
+	     (lambda (%this)
+		(worker-compiler-available? %ctxthis filename)))))
+   
+   (define (builtin-load-module filename lang)
       (cond
 	 ((or (string-suffix? ".js" filename) (string-suffix? ".mjs" filename))
 	  (load-module-js filename lang))
@@ -2377,10 +2390,18 @@
 	  (load-module-js filename lang))
 	 (else
 	  (not-found filename))))
-
+   
+   (define (url-to-path str)
+      (let ((path (if (string-prefix? "file://" str)
+		      (substring str 7)
+		      str)))
+	 (if (file-exists? path)
+	     path
+	     (js-raise-uri-error %ctxthis "load error (~s)" filename))))
+   
    (define (loader-load-module)
       (if (null? loader-loaders)
-	  (builtin-load-module filename)
+	  (builtin-load-module filename lang)
 	  (multiple-value-bind (resolve reject)
 	     (js-worker-exec-promise loader-worker "resolve"
 		(lambda (this)
@@ -2397,21 +2418,29 @@
 				      (lambda (this specifier context)
 					 (loop (cdr loaders) specifier context))
 				      (js-function-arity 2 0)
-				      (js-function-info :name "loader" :len 2)))))))))
-	     (if (symbol? reject)
-		 (builtin-load-module resolve)
+				      (js-function-info :name "loader" :len 2))))))))
+		(lambda (res)
+		   (with-access::WorkerHopThread loader-worker (%this)
+		      (js-get res (& "source") %this)))
+		(lambda (rej)
+		   rej))
+	     (if (js-jsstring? resolve)
+		 (builtin-load-module
+		    (url-to-path (js-jsstring->string resolve))
+		    #f)
 		 (js-raise-uri-error %ctxthis "loader error (~s)" filename)))))
-
+   
    (with-trace 'require (format "nodejs-load ~a" filename)
+      (trace-item "lang=" lang)
       (when (eq? commonjs-export #unspecified)
 	 (let ((cj (memq :commonjs-export (j2s-compile-options))))
 	    (if (and (pair? cj) (pair? (cdr cj)))
 		(set! commonjs-export (cadr cj))
 		(set! commonjs-export #t))))
       (with-loading-file filename
-	 (if (eq? worker loader-worker)
-	     (lambda () (builtin-load-module filename))
-	     loader-load-module))))
+		  (if (eq? worker loader-worker)
+		      (lambda () (builtin-load-module filename lang))
+		      loader-load-module))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-require-module ...                                        */
@@ -2613,7 +2642,9 @@
 				   (lambda (this specifier context)
 				      (loop (cdr resolvers) specifier context))
 				   (js-function-arity 2 0)
-				   (js-function-info :name "resolver" :len 2)))))))))
+				   (js-function-info :name "resolver" :len 2))))))))
+	     (lambda (res) res)
+	     (lambda (rej) rej))
 	  (if (symbol? reject)
 	      resolve
 	      (js-raise-uri-error %this "resolve error (~s)" name)))))
@@ -3064,20 +3095,26 @@
 ;*    make-language-loader ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (make-language-loader %ctxthis %ctxmodule worker)
+   
+   (define (language-loader lang file conf)
+      (with-access::JsGlobalObject %ctxthis (js-object js-symbol)
+	 (let* ((langmod (nodejs-require-module lang worker
+			    %ctxthis %ctxmodule))
+		(key (js-get js-symbol (& "compiler") %ctxthis))
+		(comp (js-get langmod key %ctxthis)))
+	    (js-jsobject->alist
+	       (js-call2 %ctxthis comp (js-undefined)
+		  (js-string->jsstring file)
+		  (js-alist->jsobject conf %ctxthis))
+	       %ctxthis))))
+   
    (when (and (isa? %ctxthis JsGlobalObject) (isa? %ctxmodule JsObject))
       (lambda (lang file conf)
-	 (js-worker-exec-throws worker "language-loader"
-	    (lambda (%this)
-	       (with-access::JsGlobalObject %ctxthis (js-object js-symbol)
-		  (let* ((langmod (nodejs-require-module lang worker
-				      %ctxthis %ctxmodule))
-			 (key (js-get js-symbol (& "compiler") %ctxthis))
-			 (comp (js-get langmod key %ctxthis)))
-		     (js-jsobject->alist
-			 (js-call2 %ctxthis comp (js-undefined)
-			    (js-string->jsstring file)
-			    (js-alist->jsobject conf %ctxthis))
-			 %ctxthis))))))))
+	 (if (eq? (current-thread) worker)
+	     (language-loader lang file conf)
+	     (js-worker-exec-throws worker "language-loader"
+		(lambda (%this)
+		   (language-loader lang file conf)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-plugins-toplevel-loader ...                               */
