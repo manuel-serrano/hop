@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Sat Mar  9 06:48:54 2024 (serrano)                */
+;*    Last change :  Sat Mar  9 13:14:29 2024 (serrano)                */
 ;*    Copyright   :  2014-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -516,7 +516,6 @@
 			   (js-put! %process (& "_exiting") #t #f %this)
 			   (js-call1-jsprocedure %this onexit %process %retval)))))
 	       ;; when the parent died, kill the application
-	       (tprint "EXIT..." %retval)
 	       (unless parent
 		  (exit %retval)))
 	    (with-access::WorkerHopThread th (services subworkers)
