@@ -81,7 +81,7 @@
 		(set! connection 'close))
 	    (http-write-line p "Connection: " connection)
 	    (http-write-content-type p content-type charset)
-	    (http-write-line-string p "Server: " server)
+	    (http-write-line-string p "Server: " server) (http-write-line-string p "X-Frame-Options: " "DENY")
 	    (http-write-line p)
 	    (when bodyp (display body p))
 	    (flush-output-port p)
@@ -174,7 +174,7 @@
 	       (http-write-header p header)
 	       (http-write-line p "Cache-Control: no-cache")
 	       (http-write-content-type p ctype charset)
-	       (http-write-line-string p "Server: " server)
+	       (http-write-line-string p "Server: " server) (http-write-line-string p "X-Frame-Options: " "DENY")
 	       (when bodyp
 		  ;; select the transfer method according to the content-type
 		  (cond
@@ -270,7 +270,7 @@
 	    (with-access::xml-backend backend (mime-type)
 	       (let ((ctype (or content-type mime-type)))
 		  (http-write-content-type p ctype charset)))
-	    (http-write-line-string p "Server: " server)
+	    (http-write-line-string p "Server: " server) (http-write-line-string p "X-Frame-Options: " "DENY")
 	    (if chunked
 		(begin
 		   (flush-output-port p)
@@ -315,7 +315,7 @@
 		(set! connection 'close))
 	    (http-write-line p "Connection: " connection)
 	    (http-write-content-type p content-type charset)
-	    (http-write-line-string p "Server: " server)
+	    (http-write-line-string p "Server: " server) (http-write-line-string p "X-Frame-Options: " "DENY")
 	    (http-write-line p)
 	    (flush-output-port p)
 	    ;; the body
@@ -366,7 +366,7 @@
 	    (http-write-header p header)
 	    (http-write-line p "Connection: " conn)
 	    (http-write-content-type p content-type charset)
-	    (http-write-line-string p "Server: " server)
+	    (http-write-line-string p "Server: " server) (http-write-line-string p "X-Frame-Options: " "DENY")
 	    (let ((dtc (date->rfc2822-date (current-date))))
 	       ;; don't need to explicitly display the last-modified
 	       ;; header entry because it is contained in the
@@ -452,7 +452,7 @@
 		   (http-write-header p header)
 		   (http-write-line p "Connection: " connection)
 		   (http-write-content-type p content-type charset)
-		   (http-write-line-string p "Server: " server)
+		   (http-write-line-string p "Server: " server) (http-write-line-string p "X-Frame-Options: " "DENY")
 		   (unless (eq? connection 'close)
 		      (display "Content-Length: " p)
 		      (display-elong size p)
@@ -584,7 +584,7 @@
 		(http-write-header p header)
 		(http-write-line p "Connection: close")
 		(http-write-content-type p content-type charset)
-		(http-write-line-string p "Server: " server)
+		(http-write-line-string p "Server: " server) (http-write-line-string p "X-Frame-Options: " "DENY")
 		(http-write-line p)
 		;; the body
 		(with-trace 'hop-response "http-response-cgi-process"
@@ -636,7 +636,7 @@
 		      (http-write-header p header)
 		      (http-write-line p "Connection: close")
 		      (http-write-content-type p content-type charset)
-		      (http-write-line-string p "Server: " server)
+		      (http-write-line-string p "Server: " server) (http-write-line-string p "X-Frame-Options: " "DENY")
 		      (http-write-line p)
 		      ;; the body
 		      (with-trace 'hop-response "http-response-put-process"
