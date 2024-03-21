@@ -991,10 +991,12 @@
 		(j2s->sexp val))))))
       
    (define (j2s-let-decl-inner::pair-nil d::J2SDecl mode return ctx singledecl typed)
-      (with-access::J2SDeclInit d (vtype loc)
+      (with-access::J2SDecl d (vtype loc)
 	 (let* ((ident (j2s-decl-scm-id d ctx))
 		(var (if typed (type-ident ident vtype (context-conf ctx)) ident))
-		(val (j2sdeclinit-val-fun d)))
+		(val (if (isa? d J2SDeclInit)
+			 (j2sdeclinit-val-fun d)
+			 '(js-undefined))))
 	    (cond
 	       ((or (not (isa? val J2SFun))
 		    (isa? val J2SSvc)

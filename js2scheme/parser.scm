@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Fri Feb 23 07:58:01 2024 (serrano)                */
+;*    Last change :  Sun Mar 17 06:57:12 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -508,55 +508,60 @@
    
    (define (var-decl-list in-for-init?)
       (decl-list (consume-token! 'var) in-for-init?
-	 (lambda (loc id val ty)
+	 (lambda (loc id val ty opt)
 	    (instantiate::J2SDeclInit
 	       (loc loc)
 	       (id id)
 	       (val val)
-	       (utype ty)))
-	 (lambda (loc id ty)
+	       (utype ty)
+	       (optional opt)))
+	 (lambda (loc id ty opt)
 	    (instantiate::J2SDecl
 	       (loc loc)
 	       (id id)
-	       (utype ty)))))
+	       (utype ty)
+	       (optional opt)))))
    
    (define (let-decl-list in-for-init?)
       ;; ES6 let block
       (decl-list (consume-token! 'let) in-for-init?
-	 (lambda (loc id val ty)
+	 (lambda (loc id val ty opt)
 	    (instantiate::J2SDeclInit
 	       (loc loc)
 	       (id id)
 	       (binder 'let)
 	       (val val)
-	       (utype ty)))
-	 (lambda (loc id ty)
-	    (instantiate::J2SDeclInit
+	       (utype ty)
+	       (optional opt)))
+	 (lambda (loc id ty opt)
+	    (instantiate::J2SDecl
 	       (loc loc)
 	       (id id)
 	       (binder 'let)
-	       (val (J2SUndefined))
-	       (utype ty)))))
+	       (utype ty)
+	       (optional opt)))))
    
    (define (const-decl-list in-for-init?)
       ;; ES6 const block
       (decl-list (consume-token! 'const) in-for-init?
-	 (lambda (loc id val ty)
+	 (lambda (loc id val ty opt)
 	    (instantiate::J2SDeclInit
 	       (loc loc)
 	       (id id)
 	       (writable #f)
 	       (binder 'let)
 	       (val val)
-	       (utype ty)))
-	 (lambda (loc id ty)
+	       (utype ty)
+	       (optional opt)))
+	 (lambda (loc id ty opt)
 	    (instantiate::J2SDeclInit
 	       (loc loc)
 	       (id id)
 	       (writable #f)
 	       (binder 'let)
 	       (val (J2SUndefined))
-	       (utype ty)))))
+	       (utype ty)
+	       (optional opt)))))
 
    (define (type-decl-list)
       ;; typescript type block, for now simply ignored
@@ -687,13 +692,16 @@
 	  (parse-token-error "Illegal type expression" (consume-any!)))))
       
    (define (typescript-type)
-      (let ((ty (typescript-simple-type)))
+      (let* ((loc (current-loc))
+	     (ty (typescript-simple-type)))
 	 (case (peek-token-type)
 	    ((LBRACKET)
 	     ;; array type
 	     (consume-any!)
 	     (consume-token! 'RBRACKET)
-	     'array)
+	     (instantiate::TsTypeArray
+		(loc loc)
+		(of ty)))
 	    ((BIT_OR)
 	     ;; union type
 	     (consume-any!)
@@ -718,8 +726,6 @@
 	     ty))))
    
    (define (opt-type)
-      (when (and (eq? (peek-token-type) '?) typescript)
-	 (consume-any!))
       (cond
 	 ((and (eq? (peek-token-type) ':) typescript)
 	  (consume-any!)
@@ -747,10 +753,12 @@
 				  (expr (assig-expr in-for-init? #f #f)))
 			      (list
 				 (constrinit (token-loc tid) (token-value id) expr
-				    (or ty (opt-type))))))
+				    (or ty (opt-type))
+				    #f))))
 			  (else
 			   (list (constr (token-loc tid) (token-value id)
-				    (or ty (opt-type))))))
+				    (or ty (opt-type))
+				    #f))))
 		       (parse-token-error "Illegal lhs" id))) ))
 	    ((undefined NaN Infinity)
 	     (consume-any!)
@@ -764,7 +772,7 @@
 	     (let* ((objectp (eq? (peek-token-type) 'LBRACE))
 		    (loc (token-loc id))
 		    (lhs (if objectp (object-literal #t) (array-literal #t #f 'array)))
-		    (decl (constrinit loc (gensym '%obj) (J2SUndefined) 'unknown))
+		    (decl (constrinit loc (gensym '%obj) (J2SUndefined) 'unknown #f))
 		    (bindings (j2s-destructure lhs decl #t)))
 		(if in-for-init?
 		    (let* ((tmp (instantiate::J2SDecl
@@ -1131,17 +1139,19 @@
 		  (body body)))))
 	    ((LBRACE LBRACKET)
 	     (let ((vars (var #t
-			      (lambda (loc id val ty)
+			      (lambda (loc id val ty opt)
 				 (instantiate::J2SDeclInit
 				    (loc loc)
 				    (id id)
 				    (val val)
-				    (utype ty)))
-			      (lambda (loc id ty)
+				    (utype ty)
+				    (optional opt)))
+			      (lambda (loc id ty opt)
 				 (instantiate::J2SDecl
 				    (loc loc)
 				    (id id)
-				    (utype ty))))))
+				    (utype ty)
+				    (optional opt))))))
 	       (pop-open-token (consume-token! 'RPAREN))
 	       (with-access::J2SDecl (car vars) (binder)
 				     (set! binder 'param))
@@ -1586,7 +1596,7 @@
 					       (vararg (rest-params params))))
 				       (decl (instantiate::J2SDeclFun
 						(loc loc)
-						(writable (not (eq? mode 'hopscript)))
+						(writable (and (not (eq? mode 'hopscript)) (not typescript)))
 						(usage (if (eq? mode 'hopscript)
 							   (usage '())
 							   (usage '(assig))))
@@ -1738,7 +1748,6 @@
 		       (values
 			  ""
 			  (instantiate::J2SDollar
-			     (context (config-get conf :parser "standard"))
 			     (loc (token-loc ignore))
 			     (node expr))))))
 	      (parse-token-error "Illegal import path" (consume-any!))))
@@ -2074,6 +2083,9 @@
 	 ((ID)
 	  (let* ((token (consume-any!))
 		 (loc (token-loc token))
+		 (opt (when (and typescript (eq? (peek-token-type) '?))
+			 (consume-any!)
+			 #t))
 		 (hint '())
 		 (typ (opt-type)))
 	     (if (eq? (peek-token-type) '=)
@@ -2087,7 +2099,8 @@
 			  (loc loc)
 			  (id (token-value token))
 			  (utype typ)
-			  (hint hint))
+			  (hint hint)
+			  (optional opt))
 		       #f))
 		 ;; no default value
 		 (values 
@@ -2096,7 +2109,8 @@
 		       (loc loc)
 		       (id (token-value token))
 		       (utype typ)
-		       (hint hint))
+		       (hint hint)
+		       (optional opt))
 		    #f))))
 	 ((LBRACE)
 	  (let* ((id (string->symbol (format "%~a" idx)))
@@ -2221,7 +2235,7 @@
 					(rhs val)))))
 		      (else (instantiate::J2SNop
 			       (loc loc))))
-		  (instantiate::J2SIf
+		  (instantiate::J2SIfArgDefVal
 		     (loc loc)
 		     (test test)
 		     (then then)
@@ -2313,7 +2327,7 @@
 			  (let ((decl (instantiate::J2SDeclClass
 					 (loc (token-loc id))
 					 (id (token-value id))
-					 (writable (not (eq? current-mode 'hopscript)))
+					 (writable (and (not (eq? current-mode 'hopscript)) (not typescript)))
 					 (usage (usage '()))
 					 (binder 'let)
 					 (val clazz))))
@@ -3393,7 +3407,8 @@
 		(loc loc)
 		(fun (j2s-tag->expr tag #t))
 		(thisargs (list (J2SUndefined)))
-		(args '()))))
+		(args (list (instantiate::J2SUndefined
+			       (loc loc)))))))
 	 ((HTMLCOMMENT)
 	  (let* ((tag (consume-any!))
 		 (loc (token-loc tag)))
@@ -3422,7 +3437,6 @@
 			   (expr (expression #f #f)))
 		       (pop-open-token (consume-token! 'RBRACE))
 		       (instantiate::J2SDollar
-			  (context (config-get conf :parser "standard"))
 			  (loc (token-loc ignore))
 			  (node expr)))))
 	      (parse-token-error

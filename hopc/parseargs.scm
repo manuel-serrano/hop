@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Copyright   :  2004-23 Manuel Serrano                            */
+;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
 ;*=====================================================================*/
@@ -263,6 +263,9 @@
 	     (hopc-js-return-as-exit-set! #t))
 	    (("--js-no-return-as-exit" (help "Consider top level returns as error"))
 	     (hopc-js-return-as-exit-set! #f))
+	    (("--js-typescript" (help "Enable TypeScript type annotations"))
+	     (hopc-j2s-flags-set!
+		(cons* :typescript #t (hopc-j2s-flags))))
 	    (("--js-type-annotations" (help "Enable type annotations"))
 	     (hopc-js-type-annotations-set! #t))
 	    (("--js-no-type-annotations" (help "Disable type annotations"))

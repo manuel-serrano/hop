@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.7.x/js2scheme/ast.scm                 */
+;*    serrano/prgm/project/hop/hop/js2scheme/ast.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Thu Feb 15 15:46:05 2024 (serrano)                */
+;*    Last change :  Sun Mar 17 07:00:51 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -43,7 +43,7 @@
 	   
 	   (class J2SProgram::J2SBlock
 	      (mode::symbol read-only (default 'normal))
-	      (path::bstring read-only)
+	      (path read-only)
 	      (pcache-size::long (default 0))
 	      (rxcache-size::long (default 0))
 	      (call-size::long (default 0))
@@ -95,7 +95,9 @@
 	      ;; variable 
 	      (hint::pair-nil (default '()) (info '("notraverse")))
 	      ;; export clause (if any)
-	      (export::obj (default #f) (info '("notraverse"))))
+	      (export::obj (default #f) (info '("notraverse")))
+	      ;; optional typescript argument
+	      (optional::bool (default #f)))
 
 	   (class J2SDeclRest::J2SDecl
 	      ;; lonly, 
@@ -164,6 +166,8 @@
 	      (accesses::pair-nil read-only (default '())))
 	   
 	   (final-class J2SIfIsRecord::J2SIf)
+
+	   (final-class J2SIfArgDefVal::J2SIf)
 	   
 	   (final-class J2SVarDecls::J2SStmt
 	      (decls::pair (info '("ast"))))
@@ -489,8 +493,7 @@
 	      stmt::J2SStmt)
 	   
 	   (final-class J2SDollar::J2SExpr
-	      (node::J2SNode (info '("ast")))
-	      (context::bstring read-only))
+	      (node::J2SNode (info '("ast"))))
 	   
 	   (final-class J2SNew::J2SExpr
 	      (caches (default '()))
@@ -583,6 +586,12 @@
 	   (final-class J2SImportDynamic::J2SExpr
 	      (base::bstring (default (pwd)))
 	      path::J2SExpr)
+
+	   (abstract-class TsType
+	      (loc::pair read-only (info '("notraverse"))))
+
+	   (class TsTypeArray::TsType
+	      (of read-only))
 
 	   (generic walk0 n::J2SNode p::procedure)
 	   (generic walk1 n::J2SNode p::procedure a0)
