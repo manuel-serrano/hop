@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Sun Mar 17 07:00:51 2024 (serrano)                */
+;*    Last change :  Sun Mar 24 07:56:25 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -592,6 +592,15 @@
 
 	   (class TsTypeArray::TsType
 	      (of read-only))
+
+	   (class TsTypeFunction::TsType
+	      (range read-only)
+	      (domain read-only))
+
+	   (class TsTypeBinary::TsType
+	      (op::symbol read-only)
+	      (lhs read-only)
+	      (rhs read-only))
 
 	   (generic walk0 n::J2SNode p::procedure)
 	   (generic walk1 n::J2SNode p::procedure a0)

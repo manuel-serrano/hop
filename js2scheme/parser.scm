@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Sun Mar 17 06:57:12 2024 (serrano)                */
+;*    Last change :  Sun Mar 24 07:58:31 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -634,8 +634,8 @@
 	 (if (eq? (peek-token-type) 'COMMA)
 	     (begin
 		(consume-any!)
-		(typescript-args-list))
-	     t)))
+		(cons t (typescript-args-list)))
+	     (list t))))
    
    (define (typescript-simple-type)
       (case (peek-token-type)
@@ -651,29 +651,33 @@
 	  (consume-any!)
 	  'null)
 	 ((LPAREN)
-	  (consume-any!)
-	  (if (eq? (peek-token-type) 'ID)
-	      (let ((id (consume-any!)))
-		 (if (eq? (peek-token-type) ':)
-		     ;; function type
-		     (begin
-			(consume-any!)
-			(typescript-type)
-			(unless (eq? (peek-token-type) 'RPAREN)
-			   (consume-token! 'COMMA)
-			   (typescript-args-list))
-			(consume-token! 'RPAREN)
-			(consume-token! '=>)
-			(typescript-type)
-			'function)
-		     (begin
-			(token-push-back! id)
-			(let ((t (typescript-type-list)))
-			   (consume-token! 'RPAREN)
-			   t))))
-	      (let ((t (typescript-type)))
-		 (consume-token! 'RPAREN)
-		 t)))
+	  (let ((tok (consume-any!)))
+	     (if (eq? (peek-token-type) 'ID)
+		 (let ((id (consume-any!)))
+		    (if (eq? (peek-token-type) ':)
+			;; function type
+			(begin
+			   (consume-any!)
+			   (let ((domain (list (typescript-type))))
+			      (unless (eq? (peek-token-type) 'RPAREN)
+				 (consume-token! 'COMMA)
+				 (set! domain
+				    (append domain (typescript-args-list))))
+			      (consume-token! 'RPAREN)
+			      (consume-token! '=>)
+			      (let ((range (typescript-type)))
+				 (instantiate::TsTypeFunction
+				    (loc (token-loc tok))
+				    (domain domain)
+				    (range range)))))
+			(begin
+			   (token-push-back! id)
+			   (let ((t (typescript-type)))
+			      (consume-token! 'RPAREN)
+			      t))))
+		 (let ((t (typescript-type)))
+		    (consume-token! 'RPAREN)
+		    t))))
 	 ((LBRACE)
 	  (interface-properties))
 	 ((void)
@@ -705,13 +709,21 @@
 	    ((BIT_OR)
 	     ;; union type
 	     (consume-any!)
-	     (typescript-type)
-	     'any)
+	     (let ((tz (typescript-type)))
+		(instantiate::TsTypeBinary
+		   (loc loc)
+		   (op 'BIT_OR)
+		   (lhs ty)
+		   (rhs tz))))
 	    ((&)
 	     ;; intersection type
 	     (consume-any!)
-	     (typescript-type)
-	     'any)
+	     (let ((tz (typescript-type)))
+		(instantiate::TsTypeBinary
+		   (loc loc)
+		   (op '&)
+		   (lhs ty)
+		   (rhs tz))))
 	    ((OTAG)
 	     ;; parametric type
 	     (consume-any!)
@@ -1875,7 +1887,7 @@
 
    (define (import-name-list)
       (consume-any!)
-      (let loop ((lst '()))
+      (let loop ()
 	 (let* ((token (consume2! 'ID 'default))
 		(loc (token-loc token))
 		(id (token-value token))
@@ -1891,13 +1903,13 @@
 		(next (consume-any!)))
 	    (case (token-type next)
 	       ((RBRACE)
-		(cons impnm lst))
+		(list impnm))
 	       ((COMMA)
 		(if (eq? (peek-token-type) 'RBRACE)
 		    (begin
 		       (consume-any!)
-		       (cons impnm lst))
-		    (loop (cons impnm lst))))
+		       (list impnm))
+		    (cons impnm (loop))))
 	       (else
 		(parse-token-error "Illegal import" next))))))
 
@@ -2679,9 +2691,15 @@
 		       (new-level (op-level typ)))
 		   (cond
 		      ((and (eq? typ 'as) typescript)
-		       (consume-any!)
-		       (typescript-type)
-		       expr)
+		       (let ((as (consume-any!)))
+			  (let ((ty (typescript-type)))
+			     (instantiate::J2SBinary 
+				(loc (token-loc as))
+				(type ty)
+				(op 'as)
+				(lhs expr)
+				(rhs (instantiate::J2SUndefined
+					(loc (token-loc as))))))))
 		      ((eq? typ '**)
 		       (let ((token (consume-any!)))
 			  (cond
