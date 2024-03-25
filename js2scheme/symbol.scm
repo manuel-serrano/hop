@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Sun Jul  2 06:36:39 2023 (serrano)                */
-;*    Copyright   :  2013-23 Manuel Serrano                            */
+;*    Last change :  Mon Mar 25 09:12:53 2024 (serrano)                */
+;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
 ;*    -------------------------------------------------------------    */
@@ -1328,10 +1328,18 @@
 (define-walk-method (resolve-type this::J2SDecl env conf)
    (call-default-walker)
    (with-access::J2SDecl this (utype id loc)
-      (let ((decl (find-decl utype env)))
-	 (when (isa? decl J2SDeclClass)
-	    (with-access::J2SDeclClass decl (val id)
-	       (set! utype val))))))
+      (cond
+	 ((symbol? utype)
+	  (let ((decl (find-decl utype env)))
+	     (when (isa? decl J2SDeclClass)
+		(with-access::J2SDeclClass decl (val id)
+		   (set! utype val)))))
+	 ((isa? utype TsTypeArray)
+	  (set! utype 'array))
+	 ((isa? utype TsTypeFunction)
+	  (set! utype 'function))
+	 ((isa? utype TsType)
+	  (set! utype 'any)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    resolve-tilde! ...                                               */

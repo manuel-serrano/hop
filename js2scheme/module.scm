@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 15 15:16:16 2018                          */
-;*    Last change :  Sat Mar  9 09:39:09 2024 (serrano)                */
+;*    Last change :  Mon Mar 25 09:03:14 2024 (serrano)                */
 ;*    Copyright   :  2018-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES6 Module handling                                              */
@@ -637,7 +637,7 @@
 	      (let ((dir (or (config-get args :node-modules-directory)
 			     (hop-node-modules-dir))))
 		 (or (resolve-file-or-directory (substring name 4) dir)
-		     (resolve-modules name)
+		     (resolve-modules (substring name 4))
 		     (resolve-error name)))))
 	 ((string-prefix? "hop:" name)
 	  (let ((dir (or (config-get args :node-modules-directory)
