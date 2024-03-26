@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    .../prgm/project/hop/hop/node_modules/hopc/node/hop2js.scm       */
+;*    serrano/prgm/project/hop/hop/tools/hop2js.scm                    */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  manuel serrano                                    */
 ;*    Creation    :  Wed Sep 13 01:56:26 2023                          */
-;*    Last change :  Mon Mar 25 13:13:23 2024 (serrano)                */
+;*    Last change :  Tue Mar 26 18:29:30 2024 (serrano)                */
 ;*    Copyright   :  2023-24 manuel serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    A restricted Hop-to-JS compiler.                                 */
@@ -68,6 +68,8 @@
 (hashtable-put! ident-table "while" "$$while")
 
 (hashtable-put! ident-table "memq" "memqArray")
+
+(hashtable-put! ident-table "file-exists?" "fs.existsSync")
 
 ;*---------------------------------------------------------------------*/
 ;*    caml-case ...                                                    */
@@ -141,6 +143,8 @@
 	     (let ((x (eval (cons* 'lambda margs body))))
 		(hop2js-expr (apply x args)  env))))
        #f)
+      ((define (and (? symbol?) ?var) ?expr)
+       (hop2js-stmt-define var expr '() kont-init))
       (else #f)))
 
 ;*---------------------------------------------------------------------*/
@@ -174,9 +178,10 @@
 (define (hop2js-ref id::symbol env::pair-nil)
    (let ((c (assq id env)))
       (if (and c (pair? (cdr c)))
-	  (if (pregexp-match "^[_a-zA-Z0-9]+$" (symbol->string! (cadr c)))
-	      (format "~a.~a" (caddr c) (cadr c))
-	      (format "~a['~a']" (caddr c) (cadr c)))
+	  (let ((k (symbol->string! (cadr c))))
+	     (if (pregexp-match "^[_a-zA-Z0-9]+$" k)
+		 (format "~a.~a" (caddr c) k)
+		 (format "~a['~a']" (caddr c) k)))
 	  (hop2js-ident id))))
 
 ;*---------------------------------------------------------------------*/
@@ -218,9 +223,10 @@
       (if (pair? export)
 	  (kont
 	     (format "export {~(, )}" 
-		(map (lambda (e)
-			(let ((id (if (pair? e) (car e) e)))
-			   (hop2js-typed-ident id)))
+		(filter-map (lambda (e)
+			       (let ((id (if (pair? e) (car e) e)))
+				  (unless (memq id '(class final-class abstract-class wide-class))
+				     (hop2js-typed-ident id))))
 		   (cdr export))))
 	  (kont ""))))
 
@@ -363,11 +369,14 @@
 	  (else
 	   (number->string expr))))
       ((? string?)
-       (string-append "\"" (string-for-read expr) "\""))
+       (string-append "\"" (hop2js-string expr) "\""))
       ((? keyword?)
        (string-append "'" (keyword->string expr) "'"))
       ((? char?)
-       (string-append "'" (string expr) "'"))
+       (let ((n (char->integer expr)))
+	  (if (and (>fx n 0) (<=fx n 127))
+	      (string-append "'" (string expr) "'")
+	      (string-append "'" (format "\\u~4,0x" n) "'"))))
       ((? symbol?)
        (hop2js-ref expr env))
       (((kwote quote) (and ?sym (? symbol?)))
@@ -380,11 +389,22 @@
 		  (cond
 		     ((symbol? e)
 		      (string-append "'" (symbol->string e) "'"))
-		     ((or (string? e) (char? e) (boolean? e))
+		     ((or (string? e) (char? e) (boolean? e) (number? e))
 		      (hop2js-expr e env))
 		     (else
 		      (error "kwote" "unsupported literal" e))))
 	     els)))
+      (((kwote quote) (and ?els (? vector?)))
+       (format "[~(, )]"
+	  (map (lambda (e)
+		  (cond
+		     ((symbol? e)
+		      (string-append "'" (symbol->string e) "'"))
+		     ((or (string? e) (char? e) (boolean? e) (number? e))
+		      (hop2js-expr e env))
+		     (else
+		      (error "kwote" "unsupported literal" e))))
+	     (vector->list els))))
       ((quasiquote . ?-)
        "undefined")
       ((? boolean?)
@@ -436,6 +456,25 @@
        "??")))
 
 ;*---------------------------------------------------------------------*/
+;*    hop2js-string ...                                                */
+;*---------------------------------------------------------------------*/
+(define (hop2js-string str)
+   
+   (define (encchar c)
+      (let ((n (char->integer c)))
+	 (if (and (>fx n 0) (<=fx n 127))
+	     (string c)
+	     (format "\\u~4,0x" n))))
+      
+   (let loop ((i (-fx (string-length str) 1)))
+      (if (=fx i -1)
+	  str
+	  (let ((n (char->integer (string-ref str i))))
+	     (if (and (>fx n 0) (<=fx n 127))
+		 (loop (-fx i 1))
+		 (apply string-append (map encchar (string->list str))))))))
+
+;*---------------------------------------------------------------------*/
 ;*    hop2js-stmt-case ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (hop2js-stmt-case expr clauses env kont)
@@ -446,11 +485,11 @@
 	  (format "default: ~a"
 	     (hop2js-stmt* body env kont)))
 	 ((((and ?s (? symbol?))) . ?body)
-	  (format "case '~a': ~a"
+	  (format "case '~a': ~a break;"
 	     (symbol->string s)
 	     (hop2js-stmt* body env kont)))
 	 ((((and ?n (? integer?))) . ?body)
-	  (format "case ~a: ~a"
+	  (format "case ~a: ~a break;"
 	     n
 	     (hop2js-stmt* body env kont)))
 	 (((and ?symbols (? (lambda (v) (every symbol? v)))) . ?body)
@@ -458,13 +497,24 @@
 	     (apply string-append
 		(map (lambda (s) (format "case '~a':" (symbol->string s)))
 		   symbols))
-	     (hop2js-stmt* body env kont)))
+	     (hop2js-stmt* body env kont)
+	     "break;"))
 	 (((and ?numbers (? (lambda (v) (every integer? v)))) . ?body)
 	  (string-append
 	     (apply string-append
 		(map (lambda (n) (format "case ~a:" n))
 		   numbers))
-	     (hop2js-stmt* body env kont)))))
+	     (hop2js-stmt* body env kont)
+	     "break;"))
+	 (((and ?chars (? (lambda (v) (every char? v)))) . ?body)
+	  (string-append
+	     (apply string-append
+		(map (lambda (n) (format "case '~a':" (hop2js-string (string n))))
+		   chars))
+	     (hop2js-stmt* body env kont)
+	     "break;"))
+	 (else
+	  (error "hop2js-stmt-case" "cannot compile" expr))))
    
    (format "switch (~a) { ~( ) }" (hop2js-expr expr env)
       (map case-clause clauses)))
@@ -721,7 +771,31 @@
 		 (else
 		  ;; regular calls
 		  (format "~a(~(, ))" (hop2js-expr fun env)
-		     (map (lambda (e) (hop2js-expr e env)) args)))))))))
+		     (if (find keyword? args)
+			 (hop2js-keyword-args args env)
+			 (map (lambda (e) (hop2js-expr e env)) args))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    hop2js-keyword-args ...                                          */
+;*---------------------------------------------------------------------*/
+(define (hop2js-keyword-args args env)
+
+   (define (args->object args env)
+      (string-append "{"
+	 (let loop ((args args))
+	    (let ((p (format "\"~a\": ~a"
+			(keyword->string (car args))
+			(hop2js-expr (cadr args) env))))
+	       (string-append p
+		  (if (pair? (cddr args))
+		      (string-append ", " (loop (cddr args)))
+		      "}"))))))
+	    
+   (let loop ((args args))
+      (if (keyword? (car args))
+	  (list (args->object args env))
+	  (cons (hop2js-expr (car args) env)
+	     (loop (cdr args))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop2js-instantiate ...                                           */
@@ -801,14 +875,22 @@
 ;*    hop2js-stmt-with-access ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (hop2js-stmt-with-access obj props expr* env kont)
-   (let* ((id (gensym 'obj))
-	  (frame (map (lambda (p)
-			 (if (symbol? p)
-			     (list p p id)
-			     (list (car p) (cadr p) id)))
-		    props)))
-      (format "{ let ~a = ~a; ~a }" id (hop2js-expr obj env)
-	 (hop2js-stmt* expr* (append frame env) kont))))
+   (if (symbol? obj)
+       (let* ((id (hop2js-expr obj env))
+	      (frame (map (lambda (p)
+			     (if (symbol? p)
+				 (list p p id)
+				 (list (car p) (cadr p) id)))
+			props)))
+	  (hop2js-stmt* expr* (append frame env) kont))
+       (let* ((id (gensym 'obj))
+	      (frame (map (lambda (p)
+			     (if (symbol? p)
+				 (list p p id)
+				 (list (car p) (cadr p) id)))
+			props)))
+	  (format "{ let ~a = ~a; ~a }" id (hop2js-expr obj env)
+	     (hop2js-stmt* expr* (append frame env) kont)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop2js-expr-with-access ...                                      */
@@ -850,13 +932,18 @@
 (define generic-binop-expander
    (lambda (fun args env)
       (let ((lhs (hop2js-expr (car args) env))
-	    (rhs (hop2js-expr (cadr args) env)))
-	 (format "~a ~a ~a" lhs fun rhs))))
+	    (rhs (if (pair? (cddr args))
+		     (hop2js-expr `(,fun ,@(cdr args)) env)
+		     (hop2js-expr (cadr args) env))))
+	 (format "(~a ~a ~a)" lhs fun rhs))))
+
 (define =-binop-expander
    (lambda (fun args env)
       (let ((lhs (hop2js-expr (car args) env))
-	    (rhs (hop2js-expr (cadr args) env)))
-	 (format "~a == ~a" lhs rhs))))
+	    (rhs (if (pair? (cddr args))
+		     (hop2js-expr `(,fun ,@(cdr args)) env)
+		     (hop2js-expr (cadr args) env))))
+	 (format "(~a === ~a)" lhs rhs))))
 (hashtable-put! expander-table "=" =-binop-expander)
 (hashtable-put! expander-table ">" generic-binop-expander)
 (hashtable-put! expander-table ">=" generic-binop-expander)
@@ -869,15 +956,16 @@
 (define specific-binop-expander
    (lambda (fun args env)
       (let ((lhs (hop2js-expr (car args) env))
-	    (rhs (hop2js-expr (cadr args) env))
+	    (rhs (if (pair? (cddr args))
+		     (hop2js-expr `(,fun ,@(cdr args)) env)
+		     (hop2js-expr (cadr args) env)))
 	    (op (substring (symbol->string fun) 0 1)))
-	 (format "~a ~a ~a" lhs op rhs))))
+	 (format "(~a ~a ~a)" lhs op rhs))))
 
 (hashtable-put! expander-table "+fx" specific-binop-expander)
 (hashtable-put! expander-table "-fx" specific-binop-expander)
 (hashtable-put! expander-table "*fx" specific-binop-expander)
 (hashtable-put! expander-table "/fx" specific-binop-expander)
-(hashtable-put! expander-table "=fx" specific-binop-expander)
 (hashtable-put! expander-table ">=fx" specific-binop-expander)
 (hashtable-put! expander-table ">fx" specific-binop-expander)
 (hashtable-put! expander-table "<fx" specific-binop-expander)
@@ -898,6 +986,25 @@
 (hashtable-put! expander-table ">llong" specific-binop-expander)
 (hashtable-put! expander-table "<llong" specific-binop-expander)
 (hashtable-put! expander-table "<=llong" specific-binop-expander)
+(hashtable-put! expander-table "+elong" specific-binop-expander)
+(hashtable-put! expander-table "-elong" specific-binop-expander)
+(hashtable-put! expander-table "*elong" specific-binop-expander)
+(hashtable-put! expander-table "/elong" specific-binop-expander)
+(hashtable-put! expander-table ">=elong" specific-binop-expander)
+(hashtable-put! expander-table ">elong" specific-binop-expander)
+(hashtable-put! expander-table "<elong" specific-binop-expander)
+(hashtable-put! expander-table "<=elong" specific-binop-expander)
+
+(define eq-expander
+   (lambda (fun args env)
+      (let ((lhs (hop2js-expr (car args) env))
+	    (rhs (hop2js-expr (cadr args) env))
+	    (op (substring (symbol->string fun) 0 1)))
+	 (format "~a === ~a" lhs rhs))))
+
+(hashtable-put! expander-table "=fx" eq-expander)
+(hashtable-put! expander-table "=elong" eq-expander)
+(hashtable-put! expander-table "=llong" eq-expander)
 
 (hashtable-put! expander-table "-"
    (lambda (fun args env)
@@ -908,12 +1015,7 @@
 	  (let ((lhs (hop2js-expr (car args) env)))
 	     (format "- ~a" lhs)))))
 
-(hashtable-put! expander-table "eq?"
-   (lambda (fun args env)
-      (let ((lhs (hop2js-expr (car args) env))
-	    (rhs (hop2js-expr (cadr args) env))
-	    (op (substring (symbol->string fun) 0 1)))
-	 (format "~a === ~a" lhs rhs))))
+(hashtable-put! expander-table "eq?" eq-expander)
       
 (hashtable-put! expander-table "not"
    (lambda (fun args env)
@@ -964,6 +1066,35 @@
       (format "~a[~a]"
 	 (hop2js-expr (car args) env) (hop2js-expr (cadr args) env))))
 
+(hashtable-put! expander-table "substring=?"
+   (lambda (fun args env)
+      (format "~a.substring(0, ~a) === ~a"
+	 (hop2js-expr (car args) env)
+	 (hop2js-expr (caddr args) env)
+	 (hop2js-expr (cadr args) env))))
+
+(hashtable-put! expander-table "substring"
+   (lambda (fun args env)
+      (if (pair? (cddr args))
+	  (format "~a.substring(~a, ~a)"
+	     (hop2js-expr (car args) env)
+	     (hop2js-expr (cadr args) env)
+	     (hop2js-expr (caddr args) env))
+	  (format "~a.substring(0, ~a)"
+	     (hop2js-expr (car args) env)
+	     (hop2js-expr (cadr args) env)))))
+
+(hashtable-put! expander-table "substring-at?"
+   (lambda (fun args env)
+      (format "~a.substring(~a, ~a + ~a) === ~a"
+	 (hop2js-expr (car args) env)
+	 (hop2js-expr (caddr args) env)
+	 (hop2js-expr (caddr args) env)
+	 (if (string? (cadr args))
+	     (string-length (cadr args))
+	     (format "~a.length" (hop2js-expr (cadr args) env)))
+	 (hop2js-expr (cadr args) env))))
+
 (hashtable-put! expander-table "isa?"
    (lambda (fun args env)
       (format "~a instanceof ~a"
@@ -979,6 +1110,19 @@
    (lambda (fun args env)
       (format "[~(, )]" 
 	 (map (lambda (e) (hop2js-expr e env)) args))))
+
+(hashtable-put! expander-table "vector-ref"
+   (lambda (fun args env)
+      (format "~a[~a]"
+	 (hop2js-expr (car args) env)
+	 (hop2js-expr (cadr args) env))))
+
+(hashtable-put! expander-table "vector-set!"
+   (lambda (fun args env)
+      (format "~a[~a] = ~a"
+	 (hop2js-expr (car args) env)
+	 (hop2js-expr (cadr args) env)
+	 (hop2js-expr (caddr args) env))))
 
 (hashtable-put! expander-table "usage"
    (lambda (fun args env)
@@ -1014,9 +1158,17 @@
 	    (hop2js-expr `(begin ,@body) env)
 	    (map (lambda (_) "undefined") bindings)))))
 
-(hashtable-put! expander-table "fixnump"
+(hashtable-put! expander-table "fixnum?"
    (lambda (fun args env)
       (format "Number.isInteger(~a)" (hop2js-expr (car args) env))))
+
+(hashtable-put! expander-table "integer?"
+   (lambda (fun args env)
+      (format "Number.isInteger(~a)" (hop2js-expr (car args) env))))
+
+(hashtable-put! expander-table "number?"
+   (lambda (fun args env)
+      (format "typeof (~a) === 'number'" (hop2js-expr (car args) env))))
 
 (hashtable-put! expander-table "elongp"
    (lambda (fun args env)
@@ -1040,7 +1192,7 @@
 
 (hashtable-put! expander-table "char->integer"
    (lambda (fun args env)
-      (format "~a.charCodeAt[0]" (hop2js-expr (car args) env))))
+      (format "~a.charCodeAt(0)" (hop2js-expr (car args) env))))
 
 (hashtable-put! expander-table "bit-lsh"
    (lambda (fun args env)
@@ -1104,3 +1256,63 @@
    (lambda (fun args env)
       (format "console.error(~(, ))"
 	 (map (lambda (e) (hop2js-expr e env)) args))))
+
+(hashtable-put! expander-table "open-mmap"
+   (lambda (fun args env)
+      (format "new Mmap(~(, ))"
+	 (map (lambda (a) (hop2js-expr a env)) args))))
+
+(hashtable-put! expander-table "close-mmap"
+   (lambda (fun args env)
+      (format "~a.close()"
+	 (hop2js-expr (car args) env))))
+
+(hashtable-put! expander-table "mmap-length"
+   (lambda (fun args env)
+      (format "~a.length"
+	 (hop2js-expr (car args) env))))
+
+(hashtable-put! expander-table "mmap-ref"
+   (lambda (fun args env)
+      (format "~a.ref(~a)"
+	 (hop2js-expr (car args) env) (hop2js-expr (cadr args) env))))
+
+(hashtable-put! expander-table "mmap-get-string"
+   (lambda (fun args env)
+      (format "~a.toString(~a)"
+	 (hop2js-expr (car args) env) (hop2js-expr (cadr args) env))))
+
+(hashtable-put! expander-table "mmap-get-char"
+   (lambda (fun args env)
+      (format "~a.get()"
+	 (hop2js-expr (car args) env))))
+
+(hashtable-put! expander-table "mmap-read-position"
+   (lambda (fun args env)
+      (format "~a.rindex"
+	 (hop2js-expr (car args) env))))
+
+(hashtable-put! expander-table "mmap-read-position-set!"
+   (lambda (fun args env)
+      (format "~a.rindex = ~a"
+	 (hop2js-expr (car args) env) (hop2js-expr (cadr args) env))))
+
+(hashtable-put! expander-table "mmap-write-position"
+   (lambda (fun args env)
+      (format "~a.windex"
+	 (hop2js-expr (car args) env))))
+
+(hashtable-put! expander-table "mmap-write-position-set!"
+   (lambda (fun args env)
+      (format "~a.windex = ~a"
+	 (hop2js-expr (car args) env) (hop2js-expr (cadr args) env))))
+
+(hashtable-put! expander-table "format"
+   (lambda (fun args env)
+      (hop2js-expr (car args) env)))
+
+(hashtable-put! expander-table "make-tuple"
+   (lambda (fun args env)
+      (format "[~a, ~a]"
+	 (hop2js-expr (car args) env) (hop2js-expr (cadr args) env))))
+   

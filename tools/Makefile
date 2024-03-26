@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/3.1.x/tools/Makefile                    */
+#*    serrano/prgm/project/hop/hop/tools/Makefile                      */
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Sat Oct 15 06:47:24 2016 (serrano)                */
+#*    Last change :  Tue Mar 26 07:42:40 2024 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds Hopc                                    */
 #*=====================================================================*/
@@ -39,7 +39,10 @@ POPULATION 	= $(INCLUDES) $(SOURCES) Makefile
 #*---------------------------------------------------------------------*/
 .PHONY: build dobuild
 
-build:  $(BUILDBINDIR)/testjs # $(BUILDBINDIR)/heaptojs
+build:  o
+	$(MAKE) progs
+
+progs: $(BUILDBINDIR)/testjs $(BUILDBINDIR)/hop2js $(BUILDBINDIR)/mkjsast
 
 o: 
 	mkdir -p $@
@@ -48,8 +51,11 @@ o:
 $(BUILDBINDIR)/testjs: .afile .etags o/testjs.o
 	@ $(call link,$(BIGLOO),$(BCFLAGS),,o/testjs.o,-o,$@)
 
-$(BUILDBINDIR)/heaptojs: .afile .etags o/heaptojs.o
-	@ $(call link,$(BIGLOO),$(BCFLAGS),,o/heaptojs.o,-o,$@)
+$(BUILDBINDIR)/hop2js: .afile .etags o/hop2js.o
+	@ $(call link,$(BIGLOO),$(BCFLAGS),,o/hop2js.o,-o,$@)
+
+$(BUILDBINDIR)/mkjsast: .afile .etags o/mkjsast.o
+	@ $(call link,$(BIGLOO),$(BCFLAGS),,o/mkjsast.o,-o,$@)
 
 #*---------------------------------------------------------------------*/
 #*    SUFFIXES                                                         */
@@ -60,7 +66,7 @@ $(BUILDBINDIR)/heaptojs: .afile .etags o/heaptojs.o
 #*---------------------------------------------------------------------*/
 #*    The implicit `.scm.o' rule                                       */
 #*---------------------------------------------------------------------*/
-o/%.o: %.scm .afile o
+o/%.o: %.scm .afile
 	@ $(call compile2,$(BIGLOO),$(BCFLAGS),$(BHFLAGS),-c,$< -o $@)
 
 #*---------------------------------------------------------------------*/
@@ -72,9 +78,6 @@ ude:
 
 .afile: $(SOURCES)
 	@ $(AFILE) -o .afile $(SOURCES) 
-
-.jfile: $(SOURCES)
-	@ $(JFILE) -o .jfile -pbase bigloo.hop $(SOURCES)
 
 .etags: .afile
 	@ $(BTAGS) -o .etags $(SOURCES)
@@ -100,21 +103,18 @@ install: install-$(BACKEND)
 install-native:
 	$(INSTALL) $(BUILDBINDIR)/testjs $(DESTDIR)$(HOPBINDIR)
 	chmod $(MODEXE) $(DESTDIR)$(HOPBINDIR)/testjs
-	$(INSTALL) $(BUILDBINDIR)/heaptojs $(DESTDIR)$(HOPBINDIR)
-	chmod $(MODEXE) $(DESTDIR)$(HOPBINDIR)/heaptojs
-
-install-jvm:
-	$(INSTALL) $(BUILDBINDIR)/testjs.jar $(DESTDIR)$(HOPBINDIR)
-	chmod $(MODFILE) $(DESTDIR)$(HOPBINDIR)/testjs.jar
-	$(INSTALL) $(BUILDBINDIR)/heaptojs.jar $(DESTDIR)$(HOPBINDIR)
-	chmod $(MODFILE) $(DESTDIR)$(HOPBINDIR)/heaptojs.jar
+	$(INSTALL) $(BUILDBINDIR)/hop2js $(DESTDIR)$(HOPBINDIR)
+	chmod $(MODEXE) $(DESTDIR)$(HOPBINDIR)/hop2js
+	$(INSTALL) $(BUILDBINDIR)/mkjsast $(DESTDIR)$(HOPBINDIR)
+	chmod $(MODEXE) $(DESTDIR)$(HOPBINDIR)/mkjsast
 
 #*---------------------------------------------------------------------*/
 #*    uninstall                                                        */
 #*---------------------------------------------------------------------*/
 uninstall:
 	/bin/rm -f $(DESTDIR)$(HOPBINDIR)/testjs
-	/bin/rm -f $(DESTDIR)$(HOPBINDIR)/heaptojs
+	/bin/rm -f $(DESTDIR)$(HOPBINDIR)/hop2js
+	/bin/rm -f $(DESTDIR)$(HOPBINDIR)/mkjsast
 
 #*---------------------------------------------------------------------*/
 #*    clean                                                            */
@@ -124,7 +124,8 @@ clean:
 	/bin/rm -f $(MODULES:%=%.c)
 	/bin/rm -rf o
 	/bin/rm -f $(BUILDBINDIR)/testjs
-	/bin/rm -f $(BUILDBINDIR)/heaptojs
+	/bin/rm -f $(BUILDBINDIR)/hop2js
+	/bin/rm -f $(BUILDBINDIR)/mkjsast
 	/bin/rm -rf META-INF
 
 devclean: clean

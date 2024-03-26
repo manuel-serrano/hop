@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Sun Mar 10 13:25:36 2024 (serrano)                */
+#*    Last change :  Tue Mar 26 07:42:02 2024 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -35,7 +35,7 @@ POPDIRS		= runtime hopscheme scheme2js hopscript js2scheme \
 #*---------------------------------------------------------------------*/
 .PHONY: bindir libdir lib widget share weblets bin \
   share-afile scheme2js hopscript js2scheme nodejs \
-  android node_modules doc test .buildtag
+  android node_modules doc test .buildtag tools
 
 build: build-sans-modules
 	$(MAKE) -C node_modules
@@ -49,7 +49,7 @@ bindir:
 libdir:
 	mkdir -p lib
 
-bin: bindir hopc-bin src-bin hopsh-bin hopreplay-bin hophz-bin
+bin: bindir hopc-bin src-bin hopsh-bin hopreplay-bin hophz-bin tools-bin
 
 hopc-bin: lib
 	$(MAKE) -C hopc build
@@ -65,6 +65,9 @@ hopreplay-bin: lib
 
 hophz-bin: lib hopc-bin widget weblets
 	$(MAKE) -C hophz build
+
+tools-bin: bin
+	$(MAKE) -C tools build
 
 lib: libdir scheme2js hopscript
 	$(MAKE) -C hopscheme build
@@ -302,6 +305,7 @@ clean:
 
 clean-npm:
 	rm -rf npm
+	$(MAKE) -C node_modules/exif/node clean
 
 devclean:
 	$(MAKE) -C runtime devclean
@@ -501,7 +505,7 @@ predistrib:
 #*---------------------------------------------------------------------*/
 #*    npm                                                              */
 #*---------------------------------------------------------------------*/
-.PHONY: npm npm-module
+.PHONY: npm npm-module npm-module-default-build
 
 MODULES=readlines hop hopc exif
 MODULEDIR=$(MODULE)-$(HOPRELEASE)-$(HOPBUILDTAG)
@@ -519,12 +523,11 @@ npm-sans-rm: npm-dir
 npm-dir:
 	mkdir -p npm
 
-npm-module-sans-rm:
-	echo $(MODULEDIR)
+npm-module-default-build:
 	mkdir -p npm/$(MODULEDIR)
 	mkdir -p npm/$(MODULEDIR)/lib
 	cp node_modules/$(MODULE)/package.json npm/$(MODULEDIR)
-	cp node_modules/$(MODULE)/lib/*.js npm/$(MODULEDIR)
+	cp node_modules/$(MODULE)/lib/*.*js npm/$(MODULEDIR)
 	cp node_modules/$(MODULE)/lib/*.d.ts npm/$(MODULEDIR)/lib
 	cp -r node_modules/$(MODULE)/test npm/$(MODULEDIR)
 	cp node_modules/$(MODULE)/node/*.*s npm/$(MODULEDIR)/lib
@@ -532,7 +535,18 @@ npm-module-sans-rm:
            $(MAKE) -C node_modules/$(MODULE)/node NPMDIR=../../../npm/$(MODULEDIR); \
            $(MAKE) -C node_modules/$(MODULE)/node NPMDIR=../../../npm/$(MODULEDIR) clean; \
         fi
-	(cd npm; tar --exclude="*.so" -zcvf  $(MODULEDIR).tgz $(MODULEDIR))
+
+npm-module-sans-rm:
+	@ $(call build,npm/$(MODULEDIR))
+	@ if [ -f node_modules/$(MODULE)/Makefile ]; then \
+	   echo "$(MAKE) -C node_modules/$(MODULE) MODULEDIR=\"$(MODULEDIR)\""; \
+           $(MAKE) -C node_modules/$(MODULE) MODULEDIR=$(MODULEDIR); \
+        else \
+	   echo "$(MAKE) npm-module-default-build MODULEDIR=\"$(MODULEDIR)\""; \
+	   $(MAKE) npm-module-default-build MODULEDIR=$(MODULEDIR); \
+        fi
+	(cd npm; tar --exclude="*.so" -zcf  $(MODULEDIR).tgz $(MODULEDIR))
+	@ $(call done,npm/$(MODULEDIR))
 
 npm-module: npm-module-sans-rm
 	(cd npm; rm -rf $(MODULEDIR))

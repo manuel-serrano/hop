@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/3.7.x/etc/Makefile.hopconfig.in         */
+#*    serrano/prgm/project/hop/hop/etc/Makefile.hopconfig.in           */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Sep 17 14:27:28 2004                          */
-#*    Last change :  Thu Nov 16 09:05:50 2023 (serrano)                */
-#*    Copyright   :  2004-23 Manuel Serrano                            */
+#*    Last change :  Tue Mar 26 08:22:59 2024 (serrano)                */
+#*    Copyright   :  2004-24 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The autoconf Makefile skeleton for HOP.                          */
 #*=====================================================================*/
@@ -153,6 +153,7 @@ COLOR_DEST	= [0m[1;32m
 endif
 
 done = echo '$(COLOR_DEST)$(1)$(COLOR_STOP)...done.'
+build = echo '$(COLOR_CC)$(1)$(COLOR_STOP)...'
 compile = echo '$(COLOR_CC)$(1)$(COLOR_STOP) $(2) $(3) $(COLOR_OBJ)$(4)$(COLOR_STOP)'; $(1) $(2) $(3) $(4)
 compile2 = echo '$(COLOR_CC)$(1)$(COLOR_STOP) $(2) $(3) $(4) $(COLOR_OBJ)$(5)$(COLOR_STOP)'; $(1) $(2) $(3) $(4) $(5)
 compile3 = echo '$(COLOR_CC)$(1)$(COLOR_STOP) $(5) $(COLOR_OBJ)$(6)$(COLOR_STOP) $(2) $(3) $(4)'; $(1) $(5) $(6) $(2) $(3) $(4)
