@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Sat Mar  9 13:14:29 2024 (serrano)                */
+;*    Last change :  Wed Mar 27 19:41:38 2024 (serrano)                */
 ;*    Copyright   :  2014-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -440,7 +440,8 @@
 				       %process %this keep-alive services
 				       call %retval prerun state)
       ;; set thread name for better debugging
-      (thread-name-set! (current-thread) (or name "hopjs"))
+      (thread-name-set! (current-thread)
+	 (if (symbol? name) (symbol->string name) "hopjs"))
       ;; mimic nodejs file descriptor limit
       (cond-expand
 	 (rlimit

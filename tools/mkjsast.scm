@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul  1 16:05:56 2014                          */
-;*    Last change :  Wed Mar 27 07:21:42 2024 (serrano)                */
+;*    Last change :  Wed Mar 27 18:02:36 2024 (serrano)                */
 ;*    Copyright   :  2014-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Build the JS Ast from the Bigloo type class hierarchy            */
@@ -147,11 +147,11 @@
       ((?name #f #f ?fields)
        ;; root class
        (set-car! (cdr class) #t)
-       (printf "export function ~a(~(, )) {\n" name (map ident fields))
+       (printf "export function ~a(~(, )) {\n" name (map (lambda (f) (ident (car f))) fields))
        (printf "   this.__node__ = \"~a\";\n" name)
        (for-each (lambda (f)
 		    (printf "   this[~s] = ~a;\n"
-		       (symbol->string (car f)) (ident f))) fields)
+		       (symbol->string (car f)) (ident (car f)))) fields)
        (printf "}\n")
        (when (any cdr fields)
 	  (tojson name fields))
@@ -162,14 +162,14 @@
 	      (superfields (class-superfields super env))
 	      (allfields (append superfields fields)))
 	  (set-car! (cdr class) #t)
-	  (printf "export function ~a(~(, )) {\n" name (map ident allfields))
+	  (printf "export function ~a(~(, )) {\n" name (map (lambda (f) (ident (car f))) allfields))
 	  (if (pair? superfields)
 	      (printf "   ~a.call(this, ~(, ));\n"
-		 super (map ident superfields))
+		 super (map (lambda (f) (ident (car f))) superfields))
 	      (printf "   ~a.call( this );\n" super))
 	  (for-each (lambda (f)
 		       (printf "   this[~s] = ~a;\n"
-			  (symbol->string (car f)) (ident f)))
+			  (symbol->string (car f)) (ident (car f))))
 	     fields)
 	  (printf "   this.__node__ = \"~a\";\n" name)
 	  (printf "}\n")

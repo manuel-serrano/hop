@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Sun Mar 24 07:58:31 2024 (serrano)                */
+;*    Last change :  Wed Mar 27 19:37:20 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -533,13 +533,22 @@
 	       (val val)
 	       (utype ty)
 	       (optional opt)))
-	 (lambda (loc id ty opt)
-	    (instantiate::J2SDecl
-	       (loc loc)
-	       (id id)
-	       (binder 'let)
-	       (utype ty)
-	       (optional opt)))))
+	 (if typescript
+	     (lambda (loc id ty opt)
+		(instantiate::J2SDecl
+		   (loc loc)
+		   (id id)
+		   (binder 'let)
+		   (utype ty)
+		   (optional opt)))
+	     (lambda (loc id ty opt)
+		(instantiate::J2SDeclInit
+		   (loc loc)
+		   (id id)
+		   (binder 'let)
+		   (val (J2SUndefined))
+		   (utype ty)
+		   (optional opt))))))
    
    (define (const-decl-list in-for-init?)
       ;; ES6 const block
