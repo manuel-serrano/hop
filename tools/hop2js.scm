@@ -3,25 +3,42 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  manuel serrano                                    */
 ;*    Creation    :  Wed Sep 13 01:56:26 2023                          */
-;*    Last change :  Tue Mar 26 18:29:30 2024 (serrano)                */
+;*    Last change :  Wed Mar 27 06:45:13 2024 (serrano)                */
 ;*    Copyright   :  2023-24 manuel serrano                            */
 ;*    -------------------------------------------------------------    */
-;*    A restricted Hop-to-JS compiler.                                 */
+;*    A partial Hop-to-JS compiler.                                    */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module hop2js
+   (include "ident.sch")
    (main main))
 
 ;*---------------------------------------------------------------------*/
 ;*    main ...                                                         */
 ;*---------------------------------------------------------------------*/
 (define (main args)
-   (if (pair? (cdr args))
-       (for-each (lambda (p) (call-with-input-file p compile-port)) (cdr args))
-       (compile-port (current-input-port))))
+   (let ((files '()))
+      (args-parse (cdr args)
+	 ((("-h" "--help") (help "This message"))
+	  (usage args-parse-usage)
+	  (exit 0))
+	 (else 
+	  (set! files (cons else files))))
+      (if (pair? files)
+	  (for-each (lambda (p) (call-with-input-file p compile-port))
+	     (reverse files))
+	  (compile-port (current-input-port)))))
+
+;*---------------------------------------------------------------------*/
+;*    usage ...                                                        */
+;*---------------------------------------------------------------------*/
+(define (usage args-parse-usage)
+   (print "usage: hop2js [options] ...")
+   (print "       hop2js [options] src.scm src.scm ...")
+   (args-parse-usage #f))
 
 ;*---------------------------------------------------------------------*/
 ;*    compile-port ...                                                 */
@@ -41,59 +58,10 @@
 (define expander-table (create-hashtable :weak 'open-string))
 
 ;*---------------------------------------------------------------------*/
-;*    ident-table ...                                                  */
+;*    ident-table (see ident.sch) ...                                  */
 ;*---------------------------------------------------------------------*/
-(define ident-table (create-hashtable :weak 'open-string))
-
-(hashtable-put! ident-table "arguments" "$$arguments")
-(hashtable-put! ident-table "break" "$$break")
-(hashtable-put! ident-table "catch" "$$catch")
-(hashtable-put! ident-table "continue" "$$continue")
-(hashtable-put! ident-table "do" "$$do")
-(hashtable-put! ident-table "export" "$$export")
-(hashtable-put! ident-table "else" "$$else")
-(hashtable-put! ident-table "eval" "$$eval")
-(hashtable-put! ident-table "extends" "$$extends")
-(hashtable-put! ident-table "for" "$$for")
-(hashtable-put! ident-table "finally" "$$finally")
-(hashtable-put! ident-table "function" "$$function")
-(hashtable-put! ident-table "import" "$$import")
-(hashtable-put! ident-table "interface" "$$interface")
-(hashtable-put! ident-table "return" "$$return")
-(hashtable-put! ident-table "switch" "$$switch")
-(hashtable-put! ident-table "this" "$$this")
-(hashtable-put! ident-table "throw" "$$throw")
-(hashtable-put! ident-table "var" "$$var")
-(hashtable-put! ident-table "with" "$$with")
-(hashtable-put! ident-table "while" "$$while")
-
 (hashtable-put! ident-table "memq" "memqArray")
-
 (hashtable-put! ident-table "file-exists?" "fs.existsSync")
-
-;*---------------------------------------------------------------------*/
-;*    caml-case ...                                                    */
-;*---------------------------------------------------------------------*/
-(define (caml-case s)
-   ;; must be improved
-   (let ((old (hashtable-get ident-table s)))
-      (or old
-	  (let* ((s0 (if (string-index s #\!) (string-replace s #\! #\$) s))
-		 (s1 (if (string-index s0 #\?) (string-replace s0 #\? #\p) s0))
-		 (s2 (if (string-index s1 #\*) (string-replace s1 #\* #\_) s1))
-		 (s3 (if (string-index s2 #\/) (string-replace s2 #\/ #\_) s2))
-		 (s4 (if (string-index s3 #\&) (string-replace s3 #\& #\$) s3))
-		 (s5 (if (string-index s4 #\=) (string-replace s4 #\= #\$) s4))
-		 (s6 (pregexp-replace* "->" s5 "to")))
-	     (if (string-index s6 #\-)
-		 (let* ((l (string-split s6 "-"))
-			(new (apply string-append (car l)
-				(map string-capitalize (cdr l)))))
-		    (hashtable-put! ident-table s new)
-		    new)
-		 (begin
-		    (hashtable-put! ident-table s s6)
-		    s6))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    semicolon ...                                                    */
@@ -150,11 +118,11 @@
 ;*---------------------------------------------------------------------*/
 ;*    hop2js-typed-ident ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (hop2js-typed-ident sym)
-   (let* ((s (symbol->string sym))
+(define (hop2js-typed-ident::bstring sym::symbol)
+   (let* ((s (symbol->string! sym))
 	  (i (string-index s #\:))
 	  (n (if i (substring s 0 i) s)))
-      (caml-case n)))
+      (ident n)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop2js-typed-class ...                                           */
@@ -170,7 +138,7 @@
 ;*    hop2js-ident ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (hop2js-ident sym)
-   (caml-case (symbol->string sym)))
+   (ident (symbol->string! sym)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop2js-ref ...                                                   */
@@ -178,7 +146,7 @@
 (define (hop2js-ref id::symbol env::pair-nil)
    (let ((c (assq id env)))
       (if (and c (pair? (cdr c)))
-	  (let ((k (symbol->string! (cadr c))))
+	  (let ((k (cadr c)))
 	     (if (pregexp-match "^[_a-zA-Z0-9]+$" k)
 		 (format "~a.~a" (caddr c) k)
 		 (format "~a['~a']" (caddr c) k)))
@@ -879,15 +847,15 @@
        (let* ((id (hop2js-expr obj env))
 	      (frame (map (lambda (p)
 			     (if (symbol? p)
-				 (list p p id)
-				 (list (car p) (cadr p) id)))
+				 (list p (ident p) id)
+				 (list (car p) (ident (cadr p)) id)))
 			props)))
 	  (hop2js-stmt* expr* (append frame env) kont))
        (let* ((id (gensym 'obj))
 	      (frame (map (lambda (p)
 			     (if (symbol? p)
-				 (list p p id)
-				 (list (car p) (cadr p) id)))
+				 (list p (ident p) id)
+				 (list (car p) (ident (cadr p)) id)))
 			props)))
 	  (format "{ let ~a = ~a; ~a }" id (hop2js-expr obj env)
 	     (hop2js-stmt* expr* (append frame env) kont)))))
@@ -1170,7 +1138,11 @@
    (lambda (fun args env)
       (format "typeof (~a) === 'number'" (hop2js-expr (car args) env))))
 
-(hashtable-put! expander-table "elongp"
+(hashtable-put! expander-table "elong?"
+   (lambda (fun args env)
+      (format "Number.isInteger(~a)" (hop2js-expr (car args) env))))
+
+(hashtable-put! expander-table "llong?"
    (lambda (fun args env)
       (format "Number.isInteger(~a)" (hop2js-expr (car args) env))))
 
