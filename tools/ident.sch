@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Mar 27 07:21:08 2024                          */
-;*    Last change :  Wed Mar 27 09:24:03 2024 (serrano)                */
+;*    Last change :  Thu Mar 28 18:19:24 2024 (serrano)                */
 ;*    Copyright   :  2024 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Ident mangling (shared by hop2js and mkjsast).                   */
@@ -12,34 +12,35 @@
 ;*---------------------------------------------------------------------*/
 ;*    ident-table ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define ident-table (create-hashtable :weak 'open-string))
+(define var-ident-table (create-hashtable :weak 'open-string))
+(define prop-ident-table (create-hashtable :weak 'open-string))
 
-(hashtable-put! ident-table "arguments" "$$arguments")
-(hashtable-put! ident-table "await" "$$await")
-(hashtable-put! ident-table "break" "$$break")
-(hashtable-put! ident-table "catch" "$$catch")
-(hashtable-put! ident-table "continue" "$$continue")
-(hashtable-put! ident-table "do" "$$do")
-(hashtable-put! ident-table "export" "$$export")
-(hashtable-put! ident-table "else" "$$else")
-(hashtable-put! ident-table "eval" "$$eval")
-(hashtable-put! ident-table "extends" "$$extends")
-(hashtable-put! ident-table "for" "$$for")
-(hashtable-put! ident-table "finally" "$$finally")
-(hashtable-put! ident-table "function" "$$function")
-(hashtable-put! ident-table "import" "$$import")
-(hashtable-put! ident-table "interface" "$$interface")
-(hashtable-put! ident-table "method" "$$method")
-(hashtable-put! ident-table "return" "$$return")
-(hashtable-put! ident-table "private" "$$private")
-(hashtable-put! ident-table "static" "$$static")
-(hashtable-put! ident-table "super" "$$super")
-(hashtable-put! ident-table "switch" "$$switch")
-(hashtable-put! ident-table "this" "$$this")
-(hashtable-put! ident-table "throw" "$$throw")
-(hashtable-put! ident-table "var" "$$var")
-(hashtable-put! ident-table "with" "$$with")
-(hashtable-put! ident-table "while" "$$while")
+(hashtable-put! var-ident-table "arguments" "$$arguments")
+(hashtable-put! var-ident-table "await" "$$await")
+(hashtable-put! var-ident-table "break" "$$break")
+(hashtable-put! var-ident-table "catch" "$$catch")
+(hashtable-put! var-ident-table "continue" "$$continue")
+(hashtable-put! var-ident-table "do" "$$do")
+(hashtable-put! var-ident-table "export" "$$export")
+(hashtable-put! var-ident-table "else" "$$else")
+(hashtable-put! var-ident-table "eval" "$$eval")
+(hashtable-put! var-ident-table "extends" "$$extends")
+(hashtable-put! var-ident-table "for" "$$for")
+(hashtable-put! var-ident-table "finally" "$$finally")
+(hashtable-put! var-ident-table "function" "$$function")
+(hashtable-put! var-ident-table "import" "$$import")
+(hashtable-put! var-ident-table "interface" "$$interface")
+(hashtable-put! var-ident-table "method" "$$method")
+(hashtable-put! var-ident-table "return" "$$return")
+(hashtable-put! var-ident-table "private" "$$private")
+(hashtable-put! var-ident-table "static" "$$static")
+(hashtable-put! var-ident-table "super" "$$super")
+(hashtable-put! var-ident-table "switch" "$$switch")
+(hashtable-put! var-ident-table "this" "$$this")
+(hashtable-put! var-ident-table "throw" "$$throw")
+(hashtable-put! var-ident-table "var" "$$var")
+(hashtable-put! var-ident-table "with" "$$with")
+(hashtable-put! var-ident-table "while" "$$while")
 
 ;*---------------------------------------------------------------------*/
 ;*    caml-case ...                                                    */
@@ -60,19 +61,36 @@
 	  s7)))
 
 ;*---------------------------------------------------------------------*/
-;*    ident ...                                                        */
+;*    var-ident ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define (ident::bstring ident)
+(define (var-ident::bstring ident)
    
    (define (need-mangling? name)
       (string-index name "!?*/&=%-"))
    
    (let* ((name (if (string? ident) ident (symbol->string! ident)))
-	  (old (hashtable-get ident-table name)))
+	  (old (hashtable-get var-ident-table name)))
       (or old
 	  (if (need-mangling? name)
 	      (let ((mangled (caml-case name)))
-		 (hashtable-put! ident-table name mangled)
+		 (hashtable-put! var-ident-table name mangled)
+		 mangled)
+	      name))))
+
+;*---------------------------------------------------------------------*/
+;*    prop-ident ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (prop-ident::bstring ident)
+   
+   (define (need-mangling? name)
+      (string-index name "!?*/&=%-"))
+   
+   (let* ((name (if (string? ident) ident (symbol->string! ident)))
+	  (old (hashtable-get prop-ident-table name)))
+      (or old
+	  (if (need-mangling? name)
+	      (let ((mangled (caml-case name)))
+		 (hashtable-put! prop-ident-table name mangled)
 		 mangled)
 	      name))))
 

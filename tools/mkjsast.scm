@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul  1 16:05:56 2014                          */
-;*    Last change :  Thu Mar 28 09:23:01 2024 (serrano)                */
+;*    Last change :  Thu Mar 28 18:20:42 2024 (serrano)                */
 ;*    Copyright   :  2014-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Build the JS Ast from the Bigloo type class hierarchy            */
@@ -147,11 +147,12 @@
       ((?name #f #f ?fields)
        ;; root class
        (set-car! (cdr class) #t)
-       (printf "export function ~a(~(, )) {\n" name (map (lambda (f) (ident (car f))) fields))
+       (printf "export function ~a(~(, )) {\n" name
+	  (map (lambda (f) (var-ident (car f))) fields))
        (printf "   this.__node__ = \"~a\";\n" name)
        (for-each (lambda (f)
 		    (printf "   this[~s] = ~a;\n"
-		       (symbol->string (car f)) (ident (car f)))) fields)
+		       (symbol->string (car f)) (prop-ident (car f)))) fields)
        (printf "}\n")
        (when (any cdr fields)
 	  (tojson name fields))
@@ -162,14 +163,15 @@
 	      (superfields (class-superfields super env))
 	      (allfields (append superfields fields)))
 	  (set-car! (cdr class) #t)
-	  (printf "export function ~a(~(, )) {\n" name (map (lambda (f) (ident (car f))) allfields))
+	  (printf "export function ~a(~(, )) {\n" name
+	     (map (lambda (f) (var-ident (car f))) allfields))
 	  (if (pair? superfields)
 	      (printf "   ~a.call(this, ~(, ));\n"
-		 super (map (lambda (f) (ident (car f))) superfields))
+		 super (map (lambda (f) (var-ident (car f))) superfields))
 	      (printf "   ~a.call( this );\n" super))
 	  (for-each (lambda (f)
 		       (printf "   this[~s] = ~a;\n"
-			  (symbol->string (car f)) (ident (car f))))
+			  (symbol->string (car f)) (prop-ident (car f))))
 	     fields)
 	  (printf "   this.__node__ = \"~a\";\n" name)
 	  (printf "}\n")
@@ -210,7 +212,7 @@
 (define (print-class-node class env mode aliases)
 
    (define (arg-prop arg)
-      (let ((name (ident (car arg)))
+      (let ((name (var-ident (car arg)))
 	    (typ (arg-type arg)))
 	 (if (memq typ '(pair pair-nil))
 	     (format "\"~a\": array2list(~a)" name name)
@@ -232,20 +234,22 @@
 	 (else (error (car class) "Unspported default value" val))))
 
    (define (print-class-node name super fields)
-      (let* ((id (ident name))
+      (let* ((id (var-ident name))
 	     (as (assoc id aliases)))
 	 (unless as (display "export "))
-	 (printf "function ~a(~(, )) {\n" id (map (lambda (f) (ident (car f))) fields))
+	 (printf "function ~a(~(, )) {\n" id
+	    (map (lambda (f) (var-ident (car f))) fields))
 	 (printf "  if (!new.target) {\n")
 	 (printf "    return new ~a({~(, )});\n" id (map arg-prop fields))
 	 (printf "  } else {\n")
 	 (printf "    this.$class = '~a';\n" id)
-	 (printf "    if (~a) {\n" (ident (caar fields)))
-	 (printf "      if (~a instanceof Cons) {\n" (ident (caar fields)))
-	 (printf "        this.~a = ~a;\n" (ident (caar fields)) (ident (caar fields)))
+	 (printf "    if (~a) {\n" (var-ident (caar fields)))
+	 (printf "      if (~a instanceof Cons) {\n" (var-ident (caar fields)))
+	 (printf "        this.~a = ~a;\n" (prop-ident (caar fields))
+	    (var-ident (caar fields)))
 	 (for-each (lambda (field)
 		      (let ((n (arg-field field))
-			    (p (ident (car field))))
+			    (p (var-ident (car field))))
 			 (cond
 			    ((memq (arg-type field) '(pair pair-nil))
 			     (printf "        this~a = array2list(~a);\n" n p))
@@ -256,18 +260,18 @@
 	    (cdr fields))
 	 (printf "      } else {\n")
 	 (for-each (lambda (field)
-		      (let ((n (ident (car field)))
+		      (let ((n (var-ident (car field)))
 			    (d (cadddr field)))
 			 (when (pair? d)
 			    (printf "        this.~a = ~a;\n" n (tojs (cadr d))))))
 	    (cdr fields))
-	 (printf "        Object.assign(this, ~a);\n" (ident (caar fields)) (ident (caar fields)))
+	 (printf "        Object.assign(this, ~a);\n" (var-ident (caar fields)) (var-ident (caar fields)))
 	 (printf"       }\n")
 	 (printf "    }\n")
 	 (printf "  }\n")
 	 (printf "}\n")
 	 (when super
-	    (printf "~a.prototype = new ~a();\n" id (ident super)))
+	    (printf "~a.prototype = new ~a();\n" id (var-ident super)))
 	 (printf "~a.prototype.duplicate = function(prop) {\n" id)
 	 (printf "   const o = new ~a({});\n" id)
 	 (print "   Object.assign(o, this);")
@@ -279,21 +283,21 @@
 	 (newline)))
 
    (define (print-class-javascript name super fields)
-      (let* ((id (ident name))
+      (let* ((id (var-ident name))
 	     (as (assoc id aliases)))
 	 (unless as (display "export "))
 	 (printf "function ~a(props) {\n" id)
 	 (for-each (lambda (field)
 		      (let ((d (cadddr field)))
 			 (when (pair? d)
-			    (printf "   this.~a = ~a;\n" (ident (car field))
+			    (printf "   this.~a = ~a;\n" (prop-ident (car field))
 			       (tojs (cadr d))))))
 	    fields)
 	 (printf "   this.$class = '~a';\n" id)
 	 (print "   Object.assign(this, props);")
 	 (print "}")
 	 (when super
-	    (printf "~a.prototype = new ~a();\n" id (ident super)))
+	    (printf "~a.prototype = new ~a();\n" id (var-ident super)))
 	 (printf "~a.prototype.duplicate = function(props) {\n" id)
 	 (printf "   const o = new ~a({});\n" id)
 	 (print "   Object.assign(o, this);")
@@ -335,15 +339,16 @@
       "any")
    
    (define (print-class name super fields)
-      (let* ((id (ident name))
+      (let* ((id (var-ident name))
 	     (as (assoc id aliases)))
 	 (if super
-	     (let* ((ids (ident super))
+	     (let* ((ids (var-ident super))
 		    (ass (assoc ids aliases)))
 		(printf "export class ~a extends ~a {\n" (if as (cdr as) id) (if ass (cdr ass) ids)))
 	     (printf "export class ~a {\n" (if as (cdr as) id)))
 	 (for-each (lambda (field)
-		      (printf "   ~a: ~a;\n" (tstype (arg-type field))))
+		      (printf "   ~a: ~a;\n"
+			 (prop-ident (car field)) (tstype (arg-type field))))
 	    fields)
 	 (print "}")
 	 (newline)))

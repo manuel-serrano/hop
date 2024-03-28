@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Thu Mar 28 09:02:07 2024 (serrano)                */
+#*    Last change :  Thu Mar 28 18:15:18 2024 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -536,7 +536,7 @@ npm-module-default-build:
 	cp -r node_modules/$(MODULE)/test npm/$(MODULEDIR)
 	cp node_modules/$(MODULE)/node/*.*s npm/$(MODULEDIR)/lib
 	if [ -f node_modules/$(MODULE)/node/Makefile ]; then \
-           $(MAKE) -C node_modules/$(MODULE)/node NPMDIR=../../../npm/$(MODULEDIR) clean; \
+           $(MAKE) -C node_modules/$(MODULE)/node NPMDIR=../../../npm/$(MODULEDIR) postbuild clean; \
         fi
 
 npm-module-sans-rm:

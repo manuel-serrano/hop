@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  manuel serrano                                    */
 ;*    Creation    :  Wed Sep 13 01:56:26 2023                          */
-;*    Last change :  Thu Mar 28 09:04:30 2024 (serrano)                */
+;*    Last change :  Thu Mar 28 18:20:25 2024 (serrano)                */
 ;*    Copyright   :  2023-24 manuel serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    A partial Hop-to-JS compiler.                                    */
@@ -58,10 +58,10 @@
 (define expander-table (create-hashtable :weak 'open-string))
 
 ;*---------------------------------------------------------------------*/
-;*    ident-table (see ident.sch) ...                                  */
+;*    var-ident-table (see ident.sch) ...                              */
 ;*---------------------------------------------------------------------*/
-(hashtable-put! ident-table "memq" "memqArray")
-(hashtable-put! ident-table "file-exists?" "fs.existsSync")
+(hashtable-put! var-ident-table "memq" "memqArray")
+(hashtable-put! var-ident-table "file-exists?" "fs.existsSync")
 
 ;*---------------------------------------------------------------------*/
 ;*    semicolon ...                                                    */
@@ -122,7 +122,7 @@
    (let* ((s (symbol->string! sym))
 	  (i (string-index s #\:))
 	  (n (if i (substring s 0 i) s)))
-      (ident n)))
+      (var-ident n)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop2js-typed-class ...                                           */
@@ -138,7 +138,7 @@
 ;*    hop2js-ident ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (hop2js-ident sym)
-   (ident (symbol->string! sym)))
+   (var-ident (symbol->string! sym)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop2js-ref ...                                                   */
@@ -787,7 +787,7 @@
    (define (instantiate-prop prop)
       (let ((name (car prop))
 	    (val (cadr prop)))
-	 (format "'~a': ~a" (ident name) (hop2js-expr val env))))
+	 (format "'~a': ~a" (prop-ident name) (hop2js-expr val env))))
    
    (let ((id (hop2js-ident (instantiate-class fun))))
       (format "new ~a({~(,)})" id (map instantiate-prop args))))
@@ -800,7 +800,7 @@
    (define (duplicate-prop prop)
       (let ((name (car prop))
 	    (val (cadr prop)))
-	 (format "'~a': ~a" (ident name) (hop2js-expr val env))))
+	 (format "'~a': ~a" (prop-ident name) (hop2js-expr val env))))
    
    (format "~a.duplicate({~(,)})" (hop2js-expr obj env)
       (map duplicate-prop props)))
@@ -860,8 +860,8 @@
    (let* ((id (gensym 'obj))
 	  (frame (map (lambda (p)
 			 (if (symbol? p)
-			     (list p (ident p) id)
-			     (list (car p) (ident (cadr p)) id)))
+			     (list p (prop-ident p) id)
+			     (list (car p) (prop-ident (cadr p)) id)))
 		    props)))
       (format "{ let ~a = ~a; ~a }" id (hop2js-expr obj env)
 	 (hop2js-stmt* expr* (append frame env) kont))))
@@ -873,8 +873,8 @@
    (let* ((id (gensym 'obj))
 	  (frame (map (lambda (p)
 			 (if (symbol? p)
-			     (list p (ident p) id)
-			     (list (car p) (ident (cadr p)) id)))
+			     (list p (prop-ident p) id)
+			     (list (car p) (prop-ident (cadr p)) id)))
 		    props)))
       (format "((~a => { ~a })(~a))"
 	 id (hop2js-stmt* expr* (append frame env) return-kont)
@@ -1054,7 +1054,7 @@
 	     (hop2js-expr (car args) env)
 	     (hop2js-expr (cadr args) env)
 	     (hop2js-expr (caddr args) env))
-	  (format "~a.substring(0, ~a)"
+	  (format "~a.substring(~a)"
 	     (hop2js-expr (car args) env)
 	     (hop2js-expr (cadr args) env)))))
 
