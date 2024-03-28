@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Tue Mar 26 07:42:02 2024 (serrano)                */
+#*    Last change :  Thu Mar 28 09:02:07 2024 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -305,6 +305,7 @@ clean:
 
 clean-npm:
 	rm -rf npm
+	$(MAKE) -C node_modules/hopc/node clean
 	$(MAKE) -C node_modules/exif/node clean
 
 devclean:
@@ -526,13 +527,15 @@ npm-dir:
 npm-module-default-build:
 	mkdir -p npm/$(MODULEDIR)
 	mkdir -p npm/$(MODULEDIR)/lib
+	if [ -f node_modules/$(MODULE)/node/Makefile ]; then \
+           $(MAKE) -C node_modules/$(MODULE)/node NPMDIR=../../../npm/$(MODULEDIR); \
+	fi
 	cp node_modules/$(MODULE)/package.json npm/$(MODULEDIR)
 	cp node_modules/$(MODULE)/lib/*.*js npm/$(MODULEDIR)
 	cp node_modules/$(MODULE)/lib/*.d.ts npm/$(MODULEDIR)/lib
 	cp -r node_modules/$(MODULE)/test npm/$(MODULEDIR)
 	cp node_modules/$(MODULE)/node/*.*s npm/$(MODULEDIR)/lib
 	if [ -f node_modules/$(MODULE)/node/Makefile ]; then \
-           $(MAKE) -C node_modules/$(MODULE)/node NPMDIR=../../../npm/$(MODULEDIR); \
            $(MAKE) -C node_modules/$(MODULE)/node NPMDIR=../../../npm/$(MODULEDIR) clean; \
         fi
 

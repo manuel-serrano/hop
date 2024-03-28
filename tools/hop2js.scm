@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  manuel serrano                                    */
 ;*    Creation    :  Wed Sep 13 01:56:26 2023                          */
-;*    Last change :  Wed Mar 27 06:45:13 2024 (serrano)                */
+;*    Last change :  Thu Mar 28 09:04:30 2024 (serrano)                */
 ;*    Copyright   :  2023-24 manuel serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    A partial Hop-to-JS compiler.                                    */
@@ -429,16 +429,26 @@
 (define (hop2js-string str)
    
    (define (encchar c)
-      (let ((n (char->integer c)))
-	 (if (and (>fx n 0) (<=fx n 127))
-	     (string c)
-	     (format "\\u~4,0x" n))))
+      (case c
+	 ((#\Newline)
+	  "\\n")
+	 ((#\Return)
+	  "\\r")
+	 ((#\Tab)
+	  "\\t")
+	 ((#\")
+	  "\\\"")
+	 (else
+	  (let ((n (char->integer c)))
+	     (if (and (>fx n 0) (<=fx n 127))
+		 (string c)
+		 (format "\\u~4,0x" n))))))
       
    (let loop ((i (-fx (string-length str) 1)))
       (if (=fx i -1)
 	  str
 	  (let ((n (char->integer (string-ref str i))))
-	     (if (and (>fx n 0) (<=fx n 127))
+	     (if (and (>fx n 31) (<=fx n 127) (not (=fx n 34)))
 		 (loop (-fx i 1))
 		 (apply string-append (map encchar (string->list str))))))))
 
@@ -477,7 +487,7 @@
 	 (((and ?chars (? (lambda (v) (every char? v)))) . ?body)
 	  (string-append
 	     (apply string-append
-		(map (lambda (n) (format "case '~a':" (hop2js-string (string n))))
+		(map (lambda (n) (format "case \"~a\":" (hop2js-string (string n))))
 		   chars))
 	     (hop2js-stmt* body env kont)
 	     "break;"))
@@ -747,7 +757,7 @@
 ;*    hop2js-keyword-args ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (hop2js-keyword-args args env)
-
+   
    (define (args->object args env)
       (string-append "{"
 	 (let loop ((args args))
@@ -758,12 +768,16 @@
 		  (if (pair? (cddr args))
 		      (string-append ", " (loop (cddr args)))
 		      "}"))))))
-	    
+   
    (let loop ((args args))
-      (if (keyword? (car args))
-	  (list (args->object args env))
+      (cond
+	 ((null? args)
+	  '())
+	 ((and (keyword? (car args)) (pair? (cdr args)))
+	  (list (args->object args env)))
+	 (else
 	  (cons (hop2js-expr (car args) env)
-	     (loop (cdr args))))))
+	     (loop (cdr args)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop2js-instantiate ...                                           */
@@ -773,7 +787,7 @@
    (define (instantiate-prop prop)
       (let ((name (car prop))
 	    (val (cadr prop)))
-	 (format "'~a': ~a" name (hop2js-expr val env))))
+	 (format "'~a': ~a" (ident name) (hop2js-expr val env))))
    
    (let ((id (hop2js-ident (instantiate-class fun))))
       (format "new ~a({~(,)})" id (map instantiate-prop args))))
@@ -786,7 +800,7 @@
    (define (duplicate-prop prop)
       (let ((name (car prop))
 	    (val (cadr prop)))
-	 (format "'~a': ~a" name (hop2js-expr val env))))
+	 (format "'~a': ~a" (ident name) (hop2js-expr val env))))
    
    (format "~a.duplicate({~(,)})" (hop2js-expr obj env)
       (map duplicate-prop props)))
@@ -843,22 +857,14 @@
 ;*    hop2js-stmt-with-access ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (hop2js-stmt-with-access obj props expr* env kont)
-   (if (symbol? obj)
-       (let* ((id (hop2js-expr obj env))
-	      (frame (map (lambda (p)
-			     (if (symbol? p)
-				 (list p (ident p) id)
-				 (list (car p) (ident (cadr p)) id)))
-			props)))
-	  (hop2js-stmt* expr* (append frame env) kont))
-       (let* ((id (gensym 'obj))
-	      (frame (map (lambda (p)
-			     (if (symbol? p)
-				 (list p (ident p) id)
-				 (list (car p) (ident (cadr p)) id)))
-			props)))
-	  (format "{ let ~a = ~a; ~a }" id (hop2js-expr obj env)
-	     (hop2js-stmt* expr* (append frame env) kont)))))
+   (let* ((id (gensym 'obj))
+	  (frame (map (lambda (p)
+			 (if (symbol? p)
+			     (list p (ident p) id)
+			     (list (car p) (ident (cadr p)) id)))
+		    props)))
+      (format "{ let ~a = ~a; ~a }" id (hop2js-expr obj env)
+	 (hop2js-stmt* expr* (append frame env) kont))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop2js-expr-with-access ...                                      */
@@ -867,8 +873,8 @@
    (let* ((id (gensym 'obj))
 	  (frame (map (lambda (p)
 			 (if (symbol? p)
-			     (list p p id)
-			     (list (car p) (cadr p) id)))
+			     (list p (ident p) id)
+			     (list (car p) (ident (cadr p)) id)))
 		    props)))
       (format "((~a => { ~a })(~a))"
 	 id (hop2js-stmt* expr* (append frame env) return-kont)
@@ -1281,7 +1287,24 @@
 
 (hashtable-put! expander-table "format"
    (lambda (fun args env)
-      (hop2js-expr (car args) env)))
+      (if (not (string? (car args)))
+	  (error "format" "unsupported format" `(format ,@args))
+	  (if (string=? (car args) "~a")
+	      (hop2js-expr (cadr args) env)
+	      (let* ((i (string-split (car args) "~"))
+		     (s (if (null? (cdr i))
+			    (cons "" i)
+			    i))
+		     (l (append-map (lambda (p a)
+				       (if (=fx (string-length p) 1)
+					   (list "+" (hop2js-expr a env))
+					   (list "+ \""
+					      (hop2js-string (substring p 1))
+					      "\" +"
+					      (hop2js-expr a env))))
+			   (cdr s) (cdr args))))
+		 (apply string-append
+		    (cons* "\"" (hop2js-string (car s)) "\"" l)))))))
 
 (hashtable-put! expander-table "make-tuple"
    (lambda (fun args env)

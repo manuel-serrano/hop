@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul  1 16:05:56 2014                          */
-;*    Last change :  Wed Mar 27 18:02:36 2024 (serrano)                */
+;*    Last change :  Thu Mar 28 09:23:01 2024 (serrano)                */
 ;*    Copyright   :  2014-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Build the JS Ast from the Bigloo type class hierarchy            */
@@ -210,7 +210,7 @@
 (define (print-class-node class env mode aliases)
 
    (define (arg-prop arg)
-      (let ((name (ident arg))
+      (let ((name (ident (car arg)))
 	    (typ (arg-type arg)))
 	 (if (memq typ '(pair pair-nil))
 	     (format "\"~a\": array2list(~a)" name name)
@@ -231,21 +231,21 @@
 	 ((pwd) (format "~s" (pwd)))
 	 (else (error (car class) "Unspported default value" val))))
 
-   (define (print-class-hop name super fields)
+   (define (print-class-node name super fields)
       (let* ((id (ident name))
 	     (as (assoc id aliases)))
 	 (unless as (display "export "))
-	 (printf "function ~a(~(, )) {\n" id (map ident fields))
+	 (printf "function ~a(~(, )) {\n" id (map (lambda (f) (ident (car f))) fields))
 	 (printf "  if (!new.target) {\n")
 	 (printf "    return new ~a({~(, )});\n" id (map arg-prop fields))
 	 (printf "  } else {\n")
 	 (printf "    this.$class = '~a';\n" id)
-	 (printf "    if (~a) {\n" (ident (car fields)))
-	 (printf "      if (~a instanceof Cons) {\n" (ident (car fields)))
-	 (printf "        this.~a = ~a;\n" (ident (car fields)) (ident (car fields)))
+	 (printf "    if (~a) {\n" (ident (caar fields)))
+	 (printf "      if (~a instanceof Cons) {\n" (ident (caar fields)))
+	 (printf "        this.~a = ~a;\n" (ident (caar fields)) (ident (caar fields)))
 	 (for-each (lambda (field)
 		      (let ((n (arg-field field))
-			    (p (ident field)))
+			    (p (ident (car field))))
 			 (cond
 			    ((memq (arg-type field) '(pair pair-nil))
 			     (printf "        this~a = array2list(~a);\n" n p))
@@ -256,12 +256,12 @@
 	    (cdr fields))
 	 (printf "      } else {\n")
 	 (for-each (lambda (field)
-		      (let ((n (ident field))
+		      (let ((n (ident (car field)))
 			    (d (cadddr field)))
 			 (when (pair? d)
 			    (printf "        this.~a = ~a;\n" n (tojs (cadr d))))))
 	    (cdr fields))
-	 (printf "        Object.assign(this, ~a);\n" (ident (car fields)) (ident (car fields)))
+	 (printf "        Object.assign(this, ~a);\n" (ident (caar fields)) (ident (caar fields)))
 	 (printf"       }\n")
 	 (printf "    }\n")
 	 (printf "  }\n")
@@ -289,6 +289,7 @@
 			    (printf "   this.~a = ~a;\n" (ident (car field))
 			       (tojs (cadr d))))))
 	    fields)
+	 (printf "   this.$class = '~a';\n" id)
 	 (print "   Object.assign(this, props);")
 	 (print "}")
 	 (when super
@@ -306,7 +307,7 @@
    (define (print-class name super fields)
       (if (eq? mode 'javascript)
 	  (print-class-javascript name super fields)
-	  (print-class-hop name super fields)))
+	  (print-class-node name super fields)))
    
    (match-case class
       ((?- #t . ?-)
