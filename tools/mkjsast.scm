@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul  1 16:05:56 2014                          */
-;*    Last change :  Thu Mar 28 18:20:42 2024 (serrano)                */
+;*    Last change :  Thu Mar 28 20:33:38 2024 (serrano)                */
 ;*    Copyright   :  2014-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Build the JS Ast from the Bigloo type class hierarchy            */
@@ -152,7 +152,7 @@
        (printf "   this.__node__ = \"~a\";\n" name)
        (for-each (lambda (f)
 		    (printf "   this[~s] = ~a;\n"
-		       (symbol->string (car f)) (prop-ident (car f)))) fields)
+		       (symbol->string (car f)) (var-ident (car f)))) fields)
        (printf "}\n")
        (when (any cdr fields)
 	  (tojson name fields))
@@ -171,7 +171,7 @@
 	      (printf "   ~a.call( this );\n" super))
 	  (for-each (lambda (f)
 		       (printf "   this[~s] = ~a;\n"
-			  (symbol->string (car f)) (prop-ident (car f))))
+			  (symbol->string (car f)) (var-ident (car f))))
 	     fields)
 	  (printf "   this.__node__ = \"~a\";\n" name)
 	  (printf "}\n")
