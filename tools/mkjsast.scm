@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul  1 16:05:56 2014                          */
-;*    Last change :  Thu Mar 28 20:33:38 2024 (serrano)                */
+;*    Last change :  Sat Mar 30 06:53:04 2024 (serrano)                */
 ;*    Copyright   :  2014-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Build the JS Ast from the Bigloo type class hierarchy            */
@@ -233,6 +233,9 @@
 	 ((pwd) (format "~s" (pwd)))
 	 (else (error (car class) "Unspported default value" val))))
 
+   (define (private-id? id)
+      (char=? (string-ref (symbol->string! id) 0) #\%))
+
    (define (print-class-node name super fields)
       (let* ((id (var-ident name))
 	     (as (assoc id aliases)))
@@ -290,8 +293,12 @@
 	 (for-each (lambda (field)
 		      (let ((d (cadddr field)))
 			 (when (pair? d)
-			    (printf "   this.~a = ~a;\n" (prop-ident (car field))
-			       (tojs (cadr d))))))
+			    (if (private-id? (car field))
+				;; a private field
+				(printf "   Object.defineProperty(this, \"~a\", { value: ~a, enumerable: false, writable: true, configurable: false });\n" (prop-ident (car field)) (tojs (cadr d)))
+				
+				(printf "   this.~a = ~a;\n" (prop-ident (car field))
+				   (tojs (cadr d)))))))
 	    fields)
 	 (printf "   this.$class = '~a';\n" id)
 	 (print "   Object.assign(this, props);")

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  manuel serrano                                    */
 ;*    Creation    :  Wed Sep 13 01:56:26 2023                          */
-;*    Last change :  Thu Mar 28 18:20:25 2024 (serrano)                */
+;*    Last change :  Fri Mar 29 16:25:16 2024 (serrano)                */
 ;*    Copyright   :  2023-24 manuel serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    A partial Hop-to-JS compiler.                                    */
@@ -969,11 +969,26 @@
 (hashtable-put! expander-table "<elong" specific-binop-expander)
 (hashtable-put! expander-table "<=elong" specific-binop-expander)
 
-(define eq-expander
+(define neg-expander
+   (lambda (fun args env)
+      (format "-~a" (hop2js-expr (car args) env))))
+
+(hashtable-put! expander-table "negfl" neg-expander)
+(hashtable-put! expander-table "negfx" neg-expander)
+(hashtable-put! expander-table "negelong" neg-expander)
+(hashtable-put! expander-table "negllong" neg-expander)
+
+(hashtable-put! expander-table "equal?"
    (lambda (fun args env)
       (let ((lhs (hop2js-expr (car args) env))
 	    (rhs (hop2js-expr (cadr args) env))
 	    (op (substring (symbol->string fun) 0 1)))
+	 (format "~a == ~a" lhs rhs))))
+
+(define eq-expander
+   (lambda (fun args env)
+      (let ((lhs (hop2js-expr (car args) env))
+	    (rhs (hop2js-expr (cadr args) env)))
 	 (format "~a === ~a" lhs rhs))))
 
 (hashtable-put! expander-table "=fx" eq-expander)
@@ -1046,6 +1061,17 @@
 	 (hop2js-expr (car args) env)
 	 (hop2js-expr (caddr args) env)
 	 (hop2js-expr (cadr args) env))))
+
+(hashtable-put! expander-table "getbuffer"
+   (lambda (fun args env)
+      (if (pair? (cddr args))
+	  (format "Buffer.from(~a.substring(~a, ~a), \"binary\")"
+	     (hop2js-expr (car args) env)
+	     (hop2js-expr (cadr args) env)
+	     (hop2js-expr (caddr args) env))
+	  (format "Buffer.from(~a.substring(~a), \"binary\")"
+	     (hop2js-expr (car args) env)
+	     (hop2js-expr (caddr args) env)))))
 
 (hashtable-put! expander-table "substring"
    (lambda (fun args env)
@@ -1160,11 +1186,15 @@
    (lambda (fun args env)
       (hop2js-expr (car args) env)))
 
+(hashtable-put! expander-table "fixnum->llong"
+   (lambda (fun args env)
+      (hop2js-expr (car args) env)))
+
 (hashtable-put! expander-table "elong->fixnum"
    (lambda (fun args env)
       (hop2js-expr (car args) env)))
 
-(hashtable-put! expander-table "fixnum->llong"
+(hashtable-put! expander-table "elong->flonum"
    (lambda (fun args env)
       (hop2js-expr (car args) env)))
 
