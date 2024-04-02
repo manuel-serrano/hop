@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Thu Mar 28 18:15:18 2024 (serrano)                */
+#*    Last change :  Tue Apr  2 08:13:43 2024 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -513,12 +513,12 @@ MODULEDIR=$(MODULE)-$(HOPRELEASE)-$(HOPBUILDTAG)
 
 npm: npm-dir
 	for m in $(MODULES); do \
-	   $(MAKE) npm-module MODULE=$$m; \
+	   $(MAKE) npm-module MODULE=$$m || exit 1; \
         done
 
 npm-sans-rm: npm-dir
 	for m in $(MODULES); do \
-	   $(MAKE) npm-module-sans-rm MODULE=$$m; \
+	   $(MAKE) npm-module-sans-rm MODULE=$$m || exit 1; \
         done
 
 npm-dir:
@@ -532,7 +532,8 @@ npm-module-default-build:
 	fi
 	cp node_modules/$(MODULE)/package.json npm/$(MODULEDIR)
 	cp node_modules/$(MODULE)/lib/*.*js npm/$(MODULEDIR)
-	cp node_modules/$(MODULE)/lib/*.d.ts npm/$(MODULEDIR)/lib
+	-cp node_modules/$(MODULE)/lib/*.d.ts npm/$(MODULEDIR)/lib 2> /dev/null
+	-cp node_modules/$(MODULE)/type/*.d.ts npm/$(MODULEDIR)/lib 2> /dev/null
 	cp -r node_modules/$(MODULE)/test npm/$(MODULEDIR)
 	cp node_modules/$(MODULE)/node/*.*s npm/$(MODULEDIR)/lib
 	if [ -f node_modules/$(MODULE)/node/Makefile ]; then \
@@ -543,10 +544,10 @@ npm-module-sans-rm:
 	@ $(call build,npm/$(MODULEDIR))
 	@ if [ -f node_modules/$(MODULE)/Makefile ]; then \
 	   echo "$(MAKE) -C node_modules/$(MODULE) MODULEDIR=\"$(MODULEDIR)\""; \
-           $(MAKE) -C node_modules/$(MODULE) MODULEDIR=$(MODULEDIR); \
+           $(MAKE) -C node_modules/$(MODULE) MODULEDIR=$(MODULEDIR) || exit 1; \
         else \
 	   echo "$(MAKE) npm-module-default-build MODULEDIR=\"$(MODULEDIR)\""; \
-	   $(MAKE) npm-module-default-build MODULEDIR=$(MODULEDIR); \
+	   $(MAKE) npm-module-default-build MODULEDIR=$(MODULEDIR) || exit 1; \
         fi
 	(cd npm; tar --exclude="*.so" -zcf  $(MODULEDIR).tgz $(MODULEDIR))
 	@ $(call done,npm/$(MODULEDIR))
