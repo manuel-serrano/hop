@@ -13,7 +13,7 @@ service broadcast() {
    return <html>
       <script type="importmap"> {
 	 "imports": {
-	    "@hop/hop": "${hop.register('@hop/hop/hop-client.mjs')}"
+	    "@hop/hop": "${hop.register('./hop-client.mjs')}"
 	 }
       }
       </script>
