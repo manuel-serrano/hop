@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Wed Aug 30 16:45:13 2023 (serrano)                */
-;*    Copyright   :  2014-23 Manuel Serrano                            */
+;*    Last change :  Thu Apr  4 14:30:07 2024 (serrano)                */
+;*    Copyright   :  2014-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
 ;*=====================================================================*/
@@ -28,6 +28,16 @@
 	    (hopc-read p #!key cenv menv)
 	    (setup-client-compiler!)
 	    (compile-sources::int)))
+
+;*---------------------------------------------------------------------*/
+;*    tmp ...                                                          */
+;*---------------------------------------------------------------------*/
+(define (tmp)
+   (let ((d (make-file-name (os-tmp)
+	       (or (getenv "USER") (symbol->string (gensym))))))
+      (unless (directory? d)
+	 (make-directories d))
+      d))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopc-read ...                                                    */
@@ -407,7 +417,7 @@
 	     (compile-temp opts comp file temp))
 	    ((> (file-size file) (hopc-pipe-filesize-threshold))
 	     (compile-temp-ast opts comp file
-		(make-file-name (os-tmp)
+		(make-file-name (tmp)
 		   (string-append (basename file) ".ast"))))
 	    (else
 	     (compile-pipe opts comp file))))
@@ -475,11 +485,11 @@
 		(deps (map (lambda (import)
 			      (let* ((path import)
 				     (temp (unless (string-suffix? ".scm" path)
-					      (make-file-name (os-tmp)
+					      (make-file-name (tmp)
 						 (string-append
 						    (prefix (basename path))
 						    ".scm"))))
-				     (obj (make-file-name (os-tmp)
+				     (obj (make-file-name (tmp)
 					     (string-append
 						(prefix (basename path))
 						".o")))
