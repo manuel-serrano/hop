@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Sat Mar  9 06:41:28 2024 (serrano)                */
+;*    Last change :  Sat Apr 13 08:28:04 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -1138,7 +1138,7 @@
 		(let ((ty (js-get attrs (& "type") %this)))
 		   (when (eq? ty (& "hop"))
 		      (js-put! attrs (& "type") (& "module") #f %this)
-		      "import * as hop from '/hop/0/hop-client.mjs';"))))))
+		      "import * as hop from '/hop/0/client.mjs';"))))))
    
    (define (script-lang attrs nodes lang)
       (let* ((comp (language-script lang %this %module worker))
@@ -1168,7 +1168,7 @@
 	    :%context %scope :module %module
 	    (js-object->keyword-arguments* attrs %this)
 	    (cons* :type "module"
-	       "import * as hop from '/hop/0/hop-client.mjs';"
+	       "import * as hop from '/hop/0/client.mjs';"
 	       nodes))))
    
    (define (as-array %this tmp)
