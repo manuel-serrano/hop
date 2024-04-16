@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Sun Mar 24 07:56:25 2024 (serrano)                */
+;*    Last change :  Fri Apr  5 10:18:17 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -587,6 +587,21 @@
 	      (base::bstring (default (pwd)))
 	      path::J2SExpr)
 
+	   (class TsInterface::J2SNode
+	      (id (default #f) read-only)
+	      (decl (default #f) read-only)
+	      (properties::pair-nil read-only))
+
+	   (class TsInterfaceProperty::J2SNode
+	      (name::J2SExpr read-only)
+	      (optional::bool read-only)
+	      (type read-only))
+
+	   (class TsInterfacePropertyName
+	      (loc read-only)
+	      (fakename::J2SString read-only)
+	      (type read-only))
+	   
 	   (abstract-class TsType
 	      (loc::pair read-only (info '("notraverse"))))
 

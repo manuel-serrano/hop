@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  manuel serrano                                    */
 ;*    Creation    :  Wed Sep 13 01:56:26 2023                          */
-;*    Last change :  Fri Mar 29 16:25:16 2024 (serrano)                */
+;*    Last change :  Fri Apr  5 10:11:22 2024 (serrano)                */
 ;*    Copyright   :  2023-24 manuel serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    A partial Hop-to-JS compiler.                                    */
@@ -25,6 +25,8 @@
 	 ((("-h" "--help") (help "This message"))
 	  (usage args-parse-usage)
 	  (exit 0))
+	 (("-d" ?ident (help "Only compile definition IDENT"))
+	  (set! idents (cons (string->symbol ident) idents)))
 	 (else 
 	  (set! files (cons else files))))
       (if (pair? files)
@@ -33,11 +35,28 @@
 	  (compile-port (current-input-port)))))
 
 ;*---------------------------------------------------------------------*/
+;*    idents ...                                                       */
+;*---------------------------------------------------------------------*/
+(define idents '())
+
+;*---------------------------------------------------------------------*/
+;*    active-ident? ...                                                */
+;*---------------------------------------------------------------------*/
+(define (active-ident? id)
+   (or (null? idents)
+       (let* ((s (symbol->string! id))
+	      (i (string-index s #\:)))
+	  (if i
+	      (let ((n (if i (substring s 0 i) s)))
+		 (memq n idents))
+	      (memq id idents)))))
+
+;*---------------------------------------------------------------------*/
 ;*    usage ...                                                        */
 ;*---------------------------------------------------------------------*/
 (define (usage args-parse-usage)
    (print "usage: hop2js [options] ...")
-   (print "       hop2js [options] src.scm src.scm ...")
+   (print "       hop2js [options] src1.scm src2.scm ...")
    (args-parse-usage #f))
 
 ;*---------------------------------------------------------------------*/
@@ -98,11 +117,14 @@
    
    (match-case expr
       ((define (?name . ?args) . ?body)
-       (hop2js-function name args body '() semicolon))
+       (when (active-ident? name)
+	  (hop2js-function name args body '() semicolon)))
       ((define-generic (?name ?a0 . ?args) . ?body)
-       (hop2js-stmt-define-generic name a0 args body '() kont-init))
+       (when (active-ident? name)
+	  (hop2js-stmt-define-generic name a0 args body '() kont-init)))
       ((define-method (?name ?a0 . ?args) . ?body)
-       (hop2js-stmt-define-method name a0 args body '() kont-init))
+       (when (active-ident? name)
+	  (hop2js-stmt-define-method name a0 args body '() kont-init)))
       ((module ?name . ?clauses)
        (hop2js-module name clauses '() kont-init))
       ((define-macro (?name . ?margs) . ?body)
@@ -112,7 +134,8 @@
 		(hop2js-expr (apply x args)  env))))
        #f)
       ((define (and (? symbol?) ?var) ?expr)
-       (hop2js-stmt-define var expr '() kont-init))
+       (when (active-ident? var)
+	  (hop2js-stmt-define var expr '() kont-init)))
       (else #f)))
 
 ;*---------------------------------------------------------------------*/
@@ -190,12 +213,15 @@
    (let ((export (assq 'export clauses)))
       (if (pair? export)
 	  (kont
-	     (format "export {~(, )}" 
-		(filter-map (lambda (e)
-			       (let ((id (if (pair? e) (car e) e)))
-				  (unless (memq id '(class final-class abstract-class wide-class))
-				     (hop2js-typed-ident id))))
-		   (cdr export))))
+	     (let ((es (filter-map (lambda (e)
+				      (let ((id (if (pair? e) (car e) e)))
+					 (unless (memq id '(class final-class abstract-class wide-class))
+					    (when (active-ident? id)
+					       (hop2js-typed-ident id)))))
+			  (cdr export))))
+		(if (pair? es)
+		    (format "export {~(, )}"  es)
+		    "")))
 	  (kont ""))))
 
 ;*---------------------------------------------------------------------*/
@@ -644,10 +670,12 @@
 ;*---------------------------------------------------------------------*/
 (define (hop2js-stmt-let bindings body env::pair-nil kont::procedure)
    (let ((bs (map (lambda (b)
-		     (format "~a = ~a" (hop2js-typed-ident (car b))
-			(hop2js-expr (cadr b) env)))
+		     (if (pair? b)
+			 (format "~a = ~a" (hop2js-typed-ident (car b))
+			    (hop2js-expr (cadr b) env))
+			 (hop2js-typed-ident b)))
 		bindings))
-	 (frame (map (lambda (b) (list (car b))) bindings)))
+	 (frame (map (lambda (b) (list (if (pair? b) (car b) b))) bindings)))
       (format "{ let ~(, ); ~a }" bs
 	 (hop2js-stmt* body (append frame env) kont))))
 
@@ -749,10 +777,28 @@
 		 (else
 		  ;; regular calls
 		  (format "~a(~(, ))" (hop2js-expr fun env)
-		     (if (find keyword? args)
+		     (if (keyword-arguments? args)
 			 (hop2js-keyword-args args env)
 			 (map (lambda (e) (hop2js-expr e env)) args))))))))))
 
+;*---------------------------------------------------------------------*/
+;*    keyword-arguments? ...                                           */
+;*---------------------------------------------------------------------*/
+(define (keyword-arguments? args)
+   (let loop ((args args))
+      (cond
+	 ((null? args)
+	  #f)
+	 ((keyword? (car args))
+	  ;; every other remaining args must be a keyword
+	  (let loop ((args args))
+	     (cond
+		((null? args) #t)
+		((and (keyword? (car args)) (pair? (cdr args))) (loop (cddr args)))
+		(else #f))))
+	 (else
+	  (loop (cdr args))))))
+	     
 ;*---------------------------------------------------------------------*/
 ;*    hop2js-keyword-args ...                                          */
 ;*---------------------------------------------------------------------*/
@@ -1318,7 +1364,7 @@
 (hashtable-put! expander-table "format"
    (lambda (fun args env)
       (if (not (string? (car args)))
-	  (error "format" "unsupported format" `(format ,@args))
+	  (error "hop2js" "unsupported \"format\"" `(format ,@args))
 	  (if (string=? (car args) "~a")
 	      (hop2js-expr (cadr args) env)
 	      (let* ((i (string-split (car args) "~"))
@@ -1328,10 +1374,11 @@
 		     (l (append-map (lambda (p a)
 				       (if (=fx (string-length p) 1)
 					   (list "+" (hop2js-expr a env))
-					   (list "+ \""
+					   (list "+"
+					      (hop2js-expr a env)
+					      "+\""
 					      (hop2js-string (substring p 1))
-					      "\" +"
-					      (hop2js-expr a env))))
+					      "\"")))
 			   (cdr s) (cdr args))))
 		 (apply string-append
 		    (cons* "\"" (hop2js-string (car s)) "\"" l)))))))
@@ -1340,4 +1387,3 @@
    (lambda (fun args env)
       (format "[~a, ~a]"
 	 (hop2js-expr (car args) env) (hop2js-expr (cadr args) env))))
-   

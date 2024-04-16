@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Mar 27 07:21:08 2024                          */
-;*    Last change :  Thu Mar 28 18:19:24 2024 (serrano)                */
+;*    Last change :  Thu Apr 11 15:03:20 2024 (serrano)                */
 ;*    Copyright   :  2024 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Ident mangling (shared by hop2js and mkjsast).                   */
@@ -53,12 +53,13 @@
 	  (s4 (if (string-index s3 #\&) (string-replace s3 #\& #\$) s3))
 	  (s5 (if (string-index s4 #\=) (string-replace s4 #\= #\$) s4))
 	  (s6 (if (string-index s5 #\%) (string-replace s5 #\% #\$) s5))
-	  (s7 (pregexp-replace* "->" s6 "to")))
-      (if (string-index s7 #\-)
-	  (let ((l (string-split s7 "-")))
+	  (s7 (pregexp-replace* "->" s6 "to"))
+	  (s8 (if (string-index s7 "<>") (pregexp-replace* "[<>]" s7 "") s7)))
+      (if (string-index s8 "-:")
+	  (let ((l (string-split s8 "-:")))
 	     (apply string-append (car l)
 		(map string-capitalize (cdr l))))
-	  s7)))
+	  s8)))
 
 ;*---------------------------------------------------------------------*/
 ;*    var-ident ...                                                    */
@@ -66,8 +67,8 @@
 (define (var-ident::bstring ident)
    
    (define (need-mangling? name)
-      (string-index name "!?*/&=%-"))
-   
+      (string-index name "!?*/&=%-<>:"))
+
    (let* ((name (if (string? ident) ident (symbol->string! ident)))
 	  (old (hashtable-get var-ident-table name)))
       (or old
@@ -83,7 +84,7 @@
 (define (prop-ident::bstring ident)
    
    (define (need-mangling? name)
-      (string-index name "!?*/&=%-"))
+      (string-index name "!?*/&=%-<:>"))
    
    (let* ((name (if (string? ident) ident (symbol->string! ident)))
 	  (old (hashtable-get prop-ident-table name)))

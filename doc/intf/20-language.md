@@ -114,6 +114,6 @@ Hop extends the `require` form as follows:
 ```
 
 The first form is the original `require` form. The second, loads 
-`<ModuleExpr>` defined in language `<LangExpr>`. The third, loads
-`<ModuleExpr>` defined in language `<LangExpr>`, passing `<CompLangexpr>`
-to the `<LangExpr>` compiler.
+`ModuleExpr` defined in language `LangExpr`. The third, loads
+`ModuleExpr` defined in language `LangExpr`, passing `CompLangexpr`
+to the `LangExpr` compiler.

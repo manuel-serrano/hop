@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sat Oct 21 11:52:51 2023 (serrano)                */
-;*    Copyright   :  2013-23 Manuel Serrano                            */
+;*    Last change :  Tue Apr 16 12:19:30 2024 (serrano)                */
+;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
 ;*=====================================================================*/

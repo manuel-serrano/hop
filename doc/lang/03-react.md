@@ -79,10 +79,10 @@ ${ doc.include( doc.BUILDDIR + "/examples/reactsrv/README.md" ) }
 HTML tag
 --------
 
-### <REACT> ###
+### REACT ###
 [:@glyphicon glyphicon-tag tag]
 
-The body of a `<react>` node is client script that gets re-evaluated
+The body of a `react` node is client script that gets re-evaluated
 each time of its source is modified. The result of that evaluated in
 inserted in the DOM tree, possibly replacing already created dynamic
 nodes.

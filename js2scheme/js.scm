@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Sat Mar  9 06:19:19 2024 (serrano)                */
+;*    Last change :  Fri Apr  5 10:29:53 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for client side code).                                   */
@@ -1630,4 +1630,9 @@
 		     (with-access::J2SImportPath ip (import)
 			(j2s-js import tildec dollarc mode evalp ctx)))
 	 imports)))
-   
+
+;*---------------------------------------------------------------------*/
+;*    j2s-js ::TsInterface ...                                         */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-js this::TsInterface tildec dollarc mode evalp ctx)
+   (list this))

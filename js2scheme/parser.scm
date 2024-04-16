@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Wed Mar 27 19:37:20 2024 (serrano)                */
+;*    Last change :  Fri Apr  5 09:57:03 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -185,19 +185,29 @@
 	 (if (eq? (token-type token) type)
 	     token
 	     (parse-token-error 
-		(format "Expecting \"~a\" got \"~a\"." type (token-type token))
+		(format "expecting \"~a\" got \"~a\"." type (token-type token))
 		token))))
    
    (define (consume! type)
       (token-value (consume-token! type)))
 
+   (define (consume-of! types)
+      (let* ((token (consume-any!))
+	     (typ (token-type token)))
+	 (if (memq typ types)
+	     token
+	     (parse-token-error
+		(format "expecting one of \"~(, )\"" types
+		   (token-type token))
+		token))))
+   
    (define (consume2! type1 type2)
       (let* ((token (consume-any!))
 	     (typ (token-type token)))
 	 (if (or (eq? typ type1) (eq? typ type2))
 	     token
 	     (parse-token-error
-		(format "Expected \"~a\" or \"~a\" got \"~a\"" type1 type2
+		(format "expecting \"~a\" or \"~a\", got \"~a\"" type1 type2
 		   (token-type token))
 		token))))
    
@@ -390,9 +400,13 @@
 	     ((export) (export (consume-any!)))
 	     (else (statement))))
 	 ((type)
-	  (type-decl-list))
+	  (if typescript
+	      (type-decl-list)
+	      (statement)))
 	 ((interface)
-	  (interface))
+	  (if typescript
+	      (interface)
+	      (statement)))
 	 ((EOF)
 	  (parse-eof-error (peek-token)))
 	 ((ERROR)
@@ -586,40 +600,68 @@
 	     (empty-statement))))
 
    (define (interface)
-      ;; typescript interface block, for now simply ignored
-      (consume-token! 'interface)
-      (set! interfaces (cons (token-value (consume-token! 'ID)) interfaces))
-      (interface-properties))
+      ;; typescript interface block
+      (let ((tok (consume-token! 'interface)))
+	 (let ((id (consume-token! 'ID)))
+	    (set! interfaces (cons (token-value id) interfaces))
+	    (instantiate::TsInterface
+	       (loc (token-loc tok))
+	       (id (token-value id))
+	       (decl "interface")
+	       (properties (interface-properties))))))
 
    (define (interface-properties)
       (consume-token! 'LBRACE)
       (let loop ()
 	 (if (eq? (peek-token-type) 'RBRACE)
-	     (instantiate::J2SNop
-		(loc (token-loc (consume-any!))))
 	     (begin
-		(interface-property)
+		(consume-any!)
+		'())
+	     (let ((prop (interface-property)))
 		(case (peek-token-type)
 		   ((SEMICOLON)
-		    (consume-token! 'SEMICOLON)
-		    (loop))
+		    (consume-any!)
+		    (cons prop (loop)))
 		   ((RBRACE)
-		    (loop))
+		    (consume-any!)
+		    (list prop))
 		   (else
 		    (parse-token-error "Illegal type expression"
 		       (consume-any!))))))))
 
    (define (interface-property)
-      (if (memq (peek-token-type) '(ID class))
-	  (consume-any!)
-	  (let ((tok (consume-any!)))
-	     (parse-token-error 
-		(format "Expected ident got \"~a\"" (token-type tok))
-		tok)))
-      (when (eq? (peek-token-type) '?)
-	 (consume-any!))
-      (consume-token! ':)
-      (typescript-type))
+      (let* ((tok (consume-any!))
+	     (name (case (token-type tok)
+		      ((ID class in)
+		       (instantiate::J2SString
+			  (loc (token-loc tok))
+			  (val (symbol->string (token-value tok)))))
+		      ((LBRACKET)
+		       (let ((name (consume-of! '(ID class in))))
+			  (consume-token! ':)
+			  (let ((fakename (instantiate::J2SString
+					     (loc (token-loc tok))
+					     (val (symbol->string
+						     (token-value name)))))
+				(ty (typescript-type)))
+			     (consume-token! 'RBRACKET)
+			     (instantiate::TsInterfacePropertyName
+				(loc (token-loc tok))
+				(fakename fakename)
+				(type ty)))))
+		      (else
+		       (parse-token-error 
+			  (format "expecting \"ident\", got \"~a\""
+			     (token-type tok))
+			  tok)))))
+	 (let ((opt (when (eq? (peek-token-type) '?) (consume-any!) #t)))
+	    (consume-token! ':)
+	    (let ((ty (typescript-type)))
+	       (instantiate::TsInterfaceProperty
+		  (loc (token-loc tok))
+		  (name name)
+		  (optional opt)
+		  (type ty))))))
 
    (define (type-name ty)
       (if (eq? ty 'vector)
@@ -688,7 +730,9 @@
 		    (consume-token! 'RPAREN)
 		    t))))
 	 ((LBRACE)
-	  (interface-properties))
+	  (instantiate::TsInterface
+	     (loc (token-loc (peek-token)))
+	     (properties (interface-properties))))
 	 ((void)
 	  (consume-any!)
 	  'void)
@@ -3485,7 +3529,7 @@
 	      (let ((param (consume-rest-param!)))
 		 (if (eq? (peek-token-type) 'RPAREN)
 		     param
-		     (parse-token-error "Expecting ')'" (consume-any!)))))
+		     (parse-token-error "expecting ')'" (consume-any!)))))
 	     (else
 	      (parse-token-error "Unexpected token" (consume-any!)))))
 	 (else
@@ -3495,7 +3539,7 @@
 	      (lambda (p)
 		 ((cdr p) (consume-any!) #t conf parser-controller)))
 	     (else
-	      (parse-token-error "Unexpected token" (peek-token)))))))
+	      (parse-token-error "unexpected token" (peek-token)))))))
    
    (define (jspragma)
       (let* ((token (consume-token! 'PRAGMA))
@@ -3925,6 +3969,20 @@
 		   (nodes (list (dialect el 'normal conf)))))
 	     el)))
 
+   (define (xml)
+      (let ((el (xml-expression (consume-any!) #t)))
+	 (if (isa? el J2SNode)
+	     (with-access::J2SNode el (loc)
+		(instantiate::J2SProgram
+		   (loc loc)
+		   (endloc loc)
+		   (main (config-get conf :module-main #f))
+		   (name (config-get conf :module-name #f))
+		   (path (config-get conf :filename (abspath)))
+		   (exports (reverse exports))
+		   (nodes (list (dialect el 'normal conf)))))
+	     el)))
+
    (define (with-plugins fun)
       (lambda (ps)
 	 (let ((old plugins))
@@ -3972,6 +4030,7 @@
 	 ((dollar-expression) (dollar-expression))
 	 ((module) (program #f))
 	 ((repl) (repl))
+	 ((xml) (xml))
 	 ((eval) (eval #f))
 	 ((eval-strict) (eval-strict))
 	 ((client-program) (program #t))

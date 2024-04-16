@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Thu Apr  4 14:30:07 2024 (serrano)                */
+;*    Last change :  Fri Apr  5 11:19:47 2024 (serrano)                */
 ;*    Copyright   :  2014-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
@@ -33,8 +33,9 @@
 ;*    tmp ...                                                          */
 ;*---------------------------------------------------------------------*/
 (define (tmp)
-   (let ((d (make-file-name (os-tmp)
-	       (or (getenv "USER") (symbol->string (gensym))))))
+   (let ((d (make-file-path (os-tmp)
+	       (or (getenv "USER") (symbol->string (gensym)))
+	       "hop.install")))
       (unless (directory? d)
 	 (make-directories d))
       d))
