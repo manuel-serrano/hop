@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Jul 30 17:20:13 2015                          */
-/*    Last change :  Tue Apr 16 08:14:35 2024 (serrano)                */
+/*    Last change :  Wed Apr 17 09:41:20 2024 (serrano)                */
 /*    Copyright   :  2015-24 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Tools to build the Hop.js documentation.                         */
@@ -86,7 +86,7 @@ function chapterEntries(chapter) {
 	 if (fs.lstatSync(fp).isDirectory()) {
 	    return fs.readdirSync(fp)
 	       .filter(function(e, idx = undefined, arr = undefined) {
-		  return e.match(/[.]md$/) && (e != "index.md");
+		  return e.match(/[.]md$/) && (e !== "index.md") && (e !== "README.md");
 	       })
 	       .sort(function(left, right) {
 		  return left.naturalCompare(right);
