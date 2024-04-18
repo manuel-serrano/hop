@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:02 2014                          */
-/*    Last change :  Tue Dec  7 08:07:33 2021 (serrano)                */
-/*    Copyright   :  2014-21 Manuel Serrano                            */
+/*    Last change :  Thu Apr 18 09:23:18 2024 (serrano)                */
+/*    Copyright   :  2014-24 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing arrays                                                   */
 /*=====================================================================*/
@@ -594,4 +594,15 @@ function testSplice() {
 }
 
 assert.ok( testSplice(), "testSplice" );
+
+/*---------------------------------------------------------------------*/
+/*    flatmap                                                          */
+/*---------------------------------------------------------------------*/
+console.log("flatMap...");
+
+assert.deepEqual([1, 2].flatMap(x => x), [1, 2], "flatMap flat");
+assert.deepEqual([1, [2], 3].flatMap(x => x), [1, 2, 3], "flatMap simple");
+assert.deepEqual([1, [2, 3], 4].flatMap(x => x), [1, 2, 3, 4], "flatMap simple 2");
+assert.deepEqual([1, 2].flatMap(x => []), [], "flatMap empty");
+assert.deepEqual([1, [2], 3].flatMap(x => []), [], "flatMap empty 2");
 

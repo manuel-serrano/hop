@@ -1,4 +1,4 @@
-${ var doc = require( "hopdoc" ) }
+${ var doc = require("hopdoc") }
 
 WebSockets
 ==========

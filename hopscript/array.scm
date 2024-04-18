@@ -3609,6 +3609,25 @@
 	  (loop (- i 1) (cons (js-get arr i %this) acc)))))
 
 ;*---------------------------------------------------------------------*/
+;*    array-prototype-iterator/procedure ...                           */
+;*    -------------------------------------------------------------    */
+;*    As array-prototype-iterator but "proc"'s type is not checked.    */
+;*---------------------------------------------------------------------*/
+(define (array-prototype-iterator/procedure this proc t
+	   array-iterator::procedure vector-iterator::procedure
+	   %this::JsGlobalObject)
+   ;; length must be evaluated before checking the function
+   ;; see ch15/15.4/15.4.4/15.4.4.16/15.4.4.16-4-8.js
+   (if (js-array? this)
+       (with-access::JsArray this (length vec ilen)
+	  (if (js-array-inlined? this)
+	      (vector-iterator this this length proc t #u32:0 %this)
+	      (array-iterator this this length proc t #u32:0 %this)))
+       (let ((o (js-toobject %this this)))
+	  (let ((len (js-get-lengthu32 o %this)))
+	     (array-iterator this o len proc t #u32:0 %this)))))
+
+;*---------------------------------------------------------------------*/
 ;*    array-prototype-iterator ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (array-prototype-iterator this proc t
@@ -3616,18 +3635,10 @@
 	   %this::JsGlobalObject)
    ;; length must be evaluated before checking the function
    ;; see ch15/15.4/15.4.4/15.4.4.16/15.4.4.16-4-8.js
-   (if (js-array? this)
-       (if (not (js-procedure? proc))
-	   (js-raise-type-error %this "not a procedure ~s" proc)
-	   (with-access::JsArray this (length vec ilen)
-	      (if (js-array-inlined? this)
-		  (vector-iterator this this length proc t #u32:0 %this)
-		  (array-iterator this this length proc t #u32:0 %this))))
-       (let ((o (js-toobject %this this)))
-	  (let ((len (js-get-lengthu32 o %this)))
-	     (if (not (js-procedure? proc))
-		 (js-raise-type-error %this "not a procedure ~s" proc)
-		 (array-iterator this o len proc t #u32:0 %this))))))
+   (if (not (js-procedure? proc))
+       (js-raise-type-error %this "not a procedure ~s" proc)
+       (array-prototype-iterator/procedure this proc t
+	  array-iterator vector-iterator %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-seal ::JsArray ...                                            */
@@ -5078,7 +5089,7 @@
 	 (make-vector (js-uint32-tointeger len))
 	 (lambda (v)
 	    (array-flatmap/array this o len proc thisarg i v #u32:0 %this))))
-   
+
    (array-prototype-iterator this proc thisarg array-flatmap vector-flatmap %this))
 
 ;*---------------------------------------------------------------------*/
@@ -5140,9 +5151,9 @@
 			     (flen i))
 		     (cond
 			((or (>=u32 i ilen) (>=u32 i l))
-			 ;; this.length may grow or shrink during the flatmap
+			 ;; this.length may grow or shrink during flatmap
 			 (if (=u32 i len)
-			     (flatten-vector->array this vec len flen %this)
+			     (flatten-vector->array this v len flen %this)
 			     ;; the array has been uninlined by the callback
 			     (array-flatmap/array this o len proc thisarg i v flen %this)))
 			(else
@@ -5160,8 +5171,8 @@
 	 (make-vector (js-uint32-tointeger len))
 	 (lambda (v)
 	    (array-flatmap/array this o len proc thisarg i v #u32:0 %this))))
-   
-   (array-prototype-iterator this proc thisarg array-flatmap vector-flatmap %this))
+
+   (array-prototype-iterator/procedure this proc thisarg array-flatmap vector-flatmap %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-flatmap-procedure ...                                   */

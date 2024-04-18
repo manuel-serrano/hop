@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Jul 30 17:20:13 2015                          */
-/*    Last change :  Wed Apr 17 09:41:20 2024 (serrano)                */
+/*    Last change :  Thu Apr 18 07:42:54 2024 (serrano)                */
 /*    Copyright   :  2015-24 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Tools to build the Hop.js documentation.                         */
@@ -35,18 +35,9 @@ const chapters = doc ?
 	 return c;
       }) : [];
 
-function P(file) {
-   return path.normalize("./" + file);
-}
-   
-const css = [P("hss/doc.css"),
-	      P("hss/markdown.css"),
-	      P("hss/fontifier.css"),
-	      P("lib/bootstrap/css/bootstrap.min.css")];
-const jscript = [P("lib/jquery/js/jquery.min.js"),
-		  P("lib/bootstrap/js/bootstrap.min.js")];
-const favicon = P("favicon.png");
-
+/*---------------------------------------------------------------------*/
+/*    alias                                                            */
+/*---------------------------------------------------------------------*/
 const alias = {
    "user.md": "api",
    "config.md": "api",
@@ -54,6 +45,93 @@ const alias = {
    "markdown.md": "api",
    "tree.md": "widget",
    "spage.md": "widget"
+}
+
+/* function P(file) {                                                  */
+/*    return path.normalize("./" + file);                              */
+/* }                                                                   */
+/*                                                                     */
+/* const css = [P("hss/doc.css"),                                      */
+/* 	      P("hss/markdown.css"),                                   */
+/* 	      P("hss/fontifier.css"),                                  */
+/* 	      P("lib/bootstrap/css/bootstrap.min.css")];               */
+/* const jscript = [P("lib/jquery/js/jquery.min.js"),                  */
+/* 		  P("lib/bootstrap/js/bootstrap.min.js")];             */
+/* const favicon = P("favicon.png");                                   */
+
+/*---------------------------------------------------------------------*/
+/*    findDirFiles ...                                                 */
+/*---------------------------------------------------------------------*/
+function findDirFiles(dir, pattern) {
+   return fs.readdirSync(dir).flatMap(f => {
+      if (f === "." || f === "..") {
+	 return [];
+      } else {
+	 const rp = path.join(dir, f);
+
+	 if (fs.statSync(rp).isDirectory()) {
+	    return findDirFiles(rp, pattern);
+	 } else if (f.match(pattern)) {
+	    return [ rp ];
+	 } else {
+	    return [];
+	 }
+      }
+   });
+}
+
+/*---------------------------------------------------------------------*/
+/*    findDir ...                                                      */
+/*---------------------------------------------------------------------*/
+function findDir(file, depth, dirname, pattern) {
+   let dir = path.dirname(file);
+
+   for (let i = depth; i > 0; i--) {
+      const p = path.join(dir, dirname);
+      if (fs.existsSync(p) && fs.statSync(p).isDirectory()) {
+	 return findDirFiles(p, pattern);
+      } else {
+	 dir = path.dirname(dir);
+	 i--;
+      }
+   }
+
+   return [];
+}
+   
+/*---------------------------------------------------------------------*/
+/*    findCss ...                                                      */
+/*---------------------------------------------------------------------*/
+function findCss(file, depth = 2) {
+   return findDir(file, depth, "lib", /\.css$/)
+      .concat(findDir(file, depth, "hss", /\.css$/))
+      .concat(findDir(file, depth, "css", /\.css$/));
+}
+
+/*---------------------------------------------------------------------*/
+/*    findJscript ...                                                  */
+/*---------------------------------------------------------------------*/
+function findJscript(file, depth = 2) {
+   findDir(file, depth, "lib", /\.m?js$/);
+}
+
+/*---------------------------------------------------------------------*/
+/*    findFavicon ...                                                  */
+/*---------------------------------------------------------------------*/
+function findFavicon(file, depth = 2) {
+   let dir = path.dirname(file);
+
+   for (let i = depth; i > 0; i--) {
+      const p = path.join(dir, "favicon.png");
+      if (fs.existsSync(p)) {
+	 return p;
+      } else {
+	 dir = path.dirname(dir);
+	 i--;
+      }
+   }
+
+   return false;
 }
 
 /*---------------------------------------------------------------------*/
@@ -178,10 +256,10 @@ function compileSection(page) {
    }
 
    const document = <html>
-     <head css=${css}
+      <head css=${findCss(path)}
 	   title=${doc.title + "/" + title}
-           jscript=${jscript}
-	   favicon=${favicon}
+           jscript=${findJscript(path)}
+           favicon=${findFavicon(path)}
            rts=${false}/>
 
      <body data-spy="scroll" 
@@ -259,10 +337,10 @@ function compileChapter(json) {
       chapterEntries(chapter).filter(x => x) : false;
 
    const document = <html>
-     <head css=${css}
+     <head css=${findCss(json)}
 	   title=${doc.title + "/" + chapter.title}
-           jscript=${jscript}
-	   favicon=${favicon}
+           jscript=${findJscript(json)}
+           favicon=${findFavicon(json)}
            rts=${false}/>
 
      <body data-spy="scroll" data-target="#navbar" class="hop" data-toc=${toc ? "yes" : "no"}>
@@ -312,10 +390,10 @@ function compileChapter(json) {
 function compileMain(content) {
 
    const document = <html>
-     <head css=${css}
+     <head css=${findCss(content)}
 	   title=${doc.title}
-           jscript=${jscript}
-	   favicon=${favicon}
+           jscript=${findJscript(content)}
+           favicon=${findFavicon(content)}
            rts=${false}/>
 
      <body class="hop home" data-spy="scroll" data-target="#navbar"
@@ -354,12 +432,12 @@ function compileMain(content) {
 function compileLibrary(content) {
    const footer = path.join(PWD, "footer.md");
    const id = path.basename(content).replace(/\..*$/, "");
-   
+   console.error("CSS=" , findCss(content));
    const document = <html>
-     <head css=${css}
+     <head css=${findCss(content)}
 	   title=${doc.title}
-           jscript=${jscript}
-	   favicon=${favicon}
+           jscript=${findJscript(content)}
+           favicon=${findFavicon(content)}
            rts=${false}/>
 
       <body class="hop library" id=${id} data-spy="scroll" data-target="#navbar">
@@ -396,10 +474,10 @@ function compileIdx(json) {
    const footer = path.join(PWD, "footer.md");
 
    const document = <html>
-     <head css=${css}
+     <head css=${findCss(json)}
 	   title=${doc.title + "/" + chapter.title}
-           jscript=${jscript}
-	   favicon=${favicon}
+           jscript=${findJscript(json)}
+           favicon=${findFavicon(json)}
            rts=${false}/>
 
      <body class="hop" data-spy="scroll" data-target="#navbar"

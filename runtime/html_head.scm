@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Tue Mar  5 10:00:01 2024 (serrano)                */
+;*    Last change :  Thu Apr 18 08:36:11 2024 (serrano)                */
 ;*    Copyright   :  2005-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -511,11 +511,16 @@ function hop_realm() {return \"" (hop-realm) "\";}"))))
 		 ((:favicon)
 		  (set! favico #t)
 		  (let ((v (xml-primitive-value (cadr a) context)))
-		     (if (string? v)
+		     (cond
+			((string? v)
 			 (loop (cddr a) #f rts dir path base inl packed 
 			    (cons (favicon (absolute-path v dir) inl context)
-			       els))
-			 (error "<HEAD>" "Illegal :favicon" (cadr a)))))
+			       els)))
+			((not v)
+			 (loop (cddr a) #f rts dir path base inl packed 
+			    els))
+			(else
+			 (error "<HEAD>" "Illegal :favicon" (cadr a))))))
 		 ((:rts)
 		  (if (boolean? (cadr a))
 		      (loop (cddr a) #f (cadr a) dir path base inl packed els)
