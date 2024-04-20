@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.7.x/js2scheme/html.scm                */
+;*    serrano/prgm/project/hop/hop/js2scheme/html.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jul 23 17:15:52 2015                          */
-;*    Last change :  Tue Jan 30 16:16:34 2024 (serrano)                */
+;*    Last change :  Fri Apr 19 10:46:37 2024 (serrano)                */
 ;*    Copyright   :  2015-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    J2S Html parser                                                  */
@@ -38,9 +38,9 @@
 		(rgc-buffer-unget-char port (char->integer #\space)))
 	     (rgc-buffer-insert-substring! port str 0 (string-length str))
 	     (read/rp xml-grammar port '()
-		(string=? lang "hopscript") #f
-		(lambda (x) x)
-		(hop-locale) lang conf parser plugins))
+			 (string=? lang "hopscript") #f
+			 (lambda (x) x)
+			 (hop-locale) lang conf parser plugins))
 	  (let loop ()
 	     (let ((v (read/rp xml-grammar port '()
 			 (string=? lang "hopscript") #f

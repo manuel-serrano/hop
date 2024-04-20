@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Jul 30 17:20:13 2015                          */
-/*    Last change :  Thu Apr 18 07:42:54 2024 (serrano)                */
+/*    Last change :  Fri Apr 19 09:41:52 2024 (serrano)                */
 /*    Copyright   :  2015-24 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Tools to build the Hop.js documentation.                         */
@@ -112,7 +112,8 @@ function findCss(file, depth = 2) {
 /*    findJscript ...                                                  */
 /*---------------------------------------------------------------------*/
 function findJscript(file, depth = 2) {
-   findDir(file, depth, "lib", /\.m?js$/);
+   return findDir(file, depth, "lib", /jquery\.min.js$/)
+      .concat(findDir(file, depth, "lib", /bootstrap\.min.js$/));
 }
 
 /*---------------------------------------------------------------------*/
@@ -240,7 +241,7 @@ function makeToc(els, k, proc = false) {
 /*---------------------------------------------------------------------*/
 /*    compileSection ...                                               */
 /*---------------------------------------------------------------------*/
-function compileSection(page) {
+function compileSection(page, target) {
    const footer = path.join(PWD, "footer.md");
    const ast = hopdoc.load(path.join(PWD, page))
    const title = path.basename(page).replace(/[0-9]+[-]|[.][^.]*$/g, "");
@@ -256,10 +257,10 @@ function compileSection(page) {
    }
 
    const document = <html>
-      <head css=${findCss(path)}
+      <head css=${findCss(target || page)}
 	   title=${doc.title + "/" + title}
-           jscript=${findJscript(path)}
-           favicon=${findFavicon(path)}
+           jscript=${findJscript(target || page)}
+           favicon=${findFavicon(target || page)}
            rts=${false}/>
 
      <body data-spy="scroll" 
@@ -324,23 +325,25 @@ function compileSection(page) {
      </body>
    </html>;
 
-   console.log(hop.compileXML(document));
+   fs.writeFileSync(target || process.stdout,
+		    hop.compileXML(document),
+		    { flush: true });
 }
 
 /*---------------------------------------------------------------------*/
 /*    compileChapter ...                                               */
 /*---------------------------------------------------------------------*/
-function compileChapter(json) {
+function compileChapter(json, target) {
    const footer = path.join(PWD, "footer.md");
    const chapter = require(path.join(PWD, json));
    const toc = (typeof json !== "Object" || !("toc" in json) || json.toc) ? 
       chapterEntries(chapter).filter(x => x) : false;
 
    const document = <html>
-     <head css=${findCss(json)}
+     <head css=${findCss(target || json)}
 	   title=${doc.title + "/" + chapter.title}
-           jscript=${findJscript(json)}
-           favicon=${findFavicon(json)}
+           jscript=${findJscript(target || json)}
+           favicon=${findFavicon(target || json)}
            rts=${false}/>
 
      <body data-spy="scroll" data-target="#navbar" class="hop" data-toc=${toc ? "yes" : "no"}>
@@ -381,19 +384,21 @@ function compileChapter(json) {
      </body>
    </html>;
 
-   console.log(hop.compileXML(document));
+   fs.writeFileSync(target || process.stdout,
+		    hop.compileXML(document),
+		    { flush: true });
 }
 
 /*---------------------------------------------------------------------*/
 /*    compileMain ...                                                  */
 /*---------------------------------------------------------------------*/
-function compileMain(content) {
+function compileMain(content, target) {
 
    const document = <html>
-     <head css=${findCss(content)}
+     <head css=${findCss(target || content)}
 	   title=${doc.title}
-           jscript=${findJscript(content)}
-           favicon=${findFavicon(content)}
+           jscript=${findJscript(target || content)}
+           favicon=${findFavicon(target || content)}
            rts=${false}/>
 
      <body class="hop home" data-spy="scroll" data-target="#navbar"
@@ -423,21 +428,23 @@ function compileMain(content) {
      </body>
    </html>;
 
-   console.log(hop.compileXML(document));
+   fs.writeFileSync(target || process.stdout,
+		    hop.compileXML(document),
+		    { flush: true });
 }
 
 /*---------------------------------------------------------------------*/
 /*    compileLibrary ...                                               */
 /*---------------------------------------------------------------------*/
-function compileLibrary(content) {
+function compileLibrary(content, target) {
    const footer = path.join(PWD, "footer.md");
    const id = path.basename(content).replace(/\..*$/, "");
-   console.error("CSS=" , findCss(content));
+
    const document = <html>
-     <head css=${findCss(content)}
+     <head css=${findCss(target || content)}
 	   title=${doc.title}
-           jscript=${findJscript(content)}
-           favicon=${findFavicon(content)}
+           jscript=${findJscript(target || content)}
+           favicon=${findFavicon(target || content)}
            rts=${false}/>
 
       <body class="hop library" id=${id} data-spy="scroll" data-target="#navbar">
@@ -460,7 +467,9 @@ function compileLibrary(content) {
      </body>
    </html>;
 
-   console.log(hop.compileXML(document));
+   fs.writeFileSync(target || process.stdout,
+		    hop.compileXML(document),
+		    { flush: true });
 }
 
 /*---------------------------------------------------------------------*/
@@ -468,16 +477,16 @@ function compileLibrary(content) {
 /*    -------------------------------------------------------------    */
 /*    compile the HTML index page.                                     */
 /*---------------------------------------------------------------------*/
-function compileIdx(json) {
+function compileIdx(json, target) {
    const idx = require(path.join(PWD, json));
    const chapter = { title: "Index", key: "index" };
    const footer = path.join(PWD, "footer.md");
 
    const document = <html>
-     <head css=${findCss(json)}
+     <head css=${findCss(target || json)}
 	   title=${doc.title + "/" + chapter.title}
-           jscript=${findJscript(json)}
-           favicon=${findFavicon(json)}
+           jscript=${findJscript(target || json)}
+           favicon=${findFavicon(target || json)}
            rts=${false}/>
 
      <body class="hop" data-spy="scroll" data-target="#navbar"
@@ -512,43 +521,48 @@ function compileIdx(json) {
      </body>
    </html>;
 
-   console.log(hop.compileXML(document));
+   fs.writeFileSync(target || process.stdout,
+		    hop.compileXML(document),
+		    { flush: true });
 }
 
 /*---------------------------------------------------------------------*/
 /*    main ...                                                         */
 /*---------------------------------------------------------------------*/
 function main() {
-   switch(process.argv[2]) {
+   const argv = process.argv;
+   const target = argv[4] === "-o" ? argv[5]: false;
+   
+   switch(argv[2]) {
       case "html-to-idx":
-	 hopdoc.htmlToIdx(process.argv[3],
-			   process.argv.slice(4).map(function(f, _, __) {
+	 hopdoc.htmlToIdx(argv[3],
+			   argv.slice(4).map(function(f, _, __) {
 			      return path.join(PWD, f);
 			   }));
 	 break;
 
       case "compile-idx":
-	 compileIdx(process.argv[3]);
+	 compileIdx(argv[3], target);
 	 break;
 
       case "compile-main":
-	 compileMain(process.argv[3]);
+	 compileMain(argv[3], target);
 	 break;
 
       case "compile-library":
-	 compileLibrary(process.argv[3]);
+	 compileLibrary(argv[3], target);
 	 break;
 
       case "compile-section":
-	 compileSection(process.argv[3]);
+	 compileSection(argv[3], target);
 	 break;
 
       case "compile-chapter":
-	 compileChapter(process.argv[3]);
+	 compileChapter(argv[3], target);
 	 break;
 	 
       default:
-	 throw("Unknown command: " + process.argv[2]);
+	 throw("Unknown command: " + argv[2]);
    }
 }
 
