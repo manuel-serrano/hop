@@ -278,7 +278,7 @@ h3.glyphicon:before,
 h4.glyphicon:before {
   font-size: 65%;
   margin-right: 0.4em;
-  margin-left: 2px;
+  margin-left: 0.2em;
   font-family: 'Glyphicons Halflings';
   font-style: normal;
   font-weight: 400;
@@ -314,12 +314,12 @@ h4.scheme:before {
 
 h3.syntax:before,
 h4.syntax:before {
-  color: #555555;
+  color: #f63646;
 }
 
 h3.ext-function:before,
 h4.ext-function:before {
-  color: #f63646;
+  color: #b19011;
 }
 
 /*---------------------------------------------------------------------*/
@@ -695,6 +695,13 @@ code .h1, code .h2, code .h3, code .h4 {
 
 body.bib pre {
     border-left-color: #999;
+}
+
+/*---------------------------------------------------------------------*/
+/*    blockquote                                                       */
+/*---------------------------------------------------------------------*/
+blockquote.markdown {
+    font-size: 100%;
 }
 
 /*---------------------------------------------------------------------*/

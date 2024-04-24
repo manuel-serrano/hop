@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jul 23 17:15:52 2015                          */
-;*    Last change :  Fri Apr 19 10:46:37 2024 (serrano)                */
+;*    Last change :  Wed Apr 24 11:17:09 2024 (serrano)                */
 ;*    Copyright   :  2015-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    J2S Html parser                                                  */
@@ -34,8 +34,8 @@
    (let ((lang (config-get conf :language "hopscript")))
       (if tag
 	  (let ((str (symbol->string! (token-value tag))))
-	     (when sep
-		(rgc-buffer-unget-char port (char->integer #\space)))
+	     (when (and sep (not (eq? (token-type tag) 'OTAG)))
+		(rgc-buffer-insert-char! port (char->integer #\space)))
 	     (rgc-buffer-insert-substring! port str 0 (string-length str))
 	     (read/rp xml-grammar port '()
 			 (string=? lang "hopscript") #f

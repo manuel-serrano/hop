@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Aug  1 10:22:56 2015                          */
-/*    Last change :  Thu May  6 18:15:41 2021 (serrano)                */
-/*    Copyright   :  2015-21 Manuel Serrano                            */
+/*    Last change :  Tue Apr 23 14:11:54 2024 (serrano)                */
+/*    Copyright   :  2015-24 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop.js XML extensions                                            */
 /*=====================================================================*/
@@ -13,22 +13,22 @@
 /*---------------------------------------------------------------------*/
 /*    imports                                                          */
 /*---------------------------------------------------------------------*/
-const path = require( "path" );
-const config = require( hop.config );
+const path = require("path");
+const config = require(hop.config);
 
-const ipath = path.join( config.iconsDir, "hop" );
+const ipath = path.join(config.iconsDir, "hop");
 
 /*---------------------------------------------------------------------*/
 /*    title ...                                                        */
 /*---------------------------------------------------------------------*/
-function title( attrs, ... subtitle ) {
+function title(attrs, ... subtitle) {
    return <div class="jumbotron">
      <div class="container">
        <div class="row">
 	 <div class="col-md-2">
 	   <div class="svg-container">
 	     <svg:img
-                src=${attrs.logo ? attrs.logo : path.join( ipath, "hop.svg" )}
+                src=${attrs.logo ? attrs.logo : path.join(ipath, "hop.svg")}
                 height="16ex" width="10em"/>
            </div>
 	 </div>
@@ -56,20 +56,20 @@ function title( attrs, ... subtitle ) {
 /*---------------------------------------------------------------------*/
 /*    xmlNodes ...                                                     */
 /*---------------------------------------------------------------------*/
-function xmlNodes( nodes ) {
+function xmlNodes(nodes) {
 
-   function pred( el ) {
-      return !(typeof( el ) == "string" );
+   function pred(el) {
+      return !(typeof(el) == "string");
    }
    
-   return Array.prototype.filter.call( nodes, pred );
+   return Array.prototype.filter.call(nodes, pred);
 }
 
 /*---------------------------------------------------------------------*/
 /*    navbut ...                                                       */
 /*---------------------------------------------------------------------*/
-function navbut( attrs, ... nodes ) {
-   const body = xmlNodes( nodes );
+function navbut(attrs, ... nodes) {
+   const body = xmlNodes(nodes);
 
    return <div class="btn-group navbut">
        <button type="button"
@@ -91,21 +91,21 @@ function navbut( attrs, ... nodes ) {
 /*---------------------------------------------------------------------*/
 /*    navbar ...                                                       */
 /*---------------------------------------------------------------------*/
-function navbar( attrs, ... chapters ) {
-   if( !(chapters[ 0 ] instanceof Array) ) { chapters = chapters[ 1 ]; }
+function navbar(attrs, ... chapters) {
+   if (!(chapters[ 0 ] instanceof Array)) { chapters = chapters[ 1 ]; }
 
    return <nav class="navbar navbar-inverse navbar-fixed-top">
      <div class="container">
        <!--
        <a class="navbar-brand" href="#">
 	 <svg:img
-             src=${attrs.logo ? attrs.logo : path.join( ipath, "hop.svg" )}
+             src=${attrs.logo ? attrs.logo : path.join(ipath, "hop.svg")}
              height="3ex" width="3em"/>
        </a>
        -->
        <ul class="nav navbar-nav">
-         ${chapters.map( function( p, idx = undefined, arr = undefined ) {
-	    if( p.entries.length == 0 ) {
+         ${chapters.map(function(p, idx = undefined, arr = undefined) {
+	    if (p.entries.length == 0) {
                const clazz = p.name.toLowerCase()==attrs.key
 		   ? "active" : "";
                return <li class=${clazz}>
@@ -126,16 +126,16 @@ function navbar( attrs, ... chapters ) {
                  <ul class="dropdown-menu">
                    <li><a href=${p.href}>${p.name}</a></li>
                    <li role="separator" class="divider"></li>
-	           ${p.entries.map( function( e, idx = undefined, arr = undefined ) {
-		      if( !(e instanceof Object) ) {
+	           ${p.entries.map(function(e, idx = undefined, arr = undefined) {
+		      if (!(e instanceof Object)) {
 			 return <li role="separator" class="divider"></li>;
 		      } else {
 			 return <li><a href=${e.href}>${e.title}</a></li>
 		      }
-		   } )}
+		   })}
                  </ul>
 	       </li>
-	    } } )}
+	    } })}
 	  </ul>
      </div>
    </nav>
@@ -144,12 +144,12 @@ function navbar( attrs, ... chapters ) {
 /*---------------------------------------------------------------------*/
 /*    copyrightYears ...                                               */
 /*---------------------------------------------------------------------*/
-function copyrightYears( iyear ) {
+function copyrightYears(iyear) {
    const y = new Date().getFullYear();
 
-   if( y == iyear ) {
+   if (y == iyear) {
       return iyear + "";
-   } else if( y == iyear + 1 ) {
+   } else if (y == iyear + 1) {
       return iyear + "-" + y;
    } else {
       return iyear + "-" + y;
@@ -159,11 +159,11 @@ function copyrightYears( iyear ) {
 /*---------------------------------------------------------------------*/
 /*    docfooter ...                                                    */
 /*---------------------------------------------------------------------*/
-function docfooter( attrs ) {
+function docfooter(attrs) {
    return <footer>
      <div class="container">
        <div class="copyright col-md-2 copyright-left">
-       &copy; ${copyrightYears( 2006 )}
+       &copy; ${copyrightYears(2006)}
 	 <a href="http://www.inria.fr">Inria</a>
        </div>
        <div class="copyright col-md-8 copyright-middle">
@@ -179,7 +179,7 @@ function docfooter( attrs ) {
 	 <button type="button" class="inria btn btn-danger">
            <a href="http://www.inria.fr">
            <svg:img class="inria"
-		    src=${path.join( ipath, "inria.svg" )}
+		    src=${path.join(ipath, "inria.svg")}
 		    height="1.6ex" width="4em"/>
            </a>
 	 </button>
@@ -191,7 +191,7 @@ function docfooter( attrs ) {
 /*---------------------------------------------------------------------*/
 /*    downloadButton ...                                               */
 /*---------------------------------------------------------------------*/
-function downloadButton( attrs ) {
+function downloadButton(attrs) {
    return  <a href=${attrs.href}>
      <button class=${"download btn btn-" + attrs.class}>
        <table>
@@ -207,33 +207,33 @@ function downloadButton( attrs ) {
 /*---------------------------------------------------------------------*/
 /*    entryLetter ...                                                  */
 /*---------------------------------------------------------------------*/
-function entryLetter( en ) {
-   return en.key.charAt( 0 ).toUpperCase();
+function entryLetter(en) {
+   return en.key.charAt(0).toUpperCase();
 }
 
 /*---------------------------------------------------------------------*/
 /*    idxLetters ...                                                   */
 /*---------------------------------------------------------------------*/
-function idxLetters( es ) {
+function idxLetters(es) {
    let res = [];
    let letter = false;
    let mark = 0;
    let i = 0;
 
-   for( i = 0; i < es.length; i++ ) {
-      const l = entryLetter( es[ i ] );
-      if( l != letter ) {
-	 if( i > 0 ) {
-	    res = res.concat( es.slice( mark, i ) );
+   for (i = 0; i < es.length; i++) {
+      const l = entryLetter(es[ i ]);
+      if (l != letter) {
+	 if (i > 0) {
+	    res = res.concat(es.slice(mark, i));
 	 }
-	 res = res.concat( [ l ] );
+	 res = res.concat([ l ]);
 	 letter = l;
 	 mark = i;
       }
    }
 
-   if( mark < i ) {
-      res = res.concat( es.slice( mark, i ) );
+   if (mark < i) {
+      res = res.concat(es.slice(mark, i));
    }
 
    return res;
@@ -242,18 +242,18 @@ function idxLetters( es ) {
 /*---------------------------------------------------------------------*/
 /*    minIndexOf ...                                                   */
 /*---------------------------------------------------------------------*/
-function minIndexOf( string, ...seps ) {
+function minIndexOf(string, ...seps) {
    let index = string.length;
    let sep = false;
    
-   seps.forEach( s => {
-      const i = string.indexOf( s );
+   seps.forEach(s => {
+      const i = string.indexOf(s);
       
-      if( i > -1 && i < index ) {
+      if (i > -1 && i < index) {
 	 index = i;
 	 sep = s;
       }
-   } )
+   })
 		 
    return { index, sep };
 }
@@ -261,32 +261,32 @@ function minIndexOf( string, ...seps ) {
 /*---------------------------------------------------------------------*/
 /*    idxEntry ...                                                     */
 /*---------------------------------------------------------------------*/
-function idxEntry( e, idx = undefined, arr = undefined ) {
-   if( typeof( e ) === "string" ) {
+function idxEntry(e, idx = undefined, arr = undefined) {
+   if (typeof(e) === "string") {
       return <tr class="idx-letter"><td/><th>${e}</th></tr>;
    } else {
-      const { index, sep } = minIndexOf( e.proto, "[", "{", "(" );
+      const { index, sep } = minIndexOf(e.proto, "[", "{", "(");
       const title = e.proto + "..." + e.chapter;
-      let lbl = index ? e.proto.substring( 0, index ) : e.proto;
-      const i = lbl.lastIndexOf( "." );
-      const { index: cindex, sep: csep } = minIndexOf( e.proto, "(", "{" );
+      let lbl = index ? e.proto.substring(0, index) : e.proto;
+      const i = lbl.lastIndexOf(".");
+      const { index: cindex, sep: csep } = minIndexOf(e.proto, "(", "{");
 
-      switch( csep ) {
+      switch(csep) {
 	 case "{": lbl += "{}"; break;
 	 case "(": lbl += "()"; break;
       }
       
-      if( i > 0 ) {
+      if (i > 0) {
 	 return <tr>
-	   <td class="idx-prefix">${lbl.substring( 0, i )}.</td>
+	   <td class="idx-prefix">${lbl.substring(0, i)}.</td>
 	   <td class="idx-entry" title=${title}>
-	     <a href=${e.url}>${lbl.substring( i+1 )}</a>
+	     <a href=${e.url}>${lbl.substring(i+1)}</a>
 	   </td>
 	 </tr>;
       } else {
-	 if( lbl.indexOf( "&lt;" ) === 0 && lbl.lastIndexOf( "&gt;" ) === -1 ) {
-	    if( lbl.charAt( lbl.length - 1 ) === " " ) {
-	       lbl = lbl.substring( 0, lbl.length - 1 ) + "&gt;";
+	 if (lbl.indexOf("&lt;") === 0 && lbl.lastIndexOf("&gt;") === -1) {
+	    if (lbl.charAt(lbl.length - 1) === " ") {
+	       lbl = lbl.substring(0, lbl.length - 1) + "&gt;";
 	    } else {
 	       lbl += "&gt;";
 	    }
@@ -304,24 +304,24 @@ function idxEntry( e, idx = undefined, arr = undefined ) {
 /*---------------------------------------------------------------------*/
 /*    idx ...                                                          */
 /*---------------------------------------------------------------------*/
-function idx( attrs, entries ) {
-   const en = idxLetters( entries.filter( x => x ) );
+function idx(attrs, entries) {
+   const en = idxLetters(entries.filter(x => x));
    const collen = en.length / 3;
    
    return <div class="row">
      <div class="col-md-4">
        <table class="idx-col">
-         ${en.slice( 0, collen ).map( idxEntry )}
+         ${en.slice(0, collen).map(idxEntry)}
        </table>
      </div>
      <div class="col-md-4">
        <table class="idx-col">
-         ${en.slice( collen, collen * 2 ).map( idxEntry )}
+         ${en.slice(collen, collen * 2).map(idxEntry)}
        </table>
      </div>
      <div class="col-md-4">
        <table class="idx-col">
-         ${en.slice( collen * 2, en.length ).map( idxEntry )}
+         ${en.slice(collen * 2, en.length).map(idxEntry)}
        </table>
      </div>
    </div>;

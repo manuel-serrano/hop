@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Jul 30 17:20:13 2015                          */
-/*    Last change :  Fri Apr 19 09:41:52 2024 (serrano)                */
+/*    Last change :  Tue Apr 23 07:22:58 2024 (serrano)                */
 /*    Copyright   :  2015-24 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Tools to build the Hop.js documentation.                         */
@@ -62,7 +62,7 @@ const alias = {
 /*---------------------------------------------------------------------*/
 /*    findDirFiles ...                                                 */
 /*---------------------------------------------------------------------*/
-function findDirFiles(dir, pattern) {
+function findDirFiles(dir, pattern, prefix) {
    return fs.readdirSync(dir).flatMap(f => {
       if (f === "." || f === "..") {
 	 return [];
@@ -70,9 +70,9 @@ function findDirFiles(dir, pattern) {
 	 const rp = path.join(dir, f);
 
 	 if (fs.statSync(rp).isDirectory()) {
-	    return findDirFiles(rp, pattern);
+	    return findDirFiles(rp, pattern, prefix);
 	 } else if (f.match(pattern)) {
-	    return [ rp ];
+	    return [ prefix + rp ];
 	 } else {
 	    return [];
 	 }
@@ -85,13 +85,15 @@ function findDirFiles(dir, pattern) {
 /*---------------------------------------------------------------------*/
 function findDir(file, depth, dirname, pattern) {
    let dir = path.dirname(file);
+   let prefix = "";
 
    for (let i = depth; i > 0; i--) {
       const p = path.join(dir, dirname);
       if (fs.existsSync(p) && fs.statSync(p).isDirectory()) {
-	 return findDirFiles(p, pattern);
+	 return findDirFiles(p, pattern, prefix);
       } else {
 	 dir = path.dirname(dir);
+	 prefix = "../" + prefix;
 	 i--;
       }
    }
@@ -102,7 +104,7 @@ function findDir(file, depth, dirname, pattern) {
 /*---------------------------------------------------------------------*/
 /*    findCss ...                                                      */
 /*---------------------------------------------------------------------*/
-function findCss(file, depth = 2) {
+function findCss(file, depth = 3) {
    return findDir(file, depth, "lib", /\.css$/)
       .concat(findDir(file, depth, "hss", /\.css$/))
       .concat(findDir(file, depth, "css", /\.css$/));
@@ -111,7 +113,7 @@ function findCss(file, depth = 2) {
 /*---------------------------------------------------------------------*/
 /*    findJscript ...                                                  */
 /*---------------------------------------------------------------------*/
-function findJscript(file, depth = 2) {
+function findJscript(file, depth = 3) {
    return findDir(file, depth, "lib", /jquery\.min.js$/)
       .concat(findDir(file, depth, "lib", /bootstrap\.min.js$/));
 }
@@ -119,15 +121,17 @@ function findJscript(file, depth = 2) {
 /*---------------------------------------------------------------------*/
 /*    findFavicon ...                                                  */
 /*---------------------------------------------------------------------*/
-function findFavicon(file, depth = 2) {
+function findFavicon(file, depth = 3) {
    let dir = path.dirname(file);
+   let prefix = "";
 
    for (let i = depth; i > 0; i--) {
       const p = path.join(dir, "favicon.png");
       if (fs.existsSync(p)) {
-	 return p;
+	 return prefix + p;
       } else {
 	 dir = path.dirname(dir);
+	 prefix = "../" + prefix;
 	 i--;
       }
    }
@@ -244,7 +248,7 @@ function makeToc(els, k, proc = false) {
 function compileSection(page, target) {
    const footer = path.join(PWD, "footer.md");
    const ast = hopdoc.load(path.join(PWD, page))
-   const title = path.basename(page).replace(/[0-9]+[-]|[.][^.]*$/g, "");
+   const title = path.basename(target || page).replace(/[0-9]+[-]|[.][^.]*$/g, "");
    let key = path.basename(path.dirname(page)).toLowerCase();
    const affix = "normal";
    const chap = findChapter(title);
@@ -256,12 +260,23 @@ function compileSection(page, target) {
       key = title;
    }
 
+   if (target) {
+      // adjust the chpater hrefs
+      const dir = path.dirname(target);
+      
+      if (dir !== ".") {
+	 const reldir = dir.replace(/[^\/]+/, "..");
+	 chapters.forEach(e => e.href = path.join(reldir, e.href));
+      }
+   }
+   
+   
    const document = <html>
       <head css=${findCss(target || page)}
-	   title=${doc.title + "/" + title}
-           jscript=${findJscript(target || page)}
-           favicon=${findFavicon(target || page)}
-           rts=${false}/>
+	    title=${doc.title + "/" + title}
+            jscript=${findJscript(target || page)}
+            favicon=${findFavicon(target || page)}
+            rts=${false}/>
 
      <body data-spy="scroll" 
 	   data-target="#navbar" 
@@ -532,13 +547,15 @@ function compileIdx(json, target) {
 function main() {
    const argv = process.argv;
    const target = argv[4] === "-o" ? argv[5]: false;
+
+   hopdoc.setSource(argv[3]);
    
    switch(argv[2]) {
       case "html-to-idx":
 	 hopdoc.htmlToIdx(argv[3],
-			   argv.slice(4).map(function(f, _, __) {
-			      return path.join(PWD, f);
-			   }));
+			  argv.slice(target ? 6: 4)
+			     .map(f=> path.join(PWD, f)),
+			  target);
 	 break;
 
       case "compile-idx":
