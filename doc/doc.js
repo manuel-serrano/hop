@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Jul 30 17:20:13 2015                          */
-/*    Last change :  Tue Apr 23 07:22:58 2024 (serrano)                */
+/*    Last change :  Thu Apr 25 06:43:01 2024 (serrano)                */
 /*    Copyright   :  2015-24 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Tools to build the Hop.js documentation.                         */
@@ -21,21 +21,6 @@ const hopdoc = require("hopdoc")
 const docxml = require("./xml.js");
 
 /*---------------------------------------------------------------------*/
-/*    global parameters                                                */
-/*---------------------------------------------------------------------*/
-const PWD = process.cwd();
-const ROOT = process.cwd();
-const DOC = path.join(ROOT, "doc.json");
-
-const doc = fs.existsSync(DOC) ? require(DOC) : undefined;
-
-const chapters = doc ?
-      doc.chapters.map(function(c, idx = undefined, arr = undefined) {
-	 c.entries = chapterEntries(c);
-	 return c;
-      }) : [];
-
-/*---------------------------------------------------------------------*/
 /*    alias                                                            */
 /*---------------------------------------------------------------------*/
 const alias = {
@@ -46,18 +31,6 @@ const alias = {
    "tree.md": "widget",
    "spage.md": "widget"
 }
-
-/* function P(file) {                                                  */
-/*    return path.normalize("./" + file);                              */
-/* }                                                                   */
-/*                                                                     */
-/* const css = [P("hss/doc.css"),                                      */
-/* 	      P("hss/markdown.css"),                                   */
-/* 	      P("hss/fontifier.css"),                                  */
-/* 	      P("lib/bootstrap/css/bootstrap.min.css")];               */
-/* const jscript = [P("lib/jquery/js/jquery.min.js"),                  */
-/* 		  P("lib/bootstrap/js/bootstrap.min.js")];             */
-/* const favicon = P("favicon.png");                                   */
 
 /*---------------------------------------------------------------------*/
 /*    findDirFiles ...                                                 */
@@ -70,9 +43,9 @@ function findDirFiles(dir, pattern, prefix) {
 	 const rp = path.join(dir, f);
 
 	 if (fs.statSync(rp).isDirectory()) {
-	    return findDirFiles(rp, pattern, prefix);
+	    return findDirFiles(rp, pattern, prefix + "/" + f);
 	 } else if (f.match(pattern)) {
-	    return [ prefix + rp ];
+	    return [ prefix + "/" + f ];
 	 } else {
 	    return [];
 	 }
@@ -81,68 +54,68 @@ function findDirFiles(dir, pattern, prefix) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    findDir ...                                                      */
-/*---------------------------------------------------------------------*/
-function findDir(file, depth, dirname, pattern) {
-   let dir = path.dirname(file);
-   let prefix = "";
-
-   for (let i = depth; i > 0; i--) {
-      const p = path.join(dir, dirname);
-      if (fs.existsSync(p) && fs.statSync(p).isDirectory()) {
-	 return findDirFiles(p, pattern, prefix);
-      } else {
-	 dir = path.dirname(dir);
-	 prefix = "../" + prefix;
-	 i--;
-      }
-   }
-
-   return [];
-}
-   
-/*---------------------------------------------------------------------*/
 /*    findCss ...                                                      */
 /*---------------------------------------------------------------------*/
-function findCss(file, depth = 3) {
-   return findDir(file, depth, "lib", /\.css$/)
-      .concat(findDir(file, depth, "hss", /\.css$/))
-      .concat(findDir(file, depth, "css", /\.css$/));
+function findCss(file) {
+   const cwd = process.cwd();
+   let css = cwd + "/css";
+   const lib = cwd + "/lib";
+   const base = path.relative(path.dirname(file), cwd) || ".";
+   
+   if (!fs.existsSync(css) || !fs.statSync(css).isDirectory()) {
+      const hss = cwd + "/hss";
+      if (!fs.existsSync(hss) || !fs.statSync(hss).isDirectory()) {
+	 throw `"${css}" nor "${hss}" directories exist`;
+      } else {
+	 css = hss;
+      }
+   }
+   
+   if (!fs.existsSync(lib) || !fs.statSync(lib).isDirectory()) {
+      throw `"${lib}" directory does not exist`;
+   }
+
+   return findDirFiles(css, /\.css$/, path.basename(css))
+      .concat(findDirFiles(lib, /\.css$/, "lib"))
+      .map(f => base + "/" + f);
 }
 
 /*---------------------------------------------------------------------*/
 /*    findJscript ...                                                  */
 /*---------------------------------------------------------------------*/
-function findJscript(file, depth = 3) {
-   return findDir(file, depth, "lib", /jquery\.min.js$/)
-      .concat(findDir(file, depth, "lib", /bootstrap\.min.js$/));
+function findJscript(file) {
+   const cwd = process.cwd();
+   const lib = cwd + "/lib";
+   const base = path.relative(path.dirname(file), cwd) || ".";
+   
+   if (!fs.existsSync(lib) || !fs.statSync(lib).isDirectory()) {
+      throw `"${lib}" directory does not exist`;
+   }
+
+   return findDirFiles(lib, /jquery\.min.js$/, "lib")
+      .concat(findDirFiles(lib, /bootstrap\.min.js$/, "lib"))
+      .map(f => base + "/" + f);
 }
 
 /*---------------------------------------------------------------------*/
 /*    findFavicon ...                                                  */
 /*---------------------------------------------------------------------*/
-function findFavicon(file, depth = 3) {
-   let dir = path.dirname(file);
-   let prefix = "";
+function findFavicon(file) {
+   const cwd = process.cwd();
+   const favicon = cwd + "/favicon.png";
+   const base = path.relative(path.dirname(file), cwd) || ".";
 
-   for (let i = depth; i > 0; i--) {
-      const p = path.join(dir, "favicon.png");
-      if (fs.existsSync(p)) {
-	 return prefix + p;
-      } else {
-	 dir = path.dirname(dir);
-	 prefix = "../" + prefix;
-	 i--;
-      }
+   if (fs.existsSync(favicon)) {
+      return base + "/" + favicon;
+   } else {
+      return false;
    }
-
-   return false;
 }
 
 /*---------------------------------------------------------------------*/
 /*    findChapter ...                                                  */
 /*---------------------------------------------------------------------*/
-function findChapter(key) {
+function findChapter(chapters, key) {
    const keyhtml = key + ".html";
    return chapters.find(e => e.href === keyhtml);
 }
@@ -150,22 +123,22 @@ function findChapter(key) {
 /*---------------------------------------------------------------------*/
 /*    chapterEntries ...                                               */
 /*---------------------------------------------------------------------*/
-function chapterEntries(chapter) {
-   
-   function chapterFile(file, i = undefined, arr = undefined) {
-      const base = path.basename(file);
+function chapterEntries(chapter, root, target) {
+
+   function chapterFile(file, base) {
       return {
 	 path: file.replace(/[.]md$/, ".html"),
-	 href: base.replace(/[.]md$/, ".html"),
-	 title: base.replace(/[0-9]+[-]|[.]md$/g, "")
+	 href: base + "/" + file.replace(/[.]md$/, ".html"),
+	 title: path.basename(file).replace(/[0-9]+[-]|[.]md$/g, "")
       };
    }
    
-   function chapterEntry(file, i = false, arr = false) {
+   function chapterEntry(file, base) {
       if (typeof file != "string") {
 	 return [false];
       } else {
-	 const fp = path.join(ROOT, file);
+	 const fp = path.join(root, file);
+
 	 if (fs.lstatSync(fp).isDirectory()) {
 	    return fs.readdirSync(fp)
 	       .filter(function(e, idx = undefined, arr = undefined) {
@@ -174,21 +147,38 @@ function chapterEntries(chapter) {
 	       .sort(function(left, right) {
 		  return left.naturalCompare(right);
 	       })
-	       .map(chapterFile);
+	       .map(f => chapterFile(file + "/" + f, base));
 	 } else {
-	    return [chapterFile(file)];
+	    return [ chapterFile(file, base) ];
 	 }
       }
    }
 
    if (chapter.json) {
-      const c = require(path.join(PWD, chapter.json));
-      return Array.prototype.concat.apply([], c.files.map(chapterEntry));
+      const c = require(path.join(root, chapter.json));
+      const d = root + "/" + path.dirname(chapter.json);
+      const base = path.relative(path.dirname(target), root) || ".";
+
+      return Array.prototype.concat.apply([], c.files.map(f => chapterEntry(f, base)));
    } else if (chapter.files) {
-      return Array.prototype.concat.apply([], chapter.files.map(chapterEntry));
+      const base = path.relative(path.dirname(target), root) || ".";
+      return Array.prototype.concat.apply([], chapter.files.map(f => chapterEntry(f, base)));
    } else {
       return [];
    }
+}
+
+/*---------------------------------------------------------------------*/
+/*    findChapters ...                                                 */
+/*---------------------------------------------------------------------*/
+function findChapters(root, doc, target) {
+   const base = path.relative(path.dirname(target), root) || ".";
+   
+   return doc.chapters.map(c => {
+      c.href = base + "/" + c.href;
+      c.entries = chapterEntries(c, root, target);
+      return c;
+   });
 }
 
 /*---------------------------------------------------------------------*/
@@ -246,31 +236,19 @@ function makeToc(els, k, proc = false) {
 /*    compileSection ...                                               */
 /*---------------------------------------------------------------------*/
 function compileSection(page, target) {
-   const footer = path.join(PWD, "footer.md");
-   const ast = hopdoc.load(path.join(PWD, page))
-   const title = path.basename(target || page).replace(/[0-9]+[-]|[.][^.]*$/g, "");
+   const root = process.cwd();
+   const footer = path.join(root, "footer.md");
+   const ast = hopdoc.load(path.join(root, page))
+   const title = path.basename(page) === "README.md"
+      ? path.basename(path.dirname(page))
+      : path.basename(target || page).replace(/[0-9]+[-]|[.][^.]*$/g, "");
    let key = path.basename(path.dirname(page)).toLowerCase();
    const affix = "normal";
-   const chap = findChapter(title);
+   const doc = require(root + "/doc.json");
+   const chapters = findChapters(root, doc, target);
+   const chap = findChapter(chapters, title);
    const toc = (!chap || !("toc" in chap) || chap.toc) ? hopdoc.toc(ast) : [];
 
-   if (key == "doc") {
-      key = alias[path.basename(page)];
-   } else if (key == ".") {
-      key = title;
-   }
-
-   if (target) {
-      // adjust the chpater hrefs
-      const dir = path.dirname(target);
-      
-      if (dir !== ".") {
-	 const reldir = dir.replace(/[^\/]+/, "..");
-	 chapters.forEach(e => e.href = path.join(reldir, e.href));
-      }
-   }
-   
-   
    const document = <html>
       <head css=${findCss(target || page)}
 	    title=${doc.title + "/" + title}
@@ -299,7 +277,7 @@ function compileSection(page, target) {
 		     version=${doc.version}
 		     date=${doc.date}
 		     logo=${doc.logo}
-		     root=${ROOT}>
+		     root=${root}>
           ${title}
        </docxml.title>
        <div class="container">
@@ -335,7 +313,7 @@ function compileSection(page, target) {
 	 </div>
 	 ${fs.existsSync(footer)
 	   ? hopdoc.load(footer).XML 
-	   : <docxml.footer root=${ROOT}/>}
+	   : <docxml.footer root=${root}/>}
        </div>
      </body>
    </html>;
@@ -349,10 +327,13 @@ function compileSection(page, target) {
 /*    compileChapter ...                                               */
 /*---------------------------------------------------------------------*/
 function compileChapter(json, target) {
-   const footer = path.join(PWD, "footer.md");
-   const chapter = require(path.join(PWD, json));
+   const root = process.cwd();
+   const footer = path.join(root, "footer.md");
+   const doc = require(root + "/doc.json");
+   const chapters = findChapters(root, doc, target);
+   const chapter = require(path.join(root, json));
    const toc = (typeof json !== "Object" || !("toc" in json) || json.toc) ? 
-      chapterEntries(chapter).filter(x => x) : false;
+      chapterEntries(chapter, root, target).filter(x => x) : false;
 
    const document = <html>
      <head css=${findCss(target || json)}
@@ -369,15 +350,15 @@ function compileChapter(json, target) {
 		     version=${doc.version}
 		     date=${doc.date}
 		     logo=${doc.logo}
-		     root=${ROOT}>
+		     root=${root}>
           ${chapter.title}
        </docxml.title>
 
        <div class="container">
 	 <div class="filler">.keep</div>
          ${chapter.description ? <div class="chapter-header">
-	   ${ fs.existsSync(ROOT + "/" + chapter.description) ?
-	      hopdoc.load(ROOT + "/" + chapter.description).XML
+	   ${ fs.existsSync(root + "/" + chapter.description) ?
+	      hopdoc.load(root + "/" + chapter.description).XML
 	      : hopdoc.eval(chapter.description).XML }
 	   </div> : ""}
 	 
@@ -394,7 +375,7 @@ function compileChapter(json, target) {
          </ul>
 	 ${fs.existsSync(footer) 
 	   ? hopdoc.load(footer).XML 
-	   : <docxml.footer root=${ROOT}/>}
+	   : <docxml.footer root=${root}/>}
        </div>
      </body>
    </html>;
@@ -408,6 +389,9 @@ function compileChapter(json, target) {
 /*    compileMain ...                                                  */
 /*---------------------------------------------------------------------*/
 function compileMain(content, target) {
+   const root = process.cwd();
+   const doc = require(root + "/doc.json");
+   const chapters = findChapters(root, doc, target);
 
    const document = <html>
      <head css=${findCss(target || content)}
@@ -433,12 +417,12 @@ function compileMain(content, target) {
 		     version=${doc.version}
 		     date=${doc.date}
 		     logo=${doc.logo}
-		     root=${ROOT}/>
+		     root=${root}/>
 
        <div class="container home-body">
 	 <div class="filler">.keep</div>
          ${hopdoc.load(content).XML}
-	 <docxml.footer root=${ROOT}/>
+	 <docxml.footer root=${root}/>
        </div>
      </body>
    </html>;
@@ -452,8 +436,11 @@ function compileMain(content, target) {
 /*    compileLibrary ...                                               */
 /*---------------------------------------------------------------------*/
 function compileLibrary(content, target) {
-   const footer = path.join(PWD, "footer.md");
+   const root = process.cwd();
+   const footer = path.join(root, "footer.md");
    const id = path.basename(content).replace(/\..*$/, "");
+   const doc = require(root + "/doc.json");
+   const chapters = findChapters(root, doc, target);
 
    const document = <html>
      <head css=${findCss(target || content)}
@@ -470,7 +457,7 @@ function compileLibrary(content, target) {
 		     version=${doc.version}
 		     date=${doc.date}
 		     logo=${doc.logo}
-		     root=${ROOT}/>
+		     root=${root}/>
 
        <div class="container home-body">
 	 <div class="filler">.keep</div>
@@ -493,9 +480,12 @@ function compileLibrary(content, target) {
 /*    compile the HTML index page.                                     */
 /*---------------------------------------------------------------------*/
 function compileIdx(json, target) {
-   const idx = require(path.join(PWD, json));
+   const root = process.cwd();
+   const idx = require(path.join(root, json));
    const chapter = { title: "Index", key: "index" };
-   const footer = path.join(PWD, "footer.md");
+   const footer = path.join(root, "footer.md");
+   const doc = require(root + "/doc.json");
+   const chapters = findChapters(root, doc, target);
 
    const document = <html>
      <head css=${findCss(target || json)}
@@ -522,7 +512,7 @@ function compileIdx(json, target) {
 		     version=${doc.version}
 		     date=${doc.date}
 		     logo=${doc.logo}
-		     root=${ROOT}>
+		     root=${root}>
           ${chapter.title}
        </docxml.title>
 
@@ -547,14 +537,14 @@ function compileIdx(json, target) {
 function main() {
    const argv = process.argv;
    const target = argv[4] === "-o" ? argv[5]: false;
+   const root = process.cwd();
 
    hopdoc.setSource(argv[3]);
    
    switch(argv[2]) {
       case "html-to-idx":
 	 hopdoc.htmlToIdx(argv[3],
-			  argv.slice(target ? 6: 4)
-			     .map(f=> path.join(PWD, f)),
+			  argv.slice(target ? 6: 4).map(f => root + "/" + f),
 			  target);
 	 break;
 
