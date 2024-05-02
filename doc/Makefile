@@ -3,8 +3,8 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Thu Oct 12 11:13:40 2023 (serrano)                */
-#*    Copyright   :  2006-23 Manuel Serrano                            */
+#*    Last change :  Thu May  2 09:08:34 2024 (serrano)                */
+#*    Copyright   :  2006-24 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Doc Makefile                                                     */
 #*=====================================================================*/
@@ -207,7 +207,7 @@ index.html: _index.md doc.js xml.js
 idx.json: $(API_TARGETS) $(LANG_TARGETS) $(DEV_TARGETS) $(WIDGET_TARGETS) \
   $(INTF_TARGETS)
 	$(HOP) $(HOPFLAGS) $(EFLAGS) -- \
-          $(BUILDDIR)/doc/doc.js "html-to-idx" . $^ > $@ \
+          $(BUILDDIR)/doc/doc.js "html-to-idx" . -o $@ $^ \
           || ($(RM) $@; exit 1)
 
 #*---------------------------------------------------------------------*/
