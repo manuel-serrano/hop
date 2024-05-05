@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  manuel serrano                                    */
 ;*    Creation    :  Wed Sep 13 01:56:26 2023                          */
-;*    Last change :  Fri Apr  5 10:11:22 2024 (serrano)                */
+;*    Last change :  Sun May  5 11:55:53 2024 (serrano)                */
 ;*    Copyright   :  2023-24 manuel serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    A partial Hop-to-JS compiler.                                    */
@@ -1101,6 +1101,11 @@
       (format "~a[~a]"
 	 (hop2js-expr (car args) env) (hop2js-expr (cadr args) env))))
 
+(hashtable-put! expander-table "string-index"
+   (lambda (fun args env)
+      (format "~a.indexOf(~a)"
+	 (hop2js-expr (car args) env) (hop2js-expr (cadr args) env))))
+
 (hashtable-put! expander-table "substring=?"
    (lambda (fun args env)
       (format "~a.substring(0, ~a) === ~a"
@@ -1340,6 +1345,13 @@
    (lambda (fun args env)
       (format "~a.get()"
 	 (hop2js-expr (car args) env))))
+
+(hashtable-put! expander-table "mmap-substring"
+   (lambda (fun args env)
+      (format "~a.substring(~a, ~a)"
+	 (hop2js-expr (car args) env)
+	 (hop2js-expr (cadr args) env)
+	 (hop2js-expr (caddr args) env))))
 
 (hashtable-put! expander-table "mmap-read-position"
    (lambda (fun args env)
