@@ -255,6 +255,9 @@
 	    (hop-icons-directory::bstring)
 	    (hop-icons-directory-set! ::bstring)
 
+	    (hop-max-threads::int) 
+	    (hop-max-threads-set! ::int)
+	    
 	    (hop-connection-ttl::int) 
 	    (hop-connection-ttl-set! ::int)
 	    
@@ -1172,6 +1175,16 @@
       (let ((hi (hostinfo (hostname))))
 	 (let ((c (assq 'addresses hi)))
 	    (if (pair? c) (cdr c) '())))))
+
+;*---------------------------------------------------------------------*/
+;*    Thread management                                                */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-max-threads
+   12
+   (lambda (v)
+      (cond-expand
+	 (enable-threads v)
+	 (else 1))))
 
 ;*---------------------------------------------------------------------*/
 ;*    Connection delays and timeouts                                   */

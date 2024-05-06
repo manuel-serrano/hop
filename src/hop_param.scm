@@ -19,9 +19,6 @@
    (export  (hop-scheduler::obj)
 	    (hop-scheduler-set! ::obj)
 	    
-	    (hop-max-threads::int)
-	    (hop-max-threads-set! ::int)
-	    
 	    (hop-autoload-directories::pair-nil)
 	    (hop-autoload-directories-set! ::pair-nil)
 	    (hop-autoload-directory-add! ::bstring)
@@ -124,13 +121,6 @@
 (define-parameter hop-scheduler
    #unspecified)
 
-(define-parameter hop-max-threads
-   12
-   (lambda (v)
-      (cond-expand
-	 (enable-threads v)
-	 (else 1))))
-
 ;*---------------------------------------------------------------------*/
 ;*    Autoload                                                         */
 ;*---------------------------------------------------------------------*/
@@ -199,21 +189,7 @@
 ;*    A list of IP addresses not allowed to get connected              */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-ip-blacklist
-   '()
-   (lambda (v)
-      (cond
-	 ((hashtable? v)
-	  v)
-	 ((list? v)
-	  (let ((t (create-hashtable :size 32)))
-	     (for-each (lambda (e)
-			  (when (string? e)
-			     (hashtable-put! t e #t)))
-		       v)
-	     (hop-ip-blacklist-table-set! t)
-	     v))
-	 (else
-	  (error "hop-ip-blacklist" "Illegal blacklist" v)))))
+   '())
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-ip-blacklist-table ...                                       */

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 24 16:10:01 2023                          */
-;*    Last change :  Fri Jun  9 08:55:21 2023 (serrano)                */
-;*    Copyright   :  2023 Manuel Serrano                               */
+;*    Last change :  Mon May  6 18:13:59 2024 (serrano)                */
+;*    Copyright   :  2023-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Scheme part of the node_api.                                 */
 ;*=====================================================================*/
@@ -550,7 +550,7 @@
    (with-access::JsGlobalObject %this (worker)
       (with-access::WorkerHopThread worker (%loop)
 	 (with-access::UvLoop %loop ($builtin)
-	    $builtin))))
+	    ($uv-loop-t $builtin)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    napi-jsstring? ...                                               */

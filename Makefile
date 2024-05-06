@@ -24,7 +24,7 @@ do: build
 POPULATION	= Makefile LICENSE README INSTALL.md INSTALL.jvm \
                   configure .hoprelease .hgignore .gitignore README.md \
                   TODO.md
-POPDIRS		= runtime hopscheme scheme2js hopscript js2scheme \
+POPDIRS		= runtime hopsched hopscheme scheme2js hopscript js2scheme \
                   src hopc hopsh hopreplay hophz \
                   etc share arch \
                   weblets widget nodejs node_modules \
@@ -34,7 +34,7 @@ POPDIRS		= runtime hopscheme scheme2js hopscript js2scheme \
 #*    build                                                            */
 #*---------------------------------------------------------------------*/
 .PHONY: bindir libdir lib widget share weblets bin \
-  share-afile scheme2js hopscript js2scheme nodejs \
+  share-afile scheme2js hopscript js2scheme nodejs hopsched \
   android node_modules doc test .buildtag tools
 
 build: build-sans-modules
@@ -72,6 +72,7 @@ tools-bin: bin
 lib: libdir scheme2js hopscript
 	$(MAKE) -C hopscheme build
 	$(MAKE) -C runtime build
+	$(MAKE) -C hopsched build
 	$(MAKE) -C js2scheme build
 
 widget: libdir hopc-bin share-afile
@@ -116,6 +117,7 @@ dep:
 	$(MAKE) -C scheme2js dep
 	$(MAKE) -C hopscheme dep
 	$(MAKE) -C runtime dep
+	$(MAKE) -C hopsched dep
 	$(MAKE) -C js2scheme dep
 	$(MAKE) -C hopscript dep
 	$(MAKE) -C nodejs dep
@@ -130,6 +132,7 @@ ude:
 	$(MAKE) -C scheme2js ude
 	$(MAKE) -C hopscheme ude
 	$(MAKE) -C runtime ude
+	$(MAKE) -C hopsched ude
 	$(MAKE) -C js2scheme ude
 	$(MAKE) -C hopscript ude
 	$(MAKE) -C nodejs ude
@@ -158,6 +161,7 @@ install-weblets: hop-dirs
 
 install-quick: hop-dirs install-init install-config
 	$(MAKE) -C runtime install && \
+	$(MAKE) -C hopsched install && \
 	$(MAKE) -C widget install && \
 	$(MAKE) -C scheme2js install && \
 	$(MAKE) -C hopscheme install && \
@@ -255,6 +259,7 @@ uninstall:
 	$(MAKE) -C src uninstall
 	$(MAKE) -C hopsh uninstall
 	$(MAKE) -C runtime uninstall
+	$(MAKE) -C hopsched uninstall
 	$(MAKE) -C widget uninstall
 	$(MAKE) -C scheme2js uninstall
 	$(MAKE) -C hopscheme uninstall
@@ -272,6 +277,7 @@ uninstall:
 #*---------------------------------------------------------------------*/
 clean-quick:
 	$(MAKE) -C runtime clean
+	$(MAKE) -C hopsched clean
 	$(MAKE) -C src clean
 	$(MAKE) -C hopsh clean
 	$(MAKE) -C hophz clean
@@ -286,6 +292,7 @@ clean-quick:
 
 clean: 
 	$(MAKE) -C runtime clean
+	$(MAKE) -C hopsched clean
 	$(MAKE) -C scheme2js clean
 	$(MAKE) -C hopscheme clean
 	$(MAKE) -C js2scheme clean
@@ -310,6 +317,7 @@ clean-npm:
 
 devclean:
 	$(MAKE) -C runtime devclean
+	$(MAKE) -C hopsched devclean
 	$(MAKE) -C src devclean
 	$(MAKE) -C hopc devclean
 	$(MAKE) -C hopsh devclean
@@ -322,6 +330,7 @@ devclean:
 
 distclean: clean 
 	$(MAKE) -C runtime distclean
+	$(MAKE) -C hopsched distclean
 	$(MAKE) -C src distclean
 	$(MAKE) -C hopc distclean
 	$(MAKE) -C hopsh distclean

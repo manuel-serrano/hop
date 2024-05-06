@@ -18,14 +18,7 @@
    
    (import  hop_parseargs
 	    hop_param
-	    hop_init
-	    hop_accept
-	    hop_scheduler
-	    hop_scheduler-nothread
-	    hop_scheduler-queue
-	    hop_scheduler-one-to-one
-	    hop_scheduler-pool
-	    hop_scheduler-accept-many)
+	    hop_init)
 
    (cond-expand
       ((library libbacktrace)
@@ -191,16 +184,17 @@
 				 (body (lambda ()
 					  (scheduler-accept-loop
 					     (make-hop-scheduler)
-					     servs #t)))))
-			   (scheduler-accept-loop (hop-scheduler) serv #t))
+					     servs #t
+					     (hop-ip-blacklist))))))
+			   (scheduler-accept-loop (hop-scheduler) serv #t (hop-ip-blacklist)))
 			  (else
 			   (error "hop"
 			      "Thread support missing for running both http and https servers"
 			      servs))))
 		      (serv
-		       (scheduler-accept-loop (hop-scheduler) serv #t))
+		       (scheduler-accept-loop (hop-scheduler) serv #t (hop-ip-blacklist)))
 		      (servs
-		       (scheduler-accept-loop (hop-scheduler) servs #t)))
+		       (scheduler-accept-loop (hop-scheduler) servs #t (hop-ip-blacklist))))
 		   (when jsctx
 		      (thread-join! (jsctx-worker jsctx))))
 		  (jsctx
@@ -584,7 +578,8 @@
 ;*---------------------------------------------------------------------*/
 (define (stage-repl repl)
    (lambda (scd thread)
-      (debug-thread-info-set! thread "stage-repl")
+      (when (>fx (bigloo-debug) 0)
+	 (thread-info-set! thread "stage-repl"))
       (hop-verb 1 "Entering repl...\n")
       (begin (repl) (exit 0))))
 

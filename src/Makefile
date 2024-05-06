@@ -23,15 +23,9 @@ EXEC		= hop
 #*---------------------------------------------------------------------*/
 #*    Sources    					               */
 #*---------------------------------------------------------------------*/
-MODULES		= hop_param parseargs main init \
-                  scheduler accept pipeline \
-                  nothread_scheduler \
-                  queue_scheduler \
-                  oto_scheduler \
-                  pool_scheduler \
-                  amany_scheduler
+MODULES		= hop_param parseargs main init
 
-INCLUDES	= stage.sch
+INCLUDES	= 
 
 CLASS_PATH	= o/class_s
 CLASS_DIR	= $(CLASS_PATH)/bigloo/hop
