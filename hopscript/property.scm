@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed Mar  6 09:10:44 2024 (serrano)                */
+;*    Last change :  Tue May  7 15:31:23 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -1335,18 +1335,19 @@
 	 (let ((methods %methods)
 	       (props %props))
 	    ;; Because the inline size might be dynamically extended
-	    ;; we may have elements.length > props.length so to avoid
-	    ;; array overflow, it is required to scan only the elements
-	    ;; that have an associated prop
+	    ;; if might be that elements.length > cmap.props.length
+	    ;; so to avoid array overflows, it is required to scan only
+	    ;; the elements that have an associated prop
 	    (let loop ((i (-fx (vector-length props) 1)))
 	       (if (=fx i -1)
 		   o
 		   (let ((v (js-object-inline-ref o i)))
 		      (cond
 			 ((not (js-function? v))
-			  (js-invalidate-cache-method! cmap i
-			     "non function in literal"
-			     (vector-ref props i)))
+			  (when (vector-ref methods i)
+			     (js-invalidate-cache-method! cmap i
+				"non function in literal"
+				(vector-ref props i))))
 			 ((eq? (vector-ref methods i) #unspecified)
 			  (vector-set! methods i v))
 			 (else

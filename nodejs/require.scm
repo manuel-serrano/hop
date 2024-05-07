@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Tue May  7 09:32:13 2024 (serrano)                */
+;*    Last change :  Tue May  7 15:21:59 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -90,7 +90,8 @@
 ;*---------------------------------------------------------------------*/
 (define (debug-load name res color)
    (when env-debug-load
-      (fprint (current-error-port) name ": " (hop-color color "" res))))
+      (fprint (current-error-port) name ": " (hop-color color "" res))
+      (flush-output-port (current-error-port))))
 
 ;*---------------------------------------------------------------------*/
 ;*    %env-push-trace ...                                              */
