@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Sat Mar  9 09:51:13 2024 (serrano)                */
+;*    Last change :  Tue May  7 07:33:03 2024 (serrano)                */
 ;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -20,10 +20,6 @@
 	    hop_param
 	    hop_init)
 
-   (cond-expand
-      ((library libbacktrace)
-       (library libbacktrace)))
-   
    (cond-expand
       (hop-library
        (extern (export main "hop_main"))
@@ -571,7 +567,7 @@
 	  "not enough threads to start a REPL (see --threads-max option)"
 	  (hop-max-threads)))
       (else
-       (repljs %global %worker))))
+       (node-repl %global %worker))))
 
 ;*---------------------------------------------------------------------*/
 ;*    stage-repl ...                                                   */

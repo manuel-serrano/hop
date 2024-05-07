@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Sat Mar  9 10:25:26 2024 (serrano)                */
+;*    Last change :  Tue May  7 08:46:09 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -638,6 +638,10 @@
 
       (unless (memq :=fx-as-eq o)
 	 (set! o (cons* :=fx-as-eq #t o)))
+      (unless (memq :source o)
+	 (if (memq :filename o)
+	     (set! o (cons* :source (cadr (memq :filename o)) o))
+	     (set! o (cons* :source  '(or (the-loading-file) "/") o))))
       (unless (memq :filename o)
 	 (set! o (cons* :filename filename o)))
 

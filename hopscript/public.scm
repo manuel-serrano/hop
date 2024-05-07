@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Tue Apr 16 12:19:30 2024 (serrano)                */
+;*    Last change :  Tue May  7 08:54:02 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -3254,6 +3254,7 @@
 		(raise e))))
 	 (let ((e (j2s-compile in
 		     :verbose 0
+		     :filename "."
 		     :eval #t
 		     :driver (j2s-eval-driver)
 		     :driver-name "j2s-eval-driver"

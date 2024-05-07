@@ -3,8 +3,8 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Fri Oct 28 13:40:28 2022 (serrano)                */
-#*    Copyright   :  2006-22 Manuel Serrano                            */
+#*    Last change :  Tue May  7 07:44:49 2024 (serrano)                */
+#*    Copyright   :  2006-24 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
 #*=====================================================================*/
@@ -73,10 +73,10 @@ install:
 	chmod $(MODEXE) $(DESTDIR)$(HOPBINDIR)/hopaot
 	cp ../bin/hopaot.sh $(DESTDIR)$(HOPBINDIR)/hopaot-$(HOPRELEASE)
 	chmod $(MODEXE) $(DESTDIR)$(HOPBINDIR)/hopaot-$(HOPRELEASE)
-	cp ../bin/hopjs.sh $(DESTDIR)$(HOPBINDIR)/hopjs
-	chmod $(MODEXE) $(DESTDIR)$(HOPBINDIR)/hopjs
-	cp ../bin/hopjs.sh $(DESTDIR)$(HOPBINDIR)/hopjs-$(HOPRELEASE)
-	chmod $(MODEXE) $(DESTDIR)$(HOPBINDIR)/hopjs-$(HOPRELEASE)
+#* 	cp ../bin/hopjs.sh $(DESTDIR)$(HOPBINDIR)/hopjs                */
+#* 	chmod $(MODEXE) $(DESTDIR)$(HOPBINDIR)/hopjs                   */
+#* 	cp ../bin/hopjs.sh $(DESTDIR)$(HOPBINDIR)/hopjs-$(HOPRELEASE)  */
+#* 	chmod $(MODEXE) $(DESTDIR)$(HOPBINDIR)/hopjs-$(HOPRELEASE)     */
 
 uninstall:
 	$(RM) -f $(DESTDIR)$(HOPLIBDIR)/hop/$(HOPRELEASE)/Makefile.hopconfig
@@ -86,8 +86,8 @@ uninstall:
 	$(RM) -f $(DESTDIR)$(HOPMANDIR)/hopreplay.1
 	$(RM) -f $(DESTDIR)$(HOPBINDIR)/hopaot
 	$(RM) -f $(DESTDIR)$(HOPBINDIR)/hopaot-$(HOPRELEASE)
-	$(RM) -f $(DESTDIR)$(HOPBINDIR)/hopjs
-	$(RM) -f $(DESTDIR)$(HOPBINDIR)/hopjs-$(HOPRELEASE)
+#* 	$(RM) -f $(DESTDIR)$(HOPBINDIR)/hopjs                          */
+#* 	$(RM) -f $(DESTDIR)$(HOPBINDIR)/hopjs-$(HOPRELEASE)            */
 
 clean:
 

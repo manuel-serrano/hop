@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Mon May 18 07:51:43 2020 (serrano)                */
+#*    Last change :  Tue May  7 07:33:40 2024 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds Hop                                     */
 #*=====================================================================*/
@@ -18,7 +18,8 @@ do: build
 #*---------------------------------------------------------------------*/
 #*    Target and Project                                               */
 #*---------------------------------------------------------------------*/
-EXEC		= hop
+HOP_EXEC	= hop
+HOPJS_EXEC	= hopjs
 
 #*---------------------------------------------------------------------*/
 #*    Sources    					               */
@@ -49,7 +50,7 @@ POPULATION 	= $(INCLUDES) $(SOURCES) Makefile
 
 build:  o $(BACKEND)
 
-native: $(BUILDBINDIR)/$(EXEC)
+native: $(BUILDBINDIR)/$(HOP_EXEC) $(BUILDBINDIR)/$(HOPJS_EXEC)
 
 o: 
 	mkdir -p $@
@@ -57,8 +58,11 @@ o:
 $(CLASS_DIR):
 	mkdir -p $@
 
-$(BUILDBINDIR)/$(EXEC): .afile .etags $(OBJECTS)
+$(BUILDBINDIR)/$(HOP_EXEC): .afile .etags $(OBJECTS)
 	$(MAKE) link.$(LINK) DEST=$@
+
+$(BUILDBINDIR)/$(HOPJS_EXEC): .afile .etags o/hopjs.o
+	$(MAKE) link.$(LINK) DEST=$@ OBJECTS=o/hopjs.o
 
 link.dynamic:
 	@ $(call link,$(BIGLOO),$(BCFLAGS) $(BLDFLAGS),$(BCFLAGSDEV),$(OBJECTS),-o,$(DEST))
@@ -86,6 +90,9 @@ o/%.o: %.scm .afile
 	@ $(call compile,$(BIGLOO),$(BCFLAGS),-c,$< -o $@)
 
 o/main.o: main.scm
+	@ $(call compile2,$(BIGLOO),$(BCFLAGS),$(BCFLAGSDEV),-c,$< -o $@)
+
+o/hopjs.o: hopjs.scm
 	@ $(call compile2,$(BIGLOO),$(BCFLAGS),$(BCFLAGSDEV),-c,$< -o $@)
 
 #*---------------------------------------------------------------------*/
@@ -125,21 +132,26 @@ dep:
 install: install-$(BACKEND)
 
 install-native:
-	$(INSTALL) $(BUILDBINDIR)/$(EXEC) $(DESTDIR)$(HOPBINDIR)/hop-$(HOPRELEASE)
+	$(INSTALL) $(BUILDBINDIR)/$(HOP_EXEC) $(DESTDIR)$(HOPBINDIR)/hop-$(HOPRELEASE)
 	chmod $(MODEXE) $(DESTDIR)$(HOPBINDIR)/hop-$(HOPRELEASE)
 	(cd $(DESTDIR)$(HOPBINDIR) && $(RM) -f hop && ln hop-$(HOPRELEASE) hop)
+	$(INSTALL) $(BUILDBINDIR)/$(HOPJS_EXEC) $(DESTDIR)$(HOPBINDIR)/hopjs-$(HOPRELEASE)
+	chmod $(MODEXE) $(DESTDIR)$(HOPBINDIR)/hopjs-$(HOPRELEASE)
+	(cd $(DESTDIR)$(HOPBINDIR) && $(RM) -f hopjs && ln hopjs-$(HOPRELEASE) hopjs)
 
 install-jvm:
-	$(INSTALL) $(BUILDBINDIR)/$(EXEC).jar $(DESTDIR)$(HOPBINDIR)
-	chmod $(MODFILE) $(DESTDIR)$(HOPBINDIR)/$(EXEC).jar
+	$(INSTALL) $(BUILDBINDIR)/$(HOP_EXEC).jar $(DESTDIR)$(HOPBINDIR)
+	chmod $(MODFILE) $(DESTDIR)$(HOPBINDIR)/$(HOP_EXEC).jar
 
 #*---------------------------------------------------------------------*/
 #*    uninstall                                                        */
 #*---------------------------------------------------------------------*/
 uninstall:
-	$(RM) -f $(DESTDIR)$(HOPBINDIR)/$(EXEC)-$(HOPRELEASE)
-	$(RM) -f $(DESTDIR)$(HOPBINDIR)/$(EXEC)
-	$(RM) -f $(DESTDIR)$(HOPBINDIR)/$(EXEC).jar
+	$(RM) -f $(DESTDIR)$(HOPBINDIR)/$(HOP_EXEC)-$(HOPRELEASE)
+	$(RM) -f $(DESTDIR)$(HOPBINDIR)/$(HOP_EXEC)
+	$(RM) -f $(DESTDIR)$(HOPBINDIR)/$(HOPJS_EXEC)-$(HOPRELEASE)
+	$(RM) -f $(DESTDIR)$(HOPBINDIR)/$(HOPJS_EXEC)
+	$(RM) -f $(DESTDIR)$(HOPBINDIR)/$(HOP_EXEC).jar
 
 #*---------------------------------------------------------------------*/
 #*    clean                                                            */
@@ -150,8 +162,9 @@ clean:
 	$(RM) -f $(OBJECTS)
 	$(RM) -f $(MODULES:%=%.c)
 	$(RM) -rf o
-	$(RM) -f $(BUILDBINDIR)/$(EXEC)
-	$(RM) -f $(BUILDBINDIR)/$(EXEC).jar
+	$(RM) -f $(BUILDBINDIR)/$(HOP_EXEC)
+	$(RM) -f $(BUILDBINDIR)/$(HOPJS_EXEC)
+	$(RM) -f $(BUILDBINDIR)/$(HOP_EXEC).jar
 	$(RM) -f META-INF/MANIFEST.MF
 
 devclean: clean

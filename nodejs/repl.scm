@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct  6 08:22:43 2013                          */
-;*    Last change :  Sat May 13 06:23:26 2023 (serrano)                */
-;*    Copyright   :  2013-23 Manuel Serrano                            */
+;*    Last change :  Tue May  7 08:27:00 2024 (serrano)                */
+;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS like REPL                                                 */
 ;*=====================================================================*/
@@ -21,7 +21,7 @@
 
    (import __nodejs_require)
    
-   (export (repljs ::JsGlobalObject ::WorkerHopThread)))
+   (export (node-repl ::JsGlobalObject ::WorkerHopThread)))
 
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
@@ -36,9 +36,9 @@
    (flush-output-port (current-output-port)))
 
 ;*---------------------------------------------------------------------*/
-;*    repljs ...                                                       */
+;*    node-repl ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define (repljs %this %worker)
+(define (node-repl %this %worker)
    (set! __js_strings (&init!))
    ;; start executing the nodejs header
    (let ((old-intrhdl (get-signal-handler sigint))
@@ -51,7 +51,7 @@
 		       (j2s-compile in :driver (j2s-plain-driver)
 			  :driver-name "j2s-plain-driver"
 			  :parser 'repl
-			  :filename "repl.js"
+			  :filename "."
 			  :warning-global #f
 			  :node-modules-directory (nodejs-node-modules-directory))))))
 	 ((eval exp) %this %this %this module))
@@ -134,7 +134,7 @@
       :driver-name "j2s-eval-driver"
       :commonjs-export #f
       :warning-global #f
-      :filename "repl.js"))   
+      :filename "."))   
 
 ;*---------------------------------------------------------------------*/
 ;*    &end!                                                            */

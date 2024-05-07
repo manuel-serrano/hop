@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.7.x/js2scheme/sourcemap.scm           */
+;*    serrano/prgm/project/hop/hop/js2scheme/sourcemap.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jul 11 10:52:32 2014                          */
-;*    Last change :  Tue Nov 28 14:43:29 2023 (serrano)                */
-;*    Copyright   :  2014-23 Manuel Serrano                            */
+;*    Last change :  Tue May  7 11:11:21 2024 (serrano)                */
+;*    Copyright   :  2014-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript source map generation                                 */
 ;*=====================================================================*/
@@ -49,7 +49,7 @@
 
    (when (isa? this J2SProgram)
       (with-access::J2SProgram this (source-map nodes path)
-	 (when (and source-map (config-get conf :source-map #t))
+	 (when (and (config-get conf :source-map #t) source-map)
 	    (let* ((smap (read-source-map source-map))
 		   (mappings (assq-get 'mappings smap))
 		   (sources (assq-get 'sources smap))

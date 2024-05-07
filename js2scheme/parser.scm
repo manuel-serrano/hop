@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Fri Apr  5 09:57:03 2024 (serrano)                */
+;*    Last change :  Tue May  7 11:13:20 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -39,7 +39,7 @@
    (define lang (config-get conf :language "hopscript"))
    (define debug-function (>= (config-get conf :debug 0) 2))
    (define current-mode 'normal)
-   (define source-map (config-get conf :source-map #f))
+   (define source-map #f)
    (define fun-src (config-get conf :fun-src #t))
    (define interfaces '())
    (define types '())
@@ -415,9 +415,10 @@
 	  (let ((tok (consume-any!)))
 	     (if (eof?)
 		 (begin
-		    (set! source-map
-		       (make-file-name (dirname (input-port-name input-port))
-			  (token-value tok)))
+		    (when (config-get conf :source-map #f)
+		       (set! source-map
+			  (make-file-name (dirname (input-port-name input-port))
+			     (token-value tok))))
 		    'source-map)
 		 (parse-token-warning "Unexpected source-map" tok))))
 	 ((SOURCEELEMENT)

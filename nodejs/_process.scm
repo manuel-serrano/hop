@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Fri Feb 23 09:56:38 2024 (serrano)                */
+;*    Last change :  Tue May  7 10:49:28 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -67,6 +67,7 @@
 	      (reader::obj (default #f))))
 
    (export (nodejs-compiler-options-add! ::keyword ::obj)
+	   (nodejs-command-line-set! ::pair-nil)
 	   (nodejs-process ::WorkerHopThread ::JsGlobalObject)
 	   (process-ares-fail ::JsGlobalObject ::JsProcess ::int)
 	   (nodejs-process-exit proc status ::JsGlobalObject)))
@@ -87,6 +88,21 @@
 (define (nodejs-compiler-options-add! k v)
    (j2s-compile-options-set! (cons* k v (j2s-compile-options))))
 
+;*---------------------------------------------------------------------*/
+;*    nodejs-command-line ...                                          */
+;*    -------------------------------------------------------------    */
+;*    Default value that can be overriden using                        */
+;*      nodejs-command-line-set!                                       */
+;*---------------------------------------------------------------------*/
+(define nodejs-command-line
+   (command-line))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-command-line-set! ...                                     */
+;*---------------------------------------------------------------------*/
+(define (nodejs-command-line-set! cl)
+   (set! nodejs-command-line cl))
+   
 ;*---------------------------------------------------------------------*/
 ;*    binding ...                                                      */
 ;*---------------------------------------------------------------------*/
@@ -385,13 +401,13 @@
 	    #f %this)
 
 	 (js-put! proc (& "argv")
-	    (let ((jsargs (member "--" (command-line))))
+	    (let ((jsargs (member "--" nodejs-command-line)))
 	       (if jsargs
-		   (let ((cmdline (cons (js-string->jsstring (car (command-line)))
+		   (let ((cmdline (cons (js-string->jsstring (car nodejs-command-line))
 				     (map js-string->jsstring (cdr jsargs)))))
 		      (js-vector->jsarray (list->vector cmdline) %this))
 		   (js-vector->jsarray
-		      (list->vector (map js-string->jsstring (command-line)))
+		      (list->vector (map js-string->jsstring nodejs-command-line))
 		      %this)))
 	    #f %this)
 	 (js-put! proc (& "execPath")

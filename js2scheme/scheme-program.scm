@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Sun Nov 19 09:42:30 2023 (serrano)                */
-;*    Copyright   :  2018-23 Manuel Serrano                            */
+;*    Last change :  Tue May  7 08:38:27 2024 (serrano)                */
+;*    Copyright   :  2018-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
 ;*=====================================================================*/
@@ -62,7 +62,7 @@
 			   (context-get ctx :profile-location #f))
 		       (list `',(j2s-profile-cache this))
 		       '())))
-	   (define %source (or (the-loading-file) "/"))
+	   (define %source ,(context-get ctx :source))
 	   (define %resource (dirname %source))
 	   ,(when (context-get ctx :profile-call #f)
 	       `(define %call-log (make-vector ,call-size #l0)))
@@ -114,7 +114,7 @@
 	    (define __js_strings #f)
 	    (define __js_rxcaches #f)
 	    (define %sourcepath ,(context-get ctx :filename))
-	    (define %source (or (the-loading-file) "/"))
+	    (define %source ,(context-get ctx :source))
 	    (define %resource (dirname %source))
 	    ,@(map j2s-record-predicate records)
 	     ,@(js-declare-tls this ctx)
@@ -197,7 +197,7 @@
 		      `((define %cmap-log (make-vector ,call-size '())))
 		      '())
 		(define %worker (js-current-worker))
-		(define %source (or (the-loading-file) "/"))
+		(define %source ,(context-get ctx :source))
 		(define %resource (dirname %source))
 		(define %cnst-table ,cnsttable)
 		,@(js-define-tls this ctx)

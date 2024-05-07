@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Sat Apr 13 08:28:04 2024 (serrano)                */
+;*    Last change :  Tue May  7 09:32:13 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -73,6 +73,24 @@
       (if (string? env)
 	  (string->integer env)
 	  0)))
+
+;*---------------------------------------------------------------------*/
+;*    env-debug-load ...                                               */
+;*---------------------------------------------------------------------*/
+(define env-debug-load
+   (let ((env (getenv "NODE_DEBUG")))
+      (when (string? env)
+	 (or (string=? env "load")
+	     (string-prefix? "load," env)
+	     (string-suffix? ",load" env)
+	     (string-contains env ",load,")))))
+
+;*---------------------------------------------------------------------*/
+;*    debug-load ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (debug-load name res color)
+   (when env-debug-load
+      (fprint (current-error-port) name ": " (hop-color color "" res))))
 
 ;*---------------------------------------------------------------------*/
 ;*    %env-push-trace ...                                              */
@@ -1431,6 +1449,7 @@
 	    (when (and (file-exists? path)
 		       (<elong (file-modification-time filename)
 			  (file-modification-time path)))
+	       (debug-load filename path 2)
 	       (hop-verb 3 "using cache \"" (hop-color 7 "" path) "\"\n")
 	       (call-with-input-file path
 		  port->sexp-list)))))
@@ -1438,6 +1457,7 @@
    (define (store-cache filename expr)
       (when (hop-cache-enable)
 	 (let ((path (cache-path filename)))
+	    (debug-load filename path 3)
 	    (with-handler
 	       (lambda (e)
 		  (when (>=fx (nodejs-hop-debug) 1)
@@ -2138,6 +2158,7 @@
 	    (trace-item "sopath=" sopath)
 	    (cond
 	       ((and (string? sopath) (hop-sofile-enable))
+		(debug-load src sopath 1)
 		(multiple-value-bind (p _)
 		   (hop-dynamic-load sopath)
 		   (if (and (procedure? p) (=fx (procedure-arity p) 4))
@@ -2470,6 +2491,7 @@
 	   config (commonjs-export #t) loc)
    
    (define (load-json path)
+      (debug-load path "json" 4)
       (let ((mod (nodejs-new-module path path worker %this))
 	    (json (call-with-input-file path
 		     (lambda (ip)
@@ -2584,6 +2606,7 @@
 	       mod))))
 
    (with-trace 'require (format "nodejs-core-module ~a" name)
+      (debug-load name "core" 5)
       (nodejs-init-core name worker %this)))
 
 ;*---------------------------------------------------------------------*/
