@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Fri Jul 14 07:45:37 2023 (serrano)                */
-;*    Copyright   :  2014-23 Manuel Serrano                            */
+;*    Last change :  Tue May  7 19:09:05 2024 (serrano)                */
+;*    Copyright   :  2014-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
 ;*=====================================================================*/
@@ -29,9 +29,7 @@
 
    (eval   (export hopjs-standalone-set!))
    
-   (export (nodejs-modules-directory::bstring)
-	   (nodejs-modules-directory-set! ::bstring)
-	   (hopjs-standalone-set! ::bool)
+   (export (hopjs-standalone-set! ::bool)
 	   (hopjs-process-hop ::WorkerHopThread ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
@@ -54,12 +52,6 @@
 ;*    hopjs-standalone ...                                             */
 ;*---------------------------------------------------------------------*/
 (define hopjs-standalone #f)
-
-;*---------------------------------------------------------------------*/
-;*    nodejs-modules-directory ...                                     */
-;*---------------------------------------------------------------------*/
-(define-parameter nodejs-modules-directory
-   (make-file-path (hop-lib-directory) "hop" (hop-version) "node_modules"))
 
 ;*---------------------------------------------------------------------*/
 ;*    define-js ...                                                    */

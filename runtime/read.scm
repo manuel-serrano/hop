@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Wed Sep 13 16:34:57 2023 (serrano)                */
-;*    Copyright   :  2005-23 Manuel Serrano                            */
+;*    Last change :  Tue May  7 21:03:26 2024 (serrano)                */
+;*    Copyright   :  2005-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
 ;*    js-expressions. Js-expressions starts with { and ends with }.    */
@@ -1036,14 +1036,14 @@
 	     (cons 'error (errfile sopath)))
 	    (else
 	     #f))))
-   
+
    (define (find-in-sodir dir base)
       (or (soprecompiled 
 	     (make-file-path dir "so" (hop-so-dirname)
 		(hop-soname path "")))
 	  (soprecompiled 
 	     (make-file-path dir "so" (hop-so-dirname)
-		(string-append base "." (so-suffix))))
+		(string-append base (so-suffix))))
 	  (soprecompiled 
 	     (make-file-path (hop-sofile-directory)
 		(hop-soname path "")))))

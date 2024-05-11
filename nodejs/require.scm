@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Tue May  7 15:21:59 2024 (serrano)                */
+;*    Last change :  Tue May  7 19:01:20 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -25,6 +25,8 @@
 	   __nodejs_syncg)
 
    (export (nodejs-hop-debug)
+	   (nodejs-modules-directory::bstring)
+	   (nodejs-modules-directory-set! ::bstring)
 	   (nodejs-file-paths::JsObject ::JsStringLiteral ::JsGlobalObject)
 	   (nodejs-new-module::JsObject ::bstring ::bstring ::WorkerHopThread ::JsGlobalObject)
 	   (node-module-paths ::JsObject ::JsGlobalObject)
@@ -127,6 +129,12 @@
 	     '(tprint "& paths " (current-thread) " " ',(cer x))
 	     (& "paths"))
 	 e)))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-modules-directory ...                                     */
+;*---------------------------------------------------------------------*/
+(define-parameter nodejs-modules-directory
+   (make-file-path (hop-lib-directory) "hop" (hop-version) "node_modules"))
 
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
@@ -2253,6 +2261,7 @@
 		  mod)))))
    
    (define (hop-eval filename ws)
+      (debug-load filename filename 8)
       (let ((old (hashtable-get hop-load-cache filename)))
 	 (if old
 	     (values (car old) (cdr old))
@@ -2288,9 +2297,11 @@
 	    ((compiled-module filename)
 	     =>
 	     (lambda (mod)
+		(debug-load filename sopath 7)		
 		(call-with-eval-module mod
 		   (lambda () (eval 'hopscript)))))
 	    ((and (string? sopath) (hop-sofile-enable))
+	     (debug-load filename sopath 6)
 	     (hop-dynamic-load sopath))
 	    ((or (not (symbol? sopath)) (not (eq? sopath 'error)))
 	     (case (hop-sofile-compile-policy)
@@ -2806,7 +2817,7 @@
 		   (when (file-exists? p)
 		      (file-name-canonicalize p)))))))
    
-   (define (resolve-file-or-directory x dir)
+   (define (resolve-file-or-directory x dir::bstring)
       (let ((file (make-file-name dir x)))
 	 (or (resolve-package-exports file)
 	     (resolve-file file)
@@ -2874,14 +2885,6 @@
 			 (lambda (x) #f)
 			 :host host
 			 :port port))))
-;* 	       ((string-prefix? "@hop/" name)                          */
-;* 		(if (string=? "@hop/hop" name)                         */
-;* 		    "hop.mod"                                          */
-;* 		    (or (resolve-file-or-directory                     */
-;* 			   (substring name 5)                          */
-;* 			   (nodejs-node-modules-directory))            */
-;* 			(resolve-modules mod name)                     */
-;* 			(resolve-error name dir))))                    */
 	       ((string-prefix? "hop:" name)
 		(if (string=? "hop:hop" name)
 		    "hop.mod"

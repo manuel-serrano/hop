@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 23 08:11:51 2010                          */
-;*    Last change :  Sun Apr 11 15:34:32 2021 (serrano)                */
-;*    Copyright   :  2010-21 Manuel Serrano                            */
+;*    Last change :  Tue May  7 18:49:56 2024 (serrano)                */
+;*    Copyright   :  2010-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HTML tags                                                        */
 ;*=====================================================================*/
@@ -29,6 +29,7 @@
 	    (<APPLET> . ::obj)
 	    (<AREA> . ::obj)
 	    (<ARTICLE> . ::obj)
+	    (<AUDIO> . ::obj)
 	    (<B> . ::obj)
 	    (<BASE> . ::obj)
 	    (<BASEFONT> . ::obj)
@@ -128,7 +129,8 @@
 	    (<TT> . ::obj)
 	    (<U> . ::obj)
 	    (<UL> . ::obj)
-	    (<VAR> . ::obj)))
+	    (<VAR> . ::obj)
+	    (<VIDEO> . ::obj)))
    
 ;*---------------------------------------------------------------------*/
 ;*    HTML 4.01 elements ...                                           */
@@ -140,6 +142,7 @@
 (define-xml-element <APPLET>)
 (define-xml xml-empty-element #t <AREA>)
 (define-xml-element <ARTICLE>)
+(define-xml-element <AUDIO>)
 (define-xml-element <B>)
 (define-xml xml-empty-element #t <BASE>)
 (define-xml xml-empty-element #t <BASEFONT>)
@@ -237,6 +240,7 @@
 (define-xml-element <U>)
 (define-xml-element <UL>)
 (define-xml-element <VAR>)
+(define-xml-element <VIDEO>)
 
 ;*---------------------------------------------------------------------*/
 ;*    <META> ...                                                       */

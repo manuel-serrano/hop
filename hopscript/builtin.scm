@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    /tmp/HOPNEW/hop/hopscript/builtin.scm                            */
+;*    serrano/prgm/project/hop/hop/hopscript/builtin.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Jan 26 08:54:32 2019                          */
-;*    Last change :  Sun Feb 23 14:56:19 2020 (serrano)                */
-;*    Copyright   :  2019-20 Manuel Serrano                            */
+;*    Last change :  Tue May  7 18:48:38 2024 (serrano)                */
+;*    Copyright   :  2019-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop builtin JavaScript objects                                   */
 ;*                                                                     */
@@ -15,7 +15,7 @@
 ;*---------------------------------------------------------------------*/
 (module __hopscript_builtin
    
-   (library hop hopwidget js2scheme)
+   (library hop js2scheme)
    
    (include "types.sch" "stringliteral.sch" "property.sch")
    
@@ -97,7 +97,7 @@
    (with-access::JsGlobalObject %this (js-function-prototype)
       ;; html_base
       (js-bind-tags! %this builtin js-function-prototype
-	 A ABBR ACRONYM ADDRESS APPLET AREA ARTICLE B BASE
+	 A ABBR ACRONYM ADDRESS APPLET AREA ARTICLE AUDIO B BASE
 	 BASEFONT BDI BDO BIG BLOCKQUOTE BODY BR BUTTON
 	 CANVAS CAPTION CENTER CITE CODE COL COLGROUP
 	 DATALIST DD DEL DETAILS DFN DIR DIV DL DT EM EMBED FIELDSET
@@ -108,15 +108,12 @@
 	 OBJECT OL OPTGROUP OPTION P PARAM PRE PROGRESS
 	 Q S SAMP SECTION SELECT SMALL SOURCE SPAN STRIKE
 	 STRONG SUB SUMMARY SUP TABLE TBODY TD TEXTAREA TFOOT TH
-	 THEAD TIME TITLE TR TT U UL VAR REACT)
+	 THEAD TIME TITLE TR TRACK TT U UL VAR VIDEO REACT)
       
       ;; html_head
       (js-bind-tags! %this builtin js-function-prototype LINK STYLE)
       
       (js-bind-tags! %this builtin js-function-prototype IMG)
-      
-      ;; html5
-      (js-bind-tags! %this builtin js-function-prototype AUDIO VIDEO TRACK)
       
       ;; svg
       (js-bind-svg-tags! %this builtin js-function-prototype
@@ -126,7 +123,6 @@
 	 SVG:TEXTPATH SVG:TREF SVG:TSPAN
 	 SVG:RADIALGRADIENT SVG:LINEARGRADIENT)
       
-      ;;(js-bind-tag! %this builtin js-function-prototype SVG:IMG)
       (js-bind-tag! %this builtin js-function-prototype SVG:IMG)
       
       ;; mathml

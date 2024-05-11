@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Wed Mar  8 11:39:40 2023 (serrano)                */
+#*    Last change :  Tue May  7 18:47:41 2024 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOPSCRIPT library.                     */
 #*=====================================================================*/
@@ -33,7 +33,7 @@ install: install-library
 #*---------------------------------------------------------------------*/
 # the library name
 TARGETNAME = hopscript
-HOPAPPLIBS = js2scheme hop hopwidget
+HOPAPPLIBS = js2scheme hop 
 
 BLIBFLAGS = $(BCFLAGSRTS)
 

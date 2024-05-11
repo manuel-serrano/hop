@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Tue Mar  5 10:43:18 2024 (serrano)                */
+;*    Last change :  Tue May  7 18:48:43 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -17,7 +17,7 @@
 ;*---------------------------------------------------------------------*/
 (module __hopscript_object
    
-   (library hop hopwidget js2scheme)
+   (library hop js2scheme)
    
    (include "types.sch" "stringliteral.sch" "property.sch" "function.sch")
    
