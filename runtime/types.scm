@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Sun Mar  3 07:44:13 2024 (serrano)                */
+;*    Last change :  Mon May 13 11:48:34 2024 (serrano)                */
 ;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -204,7 +204,9 @@
 	      ;; the source file
 	      (source::obj read-only (default #f))
 	      ;; ctx (i.e., %this for JavaScript)
-	      (ctx::obj read-only (default #f)))))
+	      (ctx::obj read-only (default #f))
+	      ;; the hashtable where the service is registered (optional)
+	      (svctable (default #f)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-display ...                                               */

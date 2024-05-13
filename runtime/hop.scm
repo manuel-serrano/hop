@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Sat Mar  5 12:51:49 2022 (serrano)                */
-;*    Copyright   :  2004-22 Manuel Serrano                            */
+;*    Last change :  Mon May 13 12:03:19 2024 (serrano)                */
+;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
 ;*=====================================================================*/
@@ -602,7 +602,7 @@
 (define-method (with-hop-local obj::http-response-autoload success fail auth header)
    (with-access::http-response-autoload obj (request)
       (with-access::http-request request (path)
-	 (let ((rep (service-filter request)))
+	 (let ((rep ((make-service-filter *default-service-table*) request)))
 	    (if (isa? rep %http-response)
 		(with-hop-local rep success fail auth header)
 		(error "with-hop" "Bad auto-loaded local service" path))))))

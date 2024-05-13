@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Tue May  7 18:48:43 2024 (serrano)                */
+;*    Last change :  Mon May 13 14:22:49 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -326,7 +326,7 @@
 	    (js-init-date! %this)
 	    (js-init-error! %this)
 	    (js-init-json! %this)
-	    (js-init-service! %this)
+	    (js-init-service! %this *default-service-table*)
 	    (js-init-worker! %this)
 	    (js-init-websocket! %this)
 	    (js-init-promise! %this)

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 16:36:28 2006                          */
-;*    Last change :  Tue Oct  8 13:10:22 2019 (serrano)                */
-;*    Copyright   :  2006-21 Manuel Serrano                            */
+;*    Last change :  Mon May 13 12:01:42 2024 (serrano)                */
+;*    Copyright   :  2006-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    This file implements the service expanders. It is used both      */
 ;*    at compile-time and runtime-time.                                */
@@ -153,7 +153,7 @@
 		       (resource (and (string? ,file) (dirname ,file)))
 		       (source (and (string? ,file) (basename ,file))))))
 	  ,(when (pair? body)
-	     `(register-service! ,svc))
+	     `(register-service! ,svc *default-service-table*))
 	  (procedure-attr-set! ,fun ,svc)
 	  ,fun)))
    

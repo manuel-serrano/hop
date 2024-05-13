@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Tue May  7 07:33:03 2024 (serrano)                */
+;*    Last change :  Mon May 13 13:15:15 2024 (serrano)                */
 ;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -83,7 +83,8 @@
       hop-module-extension-handler)
    (bigloo-module-resolver-set!
       (make-hop-module-resolver (bigloo-module-resolver)))
-   (let ((jsctx #f))
+   (let ((jsctx #f)
+	 (service-filter (make-service-filter *default-service-table*)))
       ;; parse the command line
       (multiple-value-bind (files exprs exprsjs loadersjs)
 	 (parse-args

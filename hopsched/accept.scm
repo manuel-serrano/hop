@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/src/accept.scm                      */
+;*    serrano/prgm/project/hop/hop/hopsched/accept.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep  1 08:35:47 2008                          */
-;*    Last change :  Mon May  6 14:03:32 2024 (serrano)                */
+;*    Last change :  Mon May 13 10:54:50 2024 (serrano)                */
 ;*    Copyright   :  2008-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop accept loop                                                  */
@@ -20,8 +20,6 @@
  
    (cond-expand
       (enable-ssl (library ssl)))
-
-   (library hop)
 
    (import  hopsched_scheduler
 	    hopsched_scheduler-nothread

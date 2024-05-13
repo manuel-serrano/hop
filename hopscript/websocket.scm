@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu May 15 05:51:37 2014                          */
-;*    Last change :  Mon Feb 13 17:11:07 2023 (serrano)                */
-;*    Copyright   :  2014-23 Manuel Serrano                            */
+;*    Last change :  Mon May 13 13:06:27 2024 (serrano)                */
+;*    Copyright   :  2014-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSockets                                                   */
 ;*=====================================================================*/
@@ -687,10 +687,14 @@
    (define (eof-error? e)
       (or (isa? e &io-closed-error) (isa? e &io-read-error)))
 
+   (tprint "todo invoke-websocket-service")
    (define (invoke-websocket-service frame::JsHopFrame)
-      (with-access::JsHopFrame frame (path args)
-	 (let ((svc (get-service path)))
-	    (service-invoke svc req args))))
+      (tprint "MS TODO")
+      '(with-access::JsHopFrame frame (path args)
+	 (with-access::JsGlobalObject %this (worker)
+	    (with-access::WorkerHopThread worker (svctable)
+	       (let ((svc (get-service path svctable)))
+		  (service-invoke svc req args))))))
 
    (define (decode-ws-message content-type data)
       (let ((val (hop-http-decode-value data

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Fri Mar  8 10:14:37 2024 (serrano)                */
+;*    Last change :  Mon May 13 11:59:29 2024 (serrano)                */
 ;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -230,8 +230,7 @@
 	    (("--devel" (help "Enable devel mode"))
 	     (set! clear-cache #t)
 	     (hop-cache-enable-set! #f)
-	     (hop-allow-redefine-service-set! #t)
-	     (hop-force-reload-service-set! #t))
+	     (hop-allow-redefine-service-set! #t))
 	    (("--time" (help "Report execution time"))
 	     (hop-report-execution-time-set! #t))
 	    (("-w?level" (help "Increase/set warning level (-w0 no warning)"))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Tue Mar  5 09:59:52 2024 (serrano)                */
+;*    Last change :  Mon May 13 11:59:13 2024 (serrano)                */
 ;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -178,9 +178,6 @@
 
 	    (hop-initial-weblet::bstring)
 	    (hop-initial-weblet-set! ::bstring)
-
-	    (hop-force-reload-service::bool)
-	    (hop-force-reload-service-set! ::bool)
 
 	    (hop-allow-redefine-service::bool)
 	    (hop-allow-redefine-service-set! ::bool)
@@ -893,16 +890,6 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-initial-weblet
    "hop")
-
-;*---------------------------------------------------------------------*/
-;*    hop-force-reload-service ...                                     */
-;*    -------------------------------------------------------------    */
-;*    When set to #t each time a service is invoked, it's source       */
-;*    file is checked. When modified, it is automatically reloaded     */
-;*    before the service is executed. See --devel mode.                */
-;*---------------------------------------------------------------------*/
-(define-parameter hop-force-reload-service
-   #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-allow-redefine-service ...                                   */

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Fri Mar  3 14:17:52 2023 (serrano)                */
-;*    Copyright   :  2013-23 Manuel Serrano                            */
+;*    Last change :  Mon May 13 12:24:17 2024 (serrano)                */
+;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
 ;*=====================================================================*/
@@ -34,7 +34,7 @@
 	   __hopscript_promise
 	   __hopscript_websocket)
 
-   (export (js-init-service! ::JsGlobalObject)
+   (export (js-init-service! ::JsGlobalObject ::struct)
 	   (js-make-hopframe ::JsGlobalObject ::obj ::obj ::obj)
 	   (js-create-service::JsService ::JsGlobalObject ::obj ::obj ::obj ::bool ::bool ::WorkerHopThread)
 	   (js-make-service::JsService ::JsGlobalObject ::procedure ::bstring ::bool ::bool ::int ::obj ::obj)))
@@ -55,27 +55,29 @@
 		(vector path resource))
 	     (vector #t #t))))
    (lambda (o ctx)
-      (let* ((path (vector-ref o 0))
-	     (svcp (lambda (this . args)
-		      (js-make-hopframe ctx this path args)))
-	     (hopsvc (cond
-			((service-exists? path)
-			 (get-service path))
-			(else
-			 (instantiate::hop-service
-			    (id (string->symbol path))
-			    (wid (let ((i (string-index path #\?)))
-				    (string->symbol
-				       (if i (substring path 0 i) path))))
-			    (args '())
-			    (proc (lambda l l))
-			    (javascript "")
-			    (path path)
-			    (resource (vector-ref o 1)))))))
-	 (js-make-service ctx svcp
-	    (basename path)
-	    #f #f -1 (js-current-worker)
-	    hopsvc))))
+      (with-access::JsGlobalObject ctx (worker)
+	 '(with-access::WorkerHopThread worker (svctable)
+	    (let* ((path (vector-ref o 0))
+		   (svcp (lambda (this . args)
+			    (js-make-hopframe ctx this path args)))
+		   (hopsvc (cond
+			      ((service-exists? path svctable)
+			       (get-service path svctable))
+			      (else
+			       (instantiate::hop-service
+				  (id (string->symbol path))
+				  (wid (let ((i (string-index path #\?)))
+					  (string->symbol
+					     (if i (substring path 0 i) path))))
+				  (args '())
+				  (proc (lambda l l))
+				  (javascript "")
+				  (path path)
+				  (resource (vector-ref o 1)))))))
+	       (js-make-service ctx svcp
+		  (basename path)
+		  #f #f -1 (js-current-worker)
+		  hopsvc))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsHopFrame ...                               */
@@ -255,13 +257,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-init-service! ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (js-init-service! %this::JsGlobalObject)
-   (with-access::JsGlobalObject %this (js-function
+(define (js-init-service! %this::JsGlobalObject svctable)
+   (with-access::JsGlobalObject %this (worker
+					 js-function
 					 js-service-pcache
 					 js-service-prototype
 					 js-hopframe-prototype)
       (let ((js-function-prototype (js-object-proto js-function)))
-
 	 ;; local constant strings initialization
 	 (unless (vector? __js_strings) (set! __js_strings (&init!)))
 
@@ -389,9 +391,10 @@
 	    :value (js-make-function %this
 		      (lambda (this::JsHopFrame req opt)
 			 (with-access::JsHopFrame this (path args)
-			    (let ((svc (get-service path)))
-			       (with-access::hop-service svc (proc)
-				  (apply proc req args)))))
+			    (with-access::JsGlobalObject %this (worker)
+			       (let ((svc (get-service path svctable)))
+				  (with-access::hop-service svc (proc)
+				     (apply proc req args))))))
 		      (js-function-arity 2 0)
 		      (js-function-info :name "call" :len 2))
 	    :hidden-class #t)
@@ -479,7 +482,7 @@
 	       :configurable #f :enumerable #f
 	       :value (js-make-function %this
 			 (lambda (this svc)
-			    (service-exists? (js-tostring svc %this)))
+			    (service-exists? (js-tostring svc %this) svctable))
 			 (js-function-arity 1 0)
 			 (js-function-info :name "exists" :len 1))
 	       :hidden-class #t)
@@ -488,7 +491,7 @@
 	       :value (js-make-function %this
 			 (lambda (this svc)
 			    (let* ((name (js-tostring svc %this))
-				   (svc (get-service-from-name name)))
+				   (svc (get-service-from-name name svctable)))
 			       (js-make-service %this
 				  (lambda (this . args)
 				     (with-access::hop-service svc (path)
@@ -502,7 +505,7 @@
 	       :value (js-make-function %this
 			 (lambda (this svc)
 			    (let* ((name (js-tostring svc %this))
-				   (svc (get-service name)))
+				   (svc (get-service name svctable)))
 			       (js-make-service %this
 				  (lambda (this . args)
 				     (with-access::hop-service svc (path)
@@ -1056,7 +1059,7 @@
 	 (resource "/")))
    
    (define (set-service-path! o p)
-      (with-access::JsService o (svc)
+      '(with-access::JsService o (svc)
 	 (when svc
 	    (when register (unregister-service! svc))
 	    (with-access::hop-service svc (path id wid)
@@ -1068,15 +1071,15 @@
 			(service-path->ids apath)
 			(set! id i)
 			(set! wid w)))))
-	    (when register (register-service! svc)))))
+	    (when register
+	       (with-access::WorkerHopThread worker (svctable)
+		  (register-service! svc svctable))))))
    
    ;; register only if there is an implementation
-   (when svc
+   '(when svc
       (when (and register (>=fx (hop-default-port) 0))
-	 (register-service! svc))
-      (unless import
-	 (with-access::WorkerHopThread worker (services)
-	    (set! services (cons svc services)))))
+	 (with-access::WorkerHopThread worker (svctable)
+	    (register-service! svc svctable))))
    
    (define (get-path o)
       (with-access::JsService o (svc)

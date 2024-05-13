@@ -14,7 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (declare-library! 'hopsched
 		  :version "@VERSION@"
-		  :module-init 'hopsched_pipeline
+		  :module-init 'hopsched_accept
 		  :module-eval '__hopsched_makelib
 		  :class-init "bigloo.hopsched_pipeline.scm"
 		  :class-eval "bigloo.hopsched.make_lib")

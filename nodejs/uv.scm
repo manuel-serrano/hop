@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Wed Mar 27 19:41:38 2024 (serrano)                */
+;*    Last change :  Mon May 13 13:07:58 2024 (serrano)                */
 ;*    Copyright   :  2014-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -438,7 +438,7 @@
 (define-method (js-worker-loop th::WorkerHopThread init::procedure)
    (with-access::WorkerHopThread th (mutex condv %loop name
 				       %process %this keep-alive services
-				       call %retval prerun state)
+				       call %retval prerun state svctable)
       ;; set thread name for better debugging
       (thread-name-set! (current-thread)
 	 (if (symbol? name) (symbol->string name) "hopjs"))
@@ -463,8 +463,7 @@
 				 (js-worker-tick th)
 				 (with-access::JsLoop loop (exiting actions-count mutex)
 				    (synchronize mutex
-				       (when (and (null? services)
-						  (=fx actions-count 0)
+				       (when (and (=fx actions-count 0)
 						  (not (active-subworkers? th))
 						  (or (not keep-alive)
 						      exiting))
@@ -519,9 +518,11 @@
 	       ;; when the parent died, kill the application
 	       (unless parent
 		  (exit %retval)))
-	    (with-access::WorkerHopThread th (services subworkers)
+	    (with-access::WorkerHopThread th (svctable subworkers)
 	       ;; unregister all the worker services
-	       (for-each unregister-service! services)
+	       (tprint "TODO UNREGISTER ON WORKER TERMINATION...")
+	       '(hashtable-for-each (lambda (k r) (unregister-service! r))
+		  svctable)
 	       ;; tell the subworkers that they will never receive
 	       ;; any new message from their parent
 	       (for-each (lambda (w)
