@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Tue May 14 09:19:36 2024 (serrano)                */
+;*    Last change :  Wed May 15 09:30:12 2024 (serrano)                */
 ;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -75,7 +75,7 @@
 		(set! connection 'close))
 	    (http-write-line p "Connection: " connection)
 	    (http-write-content-type p content-type charset)
-	    (http-write-line-string p "Server: " server)
+	    (http-write-line-string p "Server: " (or server (hop-server-name)))
 	    (http-write-line p)
 	    (when bodyp (display body p))
 	    (flush-output-port p)
@@ -168,7 +168,7 @@
 	       (http-write-header p header)
 	       (http-write-line p "Cache-Control: no-cache")
 	       (http-write-content-type p ctype charset)
-	       (http-write-line-string p "Server: " server)
+	       (http-write-line-string p "Server: " (or server (hop-server-name)))
 	       (when bodyp
 		  ;; select the transfer method according to the content-type
 		  (cond
@@ -264,7 +264,7 @@
 	    (with-access::xml-backend backend (mime-type)
 	       (let ((ctype (or content-type mime-type)))
 		  (http-write-content-type p ctype charset)))
-	    (http-write-line-string p "Server: " server)
+	    (http-write-line-string p "Server: " (or server (hop-server-name)))
 	    (if chunked
 		(begin
 		   (flush-output-port p)
@@ -309,7 +309,7 @@
 		(set! connection 'close))
 	    (http-write-line p "Connection: " connection)
 	    (http-write-content-type p content-type charset)
-	    (http-write-line-string p "Server: " server)
+	    (http-write-line-string p "Server: " (or server (hop-server-name)))
 	    (http-write-line p)
 	    (flush-output-port p)
 	    ;; the body
@@ -361,7 +361,7 @@
 	    (http-write-header p header)
 	    (http-write-line p "Connection: " conn)
 	    (http-write-content-type p content-type charset)
-	    (http-write-line-string p "Server: " server)
+	    (http-write-line-string p "Server: " (or server (hop-server-name)))
 	    (let ((dtc (date->rfc2822-date (current-date))))
 	       ;; don't need to explicitly display the last-modified
 	       ;; header entry because it is contained in the
@@ -447,7 +447,7 @@
 		   (http-write-header p header)
 		   (http-write-line p "Connection: " connection)
 		   (http-write-content-type p content-type charset)
-		   (http-write-line-string p "Server: " server)
+		   (http-write-line-string p "Server: " (or server (hop-server-name)))
 		   (unless (eq? connection 'close)
 		      (display "Content-Length: " p)
 		      (display-elong size p)
@@ -488,12 +488,8 @@
 		(set! connection 'close))
 	    (http-write-line p "Connection: " connection)
 	    (http-write-content-type p content-type charset)
-	    (http-write-line-string p "Server: " server)
+	    (http-write-line-string p "Server: " (or server (hop-server-name)))
 	    (http-write-line p)
-;* 	    (tprint "REP+ " clen " " string)                           */
-;* 	    (tprint "start=" start-line)                               */
-;* 	    (tprint "ctype=" content-type)                             */
-;* 	    (tprint "header=" header)                                  */
 	    (when bodyp
 	       (when string (display string p))
 	       (when file (send-file file p fsize 0)))
@@ -504,9 +500,9 @@
 ;*    directory->response ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (directory->response rep dir)
-   (with-access::%http-response rep (bodyp)
+   (with-access::%http-response-server rep (bodyp server)
       (instantiate::http-response-xml
-	 (server (hop-server-name))
+	 (server (or server (hop-server-name)))
 	 (backend (hop-xml-backend))
 	 (content-type (with-access::xml-backend (hop-xml-backend) (mime-type) mime-type))
 	 (charset (hop-charset))
@@ -620,7 +616,7 @@
 		(http-write-header p header)
 		(http-write-line p "Connection: close")
 		(http-write-content-type p content-type charset)
-		(http-write-line-string p "Server: " server)
+		(http-write-line-string p "Server: " (or server (hop-server-name)))
 		(http-write-line p)
 		;; the body
 		(with-trace 'hop-response "http-response-cgi-process"
@@ -658,7 +654,7 @@
 		   (http-response
 		    (instantiate::http-response-string
 		       (start-line "HTTP/1.0 400 Bad Request")
-		       (server (hop-server-name))
+		       (server (or server (hop-server-name)))
 		       (charset (hop-locale))
 		       (body (format "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\n<html><body>Bad request ~a</body></html>" uri))
 		       (timeout timeout))
@@ -673,7 +669,7 @@
 		      (http-write-header p header)
 		      (http-write-line p "Connection: close")
 		      (http-write-content-type p content-type charset)
-		      (http-write-line-string p "Server: " server)
+		      (http-write-line-string p "Server: " (or server (hop-server-name)))
 		      (http-write-line p)
 		      ;; the body
 		      (with-trace 'hop-response "http-response-put-process"
@@ -721,6 +717,13 @@
 	       (display body p)
 	       (flush-output-port p)))
 	 'persistent)))
+
+;*---------------------------------------------------------------------*/
+;*    http-response ::http-response-error ...                          */
+;*---------------------------------------------------------------------*/
+(define-method (http-response r::http-response-error request socket)
+   (with-access::http-response-error r (err)
+      (http-response (http-error err request) request socket)))
 
 ;*---------------------------------------------------------------------*/
 ;*    response-is-xml? ...                                             */
@@ -919,9 +922,3 @@
 	     (make-client-socket proxy port :timeout tmt))
 	  (make-client-socket proxy 80 :timeout tmt))))
 
-;*---------------------------------------------------------------------*/
-;*    scheme->response ::http-response-error ...                       */
-;*---------------------------------------------------------------------*/
-(define-method (scheme->response o::http-response-error req ctx)
-   (with-access::http-response-error o (err)
-      (scheme->response (http-error err req) req ctx)))

@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 16:46:47 2006                          */
 ;*    Last change :  Sun Jun 17 17:17:53 2012 (serrano)                */
-;*    Copyright   :  2006-12 Manuel Serrano                            */
+;*    Copyright   :  2006-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop expanders                                                    */
 ;*=====================================================================*/

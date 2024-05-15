@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep  1 08:35:47 2008                          */
-;*    Last change :  Tue May 14 16:09:57 2024 (serrano)                */
+;*    Last change :  Wed May 15 08:45:57 2024 (serrano)                */
 ;*    Copyright   :  2008-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop accept loop                                                  */
@@ -296,7 +296,8 @@
       (let ((table (create-hashtable :size 512  :weak 'open-string)))
 	 (for-each (lambda (ip)
 		      (hashtable-put! table ip #t))
-	    table))))
+	    blacklist)
+	 table)))
 
 ;*---------------------------------------------------------------------*/
 ;*    socket-blacklist? ...                                            */

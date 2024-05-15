@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Tue May 14 13:48:58 2024 (serrano)                */
+;*    Last change :  Wed May 15 08:54:52 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -929,11 +929,11 @@
 ;*    "args" arguments is an object, in which case, the function       */
 ;*    builds a service with optional named arguments.                  */
 ;*---------------------------------------------------------------------*/
-(define (js-create-service %this::JsGlobalObject proc path loc register import worker::WorkerHopThread)
+(define (js-create-service %this::JsGlobalObject impl path loc register import worker::WorkerHopThread)
    
-   (define (source::bstring proc)
-      (if (js-function? proc)
-	  (or (js-function-path proc) (pwd))
+   (define (source::bstring impl)
+      (if (js-function? impl)
+	  (or (js-function-path impl) (pwd))
 	  (pwd)))
    
    (define (fix-args len)
@@ -941,31 +941,34 @@
 	      (string->symbol (format "a~a" i)))
 	 (iota len)))
    
-   (define (service-debug id::symbol proc)
+   (define (service-debug id::symbol impl)
       (lambda (%this)
-	 (js-service/debug id loc proc %this)))
+	 (js-service/debug id loc impl %this)))
    
    (define (js-service-parse-request %this svc req)
       (with-access::http-request req (path abspath)
 	 (let ((args (service-parse-request svc req)))
 	    (js-obj->jsobject args %this))))
    
-   (when (and (eq? proc (js-undefined)) (not (eq? path (js-undefined))))
-      (set! path (js-tostring proc %this)))
+   (cond
+      ((eq? impl (js-undefined))
+       (unless (eq? path (js-undefined))
+	  (set! path (js-tostring impl %this))))
+      ((not (js-procedure? impl))
+       (error "service" "not a procedure" impl)))
    
    (let* ((path (or path (gen-service-url :public #t)))
 	  (hoppath (make-hop-url-name path))
-	  (src (source proc)))
+	  (src (source impl)))
       (multiple-value-bind (id wid)
 	 (service-path->ids path)
-	 (letrec* ((svcp (lambda (this . vals)
-			    (with-access::JsService svcjs (svc)
-			       (with-access::hop-service svc (path)
-				  (js-make-hopframe %this this path vals)))))
-		   (svcn (symbol->string! id))
-		   (proc (if (js-procedure? proc)
+	 (letrec* ((svcn (symbol->string! id))
+		   (svcp (lambda (this . vals)
+			    (with-access::hop-service svc (path)
+			       (js-make-hopframe %this this path vals))))
+		   (proc (if (js-procedure? impl)
 			     (lambda (req . args)
-				(js-apply %this proc req args))
+				(js-apply %this impl req args))
 			     (lambda (this . args)
 				(js-undefined))))
 		   (handler (if (>fx (bigloo-debug) 0)
@@ -980,21 +983,24 @@
 				      (lambda (%this)
 					 (service-invoke svc req
 					    (js-service-parse-request %this svc req)))))))
-		   (svcjs (js-make-service %this svcp svcn
-			     register import
-			     (js-function-arity svcp) worker
-			     (instantiate::hop-service
-				(ctx %this)
-				(proc proc)
-				(handler handler)
-				(javascript "HopService( ~s, ~s )")
-				(path hoppath)
-				(id id)
-				(wid wid)
-				(args (fix-args (js-get proc (& "length") %this)))
-				(resource (dirname src))
-				(source src)))))
-	    svcjs))))
+		   (args (if (js-procedure? impl)
+			     (fix-args (js-get impl (& "length") %this))
+			     '()))
+		   (svc (instantiate::hop-service
+			   (ctx %this)
+			   (proc proc)
+			   (handler handler)
+			   (javascript "HopService(~s, ~s)")
+			   (path hoppath)
+			   (id id)
+			   (wid wid)
+			   (args args)
+			   (resource (dirname src))
+			   (source src))))
+	    (js-make-service %this svcp svcn
+	       register import
+	       (js-function-arity svcp) worker
+	       svc)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    service-path->ids ...                                            */
@@ -1053,7 +1059,7 @@
 (define (js-make-service %this proc name register import arity worker svc)
    
    (define (set-service-path! o p)
-      '(with-access::JsService o (svc)
+      (with-access::JsService o (svc)
 	 (when svc
 	    (when register (unregister-service! svc))
 	    (with-access::hop-service svc (path id wid)
@@ -1066,14 +1072,12 @@
 			(set! id i)
 			(set! wid w)))))
 	    (when register
-	       (with-access::WorkerHopThread worker (svctable)
-		  (register-service! svc svctable))))))
+	       (register-service! svc *default-service-table*)))))
    
    ;; register only if there is an implementation
-   '(when svc
+   (when svc
       (when (and register (>=fx (hop-default-port) 0))
-	 (with-access::WorkerHopThread worker (svctable)
-	    (register-service! svc svctable))))
+	 (register-service! svc *default-service-table*)))
    
    (define (get-path o)
       (with-access::JsService o (svc)

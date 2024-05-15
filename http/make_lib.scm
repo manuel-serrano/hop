@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug  9 14:00:32 2013                          */
-;*    Last change :  Tue May 14 11:59:36 2024 (serrano)                */
+;*    Last change :  Wed May 15 08:43:19 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    THe module used to build the http heap file.                     */
@@ -26,15 +26,19 @@
 	   __http_scheduler-queue
 	   __http_scheduler-pool
 	   __http_parser)
-   
+
    (eval   (export-all)
 
-	   (class %http-message)
+           (class scheduler)
+           (class row-scheduler)
+           (class pool-scheduler)
 	   
+	   (class %http-message)
+
 	   (class http-request)
 	   (class http-server-request)
 	   (class http-proxy-request)
-	   
+
 	   (class %http-response)
 	   (class http-response-proxy)
 	   (class %http-response-server)

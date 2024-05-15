@@ -52,6 +52,8 @@
    (multiple-value-bind (scheme uinfo host port abspath)
       (http-url-parse src)
       (instantiate::http-response-remote
+	 (remote-timeout (hop-read-timeout))
+	 (connection-timeout (hop-connection-timeout))
 	 (host host)
 	 (port port)
 	 (path abspath)

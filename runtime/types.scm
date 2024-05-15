@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Tue May 14 09:09:36 2024 (serrano)                */
+;*    Last change :  Wed May 15 09:46:08 2024 (serrano)                */
 ;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -201,3 +201,16 @@
    (with-access::&hop-autoload-error exc (proc obj msg)
       (fprintf (current-error-port) "~a: cannot autoload ~s\n" proc msg)
       (exception-notify obj)))
+
+;*---------------------------------------------------------------------*/
+;*    http-request-local? ...                                          */
+;*    -------------------------------------------------------------    */
+;*    Is the request initiated by the local host ?                     */
+;*---------------------------------------------------------------------*/
+(define (http-request-local? req::http-request)
+   (with-access::http-request req (socket)
+      ;; assume socket to be a real socket
+      (or (socket-local? socket)
+	  (find (lambda (addr)
+		   (socket-host-address=? socket addr))
+	     (hop-server-addresses)))))

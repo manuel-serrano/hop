@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Tue May 14 09:43:56 2024 (serrano)                */
+;*    Last change :  Wed May 15 09:56:16 2024 (serrano)                */
 ;*    Copyright   :  2005-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
@@ -646,16 +646,4 @@
 	       (get-weblets-zeroconf)))))
    (zeroconf-start))
 
-;*---------------------------------------------------------------------*/
-;*    http-request-local? ...                                          */
-;*    -------------------------------------------------------------    */
-;*    Is the request initiated by the local host ?                     */
-;*---------------------------------------------------------------------*/
-(define (http-request-local? req::http-request)
-   (with-access::http-request req (socket)
-      ;; assume socket to be a real socket
-      (or (socket-local? socket)
-	  (find (lambda (addr)
-		   (socket-host-address=? socket addr))
-	     (hop-server-addresses)))))
 

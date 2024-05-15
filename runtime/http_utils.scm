@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  6 09:04:30 2004                          */
-;*    Last change :  Tue May 14 12:54:31 2024 (serrano)                */
+;*    Last change :  Wed May 15 09:47:41 2024 (serrano)                */
 ;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple HTTP utils                                                */
@@ -34,7 +34,8 @@
 	    (http-decode-authentication::obj ::bstring)
 	    (http-write-header ::output-port ::pair-nil)
 	    (http-filter-proxy-header::pair-nil ::pair-nil)
-	    (http-parse-range ::bstring)))
+	    (http-parse-range ::bstring)
+	    (http-request-local?::bool ::http-request)))
 	   
 ;*---------------------------------------------------------------------*/
 ;*    parse-error ...                                                  */
@@ -355,7 +356,7 @@
 	 (if (=fx i len)
 	     acc
 	     (let ((d (fixnum->elong
-		       (-fx (char->integer (string-ref string i))
+			 (-fx (char->integer (string-ref string i))
 			    (char->integer #\0)))))
 		(loop (+fx i 1) (+elong (*elong acc #d10) d))))))
    
@@ -372,4 +373,17 @@
 	      (values (string->fixnum range 6 i) #f))
 	     (else
 	      (values (string->fixnum range 6 i)
-		      (string->fixnum range (+fx i 1) l)))))))
+		 (string->fixnum range (+fx i 1) l)))))))
+
+;*---------------------------------------------------------------------*/
+;*    http-request-local? ...                                          */
+;*    -------------------------------------------------------------    */
+;*    Is the request initiated by the local host ?                     */
+;*---------------------------------------------------------------------*/
+(define (http-request-local? req::http-request)
+   (with-access::http-request req (socket)
+      ;; assume socket to be a real socket
+      (or (socket-local? socket)
+	  (find (lambda (addr)
+		   (socket-host-address=? socket addr))
+	     (hop-server-addresses)))))

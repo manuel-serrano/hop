@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb 26 07:03:15 2008                          */
-;*    Last change :  Tue May 14 12:26:25 2024 (serrano)                */
+;*    Last change :  Wed May 15 08:49:12 2024 (serrano)                */
 ;*    Copyright   :  2008-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Pool scheduler                                                   */
@@ -28,9 +28,9 @@
    
    (import  __http_scheduler)
 
-   (export  (class &stack-overflow::&error))
+   (export  (class &stack-overflow::&error)
    
-   (export  (class pool-scheduler::row-scheduler
+            (class pool-scheduler::row-scheduler
 	       (mutex::mutex read-only (default (make-mutex)))
 	       (condv::condvar read-only (default (make-condition-variable)))
 	       (nfree::int (default 0))

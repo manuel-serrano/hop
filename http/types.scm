@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May 14 09:04:28 2024                          */
-;*    Last change :  Tue May 14 15:49:16 2024 (serrano)                */
+;*    Last change :  Wed May 15 09:26:18 2024 (serrano)                */
 ;*    Copyright   :  2024 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HTTP public types                                                */
@@ -60,7 +60,7 @@
 	      (connection-timeout read-only))
 	   
 	   (abstract-class %http-response-server::%http-response
-	      (server::bstring read-only)
+	      (server (default #unspecified))
  	      (start-line::bstring (default "HTTP/1.1 200 Ok")))
 	   
 	   (class http-response-string::%http-response-server
