@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Tue May 14 08:31:11 2024 (serrano)                */
+;*    Last change :  Wed May 15 14:52:33 2024 (serrano)                */
 ;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -238,7 +238,8 @@
    ;; start the main JS loop
    (multiple-value-bind (%worker %global %module)
       (js-main-worker! "main"
-	 (format "hop-~a~a (~a)" (hop-version) (hop-minor-version) (hop-build-tag))
+	 (format "hop-~a~a (~a)"
+	    (hop-version) (hop-minor-version) (hop-build-tag))
 	 (or (hop-run-server) (eq? (hop-enable-repl) 'js))
 	 nodejs-new-global-object nodejs-new-module)
       ;; js loader
@@ -349,7 +350,6 @@
 	       (let ((oldload (hop-rc-loaded)))
 		  (hop-rc-loaded! #f)
 		  (unwind-protect
-		     ;;(nodejs-load path path %worker %global %module :commonjs-export #t)
 		     (nodejs-load-module path %worker %global %module :commonjs-export #t)
 		     (begin
 			(hop-rc-loaded! oldload)

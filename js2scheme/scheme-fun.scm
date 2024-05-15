@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Sat Jul 22 06:05:14 2023 (serrano)                */
-;*    Copyright   :  2017-23 Manuel Serrano                            */
+;*    Last change :  Wed May 15 15:34:17 2024 (serrano)                */
+;*    Copyright   :  2017-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
 ;*=====================================================================*/
@@ -985,7 +985,8 @@
 				 `'(#!key ,@args)
 				 `',args))
 		      (resource %resource)
-		      (source %source)))))))
+		      (source %source))
+		   *default-service-table*)))))
    
    (define (init->formal init::J2SDataPropertyInit)
       (with-access::J2SDataPropertyInit init (name val)

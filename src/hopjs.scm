@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Tue May 14 13:55:54 2024 (serrano)                */
+;*    Last change :  Wed May 15 14:57:17 2024 (serrano)                */
 ;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -65,6 +65,9 @@
 
    ;; final configuration
    (when (hop-profile) (js-profile-init `(:server #t) #f #f))
+
+   ;; disable JS global service declaration
+   (js-service-support-set! #f)
    
    ;; js initialization
    (multiple-value-bind (%worker %global %module)

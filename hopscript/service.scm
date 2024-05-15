@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Wed May 15 08:54:52 2024 (serrano)                */
+;*    Last change :  Wed May 15 14:54:51 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -34,10 +34,23 @@
 	   __hopscript_promise
 	   __hopscript_websocket)
 
-   (export (js-init-service! ::JsGlobalObject ::struct)
+   (export (js-service-support-set! ::bool)
+	   (js-init-service! ::JsGlobalObject ::struct)
 	   (js-make-hopframe ::JsGlobalObject ::obj ::obj ::obj)
 	   (js-create-service::JsService ::JsGlobalObject ::obj ::obj ::obj ::bool ::bool ::WorkerHopThread)
-	   (js-make-service::JsService ::JsGlobalObject ::procedure ::bstring ::bool ::bool ::int ::obj ::obj)))
+	   (js-make-service::JsService ::JsGlobalObject ::procedure ::bstring ::bool ::bool ::int ::obj ::obj ::struct)
+	   (service-path->ids path)))
+
+;*---------------------------------------------------------------------*/
+;*    *js-service-support* ...                                         */
+;*---------------------------------------------------------------------*/
+(define *js-service-support* #t)
+
+;*---------------------------------------------------------------------*/
+;*    js-service-support-set! ...                                      */
+;*---------------------------------------------------------------------*/
+(define (js-service-support-set! val)
+   (set! *js-service-support* val))
 
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
@@ -77,7 +90,7 @@
 	       (js-make-service ctx svcp
 		  (basename path)
 		  #f #f -1 (js-current-worker)
-		  hopsvc))))))
+		  hopsvc *default-service-table*))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsHopFrame ...                               */
@@ -266,7 +279,7 @@
       (let ((js-function-prototype (js-object-proto js-function)))
 	 ;; local constant strings initialization
 	 (unless (vector? __js_strings) (set! __js_strings (&init!)))
-
+	 
 	 ;; service pcache
 	 (set! js-service-pcache
 	    ((@ js-make-pcache-table __hopscript_property) 1 "service"))
@@ -282,7 +295,7 @@
 		  (info (js-function-info :name "" :len -1))
 		  (procedure list)
 		  (svc #f))))
-
+	 
 	 (js-bind! %this js-service-prototype (& "name")
 	    :value (js-ascii->jsstring "service")
 	    :writable #f
@@ -446,93 +459,96 @@
 		      (js-function-arity 1 0)
 		      (js-function-info :name "setOptions" :len 1))
 	    :hidden-class #t)
-
+	 
 	 (define (%js-service this proc path)
 	    (js-create-service %this proc
 	       (unless (eq? path (js-undefined))
 		  (js-tostring path %this))
 	       #f #t #f (js-current-worker)))
-
+	 
 	 (define (%js-hopframe this path args)
 	    (js-make-hopframe %this this path args))
 	 
-	 (letrec ((js-service (js-make-function %this
-				 %js-service
-				 (js-function-arity %js-service)
-				 (js-function-info :name "Service" :len 2)
-				 :__proto__ js-function-prototype
-				 :prototype js-service-prototype
-				 :size 5
-				 :alloc js-no-alloc))
-		  (js-hopframe (js-make-function %this
-				  %js-hopframe
-				  (js-function-arity %js-hopframe)
-				  (js-function-info :name "HopFrame" :len 1)
-				  :__proto__ js-function-prototype
-				  :prototype js-hopframe-prototype
-				  :alloc js-no-alloc)))
-	    (js-bind! %this %this (& "Service")
-	       :configurable #f :enumerable #f :value js-service
-	       :hidden-class #t)
-	    (js-bind! %this %this (& "HopFrame")
-	       :configurable #f :enumerable #f :value js-hopframe
-	       :hidden-class #t)
-	    
-	    (js-bind! %this js-service (& "exists")
-	       :configurable #f :enumerable #f
-	       :value (js-make-function %this
-			 (lambda (this svc)
-			    (service-exists? (js-tostring svc %this) svctable))
-			 (js-function-arity 1 0)
-			 (js-function-info :name "exists" :len 1))
-	       :hidden-class #t)
-	    (js-bind! %this js-service (& "getService")
-	       :configurable #f :enumerable #f
-	       :value (js-make-function %this
-			 (lambda (this svc)
-			    (let* ((name (js-tostring svc %this))
-				   (svc (get-service-from-name name svctable)))
-			       (js-make-service %this
-				  (lambda (this . args)
-				     (with-access::hop-service svc (path)
-					(js-make-hopframe %this this path args)))
-				  name #f #f -1 (js-current-worker) svc)))
-			 (js-function-arity 1 0)
-			 (js-function-info :name "getService" :len 1))
-	       :hidden-class #t)
-	    (js-bind! %this js-service (& "getServiceFromPath")
-	       :configurable #f :enumerable #f
-	       :value (js-make-function %this
-			 (lambda (this svc)
-			    (let* ((name (js-tostring svc %this))
-				   (svc (get-service name svctable)))
-			       (js-make-service %this
-				  (lambda (this . args)
-				     (with-access::hop-service svc (path)
-					(js-make-hopframe %this this path args)))
-				  name #f #f -1 (js-current-worker) svc)))
-			 (js-function-arity 1 0)
-			 (js-function-info :name "getService" :len 1))
-	       :hidden-class #t)
-	    
-	    (js-bind! %this js-service (& "allowURL")
-	       :configurable #f :enumerable #f
-	       :value (js-make-function %this
-			 (lambda (this url)
-			    (cond
-			       ((not (hop-filters-open?))
-				(js-raise-type-error %this
-				   "allowURL must called from within the hoprc.js file"
-				   url))
-			       ((not (memq service-url-filter (hop-filters)))
-				(set! *url-redirect* (create-hashtable))
-				(hop-filter-add! service-url-filter)
-				(add-service-allow-url! url))
-			       (else
-				(add-service-allow-url! url))))
-			 (js-function-arity 1 0)
-			 (js-function-info :name "allowURL" :len 1))
-	       :hidden-class #t))
+	 (when *js-service-support*
+	    (letrec ((js-service (js-make-function %this
+				    %js-service
+				    (js-function-arity %js-service)
+				    (js-function-info :name "Service" :len 2)
+				    :__proto__ js-function-prototype
+				    :prototype js-service-prototype
+				    :size 5
+				    :alloc js-no-alloc))
+		     (js-hopframe (js-make-function %this
+				     %js-hopframe
+				     (js-function-arity %js-hopframe)
+				     (js-function-info :name "HopFrame" :len 1)
+				     :__proto__ js-function-prototype
+				     :prototype js-hopframe-prototype
+				     :alloc js-no-alloc)))
+	       (js-bind! %this %this (& "Service")
+		  :configurable #f :enumerable #f :value js-service
+		  :hidden-class #t)
+	       (js-bind! %this %this (& "HopFrame")
+		  :configurable #f :enumerable #f :value js-hopframe
+		  :hidden-class #t)
+	       
+	       (js-bind! %this js-service (& "exists")
+		  :configurable #f :enumerable #f
+		  :value (js-make-function %this
+			    (lambda (this svc)
+			       (service-exists? (js-tostring svc %this) svctable))
+			    (js-function-arity 1 0)
+			    (js-function-info :name "exists" :len 1))
+		  :hidden-class #t)
+	       (js-bind! %this js-service (& "getService")
+		  :configurable #f :enumerable #f
+		  :value (js-make-function %this
+			    (lambda (this svc)
+			       (let* ((name (js-tostring svc %this))
+				      (svc (get-service-from-name name svctable)))
+				  (js-make-service %this
+				     (lambda (this . args)
+					(with-access::hop-service svc (path)
+					   (js-make-hopframe %this this path args)))
+				     name #f #f -1 (js-current-worker) svc
+				     *default-service-table*)))
+			    (js-function-arity 1 0)
+			    (js-function-info :name "getService" :len 1))
+		  :hidden-class #t)
+	       (js-bind! %this js-service (& "getServiceFromPath")
+		  :configurable #f :enumerable #f
+		  :value (js-make-function %this
+			    (lambda (this svc)
+			       (let* ((name (js-tostring svc %this))
+				      (svc (get-service name svctable)))
+				  (js-make-service %this
+				     (lambda (this . args)
+					(with-access::hop-service svc (path)
+					   (js-make-hopframe %this this path args)))
+				     name #f #f -1 (js-current-worker) svc
+				     *default-service-table*)))
+			    (js-function-arity 1 0)
+			    (js-function-info :name "getService" :len 1))
+		  :hidden-class #t)
+	       
+	       (js-bind! %this js-service (& "allowURL")
+		  :configurable #f :enumerable #f
+		  :value (js-make-function %this
+			    (lambda (this url)
+			       (cond
+				  ((not (hop-filters-open?))
+				   (js-raise-type-error %this
+				      "allowURL must called from within the hoprc.js file"
+				      url))
+				  ((not (memq service-url-filter (hop-filters)))
+				   (set! *url-redirect* (create-hashtable))
+				   (hop-filter-add! service-url-filter)
+				   (add-service-allow-url! url))
+				  (else
+				   (add-service-allow-url! url))))
+			    (js-function-arity 1 0)
+			    (js-function-info :name "allowURL" :len 1))
+		  :hidden-class #t)))
 	 
 	 (js-undefined))))
 
@@ -1000,7 +1016,7 @@
 	    (js-make-service %this svcp svcn
 	       register import
 	       (js-function-arity svcp) worker
-	       svc)))))
+	       svc *default-service-table*)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    service-path->ids ...                                            */
@@ -1056,7 +1072,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-make-service ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (js-make-service %this proc name register import arity worker svc)
+(define (js-make-service %this proc name register import arity worker svc table)
    
    (define (set-service-path! o p)
       (with-access::JsService o (svc)
@@ -1072,12 +1088,12 @@
 			(set! id i)
 			(set! wid w)))))
 	    (when register
-	       (register-service! svc *default-service-table*)))))
+	       (register-service! svc table)))))
    
    ;; register only if there is an implementation
    (when svc
       (when (and register (>=fx (hop-default-port) 0))
-	 (register-service! svc *default-service-table*)))
+	 (register-service! svc table)))
    
    (define (get-path o)
       (with-access::JsService o (svc)
