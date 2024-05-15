@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.6.x/runtime/mathml.scm                */
+;*    serrano/prgm/project/hop/hop/runtime/mathml.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  2 08:24:08 2007                          */
-;*    Last change :  Fri Feb 21 13:41:25 2014 (serrano)                */
-;*    Copyright   :  2007-14 Manuel Serrano                            */
+;*    Last change :  Tue May 14 12:50:11 2024 (serrano)                */
+;*    Copyright   :  2007-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop MATHML support.                                              */
 ;*=====================================================================*/
@@ -13,6 +13,8 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module __hop_mathml
+
+   (library http)
    
    (include "xml.sch")
 

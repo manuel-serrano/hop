@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/hopreplay/replay.scm              */
+;*    serrano/prgm/project/hop/hop/hopreplay/replay.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Apr 26 09:44:38 2008                          */
-;*    Last change :  Fri Nov 16 14:39:33 2012 (serrano)                */
-;*    Copyright   :  2008-12 Manuel Serrano                            */
+;*    Last change :  Tue May 14 13:53:28 2024 (serrano)                */
+;*    Copyright   :  2008-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPRP Replay machinery                                           */
 ;*=====================================================================*/
@@ -14,11 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module hoprp_replay
 
-   (library web)
+   (library web pthread)
    
-   (cond-expand
-      (enable-threads (library pthread)))
-
    (import  hoprp_log
 	    hoprp_param)
 

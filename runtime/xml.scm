@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.5.x/runtime/xml.scm                   */
+;*    serrano/prgm/project/hop/hop/runtime/xml.scm                     */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Thu Jan 20 09:19:18 2022 (serrano)                */
-;*    Copyright   :  2004-22 Manuel Serrano                            */
+;*    Last change :  Tue May 14 12:48:58 2024 (serrano)                */
+;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
 ;*=====================================================================*/
@@ -14,7 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_xml
 
-   (library  web)
+   (library  web http)
    
    (include "param.sch"
 	    "xml.sch")

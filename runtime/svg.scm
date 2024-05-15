@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  2 08:22:25 2007                          */
-;*    Last change :  Tue Nov  8 08:30:10 2022 (serrano)                */
-;*    Copyright   :  2007-22 Manuel Serrano                            */
+;*    Last change :  Tue May 14 12:49:54 2024 (serrano)                */
+;*    Copyright   :  2007-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop SVG support.                                                 */
 ;*=====================================================================*/
@@ -14,7 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_svg
    
-   (library web)
+   (library web http)
    
    (include "xml.sch")
    

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/src/scheduler.scm                 */
+;*    serrano/prgm/project/hop/hop/http/scheduler.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 22 11:19:21 2008                          */
-;*    Last change :  Sun Nov 23 20:55:46 2014 (serrano)                */
-;*    Copyright   :  2008-20 Manuel Serrano                            */
+;*    Last change :  Tue May 14 16:08:56 2024 (serrano)                */
+;*    Copyright   :  2008-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Specification of the various Hop schedulers                      */
 ;*=====================================================================*/
@@ -12,11 +12,11 @@
 ;*---------------------------------------------------------------------*/
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
-(module hopsched_scheduler
+(module __http_scheduler
    
-   (library hop)
+   (library pthread)
    
-   (export (class scdthread::hopthread
+   (export (class scdthread::pthread
 	      (proc::procedure (default (lambda (t) #f)))
 	      (condv::condvar read-only (default (make-condition-variable)))
 	      (mutex::mutex read-only (default (make-mutex)))
@@ -39,7 +39,10 @@
 	   (abstract-class scheduler
 	      (scheduler-init!)
 	      (onready read-only (default #f))
-	      (size::int read-only (default 0)))
+	      (size::int read-only (default 0))
+	      (filters::pair-nil read-only)
+	      (accept-timeout::long read-only (default (*fx 10 1000)))
+	      (keep-alive-timeout::long read-only))
 
 	   (abstract-class row-scheduler::scheduler)
 	   
@@ -227,23 +230,19 @@
    (with-access::scdthread th (info)
       (set! info i)))
 
-;*---------------------------------------------------------------------*/
-;*    thread-request ::scdthread ...                                   */
-;*---------------------------------------------------------------------*/
-(cond-expand
-   (enable-threads
-      (define-method (thread-request th::scdthread)
-	 (with-access::scdthread th (request)
-	    request))))
-
-;*---------------------------------------------------------------------*/
-;*    thread-request-set! ::scdthread ...                              */
-;*---------------------------------------------------------------------*/
-(cond-expand
-   (enable-threads
-    (define-method (thread-request-set! th::scdthread req)
-	 (with-access::scdthread th (request)
-	    (set! request req)))))
+;* {*---------------------------------------------------------------------*} */
+;* {*    thread-request ::scdthread ...                                   *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define-method (thread-request th::scdthread)                       */
+;*    (with-access::scdthread th (request)                             */
+;*       request))                                                     */
+;*                                                                     */
+;* {*---------------------------------------------------------------------*} */
+;* {*    thread-request-set! ::scdthread ...                              *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define-method (thread-request-set! th::scdthread req)              */
+;*    (with-access::scdthread th (request)                             */
+;*       (set! request req)))                                          */
 
 ;*---------------------------------------------------------------------*/
 ;*    scheduler-default-handler ...                                    */

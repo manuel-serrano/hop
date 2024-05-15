@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Jan 28 15:38:06 2006 (eg)                     */
-;*    Last change :  Tue May  4 14:51:51 2021 (serrano)                */
-;*    Copyright   :  2004-21 Manuel Serrano                            */
+;*    Last change :  Tue May 14 12:58:26 2024 (serrano)                */
+;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Weblets Management                                               */
 ;*=====================================================================*/
@@ -14,6 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_weblets
 
+   (library http)
+   
    (include "xml.sch"
             "verbose.sch")
    

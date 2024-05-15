@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Tue May  7 12:04:11 2019 (serrano)                */
-;*    Copyright   :  2005-19 Manuel Serrano                            */
+;*    Last change :  Tue May 14 13:46:41 2024 (serrano)                */
+;*    Copyright   :  2005-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of trees.                                 */
 ;*=====================================================================*/
@@ -14,7 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module __hopwidget-tree
 
-   (library hop)
+   (library hop http)
 
    (static  (class html-tree::xml-element
 	       (context read-only)
@@ -387,8 +387,9 @@
 			    ((isa? b xml-tilde)
 			     (return
 				(instantiate::http-response-hop
-				   (backend (hop-xml-backend))
 				   (start-line "HTTP/1.0 501 Internal Server Error")
+				   (server (hop-server-name))
+				   (backend (hop-xml-backend))
 				   (content-type (hop-mime-type))
 				   (value b))))
 			    (else

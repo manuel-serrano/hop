@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Mon May 13 11:59:13 2024 (serrano)                */
+;*    Last change :  Tue May 14 13:54:19 2024 (serrano)                */
 ;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -1169,9 +1169,7 @@
 (define-parameter hop-max-threads
    12
    (lambda (v)
-      (cond-expand
-	 (enable-threads v)
-	 (else 1))))
+      v))
 
 ;*---------------------------------------------------------------------*/
 ;*    Connection delays and timeouts                                   */
@@ -1190,20 +1188,14 @@
 
 (define-parameter hop-enable-keep-alive
    ;; does hop support keep-alive connection
-   (cond-expand
-      ;; in a multi-threaded config, by default, it does
-      (enable-threads #t)
-      ;; in a single env, it does not
-      (else #f))
+   #t
    (lambda (v)
       (unless v (hop-enable-proxy-keep-alive-set! v))
       v))
 
 (define-parameter hop-enable-proxy-keep-alive
    ;; does hop support keep-alive remote connection (when proxying)
-   (cond-expand
-      (enable-threads #t)
-      (else #f)))
+   #t)
    
 (define-parameter hop-keep-alive-timeout
    ;; the number of milli-seconds to wait for keep-alive connections

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/src/amany_scheduler.scm           */
+;*    serrano/prgm/project/hop/hop/http/amany_scheduler.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb 26 07:03:15 2008                          */
-;*    Last change :  Fri Mar 29 10:51:07 2013 (serrano)                */
-;*    Copyright   :  2008-13 Manuel Serrano                            */
+;*    Last change :  Tue May 14 09:22:10 2024 (serrano)                */
+;*    Copyright   :  2008-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Accept-many scheduler                                            */
 ;*    -------------------------------------------------------------    */
@@ -19,12 +19,12 @@
 ;*---------------------------------------------------------------------*/
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
-(module hopsched_scheduler-accept-many
+(module __http_scheduler-accept-many
 
-   (library hop)
+   (library pthread)
    
-   (import  hopsched_scheduler
-	    hopsched_scheduler-pool)
+   (import  __http_scheduler
+	    __http_scheduler-pool)
 
    (export  (class accept-many-scheduler::pool-scheduler)))
 

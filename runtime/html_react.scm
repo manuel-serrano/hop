@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/runtime/html_react.scm            */
+;*    serrano/prgm/project/hop/hop/runtime/html_react.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr 28 18:01:20 2016                          */
-;*    Last change :  Tue Nov 13 20:50:36 2018 (serrano)                */
-;*    Copyright   :  2016-20 Manuel Serrano                            */
+;*    Last change :  Tue May 14 12:49:45 2024 (serrano)                */
+;*    Copyright   :  2016-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dynamic nodes                                                    */
 ;*=====================================================================*/
@@ -14,7 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_html-react
 
-   (library web)
+   (library web http)
 
    (include "param.sch"
 	    "xml.sch")

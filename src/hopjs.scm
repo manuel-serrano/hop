@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Tue May  7 11:06:53 2024 (serrano)                */
+;*    Last change :  Tue May 14 13:55:54 2024 (serrano)                */
 ;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -14,7 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module main
 
-   (library hop libuv js2scheme hopscript nodejs)
+   (library pthread http hop libuv js2scheme hopscript nodejs)
    (eval (library hop hopscript nodejs))
    
    (main main))
@@ -23,9 +23,6 @@
 ;*    signal-init! ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (signal-init!)
-   (cond-expand
-      (enable-threads #unspecified)
-      (else (signal sigpipe (lambda (n) #unspecified))))
    (signal sigterm
       (lambda (n)
 	 (unless (current-thread)

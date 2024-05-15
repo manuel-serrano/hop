@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Dec 18 08:04:49 2007                          */
-;*    Last change :  Thu Mar 19 16:38:05 2020 (serrano)                */
-;*    Copyright   :  2007-20 Manuel Serrano                            */
+;*    Last change :  Tue May 14 12:49:35 2024 (serrano)                */
+;*    Copyright   :  2007-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dealing with IMG markups.                                        */
 ;*=====================================================================*/
@@ -14,7 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_html-img
 
-   (library web)
+   (library web http)
 
    (include "param.sch"
 	    "xml.sch")

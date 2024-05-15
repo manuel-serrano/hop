@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Wed Apr 17 08:01:17 2019 (serrano)                */
-;*    Copyright   :  2004-20 Manuel Serrano                            */
+;*    Last change :  Tue May 14 15:38:46 2024 (serrano)                */
+;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOPHZ entry point                                            */
 ;*=====================================================================*/
@@ -14,7 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module hophz
 
-   (library scheme2js hopscheme hopwidget hop sqlite)
+   (library scheme2js hopscheme hopwidget hop http sqlite)
 
    (import  hophz_parseargs
 	    hophz_param

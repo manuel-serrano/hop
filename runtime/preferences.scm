@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/runtime/preferences.scm           */
+;*    serrano/prgm/project/hop/hop/runtime/preferences.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 28 07:45:15 2006                          */
-;*    Last change :  Sun Jan 11 20:41:12 2015 (serrano)                */
-;*    Copyright   :  2006-15 Manuel Serrano                            */
+;*    Last change :  Tue May 14 13:12:47 2024 (serrano)                */
+;*    Copyright   :  2006-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preferences editor                                               */
 ;*=====================================================================*/
@@ -13,6 +13,8 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module __hop_preferences
+
+   (library http)
    
    (include "xml.sch"
 	    "service.sch")

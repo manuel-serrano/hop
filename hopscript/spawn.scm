@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct  7 09:04:09 2016                          */
-;*    Last change :  Sun Mar  3 10:43:53 2024 (serrano)                */
+;*    Last change :  Tue May 14 12:33:25 2024 (serrano)                */
 ;*    Copyright   :  2016-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Spawn implementation as defined in                               */
@@ -50,9 +50,9 @@
 ;*---------------------------------------------------------------------*/
 (module __hopscript_spawn
 
-   (library hop)
-
    (include "names.sch" "types_expd.sch" "stringthread.sch")
+
+   (library pthread http hop)
    
    (import __hopscript_types
 	   __hopscript_property

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 15 09:04:07 2011                          */
-;*    Last change :  Sun Mar 20 08:50:47 2022 (serrano)                */
-;*    Copyright   :  2011-22 Manuel Serrano                            */
+;*    Last change :  Tue May 14 12:38:31 2024 (serrano)                */
+;*    Copyright   :  2011-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Avahi support for Hop                                            */
 ;*=====================================================================*/
@@ -14,8 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (directives
 
-   (include "verbose.sch"
-	    "thread.sch")
+   (include "verbose.sch")
    
    (import __hop_configure
 	   __hop_param
@@ -24,7 +23,7 @@
 	   __hop_types
 	   __hop_thread)
    
-   (library avahi)
+   (library avahi pthread http)
    
    (export (class avahi::zeroconf
 	      (lock::mutex read-only (default (make-mutex)))

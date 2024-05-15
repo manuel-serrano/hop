@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 21 18:31:30 2017                          */
-;*    Last change :  Thu Oct 24 12:03:22 2019 (serrano)                */
-;*    Copyright   :  2017-19 Manuel Serrano                            */
+;*    Last change :  Tue May 14 12:35:53 2024 (serrano)                */
+;*    Copyright   :  2017-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Watch for socket close                                           */
 ;*    -------------------------------------------------------------    */
@@ -26,7 +26,7 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_watch
 
-   (include "thread.sch")
+   (library pthread)
 
    (import __hop_thread)
    

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/runtime/websocket.scm             */
+;*    serrano/prgm/project/hop/hop/runtime/websocket.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 15 07:21:08 2012                          */
-;*    Last change :  Mon Jul  2 17:28:38 2018 (serrano)                */
-;*    Copyright   :  2012-18 Manuel Serrano                            */
+;*    Last change :  Tue May 14 12:36:03 2024 (serrano)                */
+;*    Copyright   :  2012-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSocket server-side tools                                  */
 ;*=====================================================================*/
@@ -14,12 +14,11 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_websocket
    
-   (include "http_lib.sch"
+   (include "http_utils.sch"
 	    "service.sch"
-            "verbose.sch"
-	    "thread.sch")
+            "verbose.sch")
 
-   (library web)
+   (library web pthread http)
 
    (import  __hop_configure
 	    __hop_thread
@@ -31,7 +30,7 @@
 	    __hop_html-head
 	    __hop_misc
 	    __hop_hop
-	    __hop_http-lib
+	    __hop_http-utils
 	    __hop_http-response
 	    __hop_json
 	    __hop_read
@@ -266,8 +265,9 @@
    
    (define (websocket-hixie-protocol header subprotocol read)
       (instantiate::http-response-websocket
-	 (request req)
 	 (start-line "HTTP/1.1 101 Web Socket Protocol Handshake")
+	 (server (hop-server-name))
+	 (request req)
 	 (location (websocket-server-location (get-header header host: #f)))
 	 (origin (get-header header origin: "localhost"))
 	 (protocol subprotocol)
@@ -281,8 +281,9 @@
 	 (trace-item "header=" header " subprotocol=" subprotocol)
 	 (let ((key (get-header header sec-websocket-key: #f)))
 	    (instantiate::http-response-websocket
-	       (request req)
 	       (start-line "HTTP/1.1 101 Switching Protocols")
+	       (server (hop-server-name))
+	       (request req)
 	       (connection 'Upgrade)
 	       (protocol subprotocol)
 	       (accept (websocket-hybi-accept key))
@@ -371,17 +372,11 @@
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-proxy-websocket request socket)
    (with-trace 'websocket "http-response::http-response-proxy-websocket"
-      (cond-expand
-	 (enable-threads
-	    (thread-start!
-	       (instantiate::hopthread
-		  (body
-		     (lambda () (websocket-tunnel r socket)))))
-	    'persistent)
-	 (else
-	  (error "http-response"
-	     "websocket tunnel requires thread support"
-	     #f)))))
+      (thread-start!
+	 (instantiate::hopthread
+	    (body
+	       (lambda () (websocket-tunnel r socket)))))
+      'persistent))
 
 ;*---------------------------------------------------------------------*/
 ;*    websocket-connect-tunnel ...                                     */

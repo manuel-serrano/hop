@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 15 11:28:31 2004                          */
-;*    Last change :  Thu Oct 31 22:18:35 2019 (serrano)                */
-;*    Copyright   :  2004-19 Manuel Serrano                            */
+;*    Last change :  Tue May 14 12:48:04 2024 (serrano)                */
+;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP misc                                                         */
 ;*=====================================================================*/
@@ -16,6 +16,8 @@
 
    (include "param.sch")
 
+   (library http)
+   
    (cond-expand
       (enable-ssl (library ssl)))
 
@@ -443,7 +445,4 @@
 ;*    a new process for executing in background.                       */
 ;*---------------------------------------------------------------------*/
 (define (call-in-background thunk)
-   (cond-expand
-      (enable-threads (thunk))
-      (bigloo-c (when (=fx (fork) 0) (thunk) (exit 0)))
-      (else (thunk))))
+   (thunk))

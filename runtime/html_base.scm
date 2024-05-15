@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 23 08:11:51 2010                          */
-;*    Last change :  Tue May  7 18:49:56 2024 (serrano)                */
+;*    Last change :  Tue May 14 12:49:11 2024 (serrano)                */
 ;*    Copyright   :  2010-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HTML tags                                                        */
@@ -14,6 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_html-base
 
+   (library http)
+   
    (include "param.sch"
 	    "xml.sch")
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 19 08:19:19 2015                          */
-;*    Last change :  Sun Mar  3 15:45:53 2024 (serrano)                */
+;*    Last change :  Tue May 14 15:47:33 2024 (serrano)                */
 ;*    Copyright   :  2015-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript promises                     */
@@ -18,7 +18,7 @@
    
    (include "../nodejs/nodejs_debug.sch")
    
-   (library hop)
+   (library http hop)
    
    (include "types.sch" "stringliteral.sch")
    
@@ -126,6 +126,7 @@
 				 (lambda (%this)
 				    (k (instantiate::http-response-hop
 					  (start-line "HTTP/1.1 500 Internal Server Error")
+					  (server (hop-server-name))
 					  (backend (hop-xml-backend))
 					  (content-type "application/x-hop")
 					  (header `((Hop-Error: . ,errobj)))

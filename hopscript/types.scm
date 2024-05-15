@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Mon May 13 12:27:01 2024 (serrano)                */
+;*    Last change :  Tue May 14 13:50:36 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -16,7 +16,7 @@
 ;*---------------------------------------------------------------------*/
 (module __hopscript_types
 
-   (library hop)
+   (library pthread http hop)
    
    (use __hopscript_object
 	__hopscript_string
@@ -111,7 +111,7 @@
 
 	   ($$hopscript-breakpoint::obj (::obj) "hopjs_breakpoint"))
    
-   (export (class WorkerHopThread::hopthread
+   (export (class WorkerHopThread::pthread
 	      (%loop (default #f))
 	      (keep-alive::bool (default #f))
 	      (mutex::mutex read-only (default (make-mutex)))
@@ -326,7 +326,7 @@
 	   
 	   (class JsServer::JsObject
 	      (data::pair-nil (default '()))
-	      (obj::server read-only))
+	      (obj read-only))
 	   
 	   (class JsNumber::JsObject
 	      (val::obj (default 0)))

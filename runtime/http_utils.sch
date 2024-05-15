@@ -1,12 +1,12 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/runtime/http_lib.sch              */
+;*    serrano/prgm/project/hop/hop/runtime/http_lib.sch                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 11 16:53:29 2005                          */
-;*    Last change :  Sun Nov  7 08:57:29 2010 (serrano)                */
-;*    Copyright   :  2005-10 Manuel Serrano                            */
+;*    Last change :  Tue May 14 09:19:22 2024 (serrano)                */
+;*    Copyright   :  2005-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
-;*    HTTP-LIB macros                                                  */
+;*    utils macros                                                     */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/

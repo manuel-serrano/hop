@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/runtime/http_filter.scm           */
+;*    serrano/prgm/project/hop/hop/runtime/http_filter.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 24 13:19:41 2006                          */
-;*    Last change :  Mon Dec 15 21:27:23 2014 (serrano)                */
-;*    Copyright   :  2006-14 Manuel Serrano                            */
+;*    Last change :  Tue May 14 12:40:25 2024 (serrano)                */
+;*    Copyright   :  2006-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HTTP response filtering                                          */
 ;*=====================================================================*/
@@ -14,17 +14,17 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_http-filter
 
-   (include "http_lib.sch"
+   (include "http_utils.sch"
             "verbose.sch")
 
-   (library web)
+   (library web http)
    
    (import  __hop_param
 	    __hop_configure
 	    __hop_types
 	    __hop_misc
 	    __hop_xml-types
-	    __hop_http-lib
+	    __hop_http-utils
 	    __hop_http-error
 	    __hop_http-response
 	    __hop_http-proxy)

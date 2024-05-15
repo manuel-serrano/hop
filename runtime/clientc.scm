@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Mar 25 14:37:34 2009                          */
-;*    Last change :  Fri Sep 30 18:42:52 2022 (serrano)                */
-;*    Copyright   :  2009-22 Manuel Serrano                            */
+;*    Last change :  Tue May 14 12:42:08 2024 (serrano)                */
+;*    Copyright   :  2009-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP client-side compiler                                         */
 ;*=====================================================================*/
@@ -14,7 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_clientc
 
-   (library web)
+   (library web http)
    
    (include "xml.sch"
 	    "service.sch")
@@ -29,7 +29,7 @@
 	    __hop_mime
 	    __hop_types
 	    __hop_hop
-	    __hop_http-lib
+	    __hop_http-utils
 	    __hop_configure)
    
    (export  (class clientc
@@ -161,11 +161,13 @@
 		      (if (and (string? etag)
 			       (=elong (string->elong etag) signature))
 			  (instantiate::http-response-string
+			     (server (hop-server-name))
 			     (start-line "HTTP/1.1 304 Not Modified")
 			     (content-type mime)
 			     (header hd)
 			     (charset (hop-locale)))
 			  (instantiate::http-response-file
+			     (server (hop-server-name))
 			     (charset (hop-locale))
 			     (content-type mime)
 			     (bodyp (eq? method 'GET))
@@ -181,6 +183,7 @@
 				(compile-client path name value query)
 				;; sent the file response
 				(instantiate::http-response-file
+				   (server (hop-server-name))
 				   (charset (hop-locale))
 				   (content-type mime)
 				   (bodyp (eq? method 'GET))
@@ -189,6 +192,7 @@
 				   (file value)))
 			     ;; no cache, use a string
 			     (instantiate::http-response-string
+				(server (hop-server-name))
 				(charset (hop-locale))
 				(content-type mime)
 				(bodyp (eq? method 'GET))

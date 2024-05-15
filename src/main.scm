@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Mon May 13 13:15:15 2024 (serrano)                */
+;*    Last change :  Tue May 14 08:31:11 2024 (serrano)                */
 ;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -33,9 +33,6 @@
 ;*    signal-init! ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (signal-init!)
-   (cond-expand
-      (enable-threads #unspecified)
-      (else (signal sigpipe (lambda (n) #unspecified))))
    (signal sigterm
       (lambda (n)
 	 (unless (current-thread)
@@ -174,20 +171,14 @@
 		   ;; start the main loop
 		   (cond
 		      ((and serv servs)
-		       (cond-expand
-			  (enable-threads 
-			   (thread-start!
-			      (instantiate::hopthread
-				 (body (lambda ()
-					  (scheduler-accept-loop
-					     (make-hop-scheduler)
-					     servs #t
-					     (hop-ip-blacklist))))))
-			   (scheduler-accept-loop (hop-scheduler) serv #t (hop-ip-blacklist)))
-			  (else
-			   (error "hop"
-			      "Thread support missing for running both http and https servers"
-			      servs))))
+		       (thread-start!
+			  (instantiate::hopthread
+			     (body (lambda ()
+				      (scheduler-accept-loop
+					 (make-hop-scheduler)
+					 servs #t
+					 (hop-ip-blacklist))))))
+		       (scheduler-accept-loop (hop-scheduler) serv #t (hop-ip-blacklist)))
 		      (serv
 		       (scheduler-accept-loop (hop-scheduler) serv #t (hop-ip-blacklist)))
 		      (servs
@@ -429,33 +420,42 @@
 ;*    make-hop-scheduler ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (make-hop-scheduler)
-   (cond-expand
-      (enable-threads
-       (case (hop-scheduling)
-	  ((nothread)
-	   (instantiate::nothread-scheduler))
-	  ((queue)
-	   (instantiate::queue-scheduler
-	      (size (hop-max-threads))
-	      (onready hop-acknowledge)))
-	  ((one-to-one)
-	   (instantiate::one-to-one-scheduler
-	      (size (hop-max-threads))
-	      (onready hop-acknowledge)))
-	  ((pool)
-	   (instantiate::pool-scheduler
-	      (size (hop-max-threads))
-	      (onready hop-acknowledge)))
-	  ((accept-many)
-	   (instantiate::accept-many-scheduler
-	      (size (hop-max-threads))
-	      (onready hop-acknowledge)))
-	  (else
-	   (error "hop" "Unknown scheduling policy" (hop-scheduling)))))
+   (case (hop-scheduling)
+      ((nothread)
+       (instantiate::nothread-scheduler
+	  (filters (hop-filters))
+	  (accept-timeout (hop-read-timeout))
+	  (keep-alive-timeout (hop-keep-alive-timeout))))
+      ((queue)
+       (instantiate::queue-scheduler
+	  (size (hop-max-threads))
+	  (onready hop-acknowledge)
+	  (filters (hop-filters))
+	  (accept-timeout (hop-read-timeout))
+	  (keep-alive-timeout (hop-keep-alive-timeout))))
+      ((one-to-one)
+       (instantiate::one-to-one-scheduler
+	  (size (hop-max-threads))
+	  (onready hop-acknowledge)
+	  (filters (hop-filters))
+	  (accept-timeout (hop-read-timeout))
+	  (keep-alive-timeout (hop-keep-alive-timeout))))
+      ((pool)
+       (instantiate::pool-scheduler
+	  (size (hop-max-threads))
+	  (onready hop-acknowledge)
+	  (filters (hop-filters))
+	  (accept-timeout (hop-read-timeout))
+	  (keep-alive-timeout (hop-keep-alive-timeout))))
+      ((accept-many)
+       (instantiate::accept-many-scheduler
+	  (size (hop-max-threads))
+	  (onready hop-acknowledge)
+	  (filters (hop-filters))
+	  (accept-timeout (hop-read-timeout))
+	  (keep-alive-timeout (hop-keep-alive-timeout))))
       (else
-       (unless (eq? (hop-scheduling) 'nothread)
-	  (warning "hop" "Threads disabled, forcing \"nothread\" scheduler."))
-       (instantiate::nothread-scheduler))))
+       (error "hop" "Unknown scheduling policy" (hop-scheduling)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    load-command-line-weblet ...                                     */

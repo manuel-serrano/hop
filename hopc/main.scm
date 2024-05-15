@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Mon Mar 27 15:01:41 2023 (serrano)                */
-;*    Copyright   :  2004-23 Manuel Serrano                            */
+;*    Last change :  Tue May 14 13:40:58 2024 (serrano)                */
+;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOPC entry point                                             */
 ;*=====================================================================*/
@@ -14,7 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module hopc
 
-   (library scheme2js hopscheme js2scheme hop)
+   (library scheme2js hopscheme js2scheme hop http)
 
    (cond-expand
       ((library libbacktrace)

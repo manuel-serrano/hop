@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu May 15 05:51:37 2014                          */
-;*    Last change :  Mon May 13 13:06:27 2024 (serrano)                */
+;*    Last change :  Tue May 14 13:49:36 2024 (serrano)                */
 ;*    Copyright   :  2014-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSockets                                                   */
@@ -16,7 +16,7 @@
 
    (include "types.sch" "stringliteral.sch")
    
-   (library web hop js2scheme)
+   (library web hop http)
    
    (import __hopscript_types
 	   __hopscript_arithmetic

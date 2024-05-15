@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Mon Mar 16 08:03:56 2020 (serrano)                */
-;*    Copyright   :  2004-20 Manuel Serrano                            */
+;*    Last change :  Tue May 14 13:56:12 2024 (serrano)                */
+;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
 ;*=====================================================================*/
@@ -134,11 +134,7 @@
 ;*    hop-preload-libraries ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-preload-libraries
-   (cond-expand
-      (enable-threads
-       '(pthread hop hopwidget web hopscheme scheme2js multimedia))
-      (else
-       '(hop hopwidget web hopscheme scheme2js multimedia))))
+   '(pthread hop http hopwidget web hopscheme scheme2js multimedia))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-proxy-authentication ...                                     */

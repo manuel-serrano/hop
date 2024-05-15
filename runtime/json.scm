@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 19 11:52:55 2010                          */
-;*    Last change :  Fri Mar 20 13:55:22 2020 (serrano)                */
-;*    Copyright   :  2010-20 Manuel Serrano                            */
+;*    Last change :  Tue May 14 12:52:28 2024 (serrano)                */
+;*    Copyright   :  2010-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JSON lib.                                                        */
 ;*=====================================================================*/
@@ -13,6 +13,8 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module __hop_json
+
+   (library http)
    
    (import  __hop_param
 	    __hop_types

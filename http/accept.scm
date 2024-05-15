@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/hopsched/accept.scm                 */
+;*    serrano/prgm/project/hop/hop/http/accept.scm                     */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep  1 08:35:47 2008                          */
-;*    Last change :  Mon May 13 10:54:50 2024 (serrano)                */
+;*    Last change :  Tue May 14 16:09:57 2024 (serrano)                */
 ;*    Copyright   :  2008-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop accept loop                                                  */
@@ -12,30 +12,25 @@
 ;*---------------------------------------------------------------------*/
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
-(module hopsched_accept
-
-   (library hop)
+(module __http_accept
 
    (include "stage.sch")
  
+   (library pthread)
+   
    (cond-expand
       (enable-ssl (library ssl)))
 
-   (import  hopsched_scheduler
-	    hopsched_scheduler-nothread
-	    hopsched_scheduler-queue
-	    hopsched_scheduler-one-to-one
-	    hopsched_scheduler-pool
-	    hopsched_scheduler-accept-many
-	    hopsched_pipeline)
+   (import  __http_utils
+	    __http_scheduler
+	    __http_scheduler-nothread
+	    __http_scheduler-queue
+	    __http_scheduler-one-to-one
+	    __http_scheduler-pool
+	    __http_scheduler-accept-many
+	    __http_pipeline)
 
-   (export  (generic scheduler-accept-loop ::scheduler ::socket ::bool #!optional blacklist)
-	    *verb-mutex*))
-
-;*---------------------------------------------------------------------*/
-;*    *verb-mutex* ...                                                 */
-;*---------------------------------------------------------------------*/
-(define *verb-mutex* (make-mutex "hop-verb"))
+   (export  (generic scheduler-accept-loop ::scheduler ::socket ::bool #!optional blacklist)))
 
 ;*---------------------------------------------------------------------*/
 ;*    tune-socket! ...                                                 */
@@ -51,7 +46,8 @@
    (with-access::scheduler scd (onready)
       (when (procedure? onready)
 	 (onready)))
-   (let ((table (blacklist-table blacklist)))
+   (let ((table (blacklist-table blacklist))
+	 (timeout (with-access::scheduler scd (accept-timeout) accept-timeout)))
       (let loop ((id 1))
 	 (let ((sock (socket-accept serv)))
 	    (if (socket-blacklist? sock table)
@@ -60,13 +56,14 @@
 		   (socket-shutdown sock)
 		   (loop id))
 		(begin
-		   (hop-verb 2 (hop-color id id " ACCEPT")
-		      ": " (socket-hostname sock)
-		      " [" (current-date) "]\n")
+		   (trace 2 id "ACCEPT"
+		      (format ": ~a [~a]\n"
+			 (socket-hostname sock)
+			 (current-date)))
 		   ;; tune the socket
 		   (tune-socket! sock)
 		   ;; process the request
-		   (spawn scd stage-request id sock (hop-read-timeout) 'connect)
+		   (spawn scd stage-request id sock timeout 'connect)
 		   (loop (+fx id 1))))))))
 
 ;*---------------------------------------------------------------------*/
@@ -90,33 +87,34 @@
    (with-access::scheduler scd (onready)
       (when (procedure? onready)
 	 (onready)))
-   (let* ((acclen (min 50 (/fx (hop-max-threads) 2)))
-	  (socks (make-vector acclen))
-	  (table (blacklist-table blacklist)))
-      (let loop ((id 1))
-	 (with-access::queue-scheduler scd (mutex condv qlength max-qlength)
+   (with-access::queue-scheduler scd (mutex condv qlength max-qlength accept-timeout)   
+      (let* ((acclen qlength)
+	     (socks (make-vector acclen))
+	     (table (blacklist-table blacklist))
+	     (timeout accept-timeout))
+	 (let loop ((id 1))
 	    (synchronize mutex
 	       (when (>fx qlength max-qlength)
-		  (condition-variable-wait! condv mutex))))
-	 (let* ((in-buffers (allocate-vector acclen (make-string 512)))
-		(out-buffers (allocate-vector acclen (make-string 1024)))
-		(n (socket-accept-many serv socks
-		      :inbufs in-buffers
-		      :outbufs out-buffers)))
-	    (let liip ((i 0))
-	       (if (=fx i n)
-		   (loop (+fx id i))
-		   (let ((sock (vector-ref socks i))
-			 (nid (+fx id i)))
-		      (hop-verb 2 (hop-color nid nid " ACCEPT")
-			 ": " (socket-hostname sock)
-			 " [" (current-date) "]\n")
-		      ;; tune the socket
-		      (tune-socket! sock)
-		      ;; process the request
-		      (spawn scd stage-request nid sock
-			 (hop-read-timeout) 'connect)
-		      (liip (+fx i 1)))))))))
+		  (condition-variable-wait! condv mutex)))
+	    (let* ((in-buffers (allocate-vector acclen (make-string 512)))
+		   (out-buffers (allocate-vector acclen (make-string 1024)))
+		   (n (socket-accept-many serv socks
+			 :inbufs in-buffers
+			 :outbufs out-buffers)))
+	       (let liip ((i 0))
+		  (if (=fx i n)
+		      (loop (+fx id i))
+		      (let ((sock (vector-ref socks i))
+			    (nid (+fx id i)))
+			 (trace 2 nid "ACCEPT"
+			    (format ": ~a [~a]\n"
+			       (socket-hostname sock)
+			       (current-date)))
+			 ;; tune the socket
+			 (tune-socket! sock)
+			 ;; process the request
+			 (spawn scd stage-request nid sock timeout 'connect)
+			 (liip (+fx i 1))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    scheduler-accept-loop ::pool-scheduler ...                       */
@@ -124,19 +122,19 @@
 (define-method (scheduler-accept-loop scd::pool-scheduler serv::socket w::bool #!optional blacklist)
    
    (define dummybuf (make-string 512))
-   (define idmutex (make-mutex "pool-scheduler"))
+   (define idmutex (make-spinlock "pool-scheduler"))
    (define idcount 0)
    (define nbthreads (with-access::pool-scheduler scd (nfree) nfree))
    (define table (blacklist-table blacklist))
+   (define timeout (with-access::pool-scheduler scd (accept-timeout) accept-timeout))
    
    (define (get-next-id)
-      (if (=fx (hop-verbose) 0)
+      (if (=fx (trace-level) 0)
 	  0
-	  (begin
-	     (synchronize idmutex
-		(let ((v (+fx idcount 1)))
-		   (set! idcount v)
-		   v)))))
+	  (synchronize idmutex
+	     (let ((v (+fx idcount 1)))
+		(set! idcount v)
+		v))))
 
    (define (scheduler-load-add! scd inc)
       (with-access::pool-scheduler scd (mutex naccept)
@@ -144,8 +142,8 @@
 	    (set! naccept (+fx naccept inc)))))
 
    (define (accept-error-handler e scd)
-      (hop-verb 2 (hop-color -1 -1 " CONNECTION FAILED"))
-      (hop-verb 2 ": " (with-access::&error e (obj) obj) "\n")
+      (trace 2 -1 "CONNECTION FAILED"
+	 ": " (with-access::&error e (obj) obj))
       (scheduler-load-add! scd -1)
       (exception-notify e)
       #unspecified)
@@ -172,20 +170,20 @@
 			    (scheduler-load-add! scd -1)
 			    (output-port-flush-buffer-set!
 			       (socket-output sock) flushbuf)
-			    (hop-verb 2 (hop-color id id " ACCEPT")
-			       (if (>=fx (hop-verbose) 3)
+			    (trace 2 "ACCEPT"
+			       (if (>=fx (trace-level) 3)
 				   (format " ~a" thread) "")
 			       ": " (socket-hostname sock)
-			       (if (>=fx (hop-verbose) 4)
+			       (if (>=fx (trace-level) 4)
 				   (format ":~a" (socket-port-number sock))
 				   "")
-			       " [" (current-date) "]\n")
+			       " [" (current-date) "]")
 			    ;; tune the socket
 			    (tune-socket! sock)
 			    ;; process the request
 			    (stage scd
 			       thread stage-request id sock
-			       (hop-read-timeout) 'connect)
+			       timeout 'connect)
 			    ;; go back to the accept stage
 			    (loop))))))))
       (connect-stage scd thread))
@@ -215,12 +213,11 @@
    
    (define (stage-accept scd thread id sock timeout n)
       ;; a little bit of traces
-      (hop-verb 2 (hop-color id id " ACCEPT")
-	 (if (>=fx (hop-verbose) 3)
+      (trace 2 id "ACCEPT"
+	 (if (>=fx (trace-level) 3)
 	     (format " ~a, ~a accept" thread n)
 	     "")
-	 ": " (socket-hostname sock)
-	 " [" (current-date) "]\n")
+	 (format ": ~a [~a]" (socket-hostname sock) (current-date)))
       ;; tune the socket
       (tune-socket! sock)
       ;; prepare the socket buffers
@@ -236,7 +233,8 @@
    (with-access::scheduler scd (onready)
       (when (procedure? onready)
 	 (onready)))
-   (let ((table (blacklist-table blacklist)))
+   (let ((table (blacklist-table blacklist))
+	 (timeout (with-access::scheduler scd (accept-timeout) accept-timeout)))
       (let loop ((id 1))
 	 (let ((n (socket-accept-many serv socks
 		     :inbufs dummybufs
@@ -248,8 +246,7 @@
 		      ;; tune the socket
 		      (tune-socket! s)
 		      ;; process the request
-		      (spawn scd stage-accept (+fx id i) s
-			 (hop-read-timeout) n)
+		      (spawn scd stage-accept (+fx id i) s timeout n)
 		      (liip (+fx i 1)))))))))
 
 ;*---------------------------------------------------------------------*/
@@ -257,6 +254,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (scheduler-accept-loop scd::nothread-scheduler serv::socket w #!optional blacklist)
    (letrec* ((table (blacklist-table blacklist))
+	     (timeout (with-access::scheduler scd (accept-timeout) accept-timeout))
 	     (thread (nothread-scheduler-get-fake-thread
 			(lambda ()
 			   (let loop ()
@@ -279,7 +277,7 @@
 						 (tune-socket! s)
 						 ;; process the request
 						 (spawn scd stage-request id s
-						    (hop-read-timeout) 'connect)
+						    timeout 'connect)
 						 (loop (+fx id 1))))))))
 			      (loop))))))
       (tune-socket! serv)
@@ -311,7 +309,7 @@
 ;*    notify-reject ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (notify-reject sock)
-   (hop-verb 1 (hop-color -1 -1 " REJECT")
-	     ": " (socket-host-address sock)
-	     " [" (current-date) "]\n"))
+   (trace 1 -1 "REJECT"
+      ": " (socket-host-address sock)
+      " [" (current-date) "]"))
 

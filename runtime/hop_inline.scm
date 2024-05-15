@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 23 08:17:58 2005                          */
-;*    Last change :  Tue Oct  8 13:16:28 2019 (serrano)                */
-;*    Copyright   :  2005-19 Manuel Serrano                            */
+;*    Last change :  Tue May 14 13:12:05 2024 (serrano)                */
+;*    Copyright   :  2005-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of the HOP inline markup.                     */
 ;*=====================================================================*/
@@ -14,7 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_hop-inline
 
-   (library web)
+   (library web http)
    
    (include "xml.sch")
 

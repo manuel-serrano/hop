@@ -3,8 +3,8 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Mar 15 07:22:39 2006                          */
-#*    Last change :  Sat Feb 25 06:43:51 2023 (serrano)                */
-#*    Copyright   :  2006-23 Manuel Serrano                            */
+#*    Last change :  Tue May 14 09:29:29 2024 (serrano)                */
+#*    Copyright   :  2006-24 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The common Makefile for building libraries                       */
 #*=====================================================================*/
@@ -73,12 +73,8 @@ lib-c-static-sans-afile: \
 # order when invoking make with --jobs N
 lib-c-shared: lib-c-static
 	@ if [ "$(SHAREDLIBRARYSUPPORT)" = "yes" ]; then \
-	   if [ "$(THREADS)" = "yes" ]; then \
-             $(MAKE) lib-c_mt.$(SHAREDSUFFIX); \
-           else \
-             $(MAKE) lib-c_st.$(SHAREDSUFFIX); \
-           fi \
-        fi
+            $(MAKE) lib-c_mt.$(SHAREDSUFFIX); \
+          fi
 
 # we have 8 versions of each library:
 # safe and unsafe, runtime and evaluation time
@@ -240,11 +236,7 @@ install-native-heap:
 	chmod $(MODFILE) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME).heap
 
 install-native-libs:
-	if [ "$(THREADS)" = "yes" ]; then \
-          $(MAKE) LIBSUFFIXTHREAD=_mt install-native-libs-version; \
-        else \
-          $(MAKE) LIBSUFFIXTHREAD= install-native-libs-version; \
-        fi
+	$(MAKE) LIBSUFFIXTHREAD=_mt install-native-libs-version
 
 install-native-libs-version:
 	$(MAKE) install-lib \
@@ -284,11 +276,7 @@ uninstall-native-heap:
 	-$(RM) -f $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME).heap
 
 uninstall-native-libs:
-	if [ "$(THREADS)" = "yes" ]; then \
-          $(MAKE) LIBSUFFIXTHREAD=_mt uninstall-native-libs-version; \
-        else \
-          $(MAKE) VERSOIN= uninstall-native-libs-version; \
-        fi
+	$(MAKE) LIBSUFFIXTHREAD=_mt uninstall-native-libs-version
 
 uninstall-native-libs-version:
 	-$(MAKE) uninstall-lib LIB=lib$(TARGETNAME)_s$(LIBSUFFIXTHREAD)-$(HOPRELEASE)

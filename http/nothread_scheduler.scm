@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/src/nothread_scheduler.scm        */
+;*    serrano/prgm/project/hop/hop/http/nothread_scheduler.scm         */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 22 14:28:00 2008                          */
-;*    Last change :  Fri Mar 29 10:50:28 2013 (serrano)                */
-;*    Copyright   :  2008-13 Manuel Serrano                            */
+;*    Last change :  Tue May 14 09:21:21 2024 (serrano)                */
+;*    Copyright   :  2008-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NOTHREAD scheduler                                               */
 ;*=====================================================================*/
@@ -12,11 +12,11 @@
 ;*---------------------------------------------------------------------*/
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
-(module hopsched_scheduler-nothread
+(module __http_scheduler-nothread
 
-   (library hop)
+   (library pthread)
    
-   (import hopsched_scheduler)
+   (import __http_scheduler)
 
    (include "stage.sch")
 

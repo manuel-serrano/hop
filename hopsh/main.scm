@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Wed Apr 17 08:02:57 2019 (serrano)                */
-;*    Copyright   :  2004-20 Manuel Serrano                            */
+;*    Last change :  Tue May 14 15:30:54 2024 (serrano)                */
+;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOPSH entry point                                            */
 ;*=====================================================================*/
@@ -14,7 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module hopsh
 
-   (library scheme2js hopscheme hop)
+   (library scheme2js hopscheme hop http)
 
    (import  hopsh_parseargs
 	    hopsh_param

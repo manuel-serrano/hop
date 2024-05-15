@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/3.0.x/hopsched/Makefile                */
+#*    serrano/prgm/project/hop/hop/http/Makefile                       */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Florian Loitsch                                   */
 #*    Creation    :  Wed Mar 15 07:27:50 2006                          */
-#*    Last change :  Sat May 24 08:58:26 2014 (serrano)                */
-#*    Copyright   :  2006-20 Manuel Serrano                            */
+#*    Last change :  Tue May 14 12:45:17 2024 (serrano)                */
+#*    Copyright   :  2006-24 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build the hopsched library.                     */
 #*=====================================================================*/
@@ -24,14 +24,14 @@ install: install-library
 #*    Compilers, Tools and Destinations                                */
 #*---------------------------------------------------------------------*/
 # the library name
-TARGETNAME = hopsched
+TARGETNAME = http
 
 BLIBFLAGS = $(BSCM2JSFLAGS)
 
 #*---------------------------------------------------------------------*/
 #*    Scheme extended objects                                          */
 #*---------------------------------------------------------------------*/
-_BGL_OBJECTS = accept pipeline scheduler \
+_BGL_OBJECTS = types utils parser accept pipeline scheduler \
   amany_scheduler nothread_scheduler oto_scheduler \
   pool_scheduler queue_scheduler 
 

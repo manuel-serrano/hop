@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Tue Dec 20 16:50:13 2022 (serrano)                */
-;*    Copyright   :  2004-22 Manuel Serrano                            */
+;*    Last change :  Tue May 14 13:53:16 2024 (serrano)                */
+;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC global parameters                                           */
 ;*=====================================================================*/
@@ -354,9 +354,7 @@
 ;*    hopc-js-worker ...                                               */
 ;*---------------------------------------------------------------------*/
 (define-parameter hopc-js-worker
-   (cond-expand
-      (enable-threads #t)
-      (else #f)))
+   #t)
 
 ;*---------------------------------------------------------------------*/
 ;*    hopc-js-worker-slave ...                                         */
@@ -465,7 +463,5 @@
 ;*    Merely a compatibility variable with Hop (for tools autoconf)    */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-max-threads
-   (cond-expand
-      (enable-threads 12)
-      (else 1)))
+   12)
 

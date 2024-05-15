@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Mon May 13 14:22:49 2024 (serrano)                */
+;*    Last change :  Tue May 14 13:48:29 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -221,6 +221,7 @@
 			  (with-access::http-response-hop rep ((rctx ctx))
 			     (set! rctx ctx)
 			     (instantiate::http-response-responder
+				(server (hop-server-name))
 				(ctx ctx)
 				(response rep)
 				(responder responder)))

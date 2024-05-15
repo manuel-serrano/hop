@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Sun Mar  3 07:44:23 2024 (serrano)                */
+;*    Last change :  Tue May 14 09:19:36 2024 (serrano)                */
 ;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -14,9 +14,9 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_http-response
 
-   (library web)
+   (library web http)
    
-   (include "http_lib.sch")
+   (include "http_utils.sch")
    
    (import  __hop_param
 	    __hop_configure
@@ -27,7 +27,7 @@
 	    __hop_html-base
 	    __hop_html-head
 	    __hop_charset
-	    __hop_http-lib
+	    __hop_http-utils
 	    __hop_http-error
 	    __hop_http-filter
 	    __hop_js-comp
@@ -36,15 +36,9 @@
 	    __hop_cache
 	    __hop_security)
 
-   (export  (generic http-response::symbol ::%http-response ::obj ::socket)
-	    (generic scheme->response ::obj ::http-request ctx)
+   (export  (generic scheme->response ::obj ::http-request ctx)
 	    (http-send-request ::http-request ::procedure #!key body args)
 	    (chunked-flush-hook port size)))
-
-;*---------------------------------------------------------------------*/
-;*    http-response ...                                                */
-;*---------------------------------------------------------------------*/
-(define-generic (http-response::symbol r::%http-response request socket))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-write-content-type ...                                      */
@@ -350,6 +344,7 @@
       (http-response
        (instantiate::http-response-string
 	  (start-line status-line)
+	  (server (hop-server-name))
 	  (charset (hop-locale))
 	  (header header))
        request
@@ -511,6 +506,7 @@
 (define (directory->response rep dir)
    (with-access::%http-response rep (bodyp)
       (instantiate::http-response-xml
+	 (server (hop-server-name))
 	 (backend (hop-xml-backend))
 	 (content-type (with-access::xml-backend (hop-xml-backend) (mime-type) mime-type))
 	 (charset (hop-charset))
@@ -662,6 +658,7 @@
 		   (http-response
 		    (instantiate::http-response-string
 		       (start-line "HTTP/1.0 400 Bad Request")
+		       (server (hop-server-name))
 		       (charset (hop-locale))
 		       (body (format "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\n<html><body>Bad request ~a</body></html>" uri))
 		       (timeout timeout))
@@ -748,6 +745,7 @@
       (cond
 	 ((string? obj)
 	  (instantiate::http-response-string
+	     (server (hop-server-name))
 	     (charset (hop-charset))
 	     (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
 	     (bodyp (not (eq? method 'HEAD)))
@@ -770,6 +768,7 @@
 			   (else
 			    "application/x-javascript"))))
 	     (instantiate::http-response-hop
+		(server (hop-server-name))
 		(backend (hop-xml-backend-secure))
 		(content-type ctype)
 		(charset (hop-charset))
@@ -791,6 +790,7 @@
       (let ((be (hop-xml-backend-secure)))
 	 (with-access::xml-backend be (mime-type)
 	    (instantiate::http-response-xml
+	       (server (hop-server-name))
 	       (backend be)
 	       (content-type mime-type)
 	       (charset (hop-charset))
@@ -804,6 +804,7 @@
 (define-method (scheme->response obj::xml-tilde req ctx)
    (with-access::http-request req (method)
       (instantiate::http-response-string
+	 (server (hop-server-name))
 	 (content-type (hop-mime-type))
 	 (charset (hop-charset))
 	 (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
@@ -820,6 +821,7 @@
    (with-access::xml-http-request obj (status input-port header)
       (instantiate::http-response-procedure
 	 (start-line (format "HTTP/1.1 ~a" status))
+	 (server (hop-server-name))
 	 (header header)
 	 (proc (lambda (op) (display (read-string input-port) op))))))
    
@@ -917,3 +919,9 @@
 	     (make-client-socket proxy port :timeout tmt))
 	  (make-client-socket proxy 80 :timeout tmt))))
 
+;*---------------------------------------------------------------------*/
+;*    scheme->response ::http-response-error ...                       */
+;*---------------------------------------------------------------------*/
+(define-method (scheme->response o::http-response-error req ctx)
+   (with-access::http-response-error o (err)
+      (scheme->response (http-error err req) req ctx)))

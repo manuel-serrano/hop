@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/widget/file.scm                   */
+;*    serrano/prgm/project/hop/hop/widget/file.scm                     */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr  2 07:32:34 2008                          */
-;*    Last change :  Wed Nov 16 12:01:41 2011 (serrano)                */
-;*    Copyright   :  2008-11 Manuel Serrano                            */
+;*    Last change :  Tue May 14 13:47:30 2024 (serrano)                */
+;*    Copyright   :  2008-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP of server-side file selectors and completion.            */
 ;*=====================================================================*/
@@ -14,7 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module __hopwidget-file
 
-   (library web hop)
+   (library web hop http)
    
    (import  __hopwidget-tree
 	    __hopwidget-paned)

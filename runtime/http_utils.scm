@@ -1,22 +1,22 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/runtime/http_lib.scm                */
+;*    serrano/prgm/project/hop/hop/runtime/http_utils.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  6 09:04:30 2004                          */
-;*    Last change :  Fri Mar  1 12:35:05 2024 (serrano)                */
+;*    Last change :  Tue May 14 12:54:31 2024 (serrano)                */
 ;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
-;*    Simple HTTP lib                                                  */
+;*    Simple HTTP utils                                                */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
-(module __hop_http-lib
+(module __hop_http-utils
 
-   (library web)
+   (library web http)
    
-   (include "http_lib.sch")
+   (include "http_utils.sch")
    
    (import  __hop_param
 	    __hop_types)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Mon May 13 11:59:29 2024 (serrano)                */
+;*    Last change :  Tue May 14 13:57:11 2024 (serrano)                */
 ;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -665,12 +665,7 @@
       " [" (hop-security) "]\n")
    (hop-verb 3 "  session: " (hop-color 2 "" (hop-session)) "\n")
    (hop-verb 3 "  backend: " (hop-color 2 "" (hop-backend)) "\n")
-   (hop-verb 3 "  scheduler: "
-      (hop-color 2 ""
-	 (cond-expand
-	    (enable-threads (hop-scheduling))
-	    (else "single-threaded")))
-      "\n"))
+   (hop-verb 3 "  scheduler: " (hop-color 2 "" (hop-scheduling)) "\n"))
 
 ;*---------------------------------------------------------------------*/
 ;*    usage ...                                                        */

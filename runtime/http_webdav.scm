@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/runtime/http_webdav.scm           */
+;*    serrano/prgm/project/hop/hop/runtime/http_webdav.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 15 14:30:41 2007                          */
-;*    Last change :  Tue Nov 18 09:48:12 2014 (serrano)                */
-;*    Copyright   :  2007-20 Manuel Serrano                            */
+;*    Last change :  Tue May 14 12:40:02 2024 (serrano)                */
+;*    Copyright   :  2007-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    WebDAV (server side) implementation                              */
 ;*    This module implements a WebDAV server as specified              */
@@ -17,14 +17,14 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_http-webdav
 
-   (library web)
+   (library web http)
    
-   (include "http_lib.sch"
+   (include "http_utils.sch"
 	    "xml.sch")
    
    (import  __hop_param
 	    __hop_types
-	    __hop_http-lib
+	    __hop_http-utils
 	    __hop_http-response
 	    __hop_user
 	    __hop_misc
@@ -230,6 +230,7 @@
 	     (with-access::xml-backend *webdav-backend* (mime-type)
 		(instantiate::http-response-xml
 		   (start-line "HTTP/1.1 207 Multi-Status")
+		   (server (hop-server-name))
 		   (backend *webdav-backend*)
 		   (content-type mime-type)
 		   (charset (hop-charset))
@@ -242,8 +243,9 @@
 ;*---------------------------------------------------------------------*/
 (define (webdav-proppatch req::http-request)
    (instantiate::http-response-string
-      (charset (hop-locale))
-      (start-line "HTTP/1.1 403 Forbidden")))
+      (start-line "HTTP/1.1 403 Forbidden")
+      (server (hop-server-name))
+      (charset (hop-locale))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <GETCONTENTLENGTH> ...                                           */
@@ -358,24 +360,29 @@
 	     (cond
 		((not (directory? parent))
 		 (instantiate::http-response-string
-		    (charset (hop-locale))
-		    (start-line "HTTP/1.1 409 Conflict")))
+		    (start-line "HTTP/1.1 409 Conflict")
+		    (server (hop-server-name))
+		    (charset (hop-locale))))
 		((directory? dir)
 		 (instantiate::http-response-string
-		    (charset (hop-locale))
-		    (start-line "HTTP/1.1 405 Not allowed")))
+		    (start-line "HTTP/1.1 405 Not allowed")
+		    (server (hop-server-name))
+		    (charset (hop-locale))))
 		((not (make-directory dir))
 		 (instantiate::http-response-string
-		    (charset (hop-locale))
-		    (start-line "HTTP/1.1 507 Insufficient Storage")))
+		    (start-line "HTTP/1.1 507 Insufficient Storage")
+		    (server (hop-server-name))
+		    (charset (hop-locale))))
 		((>=elong content-length #e0)
 		 (instantiate::http-response-string
-		    (charset (hop-locale))
-		    (start-line "HTTP/1.1 415 Unsupported Media Type")))
+		    (start-line "HTTP/1.1 415 Unsupported Media Type")
+		    (server (hop-server-name))
+		    (charset (hop-locale))))
 		(else
 		 (instantiate::http-response-string
-		    (charset (hop-locale))
-		    (start-line "HTTP/1.1 201 Created")))))))))
+		    (start-line "HTTP/1.1 201 Created")
+		    (server (hop-server-name))
+		    (charset (hop-locale))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    webdav-delete ...                                                */
@@ -386,27 +393,32 @@
 	 (cond
 	    ((not (file-exists? abspath))
 	     (instantiate::http-response-string
-		(charset (hop-locale))
-		(start-line "HTTP/1.1 404 File Not Found")))
+		(start-line "HTTP/1.1 404 File Not Found")
+		(server (hop-server-name))
+		(charset (hop-locale))))
 	    ((directory? abspath)
 	     (if (and (pair? depth) (not (string=? (cadr depth) "infinity")))
 		 (http-bad-request (format "Illegal depth: ~a" (cadr depth)))
 		 (if (delete-path abspath)
 		     (instantiate::http-response-string
-			(charset (hop-locale))
-			(start-line "HTTP/1.1 200 Ok"))
+			(start-line "HTTP/1.1 200 Ok")
+			(server (hop-server-name))
+			(charset (hop-locale)))
 		     (instantiate::http-response-string
-			(charset (hop-locale))
-			(start-line "HTTP/1.1 424 Failed Dependency")))))
+			(start-line "HTTP/1.1 424 Failed Dependency")
+			(server (hop-server-name))
+			(charset (hop-locale))))))
 	    
 	    (else
 	     (if (delete-file abspath)
 		 (instantiate::http-response-string
-		    (charset (hop-locale))
-		    (start-line "HTTP/1.1 200 Ok"))
+		    (start-line "HTTP/1.1 200 Ok")
+		    (server (hop-server-name))
+		    (charset (hop-locale)))
 		 (instantiate::http-response-string
-		    (charset (hop-locale))
-		    (start-line "HTTP/1.1 424 Failed Dependency"))))))))
+		    (start-line "HTTP/1.1 424 Failed Dependency")
+		    (server (hop-server-name))
+		    (charset (hop-locale)))))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    webdav-copy ...                                                  */
@@ -415,8 +427,9 @@
    
    (define (resp status)
       (instantiate::http-response-string
-	 (charset (hop-locale))
-	 (start-line status)))
+	 (start-line status)
+	 (server (hop-server-name))
+	 (charset (hop-locale))))
    
    (define (cp-file overwrite src dst)
       (let* ((dst (if (directory? dst) (make-file-name dst (basename src)) dst))
@@ -443,6 +456,7 @@
 	  (with-access::xml-backend *webdav-backend* (mime-type)
 	     (instantiate::http-response-xml
 		(start-line "HTTP/1.1 207 Multi-Status")
+		(server (hop-server-name))
 		(backend *webdav-backend*)
 		(content-type mime-type)
 		(charset (hop-locale))
@@ -535,8 +549,9 @@
    
    (define (resp status)
       (instantiate::http-response-string
-	 (charset (hop-locale))
-	 (start-line status)))
+	 (start-line status)
+	 (server (hop-server-name))
+	 (charset (hop-locale))))
    
    (define (mv-file overwrite src dst)
       (let* ((dst (if (directory? dst)
@@ -622,20 +637,23 @@
 	 (cond
 	    ((not (output-port? p))
 	     (instantiate::http-response-string
-		(charset (hop-locale))
 		(start-line (if (directory? (dirname abspath))
 				"HTTP/1.1 507 Insufficient Storage"
-				"HTTP/1.1 409 Conflict"))))
+				"HTTP/1.1 409 Conflict"))
+		(server (hop-server-name))
+		(charset (hop-locale))))
 	    ((<=fx len (send-chars (socket-input socket) p len))
 	     (instantiate::http-response-string
-		(charset (hop-locale))
-		(start-line status)))
+		(start-line status)
+		(server (hop-server-name))
+		(charset (hop-locale))))
 	    (else
 	     (close-output-port p)
 	     (delete-file abspath)
 	     (instantiate::http-response-string
-		(charset (hop-locale))
-		(start-line "HTTP/1.1 507 Insufficient Storage")))))))
+		(start-line "HTTP/1.1 507 Insufficient Storage")
+		(server (hop-server-name))
+		(charset (hop-locale))))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    webdav-lock ...                                                  */

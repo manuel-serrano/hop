@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/src/oto_scheduler.scm             */
+;*    serrano/prgm/project/hop/hop/http/oto_scheduler.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb 26 06:41:38 2008                          */
-;*    Last change :  Fri Mar 29 10:51:24 2013 (serrano)                */
-;*    Copyright   :  2008-13 Manuel Serrano                            */
+;*    Last change :  Tue May 14 12:27:13 2024 (serrano)                */
+;*    Copyright   :  2008-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    One to one scheduler                                             */
 ;*    -------------------------------------------------------------    */
@@ -18,11 +18,11 @@
 ;*---------------------------------------------------------------------*/
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
-(module hopsched_scheduler-one-to-one
+(module __http_scheduler-one-to-one
 
-   (library hop)
+   (library pthread)
    
-   (import  hopsched_scheduler)
+   (import  __http_scheduler)
 
    (export  (class one-to-one-scheduler::row-scheduler
 	       (mutex::mutex read-only (default (make-mutex)))
@@ -47,8 +47,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (scheduler-load scd::one-to-one-scheduler)
    (with-access::one-to-one-scheduler scd (cur size)
-      (flonum->fixnum
-       (*fl 100. (/fl (fixnum->flonum cur) (fixnum->flonum size))))))
+      (/fx (*fx 100 cur) size)))
 
 ;*---------------------------------------------------------------------*/
 ;*    spawn ::one-to-one-scheduler ...                                 */

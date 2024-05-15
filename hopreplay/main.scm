@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/hopreplay/main.scm                */
+;*    serrano/prgm/project/hop/hop/hopreplay/main.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Sun Jun 17 08:57:26 2012 (serrano)                */
-;*    Copyright   :  2004-12 Manuel Serrano                            */
+;*    Last change :  Tue May 14 15:38:17 2024 (serrano)                */
+;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOPREPLAY entry point                                        */
 ;*=====================================================================*/
@@ -14,7 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module hoprp
 
-   (library scheme2js hopscheme hop web)
+   (library scheme2js hopscheme hop web http)
 
    (import  hoprp_parseargs
 	    hoprp_param

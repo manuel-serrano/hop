@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 16:36:28 2006                          */
-;*    Last change :  Mon May 13 12:01:42 2024 (serrano)                */
+;*    Last change :  Tue May 14 16:28:01 2024 (serrano)                */
 ;*    Copyright   :  2006-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    This file implements the service expanders. It is used both      */
@@ -146,6 +146,7 @@
 		       (path ,path)
 		       (args ',args)
 		       (proc ,proc)
+		       (handler default-service-handler)
 		       (javascript ,(jscript-funcall args))
 		       (creation (date->seconds (current-date)))
 		       (timeout ,timeout)

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/src/pool_scheduler.scm              */
+;*    serrano/prgm/project/hop/hop/http/pool_scheduler.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb 26 07:03:15 2008                          */
-;*    Last change :  Wed Feb 15 14:02:52 2023 (serrano)                */
-;*    Copyright   :  2008-23 Manuel Serrano                            */
+;*    Last change :  Tue May 14 12:26:25 2024 (serrano)                */
+;*    Copyright   :  2008-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Pool scheduler                                                   */
 ;*    -------------------------------------------------------------    */
@@ -22,11 +22,11 @@
 ;*---------------------------------------------------------------------*/
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
-(module hopsched_scheduler-pool
+(module __http_scheduler-pool
 
-   (library hop)
+   (library pthread)
    
-   (import  hopsched_scheduler)
+   (import  __http_scheduler)
 
    (export  (class &stack-overflow::&error))
    
@@ -59,11 +59,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (scheduler-load scd::pool-scheduler)
    (with-access::pool-scheduler scd (naccept size mutex)
-      (synchronize mutex
-	 (flonum->fixnum
-	    (*fl 100.
-	       (/fl (fixnum->flonum (-fx size naccept))
-		  (fixnum->flonum size)))))))
+      (/fx (*fx 100 (-fx size naccept)) size)))
 
 ;*---------------------------------------------------------------------*/
 ;*    spawn ::pool-scheduler ...                                       */

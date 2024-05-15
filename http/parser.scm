@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/runtime/http_request.scm            */
+;*    serrano/prgm/project/hop/hop/http/parser.scm                     */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Tue Oct  8 13:17:30 2019 (serrano)                */
-;*    Copyright   :  2004-19 Manuel Serrano                            */
+;*    Last change :  Tue May 14 13:10:32 2024 (serrano)                */
+;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
 ;*    -------------------------------------------------------------    */
@@ -16,22 +16,14 @@
 ;*---------------------------------------------------------------------*/
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
-(module __hop_http-request
+(module __http_parser
 
    (library web)
+
+   (import  __http_types)
    
-   (import  __hop_param
-	    __hop_configure
-	    __hop_types
-	    __hop_http-lib
-	    __hop_user
-	    __hop_misc
-	    __hop_charset
-	    __hop_websocket
-	    __hop_event)
-   
-   (export  (http-parse-request::http-request ::socket ::int ::int)
-	    (http-request-local?::bool ::http-request)))
+   (export  (http-parse-request::http-request ::socket ::int)))
+
 
 ;*---------------------------------------------------------------------*/
 ;*    parse-error ...                                                  */
@@ -51,27 +43,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    http-parse-request ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (http-parse-request sock id timeout)
+(define (http-parse-request sock id)
    (let ((port (socket-input sock))
 	 (out (socket-output sock)))
-      (socket-timeout-set! sock timeout timeout)
       (let ((req (read/rp request-line-grammar port id out)))
 	 (with-access::http-request req (socket)
 	    (set! socket sock)
 	    req))))
-
-;*---------------------------------------------------------------------*/
-;*    http-request-local? ...                                          */
-;*    -------------------------------------------------------------    */
-;*    Is the request initiated by the local host ?                     */
-;*---------------------------------------------------------------------*/
-(define (http-request-local? req::http-request)
-   (with-access::http-request req (socket)
-      ;; assume socket to be a real socket
-      (or (socket-local? socket)
-	  (find (lambda (addr)
-		   (socket-host-address=? socket addr))
-	     (hop-server-addresses)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    request-eof ...                                                  */
@@ -98,7 +76,7 @@
        (http-parse-policy-file-request id (the-string) (the-port)))
       ((: (out #\< SP) (+ (out SP)) SP)
        ;; Illegal (parsed) requests
-       (raise (instantiate::&hop-method-error
+       (raise (instantiate::&io-parse-method-error
 		 (proc "request-line-grammar")
 		 (msg "Method not implemented")
 		 (obj (the-string)))))
@@ -161,32 +139,18 @@
                                 (let ((l (string-length path)))
                                    (set! query (substring path 1 l)))   
                                 "/")))
-		   (connection (if (hop-enable-keep-alive)
-				   (or co
-				       (if (eq? http-version 'HTTP/1.1)
-					   'keep-alive
-					   'close))
-				   'close)))
+		   (connection (or co
+				   (if (eq? http-version 'HTTP/1.1)
+				       'keep-alive
+				       'close))))
 	       (trace-item "abspath=" abspath
 		  " query=" query
 		  " connection=" connection
 		  " content-length=" cl
 		  " header=" header)
-	       (let* ((ip (input-port-name pi))
-		      (user (or (and (string? auth)
-				     (find-authenticated-user auth abspath method ip))
-				(and (string? pauth)
-				     (find-authenticated-user pauth abspath method ip))
-				(and (string? userinfo)
-				     (find-authenticated-user userinfo abspath method ip))
-				(anonymous-user)))
-		      (port (or actual-port port (hop-default-port))))
-		  (cond
-		     ((not (fixnum? port))
-		      (parse-error "http-parse-method-request" "Illegal port"
-			 (format "~a://~a:~a/~a" scheme host port path)
-			 pi))
-		     ((string? host)
+	       (let ((ip (input-port-name pi))
+		     (port (or actual-port port 80)))
+		  (if (string? host)
 		      (instantiate::http-proxy-request
 			 (id id)
 			 (method method)
@@ -202,8 +166,7 @@
 			 (content-length cl)
 			 (transfer-encoding te)
 			 (authorization pauth)
-			 (connection connection)))
-		     (else
+			 (connection connection))
 		      (instantiate::http-server-request
 			 (id id)
 			 (method method)
@@ -211,8 +174,7 @@
 			 (scheme scheme)
 			 (userinfo userinfo)
 			 (path path)
-			 (abspath (charset-convert! abspath
-				     (hop-charset) (hop-locale)))
+			 (abspath abspath)
 			 (query query)
 			 (header header)
 			 (port port)
@@ -220,7 +182,7 @@
 			 (content-length cl)
 			 (transfer-encoding te)
 			 (authorization auth)
-			 (connection connection))))))))))
+			 (connection connection)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-parse-policy-file-request ...                               */
@@ -239,10 +201,10 @@
 	  (path "<policy-file-request/>")
 	  (abspath "<policy-file-request/>")
 	  (header '())
-	  (port (hop-default-port))
+	  (port port)
 	  (host "localhost")
 	  (content-length 10))
-       (raise (instantiate::&hop-method-error
+       (raise (instantiate::&io-parse-method-error
 		 (proc "request-line-grammar")
 		 (msg "policy file request not understood")
 		 (obj string)))))

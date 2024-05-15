@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Tue May  7 21:03:26 2024 (serrano)                */
+;*    Last change :  Tue May 14 12:35:24 2024 (serrano)                */
 ;*    Copyright   :  2005-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -15,9 +15,7 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_read
 
-   (include "thread.sch")
-   
-   (library web)
+   (library web pthread http)
 
    (import  __hop_param
 	    __hop_read-js

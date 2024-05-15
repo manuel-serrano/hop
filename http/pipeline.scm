@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/src/pipeline.scm                    */
+;*    serrano/prgm/project/hop/hop/http/pipeline.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep  4 09:28:11 2008                          */
-;*    Last change :  Mon May  6 14:06:14 2024 (serrano)                */
+;*    Last change :  Tue May 14 13:04:33 2024 (serrano)                */
 ;*    Copyright   :  2008-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The pipeline into which requests transit.                        */
@@ -12,24 +12,27 @@
 ;*---------------------------------------------------------------------*/
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
-(module hopsched_pipeline
-
-   (library hop)
+(module __http_pipeline
 
    (include "stage.sch")
+
+   (library pthread)
 
    (cond-expand
       (enable-ssl (library ssl)))
 
-   (import hopsched_scheduler
-	   hopsched_accept)
+   (import __http_utils
+	   __http_types
+	   __http_scheduler
+	   __http_accept
+	   __http_parser)
 
    (export (stage-request ::scheduler ::thread ::int ::socket ::obj ::symbol)))
 
 ;*---------------------------------------------------------------------*/
 ;*    *socket-mutex* ...                                               */
 ;*---------------------------------------------------------------------*/
-(define *socket-mutex* (make-mutex "hop-sock"))
+(define *socket-mutex* (make-spinlock "hop-sock"))
 
 ;*---------------------------------------------------------------------*/
 ;*    *keep-alive* ...                                                 */
@@ -70,12 +73,10 @@
       `(if hop-report-execution-time
 	   (multiple-value-bind (value real sys user)
 	      (time (lambda () ,expr))
-	      (hop-verb 1
-			(hop-color ,id ,id (format " ~a.time " ,msg))
-			" real: " real
-			" sys: " sys
-			" user: " user
-			"\n")
+	      (trace 1 ,id (format " ~a.time " ,msg)
+		 " real: " real
+		 " sys: " sys
+		 " user: " user)
 	      value)
 	   ,expr)))
 
@@ -83,64 +84,18 @@
 ;*    stage-request ...                                                */
 ;*    -------------------------------------------------------------    */
 ;*    This stage is in charge of parsing the request. It produces a    */
-;*    http-request.                                                    */
+;*    request object which is passed to the next stage.                */
 ;*---------------------------------------------------------------------*/
 (define (stage-request scd thread id sock timeout mode)
-   
-   ;; verbose function (only for log and debug)
-   (define (http-connect-verb scd id sock req mode num)
-      (with-access::http-request req (method scheme host port path header)
-         (when (>=fx (hop-verbose) 1)
-	    (hop-verb 4 (hop-color id id " CONNECT.header") ": "
-	       path " " 
-	       (with-output-to-string (lambda () (write header))) "\n")
-	    (hop-verb 1 (if (isa? req http-proxy-request)
-			    (hop-color req req
-			       (if (eq? mode 'keep-alive)
-				   (format " REQUEST.prox (+~a)" num)
-				   " REQUEST.prox"))
-			    (hop-color req req
-			       (if (eq? mode 'keep-alive)
-				   (format " REQUEST.serv (+~a)" num)
-				   " REQUEST.serv")))
-	       (if (>=fx (hop-verbose) 3)
-		   (format " ~a~a: " thread (scheduler-stat scd))
-		   ": ")
-	       method " " scheme "://"
-	       (if (>=fx (hop-verbose) 2)
-		   (with-access::user (http-request-user req) (name)
-		      (string-append name "@"))
-		   "")
-	       host ":"
-	       port " "
-	       (let ((s (string-for-read path)))
-		  (if (and (=fx (hop-verbose) 1)
-			   (>fx (string-length s) 80))
-		      (string-append (substring s 0 80) "...")
-		      s))
-	       " "
-	       (if (>=fx (hop-verbose) 2)
-		   (with-access::http-request req (http) http)
-		   "")
-	       "\n"))))
-   
    (let loop ((mode mode)
 	      (timeout timeout)
 	      (num 1))
       (with-stage-handler stage-request-error-handler (id sock mode)
-	 ;; debug trace
-	 (debug-thread-info-set! thread "connection established with ~a")
-	 (let ((req (with-time (http-parse-request sock id timeout) id "CONNECT")))
-	    ;; debug info
-	    (with-access::http-request req (method path)
-	       (debug-thread-info-set! thread
-		  (format "request parsed for ~a, ~a ~a"
-		     (if (>=fx (hop-verbose) 2)
-			 (socket-hostname sock)
-			 (socket-host-address sock))
-		     method
-		     path)))
-	    (http-connect-verb scd id sock req mode num)
+	 (when (>fx timeout 0)
+	    (input-port-timeout-set! (socket-input sock) (*fx 1000 timeout)))
+	 (let ((req (with-time (http-parse-request sock id) id "CONNECT")))
+	    (when-trace 1
+	       (trace-http-connect scd id sock req mode num))
 	    ;; decrement the keep-alive number (we have a valid connection)
 	    (when (eq? mode 'keep-alive) (keep-alive--))
 	    ;; start computing the answer
@@ -148,6 +103,37 @@
 	       (when (fixnum? keep-alive-timeout)
 		  (loop 'keep-alive keep-alive-timeout (+fx num 1))))))))
 
+;*---------------------------------------------------------------------*/
+;*    trace-http-connect ...                                           */
+;*---------------------------------------------------------------------*/
+(define (trace-http-connect scd id sock req mode num)
+   (with-access::http-request req ((rid id) method scheme host port path header)
+      (trace 4 id "CONNECT.header"
+	 ": " path " " 
+	 (with-output-to-string (lambda () (write header))) "\n")
+      (trace 1 rid (if (isa? req http-proxy-request)
+		       (if (eq? mode 'keep-alive)
+			   (format " REQUEST.prox (+~a)" num)
+			   " REQUEST.prox")
+		       (if (eq? mode 'keep-alive)
+			   (format " REQUEST.serv (+~a)" num)
+			   " REQUEST.serv"))
+	 (if (>=fx (trace-level) 3)
+	     (format " ~a~a: " thread (scheduler-stat scd))
+	     ": ")
+	 method " " scheme "://"
+	 host ":"
+	 port " "
+	 (let ((s (string-for-read path)))
+	    (if (and (=fx (trace-level) 1)
+		     (>fx (string-length s) 80))
+		(string-append (substring s 0 80) "...")
+		s))
+	 " "
+	 (if (>=fx (trace-level) 2)
+	     (with-access::http-request req (http) http)
+	     ""))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    stage-request-error-handler ...                                  */
 ;*---------------------------------------------------------------------*/
@@ -164,7 +150,7 @@
 
    (if (keep-alive-ellapsed-error? e)
        ;; this is not a true error, just log
-       (hop-verb 3 (hop-color id id " SHUTDOWN")
+       (trace 3 id "SHUTDOWN"
 	  (cond
 	     ((isa? e &io-timeout-error)
 	      " (keep-alive, timeout ellapsed)")
@@ -173,26 +159,20 @@
 		      (eof-object? obj)))
 	      " (keep-alive, connection reset by peer)")
 	     (else
-	      " (keep-alive, parse error)"))
-	  "\n")
+	      " (keep-alive, parse error)")))
        ;; this one is a true error
        (begin
 	  (when (isa? e &exception)
-	     (hop-verb 1 (hop-color id id " ABORT: ")
-		" " (trace-color 1 (typeof e))
-		(if (>=fx (hop-verbose) 4)
+	     (trace 1 id "ABORT"
+		" " (typeof e)
+		(if (>=fx (trace-level) 4)
 		    (format "~a:~a"
 		       (socket-hostname sock)
 		       (socket-port-number sock))
-		    "")
-		"\n")
-	     (cond
-		((isa? e &hop-security-error)
-		 (exception-notify e))
-		((>fx (bigloo-debug) 0)
-		 (hop-verb 1
-		    (with-error-to-string
-		       (lambda () (exception-notify e)))))))
+		    ""))
+	     (trace 0 -1 "ERROR"
+		(with-error-to-string
+		   (lambda () (exception-notify e)))))
 	  (when (and (isa? e &io-unknown-host-error) (not (socket-down? sock)))
 	     (with-handler
 		(lambda (e)
@@ -204,8 +184,8 @@
 		(unless (isa? e &io-sigpipe-error)
 		   (let* ((req (instantiate::http-request
 				  (socket sock)))
-			  (resp ((or (hop-http-request-error) http-error)
-				 e req)))
+			  (resp (instantiate::http-response-error
+				   (err e))))
 		      (http-response resp req sock)))))))
 
    ;; decrement the keep-alive number
@@ -232,19 +212,39 @@
 ;*    request.                                                         */
 ;*---------------------------------------------------------------------*/
 (define (stage-response scd thread id req)
-   (hop-verb 3 (hop-color id id " RESPONSE") (format " ~a" thread) "\n")
+   (trace 3 id "RESPONSE" (format " ~a" thread))
    (with-stage-handler response-error-handler (scd req)
-      (let ((resp (with-time (request->response req thread) id "RESPONSE")))
-	 (with-access::http-request req (method scheme host port path)
-	    (debug-thread-info-set! thread
-	       (format "~a ~a://~a:~a~a... -> ~a"
-		  method scheme host
-		  port path (typeof resp))))
-	 (let ((proc (cond
-			((http-response-static? resp) stage-static-answer)
-			((isa? resp http-response-async) stage-async-answer)
-			(else stage-dynamic-answer))))
-	    (stage scd thread proc id req resp)))))
+      (let ((resp (with-time (request->response req scd) id "RESPONSE")))
+	 (cond
+	    ((http-response-static? resp)
+	     (stage scd thread stage-static-answer id req resp))
+	    ((isa? resp http-response-async)
+	     (stage scd thread stage-async-answer id req resp))
+	    (else
+	     (stage scd thread stage-dynamic-answer id req resp))))))
+
+;*---------------------------------------------------------------------*/
+;*    request->response ...                                            */
+;*    -------------------------------------------------------------    */
+;*    This function assumes that (HOP-FILTERS) returns a read-only     */
+;*    immutable data structure. In other words, it assumes that no     */
+;*    other thread can change the list (HOP-FILTERS) in the            */
+;*    background. Because of this assumption, no lock is needed in     */
+;*    this function.                                                   */
+;*---------------------------------------------------------------------*/
+(define (request->response::%http-response req::http-request scd::scheduler)
+   (with-access::scheduler scd (filters)
+      (let loop ((m req)
+		 (fs filters))
+	 (if (null? fs)
+	     (instantiate::http-response-abort)
+	     (let ((n ((cdar fs) m)))
+		(cond
+		   ((isa? n %http-response) n)
+		   ((eq? n m) (loop m (cdr fs)))
+		   ((isa? n http-request) (loop n (cdr fs)))
+		   ((eq? n 'hop-resume) (loop m filters))
+		   (else (loop m (cdr fs)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    for ...                                                          */
@@ -263,11 +263,9 @@
 ;*---------------------------------------------------------------------*/
 (define (response-error-handler e scd req)
    ;; notify the error
-   (hop-verb 1 (hop-color req req " ERROR"))
-   (hop-verb 2 (scheduler-stat scd))
-   (hop-verb 1 ": "
-      (trace-color 1 (call-with-output-string (lambda (p) (display e p))))
-      "\n")
+   (with-access::http-request req (id)
+      (trace 1 id " ERROR"
+	 (call-with-output-string (lambda (p) (display e p)))))
    ;; when the error is a response, we transmit it to the next stage
    ;; when the error is an exception, we create a response that it
    ;; then transmitted to the next stage
@@ -283,24 +281,10 @@
 	     (http-response e req socket))
 	  (begin
 	     (exception-notify e)
-	     (when (>=fx (bigloo-debug) 1)
-		(with-access::http-request req (header)
-		   (let ((stk (http-header-field header hop-debug-stack:)))
-		      (when (string? stk)
-			 (with-handler
-			    (lambda (e) #f)
-			    (let ((stk (hop-debug-exception-stack
-					  (string->obj (url-decode stk)))))
-			       (when (pair? stk)
-				  (display-trace-stack stk
-				     (current-error-port)
-				     (if (isa? e &exception)
-					 (with-access::&exception e (stack)
-					    (+fx 1 (length stack)))
-					 1)))))))))
 	     ;; generate a legal response for the next stage (although
 	     ;; this response denotes the error).
-	     (let ((resp ((or (hop-http-response-error) http-error) e req)))
+	     (let ((resp (instantiate::http-response-error
+			    (err e))))
 		(with-access::http-request req (socket)
 		   (http-response resp req socket)
 		   ;; abort this request
@@ -325,64 +309,67 @@
 (define (stage-async-answer scd thread id req respa)
    (with-stage-handler exec-error-handler (scd req)
       (with-access::http-request req (socket method scheme port host path connection)
-	 (socket-timeout-set! socket 0 0)
-	 (socket-buffers-detach! socket)
-	 (with-access::http-response-async respa (async)
-	    (let ((mutex (make-mutex))
-		  (condv (make-condition-variable)))
-	       (let ((resps #f))
-		  (synchronize mutex
-		     (async
-			(lambda (r)
-			   (synchronize mutex
-			      (set! resps r)
-			      (condition-variable-broadcast! condv))))
-		     (condition-variable-wait! condv mutex)
-		     (socket-timeout-set! socket
-			(hop-keep-alive-timeout) (hop-keep-alive-timeout))
-		     (let ((tmt (with-handler
-				   (lambda (e)
-				      (exec-error-handler e scd req))
-				   (stage-exec scd thread id req resps))))
-			(if (integer? tmt)
-			    (stage-request scd thread id socket tmt 'keep-alive)
-			    (begin
-			       (socket-shutdown socket)
-			       #f)))))))
+	 (let* ((in (socket-input socket))
+		(out (socket-output socket))
+		(rtmt (input-port-timeout in))
+		(wtmt (output-port-timeout out)))
+	    (input-port-timeout-set! in 0)
+	    (output-port-timeout-set! out 0)
+	    ;; persistent and asynchronous responses have to duplicate
+	    ;; the buffer they use as these buffers are reused by the 
+	    ;; next requests
+	    (input-port-buffer-set! in (string-copy (input-port-buffer in)))
+	    (output-port-buffer-set! out (string-copy (output-port-buffer out)))
+	    (with-access::http-response-async respa (async)
+	       (let ((mutex (make-mutex))
+		     (condv (make-condition-variable)))
+		  (let ((resps #f))
+		     (synchronize mutex
+			(async
+			   (lambda (r)
+			      (synchronize mutex
+				 (set! resps r)
+				 (condition-variable-broadcast! condv))))
+			(condition-variable-wait! condv mutex)
+			(input-port-timeout-set! in rtmt)
+			(output-port-timeout-set! out wtmt)
+			(let ((tmt (with-handler
+				      (lambda (e)
+					 (exec-error-handler e scd req))
+				      (stage-exec scd thread id req resps))))
+			   (if (integer? tmt)
+			       (stage-request scd thread id socket tmt 'keep-alive)
+			       (begin
+				  (socket-shutdown socket)
+				  #f))))))))
 	 #f)))
 
 ;*---------------------------------------------------------------------*/
 ;*    stage-exec-verb ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (stage-exec-verb scd thread req resp connection mode)
-   (hop-verb 3 (hop-color req req mode)
-      (format " ~a" thread)
-      " load=" (scheduler-load scd)
-      (scheduler-stat scd)
-      ": " (typeof resp) " "
-      " [" (current-date) "] "
-      (if (and (eq? connection 'keep-alive) (>=fx (hop-verbose) 4))
-	  (format " keep-alive [open=~a/~a]"
-	     (keep-alive)
-	     (hop-keep-alive-threshold))
-	  connection)
-      "\n"))
+   (with-access::http-request req (id)
+      (trace 3 id
+	 (format " ~a" thread)
+	 " load=" (scheduler-load scd)
+	 (scheduler-stat scd)
+	 ": " (typeof resp) " "
+	 " [" (current-date) "] "
+	 (if (and (eq? connection 'keep-alive) (>=fx (trace-level) 4))
+	     (format " keep-alive [load=~a]" (scheduler-load scd))
+	     connection))))
 
 ;*---------------------------------------------------------------------*/
 ;*    stage-exec ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (stage-exec scd thread id req resp)
    ;; log
-   (if (isa? resp http-response-abort)
-       (hop-verb 1 (hop-color req req " ABORT")
-	  " user: "
-	  (with-access::user (http-request-user req) (name) name) "\n")
-       (hop-verb 3 (hop-color req req " EXEC")
-	  " load: " (scheduler-load scd)
-	  (scheduler-stat scd)
-	  (format " ~a" thread)
-	  ": " (typeof resp)
-	  " " (with-access::user (http-request-user req) (name) name) "\n"))
+   (when (isa? resp http-response-abort)
+      (trace 3 id "EXEC"
+	 " load: " (scheduler-load scd)
+	 (scheduler-stat scd)
+	 (format " ~a" thread)
+	 ": " (typeof resp)))
    (with-stage-handler exec-error-handler (scd req)
       (with-access::http-request req (socket method scheme port host path)
 	 (let ((conn (with-time (http-response resp req socket) id "EXEC")))
@@ -395,32 +382,32 @@
 	       ((keep-alive)
 		(let ((load (scheduler-load scd)))
 		   (cond
-		      ((or (>=fx (keep-alive) (hop-keep-alive-threshold))
-			   (=fx load 100))
-		       (when (>=fx (hop-verbose) 3)
+		      ((>=fx load 90)
+		       (when (>=fx (trace-level) 3)
 			  (stage-exec-verb scd thread req resp conn
 			     " END"))
 		       (socket-shutdown socket)
 		       #f)
-		      ((>=fx load 80)
-		       (when (>=fx (hop-verbose) 3)
+		      ((>=fx load 70)
+		       (when (>=fx (trace-level) 3)
 			  (stage-exec-verb scd thread req resp conn
 			     " KEEP-ALIVE"))
 		       (keep-alive++)
 		       1)
 		      (else
-		       (when (>=fx (hop-verbose) 3)
+		       (when (>=fx (trace-level) 3)
 			  (stage-exec-verb scd thread req resp conn
 			     " KEEP-ALIVE"))
 		       (keep-alive++)
-		       (hop-keep-alive-timeout)))))
+		       (with-access::scheduler scd (keep-alive-timeout)
+			  keep-alive-timeout)))))
 	       ((persistent)
-		(when (>=fx (hop-verbose) 3)
+		(when (>=fx (trace-level) 3)
 		   (stage-exec-verb scd thread req resp conn
 		      " PERSISTENT"))
 		#f)
 	       (else
-		(when (>=fx (hop-verbose) 3)
+		(when (>=fx (trace-level) 3)
 		   (stage-exec-verb scd thread req resp conn " END"))
 		(socket-shutdown socket)
 		#f))))))
@@ -429,32 +416,17 @@
 ;*    exec-error-handler ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (exec-error-handler e scd req)
-   (with-access::http-request req (socket)
+   (with-access::http-request req (socket id)
       ;; first, close the socket, anycase
       (socket-shutdown socket)
       (unless (isa? e &io-sigpipe-error)
 	 ;; signal the error, when this is an error
-	 (hop-verb 2 (hop-color req req " INTERRUPTED"))
-	 (hop-verb 2 ": " req "\n")
+	 (trace 2 id "INTERRUPTED" (format " ~a" req))
 	 ;; abort the request
 	 (with-handler
 	    (lambda (e2) #unspecified)
 	    (begin
 	       (exception-notify e)
-	       (with-access::http-request req (header)
-		  (let ((stk (http-header-field header hop-debug-stack:)))
-		     (when (string? stk)
-			(with-handler
-			   (lambda (e) #f)
-			   (let ((stk (hop-debug-exception-stack
-					 (string->obj (url-decode stk)))))
-			      (when (pair? stk)
-				 (display-trace-stack stk
-				    (current-error-port)
-				    (if (isa? e &exception)
-					(with-access::&exception e (stack)
-					   (+fx 1 (length stack)))
-					1))))))))
 	       #f))
 	 #unspecified)))
 

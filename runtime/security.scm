@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/runtime/security.scm              */
+;*    serrano/prgm/project/hop/hop/runtime/security.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 22 17:58:28 2009                          */
-;*    Last change :  Thu Jul  9 14:28:21 2015 (serrano)                */
-;*    Copyright   :  2009-15 Manuel Serrano                            */
+;*    Last change :  Tue May 14 13:12:58 2024 (serrano)                */
+;*    Copyright   :  2009-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Security management.                                             */
 ;*=====================================================================*/
@@ -16,7 +16,7 @@
 
    (include "param.sch")
 
-   (library web)
+   (library web http)
 	    
    (import  __hop_param
 	    __hop_configure

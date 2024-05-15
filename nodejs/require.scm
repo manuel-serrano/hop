@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Tue May  7 19:01:20 2024 (serrano)                */
+;*    Last change :  Tue May 14 15:51:58 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -17,7 +17,7 @@
    (include "../hopscript/stringthread.sch"
 	    "nodejs.sch")
    
-   (library hop hopscript js2scheme web)
+   (library pthread http hop hopscript js2scheme web)
 
    (import __nodejs
 	   __nodejs__hop

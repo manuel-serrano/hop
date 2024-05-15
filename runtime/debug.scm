@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/runtime/debug.scm                 */
+;*    serrano/prgm/project/hop/hop/runtime/debug.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 21 12:09:24 2013                          */
-;*    Last change :  Sun Oct 28 10:57:55 2018 (serrano)                */
-;*    Copyright   :  2013-18 Manuel Serrano                            */
+;*    Last change :  Tue May 14 13:13:56 2024 (serrano)                */
+;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Debugging facilities                                             */
 ;*=====================================================================*/
@@ -22,7 +22,7 @@
 	    "sourcemap.sch"
 	    "base64_vlq.sch")
 
-   (library web)
+   (library web http)
 
    (import __hop_misc
 	   __hop_read
@@ -92,6 +92,7 @@
 	 (file)
 	 (if (file-exists? file)
 	     (instantiate::http-response-file
+		(server (hop-server-name))
 		(file file)
 		(content-type "application/json")
 		(bodyp #t)

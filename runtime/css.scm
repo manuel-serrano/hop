@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Sat Jun  4 10:57:09 2022 (serrano)                */
-;*    Copyright   :  2005-22 Manuel Serrano                            */
+;*    Last change :  Tue May 14 12:42:14 2024 (serrano)                */
+;*    Copyright   :  2005-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
 ;*=====================================================================*/
@@ -14,7 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_css
 
-   (library web multimedia)
+   (library web multimedia http)
    
    (include "xml.sch"
 	    "service.sch"
@@ -31,7 +31,7 @@
 	    __hop_mime
 	    __hop_misc
 	    __hop_user
-	    __hop_http-lib)
+	    __hop_http-utils)
 
    (static  (class css-ruleset-unfold
 	       (ruleset+::pair read-only)))
@@ -381,11 +381,13 @@
 		       (if (and (string? etag)
 				(=elong (string->elong etag) signature))
 			   (instantiate::http-response-string
+			      (server (hop-server-name))
 			      (start-line "HTTP/1.1 304 Not Modified")
 			      (content-type mime)
 			      (header hd)
 			      (charset (hop-locale)))
 			   (instantiate::http-response-file
+			      (server (hop-server-name))
 			      (charset (hop-locale))
 			      (content-type mime)
 			      (bodyp (eq? method 'GET))
@@ -393,16 +395,18 @@
 			      (file value))))))
 		((string? hss)
 		 (instantiate::http-response-file
+		    (server (hop-server-name))
 		    (charset (hop-locale))
 		    (content-type mime)
 		    (bodyp (eq? method 'GET))
 		    (file hss)))
 		(hss
                  (instantiate::http-response-procedure
-                      (charset (hop-locale))
-                      (content-type mime)
-                      (bodyp (eq? method 'GET))
-                      (proc (lambda (p) (css-write hss p)))))
+		    (server (hop-server-name))
+		    (charset (hop-locale))
+		    (content-type mime)
+		    (bodyp (eq? method 'GET))
+		    (proc (lambda (p) (css-write hss p)))))
 		(else
 		 (http-file-not-found path)))))
        (access-denied req)))

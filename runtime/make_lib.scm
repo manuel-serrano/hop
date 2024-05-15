@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 10:49:38 2006                          */
-;*    Last change :  Sun Mar  3 07:45:18 2024 (serrano)                */
+;*    Last change :  Tue May 14 09:13:39 2024 (serrano)                */
 ;*    Copyright   :  2006-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The module used to build the HOP heap file.                      */
@@ -14,8 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_makelib
 
-   (include "thread.sch")
-
+   (library pthread http)
+   
    (import __hop_configure
 	   __hop_thread
 	   __hop_param
@@ -43,8 +43,7 @@
 	   __hop_json
 	   __hop_hop
 	   __hop_service
-	   __hop_http-lib
-	   __hop_http-request
+	   __hop_http-utils
 	   __hop_http-response
 	   __hop_http-proxy
 	   __hop_http-shoutcast
@@ -79,26 +78,19 @@
 
 	   (class %http-message)
 	   (class http-request)
-	   (class http-server-request)
-	   (class http-proxy-request)
+	   
 	   (class %http-response)
-	   (class http-response-proxy)
 	   (class http-response-remote)
-	   (class %http-response-server)
 	   (class http-response-autoload)
 	   (class http-response-filter)
 	   (class http-response-xml)
 	   (class http-response-procedure)
-	   (class http-response-file)
 	   (class http-response-shoutcast)
-	   (class http-response-string)
 	   (class http-response-raw)
 	   (class http-response-hop)
 	   (class http-response-authentication)
 	   (class http-response-cgi)
-	   (class http-response-abort)
 	   (class http-response-persistent)
-	   (class http-response-async)
 	   (class http-response-put)
 	   (class http-response-websocket)
 	   (class http-response-file+)

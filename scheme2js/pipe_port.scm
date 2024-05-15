@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-12 Florian Loitsch, see LICENSE file         */
+;*    Copyright   :  2007-24 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -11,8 +11,7 @@
 ;*=====================================================================*/
 
 (module pipe-port
-   (cond-expand
-      (enable-threads (library pthread)))
+   (library pthread)
    (export (open-pipe-port)))
 
 (define *INITIAL-BUFFER-SIZE* 128)

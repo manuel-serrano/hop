@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Sep 17 14:27:28 2004                          */
-#*    Last change :  Tue Mar 26 08:22:59 2024 (serrano)                */
+#*    Last change :  Tue May 14 09:28:07 2024 (serrano)                */
 #*    Copyright   :  2004-24 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The autoconf Makefile skeleton for HOP.                          */
@@ -54,7 +54,6 @@ INSTALL		= @INSTALL@
 #*---------------------------------------------------------------------*/
 MACH		= @BGLMACH@
 ARCH		= @BGLARCH@
-THREADS		= @THREADS@
 NODOC		= @NODOC@
 
 #*---------------------------------------------------------------------*/

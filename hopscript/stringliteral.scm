@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.7.x/hopscript/stringliteral.scm       */
+;*    serrano/prgm/project/hop/hop/hopscript/stringliteral.scm         */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Sat Feb 17 06:54:29 2024 (serrano)                */
+;*    Last change :  Tue May 14 12:33:35 2024 (serrano)                */
 ;*    Copyright   :  2014-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -14,8 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __hopscript_stringliteral
 
-   (library hop)
-
+   (library pthread http hop)
+   
    (include "types.sch" "names.sch" "stringthread.sch" "array.sch")
    
    (import __hopscript_types
@@ -176,9 +176,7 @@
 	   (trim-whitespaces+ s::bstring #!key (left #t) (right #f) (plus #f))
 	   )
 
-   (cond-expand
-      ((not |bigloo4.3a|)
-       (pragma (js-string->jsstring default-inline)))))
+   (pragma (js-string->jsstring default-inline)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-tostring ...                                                  */

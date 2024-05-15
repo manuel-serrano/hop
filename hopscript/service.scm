@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Mon May 13 12:24:17 2024 (serrano)                */
+;*    Last change :  Tue May 14 13:48:58 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -14,7 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module __hopscript_service
 
-   (library hop js2scheme)
+   (library hop js2scheme http)
 
    (include "types.sch"
 	    "stringliteral.sch")
@@ -940,18 +940,16 @@
       (map (lambda (i)
 	      (string->symbol (format "a~a" i)))
 	 (iota len)))
-
+   
    (define (service-debug id::symbol proc)
-      (if (>fx (bigloo-debug) 0)
-	  (lambda (%this)
-	     (js-service/debug id loc proc %this))
-	  proc))
-
-   (define (js-service-parse-request svc req)
+      (lambda (%this)
+	 (js-service/debug id loc proc %this)))
+   
+   (define (js-service-parse-request %this svc req)
       (with-access::http-request req (path abspath)
 	 (let ((args (service-parse-request svc req)))
 	    (js-obj->jsobject args %this))))
-
+   
    (when (and (eq? proc (js-undefined)) (not (eq? path (js-undefined))))
       (set! path (js-tostring proc %this)))
    
@@ -965,22 +963,30 @@
 			       (with-access::hop-service svc (path)
 				  (js-make-hopframe %this this path vals)))))
 		   (svcn (symbol->string! id))
+		   (proc (if (js-procedure? proc)
+			     (lambda (req . args)
+				(js-apply %this proc req args))
+			     (lambda (this . args)
+				(js-undefined))))
+		   (handler (if (>fx (bigloo-debug) 0)
+				(lambda (svc req)
+				   (js-worker-exec-throws worker svcn
+				      (service-debug id
+					 (lambda (%this)
+					    (service-invoke svc req
+					       (js-service-parse-request %this svc req))))))
+				(lambda (svc req)
+				   (js-worker-exec-throws worker svcn
+				      (lambda (%this)
+					 (service-invoke svc req
+					    (js-service-parse-request %this svc req)))))))
 		   (svcjs (js-make-service %this svcp svcn
 			     register import
 			     (js-function-arity svcp) worker
 			     (instantiate::hop-service
 				(ctx %this)
-				(proc (if (js-procedure? proc)
-					  (lambda (this . args)
-					     (js-apply %this proc this args))
-					  (lambda (this . args)
-					     (js-undefined))))
-				(handler (lambda (svc req)
-					    (js-worker-exec-throws worker svcn
-					       (service-debug id
-						  (lambda (%this)
-						     (service-invoke svc req
-							(js-service-parse-request svc req)))))))
+				(proc proc)
+				(handler handler)
 				(javascript "HopService( ~s, ~s )")
 				(path hoppath)
 				(id id)
@@ -1046,18 +1052,6 @@
 ;*---------------------------------------------------------------------*/
 (define (js-make-service %this proc name register import arity worker svc)
    
-   (define (default-service)
-      (instantiate::hop-service
-	 (id (string->symbol name))
-	 (wid (let ((i (string-index name #\?)))
-		 (string->symbol
-		    (if i (substring name 0 i) name))))
-	 (args '())
-	 (proc (lambda l l))
-	 (javascript "")
-	 (path (hop-service-base))
-	 (resource "/")))
-   
    (define (set-service-path! o p)
       '(with-access::JsService o (svc)
 	 (when svc
@@ -1112,7 +1106,7 @@
 	 (prototype (js-object-proto %this))
 	 (__proto__ js-service-prototype)
 	 (alloc js-not-a-constructor-alloc)
-	 (svc (or svc (default-service)))
+	 (svc svc)
 	 (elements (vector
 			(instantiate::JsValueDescriptor
 			   (name (& "length"))

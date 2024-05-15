@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Mon May 13 12:03:19 2024 (serrano)                */
+;*    Last change :  Tue May 14 12:42:20 2024 (serrano)                */
 ;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -14,7 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_hop
    
-   (library web)
+   (library web http)
    
    (cond-expand
       (enable-ssl (library ssl)))
@@ -31,7 +31,7 @@
 	    __hop_json
 	    __hop_xml-types
 	    __hop_http-error
-	    __hop_http-lib
+	    __hop_http-utils
 	    __hop_weblets
 	    __hop_xml)
    

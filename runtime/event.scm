@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Fri Jun 14 14:57:28 2019 (serrano)                */
-;*    Copyright   :  2005-20 Manuel Serrano                            */
+;*    Last change :  Tue May 14 12:34:58 2024 (serrano)                */
+;*    Copyright   :  2005-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
 ;*=====================================================================*/
@@ -14,13 +14,11 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_event
 
-   (library web)
+   (library web pthread http)
 
    (cond-expand
       (enable-ssl
        (library ssl)))
-
-   (include "thread.sch")
 
    (include "xml.sch"
 	    "service.sch"
@@ -435,6 +433,7 @@
 	       :timeout 0
 	       (#!key port key)
 	       (instantiate::http-response-string
+		  (server (hop-server-name))
 		  (content-type "application/xml")
 		  (body (hop-event-policy port)))))
 	 
@@ -495,6 +494,7 @@
 		   ;; that's the way we have configured the xhr
 		   ;; on the client side but we must close the connection
 		   (instantiate::http-response-string
+		      (server (hop-server-name))
 		      (header '((Transfer-Encoding: . "chunked")))
 		      (content-length #e-2)
 		      (content-type (format "multipart/x-mixed-replace; boundary=\"~a\"" hop-multipart-key))
@@ -537,11 +537,13 @@
 		      name
 		      (lambda (l) (cons resp l))
 		      (list resp))
-		   (instantiate::http-response-string))
+		   (instantiate::http-response-string
+		      (server (hop-server-name))))
 		(begin
 		   (trace-item "keylist=" *websocket-response-list*)
 		   (instantiate::http-response-string
 		      (start-line "HTTP/1.0 500 Illegal key")
+		      (server (hop-server-name))
 		      (body (md5sum (symbol->string! key)))))))))
 
    (with-trace 'event "ws-register-event!"
@@ -996,6 +998,7 @@
 ;*---------------------------------------------------------------------*/
 (define (hop-event-policy-file req)
    (instantiate::http-response-raw
+      (server (hop-server-name))
       (connection 'close)
       (proc (lambda (p)
 	       (with-access::http-request req (port)

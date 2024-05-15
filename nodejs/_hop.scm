@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Tue May  7 19:09:05 2024 (serrano)                */
+;*    Last change :  Tue May 14 09:42:56 2024 (serrano)                */
 ;*    Copyright   :  2014-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -16,7 +16,7 @@
 
    (include "../hopscript/stringthread.sch")
    
-   (library hopscript hop)
+   (library hopscript http hop)
 
    (import  __nodejs_uv
 	    __nodejs__buffer
@@ -443,11 +443,6 @@
 			(else #unspecified))))
 	       
 	       ;; request
-	       (define-js isLocalRequest 1
-		  (lambda (this req)
-		     (when (isa? req http-request)
-			(http-request-local? req))))
-
 	       (define-js requestLocalAddr 1
 		  (lambda (this req)
 		     (when (isa? req http-request)
@@ -813,14 +808,16 @@
 (define (hopjs-response-hop this obj req %this)
    (if (js-object? req)
        (instantiate::http-response-hop
-	  (backend (get/default req (& "backend") %this (hop-xml-backend)))
 	  (start-line (get/default req (& "startLine") %this "HTTP/1.1 200 Ok"))
+	  (server (hop-server-name))
+	  (backend (get/default req (& "backend") %this (hop-xml-backend)))
 	  (content-type (get/default req (& "contentType") %this "application/x-json-hop"))
 	  (content-length (get/default req (& "contentLength") %this #e-1))
 	  (charset (get/default req (& "charset") %this (hop-charset)))
 	  (header (get/list req (& "header") %this '((Cache-Control: . "no-cache") (Pragma: . "no-cache"))))
 	  (value obj))
        (instantiate::http-response-hop
+	  (server (hop-server-name))
 	  (backend (hop-xml-backend))
 	  (content-type "application/x-json-hop")
 	  (value obj))))
@@ -831,14 +828,16 @@
 (define (hopjs-response-xml this obj req %this)
    (if (js-object? req)
        (instantiate::http-response-xml
-	  (backend (get/default req (& "backend") %this (hop-xml-backend)))
 	  (start-line (get/default req (& "startLine") %this "HTTP/1.1 200 Ok"))
+	  (server (hop-server-name))
+	  (backend (get/default req (& "backend") %this (hop-xml-backend)))
 	  (content-type (get/default req (& "contentType") %this "application/x-javascript"))
 	  (content-length (get/default req (& "contentLength") %this #e-1))
 	  (charset (get/default req (& "charset") %this (hop-charset)))
 	  (header (get/list req (& "header") %this '((Cache-Control: . "no-cache") (Pragma: . "no-cache"))))
 	  (xml obj))
        (instantiate::http-response-xml
+	  (server (hop-server-name))
 	  (backend (hop-xml-backend))
 	  (charset (hop-charset))
 	  (content-type "text/html")
@@ -852,6 +851,7 @@
    (let ((path (js-tostring file %this)))
       (if (js-object? req)
 	  (instantiate::http-response-file
+	     (server (hop-server-name))
 	     (charset (get/default req (& "charset") %this (hop-charset)))
 	     (content-type (get/default req (& "contentType") %this
 			      (mime-type path "text/plain")))
@@ -860,6 +860,7 @@
 	     (connection (get-symbol/default req (& "connection") %this #f))
 	     (file path))
 	  (instantiate::http-response-file
+	     (server (hop-server-name))
 	     (file path)
 	     (charset (hop-locale))
 	     (content-type (mime-type path "text/plain"))))))
@@ -870,13 +871,15 @@
 (define (hopjs-response-string this string req %this)
    (if (js-object? req)
        (instantiate::http-response-string
+	  (start-line (get/default req (& "startLine") %this "HTTP/1.1 200 Ok"))
+	  (server (hop-server-name))
 	  (charset (get/default req (& "charset") %this (hop-charset)))
 	  (content-type (get/default req (& "contentType") %this #f))
 	  (content-length (fixnum->elong (get/default req (& "contentLength") %this -1)))
-	  (start-line (get/default req (& "startLine") %this "HTTP/1.1 200 Ok"))
 	  (header (get/list req (& "header") %this '()))
 	  (body (js-tostring string %this)))
        (instantiate::http-response-string
+	  (server (hop-server-name))
 	  (body (js-tostring string %this)))))
 
 ;*---------------------------------------------------------------------*/
@@ -894,6 +897,8 @@
       (multiple-value-bind (scheme uinfo host port abspath)
 	 (http-url-parse url)
 	 (instantiate::http-response-remote
+	    (remote-timeout (hop-read-timeout))
+	    (connection-timeout (hop-connection-timeout))
 	    (host host)
 	    (port port)
 	    (path abspath)

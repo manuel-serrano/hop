@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-2009 Florian Loitsch, see LICENSE file       */
+;*    Copyright   :  2007-24 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -11,8 +11,7 @@
 ;*=====================================================================*/
 
 (module scheme2js-main
-   (cond-expand
-      (enable-threads (library pthread)))
+   (library pthread)
    (import scheme2js
 	   config)
    (include "version.sch")

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Tue Oct  8 13:17:09 2019 (serrano)                */
-;*    Copyright   :  2004-20 Manuel Serrano                            */
+;*    Last change :  Tue May 14 12:58:35 2024 (serrano)                */
+;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
 ;*=====================================================================*/
@@ -14,7 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_http-error
    
-   (library web)
+   (library web http)
    
    (include "xml.sch")
 
@@ -100,6 +100,7 @@
 (define (hop-error-response e)
    (instantiate::http-response-hop
       (start-line "HTTP/1.1 500 Internal Server Error")
+      (server (hop-server-name))
       (backend (hop-xml-backend-secure))
       (charset (hop-charset))
       (header (http-error-header e))
@@ -139,6 +140,7 @@
 	    (set! connection 'close))
 	 (instantiate::http-response-xml
 	    (start-line "HTTP/1.1 500 Internal Server Error")
+	    (server (hop-server-name))
 	    (header (http-error-header e))
 	    (backend (hop-xml-backend))
 	    (content-type mime-type)
@@ -181,6 +183,7 @@
 	 (set! connection 'close))
       (instantiate::http-response-xml
 	 (start-line "HTTP/1.1 404 Not Found")
+	 (server (hop-server-name))
 	 (header (http-error-header e))
 	 (backend (hop-xml-backend))
 	 (content-type mime-type)
@@ -209,9 +212,9 @@
    (http-io-error e req))
 
 ;*---------------------------------------------------------------------*/
-;*    http-error ::&hop-method-error ...                               */
+;*    http-error ::&io-parse-method-error ...                          */
 ;*---------------------------------------------------------------------*/
-(define-method (http-error e::&hop-method-error req)
+(define-method (http-error e::&io-parse-method-error req)
    (with-access::&error e (obj)
       (http-method-error obj)))
 
@@ -226,6 +229,7 @@
       (with-access::xml-backend (hop-xml-backend) (mime-type)
 	 (instantiate::http-response-xml
 	    (start-line "HTTP/1.1 200 ok")
+	    (server (hop-server-name))
 	    (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
 	    (backend (hop-xml-backend))
 	    (content-type mime-type)
@@ -285,6 +289,7 @@
 (define (http-file-not-found file)
    (instantiate::http-response-xml
       (start-line "HTTP/1.1 404 Not Found")
+      (server (hop-server-name))
       (header (http-error-header (format "File not found ~s" file)))
       (backend (hop-xml-backend))
       (charset (hop-charset))
@@ -301,6 +306,7 @@
       (with-access::xml-backend (hop-xml-backend) (mime-type)
 	 (instantiate::http-response-xml
 	    (start-line "HTTP/1.1 404 Not Found")
+	    (server (hop-server-name))
 	    (header (http-error-header (format "Service not found ~s" file)))
 	    (backend (hop-xml-backend))
 	    (content-type mime-type)
@@ -342,6 +348,7 @@ a timeout which has now expired. The service is then no longer available."))
 (define (http-permission-denied file)
    (instantiate::http-response-string
       (start-line "HTTP/1.0 403 Forbidden")
+      (server (hop-server-name))
       (charset (hop-locale))
       (body (format "Permission denied: ~s" file))))
 
@@ -351,6 +358,7 @@ a timeout which has now expired. The service is then no longer available."))
 (define (http-method-error obj)
    (instantiate::http-response-string
       (start-line "HTTP/1.0 501 Not Implemented")
+      (server (hop-server-name))
       (charset (hop-locale))
       (body (format "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\n<html><body>Method not implemented ~a</body></html>"
 		    obj))))
@@ -361,6 +369,7 @@ a timeout which has now expired. The service is then no longer available."))
 (define (http-parse-error obj)
    (instantiate::http-response-string
       (start-line "HTTP/1.0 400 Bad Request")
+      (server (hop-server-name))
       (charset (hop-locale))
       (body (format "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\n<html><body>Parse error in HTTP request on token <tt>~a</tt>/body></html>"
 		    obj))))
@@ -371,6 +380,7 @@ a timeout which has now expired. The service is then no longer available."))
 (define (http-bad-request obj)
    (instantiate::http-response-string
       (start-line "HTTP/1.0 400 Bad Request")
+      (server (hop-server-name))
       (charset (hop-locale))
       (body (format "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\n<html><body>Bad request <tt><pre>~a</pre></tt></body></html>" obj))))
 
@@ -385,6 +395,7 @@ a timeout which has now expired. The service is then no longer available."))
       (with-access::xml-backend (hop-xml-backend) (mime-type)
 	 (instantiate::http-response-xml
 	    (start-line "HTTP/1.1 500 Internal Server Error")
+	    (server (hop-server-name))
 	    (header (http-error-header e))
 	    (backend (hop-xml-backend))
 	    (content-type mime-type)
@@ -408,6 +419,7 @@ a timeout which has now expired. The service is then no longer available."))
    (with-access::xml-backend (hop-xml-backend) (mime-type)
       (instantiate::http-response-xml
 	 (start-line "HTTP/1.1 400 Bad Request")
+	 (server (hop-server-name))
 	 (backend (hop-xml-backend))
 	 (content-type mime-type)
 	 (charset (hop-charset))
@@ -432,6 +444,7 @@ a timeout which has now expired. The service is then no longer available."))
    (with-access::xml-backend (hop-xml-backend) (mime-type)
       (instantiate::http-response-xml
 	 (start-line "HTTP/1.0 404 Not Found")
+	 (server (hop-server-name))
 	 (header (http-error-header "Invalidated service"))
 	 (backend (hop-xml-backend))
 	 (content-type mime-type)
@@ -456,6 +469,7 @@ Reloading the page is the only way to fix this problem."))))))
    (with-access::xml-backend (hop-xml-backend) (mime-type)
       (instantiate::http-response-xml
 	 (start-line "HTTP/1.0 404 Not Found")
+	 (server (hop-server-name))
 	 (header (http-error-header "Corrupted service"))
 	 (backend (hop-xml-backend))
 	 (content-type mime-type)
@@ -472,6 +486,7 @@ Reloading the page is the only way to fix this problem."))))))
    (let ((s (with-error-to-string (lambda () (warning-notify e)))))
       (instantiate::http-response-string
 	 (start-line "HTTP/1.0 400 Bad Request")
+	 (server (hop-server-name))
 	 (charset (hop-locale))
 	 (body (format "<HTML><BODY><PRE> ~a </PRE></BODY></HTML>" s)))))
    
@@ -482,6 +497,7 @@ Reloading the page is the only way to fix this problem."))))))
    (with-access::xml-backend (hop-xml-backend) (mime-type)
       (instantiate::http-response-xml
 	 (start-line "HTTP/1.1 200 ok")
+	 (server (hop-server-name))
 	 (header (http-error-header #f))
 	 (backend (hop-xml-backend))
 	 (content-type mime-type)
@@ -499,6 +515,7 @@ Reloading the page is the only way to fix this problem."))))))
    (with-access::xml-backend (hop-xml-backend) (mime-type)
       (instantiate::http-response-xml
 	 (start-line "HTTP/1.1 503 Service Unavailable")
+	 (server (hop-server-name))
 	 (header (http-error-header e))
 	 (backend (hop-xml-backend))
 	 (content-type mime-type)
@@ -521,6 +538,7 @@ Reloading the page is the only way to fix this problem."))))))
       (with-access::xml-backend (hop-xml-backend) (mime-type)
 	 (instantiate::http-response-xml
 	    (start-line "HTTP/1.1 503 Service Unavailable")
+	    (server (hop-server-name))
 	    (header (http-error-header e))
 	    (backend (hop-xml-backend))
 	    (content-type mime-type)
@@ -545,6 +563,7 @@ Reloading the page is the only way to fix this problem."))))))
       (with-access::xml-backend (hop-xml-backend) (mime-type)
 	 (instantiate::http-response-xml
 	    (start-line "HTTP/1.1 404 Not Found")
+	    (server (hop-server-name))
 	    (header (http-error-header e))
 	    (backend (hop-xml-backend))
 	    (content-type mime-type)
@@ -563,5 +582,6 @@ Reloading the page is the only way to fix this problem."))))))
 (define (http-gateway-timeout e)
    (instantiate::http-response-string
       (start-line "HTTP/1.0 502 Bad Gateway")
+      (server (hop-server-name))
       (charset (hop-locale))
       (body (format "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\n<html><body>Gateway Timeout ~a</body></html>" e))))

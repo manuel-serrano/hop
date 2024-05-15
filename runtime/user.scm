@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Tue Oct  8 13:18:29 2019 (serrano)                */
-;*    Copyright   :  2005-21 Manuel Serrano                            */
+;*    Last change :  Tue May 14 12:43:24 2024 (serrano)                */
+;*    Copyright   :  2005-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
 ;*=====================================================================*/
@@ -13,13 +13,15 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module __hop_user
+
+   (library http)
    
    (include "verbose.sch")
    
    (import  __hop_param
 	    __hop_configure
 	    __hop_types
-	    __hop_http-lib
+	    __hop_http-utils
 	    __hop_misc
 	    __hop_service
 	    __hop_cache
@@ -644,6 +646,7 @@
       ;; force closing that connection
       (set! connection 'close)
       (instantiate::http-response-authentication
+	 (server (hop-server-name))
 	 (header (authenticate-header req))
 	 (start-line "HTTP/1.0 401 Unauthorized")
 	 (body (cond
@@ -662,6 +665,7 @@
 ;*---------------------------------------------------------------------*/
 (define (user-service-denied user req svc)
    (instantiate::http-response-authentication
+      (server (hop-server-name))
       (header (authenticate-header req))
       (start-line "HTTP/1.0 401 Unauthorized")
       (body (format (hop-user-service-denied-format)
@@ -678,6 +682,7 @@
 ;*---------------------------------------------------------------------*/
 (define (proxy-denied req user host)
    (instantiate::http-response-authentication
+      (server (hop-server-name))
       (start-line "HTTP/1.0 407 Proxy Authentication Required")
       (header `((Proxy-Authenticate:
 		   .

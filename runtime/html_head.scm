@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Thu Apr 18 08:36:11 2024 (serrano)                */
+;*    Last change :  Tue May 14 12:49:25 2024 (serrano)                */
 ;*    Copyright   :  2005-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -17,7 +17,7 @@
    (include "xml.sch"
 	    "service.sch")
 
-   (library web)
+   (library web http)
 
    (import  __hop_param
 	    __hop_configure

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Wed Nov 16 20:21:37 2022 (serrano)                */
-;*    Copyright   :  2005-22 Manuel Serrano                            */
+;*    Last change :  Tue May 14 09:43:56 2024 (serrano)                */
+;*    Copyright   :  2005-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
 ;*=====================================================================*/
@@ -190,6 +190,7 @@
  <allow-access-from domain=\"*\" />
 </cross-domain-policy>" (hop-default-port))))
 	     (instantiate::http-response-string
+		(server (hop-server-name))
 		(timeout timeout)
 		(content-type "application/xml")
 		(body s))))
@@ -223,6 +224,7 @@
 	  (hss-response req abspath))
 	 (else
 	  (instantiate::http-response-file
+	     (server (hop-server-name))
 	     (timeout timeout)
 	     (charset (hop-locale))
 	     (content-type (mime-type abspath "text/plain"))
@@ -241,6 +243,7 @@
 	     rep)
 	    ((isa? rep xml)
 	     (instantiate::http-response-xml
+		(server (hop-server-name))
 		(backend (hop-xml-backend))
 		(timeout timeout)
 		(content-type (mime-type abspath "text/plain"))
@@ -252,6 +255,7 @@
 	     (let ((url (make-hop-url-name (prefix (basename abspath)))))
 		(instantiate::http-response-string
 		   (start-line "HTTP/1.0 307 Temporary Redirect")
+		   (server (hop-server-name))
 		   (header (list (cons 'location: url))))))))))
 
 ;*---------------------------------------------------------------------*/
@@ -289,6 +293,7 @@
 		    ;; not modified
 		    (instantiate::http-response-string
 		       (start-line "HTTP/1.1 304 Not Modified")
+		       (server (hop-server-name))
 		       (content-type (mime-type (prefix abspath) "text/plain"))
 		       (header `((Last-Modified: . ,lm)))
 		       (charset (hop-locale))))
@@ -313,6 +318,7 @@
 	  ;; send a gzipped file with a mime type corresponding
 	  ;; to the ungzipped file
 	  (instantiate::http-response-file
+	     (server (hop-server-name))
 	     (timeout timeout)
 	     (header `((Last-Modified: . ,last-modified)
 		       (Content-Encoding: . "gzip")
@@ -326,6 +332,7 @@
 	       (accept-gzip? header))
 	  ;; send a gzipped version of the file
 	  (instantiate::http-response-file
+	     (server (hop-server-name))
 	     (timeout timeout)
 	     (header `((Last-Modified: . ,last-modified)
 		       (Content-Encoding: . "gzip")
@@ -338,8 +345,9 @@
 	  =>
 	  (lambda (icy)
 	     (instantiate::http-response-shoutcast
-		(timeout -1)
 		(start-line "ICY 200 OK")
+		(server (hop-server-name))
+		(timeout -1)
 		(header `((Last-Modified: . ,last-modified)
 			  (Accept-Ranges: . "bytes")))
 		(bodyp bodyp)
@@ -347,6 +355,7 @@
 	 (else
 	  ;; send a regular file
 	  (instantiate::http-response-file
+	     (server (hop-server-name))
 	     (timeout timeout)
 	     (header `((Last-Modified: . ,last-modified)
 		       (Accept-Ranges: . "bytes")))
@@ -383,6 +392,7 @@
       (when (hop-enable-webdav)
 	 (set! options (add-options! options (webdav-options))))
       (instantiate::http-response-string
+	 (server (hop-server-name))
 	 (charset (hop-locale))
 	 (header options)
 	 (bodyp #f))))
@@ -635,3 +645,17 @@
 			    (cddr wi)))
 	       (get-weblets-zeroconf)))))
    (zeroconf-start))
+
+;*---------------------------------------------------------------------*/
+;*    http-request-local? ...                                          */
+;*    -------------------------------------------------------------    */
+;*    Is the request initiated by the local host ?                     */
+;*---------------------------------------------------------------------*/
+(define (http-request-local? req::http-request)
+   (with-access::http-request req (socket)
+      ;; assume socket to be a real socket
+      (or (socket-local? socket)
+	  (find (lambda (addr)
+		   (socket-host-address=? socket addr))
+	     (hop-server-addresses)))))
+

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.6.x/runtime/upnp.scm                  */
+;*    serrano/prgm/project/hop/hop/runtime/upnp.scm                    */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 10 16:49:31 2013                          */
-;*    Last change :  Fri Feb 21 13:46:58 2014 (serrano)                */
-;*    Copyright   :  2013-14 Manuel Serrano                            */
+;*    Last change :  Tue May 14 12:35:44 2024 (serrano)                */
+;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    UPNP Hop support                                                 */
 ;*=====================================================================*/
@@ -14,7 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_upnp
 
-   (include "thread.sch")
+   (library pthread http)
 
    (cond-expand
       ((and enable-upnp (library upnp))

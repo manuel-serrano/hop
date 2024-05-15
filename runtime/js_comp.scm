@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Wed Apr 17 06:55:43 2019 (serrano)                */
-;*    Copyright   :  2005-20 Manuel Serrano                            */
+;*    Last change :  Tue May 14 12:53:29 2024 (serrano)                */
+;*    Copyright   :  2005-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JS compilation tools                                             */
 ;*=====================================================================*/
@@ -14,7 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_js-comp
 
-   (library web)
+   (library web http)
 	    
    (import  __hop_param
 	    __hop_types

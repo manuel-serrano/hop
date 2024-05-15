@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Mon May 13 07:07:14 2024 (serrano)                */
+#*    Last change :  Tue May 14 09:18:39 2024 (serrano)                */
 #*    Copyright   :  2004-24 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -66,7 +66,7 @@ mimetypes=/etc/mime.types
 jsmimetype="application/x-javascript"
 cssmimetype="text/css"
 
-libraries="hop hopsched hopwidget web hopsched hopscheme scheme2js multimedia sqlite js2scheme hopscript nodejs openpgp"
+libraries="hop http hopwidget web hopscheme scheme2js multimedia sqlite js2scheme hopscript nodejs openpgp"
 bglcloselibs="web multimedia openpgp"
 
 extralibs=$EXTRALIBS
@@ -130,7 +130,6 @@ fi
 # User controlled optional features
 ssl=""
 locevent="true"
-threads=""
 nodoc=
 tls=
 
@@ -414,12 +413,6 @@ while : ; do
     --disable-locevent)
       locevent=false;;
 
-    --enable-threads)
-      threads=yes;;
-
-    --disable-threads)
-      threads=no;;
-
     --enable-tls)
       tls=yes;;
 
@@ -487,7 +480,6 @@ while : ; do
       echo "   --[enable|disable]-doc...... enables documentation generation" >&2;
       echo "   --[enable|disable]-ssl...... enables SSL support" >&2;
       echo "   --[enable|disable]-locevent. enables location event support" >&2;
-      echo "   --[enable|disable]-threads.. enables multi-threading support" >&2;
       echo "   --[enable|disable]-avahi.... enables AVAHI support" >&2;
       echo "   --[enable|disable]-upnp..... enables UPNP support" >&2;
       echo "   --[enable|disable]-libuv.... disables LIBUV support" >&2;
@@ -790,51 +782,24 @@ fi
 #*---------------------------------------------------------------------*/
 #*    Threads                                                          */
 #*---------------------------------------------------------------------*/
-if [ "$threads " = " " ]; then
-  if [ -f $bigloolibdir/pthread.heap ]; then
-    threads=yes
-  else
-    threads=no
-  fi
-fi
-
-if [ "$threads" = "yes" ]; then
-  if [ ! -f $bigloolibdir/pthread.heap ]; then
-    echo "*** ERROR:configure:bigloo pthread." >&2;
-    echo "" >&2;
-    echo "You have request a multi-threading support but it appears that" >&2;
-    echo "the installed Bigloo compiler does not support multi-threading." >&2;
-    echo "You must either, configure Hop without multi-threading support" >&2;
-    echo "or re-configure and re-install your Bigloo compiler." >&2;
-    echo "" >&2
-    bglfail=true;
-  fi
-
-  hopsrfis="$hopsrfis enable-threads"
+if [ ! -f $bigloolibdir/pthread.heap ]; then
+  echo "*** ERROR:configure:bigloo pthread missing." >&2;
+  echo "" >&2;
+  echo "Hop needs Bigloo multi-thread support but it appears that" >&2;
+  echo "the installed Bigloo compiler does not support multi-threading." >&2;
+  echo "You must either, configure Hop without multi-threading support" >&2;
+  echo "or re-configure and re-install your Bigloo compiler." >&2;
+  echo "" >&2
+  bglfail=true
+else
   libraries="$libraries pthread"
   bglcloselibs="$bglcloselibs pthread"
   bglextralibs="$bglextralibs bigloopthread"
-else
-  if [ "$avahi " = "yes " ]; then
-    echo "*** ERROR:configure:bigloo avahi." >&2;
-    echo "" >&2;
-    echo "Avahi requires threads, either disable avahi (--disable-avahi)" >&2;
-    echo "or enable threads (--enable-threads)" >&2;
-    echo "" >&2
-    bglfail=true;
-  else
-    avahi=no;
-  fi
-  if [ "$upnp " = "yes " ]; then
-    echo "*** ERROR:configure:bigloo upnp." >&2;
-    echo "" >&2;
-    echo "Upnp requires threads, either disable upnp (--disable-upnp)" >&2;
-    echo "or enable threads (--enable-threads)" >&2;
-    echo "" >&2
-    bglfail=true;
-  else
-    upnp=no;
-  fi
+  bigloopthlib="bigloopthread"
+  bigloopthlibs="-lbigloopthread_s-$""(RELEASE)"
+  bigloopthlibu="-lbigloopthread_u-$""(RELEASE)"
+  bigloogc="-lbigloogc_fth-$""(RELEASE)"
+  bhopcflags="-q --js-worker-slave"
 fi
 
 #*---------------------------------------------------------------------*/
@@ -1128,18 +1093,6 @@ else
   bigloossllibu=""
 fi
 
-if [ "$threads " = "yes " ]; then
-  bigloopthlib="bigloopthread"
-  bigloopthlibs="-lbigloopthread_s-$""(RELEASE)"
-  bigloopthlibu="-lbigloopthread_u-$""(RELEASE)"
-  bigloogc="-lbigloogc_fth-$""(RELEASE)"
-  bhopcflags="-q --js-worker-slave"
-else
-  bigloopthlibs=""
-  bigloopthlibu=""
-  bigloogc="-lbigloogc-$""(RELEASE)"
-fi
-
 mkmf=etc/Makefile.hopconfig
 
 rm -f $mkmf 2> /dev/null
@@ -1274,7 +1227,6 @@ cat $mkmf.in \
         -e "s|@BUILDID@|$buildid|" \
         -e "s|@BUILDTAG@|$buildtag|" \
         -e "s|@CLOSURE@|$closure|" \
-	-e "s|@THREADS@|$threads|" \
 	-e "s|@NODOC@|$nodoc|" \
 	>> $mkmf
 
@@ -1606,15 +1558,15 @@ cat etc/hopscheme.init.in \
 echo "" >> $init
 chmod a-w $init
 
-# lib/hopsched.init
-init=lib/hop/$version/hopsched.init
+# lib/http.init
+init=lib/hop/$version/http.init
 mkdir -p lib
-mkdir -p hopsched/o
+mkdir -p http/o
 
 rm -f $init 2> /dev/null
 echo ";* Automatically generated file (don't edit) */" > $init
 
-cat etc/hopsched.init.in \
+cat etc/http.init.in \
     | sed -e "s|@VERSION@|$version|" \
           -e "s|@BRANCH@|$branch|" \
           -e "s|@BIGLOOCLOSELIBS@|$bglcloselibs|" \
@@ -1863,7 +1815,6 @@ echo "  devel mode............................ $devmode"
 echo "  arch.................................. $arch"
 echo 
 echo "Optional features:"
-echo "  multi-threading....................... $threads"
 echo "  https support......................... $ssl"
 echo "  zeroconf.............................. $zeroconfbe"
 

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/runtime/http_shoutcast.scm        */
+;*    serrano/prgm/project/hop/hop/runtime/http_shoutcast.scm          */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Tue Nov 18 09:47:31 2014 (serrano)                */
-;*    Copyright   :  2004-14 Manuel Serrano                            */
+;*    Last change :  Tue May 14 12:40:10 2024 (serrano)                */
+;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
 ;*=====================================================================*/
@@ -14,13 +14,13 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_http-shoutcast
 
-   (include "http_lib.sch")
+   (include "http_utils.sch")
    
-   (library multimedia)
+   (library multimedia http)
    
    (import  __hop_param
 	    __hop_types
-	    __hop_http-lib
+	    __hop_http-utils
 	    __hop_http-response
 	    __hop_user
 	    __hop_misc))

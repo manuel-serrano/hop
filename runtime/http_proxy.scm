@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/runtime/http_proxy.scm            */
+;*    serrano/prgm/project/hop/hop/runtime/http_proxy.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 23 15:46:32 2006                          */
-;*    Last change :  Sun Dec 14 16:49:26 2014 (serrano)                */
-;*    Copyright   :  2006-14 Manuel Serrano                            */
+;*    Last change :  Tue May 14 12:40:16 2024 (serrano)                */
+;*    Copyright   :  2006-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP proxy response                                          */
 ;*=====================================================================*/
@@ -14,15 +14,15 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_http-proxy
 
-   (include "http_lib.sch"
+   (include "http_utils.sch"
             "verbose.sch")
 
-   (library web)
+   (library web http)
    
    (import  __hop_param
 	    __hop_types
 	    __hop_misc
-	    __hop_http-lib
+	    __hop_http-utils
 	    __hop_http-response
 	    __hop_user
 	    __hop_http-error)

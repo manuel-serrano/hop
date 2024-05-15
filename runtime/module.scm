@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Mar 26 09:29:33 2009                          */
-;*    Last change :  Fri Jun  3 12:43:18 2022 (serrano)                */
-;*    Copyright   :  2009-22 Manuel Serrano                            */
+;*    Last change :  Tue May 14 12:48:46 2024 (serrano)                */
+;*    Copyright   :  2009-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP module resolver                                          */
 ;*=====================================================================*/
@@ -13,6 +13,8 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module __hop_module
+
+   (library http)
    
    (import  __hop_misc
 	    __hop_read

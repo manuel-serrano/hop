@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Tue Apr  2 08:13:43 2024 (serrano)                */
+#*    Last change :  Tue May 14 09:17:44 2024 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -24,7 +24,7 @@ do: build
 POPULATION	= Makefile LICENSE README INSTALL.md INSTALL.jvm \
                   configure .hoprelease .hgignore .gitignore README.md \
                   TODO.md
-POPDIRS		= runtime hopsched hopscheme scheme2js hopscript js2scheme \
+POPDIRS		= http runtime hopscheme scheme2js hopscript js2scheme \
                   src hopc hopsh hopreplay hophz \
                   etc share arch \
                   weblets widget nodejs node_modules \
@@ -34,7 +34,7 @@ POPDIRS		= runtime hopsched hopscheme scheme2js hopscript js2scheme \
 #*    build                                                            */
 #*---------------------------------------------------------------------*/
 .PHONY: bindir libdir lib widget share weblets bin \
-  share-afile scheme2js hopscript js2scheme nodejs hopsched \
+  share-afile scheme2js hopscript js2scheme nodejs \
   android node_modules doc test .buildtag tools
 
 build: build-sans-modules
@@ -71,8 +71,8 @@ tools-bin: bin
 
 lib: libdir scheme2js hopscript
 	$(MAKE) -C hopscheme build
+	$(MAKE) -C http build
 	$(MAKE) -C runtime build
-	$(MAKE) -C hopsched build
 	$(MAKE) -C js2scheme build
 
 widget: libdir hopc-bin share-afile
@@ -100,7 +100,7 @@ node_modules: libdir hopc-bin hopscript-lib nodejs
 	$(MAKE) -C node_modules build
 
 doc: lib hopc-bin src-bin js2scheme scheme2js hopscript nodejs
-	if [ "$(NODOC) " != "yes " -a "$(THREADS) " = "yes " ]; then \
+	if [ "$(NODOC) " != "yes " ]; then \
 	  $(MAKE) -C doc build; \
         fi
 
@@ -116,8 +116,8 @@ build-android: lib
 dep:
 	$(MAKE) -C scheme2js dep
 	$(MAKE) -C hopscheme dep
+	$(MAKE) -C http dep
 	$(MAKE) -C runtime dep
-	$(MAKE) -C hopsched dep
 	$(MAKE) -C js2scheme dep
 	$(MAKE) -C hopscript dep
 	$(MAKE) -C nodejs dep
@@ -131,8 +131,8 @@ dep:
 ude:
 	$(MAKE) -C scheme2js ude
 	$(MAKE) -C hopscheme ude
+	$(MAKE) -C http ude
 	$(MAKE) -C runtime ude
-	$(MAKE) -C hopsched ude
 	$(MAKE) -C js2scheme ude
 	$(MAKE) -C hopscript ude
 	$(MAKE) -C nodejs ude
@@ -160,8 +160,8 @@ install-weblets: hop-dirs
 	$(MAKE) -C weblets install
 
 install-quick: hop-dirs install-init install-config
+	$(MAKE) -C http install && \
 	$(MAKE) -C runtime install && \
-	$(MAKE) -C hopsched install && \
 	$(MAKE) -C widget install && \
 	$(MAKE) -C scheme2js install && \
 	$(MAKE) -C hopscheme install && \
@@ -174,7 +174,7 @@ install-quick: hop-dirs install-init install-config
 	$(MAKE) -C hophz install && \
 	$(MAKE) -C node_modules install && \
 	$(MAKE) -C etc install && \
-	if [ "$(NODOC) " != "yes " -a "$(THREADS) " = "yes " ]; then \
+	if [ "$(NODOC) " != "yes " ]; then \
 	  $(MAKE) -C doc install; \
         fi
 
@@ -258,8 +258,8 @@ uninstall:
 	$(MAKE) -C etc uninstall
 	$(MAKE) -C src uninstall
 	$(MAKE) -C hopsh uninstall
+	$(MAKE) -C http uninstall
 	$(MAKE) -C runtime uninstall
-	$(MAKE) -C hopsched uninstall
 	$(MAKE) -C widget uninstall
 	$(MAKE) -C scheme2js uninstall
 	$(MAKE) -C hopscheme uninstall
@@ -276,8 +276,8 @@ uninstall:
 #*    clean                                                            */
 #*---------------------------------------------------------------------*/
 clean-quick:
+	$(MAKE) -C http clean
 	$(MAKE) -C runtime clean
-	$(MAKE) -C hopsched clean
 	$(MAKE) -C src clean
 	$(MAKE) -C hopsh clean
 	$(MAKE) -C hophz clean
@@ -291,8 +291,8 @@ clean-quick:
 	$(RM) -f bin/hopc.sh bin/hop.sh bin/hopaot.sh 
 
 clean: 
+	$(MAKE) -C http clean
 	$(MAKE) -C runtime clean
-	$(MAKE) -C hopsched clean
 	$(MAKE) -C scheme2js clean
 	$(MAKE) -C hopscheme clean
 	$(MAKE) -C js2scheme clean
@@ -316,8 +316,8 @@ clean-npm:
 	$(MAKE) -C node_modules/exif/node clean
 
 devclean:
+	$(MAKE) -C http devclean
 	$(MAKE) -C runtime devclean
-	$(MAKE) -C hopsched devclean
 	$(MAKE) -C src devclean
 	$(MAKE) -C hopc devclean
 	$(MAKE) -C hopsh devclean
@@ -329,8 +329,8 @@ devclean:
 	$(MAKE) -C doc devclean
 
 distclean: clean 
+	$(MAKE) -C http distclean
 	$(MAKE) -C runtime distclean
-	$(MAKE) -C hopsched distclean
 	$(MAKE) -C src distclean
 	$(MAKE) -C hopc distclean
 	$(MAKE) -C hopsh distclean

@@ -1,20 +1,20 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/etc/hopsched.init.in                */
+;*    serrano/prgm/project/hop/hop/etc/http.init.in                    */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 21 08:47:34 2008                          */
 ;*    Last change :  Mon Apr 21 08:50:03 2008 (serrano)                */
 ;*    Copyright   :  2008 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
-;*    HOPSCHED init file.                                              */
+;*    HTTP init file.                                                  */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
 ;*    Library                                                          */
 ;*---------------------------------------------------------------------*/
-(declare-library! 'hopsched
+(declare-library! 'http
 		  :version "@VERSION@"
-		  :module-init 'hopsched_accept
-		  :module-eval '__hopsched_makelib
-		  :class-init "bigloo.hopsched_pipeline.scm"
-		  :class-eval "bigloo.hopsched.make_lib")
+		  :module-init '__http_accept
+		  :module-eval '__http_makelib
+		  :class-init "bigloo.http_pipeline.scm"
+		  :class-eval "bigloo.http.make_lib")

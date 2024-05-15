@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/3.4.x/runtime/Makefile                  */
+#*    serrano/prgm/project/hop/hop/runtime/Makefile                    */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Mon Jul  5 16:16:29 2021 (serrano)                */
+#*    Last change :  Tue May 14 09:20:04 2024 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOP library.                           */
 #*=====================================================================*/
@@ -39,7 +39,7 @@ _OBJECTS = param thread misc priv types read module \
            hop service \
            mime user password cache \
            hop_wiki wiki_syntax wiki_parser wiki_toc hz \
-           http_lib http_request \
+           http_utils \
            http_response http_shoutcast http_proxy http_webdav \
            http_error http_filter \
            hop_inline \
@@ -55,7 +55,7 @@ BGL_ECLASSES = $(CLASS_EDIR)/make_lib.class
 
 SOURCES = $(_OBJECTS:%=%.scm)
 
-INCLUDES = thread.sch http_lib.sch expanders.sch \
+INCLUDES = http_utils.sch expanders.sch \
            xml.sch xml_expd.sch \
            param.sch param_expd.sch \
            hss.sch hss_expd.sch \
@@ -117,26 +117,26 @@ o/%.o: .afile
 #*---------------------------------------------------------------------*/
 #*    Dependencies ...                                                 */
 #*---------------------------------------------------------------------*/
-zeroconf_avahi.sch: verbose.sch thread.sch 
+zeroconf_avahi.sch: verbose.sch  
 o/debug.o debug.class: xml.sch service.sch verbose.sch param.sch         \
       client-exception.sch sourcemap.sch ../scheme2js/base64_vlq.sch 
-o/websocket.o websocket.class: http_lib.sch verbose.sch thread.sch 
+o/websocket.o websocket.class: http_utils.sch verbose.sch  
 o/http_error.o ./http_error.class: xml.sch 
-o/http_filter.o http_filter.class: http_lib.sch verbose.sch 
-o/websocket.o ./websocket.class: http_lib.sch verbose.sch thread.sch 
+o/http_filter.o http_filter.class: http_utils.sch verbose.sch 
+o/websocket.o ./websocket.class: http_utils.sch verbose.sch  
 o/wiki_parser.o wiki_parser.class: wiki_syntax.sch wiki_parser.sch 
 o/mathml.o ./mathml.class: xml.sch 
 o/clientc.o ./clientc.class: xml.sch service.sch 
-o/http_proxy.o ./http_proxy.class: http_lib.sch verbose.sch 
-o/read.o ./read.class: thread.sch 
-o/http_lib.o http_lib.class: http_lib.sch 
+o/http_proxy.o ./http_proxy.class: http_utils.sch verbose.sch 
+o/read.o ./read.class:  
+o/http_utils.o http_utils.class: http_utils.sch 
 o/security.o ./security.class: param.sch 
 o/preferences.o preferences.class: xml.sch service.sch 
 o/service.o service.class: service.sch verbose.sch 
 o/xdomain.o xdomain.class: service.sch 
 o/xml.o ./xml.class: param.sch xml.sch 
-o/http_response.o http_response.class: http_lib.sch 
-o/http_response.o ./http_response.class: http_lib.sch 
+o/http_response.o http_response.class: http_utils.sch 
+o/http_response.o ./http_response.class: http_utils.sch 
 o/expanders.o expanders.class: service_expd.sch prefs_expd.sch           \
       param_expd.sch hss_expd.sch xml_expd.sch verbose_expd.sch          \
       expanders.sch 
@@ -146,31 +146,31 @@ o/hop.o hop.class: verbose.sch
 o/css.o ./css.class: xml.sch service.sch hss.sch 
 o/mathml.o mathml.class: xml.sch 
 o/event.o event.class: xml.sch service.sch verbose.sch param.sch         \
-      thread.sch 
-o/http_proxy.o http_proxy.class: http_lib.sch verbose.sch 
+       
+o/http_proxy.o http_proxy.class: http_utils.sch verbose.sch 
 o/event.o ./event.class: xml.sch service.sch verbose.sch param.sch       \
-      thread.sch 
+       
 o/user.o user.class: verbose.sch 
-o/job.o job.class: thread.sch 
-o/http_webdav.o http_webdav.class: http_lib.sch xml.sch 
+o/job.o job.class:  
+o/http_webdav.o http_webdav.class: http_utils.sch xml.sch 
 o/weblets.o weblets.class: xml.sch verbose.sch 
-o/thread.o ./thread.class: thread.sch 
-o/http_lib.o ./http_lib.class: http_lib.sch 
+o/thread.o ./thread.class:  
+o/http_utils.o ./http_utils.class: http_utils.sch 
 o/html_img.o html_img.class: param.sch xml.sch 
 o/html_base.o html_base.class: param.sch xml.sch 
 o/svg.o ./svg.class: xml.sch 
 o/html_base.o ./html_base.class: param.sch xml.sch 
 o/html_head.o html_head.class: xml.sch service.sch 
 o/html_head.o ./html_head.class: xml.sch service.sch 
-o/upnp.o upnp.class: thread.sch 
+o/upnp.o upnp.class:  
 o/hop_inline.o ./hop_inline.class: xml.sch 
-o/http_filter.o ./http_filter.class: http_lib.sch verbose.sch 
+o/http_filter.o ./http_filter.class: http_utils.sch verbose.sch 
 o/clientc.o clientc.class: xml.sch service.sch 
 o/configure.o ./configure.class: configure_noarch.sch 
 o/wiki_parser.o ./wiki_parser.class: wiki_syntax.sch wiki_parser.sch 
 o/user.o ./user.class: verbose.sch 
 o/hop_wiki.o hop_wiki.class: xml.sch 
-o/thread.o thread.class: thread.sch 
+o/thread.o thread.class:  
 o/xml.o xml.class: param.sch xml.sch 
 o/preferences.o ./preferences.class: xml.sch service.sch 
 o/service.o ./service.class: service.sch verbose.sch 
@@ -182,8 +182,8 @@ o/zeroconf.o zeroconf.class: service.sch zeroconf_avahi.sch              \
 o/hop_inline.o hop_inline.class: xml.sch 
 o/hop.o ./hop.class: verbose.sch 
 o/hop_rss.o hop_rss.class: xml.sch 
-o/http_shoutcast.o http_shoutcast.class: http_lib.sch 
-o/read.o read.class: thread.sch 
+o/http_shoutcast.o http_shoutcast.class: http_utils.sch 
+o/read.o read.class:  
 o/security.o security.class: param.sch 
 o/weblets.o ./weblets.class: xml.sch verbose.sch 
 o/param.o param.class: param.sch 

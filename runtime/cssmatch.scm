@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 19 14:53:16 2010                          */
-;*    Last change :  Thu Apr 18 07:51:22 2019 (serrano)                */
-;*    Copyright   :  2010-19 Manuel Serrano                            */
+;*    Last change :  Tue May 14 12:52:51 2024 (serrano)                */
+;*    Copyright   :  2010-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Parsing and dealing with CSS.                                    */
 ;*=====================================================================*/
@@ -14,7 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_css-match
    
-   (library web)
+   (library web http)
 
    (import  __hop_xml
 	    __hop_xml-types

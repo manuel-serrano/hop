@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 05:30:17 2007                          */
-;*    Last change :  Fri Jun  3 11:27:51 2022 (serrano)                */
-;*    Copyright   :  2007-22 Manuel Serrano                            */
+;*    Last change :  Tue May 14 12:54:20 2024 (serrano)                */
+;*    Copyright   :  2007-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with HZ packages.                          */
 ;*=====================================================================*/
@@ -14,7 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_hz
 
-   (library web)
+   (library web http)
    
    (import  __hop_param
 	    __hop_misc

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/src/queue_scheduler.scm           */
+;*    serrano/prgm/project/hop/hop/http/queue_scheduler.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 22 14:29:19 2008                          */
-;*    Last change :  Mon Apr 21 07:40:10 2014 (serrano)                */
-;*    Copyright   :  2008-14 Manuel Serrano                            */
+;*    Last change :  Tue May 14 12:26:43 2024 (serrano)                */
+;*    Copyright   :  2008-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    QUEUE scheduler                                                  */
 ;*=====================================================================*/
@@ -12,11 +12,11 @@
 ;*---------------------------------------------------------------------*/
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
-(module hopsched_scheduler-queue
+(module __http_scheduler-queue
 
-   (library hop)
+   (library pthread)
    
-   (import  hopsched_scheduler)
+   (import  __http_scheduler)
 
    (export  (class queue-scheduler::scheduler
 	       (mutex::mutex read-only (default (make-mutex)))
@@ -51,9 +51,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (scheduler-load scd::queue-scheduler)
    (with-access::queue-scheduler scd (nfree size)
-      (flonum->fixnum
-       (*fl 100.
-	    (/fl (fixnum->flonum (-fx size nfree)) (fixnum->flonum size))))))
+      (/fx (*fx 100 (-fx size nfree)) size)))
 
 ;*---------------------------------------------------------------------*/
 ;*    spawn ::queue-scheduler ...                                      */

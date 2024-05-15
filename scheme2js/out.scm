@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  2007-13                                           */
-;*    Last change :  Fri Mar 20 11:36:18 2020 (serrano)                */
-;*    Copyright   :  2013-20 Manuel Serrano                            */
+;*    Last change :  Tue May 14 13:55:29 2024 (serrano)                */
+;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript code generation.                                      */
 ;*=====================================================================*/
@@ -13,9 +13,8 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module out
-   
-   (cond-expand
-      (enable-threads (library pthread)))
+
+   (library pthread)
    
    (import config
 	   tools
