@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Thu May 16 08:49:07 2024 (serrano)                */
+;*    Last change :  Thu May 16 11:38:52 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -155,7 +155,6 @@
 ;*    js-tostring ::JsHopFrame ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-method (js-tostring obj::JsHopFrame %this)
-   (tprint "js-tostring ::HsHopFrame")
    (hopframe->string obj %this))
 
 ;*---------------------------------------------------------------------*/
@@ -588,7 +587,6 @@
 			  path)
 			 (else
 			  (hop-apply-url path args %this)))))
-	 (tprint "hopframe->string path=" path)
 	 (cond
 	    ((isa? srv JsServer)
 	     (with-access::JsServer srv (obj)
