@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Thu Jul 20 18:57:06 2023 (serrano)                */
-;*    Copyright   :  2018-23 Manuel Serrano                            */
+;*    Last change :  Thu May 16 11:29:30 2024 (serrano)                */
+;*    Copyright   :  2018-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
 ;*    -------------------------------------------------------------    */
@@ -445,6 +445,8 @@
 	  (with-access::JsObject o (cmap)
 	     (let ((omap cmap))
 		(cond
+		   ((eq? omap *js-not-a-cmap*)
+		    (js-get-jsobject-name/cache-miss o name throw %this cache))
 		   ((eq? omap pmap)
 		    (let ((idx (js-pcache-pindex cache))
 			  (own (js-pcache-owner cache)))

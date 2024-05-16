@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Tue May  7 08:54:02 2024 (serrano)                */
+;*    Last change :  Thu May 16 10:57:27 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -2699,7 +2699,7 @@
       ((eq? obj #t) (& "true"))
       ((eq? obj #f) (& "false"))
       ((js-jsstring? obj) obj)
-      (else (js-tojsstring (js-toprimitive obj 'any %this) %this))))
+      (else (js-tojsstring (js-toprimitive obj 'string %this) %this))))
    
 ;*---------------------------------------------------------------------*/
 ;*    js-toprimitive ::obj ...                                         */

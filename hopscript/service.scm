@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Wed May 15 14:54:51 2024 (serrano)                */
+;*    Last change :  Thu May 16 08:49:07 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -132,7 +132,7 @@
 	 ((and (vector? o) (=fx (vector-length o) 6))
 	  (with-access::JsGlobalObject ctx (js-server-prototype)
 	     (let ((srv (instantiateJsServer
-			   (__proto__  js-server-prototype)
+			   (__proto__ js-server-prototype)
 			   (obj (instantiate::server
 				   (host (vector-ref o 0))
 				   (port (vector-ref o 1))
@@ -155,6 +155,7 @@
 ;*    js-tostring ::JsHopFrame ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-method (js-tostring obj::JsHopFrame %this)
+   (tprint "js-tostring ::HsHopFrame")
    (hopframe->string obj %this))
 
 ;*---------------------------------------------------------------------*/
@@ -380,8 +381,13 @@
 	 
 	 ;; HopFrame prototype and constructor
 	 (set! js-hopframe-prototype
-	    (instantiateJsObject
+	    (instantiateJsHopFrame
 	       (__proto__ (js-object-proto %this))
+	       (%this %this)
+	       (srv #f)
+	       (path "/hop")
+	       (args '())
+	       (cmap (js-make-jsconstructmap))
 	       (elements ($create-vector 8))))
 	 
 	 (js-bind! %this js-hopframe-prototype (& "post")
@@ -413,16 +419,24 @@
 	    :hidden-class #t)
 	 (js-bind! %this js-hopframe-prototype (& "toString")
 	    :value (js-make-function %this
-		      (lambda (this::JsHopFrame)
-			 (js-string->jsstring
-			    (hopframe->string this %this)))
+		      (lambda (this)
+			 (if (isa? this JsHopFrame)
+			     (js-string->jsstring
+				(hopframe->string this %this))
+			     (js-raise-type-error %this
+				"HopFrame.toString: not a HopFrame ~s"
+				(typeof this))))
 		      (js-function-arity 0 0)
 		      (js-function-info :name "toString" :len 0))
 	    :hidden-class #t)
 	 (js-bind! %this js-hopframe-prototype (& "inspect")
 	    :value (js-make-function %this
-		      (lambda (this::JsHopFrame)
-			 (js-string->jsstring (hopframe->string this %this)))
+		      (lambda (this)
+			 (if (isa? this JsHopFrame)
+			     (js-string->jsstring (hopframe->string this %this))
+			     (js-raise-type-error %this
+				"HopFrame.inspect: not a HopFrame ~s"
+				(typeof this))))
 		      (js-function-arity 0 0)
 		      (js-function-info :name "inspect" :len 0))
 	    :hidden-class #t)
@@ -574,7 +588,9 @@
 			  path)
 			 (else
 			  (hop-apply-url path args %this)))))
-	 (if (isa? srv JsServer)
+	 (tprint "hopframe->string path=" path)
+	 (cond
+	    ((isa? srv JsServer)
 	     (with-access::JsServer srv (obj)
 		(with-access::server obj (ssl host port authorization)
 		   (let ((scheme (if ssl "https" "http")))
@@ -582,8 +598,14 @@
 			  (format "~a://~a:~a:~a~a" scheme
 			     authorization host port sans-srv)
 			  (format "~a://~a:~a~a" scheme
-			     host port sans-srv)))))
-	     sans-srv))))
+			     host port sans-srv))))))
+	    ((and (js-object? srv) (js-get srv (& "schema") %this))
+	     =>
+	     (lambda (getter)
+		(let ((schema (js-call0 %this getter srv)))
+		   (string-append (js-tostring schema %this) sans-srv))))
+	    (else
+	     sans-srv)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    post ...                                                         */

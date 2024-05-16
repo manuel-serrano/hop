@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Tue May 14 13:53:16 2024 (serrano)                */
+;*    Last change :  Thu May 16 10:44:34 2024 (serrano)                */
 ;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC global parameters                                           */
@@ -410,12 +410,14 @@
 (define-parameter hopc-js-libraries
    (cond-expand
       (enable-libuv
-       '("-library" "hopscript"
+       '("-library" "http"
+	 "-library" "hopscript"
 	 "-library" "web"
 	 "-library" "nodejs"
 	 "-library" "libuv"))
       (else
-       '("-library" "hopscript"
+       '("-library" "http"
+	 "-library" "hopscript"
 	 "-library" "web"
 	 "-library" "nodejs"))))
 

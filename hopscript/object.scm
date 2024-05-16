@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Wed May 15 08:22:12 2024 (serrano)                */
+;*    Last change :  Thu May 16 11:08:13 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -1436,9 +1436,9 @@
 	 (symbol->string! (class-name (object-class o)))))
 
    (define (get-tostring o)
-      (with-access::JsGlobalObject %this (js-object-pcache)
+      (with-access::JsGlobalObject %this (js-object-pcache js-function-prototype)
 	 (js-get-jsobject-name/cache o (& "toString")
-	    #f %this (js-pcache-ref js-object-pcache 0))))
+		     #f %this (js-pcache-ref js-object-pcache 0))))
 
    (define (get-valueof o)
       (with-access::JsGlobalObject %this (js-object-pcache)

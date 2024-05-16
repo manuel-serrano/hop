@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Tue May  7 15:31:23 2024 (serrano)                */
+;*    Last change :  Thu May 16 11:17:07 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -549,7 +549,7 @@
 	  (with-access::JsConstructMap cmap (%id props)
 	     (fprint (current-error-port) "== " msg (typeof obj) " HASHED"
 		" els.vlen=" (hashtable-size elements)
-		"\n   __proto__=" (typeof (typeof (js-object-proto obj)))
+		"\n   __proto__=" (typeof (js-object-proto obj))
 		"\n   prop.names="
 		(hashtable-key-list elements)
 		"\n   prop.values="
@@ -558,7 +558,7 @@
 	  (with-access::JsConstructMap cmap (%id props)
 	     (fprint (current-error-port) "== " msg (typeof obj) " UNMAPPED"
 		" els.vlen=" (vector-length elements)
-		"\n   __proto__=" (typeof (typeof (js-object-proto obj)))
+		"\n   __proto__=" (typeof (js-object-proto obj))
 		"\n   prop.names="
 		(map (lambda (d)
 			(if (isa? d JsPropertyDescriptor)
