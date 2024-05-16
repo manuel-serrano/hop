@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:33:09 2013                          */
-;*    Last change :  Mon Jun 26 11:49:07 2023 (serrano)                */
-;*    Copyright   :  2013-23 Manuel Serrano                            */
+;*    Last change :  Thu May 16 07:21:01 2024 (serrano)                */
+;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript lexer                                                 */
 ;*=====================================================================*/
@@ -195,6 +195,7 @@
        (token 'ERROR (string-for-read (the-string)) 1))
 
       ((: "#!" (* blank_no_lt) "/" (+ all))
+       ;; shebang
        (ignore))
       
       ((or ls ps)

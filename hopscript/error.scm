@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Thu Feb 29 11:00:51 2024 (serrano)                */
+;*    Last change :  Thu May 16 08:47:10 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
@@ -347,8 +347,7 @@
 		    (hop-stack->jsstring o stack)))
 	     ;; always pretend a non-empty stack
 	     (js-get-stack o
-		'(("captureStackTrace" (at "." 0))
-		  ("hop" (at "." 0))
+		'(("hop" (at "." 0))
 		  ("main" (at "." 0))))))
 	 
       (define (capture-stack-trace err start-fun)

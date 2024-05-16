@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Wed May 15 14:57:17 2024 (serrano)                */
+;*    Last change :  Thu May 16 08:31:29 2024 (serrano)                */
 ;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -47,6 +47,10 @@
 	 (cond-expand
 	    (gc ($bgl-gc-verbose-set! #t))
 	    (else #unspecified))))
+
+   ;; debug traces
+   (when (getenv "BIGLOOTRACE")
+      (bigloo-debug-set! 2))
    
    ;; catch critical signals
    (signal-init!)
@@ -61,7 +65,10 @@
    
    ;; command line parsing
    (parse-args! args)
-   (nodejs-command-line-set! (cons* (car (command-line)) source options))
+   (nodejs-command-line-set!
+      (if (string? source)
+	  (cons* (car (command-line)) source options)
+	  (cons (car (command-line)) options)))
 
    ;; final configuration
    (when (hop-profile) (js-profile-init `(:server #t) #f #f))
@@ -309,13 +316,6 @@
 		(js-worker-push! %worker (format "nodejs-load(~a)" path)
 		   (lambda (%this)
 		      (nodejs-load-module path %worker %global %module :commonjs-export #t))))))
-	 ((string-suffix? ".mjs" path)
-	  ;; javascript
-	  (when %worker
-	     (with-access::WorkerHopThread %worker (%this prerun)
-		(js-worker-push! %worker (format "nodejs-load(~a)" path)
-		   (lambda (%this)
-		      (nodejs-load-module path %worker %global %module :commonjs-export #f))))))
 	 ((string-suffix? ".ts" path)
 	  ;; typescript
 	  (when %worker

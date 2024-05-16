@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Tue May 14 15:51:58 2024 (serrano)                */
+;*    Last change :  Thu May 16 08:42:32 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -2144,14 +2144,21 @@
 	 (let ((sopath (hop-find-sofile filename
 			  :suffix (if worker-slave "_w" ""))))
 	    (trace-item "sopath=" sopath)
-	    (if (string? sopath)
-		(begin
-		   (trace-item "file.mtime=" (file-modification-time sopath))
-		   (trace-item "sofi.mtime=" (file-modification-time filename))
-		   (when (>= (file-modification-time sopath)
-			    (file-modification-time filename))
-		      sopath))
-		sopath)))))
+	    (match-case sopath
+	       ((? string?)
+		(trace-item "sopa.mtime=" (file-modification-time sopath))
+		(trace-item "file.mtime" (file-modification-time filename))
+		(when (>= (file-modification-time sopath)
+			 (file-modification-time filename))
+		   sopath))
+	       ((error . ?path)
+		(trace-item "sopa.mtime=" (file-modification-time path))
+		(trace-item "file.mtime=" (file-modification-time filename))
+		(when (>= (file-modification-time path)
+			 (file-modification-time filename))
+		   'error))
+	       (else
+		#f))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-load ...                                                  */
