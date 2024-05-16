@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 18 16:19:42 2013                          */
-;*    Last change :  Wed Feb 28 15:15:57 2024 (serrano)                */
+;*    Last change :  Thu May 16 19:47:20 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    nodejs boot                                                      */
@@ -77,6 +77,7 @@
 	   (__nodejs_mod_https "| echo \"(module __nodejs_mod_https (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
 	   (__nodejs_mod_url "| echo \"(module __nodejs_mod_url (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
 	   (__nodejs_mod_process "| echo \"(module __nodejs_mod_process (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
+	   (__nodejs_mod_child_process "| echo \"(module __nodejs_mod_child_process (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
 	   (__nodejs_mod_module "| echo \"(module __nodejs_mod_module (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
 	   (__nodejs_mod_crypto "| echo \"(module __nodejs_mod_crypto (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
 	   (__nodejs_mod_util "| echo \"(module __nodejs_mod_util (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
@@ -138,6 +139,7 @@
 	 ("querystring" __nodejs_querystring)
 	 ("string_decoder" __nodejs_string_decoder)
 	 ("child_process" __nodejs_child_process)
+	 ("child_process.mod" __nodejs_mod_child_process)
 	 ("cluster" __nodejs_cluster)
 	 ("crypto" __nodejs_crypto)
 	 ("crypto.mod" __nodejs_mod_crypto)

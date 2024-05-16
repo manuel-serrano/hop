@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Tue May  7 11:13:20 2024 (serrano)                */
+;*    Last change :  Thu May 16 20:03:35 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -2621,7 +2621,7 @@
    
    (define (assig-operator? x)
       (case x
-	 ((= *= /= %= += -= <<= >>= >>>= &= ^= BIT_OR= **= ??=)
+	 ((= *= /= %= += -= <<= >>= >>>= &= ^= BIT_OR= **= ??= OR= &&=)
 	  #t)
 	 (else #f)))
    
@@ -2680,9 +2680,31 @@
 			   (rhs rhs)))))
 		   ((??=)
 		    ;; a short circuit for x ?? (x = y)
-		    ;; see ;; https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Nullish_coalescing_assignment
+		    ;; see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Nullish_coalescing_assignment
 		    (instantiate::J2SBinary
 		       (op '??)
+		       (loc (token-loc op))
+		       (lhs (dup-expr lhs))
+		       (rhs (instantiate::J2SAssig
+			       (loc (token-loc op))
+			       (lhs lhs)
+			       (rhs rhs)))))
+		   ((OR=)
+		    ;; a short circuit for x || (x = y)
+		    ;; see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Logical_OR_assignment
+		    (instantiate::J2SBinary
+		       (op 'OR)
+		       (loc (token-loc op))
+		       (lhs (dup-expr lhs))
+		       (rhs (instantiate::J2SAssig
+			       (loc (token-loc op))
+			       (lhs lhs)
+			       (rhs rhs)))))
+		   ((&&=)
+		    ;; a short circuit for x && (x = y)
+		    ;; see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Logical_AND_assignment
+		    (instantiate::J2SBinary
+		       (op '&&)
 		       (loc (token-loc op))
 		       (lhs (dup-expr lhs))
 		       (rhs (instantiate::J2SAssig
