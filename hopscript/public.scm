@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Thu May 16 10:57:27 2024 (serrano)                */
+;*    Last change :  Thu May 16 14:52:56 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -3604,7 +3604,7 @@
 (define (js-html-head %this)
    (js-make-function %this
       (lambda (this attrs . nodes)
-	 (apply <HEAD> :idiom "javascript" :%context %this
+	 (apply <HEAD> :idiom "javascript" :rts #f :%context %this
 	    (when (js-object? attrs)
 	       (js-object->keyword-arguments* attrs %this))
 	    (filter (lambda (n)

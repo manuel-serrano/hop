@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Tue May 14 12:53:29 2024 (serrano)                */
+;*    Last change :  Thu May 16 13:13:56 2024 (serrano)                */
 ;*    Copyright   :  2005-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JS compilation tools                                             */
@@ -26,8 +26,8 @@
 	    __hop_clientc
 	    __hop_read-js)
 
-   (export  (obj->javascript-attr ::obj ::output-port #!optional ctx)
-	    (obj->javascript-expr ::obj ::output-port #!optional ctx)
+   (export  (generic obj->javascript-attr ::obj ::output-port #!optional ctx)
+	    (generic obj->javascript-expr ::obj ::output-port #!optional ctx)
 	    (generic hop-register-value ::obj ::procedure)
 	    (generic hop->javascript ::obj ::output-port ::procedure ::bool ::obj)
 	    (hop->js-callback ::obj)))
@@ -78,7 +78,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    obj->javascript-attr ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (obj->javascript-attr obj op::output-port #!optional ctx)
+(define-generic (obj->javascript-attr obj op::output-port #!optional ctx)
    
    (define (host-compiler obj op compile ctx)
       (hop->javascript obj op compile #f ctx))
@@ -89,7 +89,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    obj->javascript-expr ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (obj->javascript-expr obj op #!optional ctx)
+(define-generic (obj->javascript-expr obj op #!optional ctx)
    
    (define (host-compiler obj op compile ctx)
       (hop->javascript obj op compile #t ctx))

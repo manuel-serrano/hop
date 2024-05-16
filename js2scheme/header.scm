@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 29 06:46:36 2013                          */
-;*    Last change :  Thu Feb 16 08:34:00 2023 (serrano)                */
-;*    Copyright   :  2013-23 Manuel Serrano                            */
+;*    Last change :  Thu May 16 16:38:27 2024 (serrano)                */
+;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme compilation header stage                               */
 ;*=====================================================================*/
@@ -229,6 +229,9 @@
 	    :sweepable 'always)
 	 (js-def-extern 'JSON #t writable
 	    `(with-access::JsGlobalObject %this (js-json) js-json)
+	    :sweepable 'always)
+	 (js-def-extern 'URL #t writable
+	    `(with-access::JsGlobalObject %this (js-url) js-url)
 	    :sweepable 'always)
 	 (if (or (string=? id "console.js") (string=? id "node_stdio.js"))
 	     (instantiate::J2SUndefined

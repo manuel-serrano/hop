@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Tue May 14 12:49:25 2024 (serrano)                */
+;*    Last change :  Thu May 16 14:42:24 2024 (serrano)                */
 ;*    Copyright   :  2005-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -117,6 +117,8 @@
 			       (or (not (string? v)) (string-skip v "\n\t "))))
 		    (xml-body body %context)))
 	  (hbody (cond
+		    ((not idiom)
+		     nbody)
 		    ((null? nbody)
 		     (list (<HEAD> :idiom idiom :%context %context
 			      :%location %location)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Mon Mar  4 08:42:31 2024 (serrano)                */
+;*    Last change :  Thu May 16 13:39:44 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Json                         */
@@ -293,21 +293,22 @@
 		      (lambda (op)
 			 (display opar op)
 			 (unless (string-null? gap)
-			    (newline op)
+			    ;;(newline op)
 			    (display gap op))
 			 (display (proc 0) op)
 			 (let liip ((i 1))
 			    (if (= i len)
 				(begin
 				   (unless (string-null? gap)
-				      (display "\n" op)
+				      ;;(display "\n" op)
 				      (display mind op))
 				   (display cpar op))
 				(begin
 				   (if (string-null? gap)
 				       (display "," op)
 				       (begin
-					  (display ",\n" op)
+					  (display "," op)
+					  ;;(display ",\n" op)
 					  (display gap op)))
 				   (display (proc i) op)
 				   (liip (+fx i 1)))))
@@ -446,12 +447,14 @@
 						(if (string-null? gap)
 						    (display "{" op)
 						    (begin
-						       (display "{\n" op)
+						       (display "{" op)
+						       ;;(display "{\n" op)
 						       (display gap op))))
 					     (if (string-null? gap)
 						 (display "," op)
 						 (begin
-						    (display ",\n" op)
+						    ;;(display ",\n" op)
+						    (display "," op)
 						    (display gap op))))
 					 (display (string-quote k) op)
 					 (display
@@ -464,7 +467,7 @@
 				((string-null? gap)
 				 (display "}" op))
 				(else
-				 (display "\n" op)
+				 ;;(display "\n" op)
 				 (display mind op)
 				 (display "}" op)))
 			     (set! gap mind)))))))))))

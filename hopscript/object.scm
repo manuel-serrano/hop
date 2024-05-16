@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Thu May 16 11:08:13 2024 (serrano)                */
+;*    Last change :  Thu May 16 13:36:41 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -45,6 +45,7 @@
 	   __hopscript_date
 	   __hopscript_error
 	   __hopscript_json
+	   __hopscript_url
 	   __hopscript_service
 	   __hopscript_property
 	   __hopscript_private
@@ -98,6 +99,13 @@
 	 (js-jsobject->plist obj %this)))
    (lambda (o)
       (error "string->obj" "Cannot unserialize JsResponse" o)))
+
+;*---------------------------------------------------------------------*/
+;*    obj->javascript-attr ::JsObject ...                              */
+;*---------------------------------------------------------------------*/
+(define-method (obj->javascript-attr o::JsObject op::output-port #!optional ctx)
+   (let ((str (js-json-stringify (js-undefined) o (js-undefined) 1 ctx)))
+      (display str op)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-extensible? ...                                               */
@@ -327,6 +335,7 @@
 	    (js-init-date! %this)
 	    (js-init-error! %this)
 	    (js-init-json! %this)
+	    (js-init-url! %this)
 	    (js-init-service! %this *default-service-table*)
 	    (js-init-worker! %this)
 	    (js-init-websocket! %this)
@@ -509,11 +518,11 @@
 	       (js-make-function %this
 		  (lambda (this attrs . nodes)
 		     (if (js-object? attrs)
-			 (apply <HTML> :idiom "javascript" :%context %this
+			 (apply <HTML> :idiom #f :%context %this
 			    (append
 			       (js-jsobject->keyword-plist attrs %this)
 			       nodes))
-			 (apply <HTML> :idiom "javascript" :%context %this
+			 (apply <HTML> :idiom #f :%context %this
 			    nodes)))
 		  (js-function-arity 1 -1 'scheme)
 		  (js-function-info :name "HTML" :len 1)))

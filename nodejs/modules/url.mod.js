@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Nov 19 08:48:52 2023                          */
-/*    Last change :  Fri Mar  8 12:06:44 2024 (serrano)                */
+/*    Last change :  Thu May 16 17:14:24 2024 (serrano)                */
 /*    Copyright   :  2023-24 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    url es6 module                                                   */
@@ -24,18 +24,7 @@ const Url = url.Url;
 /*---------------------------------------------------------------------*/
 /*    URL ...                                                          */
 /*---------------------------------------------------------------------*/
-const URL = function (href) {
-   const m = href.match(/([a-zA-Z]+:)\/\/(.*)/);
-
-   this.href = href;
-   if (m) {
-      this.path = m[2];
-      this.protocol = m[1];
-   } else {
-      this.path = href;
-      this.protocol = "file:";
-   }
-}
+const URL = url.URL;
 
 const fileURLToPath = url.fileURLToPath;
 const pathToFileURL = url.pathToFileURL; 

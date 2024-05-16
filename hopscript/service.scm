@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Thu May 16 11:38:52 2024 (serrano)                */
+;*    Last change :  Thu May 16 13:20:41 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -150,6 +150,16 @@
 			  (loop (cddr rest))))))))
 	 (else
 	  (error "JsServer" "wrong server" o)))))
+
+;*---------------------------------------------------------------------*/
+;*    obj->javascript-attr ::JsService ...                             */
+;*---------------------------------------------------------------------*/
+(define-method (obj->javascript-attr o::JsService op::output-port #!optional ctx)
+   (with-access::JsService o (svc)
+      (with-access::hop-service svc (path)
+	 (display "hop.server.import('" op)
+	 (display path op)
+	 (display "')" op))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-tostring ::JsHopFrame ...                                     */

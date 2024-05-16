@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Jan 26 08:54:32 2019                          */
-;*    Last change :  Tue May  7 18:48:38 2024 (serrano)                */
+;*    Last change :  Thu May 16 14:46:35 2024 (serrano)                */
 ;*    Copyright   :  2019-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop builtin JavaScript objects                                   */
@@ -112,7 +112,6 @@
       
       ;; html_head
       (js-bind-tags! %this builtin js-function-prototype LINK STYLE)
-      
       (js-bind-tags! %this builtin js-function-prototype IMG)
       
       ;; svg

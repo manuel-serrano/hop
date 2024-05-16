@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Apr 19 14:00:07 2023 (serrano)                */
-;*    Copyright   :  2013-23 Manuel Serrano                            */
+;*    Last change :  Thu May 16 19:31:01 2024 (serrano)                */
+;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript dates                        */
 ;*    -------------------------------------------------------------    */
@@ -122,6 +122,19 @@
 		  (set! time _time)
 		  (set! %val (js-donate _%val worker %_this))))
 	    nobj))))
+
+;*---------------------------------------------------------------------*/
+;*    scheme->response ::JsDate ...                                    */
+;*---------------------------------------------------------------------*/
+(define-method (scheme->response obj::JsDate req ctx)
+   (with-access::JsDate obj (time)
+      (instantiate::http-response-hop
+	 (server (hop-server-name))
+	 (backend (hop-xml-backend-secure))
+	 (content-type "text/string")
+	 (header '((Hop-Serialize: . "date") (Cache-Control: . "no-cache") (Pragma: . "no-cache")))
+	 (bodyp #t)
+	 (value (number->string time)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::JsDate ...                                           */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Thu May 16 08:31:29 2024 (serrano)                */
+;*    Last change :  Thu May 16 15:14:18 2024 (serrano)                */
 ;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -19,6 +19,9 @@
    
    (main main))
 
+(cond-expand
+   (enable-ssl (register-eval-srfi! 'enable-ssl)))
+   
 ;*---------------------------------------------------------------------*/
 ;*    signal-init! ...                                                 */
 ;*---------------------------------------------------------------------*/
@@ -69,6 +72,23 @@
       (if (string? source)
 	  (cons* (car (command-line)) source options)
 	  (cons (car (command-line)) options)))
+
+   ;; default dummy js compiler (for HTML tag embeded expressions)
+   (init-clientc-compiler!
+      :expressionc (lambda l (error "clientc" "not a compiler - expressionc" l))
+      :modulec (lambda l (error "clientc" "not a compiler - modulec" l))
+      :macroe list
+      :sexp->precompiled (lambda (obj debug) (js-trivial-compiler obj))
+      :precompiled->JS-expression js-precompiled-compiler
+      :precompiled->JS-statement js-precompiled-compiler
+      :precompiled->JS-return js-precompiled-compiler
+      :precompiled->sexp js-precompiled-compiler
+      :precompiled-free-variables (lambda l (error "clientc" "not a compiler" l))
+      :jsc (lambda l (error "clientc" "not a compiler" l))
+      :jsonc (lambda l (error "clientc" "not a compiler" l))
+      :htmlc (lambda l (error "clientc" "not a compiler" l))
+      :valuec (lambda (obj p host-compiler host-context host-reigster loc)
+		 (display (js-trivial-compiler obj) p)))
 
    ;; final configuration
    (when (hop-profile) (js-profile-init `(:server #t) #f #f))
@@ -125,6 +145,26 @@
       (thread-join! %worker)))
 
 ;*---------------------------------------------------------------------*/
+;*    js-precompiled-compiler ...                                      */
+;*---------------------------------------------------------------------*/
+(define (js-precompiled-compiler hs debug)
+   ;; see hopscheme/hopscheme.scm
+   (let ((obj (vector-ref hs 4)))
+      (js-trivial-compiler obj)))
+   
+;*---------------------------------------------------------------------*/
+;*    js-trivial-compiler ...                                          */
+;*---------------------------------------------------------------------*/
+(define (js-trivial-compiler obj)
+   (cond
+      ((eq? obj #unspecified) "undefined")
+      ((number? obj) obj)
+      ((string? obj) obj)
+      ((boolean? obj) (if obj "true" "false"))
+      ((null? obj) "null")
+      (else (error "js-trivial-compiler" "don't know how to compile" obj))))
+
+;*---------------------------------------------------------------------*/
 ;*    parse-args ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (parse-args! args)
@@ -177,6 +217,9 @@
 		(hop-sofile-directory)
 		(hop-cache-directory))))
 	 (section "Hopc options")
+	 (("-g?level" (help "Debug level"))
+	  (hop-sofile-enable-set! #f)
+	  (bigloo-debug-set! (string->integer level)))
 	 (("-O?level" (help "Optimization level (for newly compiled so files)"))
 	  (cond
 	     ((string=? level "")

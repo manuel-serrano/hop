@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Thu May 16 08:42:32 2024 (serrano)                */
+;*    Last change :  Thu May 16 14:57:47 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -1085,13 +1085,13 @@
 				(js-has-property attrs (& "rts") %this))
 			   (js-toboolean (js-get attrs (& "rts") %scope))
 			   (hop-runtime-client))))
-	       (apply <HEAD> :idiom "javascript" :%context %scope
-		  (unless (eq? rts #f)
-		     (<SCRIPT>
-			(format "hop[ '%root' ] = ~s"
-			   (dirname
-			      (js-jsstring->string
-				 (js-get %module (& "filename") %scope))))))
+	       (apply <HEAD> :idiom "javascript" :rts #f :%context %scope
+;* 		  (unless (eq? rts #f)                                 */
+;* 		     (<SCRIPT>                                         */
+;* 			(format "hop[ '%root' ] = ~s"                  */
+;* 			   (dirname                                    */
+;* 			      (js-jsstring->string                     */
+;* 				 (js-get %module (& "filename") %scope)))))) */
 		  (when (js-object? attrs)
 		     (js-object->keyword-arguments* attrs %this))
 		  (filter (lambda (n)

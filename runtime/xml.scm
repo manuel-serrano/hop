@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Tue May 14 12:48:58 2024 (serrano)                */
+;*    Last change :  Thu May 16 14:24:25 2024 (serrano)                */
 ;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -1058,17 +1058,20 @@ try { ~a } catch( e ) { hop_callback_handler(e, ~a); }"
    
    (with-access::xml-tilde obj (%js-statement body loc parent debug)
       (unless (string? %js-statement)
-	 (with-access::clientc (hop-clientc) (precompiled->JS-statement)
-	    (let ((stmt (precompiled->JS-statement body debug)))
-	       (if debug
-		   (match-case loc
-		      ((at (and (? string?) ?file) (and (? integer?) ?point))
-		       (set! %js-statement
-			  (js-catch-callback/location stmt parent file point)))
-		      (else
-		       (set! %js-statement
-			  (js-catch-callback stmt parent))))
-		   (set! %js-statement stmt)))))
+	 (if (eq? (hop-clientc) #unspecified)
+	     ;; js backend does need compilation
+	     (set! %js-statement (vector-ref body 4))
+	     (with-access::clientc (hop-clientc) (precompiled->JS-statement)
+		(let ((stmt (precompiled->JS-statement body debug)))
+		   (if debug
+		       (match-case loc
+			  ((at (and (? string?) ?file) (and (? integer?) ?point))
+			   (set! %js-statement
+			      (js-catch-callback/location stmt parent file point)))
+			  (else
+			   (set! %js-statement
+			      (js-catch-callback stmt parent))))
+		       (set! %js-statement stmt))))))
       %js-statement))
 
 ;*---------------------------------------------------------------------*/

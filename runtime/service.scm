@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Tue May 14 12:43:19 2024 (serrano)                */
+;*    Last change :  Thu May 16 18:16:31 2024 (serrano)                */
 ;*    Copyright   :  2006-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -402,30 +402,32 @@
 ;*    service-parse-request-get ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-generic (service-parse-request-get svc::hop-service req::http-request)
-   (with-access::http-request req (query path)
-      (with-access::hop-service svc (id ctx)
-	 (if (string? query)
-	     (let ((args (cgi-args->list query)))
-		(match-case args
-		   ((("hop-encoding" . "hop") ("vals" . ?vals))
-		    (string->obj vals #f ctx))
-		   ((("hop-encoding" . "json") ("vals" . ?vals))
-		    (json-encoded->obj vals))
-		   (else
-		    (cond
-		       ((and ctx (not (dsssl-service? svc)))
-			(service-pack-cgi-arguments ctx svc args))
-		       ((every string? args)
-			(if (dsssl-service? svc)
-			    (error id "bad arguments" path)
-			    (service-parse-request-get-args args)))
-		       ((every pair? args)
-			(if (dsssl-service? svc)
-			    (service-parse-request-get-args args)
-			    (error id "bad arguments" path)))
-		       (else
-			(error id "bad arguments" path))))))
-	     (service-pack-cgi-arguments ctx svc '())))))
+   (with-trace 'service-parse-request "service-parse-request-get"
+      (with-access::http-request req (query path)
+	 (with-access::hop-service svc (id ctx)
+	    (if (string? query)
+		(let ((args (cgi-args->list query)))
+		   (trace-item "cgi-args=" args)
+		   (match-case args
+		      ((("hop-encoding" . "hop") ("vals" . ?vals))
+		       (string->obj vals #f ctx))
+		      ((("hop-encoding" . "json") ("vals" . ?vals))
+		       (json-encoded->obj vals))
+		      (else
+		       (cond
+			  ((and ctx (not (dsssl-service? svc)))
+			   (service-pack-cgi-arguments ctx svc args))
+			  ((every string? args)
+			   (if (dsssl-service? svc)
+			       (error id "bad arguments" path)
+			       (service-parse-request-get-args args)))
+			  ((every pair? args)
+			   (if (dsssl-service? svc)
+			       (service-parse-request-get-args args)
+			       (error id "bad arguments" path)))
+			  (else
+			   (error id "bad arguments" path))))))
+		(service-pack-cgi-arguments ctx svc '()))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    service-parse-request-put ...                                    */
@@ -554,52 +556,66 @@
 	 (substring ctype (string-length "multipart/form-data; boundary=")
 	    (string-length ctype))))
    
-   (with-access::http-request req (content-length header socket transfer-encoding)
-      (let* ((pi (socket-input socket))
-	     (ctype (http-header-field header content-type:)))
-	 (cond
-	    ((multipart-boundary ctype)
-	     =>
-	     (lambda (boundary)
+   (with-trace 'service-parse-request "service-parse-request-post"
+      (with-access::http-request req (content-length header socket transfer-encoding)
+	 (let* ((pi (socket-input socket))
+		(ctype (http-header-field header content-type:)))
+	    (trace-item "ctype=" ctype)
+	    (trace-item "header=" header)
+	    (cond
+	       ((multipart-boundary ctype)
+		=>
+		(lambda (boundary)
+		   (with-access::hop-service svc (ctx)
+		      (let ((args (multipart->list
+				     pi content-length boundary
+				     transfer-encoding)))
+			 (cond
+			    ((hop-multipart? args)
+			     ;; hop-multipart is used for fix arity services.
+			     ;; arguments are unamed.
+			     (cond
+				((dsssl-service? svc)
+				 (multipart-value! (car args)))
+				(else
+				 (map! multipart-value! args))))
+			    ((dsssl-service? svc)
+			     (append-map multipart-dsssl-arg-value args))
+			    (ctx
+			     ;; standard post call, named string arguments
+			     (service-pack-cgi-arguments ctx svc
+				(map multipart-named-value args)))
+			    (else
+			     (map multipart-arg-value args)))))))
+	       ((not (string? ctype))
+		(let ((enc (http-header-field header :hop-serialize))
+		      (args (http-header-field header :hop-arguments)))
+		   (trace-item "enc=" enc)
+		   (trace-item "args=" args)
+		   (cond
+		      ((string=? enc "json")
+		       (with-access::hop-service svc (ctx)
+			  (call-with-input-string args
+			     (lambda (ip)
+				(json->obj ctx ip)))))
+		      (else
+		       '()))))
+	       ((string=? ctype "application/json")
 		(with-access::hop-service svc (ctx)
-		   (let ((args (multipart->list
-				  pi content-length boundary
-				  transfer-encoding)))
-		      (cond
-			 ((hop-multipart? args)
-			  ;; hop-multipart is used for fix arity services.
-			  ;; arguments are unamed.
-			  (cond
-			     ((dsssl-service? svc)
-			      (multipart-value! (car args)))
-			     (else
-			      (map! multipart-value! args))))
-			 ((dsssl-service? svc)
-			  (append-map multipart-dsssl-arg-value args))
-			 (ctx
-			  ;; standard post call, named string arguments
+		   (json->obj ctx pi)))
+	       ((string=? ctype "application/x-www-form-urlencoded")
+		(let ((body (read-chars (elong->fixnum content-length) pi)))
+		   (with-access::hop-service svc (ctx)
+		      (if (and ctx (not (dsssl-service? svc)))
 			  (service-pack-cgi-arguments ctx svc
-			     (map multipart-named-value args)))
-			 (else
-			  (map multipart-arg-value args)))))))
-	     ((not (string? ctype))
-	      '())
-	     ((string=? ctype "application/json")
-	      (with-access::hop-service svc (ctx)
-		 (json->obj ctx pi)))
-	     ((string=? ctype "application/x-www-form-urlencoded")
-	      (let ((body (read-chars (elong->fixnum content-length) pi)))
-		 (with-access::hop-service svc (ctx)
-		    (if (and ctx (not (dsssl-service? svc)))
-			(service-pack-cgi-arguments ctx svc
-			   (cgi-args->list body))
-			(service-parse-request-get-args
-			   (cgi-args->list body))))))
-	     (else
-	      (with-access::hop-service svc (id)
-		 (error "service-parse-request"
-		    (format "Illegal HTTP POST request type (~a)" id)
-		    ctype)))))))
+			     (cgi-args->list body))
+			  (service-parse-request-get-args
+			     (cgi-args->list body))))))
+	       (else
+		(with-access::hop-service svc (id)
+		   (error "service-parse-request"
+		      (format "Illegal HTTP POST request type (~a)" id)
+		      ctype))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    service-parse-request ...                                        */
@@ -609,7 +625,7 @@
 ;*    of these verbs, different encoding can be used by the caller.    */
 ;*---------------------------------------------------------------------*/
 (define (service-parse-request svc::hop-service req::http-request)
-   (with-trace 2 'service-parse-request
+   (with-trace 'service-parse-request "service-parser-request"
       (with-access::http-request req (method path abspath query)
 	 (trace-item "path=" path)
 	 (trace-item "abspath=" (string-for-read abspath))
@@ -644,6 +660,13 @@
       (cond
 	 ((not vals)
 	  (error id "Illegal service arguments encoding" `(,id)))
+	 ((correct-arity? proc 2)
+	  (let ((env (current-dynamic-env))
+		(name id))
+	     ($env-push-trace env name #f)
+	     (let ((aux (proc req vals)))
+		($env-pop-trace env)
+		aux)))
 	 ((or (pair? vals) (null? vals))
 	  (if (correct-arity? proc (+fx 1 (length vals)))
 	      (let ((env (current-dynamic-env))
@@ -656,13 +679,6 @@
 		 (format "Wrong number of arguments (~a/~a)" (length vals)
 		    (-fx (procedure-arity proc) 1))
 		 `(,id ,@vals))))
-	 ((correct-arity? proc 2)
-	  (let ((env (current-dynamic-env))
-		(name id))
-	     ($env-push-trace env name #f)
-	     (let ((aux (proc req vals)))
-		($env-pop-trace env)
-		aux)))
 	 (else
 	  (error id
 	     (format "Wrong number of arguments (1/~a)"

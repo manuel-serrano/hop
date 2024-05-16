@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Fri Apr  5 10:29:53 2024 (serrano)                */
+;*    Last change :  Thu May 16 15:01:58 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for client side code).                                   */
@@ -1502,13 +1502,7 @@
 	 ((not (memq (context-get ctx :site) '(client tilde)))
 	  path)
 	 ((string? path)
-	  (if (string-contains path "mjs=")
-	      path
-	      (let* ((p (substring path 1 (-fx (string-length path) 1)))
-		     (i (string-index p #\?)))
-		 (if i
-		     (string-append "\"" p "&mjs=" (substring p 0 i) "\"")
-		     (string-append "\"" p "?mjs=" p "\"")))))
+	  path)
 	 (else
 	  (let ((p (gensym 'path)))
 	     `(let ((,p ,path))

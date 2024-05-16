@@ -27,6 +27,7 @@ exports.resolveObject = urlResolveObject;
 exports.format = urlFormat;
 
 exports.Url = Url;
+exports.URL = URL;
 
 exports.fileURLToPath = fileURLToPath;
 exports.pathToFileURL = pathToFileURL;

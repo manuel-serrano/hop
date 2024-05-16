@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Wed May 15 09:30:12 2024 (serrano)                */
+;*    Last change :  Thu May 16 19:04:49 2024 (serrano)                */
 ;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -120,6 +120,12 @@
 	 (http-write-line p)
 	 (display-string rep p)))
 
+   (define (response-text value conn p ctx)
+      (http-write-line p "Content-Length: " (string-length value))
+      (http-write-line p "Connection: " conn)
+      (http-write-line p)
+      (display-string value p))
+
    (define (response-x-javascript value p padding ctx)
       (http-write-line p "Connection: close")
       (http-write-line p)
@@ -141,6 +147,7 @@
       (byte-array->json (serialize value ctx) p))
    
    (define (response-json value p padding ctx)
+      (http-write-line p "Hop-Serialize: json")
       (http-write-line p "Connection: close")
       (http-write-line p)
       (if padding
@@ -183,6 +190,9 @@
 		      ;; standard javascript serialization
 		      (set! conn 'close)
 		      (response-x-javascript value p padding ctx))
+		     ((string-prefix? "text/string" ctype)
+		      ;; standard javascript serialization
+		      (response-text value conn p ctx))
 		     ((string-prefix? "application/x-url-hop" ctype)
 		      ;; fast path, bigloo serialization
 		      (response-x-url-hop value conn p ctx))
@@ -753,6 +763,15 @@
 	     (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
 	     (bodyp (not (eq? method 'HEAD)))
 	     (body obj)))
+	 ((eq? obj #unspecified)
+	  (instantiate::http-response-hop
+	     (server (hop-server-name))
+	     (backend (hop-xml-backend-secure))
+	     (content-type "application/x-javascript")
+	     (charset (hop-charset))
+	     (header '((Hop-Serialize: . "undefined") (Cache-Control: . "no-cache") (Pragma: . "no-cache")))
+	     (bodyp (not (eq? method 'HEAD)))
+	     (value obj)))
 	 (else
 	  (let* ((c (assq hop-serialize: header))
 		 (ctype (cond
