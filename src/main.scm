@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Wed May 15 14:52:33 2024 (serrano)                */
+;*    Last change :  Fri May 17 08:37:28 2024 (serrano)                */
 ;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -62,7 +62,10 @@
 	 (cond-expand
 	    (gc ($bgl-gc-verbose-set! #t))
 	    (else #unspecified))))
-   ;; catch critical signals
+   ;; debug traces
+   (when (getenv "BIGLOOTRACE")
+      (bigloo-debug-set! 2))
+     ;; catch critical signals
    (signal-init!)
    ;; set the Hop cond-expand identification
    (for-each register-srfi! (cons 'hop-server (hop-srfis)))

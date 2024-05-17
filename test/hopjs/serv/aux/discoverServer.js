@@ -1,20 +1,20 @@
 "use hopscript";
 
-const assert = require( 'assert' );
+const assert = require('assert');
 
-const server = new hop.Server( 'localhost' );
+const server = new hop.Server('localhost');
 
-assert.ok( server instanceof hop.Server );
+assert.ok(server instanceof hop.Server);
 
 let counter = 0;
 
-const addSvc = service( n ) {
-   console.log( 'server: addSvc service' );
+const addSvc = service(n) {
+   console.log('server: addSvc service');
    counter += n;
 }
 
-server.register = service( clientServer ) {
-   console.log( 'server: new registration' );
+server.register = service(clientServer) {
+   console.log('server: new registration');
    server.addSvc = addSvc;
    server.count = service() {
       return counter;
@@ -22,4 +22,4 @@ server.register = service( clientServer ) {
    return server;
 }
 
-postMessage( server );
+postMessage(server);

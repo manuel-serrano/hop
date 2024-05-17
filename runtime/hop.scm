@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Tue May 14 12:42:20 2024 (serrano)                */
+;*    Last change :  Fri May 17 10:28:35 2024 (serrano)                */
 ;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -320,7 +320,7 @@
 ;*---------------------------------------------------------------------*/
 (define (make-http-callback url req success fail user-or-auth ctx responsetype
 	   json-parser x-javascript-parser)
-   
+  
    (define (default-error-handling status header p)
       (if (procedure? fail)
 	  (fail (instantiate::xml-http-request
@@ -337,6 +337,7 @@
    (lambda (p status header clength tenc)
       (with-trace 'with-hop "http-callback"
 	 (trace-item "thread=" (current-thread))
+	 (trace-item "url=" url)
 	 (trace-item "status=" status " content-length=" clength)
 	 (when (and (input-port? p) (>elong clength #e0))
 	    (input-port-fill-barrier-set! p (elong->fixnum clength)))

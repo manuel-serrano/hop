@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Thu May 16 18:16:31 2024 (serrano)                */
+;*    Last change :  Fri May 17 08:40:31 2024 (serrano)                */
 ;*    Copyright   :  2006-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -566,6 +566,7 @@
 	       ((multipart-boundary ctype)
 		=>
 		(lambda (boundary)
+		   (trace-item "boundary=" boundary)
 		   (with-access::hop-service svc (ctx)
 		      (let ((args (multipart->list
 				     pi content-length boundary
@@ -660,13 +661,6 @@
       (cond
 	 ((not vals)
 	  (error id "Illegal service arguments encoding" `(,id)))
-	 ((correct-arity? proc 2)
-	  (let ((env (current-dynamic-env))
-		(name id))
-	     ($env-push-trace env name #f)
-	     (let ((aux (proc req vals)))
-		($env-pop-trace env)
-		aux)))
 	 ((or (pair? vals) (null? vals))
 	  (if (correct-arity? proc (+fx 1 (length vals)))
 	      (let ((env (current-dynamic-env))
@@ -679,6 +673,13 @@
 		 (format "Wrong number of arguments (~a/~a)" (length vals)
 		    (-fx (procedure-arity proc) 1))
 		 `(,id ,@vals))))
+	 ((correct-arity? proc 2)
+	  (let ((env (current-dynamic-env))
+		(name id))
+	     ($env-push-trace env name #f)
+	     (let ((aux (proc req vals)))
+		($env-pop-trace env)
+		aux)))
 	 (else
 	  (error id
 	     (format "Wrong number of arguments (1/~a)"

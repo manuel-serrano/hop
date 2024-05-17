@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Thu May 16 16:38:52 2024 (serrano)                */
+;*    Last change :  Fri May 17 09:24:39 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -134,6 +134,7 @@
 	      (uvhandles::vector (default (vector (cons #unspecified #unspecified) (cons #unspecified #unspecified) (cons #unspecified #unspecified)))) 
 	      (%call (default #f))
 	      (handlers::pair-nil (default '()))
+	      (services::pair-nil (default '()))
 	      (%exn (default #unspecified)))
 
 	   (class MessageEvent::event

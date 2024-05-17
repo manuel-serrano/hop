@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 15 11:28:31 2004                          */
-;*    Last change :  Tue May 14 12:48:04 2024 (serrano)                */
+;*    Last change :  Fri May 17 10:41:05 2024 (serrano)                */
 ;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP misc                                                         */
@@ -303,14 +303,18 @@
 ;*---------------------------------------------------------------------*/
 (define (make-url-name directory file)
    (let* ((ldir (string-length directory)))
-      (if (and (=fx ldir 1) (char=? (string-ref directory 0) #\.))
-	  file
+      (cond
+	 ((and (=fx ldir 1) (char=? (string-ref directory 0) #\.))
+	  file)
+	 ((char=? (string-ref file 0) #\/)
+	  (string-append directory file))
+	 (else
 	  (let* ((lfile (string-length file))
 		 (len (+fx ldir (+fx lfile 1)))
 		 (str (make-string len #\/)))
 	     (blit-string-ur! directory 0 str 0 ldir)
 	     (blit-string-ur! file 0 str (+fx 1 ldir) lfile)
-	     str))))
+	     str)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    make-hop-url-name ...                                            */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Thu May 16 20:03:35 2024 (serrano)                */
+;*    Last change :  Fri May 17 08:04:52 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -2466,12 +2466,16 @@
    (define (class-element cname super?)
       (cond
 	 ((peek-token-id? 'static)
-	  (consume-token! 'ID)
-	  (if (peek-token-id? 'async)
-	      (begin
+	  (let ((tok (consume-token! 'ID)))
+	     (cond
+		((peek-token-id? 'async)
 		 (consume-token! 'ID)
 		 (class-method #t #t cname super?))
-	      (class-method #f #t cname super?)))
+		((eq? (peek-token-type) 'LPAREN)
+		 (token-push-back! tok)
+		 (class-method #f #f cname super?))
+		(else
+		 (class-method #f #t cname super?)))))
 	 ((peek-token-id? 'async)
 	  (consume-token! 'ID)
 	  (class-method #t #f cname super?))

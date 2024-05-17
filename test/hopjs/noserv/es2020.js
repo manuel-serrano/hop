@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Jun 30 17:54:33 2015                          */
-/*    Last change :  Mon Jun 26 08:22:04 2023 (serrano)                */
-/*    Copyright   :  2015-23 Manuel Serrano                            */
+/*    Last change :  Fri May 17 07:32:04 2024 (serrano)                */
+/*    Copyright   :  2015-24 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 2020 features                                 */
 /*=====================================================================*/
@@ -219,7 +219,61 @@ assert.equal(nullishMdnE({ duration: 125 }).duration, 125, "nullishMdnEb");
 assert.equal(nullishMdnE({}).duration, 100, "nullishMdnEc");
 assert.equal(nullishMdnE({}).speed, 25, "nullishMdnEd");
 
+/*---------------------------------------------------------------------*/
+/*    Logical assignments                                              */
+/*---------------------------------------------------------------------*/
+function mdnAndAssignment() {
+   let a = 1;
+   let b = 0;
 
+   a &&= 2;
+
+   b &&= 2;
+
+   return a == 2 && b == 0;
+}
+
+function mdnAndAssignment2() {
+   let x = 0;
+   let y = 1;
+
+   x &&= 0; if (x !== 0) return false;
+   x &&= 1; if (x !== 0) return false;
+   y &&= 1; if (y !== 1) return false;
+   y &&= 0; if (y !== 0) return false;
+   return true;
+}
+
+function mdnOrAssignment() {
+   const a = { duration: 50, title: '' };
+   a.duration ||= 10; if (a.duration !== 50) return false;
+   a.title ||= "title is emtpy"; if (a.title !== "title is emtpy") return false;
+   return true;
+}
+
+function mdnOrAssignment2() {
+   const x = {
+      get value() {
+	 return 1;
+      },
+      set value(v) {
+	 throw "should not be called";
+      },
+   };
+
+   x.value ||= 2;
+   return true;
+}
+
+console.log("logical assginments");
+console.log("   mdnAndAssignment...");
+assert.ok(mdnAndAssignment());
+console.log("   mdnAndAssignment2...");
+assert.ok(mdnAndAssignment2());
+console.log("   mdnOrAssignment...");
+assert.ok(mdnOrAssignment());
+console.log("   mdnOrAssignment2...");
+assert.ok(mdnOrAssignment2());
 
 
 

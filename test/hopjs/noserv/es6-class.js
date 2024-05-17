@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep  2 01:49:55 2017                          */
-/*    Last change :  Sun Jan  2 08:44:07 2022 (serrano)                */
-/*    Copyright   :  2017-22 Manuel Serrano                            */
+/*    Last change :  Fri May 17 07:51:05 2024 (serrano)                */
+/*    Copyright   :  2017-24 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 1.6 classes                                   */
 /*=====================================================================*/
@@ -1177,4 +1177,14 @@ assert.deepEqual(ircs2, {x: 100, y: 200, yy: 201}, "new IKCS2");
 assert.deepEqual(irsss3, {x: 100, y: 200, z: 300}, "new IKSSS3");
 assert.deepEqual(irssc3, {x: 103, xx:103, y: 203, z: 303}, "new IKSSC3");
 
+/*---------------------------------------------------------------------*/
+/*    fields names                                                     */
+/*---------------------------------------------------------------------*/
+class MNAMES {
+   static() {
+      return true;
+   }
+}
 
+console.log("field names");
+assert.ok(new MNAMES().static, "method name");

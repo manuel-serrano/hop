@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Mon May 13 13:07:58 2024 (serrano)                */
+;*    Last change :  Fri May 17 09:24:17 2024 (serrano)                */
 ;*    Copyright   :  2014-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -463,7 +463,8 @@
 				 (js-worker-tick th)
 				 (with-access::JsLoop loop (exiting actions-count mutex)
 				    (synchronize mutex
-				       (when (and (=fx actions-count 0)
+				       (when (and (null? services)
+						  (=fx actions-count 0)
 						  (not (active-subworkers? th))
 						  (or (not keep-alive)
 						      exiting))
@@ -520,9 +521,8 @@
 		  (exit %retval)))
 	    (with-access::WorkerHopThread th (svctable subworkers)
 	       ;; unregister all the worker services
-	       (tprint "TODO UNREGISTER ON WORKER TERMINATION...")
-	       '(hashtable-for-each (lambda (k r) (unregister-service! r))
-		  svctable)
+	       (tprint "------------------------------------------")
+	       (for-each unregister-service! services)
 	       ;; tell the subworkers that they will never receive
 	       ;; any new message from their parent
 	       (for-each (lambda (w)
