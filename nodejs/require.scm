@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Thu May 16 14:57:47 2024 (serrano)                */
+;*    Last change :  Sat May 18 07:38:17 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -2783,10 +2783,20 @@
 		      (e (assoc "exports" o)))
 		  (trace-item "m=" e)
 		  (when (pair? e)
-		     (let ((c (assoc (string-append "./" (basename file))
-				 (cdr e))))
-			(when (pair? c)
-			   (make-file-path dir (cdr c))))))))))
+		     (cond
+			((string? e)
+			 (let ((c (assoc (string-append "./" (basename file))
+				     (cdr e))))
+			    (when (pair? c)
+			       (make-file-path dir (cdr c)))))
+			 ((pair? e)
+			  (let ((c (or (assoc "hop" (cdr e))
+				       (assoc "default" (cdr e)))))
+			     (when (pair? c)
+				(make-file-path dir (cdr c)))))
+			 (else
+			  (js-raise-type-error %this
+			     "illegal package.json \"exports\" entry ~s" e)))))))))
 
    (define (resolve-package pkg dir)
       (with-trace 'require "resolve-package"

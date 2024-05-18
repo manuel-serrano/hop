@@ -314,6 +314,7 @@ clean:
 
 clean-npm:
 	rm -rf npm
+	$(MAKE) -C node_modules/hop/node clean
 	$(MAKE) -C node_modules/hopc/node clean
 	$(MAKE) -C node_modules/exif/node clean
 
@@ -537,16 +538,24 @@ npm-dir:
 
 npm-module-default-build:
 	mkdir -p npm/$(MODULEDIR)
-	mkdir -p npm/$(MODULEDIR)/lib
+	if [ -f node_modules/$(MODULE)/hop/Makefile ]; then \
+           $(MAKE) -C node_modules/$(MODULE)/hop NPMDIR=../../../npm/$(MODULEDIR) clean; \
+	fi
 	if [ -f node_modules/$(MODULE)/node/Makefile ]; then \
            $(MAKE) -C node_modules/$(MODULE)/node NPMDIR=../../../npm/$(MODULEDIR); \
 	fi
 	cp node_modules/$(MODULE)/package.json npm/$(MODULEDIR)
-	cp node_modules/$(MODULE)/lib/*.*js npm/$(MODULEDIR)
-	-cp node_modules/$(MODULE)/lib/*.d.ts npm/$(MODULEDIR)/lib 2> /dev/null
-	-cp node_modules/$(MODULE)/type/*.d.ts npm/$(MODULEDIR)/lib 2> /dev/null
 	cp -r node_modules/$(MODULE)/test npm/$(MODULEDIR)
-	cp node_modules/$(MODULE)/node/*.*s npm/$(MODULEDIR)/lib
+	cp -r node_modules/$(MODULE)/type npm/$(MODULEDIR)
+	cp -r node_modules/$(MODULE)/node npm/$(MODULEDIR)
+	cp -r node_modules/$(MODULE)/hop npm/$(MODULEDIR)
+	touch npm/$(MODULEDIR)/hop/Makefile~
+	$(RM) -f npm/$(MODULEDIR)/hop/Makefile npm/$(MODULEDIR)/hop/*~
+	touch npm/$(MODULEDIR)/node/Makefile~
+	$(RM) -f npm/$(MODULEDIR)/node/Makefile npm/$(MODULEDIR)/node/*~
+	if [ -f node_modules/$(MODULE)/hop/Makefile ]; then \
+           $(MAKE) -C node_modules/$(MODULE)/hop NPMDIR=../../../npm/$(MODULEDIR) postbuild clean; \
+        fi
 	if [ -f node_modules/$(MODULE)/node/Makefile ]; then \
            $(MAKE) -C node_modules/$(MODULE)/node NPMDIR=../../../npm/$(MODULEDIR) postbuild clean; \
         fi

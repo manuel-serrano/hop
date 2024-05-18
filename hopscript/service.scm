@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Fri May 17 09:25:27 2024 (serrano)                */
+;*    Last change :  Sat May 18 06:57:03 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -77,7 +77,7 @@
 		(handler (lambda (svc req)
 			    (js-worker-exec-throws worker svcn
 			       (lambda (%this)
-				  (service-invoke svc req
+				  (service-invoke-call svc req
 				     (js-service-parse-request %this svc req))))))
 		(hopsvc (cond
 			   ((service-exists? path table)
@@ -1035,12 +1035,16 @@
 				      (js-worker-exec-throws worker svcn
 					 (service-debug id
 					    (lambda (%this)
-					       (service-invoke svc req
-						  (js-service-parse-request %this svc req))))))
+					       (let ((env (current-dynamic-env)))
+						  ($env-push-trace env svcn #f)
+						  (let ((tmp (service-invoke-call svc req
+								(js-service-parse-request %this svc req))))
+						     ($env-pop-trace env)
+						     tmp))))))
 				   (lambda (svc req)
 				      (js-worker-exec-throws worker svcn
 					 (lambda (%this)
-					    (service-invoke svc req
+					    (service-invoke-call svc req
 					       (js-service-parse-request %this svc req)))))))
 		      (args (if (js-procedure? impl)
 				(fix-args (js-get impl (& "length") %this))

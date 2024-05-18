@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Fri May 17 08:40:31 2024 (serrano)                */
+;*    Last change :  Sat May 18 06:55:46 2024 (serrano)                */
 ;*    Copyright   :  2006-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -61,7 +61,8 @@
 	    (hop-apply-nice-url::bstring ::bstring ::pair-nil #!optional (ctx 'hop-to-hop))
 	    (hop-apply-url::bstring ::bstring ::pair-nil #!optional (ctx 'hop-to-hop))
 	    (hop-request-service-name::bstring ::http-request)
-	    (service-invoke ::hop-service ::http-request ::obj)
+	    (service-invoke-apply ::hop-service ::http-request ::obj)
+	    (service-invoke-call ::hop-service ::http-request ::obj)
 	    (service-apply ::hop-service ::http-request)
 	    (default-service-handler ::hop-service ::http-request)
 	    (service-parse-request ::hop-service ::http-request)
@@ -647,9 +648,9 @@
 		      method))))))))
 
 ;*---------------------------------------------------------------------*/
-;*    service-invoke ...                                               */
+;*    service-invoke-apply ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (service-invoke svc::hop-service req::http-request vals)
+(define (service-invoke-apply svc::hop-service req::http-request vals)
    
    (define (invoke-trace req id vals)
       (hop-verb 2 (hop-color req req " INVOKE.svc") " "
@@ -673,18 +674,27 @@
 		 (format "Wrong number of arguments (~a/~a)" (length vals)
 		    (-fx (procedure-arity proc) 1))
 		 `(,id ,@vals))))
-	 ((correct-arity? proc 2)
-	  (let ((env (current-dynamic-env))
-		(name id))
-	     ($env-push-trace env name #f)
-	     (let ((aux (proc req vals)))
-		($env-pop-trace env)
-		aux)))
 	 (else
 	  (error id
 	     (format "Wrong number of arguments (1/~a)"
 		(-fx (procedure-arity proc) 1))
 	     `(,id ,vals))))))
+
+;*---------------------------------------------------------------------*/
+;*    service-invoke-call ...                                          */
+;*---------------------------------------------------------------------*/
+(define (service-invoke-call svc::hop-service req::http-request vals)
+   
+   (define (invoke-trace req id vals)
+      (hop-verb 2 (hop-color req req " INVOKE.svc") " "
+	 (with-output-to-string (lambda () (write-circle (cons id vals))))
+	 "\n"))
+   
+   (with-access::hop-service svc (id proc args ctx)
+      (invoke-trace req id vals)
+      (if vals
+	  (proc req vals)
+	  (error id "Illegal service arguments encoding" `(,id)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    service-apply ...                                                */
@@ -720,7 +730,7 @@
 ;*    default-service-handler ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (default-service-handler svc req)
-   (service-invoke svc req (service-parse-request svc req)))
+   (service-invoke-apply svc req (service-parse-request svc req)))
 
 ;*---------------------------------------------------------------------*/
 ;*    procedure->service ...                                           */

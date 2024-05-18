@@ -1440,11 +1440,15 @@ cat $docker.in \
     >> $docker
 
 # node_modules
-for d in lib node; do
+for d in hop node; do
    echo "// !!! Automatically generated file (configure), don't edit" > node_modules/hop/$d/config.mjs
    cat node_modules/hop/config.mjs.in | sed -e "s|@VERSION@|$version|" -e "s|@BUILDTAG@|$buildtag|" >> node_modules/hop/$d/config.mjs
 done
 
+for d in hop hopc readlines exif; do
+  cat node_modules/$d/package.json.in | sed -e "s|@VERSION@|$version|" -e "s|@BUILDTAG@|$buildtag|" > node_modules/$d/package.json
+done
+   
 # lib/hop.init
 init=lib/hop/$version/hop.init
 
