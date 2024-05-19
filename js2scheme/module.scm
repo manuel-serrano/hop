@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 15 15:16:16 2018                          */
-;*    Last change :  Tue May  7 19:26:40 2024 (serrano)                */
+;*    Last change :  Sun May 19 08:59:37 2024 (serrano)                */
 ;*    Copyright   :  2018-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES6 Module handling                                              */
@@ -540,19 +540,36 @@
 		       (cons (file-name-canonicalize src) 'file)
 		       (loop (cdr sufs)))))))))
 
-   (define (resolve-package-exports file)
-      (let* ((dir (dirname file))
-	     (json (make-file-name dir "package.json")))
-	 (when (file-exists? json)
-	    (let* ((o (load-package-json json loc))
-		   (e (assoc "exports" o)))
-	       (when (pair? e)
-		  (let ((c (assoc (string-append "./" (basename file))
-			      (cdr e))))
-		     (when (pair? c)
-			(cons (make-file-path dir (cdr c)) 'file))))))))
+   (define (resolve-package-exports x::bstring json)
+      ;; see nodejs/require.scm
+      (let ((e (assoc "exports" json)))
+	 (trace-item "m=" e)
+	 (when (pair? e)
+	    (cond
+	       ((string? (cdr e))
+		(resolve-file-or-directory (cdr e) x))
+	       ((pair? (cdr e))
+		(let ((f (assoc "." (cdr e))))
+		   (when (pair? f)
+		      (cond
+			 ((string? (cdr f))
+			  (resolve-file-or-directory (cdr f) x))
+			 ((pair? (cdr f))
+			  (let ((c (or (assoc "hop" (cdr f))
+				       (assoc "default" (cdr f)))))
+			     (when (pair? c)
+				(resolve-file-or-directory (cdr c) x))))
+			 (else
+			  (error "resolve" "Illegal package.json" x))))))
+	       (else
+		(error "resolve" "Illegal package.json" x))))))
 
-   (define (resolve-package pkg dir)
+   (define (resolve-package-key key x::bstring json)
+      (let ((c (assoc key json)))
+	 (when (pair? c)
+	    (resolve-file-or-directory (cdr c) x))))
+
+   (define (resolve-package x)
       (with-handler
 	 (lambda (e)
 	    (with-access::&exception e (fname location)
@@ -560,27 +577,25 @@
 		  (set! fname (cadr loc))
 		  (set! location (caddr loc)))
 	       (raise e)))
-	 (let* ((o (load-package-json pkg loc))
-		(m (assoc "main" o)))
-	    (if (pair? m)
-		(cdr m)
-		(let ((idx (make-file-name dir "index.js")))
-		   (when (file-exists? idx)
-		      idx))))))
+	 (let ((json (make-file-name x "package.json")))
+	    (when (file-exists? json)
+	       (let ((json (load-package-json json loc)))
+		  (or (resolve-package-exports x json)
+		      (resolve-package-key "main" x json)
+		      (resolve-package-key "server" x json)))))))
+
+   (define (resolve-index x)
+      (let ((p (make-file-name x "index.js")))
+	 (when (file-exists? p)
+	    (cons (file-name-canonicalize p) 'file))))
    
    (define (resolve-directory x)
-      (let ((json (make-file-name x "package.json")))
-	 (or (and (file-exists? json)
-		  (let ((m (resolve-package json x)))
-		     (when (string? m)
-			(resolve-file-or-directory m x))))
-	     (let ((p (make-file-name x "index.js")))
-		(when (file-exists? p)
-		   (cons (file-name-canonicalize p) 'file))))))
+      (when (directory? x)
+	 (or (resolve-package x)
+	     (resolve-index x))))
 
    (define (resolve-path-file-or-directory path)
-      (or (resolve-package-exports path)
-	  (resolve-file path)
+      (or (resolve-file path)
 	  (resolve-directory path)))
    
    (define (resolve-file-or-directory x dir)

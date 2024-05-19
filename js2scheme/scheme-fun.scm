@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Wed May 15 15:34:17 2024 (serrano)                */
+;*    Last change :  Sun May 19 11:12:26 2024 (serrano)                */
 ;*    Copyright   :  2017-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -604,33 +604,36 @@
 			,(flatten-stmt stmt)))))
 	     (flatten-stmt (j2s-scheme body mode return ctx)))))
 
-   (with-access::J2SFun this (loc body need-bind-exit-return
-				vararg mode params generator thisp
-				new-target constrsize)
-      (let ((body (cond
-		     (generator
-		      (multiple-value-bind (init-block body-block)
-			 (generator-split-body body)
+   (with-trace 'scheme "jsfun->lambda"
+      (with-access::J2SFun this (loc body need-bind-exit-return
+				   vararg mode params generator thisp
+				   new-target constrsize)
+	 (trace-item "generator=" generator)
+	 (trace-item "need-bind-exit-return=" need-bind-exit-return)
+	 (let ((body (cond
+			(generator
+			 (multiple-value-bind (init-block body-block)
+			    (generator-split-body body)
+			    (with-access::J2SNode body (loc)
+			       (epairify loc
+				  (generator-body constrsize
+				     (j2s-scheme init-block mode return ctx)
+				     (this-body thisp body-block mode))))))
+			(need-bind-exit-return
 			 (with-access::J2SNode body (loc)
 			    (epairify loc
-			       (generator-body constrsize
-				  (j2s-scheme init-block mode return ctx)
-				  (this-body thisp body-block mode))))))
-		     (need-bind-exit-return
-		      (with-access::J2SNode body (loc)
-			 (epairify loc
-			    (return-body
-			       (this-body thisp body mode)))))
-		     (else
-		      (let ((bd (this-body thisp body mode)))
-			 (with-access::J2SNode body (loc)
-			    (epairify loc
-			       (if (pair? bd) bd `(begin ,bd)))))))))
-	 (jsfun->lambda/body this mode return ctx
-	    (if (memq new-target '(global))
-		`(let ((new-target (js-new-target-pop! %this)))
-		    ,body)
-		body)))))
+			       (return-body
+				  (this-body thisp body mode)))))
+			(else
+			 (let ((bd (this-body thisp body mode)))
+			    (with-access::J2SNode body (loc)
+			       (epairify loc
+				  (if (pair? bd) bd `(begin ,bd)))))))))
+	    (jsfun->lambda/body this mode return ctx
+	       (if (memq new-target '(global))
+		   `(let ((new-target (js-new-target-pop! %this)))
+		       ,body)
+		   body))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2sfun->ctor ...                                                 */

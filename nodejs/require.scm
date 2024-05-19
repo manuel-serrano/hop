@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Sat May 18 07:38:17 2024 (serrano)                */
+;*    Last change :  Sun May 19 08:52:02 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -66,6 +66,12 @@
 	   (nodejs-language-toplevel-loader)
 	   (nodejs-language-notify-error ::bstring ::bstring)
 	   (nodejs-register-user-loader! ::JsGlobalObject ::bstring)))
+
+;*---------------------------------------------------------------------*/
+;*    require-suffixes ...                                             */
+;*---------------------------------------------------------------------*/
+(define require-suffixes
+   '(".js" ".mjs" ".hop" ".ts" ".so" ".json" ".node" ".hss" ".css"))
 
 ;*---------------------------------------------------------------------*/
 ;*    env-debug ...                                                    */
@@ -2733,23 +2739,6 @@
 ;*---------------------------------------------------------------------*/
 (define (builtin-resolve name::bstring %this::JsGlobalObject %module paths::pair-nil mode::symbol)
    
-   (define (resolve-file x)
-      (cond
-	 ((and (file-exists? x) (not (directory? x)))
-	  (if (string-suffix? ".hz" x)
-	      (resolve-hz x)
-	      (file-name-canonicalize x)))
-	 ((string-suffix? ".hz" x)
-	  (resolve-autoload-hz x))
-	 (else
-	  (let loop ((sufs '(".js" ".mjs" ".hop" ".ts" ".so" ".json" ".node" ".hss" ".css")))
-	     (when (pair? sufs)
-		(let* ((suffix (car sufs))
-		       (src (string-append x suffix)))
-		   (if (and (file-exists? src) (not (directory? src)))
-		       (file-name-canonicalize src)
-		       (loop (cdr sufs)))))))))
-   
    (define (resolve-autoload-hz hz)
       (with-trace 'require "nodejs-resolve.resolve-autoload-hz"
 	 (trace-item "hz=" hz)
@@ -2773,72 +2762,90 @@
 		(resolve-directory dir)
 		#f))))
    
-   (define (resolve-package-exports file)
+   (define (resolve-package-exports x::bstring json)
       (with-trace 'require "resolve-package-exports"
-	 (trace-item "file=" file)
-	 (let* ((dir (dirname file))
-		(json (make-file-name dir "package.json")))
-	    (when (file-exists? json)
-	       (let* ((o (load-package-json json %this))
-		      (e (assoc "exports" o)))
-		  (trace-item "m=" e)
-		  (when (pair? e)
-		     (cond
-			((string? e)
-			 (let ((c (assoc (string-append "./" (basename file))
-				     (cdr e))))
-			    (when (pair? c)
-			       (make-file-path dir (cdr c)))))
-			 ((pair? e)
-			  (let ((c (or (assoc "hop" (cdr e))
-				       (assoc "default" (cdr e)))))
-			     (when (pair? c)
-				(make-file-path dir (cdr c)))))
-			 (else
-			  (js-raise-type-error %this
-			     "illegal package.json \"exports\" entry ~s" e)))))))))
+	 ;; see js2scheme/module.scm
+	 (let ((e (assoc "exports" json)))
+	    (trace-item "m=" e)
+	    (when (pair? e)
+	       (cond
+		  ((string? (cdr e))
+		   (resolve-file-or-directory (cdr e) x))
+		  ((pair? (cdr e))
+		   (let ((f (assoc "." (cdr e))))
+		      (when (pair? f)
+			 (cond
+			    ((string? (cdr f))
+			     (resolve-file-or-directory (cdr f) x))
+			    ((pair? (cdr f))
+			     (let ((c (or (assoc "hop" (cdr f))
+					  (assoc "default" (cdr f)))))
+				(when (pair? c)
+				   (resolve-file-or-directory (cdr c) x))))
+			    (else
+			     (error "resolve" "Illegal package.json" x))))))
+		  (else
+		   (error "resolve" "Illegal package.json" x)))))))
 
-   (define (resolve-package pkg dir)
+   (define (resolve-package-key key x::bstring json)
+      (let ((c (assoc key json)))
+	 (when (pair? c)
+	    (resolve-file-or-directory (cdr c) x))))
+
+   (define (resolve-package x)
       (with-trace 'require "resolve-package"
-	 (trace-item "pkg=" pkg)
-	 (trace-item "dir=" dir)
-	 (let* ((o (load-package-json pkg %this))
-		(m (cond
-		      ((eq? mode 'head) (assoc "client" o))
-		      ((assoc "server" o) => (lambda (m) m))
-		      (else (assoc "main" o)))))
-	    (trace-item "m=" m)
-	    (if (pair? m)
-		(cdr m)
-		(let ((idx (make-file-name dir "index.js")))
-		   (when (file-exists? idx)
-		      idx))))))
+	 (let ((json (make-file-name x "package.json")))
+	    (when (file-exists? json)
+	       (let ((json (load-package-json json %this)))
+		  (with-handler
+		     (lambda (e)
+			(js-raise-type-error %this
+			   "illegal package.json \"~a/package.json\"" x))
+		     (or (resolve-package-exports x json)
+			 (resolve-package-key "main" x json)
+			 (resolve-package-key "server" x json)
+			 (and (eq? mode 'head)
+			      (resolve-package-key "client" x json)))))))))
+   
+   (define (resolve-index x)
+      (with-trace 'require "nodejs-resolve.resolve-index"
+	 (trace-item "x=" x)
+	 (let ((p (make-file-name x "index.js")))
+	    (when (file-exists? p)
+	       (file-name-canonicalize p)))))
    
    (define (resolve-directory x)
       (with-trace 'require "nodejs-resolve.resolve-directory"
 	 (trace-item "x=" x)
-	 (let ((json (make-file-name x "package.json")))
-	    (or (and (file-exists? json)
-		     (let* ((m (resolve-package json x)))
-			(cond
-			   ((pair? m)
-			    (cons name
-			       (map (lambda (m)
-				       (resolve-file-or-directory m x))
-				  m)))
-			   ((string? m)
-			    (resolve-file-or-directory m x))
-			   (else
-			    #f))))
-		(let ((p (make-file-name x "index.js")))
-		   (when (file-exists? p)
-		      (file-name-canonicalize p)))))))
+	 (when (directory? x)
+	    (or (resolve-package x)
+		(resolve-index x)))))
    
+   (define (resolve-file x)
+      (with-trace 'require "nodejs-resolve.resolve-file"
+	 (trace-item "x=" x)
+	 (cond
+	    ((and (file-exists? x) (not (directory? x)))
+	     (if (string-suffix? ".hz" x)
+		 (resolve-hz x)
+		 (file-name-canonicalize x)))
+	    ((string-suffix? ".hz" x)
+	     (resolve-autoload-hz x))
+	    (else
+	     (let loop ((sufs require-suffixes))
+		(when (pair? sufs)
+		   (let* ((suffix (car sufs))
+			  (src (string-append x suffix)))
+		      (if (and (file-exists? src) (not (directory? src)))
+			  (file-name-canonicalize src)
+			  (loop (cdr sufs))))))))))
+
    (define (resolve-file-or-directory x dir::bstring)
-      (let ((file (make-file-name dir x)))
-	 (or (resolve-package-exports file)
-	     (resolve-file file)
-	     (resolve-directory file))))
+      (with-trace 'require "nodejs-resolve.resolve-file-or-directory"
+	 (trace-item "x=" x " dir=" dir)
+	 (let ((file (make-file-name dir x)))
+	    (or (resolve-file file)
+		(resolve-directory file)))))
    
    (define (resolve-error x dir)
       (with-access::JsGlobalObject %this (js-uri-error)
@@ -2851,14 +2858,14 @@
 	    (js-raise exn))))
 
    (define (resolve-modules mod x paths)
-      (with-trace 'require "resolve-modules"
+      (with-trace 'require "nodejs-resolve.resolve-modules"
 	 (trace-item "x=" x)
 	 (trace-item "paths=" paths)
 	 (any (lambda (dir)
 		 (resolve-file-or-directory x dir))
 	    paths)))
    
-   (with-trace 'require "builtin-resolve"
+   (with-trace 'require "nodejs-resolve"
       (trace-item "name=" name)
       (trace-item "%module=" (typeof %module))
       (trace-item "thread=" (current-thread))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Fri May 17 08:04:52 2024 (serrano)                */
+;*    Last change :  Sun May 19 11:25:45 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -412,15 +412,19 @@
 	 ((ERROR)
 	  (parse-token-error "Error" (consume-any!)))
 	 ((SOURCEMAP)
-	  (let ((tok (consume-any!)))
-	     (if (eof?)
+	  (let loop ((tok (consume-any!)))
+	     (cond
+		((eof?)
 		 (begin
 		    (when (config-get conf :source-map #f)
 		       (set! source-map
 			  (make-file-name (dirname (input-port-name input-port))
 			     (token-value tok))))
-		    'source-map)
-		 (parse-token-warning "Unexpected source-map" tok))))
+		    'source-map))
+		((eq? (peek-token-type) 'SOURCEMAP)
+		 (loop (consume-any!)))
+		(else
+		 (parse-token-warning "Unexpected source-map" tok)))))
 	 ((SOURCEELEMENT)
 	  (token-value (consume-any!)))
 	 (else

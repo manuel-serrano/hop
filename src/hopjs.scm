@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Thu May 16 15:14:18 2024 (serrano)                */
+;*    Last change :  Sun May 19 06:53:14 2024 (serrano)                */
 ;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -14,7 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module main
 
-   (library pthread http hop libuv js2scheme hopscript nodejs)
+   (library pthread http hop libuv js2scheme hopscript nodejs libbacktrace)
    (eval (library hop hopscript nodejs))
    
    (main main))

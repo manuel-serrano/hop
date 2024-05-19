@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:41:17 2017                          */
-;*    Last change :  Sat Oct 21 12:52:59 2023 (serrano)                */
-;*    Copyright   :  2017-23 Manuel Serrano                            */
+;*    Last change :  Sun May 19 10:59:02 2024 (serrano)                */
+;*    Copyright   :  2017-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme test code generation                                      */
 ;*=====================================================================*/
@@ -35,29 +35,31 @@
 ;*    j2s-test ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (j2s-test test::J2SExpr mode return conf)
-   (let ((ty (j2s-type test)))
-      (cond
-	 ((eq? ty 'bool)
-	  (j2s-bool-test test mode return conf))
-	 ((memq ty '(object array))
-	  #t)
-	 ((eq? ty 'int32)
-	  `(not (=s32 ,(j2s-scheme test mode return conf) #s32:0)))
-	 ((eq? ty 'uint32)
-	  `(not (=u32 ,(j2s-scheme test mode return conf) #u32:0)))
-	 ((is-fixnum? test conf)
-	  `(not (=fx ,(j2s-scheme test mode return conf) 0)))
-	 ((type-number? ty)
-	  `(not (= ,(j2s-scheme test mode return conf) 0)))
-	 ((eq? ty 'string)
-	  `(js-jsstring-toboolean ,(j2s-scheme test mode return conf)))
-	 ((notbool-expr? test)
-	  (j2s-toboolean (j2s-scheme test mode return conf)))
-	 (else
-	  (with-access::J2SExpr test (hint)
-	     (if (pair? (assq 'object hint))
-		 `(js-totest-likely-object ,(j2s-scheme test mode return conf))
-		 (j2s-totest (j2s-scheme test mode return conf) conf)))))))
+   (with-trace 'scheme "j2s-test"
+      (trace-item "test=" (j2s->sexp test))
+      (let ((ty (j2s-type test)))
+	 (cond
+	    ((eq? ty 'bool)
+	     (j2s-bool-test test mode return conf))
+	    ((memq ty '(object array))
+	     #t)
+	    ((eq? ty 'int32)
+	     `(not (=s32 ,(j2s-scheme test mode return conf) #s32:0)))
+	    ((eq? ty 'uint32)
+	     `(not (=u32 ,(j2s-scheme test mode return conf) #u32:0)))
+	    ((is-fixnum? test conf)
+	     `(not (=fx ,(j2s-scheme test mode return conf) 0)))
+	    ((type-number? ty)
+	     `(not (= ,(j2s-scheme test mode return conf) 0)))
+	    ((eq? ty 'string)
+	     `(js-jsstring-toboolean ,(j2s-scheme test mode return conf)))
+	    ((notbool-expr? test)
+	     (j2s-toboolean (j2s-scheme test mode return conf)))
+	    (else
+	     (with-access::J2SExpr test (hint)
+		(if (pair? (assq 'object hint))
+		    `(js-totest-likely-object ,(j2s-scheme test mode return conf))
+		    (j2s-totest (j2s-scheme test mode return conf) conf))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-test-not ...                                                 */

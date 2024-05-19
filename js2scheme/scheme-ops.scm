@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Sun Oct 22 07:19:06 2023 (serrano)                */
-;*    Copyright   :  2017-23 Manuel Serrano                            */
+;*    Last change :  Sun May 19 10:43:54 2024 (serrano)                */
+;*    Copyright   :  2017-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
 ;*=====================================================================*/
@@ -300,128 +300,132 @@
 ;*---------------------------------------------------------------------*/
 (define (js-binop2 loc op::symbol type lhs::J2SNode rhs::J2SNode
 	   mode return ctx)
-   (case op
-      ((+ ++)
-       (if (=fx (context-get ctx :optim 0) 0)
-	   (with-tmp lhs rhs mode return ctx
-	      (lambda (left right)
-		 (j2s-cast
-		    (js-binop loc op left lhs right rhs ctx)
-		    #f 'any type ctx)))
-	   (js-binop-add loc op type lhs rhs mode return ctx)))
-      ((- --)
-       (if (=fx (context-get ctx :optim 0) 0)
-	   (with-tmp lhs rhs mode return ctx
-	      (lambda (left right)
-		 (j2s-cast
-		    (js-binop-arithmetic loc op left lhs right rhs ctx)
-		    #f 'any type ctx)))
-	   (js-arithmetic-addsub loc op type lhs rhs mode return ctx)))
-      ((*)
-       (if (=fx (context-get ctx :optim 0) 0)
-	   (with-tmp lhs rhs mode return ctx
-	      (lambda (left right)
-		 (j2s-cast
-		    (js-binop-arithmetic loc op left lhs right rhs ctx)
-		    #f 'any type ctx)))
-	   (js-arithmetic-mul loc type lhs rhs mode return ctx)))
-      ((**)
-       (if (=fx (context-get ctx :optim 0) 0)
-	   (with-tmp lhs rhs mode return ctx
-	      (lambda (left right)
-		 (j2s-cast
-		    (js-binop-arithmetic loc '** left lhs right rhs ctx)
-		    #f 'any type ctx)))
-	   (js-arithmetic-expt loc type lhs rhs mode return ctx)))
-      ((/)
-       (js-arithmetic-div loc type lhs rhs mode return ctx))
-      ((remainderfx remainder)
-       (with-tmp lhs rhs mode return ctx
-	  (lambda (left right)
-	     `(,op ,left ,right))))
-      
-      ((%)
-       (js-arithmetic-% loc type lhs rhs mode return ctx))
-      ((eq?)
-       (with-tmp lhs rhs mode return ctx
-	  (lambda (left right)
-	     `(eq? ,left ,right))))
-      ((== === != !==)
-       (if (=fx (context-get ctx :optim 0) 0)
-	   (with-tmp lhs rhs mode return ctx
-	      (lambda (left right)
-		 (js-binop loc op left lhs right rhs ctx)))
-	   (js-equality loc op type lhs rhs mode return ctx)))
-      ((< <= > >=)
-       (if (=fx (context-get ctx :optim 0) 0)
-	   (with-tmp lhs rhs mode return ctx
-	      (lambda (left right)
-		 (js-binop loc op left lhs right rhs ctx)))
-	   (js-cmp loc op lhs rhs mode return ctx)))
-      ((& ^ BIT_OR >> >>> <<)
-       (js-bitop loc op type lhs rhs mode return ctx))
-      ((OR)
-       (if (eq? type 'bool)
-	   `(or ,(j2s-scheme lhs mode return ctx)
-		,(j2s-scheme rhs mode return ctx))
-	   (let* ((lhsv (gensym 'lhs))
-		  (test (if (eq? (j2s-type lhs) 'bool)
-			    lhsv
-			    (j2s-cast lhsv lhs (j2s-type lhs) 'bool ctx))))
-	      `(let ((,(type-ident lhsv (j2s-type lhs) (context-conf ctx))
-		      ,(j2s-scheme lhs mode return ctx)))
-		  ,(cond
-		      ((eq? test #t)
-		       (j2s-cast lhsv lhs (j2s-type lhs) type ctx))
-		      ((eq? test #f)
-		       (j2s-cast (j2s-scheme rhs mode return ctx) rhs
-			  (j2s-type rhs) type ctx))
-		      (else
-		       `(if ,test
-			    ,(j2s-cast lhsv lhs (j2s-type lhs) type ctx)
-			    ,(j2s-cast (j2s-scheme rhs mode return ctx) rhs
-				(j2s-type rhs) type ctx))))))))
-      ((OR*)
-       (let ((tmp (gensym '%or*)))
-	  `(let ((,tmp ,(j2s-scheme lhs mode return ctx)))
-	      (if (eq? ,tmp (js-undefined))
-		  ,(j2s-cast (j2s-scheme rhs mode return ctx) rhs
-		      (j2s-type rhs) type ctx)
-		  ,(j2s-cast tmp lhs (j2s-type lhs) type ctx)))))
-      ((&&)
-       (if (eq? type 'bool)
-	   `(and ,(j2s-scheme lhs mode return ctx)
-		 ,(j2s-scheme rhs mode return ctx))
-	   (let* ((lhsv (gensym 'lhs))
-		  (test (if (eq? (j2s-type lhs) 'bool)
-			    lhsv
-			    (j2s-cast lhsv lhs (j2s-type lhs) 'bool ctx))))
-	      `(let ((,(type-ident lhsv (j2s-type lhs) (context-conf ctx))
-		      ,(j2s-scheme lhs mode return ctx)))
-		  ,(cond
-		      ((eq? test #t)
-		       (j2s-cast (j2s-scheme rhs mode return ctx) rhs
-			  (j2s-type rhs) type ctx))
-		      ((eq? test #f)
-		       (j2s-cast lhsv lhs (j2s-type lhs) type ctx))
-		      (else
-		       `(if ,test
-			    ,(j2s-cast (j2s-scheme rhs mode return ctx) rhs
-				(j2s-type rhs) type ctx)
-			    ,(j2s-cast lhsv lhs (j2s-type lhs) type ctx))))))))
-      ((??)
-       `(js-nullish ,(box (j2s-scheme lhs mode return ctx) (j2s-type lhs) ctx)
-	   ,(box (j2s-scheme rhs mode return ctx) (j2s-type rhs) ctx)))
-      ((MAX)
-       (js-min-max loc '>>= lhs rhs mode return ctx))
-      ((MIN)
-       (js-min-max loc '<<= lhs rhs mode return ctx))
-      ((as)
-       (box (j2s-scheme lhs mode return ctx) (j2s-type lhs) ctx))
-      (else
-       (with-tmp lhs rhs mode return ctx
-	  (lambda (left right)
-	     (js-binop loc op left lhs right rhs ctx))))))
+   (with-trace 'scheme "j2s-binop2"
+      (trace-item "op=" op)
+      (trace-item "lhs=" (j2s->sexp lhs))
+      (trace-item "rhs=" (j2s->sexp rhs))
+      (case op
+	 ((+ ++)
+	  (if (=fx (context-get ctx :optim 0) 0)
+	      (with-tmp lhs rhs mode return ctx
+		 (lambda (left right)
+		    (j2s-cast
+		       (js-binop loc op left lhs right rhs ctx)
+		       #f 'any type ctx)))
+	      (js-binop-add loc op type lhs rhs mode return ctx)))
+	 ((- --)
+	  (if (=fx (context-get ctx :optim 0) 0)
+	      (with-tmp lhs rhs mode return ctx
+		 (lambda (left right)
+		    (j2s-cast
+		       (js-binop-arithmetic loc op left lhs right rhs ctx)
+		       #f 'any type ctx)))
+	      (js-arithmetic-addsub loc op type lhs rhs mode return ctx)))
+	 ((*)
+	  (if (=fx (context-get ctx :optim 0) 0)
+	      (with-tmp lhs rhs mode return ctx
+		 (lambda (left right)
+		    (j2s-cast
+		       (js-binop-arithmetic loc op left lhs right rhs ctx)
+		       #f 'any type ctx)))
+	      (js-arithmetic-mul loc type lhs rhs mode return ctx)))
+	 ((**)
+	  (if (=fx (context-get ctx :optim 0) 0)
+	      (with-tmp lhs rhs mode return ctx
+		 (lambda (left right)
+		    (j2s-cast
+		       (js-binop-arithmetic loc '** left lhs right rhs ctx)
+		       #f 'any type ctx)))
+	      (js-arithmetic-expt loc type lhs rhs mode return ctx)))
+	 ((/)
+	  (js-arithmetic-div loc type lhs rhs mode return ctx))
+	 ((remainderfx remainder)
+	  (with-tmp lhs rhs mode return ctx
+	     (lambda (left right)
+		`(,op ,left ,right))))
+	 
+	 ((%)
+	  (js-arithmetic-% loc type lhs rhs mode return ctx))
+	 ((eq?)
+	  (with-tmp lhs rhs mode return ctx
+	     (lambda (left right)
+		`(eq? ,left ,right))))
+	 ((== === != !==)
+	  (if (=fx (context-get ctx :optim 0) 0)
+	      (with-tmp lhs rhs mode return ctx
+		 (lambda (left right)
+		    (js-binop loc op left lhs right rhs ctx)))
+	      (js-equality loc op type lhs rhs mode return ctx)))
+	 ((< <= > >=)
+	  (if (=fx (context-get ctx :optim 0) 0)
+	      (with-tmp lhs rhs mode return ctx
+		 (lambda (left right)
+		    (js-binop loc op left lhs right rhs ctx)))
+	      (js-cmp loc op lhs rhs mode return ctx)))
+	 ((& ^ BIT_OR >> >>> <<)
+	  (js-bitop loc op type lhs rhs mode return ctx))
+	 ((OR)
+	  (if (eq? type 'bool)
+	      `(or ,(j2s-scheme lhs mode return ctx)
+		   ,(j2s-scheme rhs mode return ctx))
+	      (let* ((lhsv (gensym 'lhs))
+		     (test (if (eq? (j2s-type lhs) 'bool)
+			       lhsv
+			       (j2s-cast lhsv lhs (j2s-type lhs) 'bool ctx))))
+		 `(let ((,(type-ident lhsv (j2s-type lhs) (context-conf ctx))
+			 ,(j2s-scheme lhs mode return ctx)))
+		     ,(cond
+			 ((eq? test #t)
+			  (j2s-cast lhsv lhs (j2s-type lhs) type ctx))
+			 ((eq? test #f)
+			  (j2s-cast (j2s-scheme rhs mode return ctx) rhs
+			     (j2s-type rhs) type ctx))
+			 (else
+			  `(if ,test
+			       ,(j2s-cast lhsv lhs (j2s-type lhs) type ctx)
+			       ,(j2s-cast (j2s-scheme rhs mode return ctx) rhs
+				   (j2s-type rhs) type ctx))))))))
+	 ((OR*)
+	  (let ((tmp (gensym '%or*)))
+	     `(let ((,tmp ,(j2s-scheme lhs mode return ctx)))
+		 (if (eq? ,tmp (js-undefined))
+		     ,(j2s-cast (j2s-scheme rhs mode return ctx) rhs
+			 (j2s-type rhs) type ctx)
+		     ,(j2s-cast tmp lhs (j2s-type lhs) type ctx)))))
+	 ((&&)
+	  (if (eq? type 'bool)
+	      `(and ,(j2s-scheme lhs mode return ctx)
+		    ,(j2s-scheme rhs mode return ctx))
+	      (let* ((lhsv (gensym 'lhs))
+		     (test (if (eq? (j2s-type lhs) 'bool)
+			       lhsv
+			       (j2s-cast lhsv lhs (j2s-type lhs) 'bool ctx))))
+		 `(let ((,(type-ident lhsv (j2s-type lhs) (context-conf ctx))
+			 ,(j2s-scheme lhs mode return ctx)))
+		     ,(cond
+			 ((eq? test #t)
+			  (j2s-cast (j2s-scheme rhs mode return ctx) rhs
+			     (j2s-type rhs) type ctx))
+			 ((eq? test #f)
+			  (j2s-cast lhsv lhs (j2s-type lhs) type ctx))
+			 (else
+			  `(if ,test
+			       ,(j2s-cast (j2s-scheme rhs mode return ctx) rhs
+				   (j2s-type rhs) type ctx)
+			       ,(j2s-cast lhsv lhs (j2s-type lhs) type ctx))))))))
+	 ((??)
+	  `(js-nullish ,(box (j2s-scheme lhs mode return ctx) (j2s-type lhs) ctx)
+	      ,(box (j2s-scheme rhs mode return ctx) (j2s-type rhs) ctx)))
+	 ((MAX)
+	  (js-min-max loc '>>= lhs rhs mode return ctx))
+	 ((MIN)
+	  (js-min-max loc '<<= lhs rhs mode return ctx))
+	 ((as)
+	  (box (j2s-scheme lhs mode return ctx) (j2s-type lhs) ctx))
+	 (else
+	  (with-tmp lhs rhs mode return ctx
+	     (lambda (left right)
+		(js-binop loc op left lhs right rhs ctx)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-in? ...                                                      */
@@ -1231,176 +1235,180 @@
 	    ((!=) `(not (js-null-or-undefined? ,v)))
 	    ((==) `(js-null-or-undefined? ,v))
 	    (else "js-null?" "illegal operator" op))))
-   
-   (let ((tl (j2s-type lhs))
-	 (tr (j2s-type rhs)))
-      (cond
-	 ((j2s-typeof-predicate lhs rhs)
-	  =>
-	  (lambda (pred)
-	     (typeof/pred (j2s-unary-expr lhs) pred)))
-	 ((j2s-typeof-predicate rhs lhs)
-	  =>
-	  (lambda (pred)
-	     (typeof/pred (j2s-unary-expr rhs) pred)))
-	 ((and (is-uint32? lhs) (is-uint32? rhs))
-	  (cond
-	     ((j2s-aref-length? rhs)
-	      (with-access::J2SAref (aref rhs) (field alen)
-		 (let ((test `(or (=u32 %lhs ,(j2s-decl-scm-id alen ctx))
-				  (=u32 %lhs ,(j2s-scheme rhs mode return ctx)))))
-		    `(let ((%lhs ,(j2s-scheme lhs mode return ctx)))
-			,(if (memq op '(!= !==))
-			     (js-not test)
-			     test)))))
-	     ((j2s-aref-length? lhs)
-	      (with-access::J2SAref (aref lhs) (field alen)
-		 (let ((test `(or (=u32 ,(j2s-decl-scm-id alen ctx) %rhs)
-				  (=u32 ,(j2s-scheme rhs mode return ctx)
-				     %rhs))))
-		    `(let ((%rhs ,(j2s-scheme rhs mode return ctx)))
-			,(if (memq op '(!= !==))
-			     (js-not test)
-			     test)))))
-	     (else
-	      (js-cmp loc op lhs rhs mode return ctx))))
-	 ((and (type-fixnum? tl) (type-fixnum? tr))
-	  (cond
-	     ((j2s-cast-aref-length? rhs)
-	      (with-access::J2SAref (cast-aref rhs) (field alen)
-		 (let ((test `(or (=fx %lhs ,(j2s-decl-scm-id alen ctx))
-				  (=fx %lhs ,(j2s-scheme rhs mode return ctx)))))
-		    `(let ((%lhs ,(j2s-scheme lhs mode return ctx)))
-			,(if (memq op '(!= !==))
-			     (js-not test)
-			     test)))))
-	     ((j2s-cast-aref-length? lhs)
-	      (with-access::J2SAref (cast-aref lhs) (field alen)
-		 (let ((test `(or (=fx ,(j2s-decl-scm-id alen ctx) %rhs)
-				  (=fx ,(j2s-scheme rhs mode return ctx)
-				     %rhs))))
-		    `(let ((%rhs ,(j2s-scheme rhs mode return ctx)))
-			,(if (memq op '(!= !==))
-			     (js-not test)
-			     test)))))
-	     (else
-	      (js-cmp loc op lhs rhs mode return ctx))))
-	 ((eq? tl 'null)
-	  (js-null? rhs))
-	 ((eq? tr 'null)
-	  (js-null? lhs))
-	 ((eq? tl 'int32)
-	  (equality-int32 op lhs tl rhs tr mode return ctx #f))
-	 ((eq? tr 'int32)
-	  (equality-int32 op rhs tr lhs tl mode return ctx #t))
-	 ((eq? tl 'uint32)
-	  (equality-uint32 op lhs tl rhs tr mode return ctx #f))
-	 ((eq? tr 'uint32)
-	  (equality-uint32 op rhs tr lhs tl mode return ctx #t))
-	 ((and (memq op '(=== !==)) (memq tl '(string buffer)))
-	  (equality-string op lhs tl rhs tr mode return ctx #f))
-	 ((and (memq op '(=== !==)) (memq tr '(string buffer)))
-	  (equality-string op rhs tr lhs tl mode return ctx #t))
-	 ((and (memq op '(== !==)) (memq tl '(string buffer)) (charat? rhs))
-	  (equality-string op lhs tl rhs tr mode return ctx #f))
-	 ((and (memq op '(== !==)) (memq tr '(string buffer)) (charat? lhs))
-	  (equality-string op rhs tr lhs tl mode return ctx #t))
-	 ((and (eq? tl 'real) (eq? tr 'real))
-	  (with-tmp lhs rhs mode return ctx 
-	     (lambda (left right)
-		(if (memq op '(== ===))
-		    `(=fl ,left ,right)
-		    `(not (=fl ,left ,right))))))
-	 ((and (memq tl '(string buffer)) (memq tr '(string buffer)))
-	  (with-tmp lhs rhs mode return ctx
-	     (lambda (left right)
-		(if (memq op '(== ===))
-		    `(js-jsstring=? ,left ,right)
-		    `(not (js-jsstring=? ,left ,right))))))
-	 ((and (eq? tl 'bool) (eq? tr 'bool))
-	  (with-tmp lhs rhs mode return ctx
-	     (lambda (left right)
-		(if (memq op '(== ===))
-		    `(eq? ,left ,right)
-		    `(not (eq? ,left ,right))))))
-	 ((and (or (eq? tl 'bool) (eq? tr 'bool)) (memq op '(=== !==)))
-	  (with-tmp lhs rhs mode return ctx
-	     (lambda (left right)
-		(if (eq? op '===)
-		    `(eq? ,left ,right)
-		    `(not (eq? ,left ,right))))))
-	 ((and (is-number? lhs) (is-number? rhs))
-	  (cond
-	     ((j2s-cast-aref-length? rhs)
-	      (with-access::J2SAref (cast-aref rhs) (field alen)
-		 (let ((test `(or (= %lhs ,(j2s-decl-scm-id alen ctx))
-				  (= %lhs ,(j2s-scheme rhs mode return ctx)))))
-		    `(let ((%lhs ,(j2s-scheme lhs mode return ctx)))
-			,(if (memq op '(!= !==))
-			     (js-not test)
-			     test)))))
-	     ((j2s-cast-aref-length? lhs)
-	      (with-access::J2SAref (cast-aref lhs) (field alen)
-		 (let ((test `(or (= ,(j2s-decl-scm-id alen ctx) %rhs)
-				  (= ,(j2s-scheme rhs mode return ctx) %rhs))))
-		    `(let ((%rhs ,(j2s-scheme rhs mode return ctx)))
-			,(if (memq op '(!= !==))
-			     (js-not test)
-			     test)))))
-	     (else
-	      (js-cmp loc op lhs rhs mode return ctx))))
-	 ((and (memq op '(== !=))
-	       (or (memq tl '(bool string object array jsvector))
-		   (memq tr '(bool string object array jsvector))))
-	  (with-tmp lhs rhs mode return ctx
-	     (lambda (left right)
-		(cond
-		   ((and (memq tl '(null undefined bool integer int53))
-			 (memq tr '(null undefined bool integer int53)))
-		    (if (eq? op '!=)
-			`(not (eq? ,left ,right))
-			`(eq? ,left ,right)))
-		   ((memq tl '(string buffer))
-		    (if (eq? op '!=)
-			`(not (js-equal-string? ,left ,right %this))
-			`(js-equal-string? ,left ,right %this)))
-		   ((memq tr '(string buffer))
-		    (if (eq? op '!=)
-			`(not (js-equal-string? ,right ,left %this))
-			`(js-equal-string? ,right ,left %this)))
-		   (else
-		    (if (eq? op '!=)
-			`(not (js-equal-sans-flonum? ,left ,right %this))
-			`(js-equal-sans-flonum? ,left ,right %this)))))))
-	 ((or (memq tl '(undefined null)) (memq tr '(undefined null)))
-	  (with-tmp lhs rhs mode return ctx
-	     (lambda (left right)
-		(case op
-		   ((!==)
-		    `(not (eq? ,left ,right)))
-		   ((===)
-		    `(eq? ,left ,right))
-		   ((==)
-		    (if (memq (j2s-type lhs) '(undefined null))
-			`(js-null-or-undefined? ,right)
-			`(js-null-or-undefined? ,left)))
-		   ((!=)
-		    (if (memq (j2s-type lhs) '(undefined null))
-			`(not (js-null-or-undefined? ,right))
-			`(not (js-null-or-undefined? ,left))))
-		   (else
-		    (js-binop loc op left lhs right rhs ctx))))))
-	 (else
-	  (with-tmp lhs rhs mode return ctx
-	     (lambda (left right)
-		(let ((op (cond
-			     ((type-fixnum? tl)
-			      (if (memq op '(== ===)) 'eqil? '!eqil?))
-			     ((type-fixnum? tr)
-			      (if (memq op '(== ===)) 'eqir? '!eqir?))
-			     (else
-			      op))))
-		   (js-binop loc op left lhs right rhs ctx))))))))
+
+   (with-trace 'scheme "js-equality"
+      (trace-item "op=" op " type=" type)
+      (trace-item "lhs=" (j2s->sexp lhs))
+      (trace-item "rhs=" (j2s->sexp rhs))
+      (let ((tl (j2s-type lhs))
+	    (tr (j2s-type rhs)))
+	 (cond
+	    ((j2s-typeof-predicate lhs rhs)
+	     =>
+	     (lambda (pred)
+		(typeof/pred (j2s-unary-expr lhs) pred)))
+	    ((j2s-typeof-predicate rhs lhs)
+	     =>
+	     (lambda (pred)
+		(typeof/pred (j2s-unary-expr rhs) pred)))
+	    ((and (is-uint32? lhs) (is-uint32? rhs))
+	     (cond
+		((j2s-aref-length? rhs)
+		 (with-access::J2SAref (aref rhs) (field alen)
+		    (let ((test `(or (=u32 %lhs ,(j2s-decl-scm-id alen ctx))
+				     (=u32 %lhs ,(j2s-scheme rhs mode return ctx)))))
+		       `(let ((%lhs ,(j2s-scheme lhs mode return ctx)))
+			   ,(if (memq op '(!= !==))
+				(js-not test)
+				test)))))
+		((j2s-aref-length? lhs)
+		 (with-access::J2SAref (aref lhs) (field alen)
+		    (let ((test `(or (=u32 ,(j2s-decl-scm-id alen ctx) %rhs)
+				     (=u32 ,(j2s-scheme rhs mode return ctx)
+					%rhs))))
+		       `(let ((%rhs ,(j2s-scheme rhs mode return ctx)))
+			   ,(if (memq op '(!= !==))
+				(js-not test)
+				test)))))
+		(else
+		 (js-cmp loc op lhs rhs mode return ctx))))
+	    ((and (type-fixnum? tl) (type-fixnum? tr))
+	     (cond
+		((j2s-cast-aref-length? rhs)
+		 (with-access::J2SAref (cast-aref rhs) (field alen)
+		    (let ((test `(or (=fx %lhs ,(j2s-decl-scm-id alen ctx))
+				     (=fx %lhs ,(j2s-scheme rhs mode return ctx)))))
+		       `(let ((%lhs ,(j2s-scheme lhs mode return ctx)))
+			   ,(if (memq op '(!= !==))
+				(js-not test)
+				test)))))
+		((j2s-cast-aref-length? lhs)
+		 (with-access::J2SAref (cast-aref lhs) (field alen)
+		    (let ((test `(or (=fx ,(j2s-decl-scm-id alen ctx) %rhs)
+				     (=fx ,(j2s-scheme rhs mode return ctx)
+					%rhs))))
+		       `(let ((%rhs ,(j2s-scheme rhs mode return ctx)))
+			   ,(if (memq op '(!= !==))
+				(js-not test)
+				test)))))
+		(else
+		 (js-cmp loc op lhs rhs mode return ctx))))
+	    ((eq? tl 'null)
+	     (js-null? rhs))
+	    ((eq? tr 'null)
+	     (js-null? lhs))
+	    ((eq? tl 'int32)
+	     (equality-int32 op lhs tl rhs tr mode return ctx #f))
+	    ((eq? tr 'int32)
+	     (equality-int32 op rhs tr lhs tl mode return ctx #t))
+	    ((eq? tl 'uint32)
+	     (equality-uint32 op lhs tl rhs tr mode return ctx #f))
+	    ((eq? tr 'uint32)
+	     (equality-uint32 op rhs tr lhs tl mode return ctx #t))
+	    ((and (memq op '(=== !==)) (memq tl '(string buffer)))
+	     (equality-string op lhs tl rhs tr mode return ctx #f))
+	    ((and (memq op '(=== !==)) (memq tr '(string buffer)))
+	     (equality-string op rhs tr lhs tl mode return ctx #t))
+	    ((and (memq op '(== !==)) (memq tl '(string buffer)) (charat? rhs))
+	     (equality-string op lhs tl rhs tr mode return ctx #f))
+	    ((and (memq op '(== !==)) (memq tr '(string buffer)) (charat? lhs))
+	     (equality-string op rhs tr lhs tl mode return ctx #t))
+	    ((and (eq? tl 'real) (eq? tr 'real))
+	     (with-tmp lhs rhs mode return ctx 
+		(lambda (left right)
+		   (if (memq op '(== ===))
+		       `(=fl ,left ,right)
+		       `(not (=fl ,left ,right))))))
+	    ((and (memq tl '(string buffer)) (memq tr '(string buffer)))
+	     (with-tmp lhs rhs mode return ctx
+		(lambda (left right)
+		   (if (memq op '(== ===))
+		       `(js-jsstring=? ,left ,right)
+		       `(not (js-jsstring=? ,left ,right))))))
+	    ((and (eq? tl 'bool) (eq? tr 'bool))
+	     (with-tmp lhs rhs mode return ctx
+		(lambda (left right)
+		   (if (memq op '(== ===))
+		       `(eq? ,left ,right)
+		       `(not (eq? ,left ,right))))))
+	    ((and (or (eq? tl 'bool) (eq? tr 'bool)) (memq op '(=== !==)))
+	     (with-tmp lhs rhs mode return ctx
+		(lambda (left right)
+		   (if (eq? op '===)
+		       `(eq? ,left ,right)
+		       `(not (eq? ,left ,right))))))
+	    ((and (is-number? lhs) (is-number? rhs))
+	     (cond
+		((j2s-cast-aref-length? rhs)
+		 (with-access::J2SAref (cast-aref rhs) (field alen)
+		    (let ((test `(or (= %lhs ,(j2s-decl-scm-id alen ctx))
+				     (= %lhs ,(j2s-scheme rhs mode return ctx)))))
+		       `(let ((%lhs ,(j2s-scheme lhs mode return ctx)))
+			   ,(if (memq op '(!= !==))
+				(js-not test)
+				test)))))
+		((j2s-cast-aref-length? lhs)
+		 (with-access::J2SAref (cast-aref lhs) (field alen)
+		    (let ((test `(or (= ,(j2s-decl-scm-id alen ctx) %rhs)
+				     (= ,(j2s-scheme rhs mode return ctx) %rhs))))
+		       `(let ((%rhs ,(j2s-scheme rhs mode return ctx)))
+			   ,(if (memq op '(!= !==))
+				(js-not test)
+				test)))))
+		(else
+		 (js-cmp loc op lhs rhs mode return ctx))))
+	    ((and (memq op '(== !=))
+		  (or (memq tl '(bool string object array jsvector))
+		      (memq tr '(bool string object array jsvector))))
+	     (with-tmp lhs rhs mode return ctx
+		(lambda (left right)
+		   (cond
+		      ((and (memq tl '(null undefined bool integer int53))
+			    (memq tr '(null undefined bool integer int53)))
+		       (if (eq? op '!=)
+			   `(not (eq? ,left ,right))
+			   `(eq? ,left ,right)))
+		      ((memq tl '(string buffer))
+		       (if (eq? op '!=)
+			   `(not (js-equal-string? ,left ,right %this))
+			   `(js-equal-string? ,left ,right %this)))
+		      ((memq tr '(string buffer))
+		       (if (eq? op '!=)
+			   `(not (js-equal-string? ,right ,left %this))
+			   `(js-equal-string? ,right ,left %this)))
+		      (else
+		       (if (eq? op '!=)
+			   `(not (js-equal-sans-flonum? ,left ,right %this))
+			   `(js-equal-sans-flonum? ,left ,right %this)))))))
+	    ((or (memq tl '(undefined null)) (memq tr '(undefined null)))
+	     (with-tmp lhs rhs mode return ctx
+		(lambda (left right)
+		   (case op
+		      ((!==)
+		       `(not (eq? ,left ,right)))
+		      ((===)
+		       `(eq? ,left ,right))
+		      ((==)
+		       (if (memq (j2s-type lhs) '(undefined null))
+			   `(js-null-or-undefined? ,right)
+			   `(js-null-or-undefined? ,left)))
+		      ((!=)
+		       (if (memq (j2s-type lhs) '(undefined null))
+			   `(not (js-null-or-undefined? ,right))
+			   `(not (js-null-or-undefined? ,left))))
+		      (else
+		       (js-binop loc op left lhs right rhs ctx))))))
+	    (else
+	     (with-tmp lhs rhs mode return ctx
+		(lambda (left right)
+		   (let ((op (cond
+				((type-fixnum? tl)
+				 (if (memq op '(== ===)) 'eqil? '!eqil?))
+				((type-fixnum? tr)
+				 (if (memq op '(== ===)) 'eqir? '!eqir?))
+				(else
+				 op))))
+		      (js-binop loc op left lhs right rhs ctx)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-bitop ...                                                     */

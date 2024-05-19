@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Thu May 16 10:52:00 2024 (serrano)                */
+#*    Last change :  Sun May 19 06:51:40 2024 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -17,18 +17,6 @@ do: build
 -include etc/Makefile.hopconfig
 -include etc/Makefile.version
 -include $(BIGLOOLIBDIR)/Makefile.config
-
-#*---------------------------------------------------------------------*/
-#*    POPULATION                                                       */
-#*---------------------------------------------------------------------*/
-POPULATION	= Makefile LICENSE README INSTALL.md INSTALL.jvm \
-                  configure .hoprelease .hgignore .gitignore README.md \
-                  TODO.md
-POPDIRS		= http runtime hopscheme scheme2js hopscript js2scheme \
-                  src hopc hopsh hopreplay hophz \
-                  etc share arch \
-                  weblets widget nodejs node_modules \
-                  examples test tools doc docker
 
 #*---------------------------------------------------------------------*/
 #*    build                                                            */
@@ -539,7 +527,7 @@ npm-dir:
 npm-module-default-build:
 	mkdir -p npm/$(MODULEDIR)
 	if [ -f node_modules/$(MODULE)/hop/Makefile ]; then \
-           $(MAKE) -C node_modules/$(MODULE)/hop NPMDIR=../../../npm/$(MODULEDIR) clean; \
+           $(MAKE) -C node_modules/$(MODULE)/hop NPMDIR=../../../npm/$(MODULEDIR) npm; \
 	fi
 	if [ -f node_modules/$(MODULE)/node/Makefile ]; then \
            $(MAKE) -C node_modules/$(MODULE)/node NPMDIR=../../../npm/$(MODULEDIR); \
@@ -549,9 +537,9 @@ npm-module-default-build:
 	cp -r node_modules/$(MODULE)/type npm/$(MODULEDIR)
 	cp -r node_modules/$(MODULE)/node npm/$(MODULEDIR)
 	cp -r node_modules/$(MODULE)/hop npm/$(MODULEDIR)
-	touch npm/$(MODULEDIR)/hop/Makefile~
+	touch npm/$(MODULEDIR)/hop/dummy~
 	$(RM) -f npm/$(MODULEDIR)/hop/Makefile npm/$(MODULEDIR)/hop/*~
-	touch npm/$(MODULEDIR)/node/Makefile~
+	touch npm/$(MODULEDIR)/node/dummy~
 	$(RM) -f npm/$(MODULEDIR)/node/Makefile npm/$(MODULEDIR)/node/*~
 	if [ -f node_modules/$(MODULE)/hop/Makefile ]; then \
            $(MAKE) -C node_modules/$(MODULE)/hop NPMDIR=../../../npm/$(MODULEDIR) postbuild clean; \
