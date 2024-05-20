@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Sun May 19 17:26:06 2024 (serrano)                */
+;*    Last change :  Mon May 20 07:42:01 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -952,15 +952,6 @@
 		     (trace-item "name=" name)
 		     (with-handler
 			(lambda (exn)
-			   (let ((err (instantiate::&error
-					 (proc "dynamicImport")
-					 (msg "error while importing module")
-					 (obj name))))
-			      (match-case loc
-				 ((at ?fname ?loc)
-				  (error-notify/location err fname loc))
-				 (else
-				  (error-notify err))))
 			   (js-call1 %this reject (js-undefined) exn))
 			(let* ((path (nodejs-resolve name %this %module
 					(node-module-paths %module %this)
@@ -2084,8 +2075,8 @@
 					  (format "bad source format `~a'" (typeof src)) filename)))
 				 ;; target
 				 "-y" "--js-no-module-main" "-o" ,sopathtmp
-				 ;; js plugins
-				 "--js-plugins"
+;* 				 ;; js plugins                         */
+;* 				 "--js-plugins"                        */
 				 ;; profiling
 				 ,@(if (hop-profile) '("--profile") '())
 				 ;; worker

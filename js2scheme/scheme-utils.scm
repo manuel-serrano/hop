@@ -749,9 +749,9 @@
    (define conf (context-conf ctx))
    
    (define (js-get obj prop %this)
-      ;; FAUX CAR ON NE DOIT PAS FAIRE DE DEBUG SUR LES RECORDS
       (if (or (config-get conf :profile-cache #f)
-	      (> (config-get conf :debug 0) 0))
+	      (> (config-get conf :debug 0) 0)
+	      (< (config-get conf :optim 0) 1000))
 	  `(js-get/debug ,obj ,prop %this ',loc)
 	  `(js-get ,obj ,prop %this)))
    
@@ -898,11 +898,15 @@
 	     (else
 	      (js-get obj prop '%this))))
 	 ((string? propstr)
-	  (if (string=? propstr "length")
+	  (cond
+	     ((string=? propstr "length")
 	      (if (eq? tyval 'uint32)
 		  `(js-get-lengthu32 ,obj %this #f)
-		  `(js-get-length ,obj %this #f))
-	      `(js-get ,obj ,prop %this)))
+		  `(js-get-length ,obj %this #f)))
+	     ((< (config-get conf :optim 0) 1000)
+	      `(js-get/debug ,obj ,prop %this ',loc))
+	     (else
+	      `(js-get ,obj ,prop %this))))
 	 ((and (eq? optim 'array)
 	       field
 	       (mightbe-number? field)
