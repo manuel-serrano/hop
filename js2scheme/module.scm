@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 15 15:16:16 2018                          */
-;*    Last change :  Sun May 19 08:59:37 2024 (serrano)                */
+;*    Last change :  Sun May 19 17:58:13 2024 (serrano)                */
 ;*    Copyright   :  2018-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES6 Module handling                                              */
@@ -543,7 +543,6 @@
    (define (resolve-package-exports x::bstring json)
       ;; see nodejs/require.scm
       (let ((e (assoc "exports" json)))
-	 (trace-item "m=" e)
 	 (when (pair? e)
 	    (cond
 	       ((string? (cdr e))

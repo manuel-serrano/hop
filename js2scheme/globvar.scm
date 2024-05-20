@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Sat Dec 21 06:49:59 2019 (serrano)                */
-;*    Copyright   :  2017-20 Manuel Serrano                            */
+;*    Last change :  Mon May 20 06:58:59 2024 (serrano)                */
+;*    Copyright   :  2017-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Global variables optimization (constant propagation).            */
 ;*=====================================================================*/
@@ -62,6 +62,8 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    constant? ...                                                    */
+;*    -------------------------------------------------------------    */
+;*    Used for initialization values (J2SInit and J2SDeclInit).        */
 ;*---------------------------------------------------------------------*/
 (define (constant? expr::J2SExpr)
    (cond
@@ -149,7 +151,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (propagate-constant! this::J2SRef)
    (with-access::J2SRef this (decl)
-      (with-access::J2SDecl decl (%info id)
+      (with-access::J2SDecl decl (%info id export)
 	 (cond
 	    ((or (not (pair? %info)) (not (eq? (car %info) 'init)))
 	     (call-default-walker))
@@ -166,14 +168,23 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    propagate-constant! ::J2SInit ...                                */
+;*    -------------------------------------------------------------    */
+;*    Remove the variable initialization if it is bound to a           */
+;*    constant that is inlined on all its use sites (which implies     */
+;*    that the variable is not exported).                              */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (propagate-constant! this::J2SInit)
    (with-access::J2SInit this (lhs rhs loc)
-      (if (and (isa? lhs J2SRef)
-	       (with-access::J2SRef lhs (decl)
-		  (with-access::J2SDecl decl (%info)
-		     (and (pair? %info) (isa? (cdr %info) J2SExpr)))))
-	  (J2SUndefined)
+      (if (isa? lhs J2SRef)
+	  (with-access::J2SRef lhs (decl)
+	     (with-access::J2SDecl decl (%info export)
+		(if (and (pair? %info) (isa? (cdr %info) J2SExpr))
+		    (if export
+			(begin
+			   (set! rhs (propagate-constant! rhs))
+			   this)
+			(J2SUndefined))
+		    (call-default-walker))))
 	  (call-default-walker))))
 
 ;*---------------------------------------------------------------------*/

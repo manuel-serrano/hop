@@ -2781,6 +2781,8 @@
 	     (get-optional-chaining obj)))))
       
    (define (optional-chaining this::J2SAccess axs)
+      ;; MS: 19may2024: this code should be rewritten because it
+      ;; dangerously mutate the AST (see "set! obj xxx") used twice below
       (let loop ((chain this))
 	 (with-access::J2SAccess chain (loc obj)
 	    (if (eq? chain axs)

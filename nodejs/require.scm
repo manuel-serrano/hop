@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Sun May 19 08:52:02 2024 (serrano)                */
+;*    Last change :  Sun May 19 17:26:06 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -860,15 +860,17 @@
 (define (nodejs-import-module::JsModule worker::WorkerHopThread
 	   %this::JsGlobalObject %module::JsObject
 	   path::bstring checksum::long commonjs-export::bool loc)
-   (let* ((respath (nodejs-resolve path %this %module (node-module-paths %module %this) 'import))
-	  (mod (nodejs-load-module respath worker %this %module
-		  :commonjs-export commonjs-export :loc loc)))
-      (with-access::JsModule mod ((mc checksum))
-	 (if (or (=fx checksum 0) (=fx checksum mc) (=fx mc 0))
-	     mod
-	     (js-raise-type-error/loc %this loc
-		"corrupted module ~s"
-		(js-get mod (& "filename") %this))))))
+   (with-trace 'require "nodejs-import-module"
+      (trace-item "path=" path)
+      (let* ((respath (nodejs-resolve path %this %module (node-module-paths %module %this) 'import))
+	     (mod (nodejs-load-module respath worker %this %module
+		     :commonjs-export commonjs-export :loc loc)))
+	 (with-access::JsModule mod ((mc checksum))
+	    (if (or (=fx checksum 0) (=fx checksum mc) (=fx mc 0))
+		mod
+		(js-raise-type-error/loc %this loc
+		   "corrupted module ~s"
+		   (js-get mod (& "filename") %this)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-import-module-core ...                                    */
@@ -946,15 +948,28 @@
 	 (js-new1 %this js-promise
 	    (js-make-function %this
 	       (lambda (this resolve reject)
-		  (with-handler
-		     (lambda (exn)
-			(js-call1 %this reject (js-undefined) exn))
-		     (let* ((path (nodejs-resolve name %this %module
-				     (node-module-paths %module %this) 'import))
-			    (mod (nodejs-import-module worker %this %module
-				    path 0 commonjs-export loc)))
-			(js-call1 %this resolve (js-undefined)
-			   (nodejs-module-namespace mod worker %this)))))
+		  (with-trace 'require "nodejs-import-module-dynamic"
+		     (trace-item "name=" name)
+		     (with-handler
+			(lambda (exn)
+			   (let ((err (instantiate::&error
+					 (proc "dynamicImport")
+					 (msg "error while importing module")
+					 (obj name))))
+			      (match-case loc
+				 ((at ?fname ?loc)
+				  (error-notify/location err fname loc))
+				 (else
+				  (error-notify err))))
+			   (js-call1 %this reject (js-undefined) exn))
+			(let* ((path (nodejs-resolve name %this %module
+					(node-module-paths %module %this)
+					'import))
+			       (mod (nodejs-import-module worker %this %module
+				       path 0 commonjs-export loc)))
+			   (trace-item "mod=" (typeof mod))
+			   (js-call1 %this resolve (js-undefined)
+			      (nodejs-module-namespace mod worker %this))))))
 	       (js-function-arity 2 0)
 	       (js-function-info :name "import" :len 2))))))
 
@@ -2484,9 +2499,9 @@
 		(set! commonjs-export (cadr cj))
 		(set! commonjs-export #t))))
       (with-loading-file filename
-		  (if (eq? worker loader-worker)
-		      (lambda () (builtin-load-module filename lang))
-		      loader-load-module))))
+	 (if (eq? worker loader-worker)
+	     (lambda () (builtin-load-module filename lang))
+	     loader-load-module))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-require-module ...                                        */
