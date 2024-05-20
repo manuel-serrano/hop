@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Sat May 18 06:55:46 2024 (serrano)                */
+;*    Last change :  Mon May 20 15:48:19 2024 (serrano)                */
 ;*    Copyright   :  2006-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -805,7 +805,7 @@
    (let ((l1 (string-length p1))
 	 (l2 (string-length p2)))
       (and (>=fx l2 l1)
-	   (let loop ((i (+fx 1 (string-length (hop-service-base)))))
+	   (let loop ((i 0))
 	      (cond
 		 ((=fx i l1)
 		  (or (=fx i l2) (char=? (string-ref p2 i) #\?)))
@@ -819,7 +819,7 @@
 ;*---------------------------------------------------------------------*/
 (define (hash-path::long p)
    (let ((l (string-length p)))
-      (let loop ((i (+fx 1 (string-length (hop-service-base))))
+      (let loop ((i 0)
 		 (r::long 0))
 	 (if (>=fx i l)
 	     (bit-and r (-fx (bit-lsh 1 29) 1))
@@ -924,7 +924,7 @@
 		      "Service re-definition not permitted"
 		      "use `--devel' or `-s0' options to enable re-definitions"))
 		  ((>fx (bigloo-debug) 0)
-		   (warning 'register-service! "Service re-defined -- " id))))
+		   (warning "register-service!" "Service re-defined -- " id))))
 	    (hashtable-put! table path svc)
 	    (unless (char=? #\/ (string-ref path (-fx (string-length path) 1)))
 	       (hashtable-put! table (string-append path "/") svc))

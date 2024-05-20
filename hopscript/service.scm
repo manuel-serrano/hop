@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Sat May 18 06:57:03 2024 (serrano)                */
+;*    Last change :  Mon May 20 16:12:46 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -392,6 +392,19 @@
 			 (service-get-urls this %this))
 		      (js-function-arity 0 0)
 		      (js-function-info :name "getURLs" :len 0))
+	    :hidden-class #t)
+
+	 (js-bind! %this js-service-prototype (& "dollar")
+	    :value (js-make-function %this
+		      (lambda (this)
+			 (with-access::JsService this (svc)
+			    (with-access::hop-service svc (path)
+			       (js-string->jsstring
+				  (string-append "hop.server.import('"
+				     path
+				     "')")))))
+		      (js-function-arity 1 0)
+		      (js-function-info :name "dollar" :len 0))
 	    :hidden-class #t)
 	 
 	 ;; HopFrame prototype and constructor
@@ -1002,6 +1015,11 @@
    (define (service-debug id::symbol impl)
       (lambda (%this)
 	 (js-service/debug id loc impl %this)))
+
+   (define (make-hop-url path)
+      (if (char=? (string-ref path 0) #\/)
+	  path
+	  (make-file-name (hop-service-base) path)))
    
    (cond
       ((eq? impl (js-undefined))
