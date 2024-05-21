@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Thu May 16 11:17:07 2024 (serrano)                */
+;*    Last change :  Tue May 21 07:55:10 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -2590,7 +2590,7 @@
 (define-generic (js-get o prop %this::JsGlobalObject)
    (cond
       ((null? o)
-       (js-get-null o (js-toname prop %this) %this))
+       (js-get-null o (js-toname prop %this) %this #f))
       ((number? o)
        (let ((obj (if (bignum? o)
 		      (js-bigint->jsbigint o %this)
@@ -2663,7 +2663,7 @@
       ((js-object? o)
        (js-get o prop %this))
       ((null? o)
-       (js-get-null o (js-toname prop %this) %this))
+       (js-get-null o (js-toname prop %this) %this loc))
       ((number? o)
        (let ((obj (if (bignum? o)
 		      (js-bigint->jsbigint o %this)

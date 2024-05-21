@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Mon May 20 16:12:46 2024 (serrano)                */
+;*    Last change :  Tue May 21 07:38:49 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -312,6 +312,19 @@
 		  (procedure list)
 		  (svc #f))))
 	 
+	 (js-bind! %this js-service-prototype (& "dollar")
+	    :value (js-make-function %this
+		      (lambda (this)
+			 (with-access::JsService this (svc)
+			    (with-access::hop-service svc (path)
+			       (js-string->jsstring
+				  (string-append "hop.server.import('"
+				     path
+				     "')")))))
+		      (js-function-arity 1 0)
+		      (js-function-info :name "dollar" :len 0))
+	    :hidden-class #t)
+
 	 (js-bind! %this js-service-prototype (& "name")
 	    :value (js-ascii->jsstring "service")
 	    :writable #f
@@ -394,19 +407,6 @@
 		      (js-function-info :name "getURLs" :len 0))
 	    :hidden-class #t)
 
-	 (js-bind! %this js-service-prototype (& "dollar")
-	    :value (js-make-function %this
-		      (lambda (this)
-			 (with-access::JsService this (svc)
-			    (with-access::hop-service svc (path)
-			       (js-string->jsstring
-				  (string-append "hop.server.import('"
-				     path
-				     "')")))))
-		      (js-function-arity 1 0)
-		      (js-function-info :name "dollar" :len 0))
-	    :hidden-class #t)
-	 
 	 ;; HopFrame prototype and constructor
 	 (set! js-hopframe-prototype
 	    (instantiateJsHopFrame
@@ -417,6 +417,16 @@
 	       (args '())
 	       (cmap (js-make-jsconstructmap))
 	       (elements ($create-vector 8))))
+
+	 (js-bind! %this js-service-prototype (& "dollar")
+	    :value (js-make-function %this
+		      (lambda (this)
+			 (with-access::JsHopFrame this (path)
+			    (js-string->jsstring
+			       (string-append "'" path "'"))))
+		      (js-function-arity 1 0)
+		      (js-function-info :name "dollar" :len 0))
+	    :hidden-class #t)
 	 
 	 (js-bind! %this js-hopframe-prototype (& "post")
 	    :value (js-make-function %this

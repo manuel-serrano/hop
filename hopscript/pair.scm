@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.7.x/hopscript/pair.scm                */
+;*    serrano/prgm/project/hop/hop/hopscript/pair.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat May 24 07:51:25 2014                          */
-;*    Last change :  Mon Nov 27 18:07:47 2023 (serrano)                */
-;*    Copyright   :  2014-23 Manuel Serrano                            */
+;*    Last change :  Tue May 21 07:54:55 2024 (serrano)                */
+;*    Copyright   :  2014-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript JS/Hop pair binding                                    */
 ;*=====================================================================*/
@@ -34,7 +34,7 @@
 	    (js-get-own-property-pair ::pair ::obj ::JsGlobalObject)
 	    (js-get-property-value-pair ::pair ::pair ::obj ::JsGlobalObject)
 	    (js-get-pair ::pair ::obj ::JsGlobalObject)
-	    (js-get-null ::nil ::obj ::JsGlobalObject)
+	    (js-get-null ::nil ::obj ::JsGlobalObject ::obj)
 	    (js-put-pair! ::pair ::obj v throw::bool ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
@@ -203,9 +203,12 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-get-null ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (js-get-null o::nil prop %this)
-   (js-raise-type-error %this
-      (format "get: no such field \"~a\" ~~a" (js-tostring prop %this)) o))
+(define (js-get-null o::nil prop %this loc)
+   (if loc
+       (js-raise-type-error/loc %this loc
+	  (format "get: no such field \"~a\" ~~a" (js-tostring prop %this)) o)
+       (js-raise-type-error %this
+	  (format "get: no such field \"~a\" ~~a" (js-tostring prop %this)) o)))
    
 ;*---------------------------------------------------------------------*/
 ;*    js-put-pair! ...                                                 */

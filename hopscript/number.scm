@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sat Mar 18 19:25:31 2023 (serrano)                */
-;*    Copyright   :  2013-23 Manuel Serrano                            */
+;*    Last change :  Fri May 17 15:20:10 2024 (serrano)                */
+;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
 ;*=====================================================================*/
@@ -328,10 +328,11 @@
 
    ;; toExponential
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.7.4.6
+   (define (number-toexponential this fractiondigits)
+      (js-number-toexponential (js-cast-number this #f %this) fractiondigits %this))
+   
    (js-bind! %this obj (& "toExponential")
-      :value (js-make-function %this
-		(lambda (this val)
-		   (error "toExponential" "not implemented" "yet"))
+      :value (js-make-function %this number-toexponential
 		(js-function-arity 1 0)
 		(js-function-info :name "toExponential" :len 1))
       :writable #t
@@ -341,10 +342,11 @@
 
    ;; toPrecision
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.7.4.7
+   (define (number-toprecision this precision)
+      (js-number-toprecision (js-cast-number this #f %this) precision %this))
+
    (js-bind! %this obj (& "toPrecision")
-      :value (js-make-function %this
-		(lambda (this val)
-		   (error "toPrecision" "not implemented" "yet"))
+      :value (js-make-function %this number-toprecision
 		(js-function-arity 1 0)
 		(js-function-info :name "toPrecision" :len 1))
       :writable #t
@@ -430,6 +432,92 @@
 		(or cache (js-pcache-ref js-number-pcache 1)))
 	     this fractiondigits))))
 
+;*---------------------------------------------------------------------*/
+;*    js-number-toexponential ...                                      */
+;*---------------------------------------------------------------------*/
+(define (js-number-toexponential val fractiondigits %this::JsGlobalObject)
+   (js-undefined))
+
+;*---------------------------------------------------------------------*/
+;*    js-number-toprecision ...                                        */
+;*---------------------------------------------------------------------*/
+(define (js-number-toprecision x precision %this::JsGlobalObject)
+   (if (eq? precision (js-undefined))
+       ;; 2.
+       (js-tojsstring x %this)
+       ;; 3.
+       (let ((p (js-tointeger precision %this)))
+	  ;; 4.
+	  (if (and (flonum? x) (nanfl? x))
+	      (& "NaN")
+	      ;; 5. & 6.
+	      (cond
+		 ((= x +inf.0)
+		  ;; 7.
+		  (& "Infinity"))
+		 ((= x -inf.0)
+		  ;; 7.
+		  (& "-Infinity"))
+		 (else
+		  (let ((s ""))
+		     (when (< x 0)
+			(set! s "-")
+			(set! x (- x)))
+		     (if (or (< p 1) (> p 21))
+			 ;; 8.
+			 (js-raise-range-error %this
+			    "Precision out of range: ~a" p)
+			 (let ((e 0)
+			       (m ""))
+			    (if (= x 0)
+				;; 9.
+				(set! m (make-string p #\0))
+				(let (n)
+				   ;; 10.a
+				   'todo
+				   ;; 10.b
+				   (set! m (string->number n))
+				   ;; 10.c
+				   (when (or (< e -6) (>= e p))
+				      ;; 10.c.i
+				      (let ((a (substring m 0 1))
+					    (b (substring m 1)))
+					 ;; 10.c.ii
+					 (set! m (string-append a "." b))
+					 (let (c d)
+					    (if (= e 0)
+						;; 10.c.iii
+						(begin
+						   (set! c "+")
+						   (set! d "0"))
+						(begin
+						   ;; 10.c.iv
+						   (if (> e 0)
+						       (set! c "+")
+						       (begin
+							  (set! c "-")
+							  (set! e (- e))))))
+					    (set! d (string->number e))
+					    (set! m (string-append s m "e" c d)))))))
+			    (cond
+			       ((= e (- p 1))
+				;; 11.
+				(js-string->jsstring
+				   (string-append s m)))
+			       ((>= e 0)
+				;; 12.
+				(js-string->jsstring
+				   (string-append s
+				      (substring m 0 (+ e 1))
+				      "."
+				      (substring m (+ e 1)))))
+			       (else
+				;; 13.
+				(js-string->jsstring
+				   (string-append s "0."
+				      (make-string (- (+ e 1)) #\0)
+				      m)))))))))))))
+       
 ;*---------------------------------------------------------------------*/
 ;*    %real->string ...                                                */
 ;*---------------------------------------------------------------------*/
