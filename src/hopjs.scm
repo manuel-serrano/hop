@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Sun May 19 06:53:14 2024 (serrano)                */
+;*    Last change :  Wed May 22 19:00:31 2024 (serrano)                */
 ;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -219,7 +219,9 @@
 	 (section "Hopc options")
 	 (("-g?level" (help "Debug level"))
 	  (hop-sofile-enable-set! #f)
-	  (bigloo-debug-set! (string->integer level)))
+	  (if (string=? level "")
+	      (bigloo-debug-set! 1)
+	      (bigloo-debug-set! (string->integer level))))
 	 (("-O?level" (help "Optimization level (for newly compiled so files)"))
 	  (cond
 	     ((string=? level "")

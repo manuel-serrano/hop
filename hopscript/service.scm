@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Tue May 21 07:38:49 2024 (serrano)                */
+;*    Last change :  Wed May 22 16:37:49 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -418,7 +418,7 @@
 	       (cmap (js-make-jsconstructmap))
 	       (elements ($create-vector 8))))
 
-	 (js-bind! %this js-service-prototype (& "dollar")
+	 (js-bind! %this js-hopframe-prototype (& "dollar")
 	    :value (js-make-function %this
 		      (lambda (this)
 			 (with-access::JsHopFrame this (path)
@@ -617,6 +617,14 @@
 	 (args args))))
 
 ;*---------------------------------------------------------------------*/
+;*    service-apply-url ...                                            */
+;*---------------------------------------------------------------------*/
+(define (service-apply-url base vals %this)
+   (string-append base
+      "?hop-encoding=hop"
+      "&vals=" (url-path-encode (obj->string (apply vector vals) %this))))
+
+;*---------------------------------------------------------------------*/
 ;*    hopframe->string ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (hopframe->string::bstring frame::JsHopFrame %this)
@@ -625,7 +633,7 @@
 			 ((not (pair? args))
 			  path)
 			 (else
-			  (hop-apply-url path args %this)))))
+			  (service-apply-url path args %this)))))
 	 (cond
 	    ((isa? srv JsServer)
 	     (with-access::JsServer srv (obj)

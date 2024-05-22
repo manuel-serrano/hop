@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Tue May 14 09:42:56 2024 (serrano)                */
+;*    Last change :  Wed May 22 19:07:03 2024 (serrano)                */
 ;*    Copyright   :  2014-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -30,7 +30,14 @@
    (eval   (export hopjs-standalone-set!))
    
    (export (hopjs-standalone-set! ::bool)
-	   (hopjs-process-hop ::WorkerHopThread ::JsGlobalObject)))
+	   (hopjs-process-hop ::WorkerHopThread ::JsGlobalObject)
+	   (hopjs-response-hop this obj req %this)
+	   (hopjs-response-xml this obj req %this)
+	   (hopjs-response-file this file req %this)
+	   (hopjs-response-string this string req %this)
+	   (hopjs-response-authentication this msg req %this)
+	   (hopjs-response-proxy this url req %this)
+	   (hopjs-response-async this proc req %this %worker)))
 
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
