@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/runtime/mime.scm                  */
+;*    serrano/prgm/project/hop/hop/runtime/mime.scm                    */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 07:59:54 2006                          */
-;*    Last change :  Wed Feb 20 07:43:05 2013 (serrano)                */
-;*    Copyright   :  2006-20 Manuel Serrano                            */
+;*    Last change :  Wed May 22 19:42:57 2024 (serrano)                */
+;*    Copyright   :  2006-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP mime types management.                                       */
 ;*=====================================================================*/
@@ -41,7 +41,9 @@
    (let ((l (hashtable-get *mime-types-table* path)))
       (if (pair? l)
 	  (car l)
-	  default)))
+	  (begin
+	     (tprint "MIME=" (hashtable-key-list *mime-types-table*))
+	     default))))
 
 ;*---------------------------------------------------------------------*/
 ;*    mime-types ...                                                   */

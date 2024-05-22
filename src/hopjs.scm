@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Wed May 22 19:00:31 2024 (serrano)                */
+;*    Last change :  Wed May 22 19:46:49 2024 (serrano)                */
 ;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -93,6 +93,9 @@
    ;; final configuration
    (when (hop-profile) (js-profile-init `(:server #t) #f #f))
 
+   ;; mime types
+   (load-mime-types (hop-mime-types-file))
+   
    ;; disable JS global service declaration
    (js-service-support-set! #f)
    
