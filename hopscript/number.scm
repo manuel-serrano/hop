@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Fri May 17 15:20:10 2024 (serrano)                */
+;*    Last change :  Wed May 22 06:43:55 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -168,6 +168,18 @@
       (js-bind! %this js-number (& "NaN")
 	 :value +nan.0
 	 :writable #f :enumerable #f :configurable #f :hidden-class #f)
+      (js-bind! %this js-number (& "isFinite")
+	 :value (js-make-function %this
+		   (lambda (this val)
+		      (cond
+			 ((not (number? val)) #f)
+			 ((fixnum? val) #t)
+			 ((bignum? val) #t)
+			 (else (finitefl? val))))
+		   (js-function-arity 1 0)
+		   (js-function-info :name "isFinite" :len 1)
+		   :prototype (js-undefined))
+	 :enumerable #f :configurable #t :writable #t :hidden-class #f)
       (js-bind! %this js-number (& "isInteger")
 	 :value (js-make-function %this is-integer?
 		   (js-function-arity 1 0)
@@ -182,6 +194,35 @@
 		   (js-function-info :name "isNaN" :len 1)
 		   :prototype (js-undefined))
 	 :enumerable #f :configurable #t :writable #t :hidden-class #f)
+      (js-bind! %this js-number (& "isSafeInteger")
+	 :value (js-make-function %this
+		   (lambda (this val)
+		      (cond
+			 ((fixnum? val) #t)
+			 ((bignum? val) #t)
+			 ((flonum? val) (<=fl (absfl val) (-fl (exptfl 2 53) 1)))
+			 (else #f)))
+		   (js-function-arity 1 0)
+		   (js-function-info :name "isSafeFinite" :len 1)
+		   :prototype (js-undefined))
+	 :enumerable #f :configurable #t :writable #t :hidden-class #f)
+      (js-bind! %this js-number (& "parseInt")
+	       :value (js-make-function %this
+			 (lambda (this string radix)
+			    (js-parseint string radix %this))
+			 (js-function-arity 3 0)
+			 (js-function-info :name "parseInt" :len 2)
+			 :prototype (js-undefined))
+	       :enumerable #f :configurable #t :writable #t :hidden-class #f)
+      (js-bind! %this js-number (& "parseFloat")
+	       :value (js-make-function %this
+			 (lambda (this string)
+			    (js-parsefloat string %this))
+			 (js-function-arity 3 0)
+			 (js-function-info :name "parseFloat" :len 2)
+			 :prototype (js-undefined))
+	       :enumerable #f :configurable #t :writable #t :hidden-class #f)
+			 
       ;; bind the builtin prototype properties
       (init-builtin-number-prototype! %this js-number js-number-prototype)
       ;; bind Number in the global object
@@ -434,89 +475,230 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    js-number-toexponential ...                                      */
+;*    -------------------------------------------------------------    */
+;*    https://tc39.es/ecma262/2022/#sec-number.prototype.toexponential */
 ;*---------------------------------------------------------------------*/
-(define (js-number-toexponential val fractiondigits %this::JsGlobalObject)
-   (js-undefined))
+(define (js-number-toexponential x fractiondigits %this::JsGlobalObject)
+
+   (define (step-10ai x f)
+      ;; 10.ai
+      (let ((stop (exptfl 10. (fixnum->flonum f))))
+	 (cond
+	    ((<fl x stop)
+	     (let  loop ((k 0)
+			 (m x))
+		(if (>=fl m stop)
+		    (let ((n (flonum->fixnum (round m))))
+		       (values (+fx k f) n f))
+		    (loop (-fx k 1) (*fl m 10.)))))
+	    ((<fl x (*fl stop 10.))
+	     (let ((n (flonum->fixnum x)))
+		(values f n f)))
+	    (else
+	     (let ((stop (*fl stop 10.)))
+		(let  loop ((k 0)
+			    (m x))
+		   (if (<fl m stop)
+		       (let ((n (flonum->fixnum (round m))))
+			  (values (+fx k f) n f))
+		       (loop (+fx k 1) (/fl m 10.)))))))))
+   
+   (define (step-10a x f)
+      (cond
+	 ((not (eq? fractiondigits (js-undefined)))
+	  ;; 10.a
+	  (step-10ai x f))
+	 ((integer? x)
+	  (step-10ai x (-fx (string-length (fixnum->string (flonum->fixnum x))) 1)))
+	 (else
+	  ;; 10.b
+	  (step-10ai x (-fx (string-length (real->string x)) 2)))))
+	  
+   (define (step-10 x f)
+      (multiple-value-bind (e n f)
+	 (step-10a x f)
+	 (let ((m (fixnum->string n)))
+	    (step-11-14 x f m e))))
+   
+   (define (step-11-14 x f m e)
+      (unless (=fx f 0)
+	 ;; 11.
+	 (let ((a (substring m 0 1))
+	       (b (substring m 1 (+fx f 1))))
+	    (set! m (string-append a "." b))))
+      (let (c d)
+	 (cond
+	    ((=fx e 0)
+	     ;; 12.
+	     (set! c "+")
+	     (set! d "0"))
+	    ((>fx e 0)
+	     ;; 13.a
+	     (set! c "+")
+	     (set! d (fixnum->string e)))
+	    (else
+	     ;; 13.b
+	     (set! c "-")
+	     (set! d (fixnum->string (negfx e)))))
+	 ;; 14.
+	 (string-append m "e" c d)))
+
+   ;; 2.
+   (let ((f (if (eq? fractiondigits (js-undefined))
+		0
+		(js-tointeger fractiondigits %this))))
+      (when (fixnum? x) (set! x (fixnum->flonum x)))
+      ;; 4.
+      (cond
+	 ((nanfl? x)
+	  (& "NaN"))
+	 ;; 4.
+	 ((=fl x +inf.0)
+	  ;; 4.
+	  (& "Infinity"))
+	 ((=fl x -inf.0)
+	  ;; 4.
+	  (& "-Infinity"))
+	 ((or (< f 0) (> f 100))
+	  ;; 5.
+	  (js-raise-range-error %this
+	     "fractiondigits out of range: ~a" f))
+	 (else
+	  (cond
+	     ((<fl x 0.0)
+	      ;; 8.
+	      (js-string->jsstring
+		 (string-append "-" (step-10 (negfx x) f))))
+	     ((>fl x 0.0)
+	      ;; 10.
+	      (js-string->jsstring
+		 (step-10 x f)))
+	     (else
+	      (let ((m (make-string (+fx f 1) #\0))
+		    (e 0))
+		 (js-string->jsstring
+		    (step-11-14 x f m e)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-number-toprecision ...                                        */
+;*    -------------------------------------------------------------    */
+;*    https://tc39.es/ecma262/2022/#sec-number.prototype.toprecision   */
 ;*---------------------------------------------------------------------*/
 (define (js-number-toprecision x precision %this::JsGlobalObject)
+
+   (define (step-10a x p)
+      ;; Let e and n be integers such that 10^(p - 1) <= n < 10^p
+      ;; and for which n × 10^(e - p + 1) - x is as close to zero as possible.
+      ;; If there are two such sets of e and n, pick the e and n for
+      ;; which n × 10^(e - p + 1) is larger.
+      (let ((stop (exptfl 10. (fixnum->flonum (-fx p 1)))))
+	 (cond
+	    ((<fl x stop)
+	     (let  loop ((k 0)
+			 (m x))
+		(if (>=fl m stop)
+		    (let ((n (flonum->fixnum (round m))))
+		       (values (+fx k (-fx p 1)) n))
+		    (loop (-fx k 1) (*fl m 10.)))))
+	    ((<fl x (*fl stop 10.))
+	     (let ((n (flonum->fixnum x)))
+		(values (-fx p 1) n)))
+	    (else
+	     (let ((stop (*fl stop 10.)))
+		(let  loop ((k 0)
+			    (m x))
+		   (if (<fl m stop)
+		       (let ((n (flonum->fixnum (round m))))
+			  (values (+fx k (-fx p 1)) n))
+		       (loop (+fx k 1) (/fl m 10.)))))))))
+
+   (define (step-10 x p)
+      (multiple-value-bind (e n)
+	 (step-10a x p)
+	 ;; 10.b
+	 (let ((m (fixnum->string n)))
+	    ;; 10.c
+	    (if (or (<fx e -6) (>=fx e p))
+		;; 10.c.i
+		(let ((m (if (not (=fx p 1))
+			     (let ((a (substring m 0 1))
+				   (b (substring m 1)))
+				;; 10.c.ii
+				(string-append a "." b))
+			     ;; 10.b
+			     (fixnum->string n))))
+		   (let (c d)
+		      (cond
+			 ((=fx e 0)
+			  (set! c "")
+			  (set! d "0"))
+			 ((>fx e 0)
+			  ;; 10.c.iii
+			  (set! c "+"))
+			 (else
+			  ;; 10.iv
+			  (set! c "-")
+			  (set! e (negfx e))))
+		      ;; 10.c.v
+		      (set! d (fixnum->string e))
+		      ;; 10.c.vi
+		      (string-append m "e" c d)))
+		;; 10.b
+		(step-11-13 x p m e)))))
+
+   (define (step-11-13 x p m e)
+      (cond
+	 ((=fx e (-fx p 1))
+	  ;; 11.
+	  m)
+	 ((>=fx e 0)
+	  ;; 12.
+	  (string-append
+	     (substring m 0 (+fx e 1))
+	     "."
+	     (substring m (+fx e 1))))
+	 (else
+	  ;; 13
+	  (string-append "0."
+	     (make-string (negfx (+fx e 1)) #\0)
+	     m))))
+
    (if (eq? precision (js-undefined))
        ;; 2.
        (js-tojsstring x %this)
        ;; 3.
        (let ((p (js-tointeger precision %this)))
+	  (when (fixnum? x) (set! x (fixnum->flonum x)))
 	  ;; 4.
-	  (if (and (flonum? x) (nanfl? x))
-	      (& "NaN")
-	      ;; 5. & 6.
+	  (cond
+	     ((nanfl? x)
+	      (& "NaN"))
+	     ;; 4.
+	     ((=fl x +inf.0)
+	      ;; 4.
+	      (& "Infinity"))
+	     ((=fl x -inf.0)
+	      ;; 4.
+	      (& "-Infinity"))
+	     ((or (< p 1) (> p 100))
+	      ;; 5.
+	      (js-raise-range-error %this
+		 "Precision out of range: ~a" p))
+	     (else
 	      (cond
-		 ((= x +inf.0)
-		  ;; 7.
-		  (& "Infinity"))
-		 ((= x -inf.0)
-		  ;; 7.
-		  (& "-Infinity"))
+		 ((<fl x 0.0)
+		  ;; 8.
+		  (js-string->jsstring
+		     (string-append "-" (step-10 (negfx x) precision))))
+		 ((>fl x 0.0)
+		  ;; 10.
+		  (js-string->jsstring
+		     (step-10 x precision)))
 		 (else
-		  (let ((s ""))
-		     (when (< x 0)
-			(set! s "-")
-			(set! x (- x)))
-		     (if (or (< p 1) (> p 21))
-			 ;; 8.
-			 (js-raise-range-error %this
-			    "Precision out of range: ~a" p)
-			 (let ((e 0)
-			       (m ""))
-			    (if (= x 0)
-				;; 9.
-				(set! m (make-string p #\0))
-				(let (n)
-				   ;; 10.a
-				   'todo
-				   ;; 10.b
-				   (set! m (string->number n))
-				   ;; 10.c
-				   (when (or (< e -6) (>= e p))
-				      ;; 10.c.i
-				      (let ((a (substring m 0 1))
-					    (b (substring m 1)))
-					 ;; 10.c.ii
-					 (set! m (string-append a "." b))
-					 (let (c d)
-					    (if (= e 0)
-						;; 10.c.iii
-						(begin
-						   (set! c "+")
-						   (set! d "0"))
-						(begin
-						   ;; 10.c.iv
-						   (if (> e 0)
-						       (set! c "+")
-						       (begin
-							  (set! c "-")
-							  (set! e (- e))))))
-					    (set! d (string->number e))
-					    (set! m (string-append s m "e" c d)))))))
-			    (cond
-			       ((= e (- p 1))
-				;; 11.
-				(js-string->jsstring
-				   (string-append s m)))
-			       ((>= e 0)
-				;; 12.
-				(js-string->jsstring
-				   (string-append s
-				      (substring m 0 (+ e 1))
-				      "."
-				      (substring m (+ e 1)))))
-			       (else
-				;; 13.
-				(js-string->jsstring
-				   (string-append s "0."
-				      (make-string (- (+ e 1)) #\0)
-				      m)))))))))))))
+		  (let ((m (make-string p #\0))
+			(e 0))
+		     (js-string->jsstring
+			(step-11-13 x precision m e))))))))))
        
 ;*---------------------------------------------------------------------*/
 ;*    %real->string ...                                                */
