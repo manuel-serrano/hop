@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Wed May 22 16:37:49 2024 (serrano)                */
+;*    Last change :  Wed May 22 20:57:00 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -420,10 +420,15 @@
 
 	 (js-bind! %this js-hopframe-prototype (& "dollar")
 	    :value (js-make-function %this
-		      (lambda (this)
-			 (with-access::JsHopFrame this (path)
-			    (js-string->jsstring
-			       (string-append "'" path "'"))))
+		      (lambda (this loc)
+			 (if (isa? this JsHopFrame)
+			     (js-string->jsstring
+				(string-append "'"
+				   (hopframe->string this %this)
+				   "'"))
+			     (js-raise-type-error/loc %this loc
+				"HopFrame.toString: not a HopFrame ~s"
+				(typeof this))))
 		      (js-function-arity 1 0)
 		      (js-function-info :name "dollar" :len 0))
 	    :hidden-class #t)
