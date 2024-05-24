@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Thu May 16 13:36:41 2024 (serrano)                */
+;*    Last change :  Fri May 24 14:25:25 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -545,6 +545,7 @@
 		     (obj (instantiate::xml-tilde
 			     (lang 'javascript)
 			     (%js-expression expr)
+			     (debug #f)
 			     (body (vector body '() '() '() expr #f)))))))
 
 	    ;; tilde object

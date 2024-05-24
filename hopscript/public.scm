@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Fri May 17 07:57:41 2024 (serrano)                */
+;*    Last change :  Fri May 24 14:47:08 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -3625,9 +3625,7 @@
 	 (apply <SCRIPT> :idiom "javascript" :%context %this
 	    (when (js-object? attrs)
 	       (js-object->keyword-arguments* attrs %this))
-	    (filter (lambda (n)
-		       (or (isa? n xml-tilde) (isa? n xml-markup)))
-	       nodes)))
+	    nodes))
       (js-function-arity 1 -1 'scheme)
       (js-function-info :name "SCRIPT" :len 2)))
 

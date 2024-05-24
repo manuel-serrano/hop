@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 07:59:54 2006                          */
-;*    Last change :  Wed May 22 19:42:57 2024 (serrano)                */
+;*    Last change :  Thu May 23 07:20:29 2024 (serrano)                */
 ;*    Copyright   :  2006-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP mime types management.                                       */
@@ -14,6 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_mime
 
+   (import  __hop_configure)
+   
    (export (mime-type ::bstring ::obj)
 	   (mime-types ::bstring)
 	   (mime-type-add! ::bstring ::bstring)
@@ -35,15 +37,27 @@
 		(string-hash s b l)))))
 
 ;*---------------------------------------------------------------------*/
+;*    mime-types-init ...                                              */
+;*---------------------------------------------------------------------*/
+(define mime-types-init #f)
+
+;*---------------------------------------------------------------------*/
 ;*    mime-type ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (mime-type path default)
    (let ((l (hashtable-get *mime-types-table* path)))
-      (if (pair? l)
-	  (car l)
-	  (begin
-	     (tprint "MIME=" (hashtable-key-list *mime-types-table*))
-	     default))))
+      (cond
+	 ((pair? l) (car l))
+	 ((not mime-types-init) (init-mime-types!) (mime-type path default))
+	 (else default))))
+
+;*---------------------------------------------------------------------*/
+;*    load-mime-types! ...                                             */
+;*---------------------------------------------------------------------*/
+(define (init-mime-types!)
+   (set! mime-types-init #t)
+   (when (string? (hop-mime-types-file))
+      (load-mime-types (hop-mime-types-file))))
 
 ;*---------------------------------------------------------------------*/
 ;*    mime-types ...                                                   */

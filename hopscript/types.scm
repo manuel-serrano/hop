@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Fri May 17 09:24:39 2024 (serrano)                */
+;*    Last change :  Fri May 24 15:07:08 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -1456,6 +1456,13 @@
       (else
        (with-access::JsArray o (vec)
 	  (vector-set! vec idx val)))))
+
+;*---------------------------------------------------------------------*/
+;*    xml-unpack ::JsWrapper ...                                       */
+;*---------------------------------------------------------------------*/
+(define-method (xml-unpack o::JsWrapper ctx)
+   (with-access::JsWrapper o (obj)
+      (xml-unpack obj ctx)))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-primitive-value ::JsWrapper ...                              */

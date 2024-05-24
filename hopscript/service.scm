@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Wed May 22 20:57:00 2024 (serrano)                */
+;*    Last change :  Fri May 24 07:39:53 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -321,7 +321,7 @@
 				  (string-append "hop.server.import('"
 				     path
 				     "')")))))
-		      (js-function-arity 1 0)
+		      (js-function-arity 0 0)
 		      (js-function-info :name "dollar" :len 0))
 	    :hidden-class #t)
 
@@ -625,9 +625,47 @@
 ;*    service-apply-url ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (service-apply-url base vals %this)
-   (string-append base
-      "?hop-encoding=hop"
-      "&vals=" (url-path-encode (obj->string (apply vector vals) %this))))
+
+   (define (encval v)
+      (cond
+	 ((fixnum? v)
+	  (let ((s (fixnum->string v)))
+	     (format "I~d.~a" (string-length s) s)))
+	 ((number? v)
+	  (let ((s (number->string v)))
+	     (format "N~d.~a" (string-length s) s)))
+	 ((eq? v (js-undefined))
+	  "U")
+	 ((null? v)
+	  "Z")
+	 ((eq? v #t)
+	  "T")
+	 ((eq? v #f)
+	  "F")
+	 ((js-jsstring? v)
+	  (let* ((s (js-jsstring->string v))
+		 (e (url-path-encode s)))
+	     (if (string=? s e)
+		 (format "S~d.~a" (string-length e) e)
+		 (format "s~d.~a" (string-length e) e))))
+	 ((js-date? v)
+	  (with-access::JsDate v (time)
+	     (let ((s (integer->string time)))
+		(format "D~d.~a" (string-length s) s))))
+	 (else
+	  (let* ((s (js-json-stringify (js-undefined) v
+		       (js-undefined) (js-undefined) %this))
+		 (e (url-path-encode s)))
+	     (if (string=? s e)
+		 (format "J~d.~a" e)
+		 (format "j~d.~a" e))))))
+   
+   (format "~a?hop-encoding=hopjs&vals=~d.~()"
+      base (length vals) (map encval vals)))
+
+;*    (string-append base                                              */
+;*       "?hop-encoding=hop"                                           */
+;*       "&vals=" (url-path-encode (obj->string (apply vector vals) %this)))) */
 
 ;*---------------------------------------------------------------------*/
 ;*    hopframe->string ...                                             */

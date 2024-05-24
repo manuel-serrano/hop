@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Mon May 20 07:42:01 2024 (serrano)                */
+;*    Last change :  Fri May 24 10:11:01 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -92,6 +92,17 @@
 	     (string-prefix? "load," env)
 	     (string-suffix? ",load" env)
 	     (string-contains env ",load,")))))
+
+;*---------------------------------------------------------------------*/
+;*    env-debug-compile ...                                            */
+;*---------------------------------------------------------------------*/
+(define env-debug-compile
+   (let ((env (getenv "NODE_DEBUG")))
+      (when (string? env)
+	 (or (string=? env "compile")
+	     (string-prefix? "compile," env)
+	     (string-suffix? ",compile" env)
+	     (string-contains env ",compile,")))))
 
 ;*---------------------------------------------------------------------*/
 ;*    debug-load ...                                                   */
@@ -350,7 +361,7 @@
    (define (compile-html filename)
       (call-with-input-file filename
 	 (lambda (in)
-	    (debug-compile-trace "nodejs-compile-html" filename)
+	    (debug-compile "nodejs-compile-html" filename)
 	    (let ((tree (j2s-compile in
 			   :filename filename
 			   :parser 'client-program
@@ -457,7 +468,7 @@
 	       (nodejs-require-core "console" worker this) #f this))))
 
    (define (hopscript->javascript obj filename header lang::bstring esplainp this worker)
-      (debug-compile-trace "hopscript->javascript" filename)
+      (debug-compile "hopscript->javascript" filename)
       (j2s-compile obj
 	 :%this this
 	 :source filename
@@ -1438,19 +1449,25 @@
       :enumerable #f :writable #f :configurable #f :hidden-class #f))
 
 ;*---------------------------------------------------------------------*/
-;*    debug-compile-trace ...                                          */
+;*    debug-compile ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (debug-compile-trace tag filename #!optional target)
-   (when (or (>=fx (nodejs-hop-debug) 2)
-	     (string-contains (or (getenv "HOPTRACE") "") "nodejs:compile"))
-      (display "compiling (" (current-error-port))
-      (display tag (current-error-port))
-      (display "): " (current-error-port))
-      (display filename (current-error-port))
-      (when target
-	 (display " -> " (current-error-port))
-	 (display target (current-error-port)))
-      (newline (current-error-port))))
+(define (debug-compile tag filename #!optional target)
+   (cond
+      (env-debug-compile
+       (fprint (current-error-port) (hop-color 1 "" filename)
+	  " [" tag "] -> "
+	  (if target (hop-color 2 "" target) ""))
+       (flush-output-port (current-error-port)))
+      ((or (>=fx (nodejs-hop-debug) 2)
+	   (string-contains (or (getenv "HOPTRACE") "") "nodejs:compile"))
+       (display "compiling (" (current-error-port))
+       (display tag (current-error-port))
+       (display "): " (current-error-port))
+       (display filename (current-error-port))
+       (when target
+	  (display " -> " (current-error-port))
+	  (display target (current-error-port)))
+       (newline (current-error-port)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-compile ...                                               */
@@ -1506,7 +1523,7 @@
 		(store-cache filename
 		   (call-with-input-file filename
 		      (lambda (in)
-			 (debug-compile-trace "compile-file" filename)
+			 (debug-compile "compile-file" filename)
 			 (let ((m (open-mmap filename read: #t :write #f)))
 			    (unwind-protect
 			       (j2s-compile in
@@ -1534,7 +1551,7 @@
 	 (trace-item "filename=" filename)
 	 (call-with-input-file url
 	    (lambda (in)
-	       (debug-compile-trace "compile-url" filename)
+	       (debug-compile "compile-url" filename)
 	       (input-port-name-set! in url)
 	       (j2s-compile in
 		  :driver (nodejs-driver)
@@ -1556,7 +1573,7 @@
       (with-trace 'require "compile-ast"
 	 (with-access::J2SProgram ast (path)
 	    (trace-item "ast=" path)
-	    (debug-compile-trace "compile-ast" path)
+	    (debug-compile "compile-ast" path)
 	    (let ((m (when (file-exists? path)
 			(open-mmap filename read: #t :write #f))))
 	       (unwind-protect
@@ -2116,7 +2133,7 @@
 			    ;; check if the file has already been compiled while
 			    ;; we were waiting for the lock
 			    (let ((msg (unless (find-new-sofile filename worker-slave worker-slave)
-					  (debug-compile-trace "nodejs-socompile" filename sopath)
+					  (debug-compile "nodejs-socompile" filename sopath)
 					  (hop-verb 2 (hop-color -2 -2 " COMPILE") " "
 					     (format "~( )\n"
 						(map (lambda (s)
