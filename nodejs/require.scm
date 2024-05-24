@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Mon May 20 07:42:01 2024 (serrano)                */
+;*    Last change :  Fri May 24 21:24:17 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -1029,9 +1029,17 @@
 		;; constant export
 		(when debug
 		   (tprint margin "bind.1 " id " " idx " " evars))
-		(js-bind! %this modobj id
-		   :value (vector-ref evars (car idx))
-		   :configurable #f :writable #f))
+		(if (eq? (vector-ref evars (car idx)) (js-undefined))
+		    (js-bind! %this modobj id
+		       :get (js-make-function %this
+			       (lambda (this)
+				  (vector-ref evars (car idx)))
+			       (js-function-arity 0 0)
+			       (js-function-info :name "get" :len 0))
+		       :configurable #f :writable #f)
+		    (js-bind! %this modobj id
+		       :value (vector-ref evars (car idx))
+		       :configurable #f :writable #f)))
 	       (else
 		;; variable export
 		(when debug
@@ -1068,7 +1076,7 @@
 			   (lambda (id %this)
 			      (js-bind! %this modobj id
 				 :value (js-get commonjs id %this)
-				 :configurable #t :writable #t))
+				 :configurable #f :writable #f))
 			   %this))))
 	       modobj))))
    

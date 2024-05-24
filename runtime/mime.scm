@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 07:59:54 2006                          */
-;*    Last change :  Wed May 22 19:42:57 2024 (serrano)                */
+;*    Last change :  Fri May 24 19:52:16 2024 (serrano)                */
 ;*    Copyright   :  2006-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP mime types management.                                       */
@@ -41,9 +41,7 @@
    (let ((l (hashtable-get *mime-types-table* path)))
       (if (pair? l)
 	  (car l)
-	  (begin
-	     (tprint "MIME=" (hashtable-key-list *mime-types-table*))
-	     default))))
+	  default)))
 
 ;*---------------------------------------------------------------------*/
 ;*    mime-types ...                                                   */

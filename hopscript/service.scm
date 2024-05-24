@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Wed May 22 20:57:00 2024 (serrano)                */
+;*    Last change :  Fri May 24 19:58:23 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -321,7 +321,7 @@
 				  (string-append "hop.server.import('"
 				     path
 				     "')")))))
-		      (js-function-arity 1 0)
+		      (js-function-arity 0 0)
 		      (js-function-info :name "dollar" :len 0))
 	    :hidden-class #t)
 
