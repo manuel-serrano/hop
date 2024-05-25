@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Mon May 20 15:48:19 2024 (serrano)                */
+;*    Last change :  Sat May 25 08:02:15 2024 (serrano)                */
 ;*    Copyright   :  2006-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -590,16 +590,16 @@
 			    (else
 			     (map multipart-arg-value args)))))))
 	       ((not (string? ctype))
-		(let ((enc (http-header-field header :hop-serialize))
-		      (args (http-header-field header :hop-arguments)))
+		(let ((enc (http-header-field header :hop-serialize)))
 		   (trace-item "enc=" enc)
-		   (trace-item "args=" args)
 		   (cond
 		      ((string=? enc "json")
-		       (with-access::hop-service svc (ctx)
-			  (call-with-input-string args
-			     (lambda (ip)
-				(json->obj ctx ip)))))
+		       (let ((args (http-header-field header :hop-arguments)))
+			  (trace-item "args=" args)
+			  (with-access::hop-service svc (ctx)
+			     (call-with-input-string args
+				(lambda (ip)
+				   (json->obj ctx ip))))))
 		      (else
 		       '()))))
 	       ((string=? ctype "application/json")

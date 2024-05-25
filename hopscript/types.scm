@@ -1458,6 +1458,13 @@
 	  (vector-set! vec idx val)))))
 
 ;*---------------------------------------------------------------------*/
+;*    xml-unpack ::JsWrapper ...                                       */
+;*---------------------------------------------------------------------*/
+(define-method (xml-unpack o::JsWrapper ctx)
+   (with-access::JsWrapper o (obj)
+      (xml-unpack obj ctx)))
+
+;*---------------------------------------------------------------------*/
 ;*    xml-primitive-value ::JsWrapper ...                              */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-primitive-value o::JsWrapper ctx)

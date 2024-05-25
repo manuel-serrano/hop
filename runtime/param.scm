@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Tue May 14 13:54:19 2024 (serrano)                */
+;*    Last change :  Thu May 23 07:25:54 2024 (serrano)                */
 ;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -991,6 +991,7 @@
      ("image/png" "png")
      ("image/jpeg" "jpeg" "jpg")
      ("image/gif" "gif")
+     ("image/svg+xml" "svg" "svgz")
      ;; video
      ("video/mpeg" "avi")
      ("video/ogg" "ogv")

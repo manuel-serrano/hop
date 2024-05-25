@@ -546,6 +546,7 @@
 			     (lang 'javascript)
 			     (debug #f)
 			     (%js-expression expr)
+			     (debug #f)
 			     (body (vector body '() '() '() expr #f)))))))
 
 	    ;; tilde object

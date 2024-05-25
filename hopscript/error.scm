@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Thu May 16 08:47:10 2024 (serrano)                */
+;*    Last change :  Fri May 24 13:25:54 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
@@ -389,7 +389,7 @@
 	 (let ((name (pregexp-match "\\@@([^ ]*) hopscript"
 			(if (string? (car frame))
 			    (car frame)
-			    (symbol->string! (car frame))))))
+			    (symbol->string (car frame))))))
 	    (cond
 	       ((pair? name)
 		(let ((fun (cadr name))
@@ -402,7 +402,7 @@
 		(let ((fun (car frame))
 		      (loc (cadr frame)))
 		   (make-stack-frame (if (symbol? fun)
-					 (symbol->string! fun)
+					 (symbol->string fun)
 					 fun)
 		      (apply format "~a:~a" (cdr loc))
 		      (cadr loc) (caddr loc) 0)))

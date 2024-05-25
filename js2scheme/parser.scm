@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Sun May 19 11:25:45 2024 (serrano)                */
+;*    Last change :  Fri May 24 10:23:08 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -416,7 +416,7 @@
 	     (cond
 		((eof?)
 		 (begin
-		    (when (config-get conf :source-map #f)
+		    (when (config-get conf :source-map #t)
 		       (set! source-map
 			  (make-file-name (dirname (input-port-name input-port))
 			     (token-value tok))))

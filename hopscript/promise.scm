@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 19 08:19:19 2015                          */
-;*    Last change :  Tue May 14 15:47:33 2024 (serrano)                */
+;*    Last change :  Fri May 24 10:29:47 2024 (serrano)                */
 ;*    Copyright   :  2015-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript promises                     */
@@ -614,9 +614,11 @@
 		      (with-access::JsGlobalObject %this ((gworker worker))
 			 (unless (eq? %name reject-name)
 			    (if (eq? worker gworker)
-				(error "UnhandledPromiseRejection"
-				   (js-tostring reason %this)
-				   %name)
+				(if (eq? reason (js-undefined))
+				    (exit 1)
+				    (error "UnhandledPromiseRejection"
+				       (js-tostring reason %this)
+				       %name))
 				(warning "UnhandledPromiseRejectionWarning: "
 				   (js-tostring reason %this)
 				   " -- " %name))))

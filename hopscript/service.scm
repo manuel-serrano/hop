@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Fri May 24 19:58:23 2024 (serrano)                */
+;*    Last change :  Sat May 25 08:02:38 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -623,11 +623,47 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    service-apply-url ...                                            */
+;*    -------------------------------------------------------------    */
+;*    See node_modules/hop/hop/_hop.hop                                */
 ;*---------------------------------------------------------------------*/
 (define (service-apply-url base vals %this)
-   (string-append base
-      "?hop-encoding=hop"
-      "&vals=" (url-path-encode (obj->string (apply vector vals) %this))))
+
+   (define (encval v)
+      (cond
+	 ((js-jsstring? v)
+	  (let* ((s (js-jsstring->string v))
+		 (e (url-path-encode s)))
+	     (if (string=? s e)
+		 (format "S~d.~a" (string-length e) e)
+		 (format "s~d.~a" (string-length e) e))))
+	 ((fixnum? v)
+	  (let ((s (fixnum->string v)))
+	     (format "I~d.~a" (string-length s) s)))
+	 ((number? v)
+	  (let ((s (number->string v)))
+	     (format "N~d.~a" (string-length s) s)))
+	 ((eq? v (js-undefined))
+	  "U")
+	 ((null? v)
+	  "Z")
+	 ((eq? v #t)
+	  "T")
+	 ((eq? v #f)
+	  "F")
+	 ((js-date? v)
+	  (with-access::JsDate v (time)
+	     (let ((s (integer->string time)))
+		(format "D~d.~a" (string-length s) s))))
+	 (else
+	  (let* ((s (js-json-stringify (js-undefined) v
+		       (js-undefined) (js-undefined) %this))
+		 (e (url-path-encode s)))
+	     (if (string=? s e)
+		 (format "J~d.~a" (string-length e) e)
+		 (format "j~d.~a" (string-length e) e))))))
+   
+   (format "~a?hop-encoding=hopjs&vals=~d.~()"
+      base (length vals) (map encval vals)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopframe->string ...                                             */
