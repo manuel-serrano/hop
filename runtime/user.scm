@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Wed May 15 16:28:46 2024 (serrano)                */
+;*    Last change :  Mon May 27 08:08:42 2024 (serrano)                */
 ;*    Copyright   :  2005-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
@@ -42,6 +42,8 @@
 	    (authorized-path?::bool ::http-request ::bstring)
 	    (user-authorized-service?::bool ::user ::symbol)
 	    (authorized-service?::bool ::http-request ::symbol)
+	    (user-authorized-event?::bool ::user ::bstring)
+	    (authorized-event?::bool ::http-request ::bstring)
 	    (access-denied ::http-request #!optional message)
 	    (user-service-denied ::user ::http-request ::symbol)
 	    (service-denied ::http-request ::symbol)
@@ -110,7 +112,8 @@
 		 (hop-rc-directory) "users" (string-append name ".prefs")))
 	 (c '())
 	 (u #f)
-	 (d (list (hop-share-directory))))
+	 (d (list (hop-share-directory)))
+	 (e '()))
       (let loop ((a args))
 	 (cond
 	    ((null? a)
@@ -145,6 +148,7 @@
 			     (preferences (append c prefs))
 			     (preferences-filename cname)
 			     (directories d)
+			     (events e)
 			     (uuid u))))
 		   (if (hashtable-get *users* name)
 		       (begin
@@ -183,6 +187,16 @@
 			   (set! d (append (map file-name-unix-canonicalize (cadr a)) d)))
 			  (else
 			   (error "add-user!" "Illegal directories" (cadr a)))))))
+		((:events)
+		 (when (cadr a)
+		    (unless (eq? d '*)
+		       (cond
+			  ((eq? (cadr a) '*)
+			   (set! e '*))
+			  ((and (list? (cadr a)) (every string? (cadr a)))
+			   (set! e (append (cadr a) e)))
+			  (else
+			   (error "add-user!" "Illegal event" (cadr a)))))))
 		((:preferences)
 		 (when (cadr a)
 		    (set! c (append c (cadr a)))))
@@ -558,7 +572,7 @@
 ;*    user-authorized-service? ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (user-authorized-service? user service)
-   (or (with-access::user user (services name)
+   (or (with-access::user user (services)
 	  (or (eq? services '*) (memq service services)))
        ((hop-authorize-service-hook) user service)))
 
@@ -568,6 +582,21 @@
 (define (authorized-service? req service)
    (or ((hop-service-access-control) req service)
        (user-authorized-service? (http-request-user req) service)))
+
+;*---------------------------------------------------------------------*/
+;*    user-authorized-event? ...                                       */
+;*---------------------------------------------------------------------*/
+(define (user-authorized-event? user event)
+   (or (with-access::user user (events)
+	  (or (eq? events '*) (member event events)))
+       ((hop-authorize-event-hook) user event)))
+
+;*---------------------------------------------------------------------*/
+;*    authorized-event? ...                                            */
+;*---------------------------------------------------------------------*/
+(define (authorized-event? req event)
+   (or ((hop-event-access-control) req event)
+       (user-authorized-event? (http-request-user req) event)))
 
 ;*---------------------------------------------------------------------*/
 ;*    user-authorized-request? ...                                     */

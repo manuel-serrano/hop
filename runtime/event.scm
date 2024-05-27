@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Tue May 14 12:34:58 2024 (serrano)                */
+;*    Last change :  Mon May 27 07:58:54 2024 (serrano)                */
 ;*    Copyright   :  2005-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -477,51 +477,6 @@
 ;*---------------------------------------------------------------------*/
 (define (server-event-register event key mode padding req)
    
-   (define (multipart-register-event! req key name)
-      (with-trace 'event "multipart-register-event!"
-	 (let ((content (format "--~a\nContent-type: text/xml\n\n<r name='~a'></r>\n--~a\n"
-			   hop-multipart-key name hop-multipart-key))
-	       (c (assq key *multipart-request-list*)))
-	    (if (pair? c)
-		(let ((oreq (cdr c)))
-		   ;; we already have a connection for that
-		   ;; client, we simply re-use it
-		   (hashtable-update! *multipart-socket-table*
-		      name
-		      (lambda (l) (cons oreq l))
-		      (list oreq))
-		   ;; we must response as a multipart response because
-		   ;; that's the way we have configured the xhr
-		   ;; on the client side but we must close the connection
-		   (instantiate::http-response-string
-		      (server (hop-server-name))
-		      (header '((Transfer-Encoding: . "chunked")))
-		      (content-length #e-2)
-		      (content-type (format "multipart/x-mixed-replace; boundary=\"~a\"" hop-multipart-key))
-		      (body (format "~a\r\n~a" (integer->string (string-length content) 16) content))))
-		;; we create a new connection for that client
-		;; multipart never sends a complete answer. In order to
-		;; traverse proxy, we use a chunked response
-		(with-access::http-request req (socket)
-		   (output-port-flush-hook-set!
-		      (socket-output socket)
-		      (lambda (port size)
-			 (output-port-flush-hook-set! port chunked-flush-hook)
-			 ""))
-		   (set! *multipart-request-list*
-		      (cons (cons key req)
-			 *multipart-request-list*))
-		   (hashtable-update! *multipart-socket-table*
-		      name
-		      (lambda (l) (cons req l))
-		      (list req))
-		   (instantiate::http-response-persistent
-		      (request req)
-		      (body (format "HTTP/1.1 200 Ok\r\nTransfer-Encoding: chunked\r\nContent-type: multipart/x-mixed-replace; boundary=\"~a\"\r\n\r\n~a\r\n~a"
-			       hop-multipart-key
-			       (integer->string (string-length content) 16)
-			       content))))))))
-   
    (define (websocket-register-event! req key name)
       (with-trace 'event "websocket-register-event!"
 	 (let ((c (assq key *websocket-response-list*)))
@@ -556,21 +511,21 @@
 	     (if (string? key)
 		 (let ((key (string->symbol key))
 		       (event (url-decode! event)))
-		    ;; set an output timeout on the socket
-		    (with-access::http-request req (socket) 
-		       (output-timeout-set!
-			  (socket-output socket) (hop-connection-timeout)))
-		    ;; register the client
-		    (let ((r (cond
-				((string=? mode "xhr-multipart")
-				 (multipart-register-event! req key event))
-				((string=? mode "websocket")
-				 (websocket-register-event! req key event))
-				(else
-				 (error "register-event" "unsupported mode" mode)))))
-		       (notify-client! "connect" event req
-			  *connect-listeners*)
-		       r))
+		    (if (authorized-event? req event)
+			;; register the client
+			(let ((r (cond
+				    ((string=? mode "websocket")
+				     (websocket-register-event! req key event))
+				    (else
+				     (error "register-event" "unsupported mode" mode)))))
+			   ;; set an output timeout on the socket
+			   (with-access::http-request req (socket) 
+			      (output-timeout-set!
+				 (socket-output socket) (hop-connection-timeout)))
+			   (notify-client! "connect" event req
+			      *connect-listeners*)
+			   r)
+			(http-permission-denied event)))
 		 (http-service-unavailable event))
 	     (http-service-unavailable event)))))
 

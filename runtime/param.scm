@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Thu May 23 07:25:54 2024 (serrano)                */
+;*    Last change :  Mon May 27 08:17:12 2024 (serrano)                */
 ;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -217,6 +217,9 @@
 	    (hop-authorize-service-hook::procedure)
 	    (hop-authorize-service-hook-set! ::procedure)
 	    
+	    (hop-authorize-event-hook::procedure)
+	    (hop-authorize-event-hook-set! ::procedure)
+	    
 	    (hop-authorize-request-hook::procedure)
 	    (hop-authorize-request-hook-set! ::procedure)
 
@@ -308,6 +311,9 @@
 	    
 	    (hop-path-access-control::procedure)
 	    (hop-path-access-control-set! ::procedure)
+
+	    (hop-event-access-control::procedure)
+	    (hop-event-access-control-set! ::procedure)
 
 	    (hop-service-access-control::procedure)
 	    (hop-service-access-control-set! ::procedure)
@@ -1039,6 +1045,16 @@
 	  v)))
       
 ;*---------------------------------------------------------------------*/
+;*    hop-authorize-event-hook ...                                     */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-authorize-event-hook
+   (lambda (u s) #f)
+   (lambda (v)
+      (if (or (not (procedure? v)) (not (correct-arity? v 2)))
+	  (error "hop-authorized-event" "Illegal value" v)
+	  v)))
+      
+;*---------------------------------------------------------------------*/
 ;*    hop-authorize-request-hook ...                                   */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-authorize-request-hook
@@ -1302,6 +1318,31 @@
 		 v))
 	 ((not (correct-arity? v 2))
 	  (error "hop-path-access-control-set!"
+		 "arity two procedure expected"
+		 v))
+	 (else
+	  v))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-event-access-control ...                                     */
+;*    -------------------------------------------------------------    */
+;*    This parameter enables user customization of path access         */
+;*    control.                                                         */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-event-access-control
+   (lambda (req svc) #f)
+   (lambda (v)
+      (cond
+	 (*hop-rc-loaded*
+	  (error "define-parameter"
+		 "Parameter can only be set in rc file"
+		 'hop-event-access-control-set!))
+	 ((not (procedure? v))
+	  (error "hop-path-access-control-set!"
+		 (bigloo-type-error-msg "Type" "procedure" (typeof v))
+		 v))
+	 ((not (correct-arity? v 2))
+	  (error "hop-event-access-control-set!"
 		 "arity two procedure expected"
 		 v))
 	 (else

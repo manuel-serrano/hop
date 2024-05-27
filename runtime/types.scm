@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Wed May 15 09:46:08 2024 (serrano)                */
+;*    Last change :  Mon May 27 08:03:06 2024 (serrano)                */
 ;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -27,6 +27,7 @@
 	      (password::bstring read-only)
 	      (services read-only)
 	      (files read-only)
+	      (events read-only)
 	      (directories read-only)
 	      (preferences-filename::obj read-only)
 	      (preferences::pair-nil (default '()))
