@@ -19,7 +19,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 // USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-var punycode = require('punycode');
+// MS 29 May 2024 
+var punycode = undefined;
 
 exports.parse = urlParse;
 exports.resolve = urlResolve;
@@ -266,6 +267,9 @@ Url.prototype.parse = function(url, parseQueryString, slashesDenoteHost) {
       // you call it with a domain that already is in ASCII.
       var domainArray = this.hostname.split('.');
       var newOut = [];
+
+      // MS 28 May 2024 
+      punycode ||= require('punycode');
       for (var i = 0; i < domainArray.length; ++i) {
         var s = domainArray[i];
         newOut.push(s.match(/[^A-Za-z0-9_-]/) ?
