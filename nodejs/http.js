@@ -27,7 +27,7 @@ var url = require('url');
 var EventEmitter = require('events').EventEmitter;
 var FreeList = require('freelist').FreeList;
 var HTTPParser = process.binding('http_parser').HTTPParser;
-var assert = require('assert').ok;
+// var assert = require('assert').ok;
 
 var debug;
 if (process.env.NODE_DEBUG && /http/.test(process.env.NODE_DEBUG)) {
@@ -1012,12 +1012,12 @@ OutgoingMessage.prototype.end = function(data, encoding) {
 
 
 OutgoingMessage.prototype._finish = function() {
-  assert(this.connection);
+  // assert(this.connection);
   if (this instanceof ServerResponse) {
     DTRACE_HTTP_SERVER_RESPONSE(this.connection);
     COUNTER_HTTP_SERVER_RESPONSE();
   } else {
-    assert(this instanceof ClientRequest);
+    // assert(this instanceof ClientRequest);
     DTRACE_HTTP_CLIENT_REQUEST(this, this.connection);
     COUNTER_HTTP_CLIENT_REQUEST();
   }
@@ -1113,7 +1113,7 @@ function onServerResponseClose() {
 }
 
 ServerResponse.prototype.assignSocket = function(socket) {
-  assert(!socket._httpMessage);
+  // assert(!socket._httpMessage);
   socket._httpMessage = this;
   socket.on('close', onServerResponseClose);
   this.socket = socket;
@@ -1123,7 +1123,7 @@ ServerResponse.prototype.assignSocket = function(socket) {
 };
 
 ServerResponse.prototype.detachSocket = function(socket) {
-  assert(socket._httpMessage == this);
+  // assert(socket._httpMessage == this);
   socket.removeListener('close', onServerResponseClose);
   socket._httpMessage = null;
   this.socket = this.connection = null;
@@ -1721,7 +1721,7 @@ function responseOnEnd() {
       debug('AGENT socket.destroySoon()');
       socket.destroySoon();
     }
-    assert(!socket.writable);
+    // assert(!socket.writable);
   } else {
     debug('AGENT socket keep-alive');
     if (req.timeoutCb) {
@@ -1976,7 +1976,7 @@ function connectionListener(socket) {
   });
 
   socket.ondata = function(d, start, end) {
-    assert(!socket._paused);
+    // assert(!socket._paused);
     var ret = parser.execute(d, start, end - start);
     if (ret instanceof Error) {
       debug('parse error');
@@ -2085,7 +2085,7 @@ function connectionListener(socket) {
       // Usually the first incoming element should be our request.  it may
       // be that in the case abortIncoming() was called that the incoming
       // array will be empty.
-      assert(incoming.length == 0 || incoming[0] === req);
+      // assert(incoming.length == 0 || incoming[0] === req);
 
       incoming.shift();
 

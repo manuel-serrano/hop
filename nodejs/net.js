@@ -23,7 +23,7 @@ var events = require('events');
 var stream = require('stream');
 var timers = require('timers');
 var util = require('util');
-var assert = require('assert');
+// var assert = require('assert');
 var cares = process.binding('cares_wrap');
 var cluster;
 
@@ -463,7 +463,7 @@ function onread(buffer, offset, length) {
   var handle = this;
 //#:js-debug-object(handle, "O2")
   var self = handle.owner;
-  assert(handle === self._handle, 'handle != self._handle');
+  // assert(handle === self._handle, 'handle != self._handle');
 
   timers._unrefActive(self);
 
@@ -688,7 +688,7 @@ function afterWrite(status, handle, req) {
 function connect(self, address, port, addressType, localAddress) {
   // TODO return promise from Socket.prototype.connect which
   // wraps _connectReq.
-  assert.ok(self._connecting);
+  // assert.ok(self._connecting);
 
   if (localAddress) {
     var r;
@@ -822,9 +822,9 @@ function afterConnect(status, handle, req, readable, writable) {
     return;
   }
 
-  assert(handle === self._handle, 'handle != self._handle');
+  // assert(handle === self._handle, 'handle != self._handle');
 
-  assert.ok(self._connecting);
+  // assert.ok(self._connecting);
   self._connecting = false;
 
   if (status == 0) {

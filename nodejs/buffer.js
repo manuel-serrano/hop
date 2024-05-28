@@ -20,7 +20,7 @@
 // USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 var SlowBuffer = process.binding('buffer').SlowBuffer;
-var assert = require('assert');
+// var assert = require('assert');
 
 exports.INSPECT_MAX_BYTES = 50;
 

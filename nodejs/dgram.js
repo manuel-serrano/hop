@@ -19,7 +19,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 // USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-var assert = require('assert');
+//var assert = require('assert');
 var util = require('util');
 var events = require('events');
 
@@ -90,7 +90,7 @@ function newHandle(type) {
 
 exports._createSocketHandle = function(address, port, addressType, fd) {
   // Opening an existing fd is not supported for UDP handles.
-  assert(typeof fd !== 'number' || fd < 0);
+  // assert(typeof fd !== 'number' || fd < 0);
 
   var handle = newHandle(addressType);
 

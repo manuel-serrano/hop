@@ -54,7 +54,7 @@ function toBuf(str, encoding) {
 }
 
 
-var assert = require('assert');
+//var assert = require('assert');
 var StringDecoder = require('string_decoder').StringDecoder;
 
 function Credentials(secureProtocol, flags, context) {
@@ -237,7 +237,7 @@ Hmac.prototype._transform = Hash.prototype._transform;
 function getDecoder(decoder, encoding) {
   if (encoding === 'utf-8') encoding = 'utf8';  // Normalize encoding.
   decoder = decoder || new StringDecoder(encoding);
-  assert(decoder.encoding === encoding, 'Cannot change encoding');
+  //assert(decoder.encoding === encoding, 'Cannot change encoding');
   return decoder;
 }
 

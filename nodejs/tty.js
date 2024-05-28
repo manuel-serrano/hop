@@ -19,7 +19,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 // USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-var assert = require('assert');
+// var assert = require('assert');
 var inherits = require('util').inherits;
 var net = require('net');
 var TTY = process.binding('tty_wrap').TTY;

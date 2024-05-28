@@ -19,7 +19,9 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 // USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-var assert = require('assert');
+// MS 28 May 2024 
+// var assert = require('assert');
+var assert = undefined;
 var fork = require('child_process').fork;
 var net = require('net');
 var EventEmitter = require('events').EventEmitter;
@@ -96,6 +98,8 @@ ProgressTracker.prototype.check = function() {
 
 cluster.setupMaster = function(options) {
   // This can only be called from the master.
+  // MS 28 May 2024 
+  assert ||= require("assert");
   assert(cluster.isMaster);
 
   // Don't allow this function to run more than once
@@ -501,6 +505,8 @@ if (cluster.isMaster) {
 // Fork a new worker
 cluster.fork = function(env) {
   // This can only be called from the master.
+  // MS 28 May 2024 
+  assert ||= require("assert");
   assert(cluster.isMaster);
 
    // Make sure that the master has been initialized
@@ -511,6 +517,8 @@ cluster.fork = function(env) {
 // execute .disconnect on all workers and close handlers when done
 cluster.disconnect = function(callback) {
   // This can only be called from the master.
+  // MS 28 May 2024 
+  assert ||= require("assert");
   assert(cluster.isMaster);
 
   // Close all TCP handlers when all workers are disconnected
@@ -558,6 +566,8 @@ cluster._setupWorker = function() {
 // TCP server or UDP socket.
 cluster._getServer = function(tcpSelf, address, port, addressType, fd, cb) {
   // This can only be called from a worker.
+  // MS 28 May 2024 
+  assert ||= require("assert");
   assert(cluster.isWorker);
   // Store tcp instance for later use
   var key = [address, port, addressType, fd].join(':');

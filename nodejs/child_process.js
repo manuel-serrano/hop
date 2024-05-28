@@ -24,7 +24,7 @@ var EventEmitter = require('events').EventEmitter;
 var net = require('net');
 var dgram = require('dgram');
 var Process = process.binding('process_wrap').Process;
-var assert = require('assert');
+// var assert = require('assert');
 var util = require('util');
 var constants; // if (!constants) constants = process.binding('constants');
 
@@ -369,7 +369,7 @@ function setupChannel(target, channel) {
   target.on('internalMessage', function(message, handle) {
     // Once acknowledged - continue sending handles.
     if (message.cmd === 'NODE_HANDLE_ACK') {
-      assert(Array.isArray(target._handleQueue));
+      // assert(Array.isArray(target._handleQueue));
       var queue = target._handleQueue;
       target._handleQueue = null;
       queue.forEach(function(args) {
