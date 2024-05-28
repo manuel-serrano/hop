@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Thu May 23 07:25:03 2024 (serrano)                */
+;*    Last change :  Mon May 27 15:59:18 2024 (serrano)                */
 ;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -162,7 +162,10 @@
       ((string? obj) obj)
       ((boolean? obj) (if obj "true" "false"))
       ((null? obj) "null")
-      (else (error "js-trivial-compiler" "don't know how to compile" obj))))
+      ((js-jsstring? obj) (string-append "\"" (js-jsstring->string obj) "\""))
+      (else (error "js-trivial-compiler"
+	       (format "don't know how to compile (~a)" (typeof obj))
+	       obj))))
 
 ;*---------------------------------------------------------------------*/
 ;*    parse-args ...                                                   */
@@ -189,6 +192,7 @@
       (print "   - BIGLOOHEAP: Initial size of the heap (in Mbytes)")
       (print "   - BIGLOOTRACE: List of active traces")
       (print "   - BIGLOODEBUG: Bigloo debug level")
+      (print "   - XDG_CACHE_HOME: Cache directory")
       (newline)
       (print "Default configuration:")
       (print "   - rc-dir: " (hop-rc-directory)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Thu May 16 15:01:58 2024 (serrano)                */
+;*    Last change :  Mon May 27 16:36:03 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for client side code).                                   */
@@ -1504,15 +1504,7 @@
 	 ((string? path)
 	  path)
 	 (else
-	  (let ((p (gensym 'path)))
-	     `(let ((,p ,path))
-		 (if (string-contains ,p "mjs=")
-		     ,p
-		     (let* ((,p (substring ,p 1 (-fx (string-length ,p) 1)))
-			    (i (string-index ,p #\?)))
-			(if i
-			    (string-append "\"" ,p "&mjs=" (substring ,p 0 i) "\"")
-			    (string-append "\"" ,p "?mjs=" ,p "\"")))))))))
+	  path)))
    
    (define (import-module this path)
       (with-access::J2SImport this (names)

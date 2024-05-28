@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Tue May 14 13:10:32 2024 (serrano)                */
+;*    Last change :  Mon May 27 15:10:27 2024 (serrano)                */
 ;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
@@ -28,25 +28,25 @@
 ;*---------------------------------------------------------------------*/
 ;*    parse-error ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (parse-error proc msg obj port)
+(define (parse-error proc msg obj socket port)
    (let ((o (if (eof-object? obj)
 		obj
 		(let ((l (read-line port)))
 		   (if (eof-object? l)
 		       obj
-		       (format "{~a}~a" obj l))))))
+		       (format "{~a}~a" obj (string-for-read l)))))))
       (raise (instantiate::&io-parse-error
 		(obj o)
-		(proc proc)
+		(proc (format "request-line-grammar(~a)"
+			 (socket-hostname socket)))
 		(msg msg)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-parse-request ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (http-parse-request sock id)
-   (let ((port (socket-input sock))
-	 (out (socket-output sock)))
-      (let ((req (read/rp request-line-grammar port id out)))
+   (let ((port (socket-input sock)))
+      (let ((req (read/rp request-line-grammar port id sock)))
 	 (with-access::http-request req (socket)
 	    (set! socket sock)
 	    req))))
@@ -67,17 +67,18 @@
    (regular-grammar ((SP #\Space)
 		     (CRLF "\r\n")
 		     id
-		     out)
+		     socket)
       ((: (+ (in ("AZ"))) SP)
        ;; HTTP requests
-       (http-parse-method-request (the-subsymbol 0 -1) (the-port) out id))
+       (http-parse-method-request (the-subsymbol 0 -1) (the-port) socket id))
       ((: "<" (+ (in "policyferqust" #\-)) (* SP) "/>" #a000)
        ;; Flash authentication requests
        (http-parse-policy-file-request id (the-string) (the-port)))
       ((: (out #\< SP) (+ (out SP)) SP)
        ;; Illegal (parsed) requests
        (raise (instantiate::&io-parse-method-error
-		 (proc "request-line-grammar")
+		 (proc (format "request-line-grammar(~a)"
+			  (socket-hostname socket)))
 		 (msg "Method not implemented")
 		 (obj (the-string)))))
       (else
@@ -85,7 +86,7 @@
 	  (if (eof-object? o)
 	      (raise request-eof-exception)
 	      (parse-error "request-line-grammar" "Illegal method"
-		 o (the-port)))))))
+		 o socket (the-port)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-parse-error-msg ...                                         */
@@ -94,14 +95,14 @@
    (if (char? c)
        (let ((line (http-read-line port)))
 	  (string-for-read
-	     (string-append "{" (string c) "}" (if (string? line) line ""))))
+	     (string-append "{" (string c) "}"
+		(if (string? line) (string-for-read line) ""))))
        c))
-
 
 ;*---------------------------------------------------------------------*/
 ;*    http-parse-method-request ...                                    */
 ;*---------------------------------------------------------------------*/
-(define (http-parse-method-request method pi::input-port po::output-port id)
+(define (http-parse-method-request method pi::input-port socket::socket id)
    (with-trace 3 "http-parse-method-request"
       (let (scheme host port path http-version userinfo)
 	 (multiple-value-bind (s u h p a)
@@ -111,11 +112,11 @@
 	    (set! port p)
 	    (set! path a)
 	    (set! userinfo u)
-	    (set! http-version (read/rp http-version-grammar pi))
+	    (set! http-version (read/rp http-version-grammar pi socket))
 	    (trace-item "http=" http-version " scheme=" s " user=" u
 	       " host=" h " port=" p " path=[" a "]"))
 	 (multiple-value-bind (header actual-host actual-port cl te auth pauth co)
-	    (http-parse-header pi po)
+	    (http-parse-header pi (socket-output socket))
 	    (let* ((i (string-index path #\?))
 		   (query #f)
                    (abspath (cond
@@ -205,7 +206,7 @@
 	  (host "localhost")
 	  (content-length 10))
        (raise (instantiate::&io-parse-method-error
-		 (proc "request-line-grammar")
+		 (proc "http-parse-policy-file-request")
 		 (msg "policy file request not understood")
 		 (obj string)))))
 
@@ -214,7 +215,8 @@
 ;*---------------------------------------------------------------------*/
 (define http-version-grammar
    (regular-grammar ((DIGIT (in ("09")))
-		     (SP (+ #\Space)))
+		     (SP (+ #\Space))
+		     socket)
       (SP
        (ignore))
       ((: "HTTP/" (+ DIGIT) "." (+ DIGIT) "\n")
@@ -223,16 +225,5 @@
        (the-subsymbol 0 -2))
       (else
        (parse-error "http-version-grammar" "Illegal character"
-	  (the-failure) (the-port)))))
-
-;*---------------------------------------------------------------------*/
-;*    http-sp-grammar ...                                              */
-;*---------------------------------------------------------------------*/
-(define http-sp-grammar
-   (regular-grammar ((SP #\Space))
-      (SP
-       'sp)
-      (else
-       (parse-error "sp-grammar" "Illegal character"
-	  (the-failure) (the-port)))))
+	  (the-failure) socket (the-port)))))
       

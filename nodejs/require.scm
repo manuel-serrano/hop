@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Fri May 24 21:24:17 2024 (serrano)                */
+;*    Last change :  Tue May 28 08:03:55 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -2047,135 +2047,132 @@
 	 (when (and misctmp (file-exists? misctmp)) (delete-file misctmp))))
 
    (with-trace 'sorequire (format "nodejs-socompile ~a" filename)
-      (let loop ()
-	 (let ((tmp (synchronize/debug socompile-mutex
-		       (cond
-			  ((find-new-sofile filename worker-slave)
-			   =>
-			   (lambda (x) x))
-			  ((member filename socompile-files)
-			   (condition-variable-wait!/debug
-			      socompile-condv socompile-mutex)
-			   'loop)
-			  (else
-			   (set! socompile-files
-			      (cons filename socompile-files))
-			   'compile)))))
-	    (trace-item "tmp=" tmp)
-	    (cond
-	       (socompile-ended #f)
-	       ((string? tmp) tmp)
-	       ((eq? tmp 'loop) (loop))
-	       (else
-		(with-handler
-		   (lambda (e)
-		      (exception-notify e)
-		      (fprintf (current-error-port) "sofile ~s (~s) not generated."
-			 (hop-sofile-path filename
-			    :suffix (if worker-slave "_w" ""))
-			 filename))
-		   (let* ((sopath (hop-sofile-path filename
-				     :suffix (if worker-slave "_w" "")))
-			  (sopathtmp (make-file-name
-					(dirname sopath)
-					(string-append "#" (basename sopath))))
-			  (astfile (when (isa? src J2SProgram)
-				      (make-file-name (dirname sopath)
-					 (string-append (basename filename) ".ast"))))
-			  (cmd `(,(hop-hopc)
-				 ;; bigloo
-				 ,(format "--bigloo=~a" (hop-bigloo))
-				 ;; verbosity
-				 ,@(if (eq? nodejs-debug-compile 'yes)
-				       (list (format "-v~a" (hop-verbose)))
-				       '())
-				 ;; source
-				 ,@(cond
-				      ((string? src)
-				       (list src))
-				      ((isa? src J2SProgram)
-				       `(,filename "--ast-file" ,astfile))
-				      (else
-				       (error "nodejs-socompile"
-					  (format "bad source format `~a'" (typeof src)) filename)))
-				 ;; target
-				 "-y" "--js-no-module-main" "-o" ,sopathtmp
-;* 				 ;; js plugins                         */
-;* 				 "--js-plugins"                        */
-				 ;; profiling
-				 ,@(if (hop-profile) '("--profile") '())
-				 ;; worker
-				 ,@(if worker-slave '("--js-worker-slave") '())
-				 ;; debug
-				 ,@(if (eq? nodejs-debug-compile 'yes)
-				       `("-t" ,(make-file-name "/tmp/HOP"
-						  (string-append
-						     (prefix (basename filename))
-						     ".scm")))
-				       '())
-				 ;; config
-				 ,@(if (pair? (j2s-compile-options))
-				       `("--js-config"
-					   ,(string-for-read
-					       (format "~s"
-						  (j2s-compile-options))))
-				       '())
-				 ;; other options
-				 ,@(call-with-input-string (hop-hopc-flags)
-				      port->string-list)))
-			  (ksucc (make-ksucc sopath sopathtmp astfile))
-			  (kfail (make-kfail sopath sopathtmp astfile)))
-		      (make-directories (dirname sopath))
-		      (when astfile
-			 (call-with-output-file astfile
-			    (lambda (out)
-			       (display (obj->string src) out))))
-		      (trace-item "sopath=" sopath)
-		      (trace-item "sopathtmp=" sopathtmp)
-		      (trace-item "cmd=" cmd)
-		      (synchronize-global
-			 (make-file-name
-			    (dirname (hop-sofile-path "hop.lock"))
-			    "hop.lock")
-			 (lambda ()
-			    ;; check if the file has already been compiled while
-			    ;; we were waiting for the lock
-			    (let ((msg (unless (find-new-sofile filename worker-slave worker-slave)
-					  (debug-compile "nodejs-socompile" filename sopath)
-					  (hop-verb 2 (hop-color -2 -2 " COMPILE") " "
-					     (format "~( )\n"
-						(map (lambda (s)
-							(if (string-index s #\space)
-							    (string-append "\"" s "\"")
-							    s))
-						   cmd)))
-					  (exec cmd ksucc kfail))))
-			       (trace-item "msg=" msg)
-			       (unwind-protect
-				  (cond
-				     ((not msg)
-				      ;; compilation succeeded
-				      (ksucc))
-				     ((string? msg)
-				      ;; compilation failed
-				      (kfail)
-				      (hop-verb 1
-					 (hop-color -1 -1 " COMPILE-ERROR")
-					 " " cmd "\n" msg)
-				      (dump-error cmd sopath msg)
-				      'error))
-				  (synchronize/debug socompile-mutex
-				     (unless socompile-ended
-					(set! socompile-files
-					   (delete! filename socompile-files))
-					(condition-variable-broadcast!
-					   socompile-condv)))))))))))))))
+      (let ((sopath (hop-sofile-path filename
+		       :suffix (if worker-slave "_w" ""))))
+	 (trace-item "sopath=" sopath)
+	 (let loop ()
+	    (let ((tmp (synchronize/debug socompile-mutex
+			  (cond
+			     ((file-exists? sopath)
+			      sopath)
+			     ((member filename socompile-files)
+			      (condition-variable-wait!/debug
+				 socompile-condv socompile-mutex)
+			      'loop)
+			     (else
+			      (set! socompile-files
+				 (cons filename socompile-files))
+			      'compile)))))
+	       (trace-item "tmp=" tmp)
+	       (cond
+		  (socompile-ended #f)
+		  ((string? tmp) tmp)
+		  ((eq? tmp 'loop) (loop))
+		  (else
+		   (with-handler
+		      (lambda (e)
+			 (exception-notify e)
+			 (fprintf (current-error-port) "sofile ~s (~s) not generated."
+			    (hop-sofile-path filename
+			       :suffix (if worker-slave "_w" ""))
+			    filename))
+		      (let* ((sopathtmp (make-file-name
+					   (dirname sopath)
+					   (string-append "#" (basename sopath))))
+			     (astfile (when (isa? src J2SProgram)
+					 (make-file-name (dirname sopath)
+					    (string-append (basename filename) ".ast"))))
+			     (cmd `(,(hop-hopc)
+				    ;; bigloo
+				    ,(format "--bigloo=~a" (hop-bigloo))
+				    ;; verbosity
+				    ,@(if (eq? nodejs-debug-compile 'yes)
+					  (list (format "-v~a" (hop-verbose)))
+					  '())
+				    ;; source
+				    ,@(cond
+					 ((string? src)
+					  (list src))
+					 ((isa? src J2SProgram)
+					  `(,filename "--ast-file" ,astfile))
+					 (else
+					  (error "nodejs-socompile"
+					     (format "bad source format `~a'" (typeof src)) filename)))
+				    ;; target
+				    "-y" "--js-no-module-main" "-o" ,sopathtmp
+				    ;; profiling
+				    ,@(if (hop-profile) '("--profile") '())
+				    ;; worker
+				    ,@(if worker-slave '("--js-worker-slave") '())
+				    ;; debug
+				    ,@(if (eq? nodejs-debug-compile 'yes)
+					  `("-t" ,(make-file-name "/tmp/HOP"
+						     (string-append
+							(prefix (basename filename))
+							".scm")))
+					  '())
+				    ;; config
+				    ,@(if (pair? (j2s-compile-options))
+					  `("--js-config"
+					      ,(string-for-read
+						  (format "~s"
+						     (j2s-compile-options))))
+					  '())
+				    ;; other options
+				    ,@(call-with-input-string (hop-hopc-flags)
+					 port->string-list)))
+			     (ksucc (make-ksucc sopath sopathtmp astfile))
+			     (kfail (make-kfail sopath sopathtmp astfile)))
+			 (make-directories (dirname sopath))
+			 (when astfile
+			    (call-with-output-file astfile
+			       (lambda (out)
+				  (display (obj->string src) out))))
+			 (trace-item "sopathtmp=" sopathtmp)
+			 (trace-item "cmd=" cmd)
+			 (synchronize-global
+			    (make-file-name
+			       (dirname (hop-sofile-path "hop.lock"))
+			       "hop.lock")
+			    (lambda ()
+			       ;; check if the file has already been compiled while
+			       ;; we were waiting for the lock
+			       (let ((msg (unless (file-exists? sopath)
+					     (debug-compile "nodejs-socompile" filename sopath)
+					     (hop-verb 2 (hop-color -2 -2 " COMPILE") " "
+						(format "~( )\n"
+						   (map (lambda (s)
+							   (if (string-index s #\space)
+							       (string-append "\"" s "\"")
+							       s))
+						      cmd)))
+					     (exec cmd ksucc kfail))))
+				  (trace-item "msg=" msg)
+				  (unwind-protect
+				     (cond
+					((not msg)
+					 ;; compilation succeeded
+					 (ksucc))
+					((string? msg)
+					 ;; compilation failed
+					 (kfail)
+					 (hop-verb 1
+					    (hop-color -1 -1 " COMPILE-ERROR")
+					    " " cmd "\n" msg)
+					 (dump-error cmd sopath msg)
+					 'error))
+				     (synchronize/debug socompile-mutex
+					(unless socompile-ended
+					   (set! socompile-files
+					      (delete! filename socompile-files))
+					   (condition-variable-broadcast!
+					      socompile-condv))))))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    find-new-sofile ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (find-new-sofile filename::bstring worker-slave #!optional enable-cache)
-   (with-trace 'require "find-new-sofile"
+   (with-trace 'sofile "find-new-sofile"
       (trace-item "filename=" filename)
       (when (or (hop-cache-enable) enable-cache)
 	 (let ((sopath (hop-find-sofile filename

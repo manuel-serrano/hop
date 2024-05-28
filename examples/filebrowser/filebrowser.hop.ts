@@ -3,10 +3,10 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Feb  3 11:25:48 2024                          */
-/*    Last change :  Tue Feb 27 15:40:32 2024 (serrano)                */
+/*    Last change :  Mon May 27 14:19:00 2024 (serrano)                */
 /*    Copyright   :  2024 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
-/*    Basic multi-tier file browser using Hop.js.                      */
+/*    Basic multitier file browser using Hop.js.                       */
 /*=====================================================================*/
 import * as hop from "@hop/hop/lib/hop.mjs";
 import { readdir } from "node:fs/promises";
@@ -29,7 +29,7 @@ async function dir(o) {
    const files = await readdir(dir);
    return <html>
        <head>
-         <link rel="stylesheet" href=${await R.resolve("./filebrowser.css")}>
+         <link rel="stylesheet" href=${R.url("./filebrowser.css")}>
          <script type="hop">
             window.filebrowser = ${filebrowser};
             window.filecontent = ${filecontent};
@@ -62,7 +62,6 @@ async function dir(o) {
 /*    file ...                                                         */
 /*---------------------------------------------------------------------*/
 function file(o) {
-   console.log("file o=", o);
    return hop.HTTPResponseFile(o.path);
 }
 
@@ -70,7 +69,6 @@ function file(o) {
 /*    stat ...                                                         */
 /*---------------------------------------------------------------------*/
 function stat(p) {
-   console.log("stat p=", p);
    const { size, ctime } = statSync(p);
    return <table>
       <tr><th>size</th><td>${(size/1024).toFixed(2)}kb</td></tr>
@@ -89,4 +87,3 @@ const config = hop.init();
 
 console.error(`http://localhost:${config.ports.http}/filebrowser`);
 console.error(`https://localhost:${config.ports.https}/filebrowser`);
-console.error("config=", config);

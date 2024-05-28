@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Sat May 25 08:02:15 2024 (serrano)                */
+;*    Last change :  Mon May 27 16:09:19 2024 (serrano)                */
 ;*    Copyright   :  2006-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -870,40 +870,41 @@
    (lambda (req)
       (when (isa? req http-server-request)
 	 (with-access::http-server-request req (abspath)
-	    (when (hop-service-path? abspath)
-	       (let loop ((svc (synchronize *service-mutex*
-				  (hashtable-get table abspath))))
-		  (cond
-		     ((isa? svc hop-service)
-		      (service-apply svc req))
-		     (else
-		      (let ((ini (hop-initial-weblet)))
-			 (cond
-			    ((and (string? ini)
-				  (substring-at? abspath (hop-service-base) 0)
-				  (let ((l1 (string-length abspath))
-					(l2 (string-length (hop-service-base))))
-				     (or (=fx l1 l2)
-					 (and (=fx l1 (+fx l2 1))
-					      (char=? (string-ref abspath l2)
-						 #\/)))))
-			     (set! abspath
-				(string-append (hop-service-base) "/" ini))
-			     ;; resume the hop loop in order to autoload
-			     ;; the initial weblet
-			     'hop-resume)
-			    ((autoload-filter req)
-			     =>
-			     (lambda (o)
-				(if (eq? o #t)
-				    (let ((s (synchronize *service-mutex*
-						(hashtable-get table abspath))))
-				       (if (not s)
-					   (http-service-not-found abspath req)
-					   (loop s)))
-				    (http-error o req))))
-			    (else
-			     (http-service-not-found abspath req))))))))))))
+	    (let loop ((svc (synchronize *service-mutex*
+			       (hashtable-get table abspath))))
+	       (cond
+		  ((isa? svc hop-service)
+		   (service-apply svc req))
+		  ((not (hop-service-path? abspath))
+		   #f)
+		  (else
+		   (let ((ini (hop-initial-weblet)))
+		      (cond
+			 ((and (string? ini)
+			       (substring-at? abspath (hop-service-base) 0)
+			       (let ((l1 (string-length abspath))
+				     (l2 (string-length (hop-service-base))))
+				  (or (=fx l1 l2)
+				      (and (=fx l1 (+fx l2 1))
+					   (char=? (string-ref abspath l2)
+					      #\/)))))
+			  (set! abspath
+			     (string-append (hop-service-base) "/" ini))
+			  ;; resume the hop loop in order to autoload
+			  ;; the initial weblet
+			  'hop-resume)
+			 ((autoload-filter req)
+			  =>
+			  (lambda (o)
+			     (if (eq? o #t)
+				 (let ((s (synchronize *service-mutex*
+					     (hashtable-get table abspath))))
+				    (if (not s)
+					(http-service-not-found abspath req)
+					(loop s)))
+				 (http-error o req))))
+			 (else
+			  (http-service-not-found abspath req)))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    register-service! ...                                            */

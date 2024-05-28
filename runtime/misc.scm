@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 15 11:28:31 2004                          */
-;*    Last change :  Fri May 17 10:41:05 2024 (serrano)                */
+;*    Last change :  Tue May 28 07:57:31 2024 (serrano)                */
 ;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP misc                                                         */
@@ -290,8 +290,7 @@
 ;*    make-cache-name ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (make-cache-name #!optional name)
-   (let ((base (make-file-name (hop-cache-directory)
-		  (integer->string (hop-default-port)))))
+   (let ((base (hop-cache-directory)))
       (unless (directory? base)
 	 (make-directories base))
       (if name

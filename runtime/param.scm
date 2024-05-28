@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Mon May 27 08:17:12 2024 (serrano)                */
+;*    Last change :  Tue May 28 08:08:07 2024 (serrano)                */
 ;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -426,8 +426,8 @@
    (or (hop-configure-cache-directory)
        (let ((h (getenv "XDG_CACHE_HOME")))
 	  (when (string? h)
-	     (make-file-path h "hop" (hop-build-tag))))
-       (make-file-path (hop-rc-directory) "cache" (hop-build-tag)))
+	     (make-file-path h "hop" (hop-build-id))))
+       (make-file-path (hop-rc-directory) "cache" (hop-build-id)))
    (lambda (v)
       (hop-path-set! (cons v (hop-path)))
       v))
@@ -484,7 +484,7 @@
 ;*    hop-sofile-directory ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-sofile-directory
-   (make-file-path (hop-rc-directory) "so"))
+   (make-file-path (hop-cache-directory) "so"))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-rc-file ...                                                  */
