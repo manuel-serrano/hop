@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Tue May 28 08:08:07 2024 (serrano)                */
+;*    Last change :  Wed May 29 07:28:36 2024 (serrano)                */
 ;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -49,14 +49,8 @@
 	    (hop-sofile-compile-policy::symbol)
 	    (hop-sofile-compile-policy-set! ::symbol)
 
-	    (hop-sofile-compile-target::symbol)
-	    (hop-sofile-compile-target-set! ::symbol)
-
 	    (hop-sofile-max-workers::int)
 	    (hop-sofile-max-workers-set! ::int)
-
-	    (hop-sofile-directory::bstring)
-	    (hop-sofile-directory-set! ::bstring)
 
 	    (hop-load-preferences::bool)
 	    (hop-load-preferences-set! ::bool)
@@ -426,8 +420,8 @@
    (or (hop-configure-cache-directory)
        (let ((h (getenv "XDG_CACHE_HOME")))
 	  (when (string? h)
-	     (make-file-path h "hop" (hop-build-id))))
-       (make-file-path (hop-rc-directory) "cache" (hop-build-id)))
+	     (make-file-path h "hop" (hop-version))))
+       (make-file-path (hop-rc-directory) "cache" (hop-version)))
    (lambda (v)
       (hop-path-set! (cons v (hop-path)))
       v))
@@ -469,23 +463,11 @@
    (hop-sofile-compile-default-policy))
 
 ;*---------------------------------------------------------------------*/
-;*    hop-sofile-compile-target ...                                    */
-;*---------------------------------------------------------------------*/
-(define-parameter hop-sofile-compile-target
-   'sodir)
-
-;*---------------------------------------------------------------------*/
 ;*    hop-sofile-max-workers ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-sofile-max-workers
    4)
    
-;*---------------------------------------------------------------------*/
-;*    hop-sofile-directory ...                                         */
-;*---------------------------------------------------------------------*/
-(define-parameter hop-sofile-directory
-   (make-file-path (hop-cache-directory) "so"))
-
 ;*---------------------------------------------------------------------*/
 ;*    hop-rc-file ...                                                  */
 ;*---------------------------------------------------------------------*/

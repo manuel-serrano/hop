@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Tue May 28 08:03:55 2024 (serrano)                */
+;*    Last change :  Wed May 29 08:14:27 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -939,7 +939,7 @@
 
    (let ((mod (nodejs-import-module worker %this %module path
 		 checksum commonjs-export loc))
-	 (sopath (hop-sofile-path path)))
+	 (sopath (hop-sofile-cache-path path)))
       (with-access::JsModule mod (evars)
 	 (set! evars
 	    (vector-map! (lambda (s) (import-var mod s sopath)) symbols)))
@@ -2047,7 +2047,7 @@
 	 (when (and misctmp (file-exists? misctmp)) (delete-file misctmp))))
 
    (with-trace 'sorequire (format "nodejs-socompile ~a" filename)
-      (let ((sopath (hop-sofile-path filename
+      (let ((sopath (hop-sofile-cache-path filename
 		       :suffix (if worker-slave "_w" ""))))
 	 (trace-item "sopath=" sopath)
 	 (let loop ()
@@ -2073,7 +2073,7 @@
 		      (lambda (e)
 			 (exception-notify e)
 			 (fprintf (current-error-port) "sofile ~s (~s) not generated."
-			    (hop-sofile-path filename
+			    (hop-sofile-cache-path filename
 			       :suffix (if worker-slave "_w" ""))
 			    filename))
 		      (let* ((sopathtmp (make-file-name
@@ -2132,7 +2132,7 @@
 			 (trace-item "cmd=" cmd)
 			 (synchronize-global
 			    (make-file-name
-			       (dirname (hop-sofile-path "hop.lock"))
+			       (dirname (hop-sofile-cache-path "hop.lock"))
 			       "hop.lock")
 			    (lambda ()
 			       ;; check if the file has already been compiled while

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Mon May 27 15:59:18 2024 (serrano)                */
+;*    Last change :  Wed May 29 07:41:18 2024 (serrano)                */
 ;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -218,7 +218,6 @@
 		       (when (directory? cache)
 			  (delete-path cache)))
 	     (list (make-cache-name)
-		(hop-sofile-directory)
 		(hop-cache-directory))))
 	 (section "Hopc options")
 	 (("-g?level" (help "Debug level"))
@@ -250,13 +249,10 @@
 	  (hop-sofile-compile-policy-set! (string->symbol policy))
 	  (when (eq? (hop-sofile-compile-policy) 'none)
 	     (hop-sofile-enable-set! #f)))
-	 (("--so-clear-cache" (help "Clear so files cache"))
-	  (when (directory? (hop-sofile-directory))
-	     (delete-path (hop-sofile-directory))))
 	 (else
-	  (if source
-	      (set! options (append! options (list else)))
-	      (set! source else))))))
+	  (set! source else)
+	  (set! options (append! options rest))
+	  (stop #t)))))
    
 ;*---------------------------------------------------------------------*/
 ;*    javascript-start-worker! ...                                     */

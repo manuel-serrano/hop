@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Tue May 14 13:57:11 2024 (serrano)                */
+;*    Last change :  Wed May 29 07:38:56 2024 (serrano)                */
 ;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -57,7 +57,6 @@
 	 (webdav #unspecified)
 	 (zeroconf #unspecified)
 	 (clear-cache #f)
-	 (clear-so #f)
 	 (setuser #f)
 	 (clientc-source-map #f)
 	 (clientc-arity-check #f)
@@ -89,8 +88,6 @@
 	    (("--buildtag" (help "Print the buildtag and exit"))
 	     (print (hop-build-tag))
 	     (exit 0))
-	    (("--default-so-dir" (help "Display default so dir"))
-	     (print (dirname (hop-sofile-path "dummy.hop"))))
 	    (("-O" (help "Optimization mode (eq. to \"--so-policy aot\")"))
 	     (hop-sofile-compile-policy-set! 'aot))
 	    (("-Ox" (help "Experimal optimization mode"))
@@ -110,9 +107,7 @@
 	    (("--rc-dir" ?dir (help "Set rc directory"))
 	     (hop-rc-directory-set! dir)
 	     (unless cache-dir
-		(hop-cache-directory-set! (make-file-name dir "cache")))
-	     (unless sofile-dir
-		(hop-sofile-directory-set! (make-file-path dir "so"))))
+		(hop-cache-directory-set! (make-file-name dir "cache"))))
 	    (("--cache-dir" ?dir (help "Set cache directory"))
 	     (set! cache-dir #t)
 	     (hop-cache-directory-set! dir))
@@ -125,25 +120,12 @@
 	    (("--no-clear-cache" (help "Don't clear any cache"))
 	     (hop-hss-clear-cache-set! #f)
 	     (hop-clientc-clear-cache-set! #f))
-	    (("--so-dir" ?dir (help (format "Set libs directory (~a)" (hop-sofile-directory))))
-	     (set! sofile-dir #t)
-	     (hop-sofile-directory-set! dir))
-	    (("--clear-so" (help "Clear sofiles directory"))
-	     (set! clear-so #t))
-	    (("--no-clear-so" (help "Don't clear libs"))
-	     (set! clear-so #f))
 	    (("--no-so" (help "Disable loading pre-compiled file"))
 	     (hop-sofile-enable-set! #f))
 	    (("--so-policy" ?policy (help "Sofile compile policy [none, aot, aot+, nte, nte1, nte+]"))
 	     (hop-sofile-compile-policy-set! (string->symbol policy)))
 	    (("--sofile-policy" ?policy (help "Deprecated, use \"--so-policy\" instead"))
 	     (hop-sofile-compile-policy-set! (string->symbol policy)))
-	    (("--so-target" ?loc
-		(help
-		   (format "Location for generated so file [sodir, src] [~s]"
-		      (hop-sofile-compile-target))))
-	     (hop-sofile-compile-target-set! (string->symbol loc)))
-	    
 	    (("--autoload" (help "Enable autoload (default)"))
 	     (set! autoloadp #t))
 	    (("--no-autoload" (help "Disable autoload"))
@@ -488,11 +470,6 @@
 	     (lambda (p)
 		(load-mime-types (make-file-name p ".mime.types"))))))
       
-      ;; clear sofiles
-      (when clear-so
-	 (let ((dir (dirname (hop-sofile-path "dummy.so"))))
-	    (delete-path dir)))
-      
       ;; clear all caches
       (when clear-cache
 	 (for-each (lambda (cache)
@@ -501,7 +478,6 @@
 			    (hop-color 4 cache "") "\"\n")
 			 (delete-path cache)))
 	    (list (make-cache-name)
-	       (hop-sofile-directory)
 	       (hop-cache-directory))))
 
       ;; create cache directory
