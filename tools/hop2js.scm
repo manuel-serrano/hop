@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  manuel serrano                                    */
 ;*    Creation    :  Wed Sep 13 01:56:26 2023                          */
-;*    Last change :  Wed May  8 11:10:24 2024 (serrano)                */
+;*    Last change :  Fri May 31 09:10:18 2024 (serrano)                */
 ;*    Copyright   :  2023-24 manuel serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    A partial Hop-to-JS compiler.                                    */
@@ -1199,7 +1199,7 @@
 
 (hashtable-put! expander-table "memq"
    (lambda (fun args env)
-      (format "~a.includes(~a)"
+      (format "~a?.includes(~a)"
 	 (hop2js-expr (cadr args) env)
 	 (hop2js-expr (car args) env))))
 
