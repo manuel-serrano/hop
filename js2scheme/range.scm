@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Thu Jun 22 15:05:40 2023 (serrano)                */
-;*    Copyright   :  2016-23 Manuel Serrano                            */
+;*    Last change :  Sun Jun  2 10:20:50 2024 (serrano)                */
+;*    Copyright   :  2016-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
 ;*=====================================================================*/
@@ -1889,7 +1889,7 @@
 		    (multiple-value-bind (renvt renvo)
 		       (test-envs rhs envl conf mode fix)
 		       (values (append-env lenvt renvt)
-			  (append-env lenvo renvo))))))
+			  (empty-env))))))
 	     ((not (type-number? (j2s-vtype lhs)))
 	      (values (empty-env) (empty-env)))
 	     ((not (type-number? (j2s-vtype rhs)))

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Sat Oct 21 12:53:50 2023 (serrano)                */
-;*    Copyright   :  2017-23 Manuel Serrano                            */
+;*    Last change :  Sun Jun  2 10:01:19 2024 (serrano)                */
+;*    Copyright   :  2017-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Casting values from JS types to SCM implementation types.        */
 ;*=====================================================================*/
@@ -500,7 +500,7 @@
 (define (js-int32->string v expr ctx)
    (if (int32? v)
        (& (fixnum->string (int32->fixnum v)) (context-program ctx))
-       `(js-ascii->jsstring (int32->string ,v))))
+       `(js-ascii->jsstring (fixnum->string (int32->fixnum ,v)))))
 
 (define (js-bigint->bool v expr ctx)
    (if (bignum? v)
