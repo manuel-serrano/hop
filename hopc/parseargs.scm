@@ -165,6 +165,8 @@
 	     (hopc-js-module-main-set! #f)
 	     (hopc-pass-set! 'so))
 	    ((("-j" "--client-js") (help "Generate a client-side JavaScript file"))
+	     (j2s-compile-options-set!
+		(cons* :target-language 'javascript (j2s-compile-options)))
 	     (hopc-pass-set! 'client-js))
 	    (("--ast" ?ast (help "The source is an abstract syntax tree"))
 	     (hopc-source-ast-set! ast))
@@ -281,7 +283,9 @@
 	    (("--js-target-es5" (help "Generate a client-side JavaScript 1.5 file"))
 	     (hopc-js-target-set! 'es5)
 	     (j2s-compile-options-set!
-		(cons* :target 'es5 (j2s-compile-options)))
+		(cons* :target 'es5
+		   :target-language 'javascript
+		   (j2s-compile-options)))
 	     (hopc-pass-set! 'client-js))
 	    (("--js-es5" (help "Enable all EcmaScript 5 support"))
 	     (set! ecmascriptv 5))

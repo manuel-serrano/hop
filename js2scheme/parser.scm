@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Sat Jun  1 10:07:38 2024 (serrano)                */
+;*    Last change :  Sun Jun  2 09:46:05 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -4488,7 +4488,8 @@
       ;; disable hopscript var binders, and force let at beginning of blocks
       (hopscript-let! node mode)
       ;; treates top-level await import-dynamic as require
-      (hopscript-async-import! node mode)
+      (unless (eq? (config-get conf :target-language #f) 'javascript)
+	 (hopscript-async-import! node mode))
       (unless (memq mode '(strict hopscript ecmascript6 ecmascript2017))
 	 (unless (config-get conf :es6-let #f)
 	    (disable-es6-let node))

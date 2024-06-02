@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Sun Jun  2 08:33:52 2024 (serrano)                */
+;*    Last change :  Sun Jun  2 09:39:12 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -35,6 +35,7 @@
 	   (nodejs-import-module-core::JsModule ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring ::long ::bool ::obj ::vector)
 	   (nodejs-import-module-hop::JsModule ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring ::long ::bool ::obj ::vector)
 	   (nodejs-import-module-dynamic::JsPromise ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::bstring ::bool ::obj)
+	   (nodejs-import-module-dynamic-namespace::JsObject ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::bstring ::bool ::obj)
 	   (nodejs-import-meta::JsObject ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsStringLiteral)
 	   (nodejs-module-namespace::JsObject ::JsModule ::WorkerHopThread ::JsGlobalObject)
 	   (nodejs-head ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsObject)
@@ -972,16 +973,30 @@
 		     (with-handler
 			(lambda (exn)
 			   (js-call1 %this reject (js-undefined) exn))
-			(let* ((path (nodejs-resolve name %this %module
-					(node-module-paths %module %this)
-					'import))
-			       (mod (nodejs-import-module worker %this %module
-				       path 0 commonjs-export loc)))
-			   (trace-item "mod=" (typeof mod))
-			   (js-call1 %this resolve (js-undefined)
-			      (nodejs-module-namespace mod worker %this))))))
+			(js-call1 %this resolve (js-undefined)
+			   (nodejs-import-module-dynamic-namespace
+			      worker %this %module name base commonjs-export loc)))))
 	       (js-function-arity 2 0)
 	       (js-function-info :name "import" :len 2))))))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-import-module-dynamic-namespace ...                       */
+;*    -------------------------------------------------------------    */
+;*    As of October 2018, this is still a mere proposal. See           */
+;*    https://github.com/tc39/proposal-dynamic-import                  */
+;*---------------------------------------------------------------------*/
+(define (nodejs-import-module-dynamic-namespace::JsObject worker::WorkerHopThread
+	   %this::JsGlobalObject %module::JsObject name::obj
+	   base::bstring commonjs-export::bool loc)
+   (with-access::JsGlobalObject %this (js-promise)
+      (let ((name (js-tostring name %this)))
+	 (let* ((path (nodejs-resolve name %this %module
+			 (node-module-paths %module %this)
+			 'import))
+		(mod (nodejs-import-module worker %this %module
+			path 0 commonjs-export loc)))
+	    (trace-item "mod=" (typeof mod))
+	    (nodejs-module-namespace mod worker %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-import-meta ...                                           */

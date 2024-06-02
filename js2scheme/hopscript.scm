@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.7.x/js2scheme/hopscript.scm           */
+;*    serrano/prgm/project/hop/hop/js2scheme/hopscript.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu May  6 07:37:36 2021                          */
-;*    Last change :  Mon Nov 27 18:14:10 2023 (serrano)                */
-;*    Copyright   :  2021-23 Manuel Serrano                            */
+;*    Last change :  Sun Jun  2 09:34:56 2024 (serrano)                */
+;*    Copyright   :  2021-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    A list of functions that traverse the AST after the parsing to   */
 ;*    make extra hopscript verifications or modifications.             */
@@ -288,7 +288,8 @@
 ;*    hopscript-async-import! ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (hopscript-async-import! this::J2SNode mode)
-   (async-import! this))
+   (async-import! this)
+   this)
 
 ;*---------------------------------------------------------------------*/
 ;*    async-import! ...                                                */
@@ -308,6 +309,6 @@
 (define-walk-method (async-import! this::J2SYield)
    (with-access::J2SYield this (expr loc)
       (if (isa? expr J2SImportDynamic)
-	  (with-access::J2SImportDynamic expr (path)
-	     (J2SCall (J2SUnresolvedRef 'require) path))
+	  (duplicate::J2SImportDynamic expr
+	     (promise #f))
 	  this)))

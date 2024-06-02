@@ -3809,13 +3809,20 @@
 ;*    j2s-scheme ::J2SImportDynamic ...                                */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SImportDynamic mode return ctx)
-   (with-access::J2SImportDynamic this (loc path base loc)
-      (epairify loc
-	 `(nodejs-import-module-dynamic %worker %this %module
-	     ,(j2s-scheme path mode return ctx)
-	     ,base
-	     ,(context-get ctx :commonjs-export)
-	     ',loc))))
+   (with-access::J2SImportDynamic this (loc path base loc promise)
+      (if promise
+	  (epairify loc
+	     `(nodejs-import-module-dynamic %worker %this %module
+		 ,(j2s-scheme path mode return ctx)
+		 ,base
+		 ,(context-get ctx :commonjs-export)
+		 ',loc))
+	  (epairify loc
+	     `(nodejs-import-module-dynamic-namespace %worker %this %module
+		 ,(j2s-scheme path mode return ctx)
+		 ,base
+		 ,(context-get ctx :commonjs-export)
+		 ',loc)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SImportNamespace ...                              */

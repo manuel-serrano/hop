@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 15 15:16:16 2018                          */
-;*    Last change :  Sun Jun  2 06:04:38 2024 (serrano)                */
+;*    Last change :  Sun Jun  2 09:25:24 2024 (serrano)                */
 ;*    Copyright   :  2018-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES6 Module handling                                              */
@@ -84,15 +84,6 @@
 	 (set! imports (collect-imports* this (prgm-dirname this) env args))
 	 ;; declare all the imported variables
 	 (set! decls (append (collect-decls* this env args) decls)))))
-
-;* {*---------------------------------------------------------------------*} */
-;* {*    esimport ::J2SImportDynamic ...                                  *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-walk-method (esimport this::J2SImportDynamic prgm::J2SProgram stack args) */
-;*    (with-access::J2SProgram prgm (path)                             */
-;*       (with-access::J2SImportDynamic this (base)                    */
-;* 	 (set! base path)                                              */
-;* 	 (call-default-walker))))                                      */
 
 ;*---------------------------------------------------------------------*/
 ;*    collect-imports* ...                                             */
