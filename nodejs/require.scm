@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Wed May 29 08:14:27 2024 (serrano)                */
+;*    Last change :  Sun Jun  2 08:33:52 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -178,6 +178,14 @@
 	 (unless (or (and (<=fx (hop-port) -1) (<=fx (hop-ssl-port) -1))
 		     *resolve-service*)
 	    (set! *resolve-service* (nodejs-make-resolve-service %this))))))
+
+;*---------------------------------------------------------------------*/
+;*    file-younger? ...                                                */
+;*---------------------------------------------------------------------*/
+(define (file-younger? target source)
+   (when (file-exists? target)
+      (>=elong (file-modification-time target)
+	 (file-modification-time source))))
 
 ;*---------------------------------------------------------------------*/
 ;*    builtin-language? ...                                            */
@@ -1492,9 +1500,7 @@
    (define (load-cache filename)
       (when (hop-cache-enable)
 	 (let ((path (cache-path filename)))
-	    (when (and (file-exists? path)
-		       (<elong (file-modification-time filename)
-			  (file-modification-time path)))
+	    (when (file-younger? path filename)
 	       (debug-load filename path 2)
 	       (hop-verb 3 "using cache \"" (hop-color 7 "" path) "\"\n")
 	       (call-with-input-file path
@@ -2053,7 +2059,7 @@
 	 (let loop ()
 	    (let ((tmp (synchronize/debug socompile-mutex
 			  (cond
-			     ((file-exists? sopath)
+			     ((file-younger? sopath filename)
 			      sopath)
 			     ((member filename socompile-files)
 			      (condition-variable-wait!/debug
@@ -2137,7 +2143,7 @@
 			    (lambda ()
 			       ;; check if the file has already been compiled while
 			       ;; we were waiting for the lock
-			       (let ((msg (unless (file-exists? sopath)
+			       (let ((msg (unless (file-younger? sopath filename)
 					     (debug-compile "nodejs-socompile" filename sopath)
 					     (hop-verb 2 (hop-color -2 -2 " COMPILE") " "
 						(format "~( )\n"
