@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Wed May 29 07:38:56 2024 (serrano)                */
+;*    Last change :  Sun Jun  2 06:47:13 2024 (serrano)                */
 ;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -406,6 +406,7 @@
 	     (set! files (cons file files))
 	     (stop #t))
 	    (("-?dummy")
+	     (fprint (current-error-port) "Unknown option -" dummy "\n")
 	     (args-parse-usage #f)
 	     (exit 1))
 	    (else

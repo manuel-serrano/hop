@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Fri May 24 10:23:08 2024 (serrano)                */
+;*    Last change :  Sat Jun  1 10:07:38 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -2082,9 +2082,29 @@
 		      (loc loc)
 		      (decls (list decl)))))))
 	 ((*)
-	  (let* ((* (consume-token! '*))
-		 (fro (consume-token! 'ID)))
-	     (if (eq? (token-value fro) 'from)
+	  (let ((* (consume-token! '*))
+		(id (consume-token! 'ID)))
+	     (case (token-value id)
+		((as)
+		 (let ((alias (consume-token! 'ID))
+		       (fro (consume-token! 'ID)))
+		    (if (eq? (token-value fro) 'from)
+			(multiple-value-bind (path dollarpath)
+			   (consume-module-path!)
+			   (let* ((i (instantiate::J2SImport
+					(loc (token-loc token))
+					(path path)
+					(dollarpath dollarpath)
+					(names '())))
+				  (x (instantiate::J2SRedirectNamespace
+					(loc (token-loc token))
+					(id (gensym '*))
+					(alias (token-value alias))
+					(import i))))
+			      (set! exports (cons x exports))
+			      i))
+			(parse-token-error "Illegal export, \"from\" expected" fro))))
+		((from)
 		 (multiple-value-bind (path dollarpath)
 		    (consume-module-path!)
 		    (let* ((i (instantiate::J2SImport
@@ -2098,8 +2118,9 @@
 				 (alias '*)
 				 (import i))))
 		       (set! exports (cons x exports))
-		       i))
-		 (parse-token-error "Illegal export, \"from\" expected" fro))))
+		       i)))
+		(else
+		 (parse-token-error "Illegal export, \"from\" expected" id)))))
 	 ((type)
 	  (type-decl-list)
 	  (instantiate::J2SNop
