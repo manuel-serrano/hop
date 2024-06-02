@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  manuel serrano                                    */
 ;*    Creation    :  Wed Sep 13 01:56:26 2023                          */
-;*    Last change :  Fri May 31 09:10:18 2024 (serrano)                */
+;*    Last change :  Sun Jun  2 07:21:34 2024 (serrano)                */
 ;*    Copyright   :  2023-24 manuel serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    A partial Hop-to-JS compiler.                                    */
@@ -80,6 +80,7 @@
 ;*    var-ident-table (see ident.sch) ...                              */
 ;*---------------------------------------------------------------------*/
 (hashtable-put! var-ident-table "file-exists?" "fs.existsSync")
+(hashtable-put! var-ident-table "service" "$service")
 
 ;*---------------------------------------------------------------------*/
 ;*    semicolon ...                                                    */

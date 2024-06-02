@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 15 15:16:16 2018                          */
-;*    Last change :  Sun May 19 17:58:13 2024 (serrano)                */
+;*    Last change :  Sun Jun  2 09:25:24 2024 (serrano)                */
 ;*    Copyright   :  2018-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES6 Module handling                                              */
@@ -84,15 +84,6 @@
 	 (set! imports (collect-imports* this (prgm-dirname this) env args))
 	 ;; declare all the imported variables
 	 (set! decls (append (collect-decls* this env args) decls)))))
-
-;* {*---------------------------------------------------------------------*} */
-;* {*    esimport ::J2SImportDynamic ...                                  *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-walk-method (esimport this::J2SImportDynamic prgm::J2SProgram stack args) */
-;*    (with-access::J2SProgram prgm (path)                             */
-;*       (with-access::J2SImportDynamic this (base)                    */
-;* 	 (set! base path)                                              */
-;* 	 (call-default-walker))))                                      */
 
 ;*---------------------------------------------------------------------*/
 ;*    collect-imports* ...                                             */
@@ -219,124 +210,153 @@
 ;*---------------------------------------------------------------------*/
 (define-method (collect-decls* this::J2SImport env args)
    
-   (define (find-redirect id::symbol export import::J2SImport iprgm)
-      (cond
-	 (iprgm
-	  (with-access::J2SRedirect export (loc import alias)
-	     (with-access::J2SImport import (iprgm path ipath)
-		(let ((iname (instantiate::J2SImportName
-				(loc loc)
-				(id id)
-				(alias alias)))
-		      (import (duplicate::J2SImport import
-				 (path path)
-				 (ipath ipath)
-				 (names (list id)))))
-		   (find-export id import iprgm loc)))))
-	 ((config-get args :ignore-unresolved-modules #f)
-	  #f)
-	 (else
-	  (with-access::J2SImport import (path)
-	     (error "collect-decls" "wrong import" path)))))
+   (define (find-redirect name::J2SImportName id::symbol export import::J2SImport iprgm)
+      (with-trace 'j2s-module "collect-decls*.find-redirect"
+	 (trace-item "name=" (j2s->sexp name))
+	 (trace-item "id=" id)
+	 (trace-item "export=" (j2s->sexp export))
+	 (trace-item "import=" (j2s->sexp import))
+	 (cond
+	    (iprgm
+	     (with-access::J2SRedirect export (loc import alias)
+		(with-access::J2SImport import (iprgm path ipath)
+		   (let ((iname (instantiate::J2SImportName
+				   (loc loc)
+				   (id id)
+				   (alias alias)))
+			 (import (duplicate::J2SImport import
+				    (path path)
+				    (ipath ipath)
+				    (names (list id)))))
+		      (find-export name id import iprgm loc)))))
+	    ((config-get args :ignore-unresolved-modules #f)
+	     #f)
+	    (else
+	     (with-access::J2SImport import (path)
+		(error "collect-decls" "wrong import" path))))))
    
-   (define (find-export id::symbol import::J2SImport iprgm::J2SProgram loc)
-      (with-access::J2SProgram iprgm (exports path)
-	 (let loop ((exports exports))
-	    (when (pair? exports)
-	       (with-access::J2SExport (car exports) (alias (name id))
+   (define (find-export name::J2SImportName id::symbol import::J2SImport iprgm::J2SProgram loc)
+      (with-trace 'j2s-module "collect-decls*.find-export"
+	 (trace-item "name=" (j2s->sexp name))
+	 (trace-item "id=" id)
+	 (trace-item "import=" (j2s->sexp import))
+	 (with-access::J2SProgram iprgm (exports path)
+	    (let loop ((exports exports))
+	       (when (pair? exports)
+		  (with-access::J2SExport (car exports) (alias (iid id))
+		     (trace-item "export=" (j2s->sexp (car exports)))
+		     (cond
+			((isa? (car exports) J2SRedirectNamespace)
+			 (with-access::J2SRedirectNamespace (car exports) (alias import export)
+			    (if (eq? alias id)
+				(let* ((rname (duplicate::J2SImportName name
+						 (id '*)
+						 (alias id)))
+				       (rimport (duplicate::J2SImport import
+						   (names (list rname)))))
+				   (import-namespace name rimport))
+				(with-access::J2SImport import (iprgm)
+				   (multiple-value-bind (x i)
+				      (find-redirect name iid (car exports) import iprgm)
+				      (if x
+					  (duplicate::J2SRedirectNamespace (car exports)
+					     (export x))
+					  (loop (cdr exports))))))))
+			((not (eq? id alias))
+			 (loop (cdr exports)))
+			((not (isa? (car exports) J2SRedirect))
+			 (with-access::J2SImport import (respath)
+			    (values (car exports) import)))
+			(else
+			 (with-access::J2SRedirect (car exports) (import export)
+			    (with-access::J2SImport import (iprgm)
+			       (let ((x (find-redirect name iid (car exports) import iprgm)))
+				  (set! export x)
+				  (car exports))))))))))))
+   
+   (define (import-binding name::J2SImportName import::J2SImport)
+      (with-trace 'j2s-module "collect-decls*.import-binding"
+	 (trace-item "name=" (j2s->sexp name))
+	 (trace-item "import=" (j2s->sexp import))
+	 (with-access::J2SImport import (iprgm loc ipath)
+	    (unless iprgm
+	       (error (with-access::J2SImportName name (id) id)
+		  "Cannot find imported module"
+		  (with-access::J2SImportPath ipath (path) path)))
+	    (with-access::J2SImportName name (id alias)
+	       (multiple-value-bind (x i)
+		  (find-export name id this iprgm loc)
 		  (cond
-		     ((isa? (car exports) J2SRedirectNamespace)
-		      (with-access::J2SRedirect (car exports) (import export)
-			 (with-access::J2SImport import (iprgm)
-			    (multiple-value-bind (x i)
-			       (find-redirect id (car exports) import iprgm)
-			       (if x
-				   (duplicate::J2SRedirectNamespace (car exports)
-				      (export x))
-				   (loop (cdr exports)))))))
-		     ((not (eq? id alias))
-		      (loop (cdr exports)))
-		     ((not (isa? (car exports) J2SRedirect))
-		      (with-access::J2SImport import (respath)
-			 (values (car exports) import)))
+		     ((not x)
+		      (with-access::J2SImportPath ipath (protocol abspath)
+			 (if (or (eq? protocol 'missing)
+				 (config-get args :ignore-unresolved-modules #f))
+			     (let ((x (instantiate::J2SExport
+					 (loc loc)
+					 (id id)
+					 (alias id)
+					 (index 0))))
+				(instantiate::J2SDeclImport
+				   (loc loc)
+				   (id alias)
+				   (alias id)
+				   (binder 'let)
+				   (writable #f)
+				   (vtype 'any)
+				   (scope 'local)
+				   (export x)
+				   (import import)))
+			     (raise
+				(instantiate::&io-parse-error
+				   (proc "import")
+				   (msg (format "imported binding \"~a\" not exported by module ~s"
+					   id abspath))
+				   (obj id)
+				   (fname (cadr loc))
+				   (location (caddr loc)))))))
+		     ((isa? x J2SDeclInit)
+		      x)
 		     (else
-		      (with-access::J2SRedirect (car exports) (import export)
-			 (with-access::J2SImport import (iprgm)
-			    (let ((x (find-redirect name (car exports) import iprgm)))
-			       (set! export x)
-			       (car exports)))))))))))
+		      (instantiate::J2SDeclImport
+			 (loc loc)
+			 (id alias)
+			 (alias id)
+			 (binder 'let)
+			 (writable #f)
+			 (vtype 'any)
+			 (scope 'local)
+			 (export x)
+			 (import import)))))))))
    
-   (define (import-binding name import::J2SImport)
-      (with-access::J2SImport import (iprgm loc ipath)
-	 (unless iprgm
-	    (error (with-access::J2SImportName name (id) id)
-	       "Cannot find imported module"
-	       (with-access::J2SImportPath ipath (path) path)))
-	 (with-access::J2SImportName name (id alias)
-	    (multiple-value-bind (x i)
-	       (find-export id this iprgm loc)
-	       (if (not x)
-		   (with-access::J2SImportPath ipath (protocol abspath)
-		      (if (or (eq? protocol 'missing)
-			      (config-get args :ignore-unresolved-modules #f))
-			  (let ((x (instantiate::J2SExport
-				      (loc loc)
-				      (id id)
-				      (alias id)
-				      (index 0))))
-			     (instantiate::J2SDeclImport
-				(loc loc)
-				(id alias)
-				(alias id)
-				(binder 'let)
-				(writable #f)
-				(vtype 'any)
-				(scope 'local)
-				(export x)
-				(import import)))
-			  (raise
-			     (instantiate::&io-parse-error
-				(proc "import")
-				(msg (format "imported binding \"~a\" not exported by module ~s"
-					id abspath))
-				(obj id)
-				(fname (cadr loc))
-				(location (caddr loc))))))
-		   (instantiate::J2SDeclImport
-		      (loc loc)
-		      (id alias)
-		      (alias id)
-		      (binder 'let)
-		      (writable #f)
-		      (vtype 'any)
-		      (scope 'local)
-		      (export x)
-		      (import import)))))))
-   
-   (define (import-namespace name import::J2SImport)
-      (with-access::J2SImport import (loc)
-	 (with-access::J2SImportName name (alias)
-	    (instantiate::J2SDeclInit
-	       (loc loc)
-	       (id alias)
-	       (binder 'let-opt)
-	       (scope 'global)
-	       (writable #f)
-	       (val (instantiate::J2SImportNamespace
-		       (loc loc)
-		       (id alias)
-		       (type 'object)
-		       (import this)))))))
+   (define (import-namespace name::J2SImportName import::J2SImport)
+      (with-trace 'j2s-module "collect-decls*.import-namespace"
+	 (trace-item "name=" (j2s->sexp name))
+	 (trace-item "import=" (j2s->sexp import))
+	 (with-access::J2SImport import (loc)
+	    (with-access::J2SImportName name (alias)
+	       (instantiate::J2SDeclInit
+		  (loc loc)
+		  (id alias)
+		  (binder 'let-opt)
+		  (scope 'global)
+		  (writable #f)
+		  (val (instantiate::J2SImportNamespace
+			  (loc loc)
+			  (id alias)
+			  (type 'object)
+			  (import this))))))))
    
    (with-access::J2SImport this (iprgm names loc ipath dollarpath)
-      (if (isa? dollarpath J2SUndefined)
-	  (map (lambda (name)
-		  (with-access::J2SImportName name (id)
-		     (if (eq? id '*)
-			 (import-namespace name this)
-			 (import-binding name this))))
-	     names)
-	  '())))
+      (with-trace 'j2s-module "collect-decls*"
+	 (trace-item "import=" (j2s->sexp this))
+	 (if (isa? dollarpath J2SUndefined)
+	     (map (lambda (name)
+		     (with-access::J2SImportName name (id)
+			(if (eq? id '*)
+			    (import-namespace name this)
+			    (import-binding name this))))
+		names)
+	     '()))))
 
 ;*---------------------------------------------------------------------*/
 ;*    esexport ::J2SNode ...                                           */

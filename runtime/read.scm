@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Wed May 29 07:37:25 2024 (serrano)                */
+;*    Last change :  Sun Jun  2 08:33:15 2024 (serrano)                */
 ;*    Copyright   :  2005-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -1002,7 +1002,7 @@
 ;*---------------------------------------------------------------------*/
 (define (hop-find-sofile path #!key (suffix ""))
    
-   (define (more-recent? sopath)
+   (define (file-younger? sopath)
       (when (file-exists? sopath)
 	 (>=elong (file-modification-time sopath)
 	    (file-modification-time path))))
@@ -1017,9 +1017,9 @@
 	       (when (pair? paths)
 		  (let ((path (make-file-path (car paths) file)))
 		     (cond
-			((more-recent? path)
+			((file-younger? path)
 			 path)
-			((more-recent? (errfile path))
+			((file-younger? (errfile path))
 			 (cons 'error (errfile path)))
 			(else
 			 (loop (cdr paths))))))))))
@@ -1028,9 +1028,9 @@
       (with-trace 'sofile "hop-find-sofile.soprecompiled"
 	 (trace-item "sopath=" sopath)
 	 (cond
-	    ((more-recent? sopath)
+	    ((file-younger? sopath)
 	     sopath)
-	    ((more-recent? (errfile sopath))
+	    ((file-younger? (errfile sopath))
 	     (cons 'error (errfile sopath)))
 	    (else
 	     #f))))

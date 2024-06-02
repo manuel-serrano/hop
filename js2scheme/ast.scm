@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Fri Apr  5 10:18:17 2024 (serrano)                */
+;*    Last change :  Sun Jun  2 09:34:22 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -584,6 +584,7 @@
 	      import)
 
 	   (final-class J2SImportDynamic::J2SExpr
+	      (promise::bool (default #t))
 	      (base::bstring (default (pwd)))
 	      path::J2SExpr)
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Wed May 29 08:14:27 2024 (serrano)                */
+;*    Last change :  Sun Jun  2 09:39:12 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -35,6 +35,7 @@
 	   (nodejs-import-module-core::JsModule ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring ::long ::bool ::obj ::vector)
 	   (nodejs-import-module-hop::JsModule ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring ::long ::bool ::obj ::vector)
 	   (nodejs-import-module-dynamic::JsPromise ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::bstring ::bool ::obj)
+	   (nodejs-import-module-dynamic-namespace::JsObject ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::bstring ::bool ::obj)
 	   (nodejs-import-meta::JsObject ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsStringLiteral)
 	   (nodejs-module-namespace::JsObject ::JsModule ::WorkerHopThread ::JsGlobalObject)
 	   (nodejs-head ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsObject)
@@ -178,6 +179,14 @@
 	 (unless (or (and (<=fx (hop-port) -1) (<=fx (hop-ssl-port) -1))
 		     *resolve-service*)
 	    (set! *resolve-service* (nodejs-make-resolve-service %this))))))
+
+;*---------------------------------------------------------------------*/
+;*    file-younger? ...                                                */
+;*---------------------------------------------------------------------*/
+(define (file-younger? target source)
+   (when (file-exists? target)
+      (>=elong (file-modification-time target)
+	 (file-modification-time source))))
 
 ;*---------------------------------------------------------------------*/
 ;*    builtin-language? ...                                            */
@@ -964,16 +973,30 @@
 		     (with-handler
 			(lambda (exn)
 			   (js-call1 %this reject (js-undefined) exn))
-			(let* ((path (nodejs-resolve name %this %module
-					(node-module-paths %module %this)
-					'import))
-			       (mod (nodejs-import-module worker %this %module
-				       path 0 commonjs-export loc)))
-			   (trace-item "mod=" (typeof mod))
-			   (js-call1 %this resolve (js-undefined)
-			      (nodejs-module-namespace mod worker %this))))))
+			(js-call1 %this resolve (js-undefined)
+			   (nodejs-import-module-dynamic-namespace
+			      worker %this %module name base commonjs-export loc)))))
 	       (js-function-arity 2 0)
 	       (js-function-info :name "import" :len 2))))))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-import-module-dynamic-namespace ...                       */
+;*    -------------------------------------------------------------    */
+;*    As of October 2018, this is still a mere proposal. See           */
+;*    https://github.com/tc39/proposal-dynamic-import                  */
+;*---------------------------------------------------------------------*/
+(define (nodejs-import-module-dynamic-namespace::JsObject worker::WorkerHopThread
+	   %this::JsGlobalObject %module::JsObject name::obj
+	   base::bstring commonjs-export::bool loc)
+   (with-access::JsGlobalObject %this (js-promise)
+      (let ((name (js-tostring name %this)))
+	 (let* ((path (nodejs-resolve name %this %module
+			 (node-module-paths %module %this)
+			 'import))
+		(mod (nodejs-import-module worker %this %module
+			path 0 commonjs-export loc)))
+	    (trace-item "mod=" (typeof mod))
+	    (nodejs-module-namespace mod worker %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-import-meta ...                                           */
@@ -1492,9 +1515,7 @@
    (define (load-cache filename)
       (when (hop-cache-enable)
 	 (let ((path (cache-path filename)))
-	    (when (and (file-exists? path)
-		       (<elong (file-modification-time filename)
-			  (file-modification-time path)))
+	    (when (file-younger? path filename)
 	       (debug-load filename path 2)
 	       (hop-verb 3 "using cache \"" (hop-color 7 "" path) "\"\n")
 	       (call-with-input-file path
@@ -2053,7 +2074,7 @@
 	 (let loop ()
 	    (let ((tmp (synchronize/debug socompile-mutex
 			  (cond
-			     ((file-exists? sopath)
+			     ((file-younger? sopath filename)
 			      sopath)
 			     ((member filename socompile-files)
 			      (condition-variable-wait!/debug
@@ -2137,7 +2158,7 @@
 			    (lambda ()
 			       ;; check if the file has already been compiled while
 			       ;; we were waiting for the lock
-			       (let ((msg (unless (file-exists? sopath)
+			       (let ((msg (unless (file-younger? sopath filename)
 					     (debug-compile "nodejs-socompile" filename sopath)
 					     (hop-verb 2 (hop-color -2 -2 " COMPILE") " "
 						(format "~( )\n"
