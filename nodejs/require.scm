@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Sun Jun  2 09:39:12 2024 (serrano)                */
+;*    Last change :  Mon Jun  3 08:37:18 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -2788,6 +2788,9 @@
 ;*---------------------------------------------------------------------*/
 (define (builtin-resolve name::bstring %this::JsGlobalObject %module paths::pair-nil mode::symbol)
    
+   (define (absolute? path)
+      (char=? (string-ref path 0) (file-separator)))
+
    (define (resolve-autoload-hz hz)
       (with-trace 'require "nodejs-resolve.resolve-autoload-hz"
 	 (trace-item "hz=" hz)
@@ -2812,7 +2815,7 @@
 		#f))))
    
    (define (resolve-package-exports x::bstring json)
-      (with-trace 'require "resolve-package-exports"
+      (with-trace 'require "nodejs-resolve.resolve-package-exports"
 	 ;; see js2scheme/module.scm
 	 (let ((e (assoc "exports" json)))
 	    (trace-item "m=" e)
@@ -2842,8 +2845,9 @@
 	    (resolve-file-or-directory (cdr c) x))))
 
    (define (resolve-package x)
-      (with-trace 'require "resolve-package"
+      (with-trace 'require "nodejs-resolve.resolve-package"
 	 (let ((json (make-file-name x "package.json")))
+	    (trace-item "package.json=" json)
 	    (when (file-exists? json)
 	       (let ((json (load-package-json json %this)))
 		  (with-handler
@@ -2892,7 +2896,8 @@
    (define (resolve-file-or-directory x dir::bstring)
       (with-trace 'require "nodejs-resolve.resolve-file-or-directory"
 	 (trace-item "x=" x " dir=" dir)
-	 (let ((file (make-file-name dir x)))
+	 (let ((file (if (absolute? x) x (make-file-name dir x))))
+	    (trace-item "file=" file)
 	    (or (resolve-file file)
 		(resolve-directory file)))))
    
