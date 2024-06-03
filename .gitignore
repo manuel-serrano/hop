@@ -50,12 +50,14 @@ hopscript/hopscript.sch
 hopscript/bglhopscript_types.h
 
 # node_modules
-node_modules/hopc/lib/ast.js
-node_modules/hopc/lib/walk.js
+node_modules/hopc/lib/ast.mjs
+node_modules/hopc/lib/error.mjs
+node_modules/hopc/lib/walk.mjs
 node_modules/hopdroid/lib/Makefile
 node_modules/hopc/node/ast2js
 node_modules/hopc/node/hop2js
 node_modules/hopc/node/parser.js
+node_modules/hopc/node/error.mjs
 node_modules/hopc/node/parser.mjs
 node_modules/hopc/node/j2sast.mjs
 node_modules/hop/hop/config.mjs
@@ -64,6 +66,7 @@ node_modules/hop/package.json
 node_modules/hopc/package.json
 node_modules/readlines/package.json
 node_modules/exif/package.json
+node_modules/syslog/package.json
 
 
 # js2scheme
