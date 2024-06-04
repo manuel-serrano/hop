@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Sun Jun  2 08:33:15 2024 (serrano)                */
+;*    Last change :  Sun Jun  2 20:56:39 2024 (serrano)                */
 ;*    Copyright   :  2005-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -1040,6 +1040,7 @@
 	 (tprint "find-in-dir dir=" dir " base=" base " suffix=" suffix))
       ;; scan recursively the so directories
       (with-trace 'sofile "hop-find-sofile.find-in-dir"
+	 (trace-item "dir=" dir)
 	 (let ((sodir (make-file-path dir (hop-so-dirname))))
 	    (if (directory? sodir)
 		(or (soprecompiled
@@ -1053,8 +1054,9 @@
 		(let loop ((dir dir)
 			   (reldir (basename dir)))
 		   (let ((parent (dirname dir)))
-		      (unless (string=? parent dir)
+		      (unless (or (string=? parent dir) (string=? parent "/"))
 			 (let ((sodir (make-file-name parent (hop-so-dirname))))
+			    (trace-item "sodir=" sodir " " (directory? sodir))
 			    (if (directory? sodir)
 				;; path relative filename
 				(soprecompiled
@@ -1072,7 +1074,7 @@
    (with-trace 'sofile "hop-find-sofile"
       (trace-item "path=" path)
       (let ((dir (dirname path))
-	     (base (basename path)))
+	    (base (basename path)))
 	 (or (find-in-dir dir base suffix)
 	     (find-in-cache dir suffix)))))
 

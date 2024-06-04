@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Sun Jun  2 09:39:12 2024 (serrano)                */
+;*    Last change :  Sun Jun  2 20:53:24 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -2202,7 +2202,7 @@
 	    (match-case sopath
 	       ((? string?)
 		(trace-item "sopa.mtime=" (file-modification-time sopath))
-		(trace-item "file.mtime" (file-modification-time filename))
+		(trace-item "file.mtime=" (file-modification-time filename))
 		(when (>= (file-modification-time sopath)
 			 (file-modification-time filename))
 		   sopath))
