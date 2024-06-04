@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Tue May 21 07:55:10 2024 (serrano)                */
+;*    Last change :  Mon Jun  3 07:53:28 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -2893,7 +2893,10 @@
 		  ((or (eq? cmap (js-not-a-cmap)) throw)
 		   (js-get-notfound name throw %this))
 		  ((and (js-jsstring? name) (js-jsstring-private? name))
-		   (js-raise-type-error %this "Cannot read private member ~s" name))
+		   (with-access::JsPropertyCache cache (point src)
+		      (if (string? src)
+			  (js-raise-type-error/loc %this `(at ,src ,point) "Cannot read private member ~s" name)
+			  (js-raise-type-error %this "Cannot read private member ~s" name))))
 		  (else
 		   (js-pcache-update-miss! cache o)
 		   (js-undefined)))))
@@ -2976,8 +2979,13 @@
 	    (js-property-value o obj name v %this))
 	 ;; not found
 	 (lambda (o)
-	    (js-raise-type-error %this "call: not a function ~s"
-	       (js-undefined)))
+	    (with-access::JsPropertyCache cache (point src)
+	       (if (string? src)
+		   (js-raise-type-error/loc %this `(at ,src ,point)
+		      "call: not a function o.~a()"
+		      name)
+		   (js-raise-type-error %this "call: not a function o.~a()"
+		      name))))
 	 ;; loop
 	 loop)))
 
@@ -3601,7 +3609,12 @@
 		(js-raise-reference-error/loc %this loc
 		   "[[PUT]], \"~a\" is not defined" name))
 	       ((and (js-jsstring? name) (js-jsstring-private? name))
-		(js-raise-type-error %this "Cannot write private member ~s" name))
+		(if (isa? cache JsPropertyCache)
+		    (with-access::JsPropertyCache cache (src point)
+		       (if (string? src)
+			   (js-raise-type-error/loc %this `(at ,src ,point) "Cannot write private member ~s" name)
+			   (js-raise-type-error %this "Cannot write private member ~s" name)))
+		    (js-raise-type-error %this "Cannot write private member ~s" name)))
 	       ((js-object-mapped? o)
 		;; 8.12.5, step 6
 		(extend-mapped-object!))
@@ -5337,8 +5350,13 @@
 	       (jsapply (js-property-value o obj name v %this)))
 	    ;; not found
 	    (lambda (o)
-	       (js-raise-type-error %this "call: not a function ~s"
-		  (js-undefined)))
+	       (with-access::JsPropertyCache ccache (point src)
+		  (if (string? src)
+		      (js-raise-type-error/loc %this `(at ,src ,point)
+			 "call: not a function o.~a()"
+			 name)
+		      (js-raise-type-error %this "call: not a function o.~a()"
+			 name))))
 	    ;; loop
 	    loop))))
 

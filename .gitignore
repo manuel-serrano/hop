@@ -57,6 +57,7 @@ node_modules/hopc/hop/error.mjs
 node_modules/hopc/node/ast2js
 node_modules/hopc/node/hop2js
 node_modules/hopc/node/parser.js
+node_modules/hopc/node/error.mjs
 node_modules/hopc/node/parser.mjs
 node_modules/hopc/node/j2sast.mjs
 node_modules/hopc/node/error.mjs

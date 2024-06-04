@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Jul 30 17:20:13 2015                          */
-/*    Last change :  Thu Apr 25 06:43:01 2024 (serrano)                */
+/*    Last change :  Tue Jun  4 18:16:54 2024 (serrano)                */
 /*    Copyright   :  2015-24 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Tools to build the Hop.js documentation.                         */
@@ -540,7 +540,7 @@ function main() {
    const root = process.cwd();
 
    hopdoc.setSource(argv[3]);
-   
+
    switch(argv[2]) {
       case "html-to-idx":
 	 hopdoc.htmlToIdx(argv[3],

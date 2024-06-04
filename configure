@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Wed May 29 08:21:49 2024 (serrano)                */
+#*    Last change :  Mon Jun  3 08:13:15 2024 (serrano)                */
 #*    Copyright   :  2004-24 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -1446,7 +1446,12 @@ for d in hop node; do
 done
 
 for d in hop hopc readlines exif syslog; do
-  cat node_modules/$d/package.json.in | sed -e "s|@VERSION@|$version|" -e "s|@BUILDTAG@|$buildtag|" > node_modules/$d/package.json
+  cat node_modules/$d/package.json.in \
+    | sed -e "s|@VERSION@|$version|" \
+	  -e "s|@BUILDTAG@|$buildtag|" \
+	  -e "s|@NMMODULESDIR@|$nodemodulesdir|" \
+	  -e "s|@NMMODULESHOPDIR@|$nodemodulesdir/@hop/$d/hop|" \
+	  > node_modules/$d/package.json
 done
    
 # lib/hop.init

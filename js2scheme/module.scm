@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 15 15:16:16 2018                          */
-;*    Last change :  Sun Jun  2 09:25:24 2024 (serrano)                */
+;*    Last change :  Mon Jun  3 08:32:12 2024 (serrano)                */
 ;*    Copyright   :  2018-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES6 Module handling                                              */
@@ -511,6 +511,9 @@
 ;*---------------------------------------------------------------------*/
 (define (resolve-module-file name::bstring dir::bstring loc args)
 
+   (define (absolute? path)
+      (char=? (string-ref path 0) (file-separator)))
+
    (define (resolve-autoload-hz hz)
       (cond
 	 ((hz-local-weblet-path hz (get-autoload-directories))
@@ -561,27 +564,29 @@
 		       (loop (cdr sufs)))))))))
 
    (define (resolve-package-exports x::bstring json)
-      ;; see nodejs/require.scm
-      (let ((e (assoc "exports" json)))
-	 (when (pair? e)
-	    (cond
-	       ((string? (cdr e))
-		(resolve-file-or-directory (cdr e) x))
-	       ((pair? (cdr e))
-		(let ((f (assoc "." (cdr e))))
-		   (when (pair? f)
-		      (cond
-			 ((string? (cdr f))
-			  (resolve-file-or-directory (cdr f) x))
-			 ((pair? (cdr f))
-			  (let ((c (or (assoc "hop" (cdr f))
-				       (assoc "default" (cdr f)))))
-			     (when (pair? c)
-				(resolve-file-or-directory (cdr c) x))))
-			 (else
-			  (error "resolve" "Illegal package.json" x))))))
-	       (else
-		(error "resolve" "Illegal package.json" x))))))
+      (with-trace 'require "resolve-module-file-package-exports"
+	 ;; see nodejs/require.scm
+	 (let ((e (assoc "exports" json)))
+	    (trace-item "m=" e)
+	    (when (pair? e)
+	       (cond
+		  ((string? (cdr e))
+		   (resolve-file-or-directory (cdr e) x))
+		  ((pair? (cdr e))
+		   (let ((f (assoc "." (cdr e))))
+		      (when (pair? f)
+			 (cond
+			    ((string? (cdr f))
+			     (resolve-file-or-directory (cdr f) x))
+			    ((pair? (cdr f))
+			     (let ((c (or (assoc "hop" (cdr f))
+					  (assoc "default" (cdr f)))))
+				(when (pair? c)
+				   (resolve-file-or-directory (cdr c) x))))
+			    (else
+			     (error "resolve" "Illegal package.json" x))))))
+		  (else
+		   (error "resolve" "Illegal package.json" x)))))))
 
    (define (resolve-package-key key x::bstring json)
       (let ((c (assoc key json)))
@@ -589,19 +594,21 @@
 	    (resolve-file-or-directory (cdr c) x))))
 
    (define (resolve-package x)
-      (with-handler
-	 (lambda (e)
-	    (with-access::&exception e (fname location)
-	       (unless (and fname location)
-		  (set! fname (cadr loc))
-		  (set! location (caddr loc)))
-	       (raise e)))
-	 (let ((json (make-file-name x "package.json")))
-	    (when (file-exists? json)
-	       (let ((json (load-package-json json loc)))
-		  (or (resolve-package-exports x json)
-		      (resolve-package-key "main" x json)
-		      (resolve-package-key "server" x json)))))))
+      (with-trace 'require "resolve-module-file.resolve-package"
+	 (with-handler
+	    (lambda (e)
+	       (with-access::&exception e (fname location)
+		  (unless (and fname location)
+		     (set! fname (cadr loc))
+		     (set! location (caddr loc)))
+		  (raise e)))
+	    (let ((json (make-file-name x "package.json")))
+	       (trace-item "package.json=" json)
+	       (when (file-exists? json)
+		  (let ((json (load-package-json json loc)))
+		     (or (resolve-package-exports x json)
+			 (resolve-package-key "main" x json)
+			 (resolve-package-key "server" x json))))))))
 
    (define (resolve-index x)
       (let ((p (make-file-name x "index.js")))
@@ -618,8 +625,11 @@
 	  (resolve-directory path)))
    
    (define (resolve-file-or-directory x dir)
-      (let ((path (make-file-name dir x)))
-	 (resolve-path-file-or-directory path)))
+      (with-trace 'require "resolve-module-file.resolve-file-or-directory"
+	 (trace-item "x=" x " dir=" dir)
+	 (let ((path (if (absolute? x) x (make-file-name dir x))))
+	    (trace-item "path=" path)
+	    (resolve-path-file-or-directory path))))
    
    (define (resolve-error x)
       (if (config-get args :ignore-unresolved-modules)
@@ -645,43 +655,48 @@
 	    (list (config-get args :hop-library-path "."))
 	    (list (config-get args :node-modules-directory ".")))))
    
-   (define (resolve-modules name)
-      (any (lambda (dir)
-	      (resolve-file-or-directory name dir))
-	 (filter string? hop-modules-path)))
+   (define (resolve-modules x)
+      (with-trace 'require "resolve-module-file.resolve-modules"
+	 (trace-item "x=" x)
+	 (trace-item "paths=" (filter string? hop-modules-path))
+	 (any (lambda (dir)
+		 (resolve-file-or-directory x dir))
+	    (filter string? hop-modules-path))))
 
-   (let loop ((name name))
-      (cond
-	 ((core-module? name)
-	  (cons name 'core))
-	 ((or (string-prefix? "http://" name)
-	      (string-prefix? "https://" name))
-	  (cons name 'http))
-	 ((string-prefix? "hop:" name)
-	  (if (string=? "hop:hop" name)
-	      (cons "hop" 'core)
-	      (let ((dir (or (config-get args :node-modules-directory)
-			     (hop-node-modules-dir))))
-		 (or (resolve-file-or-directory (substring name 4) dir)
-		     (resolve-modules (substring name 4))
-		     (resolve-error name)))))
-	 ((string-prefix? "hop:" name)
-	  (let ((dir (or (config-get args :node-modules-directory)
-			 (hop-node-modules-dir))))
-	     (loop (make-file-path dir (substring name 4)))))
-	 ((string-prefix? "node:" name)
-	  (loop (substring name 5)))
-	 ((or (string-prefix? "./" name) (string-prefix? "../" name))
-	  (or (resolve-file-or-directory name dir)
-	      (resolve-modules name)
-	      (resolve-error name)))
-	 ((string-prefix? "/" name)
-	  (or (resolve-path-file-or-directory name)
-	      (resolve-modules name)
-	      (resolve-error name)))
-	 (else
-	  (or (resolve-modules name)
-	      (resolve-error name))))))
+   (with-trace 'require "resolve-module-file"
+      (trace-item "name=" name)
+      (let loop ((name name))
+	 (cond
+	    ((core-module? name)
+	     (cons name 'core))
+	    ((or (string-prefix? "http://" name)
+		 (string-prefix? "https://" name))
+	     (cons name 'http))
+	    ((string-prefix? "hop:" name)
+	     (if (string=? "hop:hop" name)
+		 (cons "hop" 'core)
+		 (let ((dir (or (config-get args :node-modules-directory)
+				(hop-node-modules-dir))))
+		    (or (resolve-file-or-directory (substring name 4) dir)
+			(resolve-modules (substring name 4))
+			(resolve-error name)))))
+	    ((string-prefix? "hop:" name)
+	     (let ((dir (or (config-get args :node-modules-directory)
+			    (hop-node-modules-dir))))
+		(loop (make-file-path dir (substring name 4)))))
+	    ((string-prefix? "node:" name)
+	     (loop (substring name 5)))
+	    ((or (string-prefix? "./" name) (string-prefix? "../" name))
+	     (or (resolve-file-or-directory name dir)
+		 (resolve-modules name)
+		 (resolve-error name)))
+	    ((string-prefix? "/" name)
+	     (or (resolve-path-file-or-directory name)
+		 (resolve-modules name)
+		 (resolve-error name)))
+	    (else
+	     (or (resolve-modules name)
+		 (resolve-error name)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    module-cache                                                     */

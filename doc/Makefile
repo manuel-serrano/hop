@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Thu May  2 09:08:34 2024 (serrano)                */
+#*    Last change :  Mon Jun  3 09:11:19 2024 (serrano)                */
 #*    Copyright   :  2006-24 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Doc Makefile                                                     */
@@ -182,7 +182,7 @@ uninstall:
 #*---------------------------------------------------------------------*/
 %.html: %.md doc.js xml.js
 	$(HOP) $(HOPFLAGS) $(EFLAGS) -- \
-          $(BUILDDIR)/doc/doc.js "compile-section" $< > $@ \
+          $(BUILDDIR)/doc/doc.js "compile-section" $< -o $@ \
           || ($(RM) $@; exit 1)
 
 #*---------------------------------------------------------------------*/
@@ -190,7 +190,7 @@ uninstall:
 #*---------------------------------------------------------------------*/
 %.html: %.json doc.js xml.js
 	$(HOP) $(HOPFLAGS) $(EFLAGS) -- \
-          $(BUILDDIR)/doc/doc.js "compile-chapter" $< > $@ \
+          $(BUILDDIR)/doc/doc.js "compile-chapter" $< -o $@ \
           || ($(RM) $@; exit 1)
 
 #*---------------------------------------------------------------------*/
@@ -198,7 +198,7 @@ uninstall:
 #*---------------------------------------------------------------------*/
 index.html: _index.md doc.js xml.js
 	$(HOP) $(HOPFLAGS) $(EFLAGS) -- \
-          $(BUILDDIR)/doc/doc.js "compile-main" $< > $@ \
+          $(BUILDDIR)/doc/doc.js "compile-main" $< -o $@ \
           || ($(RM) $@; exit 1)
 
 #*---------------------------------------------------------------------*/
@@ -215,7 +215,7 @@ idx.json: $(API_TARGETS) $(LANG_TARGETS) $(DEV_TARGETS) $(WIDGET_TARGETS) \
 #*---------------------------------------------------------------------*/
 idx.html: idx.json
 	$(HOP) $(HOPFLAGS) $(EFLAGS) -- \
-          $(BUILDDIR)/doc/doc.js "compile-idx" $^ > $@ \
+          $(BUILDDIR)/doc/doc.js "compile-idx" $^ -o $@ \
           || ($(RM) $@; exit 1)
 
 #*---------------------------------------------------------------------*/

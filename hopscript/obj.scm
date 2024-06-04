@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul  9 17:41:45 2017                          */
-;*    Last change :  Sun Mar  3 15:08:24 2024 (serrano)                */
+;*    Last change :  Tue Jun  4 12:54:26 2024 (serrano)                */
 ;*    Copyright   :  2017-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ScmObject binding                                                */
@@ -166,8 +166,9 @@
 ;*---------------------------------------------------------------------*/
 (define-method (js-put! o::object prop v::obj throw::bool %this::JsGlobalObject)
    (let* ((name (js-toname prop %this))
+	  (sym (string->symbol (js-jsstring->string name)))
 	  (clazz (object-class o))
-	  (field (find-class-field clazz name)))
+	  (field (find-class-field clazz sym)))
       (cond
 	 ((not field)
 	  (js-raise-type-error %this

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Fri May 17 08:37:28 2024 (serrano)                */
+;*    Last change :  Tue Jun  4 18:32:50 2024 (serrano)                */
 ;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -41,10 +41,6 @@
 ;*---------------------------------------------------------------------*/
 ;*    js initialization ...                                            */
 ;*---------------------------------------------------------------------*/
-(define jsmutex (make-mutex))
-(define jscondv (make-condition-variable))
-(define jsinit #f)
-
 (define lock (make-spinlock))
 
 ;*---------------------------------------------------------------------*/
@@ -166,9 +162,10 @@
 		      (users-close!)
 		      (hop-filters-close!)
 		      (javascript-load-files files exprsjs jsctx)
-		      (synchronize jsmutex
-			 (set! jsinit #t)
-			 (condition-variable-broadcast! jscondv)))
+		      ;; start main js loop
+		      (with-access::WorkerHopThread (jsctx-worker jsctx) (mutex condv)
+			 (synchronize mutex
+			    (condition-variable-broadcast! condv))))
 		   ;; start zeroconf
 		   (when (hop-enable-zeroconf) (init-zeroconf!))
 		   ;; start the main loop
@@ -194,9 +191,10 @@
 		   (javascript-load-files files exprsjs jsctx)
 		   ;; start zeroconf
 		   (when (hop-enable-zeroconf) (init-zeroconf!))
-		   (synchronize jsmutex
-		      (set! jsinit #t)
-		      (condition-variable-broadcast! jscondv))
+		   ;; start the JS main loop
+		   (with-access::WorkerHopThread (jsctx-worker jsctx) (mutex condv)
+		      (synchronize mutex
+			 (condition-variable-broadcast! condv)))
 		   (if (thread-join! (jsctx-worker jsctx)) 0 1))
 		  (else
 		   (sleep 2000)
@@ -244,7 +242,8 @@
 	 (format "hop-~a~a (~a)"
 	    (hop-version) (hop-minor-version) (hop-build-tag))
 	 (or (hop-run-server) (eq? (hop-enable-repl) 'js))
-	 nodejs-new-global-object nodejs-new-module)
+	 nodejs-new-global-object nodejs-new-module
+	 :autostart #f)
       ;; js loader
       (hop-loader-add! "js"
 	 (lambda (path . test)
@@ -277,7 +276,6 @@
 	     (synchronize rcmutex
 		(javascript-rc %global %module %worker rcmutex rccondv)
 		(javascript-init-main-loop exprs %global %module %worker)
-		(condition-variable-wait! rccondv rcmutex)
 		;; install the command line loaders
 		(for-each (lambda (m) (nodejs-register-user-loader! %global m))
 		   loaders)
@@ -305,12 +303,6 @@
 			       (%js-eval ip 'eval %global
 				  (js-undefined) %global))))
 	       exprs))))
-   ;; close user registration
-   (js-worker-push! %worker "jsinit"
-      (lambda (%this)
-	 (synchronize jsmutex
-	    (unless jsinit
-	       (condition-variable-wait! jscondv jsmutex)))))
    ;; start the JS repl loop
    (when (eq? (hop-enable-repl) 'js)
       (signal sigint
