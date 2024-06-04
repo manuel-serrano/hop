@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Mon Jun  3 08:37:18 2024 (serrano)                */
+;*    Last change :  Mon Jun  3 14:33:50 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -2721,30 +2721,33 @@
 ;*    See nodejs-register-user-loader!                                 */
 ;*---------------------------------------------------------------------*/
 (define (loader-resolve name::bstring %this::JsGlobalObject %module paths::pair-nil mode::symbol)
-   (if (null? loader-resolvers)
-       (builtin-resolve name %this %module paths mode)
-       (multiple-value-bind (resolve reject)
-	  (js-worker-exec-promise loader-worker "resolve"
-	     (lambda (this)
-		(with-access::WorkerHopThread loader-worker (%this)
-		   (let ((ctx (js-alist->jsobject `((parent . ,(js-undefined))) %this)))
-		      (let loop ((resolvers loader-resolvers)
-				 (name (js-string->jsstring name))
-				 (ctx ctx))
-			 (if (null? resolvers)
-			     (builtin-resolve (js-tostring name %this) %this %module paths mode)
-			     (js-call3 this (car resolvers) (js-undefined)
-				name ctx 
-				(js-make-function this
-				   (lambda (this specifier context)
-				      (loop (cdr resolvers) specifier context))
-				   (js-function-arity 2 0)
-				   (js-function-info :name "resolver" :len 2))))))))
-	     (lambda (res) res)
-	     (lambda (rej) rej))
-	  (if (symbol? reject)
-	      resolve
-	      (js-raise-uri-error %this "resolve error (~s)" name)))))
+   (with-trace 'loader "loader-resolve"
+      (trace-item "name=" name)
+      (trace-item "loader-resolvers=" (length loader-resolvers))
+      (if (null? loader-resolvers)
+	  (builtin-resolve name %this %module paths mode)
+	  (multiple-value-bind (resolve reject)
+	     (js-worker-exec-promise loader-worker "resolve"
+		(lambda (this)
+		   (with-access::WorkerHopThread loader-worker (%this)
+		      (let ((ctx (js-alist->jsobject `((parent . ,(js-undefined))) %this)))
+			 (let loop ((resolvers loader-resolvers)
+				    (name (js-string->jsstring name))
+				    (ctx ctx))
+			    (if (null? resolvers)
+				(builtin-resolve (js-tostring name %this) %this %module paths mode)
+				(js-call3 this (car resolvers) (js-undefined)
+				   name ctx 
+				   (js-make-function this
+				      (lambda (this specifier context)
+					 (loop (cdr resolvers) specifier context))
+				      (js-function-arity 2 0)
+				      (js-function-info :name "resolver" :len 2))))))))
+		(lambda (res) res)
+		(lambda (rej) rej))
+	     (if (symbol? reject)
+		 resolve
+		 (js-raise-uri-error %this "resolve error (~s)" name))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    json-table ...                                                   */
@@ -3338,13 +3341,15 @@
 ;*    load-loader ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (load-loader this path)
-   (with-access::WorkerHopThread loader-worker (%this)
-      (let* ((mod (nodejs-load-module path loader-worker %this loader-module
-		     :commonjs-export #f))
-	     (res (nodejs-module-namespace mod loader-worker %this)))
-	 (let ((resolve (js-get res (& "resolve") %this))
-	       (load (js-get res (& "load") %this)))
-	    (cons resolve load)))))
+   (with-trace 'loader "load-loader"
+      (trace-item "path=" path)
+      (with-access::WorkerHopThread loader-worker (%this)
+	 (let* ((mod (nodejs-load-module path loader-worker %this loader-module
+			:commonjs-export #f))
+		(res (nodejs-module-namespace mod loader-worker %this)))
+	    (let ((resolve (js-get res (& "resolve") %this))
+		  (load (js-get res (& "load") %this)))
+	       (cons resolve load))))))
       
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-register-user-loader! ...                                 */
@@ -3353,18 +3358,21 @@
 ;*      https://nodejs.org/docs/latest/api/module.html                 */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-register-user-loader! %this module)
-   (synchronize loader-mutex
-      (unless loader-worker
-	 (set! loader-worker (js-loader-worker))))
-   (let ((res (js-worker-exec-throws loader-worker "load"
-		 (lambda (this)
-		    (load-loader this module)))))
+   (with-trace 'loader "nodejs-register-user-loader!"
+      (trace-item "module=" module)
       (synchronize loader-mutex
-	 (when (car res)
-	    (set! loader-resolvers (append loader-resolvers (list (car res)))))
-	 (when (cdr res)
-	    (set! loader-loaders (append loader-loaders (list (cdr res))))))
-      #unspecified))
+	 (unless loader-worker
+	    (set! loader-worker (js-loader-worker))))
+      (let ((res (js-worker-exec-throws loader-worker "load"
+		    (lambda (this)
+		       (load-loader this module)))))
+	 (synchronize loader-mutex
+	    (when (car res)
+	       (set! loader-resolvers
+		  (append loader-resolvers (list (car res)))))
+	    (when (cdr res)
+	       (set! loader-loaders (append loader-loaders (list (cdr res))))))
+	 #unspecified)))
    
 ;*---------------------------------------------------------------------*/
 ;*    Bind the nodejs require functions                                */

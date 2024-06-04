@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Fri May 24 19:38:46 2024 (serrano)                */
+;*    Last change :  Tue Jun  4 07:52:11 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -117,7 +117,6 @@
 	      (mutex::mutex read-only (default (make-mutex)))
 	      (condv::condvar read-only (default (make-condition-variable)))
 	      (prehook (default #f))
-	      (alivep (default #f))
 	      (listeners::pair-nil (default '()))
 	      (exitlisteners::pair-nil (default '()))
 	      (errorlisteners::pair-nil (default '()))

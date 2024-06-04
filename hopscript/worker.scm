@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Sat Mar  9 06:49:56 2024 (serrano)                */
+;*    Last change :  Tue Jun  4 07:56:54 2024 (serrano)                */
 ;*    Copyright   :  2014-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -37,7 +37,7 @@
    (export (js-init-worker! ::JsGlobalObject)
 	   (js-worker-construct ::JsGlobalObject ::procedure)
 	   
- 	   (js-main-worker!::WorkerHopThread ::bstring ::bstring ::bool ::procedure ::procedure)
+ 	   (js-main-worker!::WorkerHopThread ::bstring ::bstring ::bool ::procedure ::procedure #!key (autostart #t))
  	   (js-main-no-worker!::WorkerHopThread ::bstring ::bstring ::bool ::procedure ::procedure)
 	   (js-current-worker::WorkerHopThread)
 	   (js-main-worker?::bool ::WorkerHopThread)
@@ -529,7 +529,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Start the initial WorkerHopThread                                */
 ;*---------------------------------------------------------------------*/
-(define (js-main-worker! name path keep-alive ctor ctormod)
+(define (js-main-worker! name path keep-alive ctor ctormod #!key (autostart #t))
 
    (define (setup-worker! %worker)
       (set! %global (ctor :name name))
@@ -547,6 +547,7 @@
       ($js-init-jsalloc (js-object-default-mode))
       (set! %global-constructor ctor)
       (let ((mutex (make-mutex))
+	    (startv (make-condition-variable))
 	    (condv (make-condition-variable)))
 	 (synchronize mutex
 	    (set! %worker
@@ -554,13 +555,18 @@
 		  (name (string-append "%worker@" name))
 		  (onexit #f)
 		  (keep-alive keep-alive)
+		  (mutex mutex)
+		  (condv condv)
 		  (body (lambda ()
 			   (setup-worker! %worker)
 			   (synchronize mutex
-			      (condition-variable-broadcast! condv))
+			      (condition-variable-broadcast! startv))
+			   (or autostart
+			       (synchronize mutex
+				  (condition-variable-wait! condv mutex)))
 			   (js-worker-loop %worker (lambda (th) th))))))
 	    (thread-start-joinable! %worker)
-	    (condition-variable-wait! condv mutex))))
+	    (condition-variable-wait! startv mutex))))
    
    (values %worker %global %module))
 

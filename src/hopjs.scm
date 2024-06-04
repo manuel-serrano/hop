@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Wed May 29 07:41:18 2024 (serrano)                */
+;*    Last change :  Mon Jun  3 13:51:02 2024 (serrano)                */
 ;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -43,106 +43,115 @@
 ;*    main ...                                                         */
 ;*---------------------------------------------------------------------*/
 (define (main args)
-   
-   ;; gc traces
-   (let ((env (getenv "HOPTRACE")))
-      (when (and (string? env) (string-contains env "hopscript:gc"))
-	 (cond-expand
-	    (gc ($bgl-gc-verbose-set! #t))
-	    (else #unspecified))))
-
-   ;; debug traces
-   (when (getenv "BIGLOOTRACE")
-      (bigloo-debug-set! 2))
-   
-   ;; catch critical signals
-   (signal-init!)
-   
-   ;; set the library load path
-   (bigloo-library-path-set! (hop-library-path))
-   
-   ;; default js configuration
-   (hop-sofile-compile-policy-set! 'aot)
-   (hopjs-standalone-set! #t)
-   (hopscript-install-expanders!)
-   
-   ;; command line parsing
-   (parse-args! args)
-   (nodejs-command-line-set!
-      (if (string? source)
-	  (cons* (car (command-line)) source options)
-	  (cons (car (command-line)) options)))
-
-   ;; default dummy js compiler (for HTML tag embeded expressions)
-   (init-clientc-compiler!
-      :expressionc (lambda l (error "clientc" "not a compiler - expressionc" l))
-      :modulec (lambda l (error "clientc" "not a compiler - modulec" l))
-      :macroe list
-      :sexp->precompiled (lambda (obj debug) (js-trivial-compiler obj))
-      :precompiled->JS-expression js-precompiled-compiler
-      :precompiled->JS-statement js-precompiled-compiler
-      :precompiled->JS-return js-precompiled-compiler
-      :precompiled->sexp js-precompiled-compiler
-      :precompiled-free-variables (lambda l (error "clientc" "not a compiler" l))
-      :jsc (lambda l (error "clientc" "not a compiler" l))
-      :jsonc (lambda l (error "clientc" "not a compiler" l))
-      :htmlc (lambda l (error "clientc" "not a compiler" l))
-      :valuec (lambda (obj p host-compiler host-context host-reigster loc)
-		 (display (js-trivial-compiler obj) p)))
-
-   ;; final configuration
-   (when (hop-profile) (js-profile-init `(:server #t) #f #f))
-
-   ;; disable JS global service declaration
-   (js-service-support-set! #f)
-   
-   ;; js initialization
-   (multiple-value-bind (%worker %global %module)
-      (js-main-worker! "main"
-	 (format "hop-~a~a (~a)"
-	    (hop-version) (hop-minor-version) (hop-build-tag))
-	 (not source)
-	 nodejs-new-global-object nodejs-new-module)
+   (with-trace 'hopjs "main"
       
-      ;; js loaders
-      (hop-loader-add! "js"
-	 (lambda (path . test)
-	    (js-worker-exec %worker "hop-loader"
-	       (lambda (%this)
-		  (nodejs-load path path  %worker %global %module
-		     :commonjs-export #t)))))
-      (hop-loader-add! "mjs"
-	 (lambda (path . test)
-	    (js-worker-exec %worker "hop-loader"
-	       (lambda (%this)
-		  (nodejs-load path path %worker %global %module
-		     :commonjs-export #t)))))
-      (hop-loader-add! "ast.json"
-	 (lambda (path . test)
-	    (js-worker-exec %worker "hop-loader"
-	       (lambda (%this)
-		  (nodejs-load path path %worker %global %module
-		     :commonjs-export #t)))))
-      ;; ts loader
-      (hop-loader-add! "ts"
-	 (lambda (path . test)
-	    (js-worker-exec %worker "hop-loader"
-	       (lambda (%this)
-		  (nodejs-load path path %worker %global %module :lang "ts"
-		     :commonjs-export #t)))))
+      ;; gc traces
+      (let ((env (getenv "HOPTRACE")))
+	 (when (and (string? env) (string-contains env "hopscript:gc"))
+	    (cond-expand
+	       (gc ($bgl-gc-verbose-set! #t))
+	       (else #unspecified))))
       
-      ;; start JS execution
-      (javascript-start-worker! %global %module %worker)
+      ;; debug traces
+      (when (getenv "BIGLOOTRACE")
+	 (bigloo-debug-set! 2))
       
-      ;; install the command line loaders
-      (for-each (lambda (m) (nodejs-register-user-loader! %global m))
-	 loaders)
+      ;; catch critical signals
+      (signal-init!)
+      
+      ;; set the library load path
+      (bigloo-library-path-set! (hop-library-path))
+      
+      ;; default js configuration
+      (hop-sofile-compile-policy-set! 'aot)
+      (hopjs-standalone-set! #t)
+      (hopscript-install-expanders!)
+      
+      ;; command line parsing
+      (let* ((e (getenv "NODE_OPTIONS"))
+	     (a (if (string? e)
+		    (append (call-with-input-string e port->string-list)
+		       (cdr args))
+		    (cdr args))))
+	 (parse-args! a))
+      
+      (nodejs-command-line-set!
+	 (if (string? source)
+	     (cons* (car (command-line)) source options)
+	     (cons (car (command-line)) options)))
+      
+      ;; default dummy js compiler (for HTML tag embeded expressions)
+      (init-clientc-compiler!
+	 :expressionc (lambda l (error "clientc" "not a compiler - expressionc" l))
+	 :modulec (lambda l (error "clientc" "not a compiler - modulec" l))
+	 :macroe list
+	 :sexp->precompiled (lambda (obj debug) (js-trivial-compiler obj))
+	 :precompiled->JS-expression js-precompiled-compiler
+	 :precompiled->JS-statement js-precompiled-compiler
+	 :precompiled->JS-return js-precompiled-compiler
+	 :precompiled->sexp js-precompiled-compiler
+	 :precompiled-free-variables (lambda l (error "clientc" "not a compiler" l))
+	 :jsc (lambda l (error "clientc" "not a compiler" l))
+	 :jsonc (lambda l (error "clientc" "not a compiler" l))
+	 :htmlc (lambda l (error "clientc" "not a compiler" l))
+	 :valuec (lambda (obj p host-compiler host-context host-reigster loc)
+		    (display (js-trivial-compiler obj) p)))
+      
+      ;; final configuration
+      (when (hop-profile) (js-profile-init `(:server #t) #f #f))
+      
+      ;; disable JS global service declaration
+      (js-service-support-set! #f)
+      
+      ;; js initialization
+      (multiple-value-bind (%worker %global %module)
+	 (js-main-worker! "main"
+	    (format "hop-~a~a (~a)"
+	       (hop-version) (hop-minor-version) (hop-build-tag))
+	    (not source)
+	    nodejs-new-global-object nodejs-new-module :autostart #f)
+	 
+	 ;; js loaders
+	 (hop-loader-add! "js"
+	    (lambda (path . test)
+	       (js-worker-exec %worker "hop-loader"
+		  (lambda (%this)
+		     (nodejs-load path path  %worker %global %module
+			:commonjs-export #t)))))
+	 (hop-loader-add! "mjs"
+	    (lambda (path . test)
+	       (js-worker-exec %worker "hop-loader"
+		  (lambda (%this)
+		     (nodejs-load path path %worker %global %module
+			:commonjs-export #t)))))
+	 (hop-loader-add! "ast.json"
+	    (lambda (path . test)
+	       (js-worker-exec %worker "hop-loader"
+		  (lambda (%this)
+		     (nodejs-load path path %worker %global %module
+			:commonjs-export #t)))))
+	 ;; ts loader
+	 (hop-loader-add! "ts"
+	    (lambda (path . test)
+	       (js-worker-exec %worker "hop-loader"
+		  (lambda (%this)
+		     (nodejs-load path path %worker %global %module :lang "ts"
+			:commonjs-export #t)))))
+	 
+	 ;; install the command line loaders
+	 (trace-item "loaders=" (length loaders))
+	 (for-each (lambda (m) (nodejs-register-user-loader! %global m))
+	    loaders)
+	 
+	 ;; start JS execution
+	 (javascript-start-worker! %global %module %worker source)
 
-      ;; load the command line files
-      (when source
-	 (load-js-file source %global %module %worker))
-   
-      (thread-join! %worker)))
+	 ;; start main js loop
+	 (with-access::WorkerHopThread %worker (mutex condv)
+	    (synchronize mutex
+	       (condition-variable-broadcast! condv)))
+	 
+	 (thread-join! %worker))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-precompiled-compiler ...                                      */
@@ -193,16 +202,17 @@
       (print "   - BIGLOOTRACE: List of active traces")
       (print "   - BIGLOODEBUG: Bigloo debug level")
       (print "   - XDG_CACHE_HOME: Cache directory")
+      (print "   - NODE_OPTIONS: Additional command line options")
       (newline)
       (print "Default configuration:")
       (print "   - rc-dir: " (hop-rc-directory)))
-
+   
    (let ((l (getenv "BIGLOODEBUG")))
       (when (string? l)
 	 (bigloo-debug-set! (string->integer l))))
    
    (bind-exit (stop)
-      (args-parse (cdr args)
+      (args-parse args
 	 (section "Misc")
 	 ((("-h" "--help") (help "This message"))
 	  (usage args-parse-usage)
@@ -210,9 +220,19 @@
 	 ((("-v" "--version") (help "print Hop.js version"))
 	  (print (hop-version))
 	  (exit 0))
+	 ;; common options
+	 (section "Common options")
 	 (("--enable-source-maps" (help "Source Map V3 support for stack traces"))
 	  (j2s-compile-options-set!
 	     (cons* :source-map #t (j2s-compile-options))))
+	 (("--loader" ?module (help "Specify the module to use a custom module loader"))
+	  (set! loaders (cons module loaders)))
+	 (("--experimental-loader=?module" (help "Specify the module to use a custom module loader"))
+	  (set! loaders (cons module loaders)))
+	 (("--no-warnings" (help "Silence all process warnings"))
+	  (bigloo-warning-set! 0))
+	 ;; specific options
+	 (section "Hopjs specific options")
 	 (("--clear-cache" (help "Clear all caches"))
 	  (for-each (lambda (cache)
 		       (when (directory? cache)
@@ -257,38 +277,43 @@
 ;*---------------------------------------------------------------------*/
 ;*    javascript-start-worker! ...                                     */
 ;*---------------------------------------------------------------------*/
-(define (javascript-start-worker! %global %module %worker)
-   ;; hss extension
-   (javascript-init-hss %worker %global)
-   ;; push user expressions
-   (when (pair? exprs)
-      (js-worker-push! %worker "cmdline"
-	 (lambda (%this)
-	    (for-each (lambda (expr)
-			 (call-with-input-string (string-append expr "\n")
-			    (lambda (ip)
-			       (%js-eval ip 'eval %global
-				  (js-undefined) %global))))
-	       exprs))))
-   ;; start the JS repl loop
-   (unless source
-      (signal sigint
-	 (lambda (n)
-	    (thread-kill! %worker sigint)))
-      (js-worker-push! %worker "repl"
-	 (lambda (%this)
-	    (display* "Welcome to Hop.js " (hop-version)
-	       " (" (hop-sofile-compile-policy) ").")
-	    (node-repl %global %worker))))
-   ;; start the javascript loop
-   (with-access::WorkerHopThread %worker (mutex condv module-cache)
-      (synchronize mutex
-	 ;; module-cache is #f until the worker is initialized and
-	 ;; running (see hopscript/worker.scm)
-	 (unless module-cache
-	    (condition-variable-wait! condv mutex))))
-   ;; return the worker for the main loop to join
-   %worker)
+(define (javascript-start-worker! %global %module %worker source)
+   (with-trace 'hopjs "javascript-start-worker!"
+      (trace-item "source=" source)
+      ;; hss extension
+      (javascript-init-hss %worker %global)
+      ;; push user expressions
+      (when (pair? exprs)
+	 (js-worker-push! %worker "cmdline"
+	    (lambda (%this)
+	       (for-each (lambda (expr)
+			    (call-with-input-string (string-append expr "\n")
+			       (lambda (ip)
+				  (%js-eval ip 'eval %global
+				     (js-undefined) %global))))
+		  exprs))))
+      (if source
+	  ;; load the source file loading
+	  (load-js-file source %global %module %worker)
+	  ;; start the js repl
+	  (begin
+	     (signal sigint
+		(lambda (n)
+		   (thread-kill! %worker sigint)))
+	     (js-worker-push! %worker "repl"
+		(lambda (%this)
+		   (display* "Welcome to Hop.js " (hop-version)
+		      " (" (hop-sofile-compile-policy) ").")
+		   (node-repl %global %worker)))))
+      ;; start the javascript loop
+      (with-access::WorkerHopThread %worker (mutex condv module-cache)
+	 (synchronize mutex
+	    ;; module-cache is #f until the worker is initialized and
+	    ;; running (see hopscript/worker.scm)
+	    (unless module-cache
+	       (condition-variable-wait! condv mutex))))
+      ;; return the worker for the main loop to join
+      %worker))
 
 ;*---------------------------------------------------------------------*/
 ;*    javascript-init-hss ...                                          */
