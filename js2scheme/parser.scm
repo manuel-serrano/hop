@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Sun Jun  2 09:46:05 2024 (serrano)                */
+;*    Last change :  Tue Jun  4 11:34:53 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -265,63 +265,15 @@
 		  (set! conf (config-add conf :type-annotations #t)))
 	       (set! current-mode mode)))))
 
-   (define (source-element-plugins node::J2SNode config)
-      (let ((lang (javascript-language node)))
-	 (when lang
-	    (let ((ploader (config-get config :plugins-loader #f)))
-	       (when (procedure? ploader)
-		  (ploader lang (abspath) config))))))
-
-   (define (source-lang-plugins tok el site conf)
-      (let ((ps (source-element-plugins el conf)))
-	 (cond
-	    (ps
-	     (let ((p (assq (string->symbol (javascript-language el)) ps)))
-		(unless p
-		   (raise
-		      (instantiate::&io-parse-error
-			 (proc "hopc")
-			 (msg "wrong language plugin")
-			 (obj (javascript-language el))
-			 (fname (abspath))
-			 (location (token-loc tok)))))
-		(set! plugins ps)
-		;; there is a plugins associated, initialize it
-		((cdr p) tok site conf parser-controller)))
-	    ((and (string=? site "module") (config-get conf :plugin-init #f))
-	     =>
-	     (lambda (p)
-		(p tok site conf parser-controller)))
-	    (else
-	     #f))))
-
-   (define (insert-pluginit nodes pluginit)
-      (if (not pluginit)
-	  nodes
-	  (let loop ((nodes nodes))
-	     (cond
-		((null? nodes)
-		 (list pluginit))
-		((isa? (car nodes) J2SString)
-		 (cons (car nodes) (loop (cdr nodes))))
-		((isa? (car nodes) J2SStmtExpr)
-		 (with-access::J2SStmtExpr (car nodes) (expr)
-		    (if (isa? expr J2SString)
-			(cons (car nodes) (loop (cdr nodes)))
-			(cons pluginit nodes))))
-		(else
-		 (cons pluginit nodes))))))
-   
    (define (source-elements::J2SBlock)
       (let loop ((rev-ses '())
-		 (first #t)
-		 (pluginit #f))
+		 (first #t))
 	 (if (eof?)
 	     (if (null? rev-ses)
 		 (instantiate::J2SBlock
 		    (loc (make-loc (input-port-name input-port) 0))
 		    (endloc (make-loc (input-port-name input-port) 0))
-		    (nodes (if pluginit (list pluginit) '())))
+		    (nodes '()))
 		 (let* ((lastnode (car rev-ses))
 			(nodes (reverse! rev-ses)))
 		    (with-access::J2SNode (car nodes) (loc)
@@ -329,23 +281,21 @@
 			  (instantiate::J2SBlock
 			     (loc loc)
 			     (endloc endloc)
-			     (nodes (insert-pluginit nodes pluginit)))))))
+			     (nodes nodes))))))
 	     (let* ((tok (peek-token))
 		    (el (source-element)))
 		(cond
 		   ((eq? el 'source-map)
-		    (loop rev-ses #f pluginit))
+		    (loop rev-ses #f))
 		   (first
 		    (source-element-mode! el)
 		    (loop (cons el rev-ses)
 		       (or (isa? el J2SString)
 			   (and (isa? el J2SStmtExpr)
 				(with-access::J2SStmtExpr el (expr)
-				   (isa? expr J2SString))))
-		       (or pluginit
-			   (source-lang-plugins tok el "module" conf))))
+				   (isa? expr J2SString))))))
 		   (else
-		    (loop (cons el rev-ses) #f pluginit)))))))
+		    (loop (cons el rev-ses) #f)))))))
 
    (define (source-id)
       (let ((token (peek-token)))
