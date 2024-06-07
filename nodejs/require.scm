@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Mon Jun  3 14:33:50 2024 (serrano)                */
+;*    Last change :  Thu Jun  6 09:17:11 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -30,6 +30,8 @@
 	   (nodejs-file-paths::JsObject ::JsStringLiteral ::JsGlobalObject)
 	   (nodejs-new-module::JsObject ::bstring ::bstring ::WorkerHopThread ::JsGlobalObject)
 	   (node-module-paths ::JsObject ::JsGlobalObject)
+	   (node-module-filename::bstring ::JsObject ::JsGlobalObject)
+	   (node-module-dirname::bstring ::JsObject ::JsGlobalObject)
 	   (nodejs-require ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring)
 	   (nodejs-import-module::JsModule ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring ::long ::bool ::obj)
 	   (nodejs-import-module-core::JsModule ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring ::long ::bool ::obj ::vector)
@@ -56,7 +58,7 @@
 	   (nodejs-compile-pending::int)
 	   (nodejs-compile-add-event-listener! ::bstring ::procedure ::bool)
 	   (nodejs-compile-remove-event-listener! ::bstring ::procedure)
-	   (nodejs-resolve ::bstring ::JsGlobalObject ::obj ::pair-nil ::symbol)
+	   (nodejs-resolve ::bstring ::JsGlobalObject ::bstring ::pair-nil ::symbol)
 	   (nodejs-resolve-extend-path! ::pair-nil)
 	   (nodejs-new-global-object::JsGlobalObject #!key name)
 	   (nodejs-new-scope-object ::JsGlobalObject)
@@ -143,10 +145,7 @@
 ;*---------------------------------------------------------------------*/
 (define-expander &&
    (lambda (x e)
-      (e `(begin
-	     '(tprint "& paths " (current-thread) " " ',(cer x))
-	     (& "paths"))
-	 e)))
+      (e `(& ,(cadr x)) e)))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-modules-directory ...                                     */
@@ -498,6 +497,8 @@
 			  "j2s-javascript-debug-driver")
 	 :language lang
 	 :site 'client
+	 :loader-resolve (lambda (name dir paths)
+			    (nodejs-resolve name %ctxthis dir paths 'import))
 	 :plugins-loader (make-plugins-loader %ctxthis %ctxmodule (js-current-worker))
 	 :debug (if esplainp 0 (nodejs-hop-debug))))
    
@@ -751,66 +752,67 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-require ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-require worker::WorkerHopThread this::JsGlobalObject %module::JsObject language::bstring)
+(define (nodejs-require worker::WorkerHopThread %this::JsGlobalObject %module::JsObject language::bstring)
 
    ;; require
    (define require
-      (js-make-function this
+      (js-make-function %this
 	 (lambda (_ name lang opt)
-	    (nodejs-require-module (js-tostring name this)
-	       (js-current-worker) this %module
+	    (nodejs-require-module (js-tostring name %this)
+	       (js-current-worker) %this %module
 	       (if (eq? lang (js-undefined))
 		   language
 		   (js-language->string lang
-		      (format "nodejs-require (~s)" name)this))
-	       (language-compiler language lang this %module
+		      (format "nodejs-require (~s)" name) %this))
+	       (language-compiler language lang %this %module
 		  (js-current-worker))
 	       opt))
 	 (js-function-arity 3 0)
 	 (js-function-info :name "require" :len 3)
 	 :size 4))
 
-   (js-init-require! this)
+   (js-init-require! %this)
    
    ;; require.lang
-   (js-bind! this require (& "lang")
-      :get (js-make-function this
+   (js-bind! %this require (& "lang")
+      :get (js-make-function %this
 	      (lambda (_)
 		 (js-string->jsstring language))
 	      (js-function-arity 0 0)
 	      (js-function-info :name "lang" :len 0))
-      :set (js-make-function this
+      :set (js-make-function %this
 	      (lambda (_ val)
-		 (set! language (js-language->string val "lang" this))
+		 (set! language (js-language->string val "lang" %this))
 		 val)
 	      (js-function-arity 1 0)
 	      (js-function-info :name "lang" :len 1))
       :configurable #f :writable #t)
    
    ;; require.main
-   (with-access::JsGlobalObject this (js-main js-object) 
-      (js-bind! this require (& "main")
-	 :get (js-make-function this (lambda (this) js-main)
+   (with-access::JsGlobalObject %this (js-main js-object) 
+      (js-bind! %this require (& "main")
+	 :get (js-make-function %this (lambda (this) js-main)
 		 (js-function-arity 0 0)
 		 (js-function-info :name "main" :len 0))
 	 :configurable #f :writable #f))
    
    ;; require.resolve
-   (js-bind! this require (& "resolve")
-      :value (js-make-function this
+   (js-bind! %this require (& "resolve")
+      :value (js-make-function %this
 		(lambda (_ name opts)
-		   (let ((name (js-tostring name this)))
+		   (let ((name (js-tostring name %this)))
 		      (if (core-module? name)
 			  (js-string->jsstring name)
 			  (let ((paths (when (js-object? opts)
-					  (js-get opts (&& "paths") this))))
+					  (js-get opts (&& "paths") %this))))
 			     (js-string->jsstring
-				(nodejs-resolve name this %module
+				(nodejs-resolve name %this
+				   (node-module-dirname %module %this)
 				   (if (js-array? paths)
 				       (map! (lambda (v)
-						(js-tostring v this))
-					  (jsarray->list paths this))
-				       (node-module-paths %module this))
+						(js-tostring v %this))
+					  (jsarray->list paths %this))
+				       (node-module-paths %module %this))
 				   'body))))))
 		(js-function-arity 2 0)
 		(js-function-info :name "resolve" :len 2))
@@ -818,12 +820,12 @@
 
    ;; require.cache
    (with-access::WorkerHopThread worker (module-cache)
-      (js-bind! this require (& "cache")
-	 :get (js-make-function this
+      (js-bind! %this require (& "cache")
+	 :get (js-make-function %this
 		 (lambda (this) module-cache)
 		 (js-function-arity 0 0)
 		 (js-function-info :name "cache" :len 0))
-	 :set (js-make-function this
+	 :set (js-make-function %this
 		 (lambda (this v)
 		    ;; when setting require.cache, erase the compilation
 		    ;; table for avoid out of sync errors
@@ -833,7 +835,7 @@
 	 :configurable #f))
 
    ;; module.require
-   (js-bind! this %module (& "require")
+   (js-bind! %this %module (& "require")
       :value require
       :enumerable #f)
 
@@ -853,6 +855,18 @@
 		nodejs-env-path)))
 	 (else
 	  nodejs-env-path))))
+
+;*---------------------------------------------------------------------*/
+;*    node-module-filename ...                                         */
+;*---------------------------------------------------------------------*/
+(define (node-module-filename mod %this)
+   (js-jsstring->string (js-get mod (& "filename") %this)))
+
+;*---------------------------------------------------------------------*/
+;*    node-module-dirname ...                                          */
+;*---------------------------------------------------------------------*/
+(define (node-module-dirname mod %this)
+   (dirname (node-module-filename mod %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-env-path ...                                              */
@@ -882,7 +896,10 @@
 	   path::bstring checksum::long commonjs-export::bool loc)
    (with-trace 'require "nodejs-import-module"
       (trace-item "path=" path)
-      (let* ((respath (nodejs-resolve path %this %module (node-module-paths %module %this) 'import))
+      (let* ((respath (nodejs-resolve path %this
+			 (node-module-dirname %module %this)
+			 (node-module-paths %module %this)
+			 'import))
 	     (mod (nodejs-load-module respath worker %this %module
 		     :commonjs-export commonjs-export :loc loc)))
 	 (with-access::JsModule mod ((mc checksum))
@@ -990,7 +1007,8 @@
 	   base::bstring commonjs-export::bool loc)
    (with-access::JsGlobalObject %this (js-promise)
       (let ((name (js-tostring name %this)))
-	 (let* ((path (nodejs-resolve name %this %module
+	 (let* ((path (nodejs-resolve name %this
+			 (node-module-dirname %module %this)
 			 (node-module-paths %module %this)
 			 'import))
 		(mod (nodejs-import-module worker %this %module
@@ -1165,36 +1183,6 @@
 ;*---------------------------------------------------------------------*/
 (define (nodejs-script worker::WorkerHopThread %this::JsGlobalObject %scope::JsObject %module)
    
-;*    (define (ast->string ast lang %this)                             */
-;*       (j2s-compile ast                                              */
-;* 	 :%this %this                                                  */
-;* 	 :filename "ast"                                               */
-;* 	 :node-modules-directory (nodejs-node-modules-directory)       */
-;* 	 :worker worker                                                */
-;* 	 :header '()                                                   */
-;* 	 :verbose 0                                                    */
-;* 	 :parser 'client-program                                       */
-;* 	 :es6-module-client #t                                         */
-;* 	 :warning-global #f                                            */
-;* 	 :driver (j2s-javascript-driver)                               */
-;* 	 :driver-name "j2s-javascript-driver"                          */
-;* 	 :language lang                                                */
-;* 	 :site 'client                                                 */
-;* 	 :plugins-loader (make-plugins-loader %this %module worker)    */
-;* 	 :debug 0)                                                     */
-;*       )                                                             */
-   
-;*    (define (json->file val lang %this)                              */
-;*       (nodejs-compile-json                                          */
-;* 	 (string-append "string:" (js-jsstring->string val))           */
-;* 	 name ofile query))                                            */
-   
-;*    (define (value->string val lang %this)                           */
-;*       (with-access::JsGlobalObject %this (js-json)                  */
-;* 	 (let* ((stringify (js-get js-json (& "stringify") %this))     */
-;* 		(str (js-call1 %this stringify (js-undefined) val)))   */
-;* 	    (json->string str lang %this))))                           */
-   
    (define (script-language-header attrs nodes)
       (when (js-object? attrs)
 	 (let ((lang (js-get attrs (& "lang") %this)))
@@ -1208,8 +1196,6 @@
 			    (let* ((ty (js-get obj (& "type") %this))
 				   (val (js-get obj (& "value") %this)))
 			       (cond
-;* 			      ((string=? ty "ast")                     */
-;* 			       (ast->string val lang %this))           */
 				  ((eq? ty (& "string"))
 				   (js-tostring val %this))
 				  (else
@@ -1323,7 +1309,10 @@
 	       (js-vector->jsarray (nodejs-filename->paths filename) %this)
 	       #f %this)
 	    ;; the resolution
-	    (nodejs-resolve name %this mod (node-module-paths mod %this) 'body)))))
+	    (nodejs-resolve name %this
+	       (node-module-dirname mod %this)
+	       (node-module-paths mod %this)
+	       'body)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-init-v8-global-object! ...                                */
@@ -1567,6 +1556,8 @@
 				  :module-name (symbol->string mod)
 				  :worker-slave worker-slave
 				  :verbose (if (>=fx (hop-verbose) 10) (-fx (hop-verbose) 10) 0)
+				  :loader-resolve (lambda (name dir paths)
+						     (nodejs-resolve name %ctxthis dir paths 'import))
 				  :plugins-loader (make-plugins-loader %ctxthis %ctxmodule (js-current-worker))
 				  :commonjs-export commonjs-export
 				  :es6-module-client #t
@@ -1593,6 +1584,8 @@
 		  :module-name (symbol->string mod)
 		  :worker-slave worker-slave
 		  :verbose (if (>=fx (hop-verbose) 10) (-fx (hop-verbose) 10) 0)
+		  :loader-resolve (lambda (name dir paths)
+				     (nodejs-resolve name %ctxthis dir paths 'import))
 		  :plugins-loader (make-plugins-loader %ctxthis %ctxmodule (js-current-worker))
 		  :commonjs-export commonjs-export
 		  :es6-module-client #t
@@ -1618,6 +1611,8 @@
 		     :module-name (symbol->string mod)
 		     :worker-slave worker-slave
 		     :verbose (if (>=fx (hop-verbose) 10) (-fx (hop-verbose) 10) 0)
+		     :loader-resolve (lambda (name dir paths)
+					(nodejs-resolve name %ctxthis dir paths 'import))
 		     :plugins-loader (make-plugins-loader %ctxthis %ctxmodule (js-current-worker))
 		     :commonjs-export commonjs-export
 		     :es6-module-client #t
@@ -2546,7 +2541,10 @@
 (define (nodejs-require-module name::bstring worker::WorkerHopThread
 	   %this %module #!optional (lang "hopscript") compiler copts)
    (with-trace 'require (format "nodejs-require-module ~a" name)
-      (let* ((path (nodejs-resolve name %this %module (node-module-paths %module %this) 'body))
+      (let* ((path (nodejs-resolve name %this
+		      (node-module-dirname %module %this)
+		      (node-module-paths %module %this)
+		      'body))
 	     (mod (nodejs-load-module path worker %this %module
 		     :lang lang :compiler compiler :config copts))
 	     (exports (js-get mod (& "exports") %this)))
@@ -2705,27 +2703,27 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://nodejs.org/api/modules.html#modules_all_together          */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-resolve name::bstring %this::JsGlobalObject %module paths::pair-nil mode::symbol)
+(define (nodejs-resolve name::bstring %this::JsGlobalObject dir::bstring paths::pair-nil mode::symbol)
    (with-trace 'require "nodejs-resolve"
       (trace-item "name=" name)
-      (trace-item "%module=" (typeof %module))
+      (trace-item "dir=" dir)
       (trace-item "thread=" (current-thread))
       (with-access::JsGlobalObject %this (worker)
 	 (if (eq? worker loader-worker)
-	     (builtin-resolve name %this %module paths mode)
-	     (loader-resolve name %this %module paths mode)))))
+	     (builtin-resolve name %this dir paths mode)
+	     (loader-resolve name %this dir paths mode)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    loader-resolve ...                                               */
 ;*    -------------------------------------------------------------    */
 ;*    See nodejs-register-user-loader!                                 */
 ;*---------------------------------------------------------------------*/
-(define (loader-resolve name::bstring %this::JsGlobalObject %module paths::pair-nil mode::symbol)
+(define (loader-resolve name::bstring %this::JsGlobalObject dir::bstring paths::pair-nil mode::symbol)
    (with-trace 'loader "loader-resolve"
       (trace-item "name=" name)
       (trace-item "loader-resolvers=" (length loader-resolvers))
       (if (null? loader-resolvers)
-	  (builtin-resolve name %this %module paths mode)
+	  (builtin-resolve name %this dir paths mode)
 	  (multiple-value-bind (resolve reject)
 	     (js-worker-exec-promise loader-worker "resolve"
 		(lambda (this)
@@ -2735,7 +2733,7 @@
 				    (name (js-string->jsstring name))
 				    (ctx ctx))
 			    (if (null? resolvers)
-				(builtin-resolve (js-tostring name %this) %this %module paths mode)
+				(builtin-resolve (js-tostring name %this) %this dir paths mode)
 				(js-call3 this (car resolvers) (js-undefined)
 				   name ctx 
 				   (js-make-function this
@@ -2789,7 +2787,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://nodejs.org/api/modules.html#modules_all_together          */
 ;*---------------------------------------------------------------------*/
-(define (builtin-resolve name::bstring %this::JsGlobalObject %module paths::pair-nil mode::symbol)
+(define (builtin-resolve name::bstring %this::JsGlobalObject dir::bstring paths::pair-nil mode::symbol)
    
    (define (absolute? path)
       (char=? (string-ref path 0) (file-separator)))
@@ -2914,7 +2912,7 @@
 	       #f %this)
 	    (js-raise exn))))
 
-   (define (resolve-modules mod x paths)
+   (define (resolve-modules x paths)
       (with-trace 'require "nodejs-resolve.resolve-modules"
 	 (trace-item "x=" x)
 	 (trace-item "paths=" paths)
@@ -2924,78 +2922,73 @@
    
    (with-trace 'require "nodejs-resolve"
       (trace-item "name=" name)
-      (trace-item "%module=" (typeof %module))
       (trace-item "thread=" (current-thread))
-      (let* ((mod %module)
-	     (filename (js-jsstring->string (js-get mod (& "filename") %this)))
-	     (dir (dirname filename)))
-	 (trace-item "dir=" dir)
-	 (trace-item "paths=" (let ((paths (js-get mod (&& "paths") %this)))
-				 (if (js-array? paths)
-				     (jsarray->vector paths %this)
-				     paths)))
-	 (let loop ((name name))
-	    (cond
-	       ((core-module? name)
-		(if (eq? mode 'import)
-		    (let ((namem (string-append name ".mod")))
-		       ;; MS 21feb23, once all the nodejs core modules are
-		       ;; supporting ES6 module, this test should be removed
-		       (if (core-module? namem)
-			   namem
-			   name))
-		    name))
-	       ((string-prefix? "node:" name)
-		(loop (substring name 5)))
-	       ((or (string-prefix? "http://" name)
-		    (string-prefix? "https://" name))
-		name)
-	       ((or (string-prefix? "http://" dir)
-		    (string-prefix? "https://" dir))
-		(multiple-value-bind (scheme uinfo host port path)
-		   (url-parse filename)
-		   (let ((abspath (hop-apply-url
-				     (string-append "/hop/" *resolve-url-path*)
-				     (list name path)
-				     %this)))
-		      (with-hop-remote abspath
-			 (lambda (x)
-			    (if uinfo
-				(format "~a://~a:~a~@a~a" scheme host port uinfo x)
-				(format "~a://~a:~a~a" scheme host port x)))
-			 (lambda (x) #f)
-			 :host host
-			 :port port))))
-	       ((string-prefix? "hop:" name)
-		(if (string=? "hop:hop" name)
-		    "hop.mod"
-		    (or (resolve-file-or-directory
-			   (substring name 4)
-			   (nodejs-node-modules-directory))
-			(resolve-modules mod name paths)
-			(resolve-error name dir))))
-	       ((string-prefix? "hop:" name)
- 		(or (resolve-file-or-directory
-		       (substring name 4)
-		       (nodejs-node-modules-directory))
-		    (resolve-error name dir)))
-	       ((or (string-prefix? "./" name)
-		    (string-prefix? "../" name)
-		    (string=? ".." name))
-		(or (resolve-file-or-directory name dir)
-		    (resolve-modules mod name paths)
-		    (resolve-error name dir)))
-	       ((string-prefix? "/" name)
-		(or (resolve-file-or-directory name "/")
-		    (resolve-modules mod name paths)
-		    (resolve-error name dir)))
-	       ((string-suffix? ".hz" name)
-		(or (resolve-hz name)
-		    (resolve-modules mod name paths)
-		    (resolve-error name dir)))
-	       (else
-		(or (resolve-modules mod name paths)
-		    (resolve-error name dir))))))))
+      (trace-item "dir=" dir)
+      (trace-item "paths=" (if (js-array? paths)
+			       (jsarray->vector paths %this)
+			       paths))
+      (let loop ((name name))
+	 (cond
+	    ((core-module? name)
+	     (if (eq? mode 'import)
+		 (let ((namem (string-append name ".mod")))
+		    ;; MS 21feb23, once all the nodejs core modules are
+		    ;; supporting ES6 module, this test should be removed
+		    (if (core-module? namem)
+			namem
+			name))
+		 name))
+	    ((string-prefix? "node:" name)
+	     (loop (substring name 5)))
+	    ((or (string-prefix? "http://" name)
+		 (string-prefix? "https://" name))
+	     name)
+	    ((or (string-prefix? "http://" dir)
+		 (string-prefix? "https://" dir))
+	     (multiple-value-bind (scheme uinfo host port path)
+		(url-parse (make-file-name dir name))
+		(let ((abspath (hop-apply-url
+				  (string-append "/hop/" *resolve-url-path*)
+				  (list name path)
+				  %this)))
+		   (with-hop-remote abspath
+		      (lambda (x)
+			 (if uinfo
+			     (format "~a://~a:~a~@a~a" scheme host port uinfo x)
+			     (format "~a://~a:~a~a" scheme host port x)))
+		      (lambda (x) #f)
+		      :host host
+		      :port port))))
+	    ((string-prefix? "hop:" name)
+	     (if (string=? "hop:hop" name)
+		 "hop.mod"
+		 (or (resolve-file-or-directory
+			(substring name 4)
+			(nodejs-node-modules-directory))
+		     (resolve-modules name paths)
+		     (resolve-error name dir))))
+	    ((string-prefix? "hop:" name)
+	     (or (resolve-file-or-directory
+		    (substring name 4)
+		    (nodejs-node-modules-directory))
+		 (resolve-error name dir)))
+	    ((or (string-prefix? "./" name)
+		 (string-prefix? "../" name)
+		 (string=? ".." name))
+	     (or (resolve-file-or-directory name dir)
+		 (resolve-modules name paths)
+		 (resolve-error name dir)))
+	    ((string-prefix? "/" name)
+	     (or (resolve-file-or-directory name "/")
+		 (resolve-modules name paths)
+		 (resolve-error name dir)))
+	    ((string-suffix? ".hz" name)
+	     (or (resolve-hz name)
+		 (resolve-modules name paths)
+		 (resolve-error name dir)))
+	    (else
+	     (or (resolve-modules name paths)
+		 (resolve-error name dir)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-resolve-extend-path! ...                                  */

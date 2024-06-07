@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Tue Jun  4 07:56:54 2024 (serrano)                */
+;*    Last change :  Fri Jun  7 08:21:46 2024 (serrano)                */
 ;*    Copyright   :  2014-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -561,9 +561,9 @@
 			   (setup-worker! %worker)
 			   (synchronize mutex
 			      (condition-variable-broadcast! startv))
-			   (or autostart
-			       (synchronize mutex
-				  (condition-variable-wait! condv mutex)))
+			   (unless autostart
+			      (synchronize mutex
+				 (condition-variable-wait! condv mutex)))
 			   (js-worker-loop %worker (lambda (th) th))))))
 	    (thread-start-joinable! %worker)
 	    (condition-variable-wait! startv mutex))))

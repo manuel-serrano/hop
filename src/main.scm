@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Tue Jun  4 18:32:50 2024 (serrano)                */
+;*    Last change :  Thu Jun  6 13:39:05 2024 (serrano)                */
 ;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -271,15 +271,13 @@
 	 (js-profile-init `(:server #t) #f #f))
       ;; rc.js file
       (if (string? (hop-rc-loaded))
-	  (let ((rcmutex (make-mutex))
-		(rccondv (make-condition-variable)))
-	     (synchronize rcmutex
-		(javascript-rc %global %module %worker rcmutex rccondv)
-		(javascript-init-main-loop exprs %global %module %worker)
-		;; install the command line loaders
-		(for-each (lambda (m) (nodejs-register-user-loader! %global m))
-		   loaders)
-		(jsctx %global %module %worker)))
+	  (begin
+	     (javascript-rc %global %module %worker)
+	     (javascript-init-main-loop exprs %global %module %worker)
+	     ;; install the command line loaders
+	     (for-each (lambda (m) (nodejs-register-user-loader! %global m))
+		loaders)
+	     (jsctx %global %module %worker))
 	  (begin
 	     (javascript-init-main-loop exprs %global %module %worker)
 	     ;; install the command line loaders
@@ -314,10 +312,8 @@
    ;; start the javascript loop
    (with-access::WorkerHopThread %worker (mutex condv module-cache)
       (synchronize mutex
-	 ;; module-cache is #f until the worker is initialized and
 	 ;; running (see hopscript/worker.scm)
-	 (unless module-cache
-	    (condition-variable-wait! condv mutex))))
+	 (condition-variable-broadcast! condv)))
    ;; return the worker for the main loop to join
    %worker)
 
@@ -326,7 +322,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Load the hoprc.js in a sandboxed environment.                    */
 ;*---------------------------------------------------------------------*/
-(define (javascript-rc %global %module %worker rcmutex rccondv)
+(define (javascript-rc %global %module %worker)
    
    (define (load-rc path)
       (hop-rc-file-set! path)
@@ -346,21 +342,14 @@
 		  (hop-rc-loaded! #f)
 		  (unwind-protect
 		     (nodejs-load-module path %worker %global %module :commonjs-export #t)
-		     (begin
-			(hop-rc-loaded! oldload)
-			(synchronize rcmutex
-			   (condition-variable-broadcast! rccondv)))))))))
+		     (hop-rc-loaded! oldload)))))))
    
    (let ((path (string-append (prefix (hop-rc-loaded)) ".js")))
       (if (file-exists? path)
 	  (load-rc path)
 	  (let ((path (string-append (prefix (hop-rc-file)) ".js")))
-	     (if (file-exists? path)
-		 (load-rc path)
-		 (js-worker-push! %worker "init"
-		    (lambda (%this)
-		       (synchronize rcmutex
-			  (condition-variable-broadcast! rccondv)))))))))
+	     (when (file-exists? path)
+		(load-rc path))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    javascript-load-files ...                                        */

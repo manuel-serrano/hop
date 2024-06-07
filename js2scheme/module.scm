@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 15 15:16:16 2018                          */
-;*    Last change :  Mon Jun  3 08:32:12 2024 (serrano)                */
+;*    Last change :  Thu Jun  6 08:52:32 2024 (serrano)                */
 ;*    Copyright   :  2018-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES6 Module handling                                              */
@@ -116,10 +116,10 @@
 ;*    collect-imports* ::J2SImport ...                                 */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (collect-imports* this::J2SImport dirname env args)
-   
+
    (define (server-side-import this dirname env args)
       (with-access::J2SImport this (ipath path lang loc iprgm)
-	 (let* ((resv (resolve-module-file path dirname loc args))
+	 (let* ((resv (compiler-resolve path dirname args loc))
 		(abspath (car resv))
 		(protocol (cdr resv)))
 	    (let ((old (env-get abspath env)))
@@ -452,7 +452,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    load-package-json ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (load-package-json file loc)
+(define (load-package-json file)
    (let ((old (hashtable-get json-table file)))
       (if old
 	  old
@@ -476,9 +476,7 @@
 					       (instantiate::&io-parse-error
 						  (proc "resolve")
 						  (msg msg)
-						  (obj path)
-						  (fname (cadr loc))
-						  (location (caddr loc))))))))
+						  (obj path)))))))
 		   (hashtable-put! json-table file o)
 		   o))))))
 
@@ -504,16 +502,40 @@
        '())))
 
 ;*---------------------------------------------------------------------*/
+;*    compiler-resolve ...                                             */
+;*---------------------------------------------------------------------*/
+(define (compiler-resolve name::bstring dir::bstring args loc)
+   
+   (define paths
+      (let* ((name (config-get args :source (config-get args :filename #f)))
+	     (file (if (string-prefix? "/" name)
+		       name
+		       (file-name-canonicalize (make-file-name (pwd) name))))
+	     (dir (if (string? file) (dirname file) (pwd))))
+	 (append (nodejs-filename->paths file)
+	    (list (config-get args :hop-library-path "."))
+	    (list (config-get args :node-modules-directory ".")))))
+
+   (with-handler
+      (lambda (e)
+	 (with-access::&exception e (fname location)
+	    (unless (and fname location)
+	       (set! fname (cadr loc))
+	       (set! location (caddr loc)))
+	    (raise e)))
+      (let ((resolve (config-get args :loader-resolve)))
+	 (if resolve
+	     (resolve name dir paths)
+	     (resolve-module-file name dir paths args)))))
+   
+;*---------------------------------------------------------------------*/
 ;*    resolve-module-file ...                                          */
 ;*    -------------------------------------------------------------    */
 ;*    Almost similar to nodejs's resolve method (see                   */
 ;*    nodejs/require.scm).                                             */
 ;*---------------------------------------------------------------------*/
-(define (resolve-module-file name::bstring dir::bstring loc args)
-
-   (define (absolute? path)
-      (char=? (string-ref path 0) (file-separator)))
-
+(define (resolve-module-file name::bstring dir::bstring paths::pair-nil args)
+   
    (define (resolve-autoload-hz hz)
       (cond
 	 ((hz-local-weblet-path hz (get-autoload-directories))
@@ -527,9 +549,7 @@
 	     (instantiate::&io-error
 		(proc "import")
 		(msg "No local repository provided (set HOP_HZ_REPOSITORY or hopcrc.js)")
-		(obj hz)
-		(fname (cadr loc))
-		(location (caddr loc)))))
+		(obj hz))))
 	 (else
 	  (let ((dir (hz-download-to-cache hz (hop-hz-repositories))))
 	     (if (directory? dir)
@@ -562,7 +582,7 @@
 		   (if (and (file-exists? src) (not (directory? src)))
 		       (cons (file-name-canonicalize src) 'file)
 		       (loop (cdr sufs)))))))))
-
+   
    (define (resolve-package-exports x::bstring json)
       (with-trace 'require "resolve-module-file-package-exports"
 	 ;; see nodejs/require.scm
@@ -587,29 +607,22 @@
 			     (error "resolve" "Illegal package.json" x))))))
 		  (else
 		   (error "resolve" "Illegal package.json" x)))))))
-
+   
    (define (resolve-package-key key x::bstring json)
       (let ((c (assoc key json)))
 	 (when (pair? c)
 	    (resolve-file-or-directory (cdr c) x))))
-
+   
    (define (resolve-package x)
       (with-trace 'require "resolve-module-file.resolve-package"
-	 (with-handler
-	    (lambda (e)
-	       (with-access::&exception e (fname location)
-		  (unless (and fname location)
-		     (set! fname (cadr loc))
-		     (set! location (caddr loc)))
-		  (raise e)))
-	    (let ((json (make-file-name x "package.json")))
-	       (trace-item "package.json=" json)
-	       (when (file-exists? json)
-		  (let ((json (load-package-json json loc)))
-		     (or (resolve-package-exports x json)
-			 (resolve-package-key "main" x json)
-			 (resolve-package-key "server" x json))))))))
-
+	 (let ((json (make-file-name x "package.json")))
+	    (trace-item "package.json=" json)
+	    (when (file-exists? json)
+	       (let ((json (load-package-json json)))
+		  (or (resolve-package-exports x json)
+		      (resolve-package-key "main" x json)
+		      (resolve-package-key "server" x json)))))))
+   
    (define (resolve-index x)
       (let ((p (make-file-name x "index.js")))
 	 (when (file-exists? p)
@@ -619,7 +632,7 @@
       (when (directory? x)
 	 (or (resolve-package x)
 	     (resolve-index x))))
-
+   
    (define (resolve-path-file-or-directory path)
       (or (resolve-file path)
 	  (resolve-directory path)))
@@ -638,31 +651,19 @@
 	     (instantiate::&io-file-not-found-error
 		(proc "hopc:resolve")
 		(msg (format "Cannot find module in ~s" dir))
-		(obj name)
-		(fname (cadr loc))
-		(location (caddr loc))))))
-
+		(obj name)))))
+   
    (define (core-module? name)
       (open-string-hashtable-get (get-core-modules) name))
-
-   (define hop-modules-path
-      (let* ((name (config-get args :source (config-get args :filename #f)))
-	     (file (if (string-prefix? "/" name)
-		       name
-		       (file-name-canonicalize (make-file-name (pwd) name))))
-	     (dir (if (string? file) (dirname file) (pwd))))
-	 (append (nodejs-filename->paths file)
-	    (list (config-get args :hop-library-path "."))
-	    (list (config-get args :node-modules-directory ".")))))
    
    (define (resolve-modules x)
       (with-trace 'require "resolve-module-file.resolve-modules"
 	 (trace-item "x=" x)
-	 (trace-item "paths=" (filter string? hop-modules-path))
+	 (trace-item "paths=" (filter string? paths))
 	 (any (lambda (dir)
 		 (resolve-file-or-directory x dir))
-	    (filter string? hop-modules-path))))
-
+	    (filter string? paths))))
+   
    (with-trace 'require "resolve-module-file"
       (trace-item "name=" name)
       (let loop ((name name))
@@ -778,7 +779,7 @@
 					  ;; that, the imported modules must
 					  ;; be compiled with something similar
 					  ;; to compile-language@hopc_driver
-					  (j2s-compile in
+		 			  (j2s-compile in
 					     :source path
 					     :driver (j2s-export-driver)
 					     :warning 0
@@ -945,4 +946,9 @@
       ((string=? path "") base)
       ((char=? (string-ref path 0) (file-separator)) path)
       (else (file-name-canonicalize (make-file-name base path)))))
-   
+
+;*---------------------------------------------------------------------*/
+;*    absolute? ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (absolute? path)
+   (char=? (string-ref path 0) (file-separator)))

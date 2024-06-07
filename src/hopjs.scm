@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Mon Jun  3 13:51:02 2024 (serrano)                */
+;*    Last change :  Wed Jun  5 07:31:08 2024 (serrano)                */
 ;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -68,12 +68,16 @@
       (hopscript-install-expanders!)
       
       ;; command line parsing
-      (let* ((e (getenv "NODE_OPTIONS"))
-	     (a (if (string? e)
-		    (append (call-with-input-string e port->string-list)
-		       (cdr args))
-		    (cdr args))))
-	 (parse-args! a))
+      (let* ((no (getenv "NODE_OPTIONS"))
+	     (ho (getenv "HOP_OPTIONS"))
+	     (argv (cdr args)))
+	 (when (string? no)
+	    (set! argv
+	       (append (call-with-input-string no port->string-list) argv)))
+	 (when (string? ho)
+	    (set! argv
+	       (append (call-with-input-string ho port->string-list) argv)))
+	 (parse-args! argv))
       
       (nodejs-command-line-set!
 	 (if (string? source)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Mon May 27 15:10:27 2024 (serrano)                */
+;*    Last change :  Thu Jun  6 07:46:54 2024 (serrano)                */
 ;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
@@ -76,11 +76,14 @@
        (http-parse-policy-file-request id (the-string) (the-port)))
       ((: (out #\< SP) (+ (out SP)) SP)
        ;; Illegal (parsed) requests
-       (raise (instantiate::&io-parse-method-error
-		 (proc (format "request-line-grammar(~a)"
-			  (socket-hostname socket)))
-		 (msg "Method not implemented")
-		 (obj (the-string)))))
+       (let ((s (if (>fx (the-length) 10)
+		    (string-append (the-substring 0 10) "...")
+		    (the-string))))
+	  (raise (instantiate::&io-parse-method-error
+		    (proc (format "request-line-grammar(~a)"
+			     (socket-hostname socket)))
+		    (msg "Method not implemented")
+		    (obj (string-for-read s))))))
       (else
        (let ((o (the-failure)))
 	  (if (eof-object? o)
