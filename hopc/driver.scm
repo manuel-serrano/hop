@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Fri Apr  5 11:19:47 2024 (serrano)                */
+;*    Last change :  Sun Jun  9 06:48:20 2024 (serrano)                */
 ;*    Copyright   :  2014-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
@@ -264,11 +264,11 @@
 			:verbose (hop-verbose)
 			:long-size (hopc-long-size)
 			:int-size (hopc-int-size)
-			:plugins-loader (hopc-plugins-loader)
 			:sofile-dir (hopc-sofile-dir)
 			:debug (bigloo-debug)
 			:warning (bigloo-warning)
 			:node-modules-directory (hopc-node-modules-directory)
+			:loader-resolve (hopc-loader-resolve)
 			(hopc-j2s-flags))))
 	       (cond
 		  ((isa? o J2SNode)
@@ -302,9 +302,9 @@
 			:long-size (hopc-long-size)
 			:int-size (hopc-int-size)
 			:sofile-dir (hopc-sofile-dir)
-			:plugins-loader (hopc-plugins-loader)
 			:debug (bigloo-debug)
 			:warning (bigloo-warning)
+			:loader-resolve (hopc-loader-resolve)
 			:node-modules-directory (hopc-node-modules-directory)
 			(hopc-j2s-flags))))
 	       (cond
@@ -555,12 +555,12 @@
 			      :verbose (hop-verbose)
 			      :long-size (hopc-long-size)
 			      :int-size (hopc-int-size)
-			      :plugins-loader (hopc-plugins-loader)
 			      :sofile-dir (hopc-sofile-dir)
 			      :debug (bigloo-debug)
 			      :warning (bigloo-warning)
 			      :function-nice-name (string? temp)
 			      :syntax syn
+			      :loader-resolve (hopc-loader-resolve)
 			      :node-modules-directory (hopc-node-modules-directory)
 			      (hopc-j2s-flags))))
 		     (cond
@@ -830,11 +830,40 @@
        (generate)))
 
 ;*---------------------------------------------------------------------*/
+;*    hopc-loader-resolve ...                                          */
+;*    -------------------------------------------------------------    */
+;*    Load the nodejs library dynamically first.                       */
+;*---------------------------------------------------------------------*/
+(define (hopc-loader-resolve)
+   (when (pair? (hopc-j2s-loaders))
+      (nowarning
+	 (lambda ()
+	    (hop-sofile-compile-policy-set! 'none)
+	    (let* ((oldbglp (bigloo-library-path))
+		   (lpath (if (hopc-hop-lib-dir)
+			      (cons (hopc-hop-lib-dir) (hop-library-path))
+			      (hop-library-path))))
+	       (bigloo-library-path-set! lpath)
+	       (unwind-protect
+		  (when (library-load-init 'nodejs lpath)
+		     (library-load-init 'hopscript lpath)
+		     (apply library-load 'hopscript lpath)
+		     (apply library-load 'nodejs lpath)
+		     (eval '((@ hopscript-install-expanders! __hopscript_expanders)))
+		     (for-each (lambda (module)
+				  (eval `((@ nodejs-register-user-loader __nodejs_require) ,module)))
+			(hopc-j2s-loaders)))
+		  (bigloo-library-path-set! oldbglp)))
+	    (multiple-value-bind (%ctxworker %ctxthis %ctxmodule)
+	       (eval '(nodejs-command-line-dummy-module))
+	       (eval `(nodejs-make-j2s-loader ,%ctxthis)))))))
+   
+;*---------------------------------------------------------------------*/
 ;*    hopc-plugins-loader ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (hopc-plugins-loader)
    (or nodejs-plugins-loader
-       (when (or (hopc-j2s-plugins) (hopc-j2s-preprocessor))
+       (when (or #f (hopc-j2s-preprocessor))
 	  (hop-sofile-compile-policy-set! 'none)
 	  (hopc-nodejs-load)
 	  nodejs-plugins-loader)))

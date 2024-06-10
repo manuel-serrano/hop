@@ -316,10 +316,8 @@
 	     (j2s-compile-options-set!
 		(append (call-with-input-string conf read)
 		   (j2s-compile-options))))
-	    (("--js-plugins" (help "Enables JavaScript plugins"))
-	     (hopc-j2s-plugins-set! #t))
-	    (("--js-no-plugins" (help "Disables JavaScript plugins"))
-	     (hopc-j2s-plugins-set! #f))
+	    (("--js-loader" ?loader (help "Add JavaScript loader"))
+	     (hopc-j2s-loaders-set! (cons loader (hopc-j2s-loaders))))
 	    (("--js-preprocessor" ?pp (help "Enables JavaScript preprocessor"))
 	     (hopc-j2s-preprocessor-set! pp))
 	    

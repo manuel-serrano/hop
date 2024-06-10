@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Thu Jun  6 08:37:59 2024 (serrano)                */
+;*    Last change :  Sat Jun  8 06:34:25 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -461,7 +461,7 @@
 		       (else
 			(j2s-parser in conf)))))
 	    (when (isa? ast J2SProgram)
-	       (with-access::J2SProgram ast (mode)
+	       (with-access::J2SProgram ast (mode path)
 		  (set! conf (cons* :mode mode conf))))
 	    (if (eof-object? ast)
 		'()

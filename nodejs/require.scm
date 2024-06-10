@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Thu Jun  6 09:17:11 2024 (serrano)                */
+;*    Last change :  Sat Jun  8 06:13:36 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -68,7 +68,8 @@
 	   (nodejs-plugins-toplevel-loader)
 	   (nodejs-language-toplevel-loader)
 	   (nodejs-language-notify-error ::bstring ::bstring)
-	   (nodejs-register-user-loader! ::JsGlobalObject ::bstring)))
+	   (nodejs-register-user-loader! ::JsGlobalObject ::bstring)
+	   (nodejs-make-j2s-loader ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
 ;*    require-suffixes ...                                             */
@@ -497,9 +498,7 @@
 			  "j2s-javascript-debug-driver")
 	 :language lang
 	 :site 'client
-	 :loader-resolve (lambda (name dir paths)
-			    (nodejs-resolve name %ctxthis dir paths 'import))
-	 :plugins-loader (make-plugins-loader %ctxthis %ctxmodule (js-current-worker))
+	 :loader-resolve (nodejs-make-j2s-loader %ctxthis)
 	 :debug (if esplainp 0 (nodejs-hop-debug))))
    
    (define (compile obj header offset esplainp worker this)
@@ -807,7 +806,7 @@
 					  (js-get opts (&& "paths") %this))))
 			     (js-string->jsstring
 				(nodejs-resolve name %this
-				   (node-module-dirname %module %this)
+				   (node-module-filename %module %this)
 				   (if (js-array? paths)
 				       (map! (lambda (v)
 						(js-tostring v %this))
@@ -897,7 +896,7 @@
    (with-trace 'require "nodejs-import-module"
       (trace-item "path=" path)
       (let* ((respath (nodejs-resolve path %this
-			 (node-module-dirname %module %this)
+			 (node-module-filename %module %this)
 			 (node-module-paths %module %this)
 			 'import))
 	     (mod (nodejs-load-module respath worker %this %module
@@ -1008,7 +1007,7 @@
    (with-access::JsGlobalObject %this (js-promise)
       (let ((name (js-tostring name %this)))
 	 (let* ((path (nodejs-resolve name %this
-			 (node-module-dirname %module %this)
+			 (node-module-filename %module %this)
 			 (node-module-paths %module %this)
 			 'import))
 		(mod (nodejs-import-module worker %this %module
@@ -1310,7 +1309,7 @@
 	       #f %this)
 	    ;; the resolution
 	    (nodejs-resolve name %this
-	       (node-module-dirname mod %this)
+	       (node-module-filename mod %this)
 	       (node-module-paths mod %this)
 	       'body)))))
 
@@ -1556,9 +1555,7 @@
 				  :module-name (symbol->string mod)
 				  :worker-slave worker-slave
 				  :verbose (if (>=fx (hop-verbose) 10) (-fx (hop-verbose) 10) 0)
-				  :loader-resolve (lambda (name dir paths)
-						     (nodejs-resolve name %ctxthis dir paths 'import))
-				  :plugins-loader (make-plugins-loader %ctxthis %ctxmodule (js-current-worker))
+				  :loader-resolve (nodejs-make-j2s-loader %ctxthis)
 				  :commonjs-export commonjs-export
 				  :es6-module-client #t
 				  :warning-global warning-global
@@ -1584,9 +1581,7 @@
 		  :module-name (symbol->string mod)
 		  :worker-slave worker-slave
 		  :verbose (if (>=fx (hop-verbose) 10) (-fx (hop-verbose) 10) 0)
-		  :loader-resolve (lambda (name dir paths)
-				     (nodejs-resolve name %ctxthis dir paths 'import))
-		  :plugins-loader (make-plugins-loader %ctxthis %ctxmodule (js-current-worker))
+		  :loader-resolve (nodejs-make-j2s-loader %ctxthis)
 		  :commonjs-export commonjs-export
 		  :es6-module-client #t
 		  :debug (nodejs-hop-debug))))))
@@ -1611,9 +1606,7 @@
 		     :module-name (symbol->string mod)
 		     :worker-slave worker-slave
 		     :verbose (if (>=fx (hop-verbose) 10) (-fx (hop-verbose) 10) 0)
-		     :loader-resolve (lambda (name dir paths)
-					(nodejs-resolve name %ctxthis dir paths 'import))
-		     :plugins-loader (make-plugins-loader %ctxthis %ctxmodule (js-current-worker))
+		     :loader-resolve (nodejs-make-j2s-loader %ctxthis)
 		     :commonjs-export commonjs-export
 		     :es6-module-client #t
 		     :debug (nodejs-hop-debug))
@@ -1860,7 +1853,7 @@
       (instantiate::hopthread
 	 (name "socompile-orchestrator")
 	 (body (lambda ()
-		  (thread-name-set! (current-thread) "socompile")
+		  (thread-name-set! (current-thread) "hopjs-socompile")
 		  (with-handler
 		     (lambda (e)
 			(exception-notify e))
@@ -1914,6 +1907,7 @@
    (instantiate::hopthread
       (name (soworker-name))
       (body (lambda ()
+	       (thread-name-set! (current-thread) "hopjs-compile-worker")
 	       (with-handler
 		  (lambda (e)
 		     (exception-notify e))
@@ -2002,6 +1996,7 @@
 		  (instantiate::hopthread
 		     (name "errlogger")
 		     (body (lambda ()
+			      (thread-name-set! (current-thread) "hopjs-socompile-errlogger")
 			      (let ((err (process-error-port proc)))
 				 (with-handler
 				    (lambda (e) e)
@@ -2116,6 +2111,8 @@
 					     (format "bad source format `~a'" (typeof src)) filename)))
 				    ;; target
 				    "-y" "--js-no-module-main" "-o" ,sopathtmp
+				    ;; loaders
+				    ,@(append-map (lambda (l) (list "--js-loader" l)) loader-names)
 				    ;; profiling
 				    ,@(if (hop-profile) '("--profile") '())
 				    ;; worker
@@ -2542,7 +2539,7 @@
 	   %this %module #!optional (lang "hopscript") compiler copts)
    (with-trace 'require (format "nodejs-require-module ~a" name)
       (let* ((path (nodejs-resolve name %this
-		      (node-module-dirname %module %this)
+		      (node-module-filename %module %this)
 		      (node-module-paths %module %this)
 		      'body))
 	     (mod (nodejs-load-module path worker %this %module
@@ -2703,50 +2700,58 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://nodejs.org/api/modules.html#modules_all_together          */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-resolve name::bstring %this::JsGlobalObject dir::bstring paths::pair-nil mode::symbol)
+(define (nodejs-resolve name::bstring %this::JsGlobalObject from::bstring paths::pair-nil mode::symbol)
    (with-trace 'require "nodejs-resolve"
       (trace-item "name=" name)
-      (trace-item "dir=" dir)
-      (trace-item "thread=" (current-thread))
+      (trace-item "from=" from)
       (with-access::JsGlobalObject %this (worker)
+	 (trace-item "thread=" (current-thread) " " (eq? worker loader-worker))
 	 (if (eq? worker loader-worker)
-	     (builtin-resolve name %this dir paths mode)
-	     (loader-resolve name %this dir paths mode)))))
+	     (builtin-resolve name %this from paths mode)
+	     (loader-resolve name %this from paths mode)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    loader-resolve ...                                               */
 ;*    -------------------------------------------------------------    */
 ;*    See nodejs-register-user-loader!                                 */
 ;*---------------------------------------------------------------------*/
-(define (loader-resolve name::bstring %this::JsGlobalObject dir::bstring paths::pair-nil mode::symbol)
+(define (loader-resolve name::bstring %this::JsGlobalObject from::bstring paths::pair-nil mode::symbol)
    (with-trace 'loader "loader-resolve"
       (trace-item "name=" name)
-      (trace-item "loader-resolvers=" (length loader-resolvers))
-      (if (null? loader-resolvers)
-	  (builtin-resolve name %this dir paths mode)
-	  (multiple-value-bind (resolve reject)
-	     (js-worker-exec-promise loader-worker "resolve"
-		(lambda (this)
-		   (with-access::WorkerHopThread loader-worker (%this)
-		      (let ((ctx (js-alist->jsobject `((parent . ,(js-undefined))) %this)))
-			 (let loop ((resolvers loader-resolvers)
-				    (name (js-string->jsstring name))
-				    (ctx ctx))
-			    (if (null? resolvers)
-				(builtin-resolve (js-tostring name %this) %this dir paths mode)
-				(js-call3 this (car resolvers) (js-undefined)
-				   name ctx 
-				   (js-make-function this
-				      (lambda (this specifier context)
-					 (loop (cdr resolvers) specifier context))
-				      (js-function-arity 2 0)
-				      (js-function-info :name "resolver" :len 2))))))))
-		(lambda (res) res)
-		(lambda (rej) rej))
-	     (if (symbol? reject)
-		 resolve
-		 (js-raise-uri-error %this "resolve error (~s)" name))))))
+      (trace-item "from=" from)
+      (trace-item "loader-resolvers.length=" (length loader-resolvers))
+      (with-access::JsGlobalObject %this (worker)
+	 (if (null? loader-resolvers)
+	     (builtin-resolve name %this from paths mode)
+	     (multiple-value-bind (resolve reject)
+		(js-worker-exec-promise loader-worker "resolve"
+		   (lambda (this)
+		      (loader-resolve-promise name %this from paths mode))
+		   (lambda (res) res)
+		   (lambda (rej) rej))
+		(if (symbol? reject)
+		    resolve
+		    (js-raise-uri-error %this "resolve error (~s)" name)))))))
 
+;*---------------------------------------------------------------------*/
+;*    loader-resolve-promise ...                                       */
+;*---------------------------------------------------------------------*/
+(define (loader-resolve-promise name %this::JsGlobalObject from::bstring paths::pair-nil mode::symbol)
+   (with-access::WorkerHopThread loader-worker (%this)
+      (let ((ctx (js-alist->jsobject `((parent . ,(js-undefined))) %this)))
+	 (let loop ((resolvers loader-resolvers)
+		    (name (js-string->jsstring name))
+		    (ctx ctx))
+	    (if (null? resolvers)
+		(builtin-resolve (js-tostring name %this) %this from paths mode)
+		(js-call3 %this (car resolvers) (js-undefined)
+		   name ctx 
+		   (js-make-function %this
+		      (lambda (this specifier context)
+			 (loop (cdr resolvers) specifier context))
+		      (js-function-arity 2 0)
+		      (js-function-info :name "resolver" :len 2))))))))
+      
 ;*---------------------------------------------------------------------*/
 ;*    json-table ...                                                   */
 ;*---------------------------------------------------------------------*/
@@ -2787,8 +2792,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://nodejs.org/api/modules.html#modules_all_together          */
 ;*---------------------------------------------------------------------*/
-(define (builtin-resolve name::bstring %this::JsGlobalObject dir::bstring paths::pair-nil mode::symbol)
-   
+(define (builtin-resolve name::bstring %this::JsGlobalObject from::bstring paths::pair-nil mode::symbol)
+
    (define (absolute? path)
       (char=? (string-ref path 0) (file-separator)))
 
@@ -2906,7 +2911,7 @@
       (with-access::JsGlobalObject %this (js-uri-error)
 	 (let ((exn (js-new %this js-uri-error
 		       (js-string->jsstring
-			  (format "cannot find module ~s in ~s" name dir))
+			  (format "cannot find module ~s from ~s" name from))
 		       7)))
 	    (js-put! exn (& "code") (js-string->jsstring "MODULE_NOT_FOUND")
 	       #f %this)
@@ -2919,11 +2924,13 @@
 	 (any (lambda (dir)
 		 (resolve-file-or-directory x dir))
 	    paths)))
+
+   (define dir (dirname from))
    
-   (with-trace 'require "nodejs-resolve"
+   (with-trace 'require "builtin-resolve"
       (trace-item "name=" name)
       (trace-item "thread=" (current-thread))
-      (trace-item "dir=" dir)
+      (trace-item "from=" from)
       (trace-item "paths=" (if (js-array? paths)
 			       (jsarray->vector paths %this)
 			       paths))
@@ -2966,29 +2973,29 @@
 			(substring name 4)
 			(nodejs-node-modules-directory))
 		     (resolve-modules name paths)
-		     (resolve-error name dir))))
+		     (resolve-error name from))))
 	    ((string-prefix? "hop:" name)
 	     (or (resolve-file-or-directory
 		    (substring name 4)
 		    (nodejs-node-modules-directory))
-		 (resolve-error name dir)))
+		 (resolve-error name from)))
 	    ((or (string-prefix? "./" name)
 		 (string-prefix? "../" name)
 		 (string=? ".." name))
 	     (or (resolve-file-or-directory name dir)
 		 (resolve-modules name paths)
-		 (resolve-error name dir)))
+		 (resolve-error name from)))
 	    ((string-prefix? "/" name)
 	     (or (resolve-file-or-directory name "/")
 		 (resolve-modules name paths)
-		 (resolve-error name dir)))
+		 (resolve-error name from)))
 	    ((string-suffix? ".hz" name)
 	     (or (resolve-hz name)
 		 (resolve-modules name paths)
-		 (resolve-error name dir)))
+		 (resolve-error name from)))
 	    (else
 	     (or (resolve-modules name paths)
-		 (resolve-error name dir)))))))
+		 (resolve-error name from)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-resolve-extend-path! ...                                  */
@@ -3322,6 +3329,7 @@
 		       (onexit #f)
 		       (keep-alive #t)
 		       (body (lambda ()
+				(thread-name-set! (current-thread) "hopjs-loader")
 				(setup-worker! worker)
 				(synchronize loader-mutex
 				   (condition-variable-broadcast! loader-condv))
@@ -3329,6 +3337,11 @@
       (thread-start! worker)
       (condition-variable-wait! loader-condv loader-mutex)
       worker))
+
+;*---------------------------------------------------------------------*/
+;*    loader-names ...                                                 */
+;*---------------------------------------------------------------------*/
+(define loader-names '())
 
 ;*---------------------------------------------------------------------*/
 ;*    load-loader ...                                                  */
@@ -3354,6 +3367,7 @@
    (with-trace 'loader "nodejs-register-user-loader!"
       (trace-item "module=" module)
       (synchronize loader-mutex
+	 (set! loader-names (cons module loader-names))
 	 (unless loader-worker
 	    (set! loader-worker (js-loader-worker))))
       (let ((res (js-worker-exec-throws loader-worker "load"
@@ -3366,7 +3380,19 @@
 	    (when (cdr res)
 	       (set! loader-loaders (append loader-loaders (list (cdr res))))))
 	 #unspecified)))
-   
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-make-j2s-loader ...                                       */
+;*---------------------------------------------------------------------*/
+(define (nodejs-make-j2s-loader %this)
+   (lambda (name from paths)
+      (let ((%this (nodejs-new-global-object :name "hopc")))
+	 (with-trace 'require "nodejs-j2s-loader"
+	    (trace-item "name=" name)
+	    (trace-item "from=" from)
+	    (trace-item "thread=" thread)
+	    (nodejs-resolve name %this from paths 'import)))))
+
 ;*---------------------------------------------------------------------*/
 ;*    Bind the nodejs require functions                                */
 ;*---------------------------------------------------------------------*/

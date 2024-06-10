@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Thu May 16 10:44:34 2024 (serrano)                */
+;*    Last change :  Sun Jun  9 06:49:23 2024 (serrano)                */
 ;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC global parameters                                           */
@@ -143,8 +143,8 @@
 	    (hopc-j2s-flags::pair-nil)
 	    (hopc-j2s-flags-set! ::pair-nil)
 
-	    (hopc-j2s-plugins::bool)
-	    (hopc-j2s-plugins-set! ::bool)
+	    (hopc-j2s-loaders::pair-nil)
+	    (hopc-j2s-loaders-set! ::pair-nil)
 
 	    (hopc-j2s-preprocessor::obj)
 	    (hopc-j2s-preprocessor-set! ::obj)
@@ -440,12 +440,12 @@
    '())
 
 ;*---------------------------------------------------------------------*/
-;*    hopc-j2s-plugins ...                                             */
+;*    hopc-j2s-loaders ...                                             */
 ;*    -------------------------------------------------------------    */
-;*    Enable/disable j2s plugins                                       */
+;*    Enable/disable j2s loaders                                       */
 ;*---------------------------------------------------------------------*/
-(define-parameter hopc-j2s-plugins
-   #t)
+(define-parameter hopc-j2s-loaders
+   '())
 
 ;*---------------------------------------------------------------------*/
 ;*    hopc-j2s-preprocessor ...                                        */

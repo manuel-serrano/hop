@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 15 15:16:16 2018                          */
-;*    Last change :  Thu Jun  6 08:52:32 2024 (serrano)                */
+;*    Last change :  Sat Jun  8 06:16:25 2024 (serrano)                */
 ;*    Copyright   :  2018-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES6 Module handling                                              */
@@ -81,7 +81,7 @@
 		   (import #f)
 		   (protocol 'file))))
 	 (env-add! (prgm-abspath this) (cons this ip) env)
-	 (set! imports (collect-imports* this (prgm-dirname this) env args))
+	 (set! imports (collect-imports* this (prgm-filename this) env args))
 	 ;; declare all the imported variables
 	 (set! decls (append (collect-decls* this env args) decls)))))
 
@@ -93,17 +93,17 @@
 ;*    and IPRGM the J2SProgram object associated with the imported     */
 ;*    module.                                                          */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (collect-imports* this::J2SNode dirname env args)
+(define-walk-method (collect-imports* this::J2SNode from env args)
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
 ;*    collect-imports* ::J2SProgram ...                                */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (collect-imports* this::J2SProgram dirname env args)
+(define-walk-method (collect-imports* this::J2SProgram from env args)
    (with-access::J2SProgram this (imports exports decls nodes path)
       (let ((imports (delete-duplicates
 			(append-map (lambda (n)
-				       (collect-imports* n dirname env args))
+				       (collect-imports* n from env args))
 			   (append decls nodes))
 			eq?)))
 	 (for-each (lambda (i n)
@@ -115,11 +115,11 @@
 ;*---------------------------------------------------------------------*/
 ;*    collect-imports* ::J2SImport ...                                 */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (collect-imports* this::J2SImport dirname env args)
+(define-walk-method (collect-imports* this::J2SImport from env args)
 
-   (define (server-side-import this dirname env args)
+   (define (server-side-import this from env args)
       (with-access::J2SImport this (ipath path lang loc iprgm)
-	 (let* ((resv (compiler-resolve path dirname args loc))
+	 (let* ((resv (j2s-resolve path from args loc))
 		(abspath (car resv))
 		(protocol (cdr resv)))
 	    (let ((old (env-get abspath env)))
@@ -184,20 +184,20 @@
 		      (import-module abspath prgm lang loc env args)
 		      (list ip))))))))
 
-   (define (client-side-import this dirname env args)
+   (define (client-side-import this from env args)
       '())
       
    (with-access::J2SImport this (ipath path dollarpath lang loc iprgm)
       (if (isa? dollarpath J2SUndefined)
-	  (server-side-import this dirname env args)
-	  (client-side-import this dirname env args))))
+	  (server-side-import this from env args)
+	  (client-side-import this from env args))))
 
 ;*---------------------------------------------------------------------*/
 ;*    collect-imports* ::J2SRedirect ...                               */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (collect-imports* this::J2SRedirect dirname env args)
+(define-walk-method (collect-imports* this::J2SRedirect from env args)
    (with-access::J2SRedirect this (import)
-      (collect-imports* import dirname env args)))
+      (collect-imports* import from env args)))
 
 ;*---------------------------------------------------------------------*/
 ;*    collect-decls* ...                                               */
@@ -502,9 +502,9 @@
        '())))
 
 ;*---------------------------------------------------------------------*/
-;*    compiler-resolve ...                                             */
+;*    j2s-resolve ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (compiler-resolve name::bstring dir::bstring args loc)
+(define (j2s-resolve name::bstring from::bstring args loc)
    
    (define paths
       (let* ((name (config-get args :source (config-get args :filename #f)))
@@ -516,17 +516,30 @@
 	    (list (config-get args :hop-library-path "."))
 	    (list (config-get args :node-modules-directory ".")))))
 
-   (with-handler
-      (lambda (e)
-	 (with-access::&exception e (fname location)
-	    (unless (and fname location)
-	       (set! fname (cadr loc))
-	       (set! location (caddr loc)))
-	    (raise e)))
-      (let ((resolve (config-get args :loader-resolve)))
-	 (if resolve
-	     (resolve name dir paths)
-	     (resolve-module-file name dir paths args)))))
+   (with-trace 'require "j2s-resolve"
+      (trace-item "name=" name)
+      (trace-item "from=" from)
+      (trace-item "thread=" (current-thread))
+      (with-handler
+	 (lambda (e)
+	    (with-access::&exception e (fname location)
+	       (unless (and fname location)
+		  (set! fname (cadr loc))
+		  (set! location (caddr loc)))
+	       (raise e)))
+	 (let ((resolve (config-get args :loader-resolve)))
+	    (cond
+	       ((core-module? name)
+		(cons name 'core))
+	       (resolve
+		(let ((p (resolve name from paths)))
+		   (cond
+		      ((not (string? p))
+		       (cons p 'error))
+		      (else
+		       (cons p 'file)))))
+	       (else
+		(resolve-module-file name from paths args)))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    resolve-module-file ...                                          */
@@ -534,7 +547,9 @@
 ;*    Almost similar to nodejs's resolve method (see                   */
 ;*    nodejs/require.scm).                                             */
 ;*---------------------------------------------------------------------*/
-(define (resolve-module-file name::bstring dir::bstring paths::pair-nil args)
+(define (resolve-module-file name::bstring from::bstring paths::pair-nil args)
+
+   (define dir (dirname from))
    
    (define (resolve-autoload-hz hz)
       (cond
@@ -650,11 +665,8 @@
 	  (raise
 	     (instantiate::&io-file-not-found-error
 		(proc "hopc:resolve")
-		(msg (format "Cannot find module in ~s" dir))
+		(msg (format "Cannot find module from ~s" dir))
 		(obj name)))))
-   
-   (define (core-module? name)
-      (open-string-hashtable-get (get-core-modules) name))
    
    (define (resolve-modules x)
       (with-trace 'require "resolve-module-file.resolve-modules"
@@ -698,6 +710,12 @@
 	    (else
 	     (or (resolve-modules name)
 		 (resolve-error name)))))))
+
+;*---------------------------------------------------------------------*/
+;*    core-module? ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (core-module? name)
+   (open-string-hashtable-get (get-core-modules) name))
 
 ;*---------------------------------------------------------------------*/
 ;*    module-cache                                                     */
@@ -919,14 +937,14 @@
    (cell-set! env (cons (cons path prgmip) (cell-ref env))))
    
 ;*---------------------------------------------------------------------*/
-;*    prgm-dirname ...                                                 */
+;*    prgm-filename ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (prgm-dirname prgm::J2SProgram)
+(define (prgm-filename prgm::J2SProgram)
    (with-access::J2SProgram prgm (path)
       (cond
-	 ((string=? path "") (pwd))
-	 ((char=? (string-ref path 0) (file-separator)) (dirname path))
-	 (else (dirname (file-name-canonicalize (make-file-name (pwd) path)))))))
+	 ((string=? path "") (make-file-name (pwd) "."))
+	 ((char=? (string-ref path 0) (file-separator)) path)
+	 (else (file-name-canonicalize (make-file-name (pwd) path))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    prgm-abspath ...                                                 */
