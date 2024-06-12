@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Sat Jun  8 06:13:36 2024 (serrano)                */
+;*    Last change :  Tue Jun 11 13:23:49 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -655,6 +655,7 @@
 	    ;; return the newly allocated module
 	    (trace-item "module=" (typeof m))
 	    m))))
+
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-new-module ...                                            */
 ;*---------------------------------------------------------------------*/
@@ -2445,89 +2446,60 @@
 		(worker-compiler-available? %ctxthis filename)))))
    
    (define (builtin-load-module filename lang)
-      (cond
-	 ((or (string-suffix? ".js" filename) (string-suffix? ".mjs" filename))
-	  (load-module-js filename lang))
-	 ((string-suffix? ".ts" filename)
-	  (load-module-js filename "typescript"))
-	 ((string-suffix? ".ast.json" filename)
-	  (load-module-js filename lang))
-	 ((string-suffix? ".html" filename)
-	  (load-module-html))
-	 ((string-suffix? ".hop" filename)
-	  (load-module-hop))
-	 ((string-suffix? ".so" filename)
-	  (load-module-so))
-	 ((string-suffix? ".node" filename)
-	  (load-module-so))
-	 ((string-suffix? ".dylib" filename)
-	  (load-module-so))
-	 ((or (string-prefix? "http://" filename)
-	      (string-prefix? "https://" filename))
-	  (cond
-	     ((string=? lang "html")
-	      (load-module-html))
-	     ((mime-html? filename)
-	      (load-module-html))
-	     (else
-	      (load-module-js filename lang))))
-	 ((not (string-index (basename filename) #\.))
-	  (load-module-js filename lang))
-	 ((compiler-available? filename)
-	  (load-module-js filename lang))
-	 (else
-	  (not-found filename))))
+      (with-trace 'require "nodejs-load.builtin-load-module"
+	 (trace-item "filename=" filename " lang=" lang)
+	 (cond
+	    ((or (string-suffix? ".js" filename) (string-suffix? ".mjs" filename))
+	     (load-module-js filename lang))
+	    ((string-suffix? ".ts" filename)
+	     (load-module-js filename "typescript"))
+	    ((string-suffix? ".ast.json" filename)
+	     (load-module-js filename lang))
+	    ((string-suffix? ".html" filename)
+	     (load-module-html))
+	    ((string-suffix? ".hop" filename)
+	     (load-module-hop))
+	    ((string-suffix? ".so" filename)
+	     (load-module-so))
+	    ((string-suffix? ".node" filename)
+	     (load-module-so))
+	    ((string-suffix? ".dylib" filename)
+	     (load-module-so))
+	    ((or (string-prefix? "http://" filename)
+		 (string-prefix? "https://" filename))
+	     (cond
+		((string=? lang "html")
+		 (load-module-html))
+		((mime-html? filename)
+		 (load-module-html))
+		(else
+		 (load-module-js filename lang))))
+	    ((not (string-index (basename filename) #\.))
+	     (load-module-js filename lang))
+	    ((compiler-available? filename)
+	     (load-module-js filename lang))
+	    (else
+	     (not-found filename)))))
    
-   (define (url-to-path str)
-      (let ((path (if (string-prefix? "file://" str)
-		      (substring str 7)
-		      str)))
-	 (if (file-exists? path)
-	     path
-	     (js-raise-uri-error %ctxthis "load error (~s)" filename))))
-   
-   (define (loader-load-module)
-      (if (null? loader-loaders)
-	  (builtin-load-module filename lang)
-	  (multiple-value-bind (resolve reject)
-	     (js-worker-exec-promise loader-worker "resolve"
-		(lambda (this)
-		   (with-access::WorkerHopThread loader-worker (%this)
-		      (let ((ctx (js-alist->jsobject `((parent . ,(js-undefined))) %this)))
-			 (let loop ((loaders loader-loaders)
-				    (url (js-string->jsstring filename))
-				    (ctx ctx))
-			    (if (null? loaders)
-				(js-alist->jsobject `((source . ,(js-jsstring->string url))) %this)
-				(js-call3 this (car loaders) (js-undefined)
-				   url ctx 
-				   (js-make-function this
-				      (lambda (this specifier context)
-					 (loop (cdr loaders) specifier context))
-				      (js-function-arity 2 0)
-				      (js-function-info :name "loader" :len 2))))))))
-		(lambda (res)
-		   (with-access::WorkerHopThread loader-worker (%this)
-		      (js-get res (& "source") %this)))
-		(lambda (rej)
-		   rej))
-	     (if (js-jsstring? resolve)
-		 (builtin-load-module
-		    (url-to-path (js-jsstring->string resolve))
-		    #f)
-		 (js-raise-uri-error %ctxthis "loader error (~s)" filename)))))
+   (define (loader-load-module filename)
+      (with-access::WorkerHopThread worker (resolver)
+	 (let ((paths (node-module-paths %ctxmodule %ctxthis))
+	       (from (node-module-filename %ctxmodule %ctxthis)))
+	    (builtin-load-module
+	       (loader-resolve worker filename %ctxthis from paths 'import)
+	       #f))))
    
    (with-trace 'require (format "nodejs-load ~a" filename)
-      (trace-item "lang=" lang)
       (when (eq? commonjs-export #unspecified)
 	 (let ((cj (memq :commonjs-export (j2s-compile-options))))
 	    (if (and (pair? cj) (pair? (cdr cj)))
 		(set! commonjs-export (cadr cj))
 		(set! commonjs-export #t))))
       (with-loading-file filename
-	 (if (eq? worker loader-worker)
-	     (lambda () (builtin-load-module filename lang))
-	     loader-load-module))))
+	 (with-access::WorkerHopThread worker (resolver)
+	    (if (not resolver)
+		(lambda () (builtin-load-module filename lang))
+		(lambda () (loader-load-module filename)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-require-module ...                                        */
@@ -2704,53 +2676,87 @@
    (with-trace 'require "nodejs-resolve"
       (trace-item "name=" name)
       (trace-item "from=" from)
+      (trace-item "mode=" mode)
       (with-access::JsGlobalObject %this (worker)
-	 (trace-item "thread=" (current-thread) " " (eq? worker loader-worker))
-	 (if (eq? worker loader-worker)
-	     (builtin-resolve name %this from paths mode)
-	     (loader-resolve name %this from paths mode)))))
+	 (trace-item "thread=" (current-thread) " worker=" worker)
+	 (cond
+	    ((not (eq? mode 'import))
+	     (builtin-resolve name %this from paths mode))
+	    ((not (isa? worker WorkerHopThread))
+	     (builtin-resolve name %this from paths mode))
+	    ((not (with-access::WorkerHopThread worker (resolver) resolver))
+	     (builtin-resolve name %this from paths mode))
+	    (else
+	     (with-access::JsGlobalObject %this (worker)
+		(loader-resolve worker name %this from paths mode)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    loader-resolve ...                                               */
 ;*    -------------------------------------------------------------    */
 ;*    See nodejs-register-user-loader!                                 */
 ;*---------------------------------------------------------------------*/
-(define (loader-resolve name::bstring %this::JsGlobalObject from::bstring paths::pair-nil mode::symbol)
+(define (loader-resolve::bstring worker::WorkerHopThread name::bstring %this::JsGlobalObject from::bstring paths::pair-nil mode::symbol)
+   
+   (define (url-to-path str)
+      (let ((path (if (string-prefix? "file://" str)
+		      (substring str 7)
+		      str)))
+	 (cond
+	    ((file-exists? path) path)
+	    ((core-module? path) path)
+	    (else (js-raise-uri-error %this "load error (~s)" name)))))
+   
    (with-trace 'loader "loader-resolve"
       (trace-item "name=" name)
       (trace-item "from=" from)
-      (trace-item "loader-resolvers.length=" (length loader-resolvers))
-      (with-access::JsGlobalObject %this (worker)
-	 (if (null? loader-resolvers)
-	     (builtin-resolve name %this from paths mode)
-	     (multiple-value-bind (resolve reject)
-		(js-worker-exec-promise loader-worker "resolve"
-		   (lambda (this)
-		      (loader-resolve-promise name %this from paths mode))
-		   (lambda (res) res)
-		   (lambda (rej) rej))
-		(if (symbol? reject)
-		    resolve
-		    (js-raise-uri-error %this "resolve error (~s)" name)))))))
+      (with-access::WorkerHopThread worker (resolver)
+	 (trace-item "resolver=" resolver)
+	 (with-access::WorkerHopThread worker (resolver)
+	    (multiple-value-bind (resolvev rejectv)
+	       (js-worker-exec-promise resolver "resolve"
+		  (lambda (this)
+		     (loader-resolve-async resolver name from paths mode))
+		  (lambda (res) res)
+		  (lambda (rej) rej))
+	       (cond
+		  ((string? resolvev)
+		   (url-to-path resolvev))
+		  ((js-jsstring? resolvev)
+		   (url-to-path (js-jsstring->string resolvev)))
+		  ((js-jsobject? resolvev)
+		   ;; clone resolvev in the current thread
+		   (let* ((obj (js-clone resolvev %this))
+			  (url (js-get obj (& "url") %this)))
+		      (if (js-jsstring? url)
+			  (url-to-path (js-jsstring->string url))
+			  (js-raise-uri-error %this "loader error ~a" url))))
+		  (else
+		   (js-raise-uri-error %this "loader error (~s)" name))))))))
 
 ;*---------------------------------------------------------------------*/
-;*    loader-resolve-promise ...                                       */
+;*    loader-resolve-async ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (loader-resolve-promise name %this::JsGlobalObject from::bstring paths::pair-nil mode::symbol)
-   (with-access::WorkerHopThread loader-worker (%this)
-      (let ((ctx (js-alist->jsobject `((parent . ,(js-undefined))) %this)))
-	 (let loop ((resolvers loader-resolvers)
-		    (name (js-string->jsstring name))
-		    (ctx ctx))
-	    (if (null? resolvers)
-		(builtin-resolve (js-tostring name %this) %this from paths mode)
-		(js-call3 %this (car resolvers) (js-undefined)
-		   name ctx 
-		   (js-make-function %this
-		      (lambda (this specifier context)
-			 (loop (cdr resolvers) specifier context))
-		      (js-function-arity 2 0)
-		      (js-function-info :name "resolver" :len 2))))))))
+(define (loader-resolve-async::JsPromise resolver::WorkerHopThread name from::bstring paths::pair-nil mode::symbol)
+   (with-trace 'loader "loader-resolver-async"
+      (trace-item "resolver=" resolver)
+      (trace-item "name=" name)
+      (trace-item "from=" from)
+      (with-access::WorkerHopThread resolver (%this services js-url)
+	 (let ((resolve (car services))
+	       (ctx (js-alist->jsobject `((parent . ,(js-undefined))) %this)))
+	    (js-call3 %this resolve (js-undefined)
+	       name ctx 
+	       (js-make-function %this
+		  (lambda (this specifier context)
+		     (let ((n (builtin-resolve (js-tostring name %this) %this from paths mode)))
+			(if (string? n)
+			    (js-alist->jsobject
+			       `((url . ,(string-append "file://" n))
+				 (format . "module"))
+			       %this)
+			    n)))
+		  (js-function-arity 2 0)
+		  (js-function-info :name "resolver" :len 2)))))))
       
 ;*---------------------------------------------------------------------*/
 ;*    json-table ...                                                   */
@@ -2935,6 +2941,7 @@
 			       (jsarray->vector paths %this)
 			       paths))
       (let loop ((name name))
+	 (trace-item "builtin.resolve.loop name=" name " " (typeof name))
 	 (cond
 	    ((core-module? name)
 	     (if (eq? mode 'import)
@@ -3298,17 +3305,20 @@
 ;*---------------------------------------------------------------------*/
 ;*    loader-worker ...                                                */
 ;*---------------------------------------------------------------------*/
-(define loader-worker #f)
 (define loader-mutex (make-mutex))
 (define loader-condv (make-condition-variable))
 (define loader-module #f)
-(define loader-resolvers '())
 (define loader-loaders '())
 
 ;*---------------------------------------------------------------------*/
-;*    js-loader-worker ...                                             */
+;*    loader-names ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (js-loader-worker)
+(define loader-names '())
+
+;*---------------------------------------------------------------------*/
+;*    make-resolver-worker ...                                         */
+;*---------------------------------------------------------------------*/
+(define (make-resolver-worker::WorkerHopThread module::bstring)
    
    (define (setup-worker! w)
       (let ((global (nodejs-new-global-object :name "loader"))
@@ -3324,39 +3334,36 @@
 	       (js-put! module-cache (js-string->jsstring path)
 		  loader-module #f global)))))
    
-   (letrec ((worker (instantiate::WorkerHopThread
-		       (name "loader")
-		       (onexit #f)
-		       (keep-alive #t)
-		       (body (lambda ()
-				(thread-name-set! (current-thread) "hopjs-loader")
-				(setup-worker! worker)
-				(synchronize loader-mutex
-				   (condition-variable-broadcast! loader-condv))
-				(js-worker-loop worker (lambda (th) th)))))))
-      (thread-start! worker)
-      (condition-variable-wait! loader-condv loader-mutex)
-      worker))
-
-;*---------------------------------------------------------------------*/
-;*    loader-names ...                                                 */
-;*---------------------------------------------------------------------*/
-(define loader-names '())
-
-;*---------------------------------------------------------------------*/
-;*    load-loader ...                                                  */
-;*---------------------------------------------------------------------*/
-(define (load-loader this path)
-   (with-trace 'loader "load-loader"
-      (trace-item "path=" path)
-      (with-access::WorkerHopThread loader-worker (%this)
-	 (let* ((mod (nodejs-load-module path loader-worker %this loader-module
-			:commonjs-export #f))
-		(res (nodejs-module-namespace mod loader-worker %this)))
-	    (let ((resolve (js-get res (& "resolve") %this))
-		  (load (js-get res (& "load") %this)))
-	       (cons resolve load))))))
-      
+   (define (load-loader worker path)
+      (with-trace 'loader "load-loader"
+	 (trace-item "path=" path)
+	 (with-access::WorkerHopThread worker (%this services)
+	    (let* ((mod (nodejs-load-module path worker %this loader-module
+			   :commonjs-export #f))
+		   (res (nodejs-module-namespace mod worker %this)))
+	       (let ((resolve (js-get res (& "resolve") %this))
+		     (load (js-get res (& "load") %this)))
+		  (set! services (list resolve load)))))))
+   
+   (let ((mutex (make-mutex))
+	 (condv (make-condition-variable))
+	 (name (basename module)))
+      (letrec ((worker (instantiate::WorkerHopThread
+			  (name name)
+			  (onexit #f)
+			  (keep-alive #t)
+			  (body (lambda ()
+				   (thread-name-set! (current-thread) name)
+				   (setup-worker! worker)
+				   (load-loader worker module)
+				   (synchronize mutex
+				      (condition-variable-broadcast! condv))
+				   (js-worker-loop worker (lambda (th) th)))))))
+	 (synchronize mutex
+	    (thread-start! worker)
+	    (condition-variable-wait! condv mutex))
+	 worker)))
+  
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-register-user-loader! ...                                 */
 ;*    -------------------------------------------------------------    */
@@ -3366,32 +3373,25 @@
 (define (nodejs-register-user-loader! %this module)
    (with-trace 'loader "nodejs-register-user-loader!"
       (trace-item "module=" module)
-      (synchronize loader-mutex
-	 (set! loader-names (cons module loader-names))
-	 (unless loader-worker
-	    (set! loader-worker (js-loader-worker))))
-      (let ((res (js-worker-exec-throws loader-worker "load"
-		    (lambda (this)
-		       (load-loader this module)))))
-	 (synchronize loader-mutex
-	    (when (car res)
-	       (set! loader-resolvers
-		  (append loader-resolvers (list (car res)))))
-	    (when (cdr res)
-	       (set! loader-loaders (append loader-loaders (list (cdr res))))))
-	 #unspecified)))
+      (with-access::JsGlobalObject %this (worker)
+	 (with-access::WorkerHopThread worker (resolver)
+	    (set! resolver (make-resolver-worker module))))
+      #unspecified))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-make-j2s-loader ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-make-j2s-loader %this)
    (lambda (name from paths)
-      (let ((%this (nodejs-new-global-object :name "hopc")))
+      (let ((this (nodejs-new-global-object :name "hopc")))
+	 (with-access::JsGlobalObject %this ((%worker worker))
+	    (with-access::JsGlobalObject this (worker)
+	       (set! worker %worker)))
 	 (with-trace 'require "nodejs-j2s-loader"
 	    (trace-item "name=" name)
 	    (trace-item "from=" from)
 	    (trace-item "thread=" thread)
-	    (nodejs-resolve name %this from paths 'import)))))
+	    (nodejs-resolve name this from paths 'import)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    Bind the nodejs require functions                                */

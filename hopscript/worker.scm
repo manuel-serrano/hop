@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Fri Jun  7 21:27:23 2024 (serrano)                */
+;*    Last change :  Wed Jun 12 09:18:49 2024 (serrano)                */
 ;*    Copyright   :  2014-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -234,6 +234,9 @@
 					 (js-function-arity 2 0)
 					 (js-function-info :name "onexit" :len 2)))
 			      (keep-alive #f)
+			      (resolver (when (isa? parent WorkerHopThread)
+					   (with-access::WorkerHopThread parent (resolver)
+					      resolver)))
 			      (body (lambda ()
 				       (setup)
 				       (synchronize mutex

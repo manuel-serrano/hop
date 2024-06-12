@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Tue Jun  4 13:34:23 2024 (serrano)                */
+;*    Last change :  Wed Jun 12 09:06:23 2024 (serrano)                */
 ;*    Copyright   :  2014-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -45,7 +45,6 @@
 		  (*stat-mtime-accessor* (default #f))
 		  (*stat-atime-accessor* (default #f))
 		  (*stat-birthtime-accessor* (default #f)))
-		  
 	  
 	  (class JsChild::UvProcess
 	     (ref (default #t))

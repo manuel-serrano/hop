@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Mon Jun  3 07:53:28 2024 (serrano)                */
+;*    Last change :  Wed Jun 12 13:16:14 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -273,6 +273,34 @@
 ;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
 (define __js_strings (&begin!))
+
+;*---------------------------------------------------------------------*/
+;*    js-clone ::JsConstructMap ...                                    */
+;*---------------------------------------------------------------------*/
+(define-method (js-clone obj::JsConstructMap %this)
+   (if (eq? obj (js-not-a-cmap))
+       obj
+       (with-access::JsConstructMap obj (props)
+	  (duplicate::JsConstructMap obj
+	     (%id (gencmapid))
+	     (props (vector-map (lambda (p)
+				   (let* ((o (js-jsstring->string (prop-name p)))
+					  (n (js-string->name o)))
+				      ;; re-create the name as the original
+				      ;; object might have been created
+				      ;; in another thread with another
+				      ;; name table
+				      (prop n (prop-flags p))))
+		       props))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-clone ::JsValueDescriptor ...                                 */
+;*---------------------------------------------------------------------*/
+(define-method (js-clone obj::JsValueDescriptor %this)
+   (with-access::JsValueDescriptor obj (writable)
+      (if writable
+	  (duplicate::JsValueDescriptor obj)
+	  obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    prop-hashtable-weak ...                                          */

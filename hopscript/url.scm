@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu May 16 16:40:42 2024                          */
-;*    Last change :  Thu May 16 17:26:07 2024 (serrano)                */
+;*    Last change :  Wed Jun 12 11:20:52 2024 (serrano)                */
 ;*    Copyright   :  2024 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of whatwg URL                              */
@@ -55,12 +55,12 @@
 	 (instantiateJsObject
 	    (cmap (js-make-jsconstructmap))
 	    (__proto__ (js-object-proto %this))
-	    (elements ($create-vector 47))))
+	    (elements ($create-vector 2))))
       
       ;; https://developer.mozilla.org/en-US/docs/Web/API/URL/URL
       (define (%js-url this url base)
 	 (let* ((s (js-tostring url %this))
-		(m (pregexp-match "/([a-zA-Z]+:)\/\/(.*)/" s)))
+		(m (pregexp-match "([a-zA-Z]+:)//(.*)" s)))
 	    (if m
 		(begin
 		   (js-put! this (& "protocol")
@@ -69,16 +69,17 @@
 		   (js-put! this (& "path")
 		      (js-string->jsstring (caddr m))
 		      #f %this))
-		(js-raise-type-error %this "Invalid URL" url))))
+		(js-raise-type-error %this "Invalid URL ~s" url))))
       
       (set! js-url
 	 (js-make-function %this %js-url
-	    (js-function-arity 0 -1 'scheme)
+	    (js-function-arity %js-url)
 	    (js-function-info :name "URL" :len 2)
 	    :__proto__ (js-object-proto js-function)
 	    :prototype js-url-prototype
 	    :size 3
-	    :shared-cmap #f))
+	    :shared-cmap #f
+	    :alloc js-object-alloc))
       
       ;; url constructor
       (js-bind! %this %this (& "URL")

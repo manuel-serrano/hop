@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Fri May 24 19:35:49 2024 (serrano)                */
+;*    Last change :  Wed Jun 12 13:15:53 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -73,6 +73,38 @@
 ;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
 (define __js_strings (&begin!))
+
+;*---------------------------------------------------------------------*/
+;*    js-clone ::JsObject ...                                          */
+;*---------------------------------------------------------------------*/
+(define-method (js-clone obj::JsObject %this)
+   
+   (define (clone-inline obj)
+      (with-access::JsGlobalObject %this (js-object)
+	 (with-access::JsObject obj (cmap)
+	    (let* ((ilen (js-object-inline-length obj))
+		   (nobj (instantiateJsObject 
+			    (cmap (js-clone cmap %this))
+			    (__proto__ (js-get js-object (& "prototype") %this))
+			    (elements (make-vector ilen)))))
+	       (let loop ((i (-fx ilen 1)))
+		  (when (>=fx i 0)
+		     (js-object-inline-set! nobj i
+			(js-clone (js-object-inline-ref obj i) %this))
+		     (loop (-fx i 1))))
+	       nobj))))
+   
+   (define (clone-noinline obj)
+      (with-access::JsObject obj (elements)
+	 (let* ((nobj (clone-inline obj))
+		(vec (vector-map (lambda (e) (js-clone e %this)) elements)))
+	    (with-access::JsObject nobj (elements)
+	       (set! elements vec)
+	       nobj))))
+
+   (let ((nobj (clone-noinline obj)))
+      (js-object-mode-set! nobj (js-object-mode obj))
+      nobj))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsObject ...                                 */

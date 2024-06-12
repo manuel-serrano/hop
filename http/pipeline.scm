@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep  4 09:28:11 2008                          */
-;*    Last change :  Tue May 14 13:04:33 2024 (serrano)                */
+;*    Last change :  Wed Jun 12 08:37:22 2024 (serrano)                */
 ;*    Copyright   :  2008-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The pipeline into which requests transit.                        */
@@ -170,7 +170,7 @@
 		       (socket-hostname sock)
 		       (socket-port-number sock))
 		    ""))
-	     (trace 0 -1 "ERROR"
+	     (trace 1 -1 "ERROR"
 		(with-error-to-string
 		   (lambda () (exception-notify e)))))
 	  (when (and (isa? e &io-unknown-host-error) (not (socket-down? sock)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Tue Jun  4 07:52:11 2024 (serrano)                */
+;*    Last change :  Wed Jun 12 09:08:24 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -134,6 +134,7 @@
 	      (%call (default #f))
 	      (handlers::pair-nil (default '()))
 	      (services::pair-nil (default '()))
+	      (resolver (default #f))
 	      (%exn (default #unspecified)))
 
 	   (class MessageEvent::event
@@ -695,7 +696,7 @@
 	   (inline js-vector-inline-ref ::JsArray ::long)
 	   (inline js-vector-inline-set! ::JsArray ::long ::obj)
 
-	   (generic js-clone::obj ::obj)
+	   (generic js-clone::obj ::obj ::JsGlobalObject)
 	   (generic js-donate ::obj ::WorkerHopThread ::JsGlobalObject)
 	   
 	   (inline js-undefined?::bool ::obj)
@@ -1326,10 +1327,13 @@
 ;*    js-object-length ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-object-length o::JsObject)
-   (+fx (vector-length (js-object-noinline-elements o))
-      (if (js-object? o)
-	  (vector-length (js-object-inline-elements o))
-	  0)))
+   (if (js-object-hashed? o)
+       (with-access::JsObject o (elements)
+	  (hashtable-size elements))
+       (+fx (vector-length (js-object-noinline-elements o))
+	  (if (js-object? o)
+	      (vector-length (js-object-inline-elements o))
+	      0))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-inline-ref ...                                         */
@@ -1680,40 +1684,20 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-clone ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define-generic (js-clone obj)
+(define-generic (js-clone obj %this)
    obj)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-clone ::JsGlobalObject ...                                    */
 ;*---------------------------------------------------------------------*/
-(define-method (js-clone obj::JsGlobalObject)
+(define-method (js-clone obj::JsGlobalObject %this)
    (with-access::JsObject obj (cmap elements)
       (let ((nobj (duplicate::JsGlobalObject obj
-		     (cmap (js-clone cmap))
-		     (elements (vector-map js-clone elements)))))
-	 (js-object-proto-set! nobj (js-clone (js-object-proto obj)))
-	 (js-object-mode-set! nobj (js-object-mode obj))
-	 nobj)))
-
-;*---------------------------------------------------------------------*/
-;*    js-clone ::JsConstructMap ...                                    */
-;*---------------------------------------------------------------------*/
-(define-method (js-clone obj::JsConstructMap)
-   (if (eq? obj (js-not-a-cmap))
-       obj
-       (with-access::JsConstructMap obj (props)
-	  (duplicate::JsConstructMap obj
-	     (%id (gencmapid))
-	     (props (vector-copy props))))))
-
-;*---------------------------------------------------------------------*/
-;*    js-clone ::JsValueDescriptor ...                                 */
-;*---------------------------------------------------------------------*/
-(define-method (js-clone obj::JsValueDescriptor)
-   (with-access::JsValueDescriptor obj (writable)
-      (if writable
-	  (duplicate::JsValueDescriptor obj)
-	  obj)))
+                     (cmap (js-clone cmap %this))
+                     (elements (vector-map (lambda (e) (js-clone e %this)) elements)))))
+         (js-object-proto-set! nobj (js-clone (js-object-proto obj) %this))
+         (js-object-mode-set! nobj (js-object-mode obj))
+         nobj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-donate ...                                                    */
