@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Sat Jun  8 06:34:25 2024 (serrano)                */
+;*    Last change :  Thu Jun 13 07:49:28 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -95,6 +95,7 @@
 	   (j2s-debug-driver)
 	   (j2s-eval-driver)
 	   (j2s-javascript-driver)
+	   (j2s-javascript-plain-driver)
 	   (j2s-javascript-optim-driver)
 	   (j2s-ecmascript5-driver)
 	   (j2s-javascript-debug-driver)
@@ -365,6 +366,17 @@
       j2s-module-stage
       j2s-symbol-stage
       j2s-letfusion-stage
+      j2s-javascript-stage))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-javascript-plain-driver ...                                  */
+;*---------------------------------------------------------------------*/
+(define (j2s-javascript-plain-driver)
+   (list
+      j2s-syntax-stage
+      j2s-sourcemap-stage
+      j2s-loopexit-stage
+      j2s-bestpractice-stage
       j2s-javascript-stage))
 
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 15 15:16:16 2018                          */
-;*    Last change :  Wed Jun 12 11:08:09 2024 (serrano)                */
+;*    Last change :  Thu Jun 13 07:50:31 2024 (serrano)                */
 ;*    Copyright   :  2018-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES6 Module handling                                              */
@@ -35,7 +35,7 @@
       (name "module")
       (comment "Handle es module export and import clauses")
       (proc j2s-esmodule)
-      (optional (lambda (args) (config-get args :module-stage #t)))))
+      (optional #f)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-node-modules-dir ...                                         */
