@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Mon Jun  3 08:13:15 2024 (serrano)                */
+#*    Last change :  Sat Jun 15 18:58:25 2024 (serrano)                */
 #*    Copyright   :  2004-24 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -1144,7 +1144,7 @@ else
   mkmfhop=$hop
 fi
 
-hsflags="`echo $hflags | sed 's/[-]O[^ ]*//g'`-Os"
+hsflags="`echo $hflags | sed 's/[-]O[^ ]*//g'` -Os"
 
 cat $mkmf.in \
   | sed -e "s|@RELEASE@|$version|" \

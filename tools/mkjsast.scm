@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul  1 16:05:56 2014                          */
-;*    Last change :  Fri Jun 14 07:55:39 2024 (serrano)                */
+;*    Last change :  Sat Jun 15 18:50:26 2024 (serrano)                */
 ;*    Copyright   :  2014-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Build the JS Ast from the Bigloo type class hierarchy            */
@@ -201,7 +201,7 @@
 	  (printf "   }\n") 
 	  (printf "   this.__node__ = \"~a\";\n" name)
 	  (printf "}\n")
-	  (printf "~a.prototype = new ~a;\n" name super)
+	  (printf "~a.prototype = new ~a();\n" name super)
 	  (tojson name allfields)
 	  (printf "registerWrapper(\"~a\", ~a);" name name)
 	  (newline)))))

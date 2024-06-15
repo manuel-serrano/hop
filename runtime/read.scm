@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Sun Jun  2 20:56:39 2024 (serrano)                */
+;*    Last change :  Sat Jun 15 18:14:28 2024 (serrano)                */
 ;*    Copyright   :  2005-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -79,7 +79,7 @@
 	    
 	    (hop-load-rc ::bstring)
 	    
-	    (hop-find-sofile::obj ::bstring #!key (suffix ""))
+	    (hop-find-sofile::obj ::bstring #!key (suffix "") (ignore-age #f))
 	    (hop-sofile-cache-path::bstring ::bstring #!key (suffix "") root)
 	    (hop-sofile-rebase::bstring ::bstring)
 	    
@@ -1000,7 +1000,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    hop-find-sofile ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (hop-find-sofile path #!key (suffix ""))
+(define (hop-find-sofile path #!key (suffix "") (ignore-age #f))
    
    (define (file-younger? sopath)
       (when (file-exists? sopath)
@@ -1017,6 +1017,8 @@
 	       (when (pair? paths)
 		  (let ((path (make-file-path (car paths) file)))
 		     (cond
+			(ignore-age
+			 path)
 			((file-younger? path)
 			 path)
 			((file-younger? (errfile path))
@@ -1028,6 +1030,8 @@
       (with-trace 'sofile "hop-find-sofile.soprecompiled"
 	 (trace-item "sopath=" sopath)
 	 (cond
+	    (ignore-age
+	     sopath)
 	    ((file-younger? sopath)
 	     sopath)
 	    ((file-younger? (errfile sopath))

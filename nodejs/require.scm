@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Tue Jun 11 13:23:49 2024 (serrano)                */
+;*    Last change :  Sat Jun 15 10:32:02 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -2183,21 +2183,72 @@
 					      socompile-condv))))))))))))))))
 
 ;*---------------------------------------------------------------------*/
+;*    builtin-find-sofile ...                                          */
+;*    -------------------------------------------------------------    */
+;*    Check if there exists a precompiled so file for this module.     */
+;*---------------------------------------------------------------------*/
+(define (builtin-find-sofile filename #!key suffix)
+   (with-trace 'sofile "builtin-find-sofile"
+      (let* ((dir (dirname filename))
+	     (subdir (basename dir))
+	     (base (basename filename))
+	     (root (dirname dir))
+	     (pkgname (basename root))
+	     (pkgjson (make-file-name root "package.json")))
+	 (trace-item "filename=" filename)
+	 (trace-item "dir=" dir)
+	 (trace-item "base=" base)
+	 (trace-item "root=" root)
+	 (trace-item "pkgname=" pkgname)
+	 (trace-item "pkgjson=" pkgjson)
+	 ;; is there a package.json at the correct location?
+	 (when (file-exists? pkgjson)
+	    ;; is there a corresponding builtin package?
+	    (let ((md5 (md5sum (call-with-input-file pkgjson read-string))))
+	       (trace-item "md5=" md5)
+	       (with-trace 'sofile "builtin-find-sofile.find"
+		  (let ((dir (make-file-name (nodejs-modules-directory) "@hop")))
+		     (trace-item "dir=" dir)
+		     (let ((broot (make-file-path dir pkgname)))
+			(trace-item "broot=" broot)
+			(when (and (directory? broot) (not (string=? root broot)))
+			   (let ((bpkgjson (make-file-name broot "package.json")))
+			      (trace-item "bpkgjson=" bpkgjson)
+			      (with-handler
+				 (lambda (e)
+				    #f)
+				 (when (string=? md5
+					  (md5sum (call-with-input-file bpkgjson read-string)))
+				    ;; the two package.json are the same
+				    (let ((sofile (hop-find-sofile (make-file-path broot subdir base) :ignore-age #t)))
+				       (trace-item "sofile=" sofile)
+				       (when (file-exists? sofile)
+					  sofile))))))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-find-sofile ...                                           */
+;*---------------------------------------------------------------------*/
+(define (nodejs-find-sofile filename #!key suffix)
+   (or (builtin-find-sofile filename :suffix suffix)
+       (hop-find-sofile filename :suffix suffix)))
+
+;*---------------------------------------------------------------------*/
 ;*    find-new-sofile ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (find-new-sofile filename::bstring worker-slave #!optional enable-cache)
    (with-trace 'sofile "find-new-sofile"
       (trace-item "filename=" filename)
       (when (or (hop-cache-enable) enable-cache)
-	 (let ((sopath (hop-find-sofile filename
+	 (let ((sopath (nodejs-find-sofile filename
 			  :suffix (if worker-slave "_w" ""))))
 	    (trace-item "sopath=" sopath)
 	    (match-case sopath
 	       ((? string?)
 		(trace-item "sopa.mtime=" (file-modification-time sopath))
 		(trace-item "file.mtime=" (file-modification-time filename))
-		(when (>= (file-modification-time sopath)
-			 (file-modification-time filename))
+		(when (or (>= (file-modification-time sopath)
+			     (file-modification-time filename))
+			  (string-prefix? (nodejs-modules-directory) sopath))
 		   sopath))
 	       ((error . ?path)
 		(trace-item "sopa.mtime=" (file-modification-time path))
