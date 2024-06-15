@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Mon May 27 16:36:03 2024 (serrano)                */
+;*    Last change :  Sat Jun 15 08:12:27 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for client side code).                                   */
@@ -539,7 +539,7 @@
 	       ((isa? this J2SSvc)
 		;; a service
 		(list this (svc funid body)))
-	       ((eq? idthis '%)
+	       ((isa? this J2SArrow)
 		;; an arrow function
 		(cons* this (if async "(async " "(")
 		   (append

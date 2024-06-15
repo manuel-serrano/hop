@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu May  6 07:37:36 2021                          */
-;*    Last change :  Fri Jun 14 16:17:48 2024 (serrano)                */
+;*    Last change :  Sat Jun 15 07:39:40 2024 (serrano)                */
 ;*    Copyright   :  2021-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    A list of functions that traverse the AST after the parsing to   */
@@ -44,9 +44,9 @@
    (call-default-walker))
 
 (define-walk-method (mode-fun! this::J2SVarDecls mode)
-   (tprint "IN VARDECLS...")
-   (with-access::J2SVarDecls this (decls)
-      (tprint (map typeof decls)))
+;*    (tprint "IN VARDECLS...")                                        */
+;*    (with-access::J2SVarDecls this (decls)                           */
+;*       (tprint (map typeof decls)))                                  */
    (with-handler
       (lambda (err)
 	 (tprint "VARDECLS ERROR...")
@@ -54,9 +54,9 @@
       (call-default-walker)))
 
 (define-walk-method (mode-fun! this::J2SLetBlock mode)
-   (tprint "IN LETBLOCK...")
-   (with-access::J2SLetBlock this (decls)
-      (tprint (map typeof decls)))
+;*    (tprint "IN LETBLOCK...")                                        */
+;*    (with-access::J2SLetBlock this (decls)                           */
+;*       (tprint (map typeof decls)))                                  */
    (with-handler
       (lambda (err)
 	 (tprint "LETBLOCK ERROR...")

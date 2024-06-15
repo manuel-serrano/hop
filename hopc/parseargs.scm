@@ -679,7 +679,7 @@
 				(print
 				   (make-file-path
 				      (cdr (assq '--version configs))
-				      (cdr (assq '--build-id configs))
+				      (cdr (assq '--build-tag configs))
 				      (cdr (assq '--build-arch configs)))))
 			       (else
 				(error "hopc"

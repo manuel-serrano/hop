@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Tue Jun  4 11:34:53 2024 (serrano)                */
+;*    Last change :  Sat Jun 15 08:22:28 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -2085,8 +2085,8 @@
 		    ((eq? next '=>)
 		     (export-decl (async-declaration token)))
 		    (else
-		     (parse-token-error "Illegal export declaration" next)))
-		 (parse-token-error "Illegal export declaration" next))))
+		     (parse-token-error "Illegal export declaration" (peek-token))))
+		 (parse-token-error "Illegal export declaration" (peek-token)))))
 	 (else
 	  (parse-token-error "Illegal export declaration" (peek-token)))))
 
