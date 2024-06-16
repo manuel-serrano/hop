@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Sat Jun 15 10:32:02 2024 (serrano)                */
+;*    Last change :  Sun Jun 16 06:08:28 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -27,6 +27,8 @@
    (export (nodejs-hop-debug)
 	   (nodejs-modules-directory::bstring)
 	   (nodejs-modules-directory-set! ::bstring)
+	   (nodejs-loaders::pair-nil)
+	   (nodejs-loaders-set! ::pair-nil)
 	   (nodejs-file-paths::JsObject ::JsStringLiteral ::JsGlobalObject)
 	   (nodejs-new-module::JsObject ::bstring ::bstring ::WorkerHopThread ::JsGlobalObject)
 	   (node-module-paths ::JsObject ::JsGlobalObject)
@@ -153,6 +155,12 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter nodejs-modules-directory
    (make-file-path (hop-lib-directory) "hop" (hop-version) "node_modules"))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-loaders ...                                               */
+;*---------------------------------------------------------------------*/
+(define-parameter nodejs-loaders
+   '())
 
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
@@ -2132,6 +2140,10 @@
 						  (format "~s"
 						     (j2s-compile-options))))
 					  '())
+				    ;; loaders
+				    ,@(append-map (lambda (l)
+						     `("--loader" ,l))
+					 (nodejs-loaders))
 				    ;; other options
 				    ,@(call-with-input-string (hop-hopc-flags)
 					 port->string-list)))

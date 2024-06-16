@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Wed Jun  5 07:31:08 2024 (serrano)                */
+;*    Last change :  Sun Jun 16 06:09:12 2024 (serrano)                */
 ;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -35,7 +35,6 @@
 ;*    global configuration                                             */
 ;*---------------------------------------------------------------------*/
 (define source #f)
-(define loaders '())
 (define exprs '())
 (define options '())
 
@@ -145,7 +144,7 @@
 	 ;; install the command line loaders
 	 (trace-item "loaders=" (length loaders))
 	 (for-each (lambda (m) (nodejs-register-user-loader! %global m))
-	    loaders)
+	    (nodejs-loaders))
 	 
 	 ;; start JS execution
 	 (javascript-start-worker! %global %module %worker source)
@@ -230,9 +229,9 @@
 	  (j2s-compile-options-set!
 	     (cons* :source-map #t (j2s-compile-options))))
 	 (("--loader" ?module (help "Specify the module to use a custom module loader"))
-	  (set! loaders (cons module loaders)))
+	  (nodejs-loaders-set! (cons module (nodejs-loaders))))
 	 (("--experimental-loader=?module" (help "Specify the module to use a custom module loader"))
-	  (set! loaders (cons module loaders)))
+	  (nodejs-loaders-set! (cons module (nodejs-loaders))))
 	 (("--no-warnings" (help "Silence all process warnings"))
 	  (bigloo-warning-set! 0))
 	 ;; specific options
