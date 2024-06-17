@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Mon Jun 17 08:53:45 2024 (serrano)                */
+;*    Last change :  Mon Jun 17 17:56:46 2024 (serrano)                */
 ;*    Copyright   :  2014-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
@@ -835,7 +835,6 @@
 ;*    Load the nodejs library dynamically first.                       */
 ;*---------------------------------------------------------------------*/
 (define (hopc-loader-resolve)
-   (tprint "hopc-loader-resolve...")
    (when (pair? (hopc-j2s-loaders))
       (nowarning
 	 (lambda ()
@@ -847,26 +846,21 @@
 	       (bigloo-library-path-set! lpath)
 	       (unwind-protect
 		  (when (library-load-init 'nodejs lpath)
-		     (tprint "A")
 		     (library-load-init 'hopscript lpath)
-		     (tprint "B")
 		     (apply library-load 'hopscript lpath)
 		     (apply library-load 'nodejs lpath)
+		     (eval '((@ hopscript-install-expanders! __hopscript_expanders)))
 		     (multiple-value-bind (%worker %global %module)
 			(eval `(js-main-worker! "main"
 				  (format "hop-~a~a (~a)"
 				     (hop-version) (hop-minor-version) (hop-build-tag))
-				  #f
+				  #t
 				  nodejs-new-global-object nodejs-new-module :autostart #f))
-			(tprint "C")
 			(for-each (lambda (module)
-				     (tprint "module=" module " " (typeof %global))
 				     (eval `((@ nodejs-register-user-loader! __nodejs_require)
 					     ,%global ,module)))
 			   (hopc-j2s-loaders))
-			(tprint "D")
-			(eval '(javascript-start-worker! %global %module %worker source))
-			(tprint "E")
+			;;(eval '(javascript-start-worker! %global %module %worker source))
 			(eval `(nodejs-make-j2s-loader ,%global))))
 		  (bigloo-library-path-set! oldbglp)))))))
    
