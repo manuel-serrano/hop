@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Mon Jun 17 07:49:25 2024 (serrano)                */
+;*    Last change :  Mon Jun 17 08:53:45 2024 (serrano)                */
 ;*    Copyright   :  2014-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
@@ -835,6 +835,7 @@
 ;*    Load the nodejs library dynamically first.                       */
 ;*---------------------------------------------------------------------*/
 (define (hopc-loader-resolve)
+   (tprint "hopc-loader-resolve...")
    (when (pair? (hopc-j2s-loaders))
       (nowarning
 	 (lambda ()
@@ -851,16 +852,22 @@
 		     (tprint "B")
 		     (apply library-load 'hopscript lpath)
 		     (apply library-load 'nodejs lpath)
-		     (eval '((@ hopscript-install-expanders! __hopscript_expanders)))
-		     (tprint "C")
-		     (let ((%this (eval '(nodejs-new-global-object :name "hopc"))))
-		     (tprint "D")
+		     (multiple-value-bind (%worker %global %module)
+			(eval `(js-main-worker! "main"
+				  (format "hop-~a~a (~a)"
+				     (hop-version) (hop-minor-version) (hop-build-tag))
+				  #f
+				  nodejs-new-global-object nodejs-new-module :autostart #f))
+			(tprint "C")
 			(for-each (lambda (module)
+				     (tprint "module=" module " " (typeof %global))
 				     (eval `((@ nodejs-register-user-loader! __nodejs_require)
-					     ,%this ,module)))
+					     ,%global ,module)))
 			   (hopc-j2s-loaders))
+			(tprint "D")
+			(eval '(javascript-start-worker! %global %module %worker source))
 			(tprint "E")
-			(eval `(nodejs-make-j2s-loader ,%this))))
+			(eval `(nodejs-make-j2s-loader ,%global))))
 		  (bigloo-library-path-set! oldbglp)))))))
    
 ;*---------------------------------------------------------------------*/

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jul 16 07:56:29 2015                          */
-;*    Last change :  Mon Mar 23 15:45:35 2020 (serrano)                */
-;*    Copyright   :  2015-20 Manuel Serrano                            */
+;*    Last change :  Mon Jun 17 09:29:43 2024 (serrano)                */
+;*    Copyright   :  2015-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    A tool to produce the client-side HopScript class serializers    */
 ;*    -------------------------------------------------------------    */
@@ -16,7 +16,7 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module mkserializer
-   (library hop hopwidget hopscript nodejs js2scheme)
+   (library hop http hopwidget hopscript nodejs js2scheme)
    (main main))
 
 ;*---------------------------------------------------------------------*/

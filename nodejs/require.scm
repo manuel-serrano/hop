@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Mon Jun 17 07:46:48 2024 (serrano)                */
+;*    Last change :  Mon Jun 17 16:10:25 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -1692,6 +1692,7 @@
 			 ;; evaluate the module clause first
 			 (eval! (car expr))
 			 (let ((nexpr (map (lambda (x)
+					      (tprint "nodejs-compile x=" x)
 					      (eval `(expand ',x)))
 					 (cdr expr))))
 			    ;; the forms to be evaluated have to be expanded
@@ -2149,6 +2150,7 @@
 					 port->string-list)))
 			     (ksucc (make-ksucc sopath sopathtmp astfile))
 			     (kfail (make-kfail sopath sopathtmp astfile)))
+			 (tprint "CMD=" cmd)
 			 (make-directories (dirname sopath))
 			 (when astfile
 			    (call-with-output-file astfile
@@ -2283,6 +2285,7 @@
 	    " slave=" (if worker-slave #t #f))
 	 (let loop ((sopath (find-new-sofile filename worker-slave)))
 	    (trace-item "sopath=" sopath)
+	    (tprint "nodejs-load src=" src " sopath=" sopath " " (hop-sofile-enable) " " (hop-sofile-compile-policy))
 	    (cond
 	       ((and (string? sopath) (hop-sofile-enable))
 		(debug-load src sopath 1)
@@ -2308,6 +2311,7 @@
 		       :lang lang :commonjs-export commonjs-export
 		       :worker-slave worker-slave))
 		   (else
+		    (tprint "ici....")
 		    (nodejs-compile src filename %ctxthis %ctxmodule
 		       :lang lang :commonjs-export commonjs-export
 		       :worker-slave worker-slave))))
@@ -3398,14 +3402,18 @@
 		  loader-module #f global)))))
    
    (define (load-loader worker path)
+      (tprint "load-loader.1 " path)
       (with-trace 'loader "load-loader"
 	 (trace-item "path=" path)
 	 (with-access::WorkerHopThread worker (%this services)
 	    (let* ((mod (nodejs-load-module path worker %this loader-module
 			   :commonjs-export #f))
+		   (_ (tprint "load-loader.2 " path))
 		   (res (nodejs-module-namespace mod worker %this)))
+	       (tprint "load-loader.3 " path)
 	       (let ((resolve (js-get res (& "resolve") %this))
 		     (load (js-get res (& "load") %this)))
+		  (tprint "load-loader.4 " path)
 		  (set! services (list resolve load)))))))
    
    (let ((mutex (make-mutex))
@@ -3434,11 +3442,13 @@
 ;*      https://nodejs.org/docs/latest/api/module.html                 */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-register-user-loader! %this module)
+   (tprint "nodejs-register-user-loader..." module)
    (with-trace 'loader "nodejs-register-user-loader!"
       (trace-item "module=" module)
       (with-access::JsGlobalObject %this (worker)
 	 (with-access::WorkerHopThread worker (resolver)
 	    (set! resolver (make-resolver-worker module))))
+      (tprint "<<< nodejs-register-user-loader..." module)
       #unspecified))
 
 ;*---------------------------------------------------------------------*/
