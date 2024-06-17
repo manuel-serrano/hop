@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Sun Jun  9 06:48:20 2024 (serrano)                */
+;*    Last change :  Mon Jun 17 07:49:25 2024 (serrano)                */
 ;*    Copyright   :  2014-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
@@ -846,17 +846,22 @@
 	       (bigloo-library-path-set! lpath)
 	       (unwind-protect
 		  (when (library-load-init 'nodejs lpath)
+		     (tprint "A")
 		     (library-load-init 'hopscript lpath)
+		     (tprint "B")
 		     (apply library-load 'hopscript lpath)
 		     (apply library-load 'nodejs lpath)
 		     (eval '((@ hopscript-install-expanders! __hopscript_expanders)))
-		     (for-each (lambda (module)
-				  (eval `((@ nodejs-register-user-loader __nodejs_require) ,module)))
-			(hopc-j2s-loaders)))
-		  (bigloo-library-path-set! oldbglp)))
-	    (multiple-value-bind (%ctxworker %ctxthis %ctxmodule)
-	       (eval '(nodejs-command-line-dummy-module))
-	       (eval `(nodejs-make-j2s-loader ,%ctxthis)))))))
+		     (tprint "C")
+		     (let ((%this (eval '(nodejs-new-global-object :name "hopc"))))
+		     (tprint "D")
+			(for-each (lambda (module)
+				     (eval `((@ nodejs-register-user-loader! __nodejs_require)
+					     ,%this ,module)))
+			   (hopc-j2s-loaders))
+			(tprint "E")
+			(eval `(nodejs-make-j2s-loader ,%this))))
+		  (bigloo-library-path-set! oldbglp)))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    hopc-plugins-loader ...                                          */

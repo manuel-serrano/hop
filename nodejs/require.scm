@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Sun Jun 16 06:08:28 2024 (serrano)                */
+;*    Last change :  Mon Jun 17 07:46:48 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -2142,7 +2142,7 @@
 					  '())
 				    ;; loaders
 				    ,@(append-map (lambda (l)
-						     `("--loader" ,l))
+						     `("--js-loader" ,l))
 					 (nodejs-loaders))
 				    ;; other options
 				    ,@(call-with-input-string (hop-hopc-flags)
