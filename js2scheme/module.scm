@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 15 15:16:16 2018                          */
-;*    Last change :  Tue Jun 18 07:59:58 2024 (serrano)                */
+;*    Last change :  Tue Jun 18 08:14:15 2024 (serrano)                */
 ;*    Copyright   :  2018-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES6 Module handling                                              */
@@ -858,9 +858,9 @@
       (let* ((name (if (pair? cm) (car cm) cm))
 	     (base (if (pair? cm) (cdr cm) cm))
 	     (loc `(at ,(string-append name ".js") 0))
-	     (modir (config-get args :mo-dir
-		       (make-file-path (hop-lib-directory)
-			  "hop" (hop-version) "mo")))
+	     (modir (or (config-get args :mo-dir)
+			(make-file-path (hop-lib-directory)
+			   "hop" (hop-version) "mo")))
 	     (mo (make-file-name modir (string-append base ".mod.mo"))))
 	 (co-instantiate ((decl (instantiate::J2SDecl
 				   (id 'default)
