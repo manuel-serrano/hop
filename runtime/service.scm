@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Mon May 27 16:09:19 2024 (serrano)                */
+;*    Last change :  Tue Jun 18 12:47:04 2024 (serrano)                */
 ;*    Copyright   :  2006-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -403,12 +403,12 @@
 ;*    service-parse-request-get ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-generic (service-parse-request-get svc::hop-service req::http-request)
-   (with-trace 'service-parse-request "service-parse-request-get"
+   (with-trace 'service "service-parse-request-get"
       (with-access::http-request req (query path)
 	 (with-access::hop-service svc (id ctx)
 	    (if (string? query)
 		(let ((args (cgi-args->list query)))
-		   (trace-item "cgi-args=" args)
+		   (trace-item "encoding=" (if (pair? args) (car args) "???"))
 		   (match-case args
 		      ((("hop-encoding" . "hop") ("vals" . ?vals))
 		       (string->obj vals #f ctx))
@@ -434,19 +434,21 @@
 ;*    service-parse-request-put ...                                    */
 ;*---------------------------------------------------------------------*/
 (define (service-parse-request-put svc::hop-service req::http-request)
-   (with-access::http-request req (query abspath)
-      (with-access::hop-service svc (ctx)
-	 (if (string? query)
-	     (let ((args (cgi-args->list query)))
-		(match-case args
-		   ((("hop-encoding" . "hop") ("vals" . ?vals))
-		    (string->obj vals #f ctx))
-		   ((("hop-encoding" . "json") ("vals" . ?vals))
-		    (json-encoded->obj vals))
-		   (else
-		    (service-pack-cgi-arguments ctx svc
-		       (service-parse-request-get-args args)))))
-	     (service-pack-cgi-arguments ctx svc '())))))
+   (with-trace 'service "service-parse-request-put"
+      (with-access::http-request req (query abspath)
+	 (with-access::hop-service svc (ctx)
+	    (if (string? query)
+		(let ((args (cgi-args->list query)))
+		   (trace-item "encoding=" (if (pair? args) (car args) "???"))
+		   (match-case args
+		      ((("hop-encoding" . "hop") ("vals" . ?vals))
+		       (string->obj vals #f ctx))
+		      ((("hop-encoding" . "json") ("vals" . ?vals))
+		       (json-encoded->obj vals))
+		      (else
+		       (service-pack-cgi-arguments ctx svc
+			  (service-parse-request-get-args args)))))
+		(service-pack-cgi-arguments ctx svc '()))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    post-multipart->obj ...                                          */
@@ -557,7 +559,7 @@
 	 (substring ctype (string-length "multipart/form-data; boundary=")
 	    (string-length ctype))))
    
-   (with-trace 'service-parse-request "service-parse-request-post"
+   (with-trace 'service "service-parse-request-post"
       (with-access::http-request req (content-length header socket transfer-encoding)
 	 (let* ((pi (socket-input socket))
 		(ctype (http-header-field header content-type:)))
@@ -591,7 +593,6 @@
 			     (map multipart-arg-value args)))))))
 	       ((not (string? ctype))
 		(let ((enc (http-header-field header :hop-serialize)))
-		   (trace-item "enc=" enc)
 		   (cond
 		      ((string=? enc "json")
 		       (let ((args (http-header-field header :hop-arguments)))
@@ -627,7 +628,7 @@
 ;*    of these verbs, different encoding can be used by the caller.    */
 ;*---------------------------------------------------------------------*/
 (define (service-parse-request svc::hop-service req::http-request)
-   (with-trace 'service-parse-request "service-parser-request"
+   (with-trace 'service "service-parse-request"
       (with-access::http-request req (method path abspath query)
 	 (trace-item "path=" path)
 	 (trace-item "abspath=" (string-for-read abspath))
@@ -656,29 +657,31 @@
       (hop-verb 2 (hop-color req req " INVOKE.svc") " "
 	 (with-output-to-string (lambda () (write-circle (cons id vals))))
 	 "\n"))
-   
+
    (with-access::hop-service svc (id proc args ctx)
-      (invoke-trace req id vals)
-      (cond
-	 ((not vals)
-	  (error id "Illegal service arguments encoding" `(,id)))
-	 ((or (pair? vals) (null? vals))
-	  (if (correct-arity? proc (+fx 1 (length vals)))
-	      (let ((env (current-dynamic-env))
-		    (name id))
-		 ($env-push-trace env name #f)
-		 (let ((aux (apply proc req vals)))
-		    ($env-pop-trace env)
-		    aux))
-	      (error id
-		 (format "Wrong number of arguments (~a/~a)" (length vals)
-		    (-fx (procedure-arity proc) 1))
-		 `(,id ,@vals))))
-	 (else
-	  (error id
-	     (format "Wrong number of arguments (1/~a)"
-		(-fx (procedure-arity proc) 1))
-	     `(,id ,vals))))))
+      (with-trace 'service "service-invoke-apply"
+	 (trace-item "id=" id)
+	 (invoke-trace req id vals)
+	 (cond
+	    ((not vals)
+	     (error id "Illegal service arguments encoding" `(,id)))
+	    ((or (pair? vals) (null? vals))
+	     (if (correct-arity? proc (+fx 1 (length vals)))
+		 (let ((env (current-dynamic-env))
+		       (name id))
+		    ($env-push-trace env name #f)
+		    (let ((aux (apply proc req vals)))
+		       ($env-pop-trace env)
+		       aux))
+		 (error id
+		    (format "Wrong number of arguments (~a/~a)" (length vals)
+		       (-fx (procedure-arity proc) 1))
+		    `(,id ,@vals))))
+	    (else
+	     (error id
+		(format "Wrong number of arguments (1/~a)"
+		   (-fx (procedure-arity proc) 1))
+		`(,id ,vals)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    service-invoke-call ...                                          */

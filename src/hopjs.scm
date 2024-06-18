@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Tue Jun 18 10:16:37 2024 (serrano)                */
+;*    Last change :  Tue Jun 18 13:01:37 2024 (serrano)                */
 ;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -51,10 +51,6 @@
 	       (gc ($bgl-gc-verbose-set! #t))
 	       (else #unspecified))))
       
-      ;; debug traces
-      (when (getenv "BIGLOOTRACE")
-	 (bigloo-debug-set! 2))
-      
       ;; catch critical signals
       (signal-init!)
       
@@ -77,6 +73,10 @@
 	    (set! argv
 	       (append (call-with-input-string ho port->string-list) argv)))
 	 (parse-args! argv))
+      
+      ;; debug traces
+      (when (getenv "BIGLOOTRACE")
+	 (bigloo-debug-set! (maxfx (bigloo-debug) 2)))
       
       (nodejs-command-line-set!
 	 (if (string? source)

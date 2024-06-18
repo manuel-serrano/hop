@@ -3,13 +3,13 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Vincent Prunet                                    */
 /*    Creation    :  Fri Sep  4 18:43:00 2015                          */
-/*    Last change :  Sat May 22 06:57:00 2021 (serrano)                */
-/*    Copyright   :  2015-21 Inria                                     */
+/*    Last change :  Tue Jun 18 13:48:26 2024 (serrano)                */
+/*    Copyright   :  2015-24 Inria                                     */
 /*    -------------------------------------------------------------    */
 /*    Testing services, webSockets and Broadcast over http and https   */
 /*=====================================================================*/
 "use hopscript";
-		  
+
 setTimeout( function() {
    if( hop.compilerDriver.pending > 0 ) {
       hop.compilerDriver.addEventListener( "all", function( e ) {
@@ -30,7 +30,7 @@ function checkCompletion() {
 
 const assert = require( 'assert' );
 const hop = require( 'hop' );
-const config = require( hop.config );
+const config = require( '@hop/config' );
 
 const objectEqual = require( './aux/objectEqual.js' );
 

@@ -1,5 +1,4 @@
-var hop = require( 'hop' );
-var user = require( hop.user );
+import * as user from "@hop/user";
 
 // Bob is declared on the server
 user.add( {name: 'Bob', password: ( user.encryptPassword( 'Bob', 'secret') ), services: [ 'foo' ], directories: '*' } );

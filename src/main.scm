@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Thu Jun  6 13:39:05 2024 (serrano)                */
+;*    Last change :  Tue Jun 18 11:17:39 2024 (serrano)                */
 ;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -58,9 +58,6 @@
 	 (cond-expand
 	    (gc ($bgl-gc-verbose-set! #t))
 	    (else #unspecified))))
-   ;; debug traces
-   (when (getenv "BIGLOOTRACE")
-      (bigloo-debug-set! 2))
      ;; catch critical signals
    (signal-init!)
    ;; set the Hop cond-expand identification
@@ -92,6 +89,9 @@
 		      (cons (car args)
 			 (append opts (cdr args))))
 		   args)))
+	 ;; debug traces
+	 (when (getenv "BIGLOOTRACE")
+	    (bigloo-debug-set! (maxfx 2 (bigloo-debug))))
 	 ;; extent the require search path to the Hop autoload directories
 	 (nodejs-resolve-extend-path! (hop-autoload-directories))
 	 ;; install the builtin filters
@@ -159,8 +159,11 @@
 		   (security-close!)
 		   ;; wait for js init
 		   (when jsctx
-		      (users-close!)
-		      (hop-filters-close!)
+		      (js-worker-push! (jsctx-worker jsctx)
+			 "init"
+			 (lambda ()
+			    (users-close!)
+			    (hop-filters-close!)))
 		      (javascript-load-files files exprsjs jsctx)
 		      ;; start main js loop
 		      (with-access::WorkerHopThread (jsctx-worker jsctx) (mutex condv)
@@ -186,8 +189,11 @@
 		   (when jsctx
 		      (thread-join! (jsctx-worker jsctx))))
 		  (jsctx
-		   (users-close!)
-		   (hop-filters-close!)
+		   (js-worker-push! (jsctx-worker jsctx)
+		      "init"
+		      (lambda ()
+			 (users-close!)
+			 (hop-filters-close!)))
 		   (javascript-load-files files exprsjs jsctx)
 		   ;; start zeroconf
 		   (when (hop-enable-zeroconf) (init-zeroconf!))

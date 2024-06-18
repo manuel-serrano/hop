@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Vincent Prunet                                    */
 /*    Creation    :  Mon Sep  7 15:00:00 2015                          */
-/*    Last change :  Sat May 22 06:24:17 2021 (serrano)                */
-/*    Copyright   :  2015-21 Inria                                     */
+/*    Last change :  Tue Jun 18 11:22:00 2024 (serrano)                */
+/*    Copyright   :  2015-24 Inria                                     */
 /*    -------------------------------------------------------------    */
 /*    Testing the user module                                          */
 /*=====================================================================*/
@@ -12,11 +12,11 @@
 
 console.log( 'loading test module authentication.js' );
 
-const hop = require( 'hop' );
-const assert = require( 'assert' );
-const user = require( 'user' );
+import * as assert from "assert";
+import * as user from "@hop/user";
 
 service foo( who ) {
+#:tprint("who=", who);
    console.log( 'service foo, user %s', who );
    console.log( 'header', this.header.authorization );
    return who;

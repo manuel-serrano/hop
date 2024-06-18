@@ -1,5 +1,4 @@
-var hop = require( 'hop' );
-var config = require( hop.config );
+import * as config from "@hop/config";
 
 console.log( 'http: %s, https: %s', config.HTTPPort, config.HTTPSPort );
 require( './http.js' );

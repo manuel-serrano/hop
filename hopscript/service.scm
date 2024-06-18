@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Sat May 25 08:02:38 2024 (serrano)                */
+;*    Last change :  Tue Jun 18 11:33:55 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -613,13 +613,16 @@
 ;*    js-make-hopframe ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (js-make-hopframe %this::JsGlobalObject srv path args)
-   (with-access::JsGlobalObject %this (js-hopframe-prototype js-object js-server)
-      (instantiateJsHopFrame
-	 (__proto__ js-hopframe-prototype)
-	 (%this %this)
-	 (srv srv)
-	 (path path)
-	 (args args))))
+   (with-trace 'service "js-make-hopframe"
+      (trace-item "path=" path)
+      (trace-item "args=" (typeof args))
+      (with-access::JsGlobalObject %this (js-hopframe-prototype js-object js-server)
+	 (instantiateJsHopFrame
+	    (__proto__ js-hopframe-prototype)
+	    (%this %this)
+	    (srv srv)
+	    (path path)
+	    (args args)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    service-apply-url ...                                            */
@@ -669,29 +672,33 @@
 ;*    hopframe->string ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (hopframe->string::bstring frame::JsHopFrame %this)
-   (with-access::JsHopFrame frame (srv path args)
-      (let ((sans-srv (cond
-			 ((not (pair? args))
-			  path)
-			 (else
-			  (service-apply-url path args %this)))))
-	 (cond
-	    ((isa? srv JsServer)
-	     (with-access::JsServer srv (obj)
-		(with-access::server obj (ssl host port authorization)
-		   (let ((scheme (if ssl "https" "http")))
-		      (if authorization
-			  (format "~a://~a:~a:~a~a" scheme
-			     authorization host port sans-srv)
-			  (format "~a://~a:~a~a" scheme
-			     host port sans-srv))))))
-	    ((and (js-object? srv) (js-get srv (& "schema") %this))
-	     =>
-	     (lambda (getter)
-		(let ((schema (js-call0 %this getter srv)))
-		   (string-append (js-tostring schema %this) sans-srv))))
-	    (else
-	     sans-srv)))))
+   (with-trace 'with-hop "hopframe->string"
+      (with-access::JsHopFrame frame (srv path args)
+	 (trace-item "path=" path)
+	 (trace-item "srv=" srv)
+	 (trace-item "args=" (typeof args))
+	 (let ((sans-srv (cond
+			    ((not (pair? args))
+			     path)
+			    (else
+			     (service-apply-url path args %this)))))
+	    (cond
+	       ((isa? srv JsServer)
+		(with-access::JsServer srv (obj)
+		   (with-access::server obj (ssl host port authorization)
+		      (let ((scheme (if ssl "https" "http")))
+			 (if authorization
+			     (format "~a://~a:~a:~a~a" scheme
+				authorization host port sans-srv)
+			     (format "~a://~a:~a~a" scheme
+				host port sans-srv))))))
+	       ((and (js-object? srv) (js-get srv (& "schema") %this))
+		=>
+		(lambda (getter)
+		   (let ((schema (js-call0 %this getter srv)))
+		      (string-append (js-tostring schema %this) sans-srv))))
+	       (else
+		sans-srv))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    post ...                                                         */
@@ -720,42 +727,45 @@
 	    (js-tostring v %this))))
    
    (define (post-request-thread name %this callback fail scheme host port auth)
-      (with-access::JsHopFrame this (path args header options)
-	 (let ((user (js-get-string options (& "user")))
-	       (password (js-get-string options (& "password")))
-	       (header (when header (js-jsobject->alist header %this)))
-	       (args (map multipart-form-arg args))
-	       (receiver (lambda (ctx thunk)
-			    (with-access::JsGlobalObject ctx (worker)
-			       (js-worker-exec worker path
-				  (lambda (%this) (thunk)))))))
-	    (thread-start!
-	       (instantiate::hopthread
-		  (name name)
-		  (body (lambda ()
-			   (with-handler
-			      (lambda (e)
-				 (exception-notify e)
-				 (with-access::JsGlobalObject %this (worker)
-				    (js-worker-exec worker path
-				       (lambda (%this)
-					  (fail e)))))
-			      (with-hop-remote path callback fail
-				 :scheme scheme
-				 :host host :port port 
-				 :user user :password password
-				 :authorization auth
-				 :header header
-				 :ctx %this
-				 :receiver receiver
-				 :json-parser json-parser
-				 :x-javascript-parser x-javascript-parser
-				 :connection-timeout (hop-connection-timeout)
-				 :args args))))))
-	    (js-undefined))))
+      (with-trace 'with-hop "post.post-request-thread"
+	 (with-access::JsHopFrame this (path args header options)
+	    (let ((user (js-get-string options (& "user")))
+		  (password (js-get-string options (& "password")))
+		  (header (when header (js-jsobject->alist header %this)))
+		  (args (map multipart-form-arg args))
+		  (receiver (lambda (ctx thunk)
+			       (with-access::JsGlobalObject ctx (worker)
+				  (js-worker-exec worker path
+				     (lambda (%this) (thunk)))))))
+	       (trace-item "header=" header)
+	       (trace-item "args=" args)
+	       (thread-start!
+		  (instantiate::hopthread
+		     (name name)
+		     (body (lambda ()
+			      (with-handler
+				 (lambda (e)
+				    (exception-notify e)
+				    (with-access::JsGlobalObject %this (worker)
+				       (js-worker-exec worker path
+					  (lambda (%this)
+					     (fail e)))))
+				 (with-hop-remote path callback fail
+				    :scheme scheme
+				    :host host :port port 
+				    :user user :password password
+				    :authorization auth
+				    :header header
+				    :ctx %this
+				    :receiver receiver
+				    :json-parser json-parser
+				    :x-javascript-parser x-javascript-parser
+				    :connection-timeout (hop-connection-timeout)
+				    :args args))))))
+	       (js-undefined)))))
    
    (define (post-server-promise this %this host port auth scheme)
-      (with-trace 'with-hop "post-server-promise"
+      (with-trace 'with-hop "post.post-server-promise"
 	 (with-access::JsGlobalObject %this (js-promise)
 	    (letrec* ((callback (lambda (x)
 				   (js-promise-async p
@@ -775,7 +785,7 @@
 	       p))))
    
    (define (post-server-async this success failure %this host port auth scheme)
-      (with-trace 'with-hop "post-server-async"
+      (with-trace 'with-hop "post.post-server-async"
 	 (with-access::JsHopFrame this (path)
 	    (trace-item "path=" path)
 	    (with-access::JsGlobalObject %this (worker)
@@ -790,7 +800,7 @@
 		     %this callback fail scheme host port auth))))))
    
    (define (post-server-sync this %this host port auth scheme)
-      (with-trace 'with-hop "post-server-sync"
+      (with-trace 'with-hop "post.post-server-sync"
 	 (with-access::JsHopFrame this (path args header options)
 	    (trace-item "path=" path)
 	    (let ((receiver (lambda (ctx thunk)
@@ -811,13 +821,16 @@
 		  :args (map multipart-form-arg args))))))
    
    (define (post-server this success failure %this async host port auth scheme)
-      (cond
-	 ((not async)
-	  (post-server-sync this %this host port auth scheme))
-	 ((or (js-procedure? success) (js-procedure? failure))
-	  (post-server-async this success failure %this host port auth scheme))
-	 (else
-	  (post-server-promise this %this host port auth scheme))))
+      (with-trace 'with-hop "post.post-server"
+	 (trace-item "success=" success)
+	 (trace-item "failure=" failure)
+	 (cond
+	    ((not async)
+	     (post-server-sync this %this host port auth scheme))
+	    ((or (js-procedure? success) (js-procedure? failure))
+	     (post-server-async this success failure %this host port auth scheme))
+	    (else
+	     (post-server-promise this %this host port auth scheme)))))
    
    (define (post-websocket-promise this::JsHopFrame srv::JsWebSocket)
       (with-access::JsWebSocket srv (recvqueue)
@@ -881,8 +894,11 @@
 		  (else
 		   (post-websocket-promise this srv)))))))
 
-   (with-trace 'with-hop "with-hop"
-      (with-access::JsHopFrame this (srv)
+   (with-trace 'with-hop "post"
+      (with-access::JsHopFrame this (srv path args)
+	 (trace-item "path=" path)
+	 (trace-item "srv=" srv)
+	 (trace-item "args=" (typeof args))
 	 (cond
 	    ((isa? srv JsServer)
 	     (with-access::JsServer srv (obj)
@@ -913,140 +929,142 @@
 ;*    post-options-deprecated ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (post-options-deprecated svc::bstring args success opt %this async)
-   (let ((host "localhost")
-	 (port (hop-default-port))
-	 (user #f)
-	 (password #f)
-	 (authorization #f)
-	 (fail #f)
-	 (failjs #f)
-	 (asynchronous async)
-	 (header #f)
-	 (scheme 'http)
-	 (worker (js-current-worker)))
-      (cond
-	 ((js-procedure? opt)
-	  (set! fail
-	     (if asynchronous
-		 (lambda (obj)
-		    (js-worker-push! worker svc
-		       (lambda (%this)
-			  (js-call1 %this opt %this obj))))
-		 (lambda (obj)
-		    (js-call1 %this opt %this obj)))))
-	 ((not (eq? opt (js-undefined)))
-	  (let* ((v (js-get opt (& "server") %this))
-		 (o (if (eq? v (js-undefined)) opt v))
-		 (a (js-get o (& "authorization") %this))
-		 (h (js-get o (& "host") %this))
-		 (p (js-get o (& "port") %this))
-		 (u (js-get opt (& "user") %this))
-		 (w (js-get opt (& "password") %this))
-		 (f (js-get opt (& "fail") %this))
-		 (y (js-get opt (& "asynchronous") %this))
-		 (s (js-get opt (& "scheme") %this))
-		 (c (js-get opt (& "ssl") %this))
-		 (r (js-get opt (& "header") %this)))
-	     (unless (eq? h (js-undefined))
-		(set! host (js-tostring h %this)))
-	     (unless (eq? p (js-undefined))
-		(set! port (js-tointeger p %this)))
-	     (unless (eq? u (js-undefined))
-		(set! user (js-tostring u %this)))
-	     (unless (eq? w (js-undefined))
-		(set! password (js-tostring w %this)))
-	     (unless (eq? a (js-undefined))
-		(set! authorization (js-tostring a %this)))
-	     (unless (js-totest y)
-		(when (js-in? opt (& "asynchronous") %this)
-		   (set! asynchronous #f)))
-	     (when (js-totest c)
-		(set! scheme 'https))
-	     (unless (eq? s (js-undefined))
-		(set! scheme (string->symbol (js-tostring s %this))))
-	     (when (js-procedure? f)
-		(set! failjs f)
-		(set! fail
-		   (lambda (obj)
-		      (if asynchronous
-			  (js-worker-push! worker svc
-			     (lambda (%this)
-				(js-call1 %this f %this obj)))
-			  (js-call1 %this f %this obj)))))
-	     (when (js-object? r)
-		(set! header (js-jsobject->alist r %this))))))
-
-      (define (scheme->js val)
-	 (js-obj->jsobject val %this))
-      
-      (define (post-request callback)
-	 (let ((receiver (lambda (ctx thunk)
-			    (with-access::JsGlobalObject ctx (worker)
-			       (js-worker-exec worker svc
-				  (lambda (%this) (thunk)))))))
-	    (with-hop-remote svc callback fail
-	       :scheme scheme
-	       :host host :port port 
-	       :user user :password password :authorization authorization
-	       :header header
-	       :ctx %this
-	       :receiver receiver
-	       :json-parser json-parser
-	       :x-javascript-parser x-javascript-parser
-	       :args args)))
-
-      (define (spawn-thread)
-	 (thread-start!
-	    (instantiate::hopthread
-	       (name "spawn-thread-deprecated")
-	       (body (lambda ()
-			(with-handler
-			   (lambda (e)
-			      (exception-notify e)
-			      (if failjs
-				  (js-worker-push! worker svc
-				     (lambda (%this)
-					(js-call1 %this failjs %this e)))
-				  (begin
-				     (exception-notify e)
-				     (display "This error has been notified because no error\n" (current-error-port))
-				     (display "handler was provided for the post invocation.\n" (current-error-port)))))
-			   (post-request
-			      (lambda (x)
-				 (js-call1 %this success %this
-				    (scheme->js x)))))))))
-	 (js-undefined))
-
-      (define (spawn-promise)
-	 (with-access::JsGlobalObject %this (js-promise)
-	    (js-new %this js-promise
-	       (js-make-function %this
-		  (lambda (this resolve reject)
-		     (set! fail
-			(lambda (obj)
-			   (js-call1 %this reject %this obj)))
-		     (thread-start!
-			(instantiate::hopthread
-			   (name "spawn-promise-deprecated")
-			   (body (lambda ()
-				    (with-handler
-				       (lambda (e)
-					  (js-call1 %this reject %this e))
-				       (post-request
-					  (lambda (x)
-					     (js-call1 %this resolve %this
-						(scheme->js x))))))))))
-		  (js-function-arity 2 0)
-		  (js-function-info :name "executor" :len 2)))))
-
-      (if asynchronous
-	  (if (js-procedure? success)
-	      (spawn-thread)
-	      (spawn-promise))
-	  (post-request
+   (with-trace 'with-hop "post-options-deprecated"
+      (trace-item "svc=" svc)
+      (let ((host "localhost")
+	    (port (hop-default-port))
+	    (user #f)
+	    (password #f)
+	    (authorization #f)
+	    (fail #f)
+	    (failjs #f)
+	    (asynchronous async)
+	    (header #f)
+	    (scheme 'http)
+	    (worker (js-current-worker)))
+	 (cond
+	    ((js-procedure? opt)
+	     (set! fail
+		(if asynchronous
+		    (lambda (obj)
+		       (js-worker-push! worker svc
+			  (lambda (%this)
+			     (js-call1 %this opt %this obj))))
+		    (lambda (obj)
+		       (js-call1 %this opt %this obj)))))
+	    ((not (eq? opt (js-undefined)))
+	     (let* ((v (js-get opt (& "server") %this))
+		    (o (if (eq? v (js-undefined)) opt v))
+		    (a (js-get o (& "authorization") %this))
+		    (h (js-get o (& "host") %this))
+		    (p (js-get o (& "port") %this))
+		    (u (js-get opt (& "user") %this))
+		    (w (js-get opt (& "password") %this))
+		    (f (js-get opt (& "fail") %this))
+		    (y (js-get opt (& "asynchronous") %this))
+		    (s (js-get opt (& "scheme") %this))
+		    (c (js-get opt (& "ssl") %this))
+		    (r (js-get opt (& "header") %this)))
+		(unless (eq? h (js-undefined))
+		   (set! host (js-tostring h %this)))
+		(unless (eq? p (js-undefined))
+		   (set! port (js-tointeger p %this)))
+		(unless (eq? u (js-undefined))
+		   (set! user (js-tostring u %this)))
+		(unless (eq? w (js-undefined))
+		   (set! password (js-tostring w %this)))
+		(unless (eq? a (js-undefined))
+		   (set! authorization (js-tostring a %this)))
+		(unless (js-totest y)
+		   (when (js-in? opt (& "asynchronous") %this)
+		      (set! asynchronous #f)))
+		(when (js-totest c)
+		   (set! scheme 'https))
+		(unless (eq? s (js-undefined))
+		   (set! scheme (string->symbol (js-tostring s %this))))
+		(when (js-procedure? f)
+		   (set! failjs f)
+		   (set! fail
+		      (lambda (obj)
+			 (if asynchronous
+			     (js-worker-push! worker svc
+				(lambda (%this)
+				   (js-call1 %this f %this obj)))
+			     (js-call1 %this f %this obj)))))
+		(when (js-object? r)
+		   (set! header (js-jsobject->alist r %this))))))
+	 
+	 (define (scheme->js val)
+	    (js-obj->jsobject val %this))
+	 
+	 (define (post-request callback)
+	    (let ((receiver (lambda (ctx thunk)
+			       (with-access::JsGlobalObject ctx (worker)
+				  (js-worker-exec worker svc
+				     (lambda (%this) (thunk)))))))
+	       (with-hop-remote svc callback fail
+		  :scheme scheme
+		  :host host :port port 
+		  :user user :password password :authorization authorization
+		  :header header
+		  :ctx %this
+		  :receiver receiver
+		  :json-parser json-parser
+		  :x-javascript-parser x-javascript-parser
+		  :args args)))
+	 
+	 (define (spawn-thread)
+	    (thread-start!
+	       (instantiate::hopthread
+		  (name "spawn-thread-deprecated")
+		  (body (lambda ()
+			   (with-handler
+			      (lambda (e)
+				 (exception-notify e)
+				 (if failjs
+				     (js-worker-push! worker svc
+					(lambda (%this)
+					   (js-call1 %this failjs %this e)))
+				     (begin
+					(exception-notify e)
+					(display "This error has been notified because no error\n" (current-error-port))
+					(display "handler was provided for the post invocation.\n" (current-error-port)))))
+			      (post-request
+				 (lambda (x)
+				    (js-call1 %this success %this
+				       (scheme->js x)))))))))
+	    (js-undefined))
+	 
+	 (define (spawn-promise)
+	    (with-access::JsGlobalObject %this (js-promise)
+	       (js-new %this js-promise
+		  (js-make-function %this
+		     (lambda (this resolve reject)
+			(set! fail
+			   (lambda (obj)
+			      (js-call1 %this reject %this obj)))
+			(thread-start!
+			   (instantiate::hopthread
+			      (name "spawn-promise-deprecated")
+			      (body (lambda ()
+				       (with-handler
+					  (lambda (e)
+					     (js-call1 %this reject %this e))
+					  (post-request
+					     (lambda (x)
+						(js-call1 %this resolve %this
+						   (scheme->js x))))))))))
+		     (js-function-arity 2 0)
+		     (js-function-info :name "executor" :len 2)))))
+	 
+	 (if asynchronous
 	     (if (js-procedure? success)
-		 (lambda (x) (js-call1 %this success %this (scheme->js x)))
-		 scheme->js)))))      
+		 (spawn-thread)
+		 (spawn-promise))
+	     (post-request
+		(if (js-procedure? success)
+		    (lambda (x) (js-call1 %this success %this (scheme->js x)))
+		    scheme->js))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-create-service ...                                            */
@@ -1103,9 +1121,9 @@
 			       (with-access::hop-service svc (path)
 				  (js-make-hopframe %this this path vals))))
 		      (proc (if (js-procedure? impl)
-				(lambda (req . args)
+				(lambda (req args)
 				   (js-apply %this impl req args))
-				(lambda (this . args)
+				(lambda (this args)
 				   (js-undefined))))
 		      (handler (if (>fx (bigloo-debug) 0)
 				   (lambda (svc req)
@@ -1391,9 +1409,17 @@
 ;*    js-service-parser-request ...                                    */
 ;*---------------------------------------------------------------------*/
 (define (js-service-parse-request %this svc req)
-   (with-access::http-request req (path abspath)
-      (let ((args (service-parse-request svc req)))
-	 (js-obj->jsobject args %this))))
+   (with-trace 'service "js-parse-request"
+      (with-access::http-request req (path abspath)
+	 (trace-item "path=" path)
+	 (let ((args (service-parse-request svc req)))
+	    (trace-item "args=" args)
+	    (let ((jsargs (js-obj->jsobject args %this)))
+	       (trace-item "jsargs=" (typeof jsargs))
+	       (cond
+		  ((pair? jsargs) jsargs)
+		  ((null? jsargs) '())
+		  (else (list jsargs))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    &end!                                                            */
