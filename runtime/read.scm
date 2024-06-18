@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Sat Jun 15 18:14:28 2024 (serrano)                */
+;*    Last change :  Tue Jun 18 10:15:45 2024 (serrano)                */
 ;*    Copyright   :  2005-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -1096,12 +1096,17 @@
 ;*    hop-sofile-cache-path ...                                        */
 ;*---------------------------------------------------------------------*/
 (define (hop-sofile-cache-path path #!key (suffix "") root)
-   (make-file-path
-      (hop-cache-directory)
-      (hop-so-dirname)
-      (if (string? root)
-	  (hop-soname (substring path (+fx (string-length root) 1)) suffix)
-	  (hop-soname path suffix))))
+   (if (hop-cache-enable)
+       (make-file-path
+	  (hop-cache-directory)
+	  (hop-so-dirname)
+	  (if (string? root)
+	      (hop-soname (substring path (+fx (string-length root) 1)) suffix)
+	      (hop-soname path suffix)))
+       (make-file-path
+	  (dirname path)
+	  (hop-so-dirname)
+	  (string-append (prefix (basename path)) (so-suffix)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-current-sobase ...                                           */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Sun Jun 16 06:09:12 2024 (serrano)                */
+;*    Last change :  Tue Jun 18 10:16:37 2024 (serrano)                */
 ;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -210,9 +210,15 @@
       (print "Default configuration:")
       (print "   - rc-dir: " (hop-rc-directory)))
    
-   (let ((l (getenv "BIGLOODEBUG")))
-      (when (string? l)
-	 (bigloo-debug-set! (string->integer l))))
+   (let ((d (getenv "BIGLOODEBUG")))
+      (when (string? d)
+	 (bigloo-debug-set! (string->integer d))))
+   
+   (let ((d (getenv "NODE_DEBUG")))
+      (when (string? d)
+	 (let ((l (filter integer? (map string->number (string-split d #\,)))))
+	    (when (pair? l)
+	       (bigloo-debug-set! (car l))))))
    
    (bind-exit (stop)
       (args-parse args
@@ -242,6 +248,8 @@
 			  (delete-path cache)))
 	     (list (make-cache-name)
 		(hop-cache-directory))))
+	 (("--compilation-cache" ?bool (help "Do not use so caches"))
+	  (hop-cache-enable-set! (member bool '("yes" "on" "true" "enable"))))
 	 (section "Hopc options")
 	 (("-g?level" (help "Debug level"))
 	  (hop-sofile-enable-set! #f)
