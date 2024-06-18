@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Mon Jun 17 17:56:46 2024 (serrano)                */
+;*    Last change :  Tue Jun 18 07:42:54 2024 (serrano)                */
 ;*    Copyright   :  2014-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
@@ -265,6 +265,7 @@
 			:long-size (hopc-long-size)
 			:int-size (hopc-int-size)
 			:sofile-dir (hopc-sofile-dir)
+			:mo-dir (hopc-mo-dir)
 			:debug (bigloo-debug)
 			:warning (bigloo-warning)
 			:node-modules-directory (hopc-node-modules-directory)
@@ -302,6 +303,7 @@
 			:long-size (hopc-long-size)
 			:int-size (hopc-int-size)
 			:sofile-dir (hopc-sofile-dir)
+			:mo-dir (hopc-mo-dir)
 			:debug (bigloo-debug)
 			:warning (bigloo-warning)
 			:loader-resolve (hopc-loader-resolve)
@@ -556,6 +558,7 @@
 			      :long-size (hopc-long-size)
 			      :int-size (hopc-int-size)
 			      :sofile-dir (hopc-sofile-dir)
+			      :mo-dir (hopc-mo-dir)
 			      :debug (bigloo-debug)
 			      :warning (bigloo-warning)
 			      :function-nice-name (string? temp)

@@ -187,6 +187,8 @@
 		(cons* "-lib-dir" dir (hopc-bigloo-options))))
 	    (("--hop-lib-dir=?dir" (help "Set the Hop library path (for bootstrapping)"))
 	     (hopc-hop-lib-dir-set! dir))
+	    (("--mo-dir=?dir" (help "Set the mo directory (for bootstrapping)"))
+	     (hopc-mo-dir-set! dir))
 	    (("--reset-bigloo-options" (help "Reset all Bigloo options"))
 	     (hopc-bigloo-options-set! '()))
 	    ((("-a" "--afile") ?file (help "Set access file"))

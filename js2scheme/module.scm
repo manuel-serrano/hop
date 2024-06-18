@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 15 15:16:16 2018                          */
-;*    Last change :  Thu Jun 13 07:50:31 2024 (serrano)                */
+;*    Last change :  Tue Jun 18 07:59:58 2024 (serrano)                */
 ;*    Copyright   :  2018-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES6 Module handling                                              */
@@ -529,7 +529,7 @@
 	       (raise e)))
 	 (let ((resolve (config-get args :loader-resolve)))
 	    (cond
-	       ((core-module? name)
+	       ((core-module? name args)
 		(cons name 'core))
 	       (resolve
 		(let ((p (resolve name from paths)))
@@ -680,7 +680,7 @@
       (trace-item "name=" name)
       (let loop ((name name))
 	 (cond
-	    ((core-module? name)
+	    ((core-module? name args)
 	     (cons name 'core))
 	    ((or (string-prefix? "http://" name)
 		 (string-prefix? "https://" name))
@@ -714,8 +714,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    core-module? ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (core-module? name)
-   (open-string-hashtable-get (get-core-modules) name))
+(define (core-module? name args)
+   (open-string-hashtable-get (get-core-modules args) name))
 
 ;*---------------------------------------------------------------------*/
 ;*    module-cache                                                     */
@@ -839,15 +839,15 @@
 ;*---------------------------------------------------------------------*/
 ;*    get-core-modules ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (get-core-modules)
+(define (get-core-modules args)
    (unless core-modules
-      (esimport-init-core-modules!))
+      (esimport-init-core-modules! args))
    core-modules)
 	   
 ;*---------------------------------------------------------------------*/
 ;*    esimport-init-core-modules! ...                                  */
 ;*---------------------------------------------------------------------*/
-(define (esimport-init-core-modules!)
+(define (esimport-init-core-modules! args)
    
    (define (read-mo path)
       (call-with-input-file path
@@ -858,9 +858,10 @@
       (let* ((name (if (pair? cm) (car cm) cm))
 	     (base (if (pair? cm) (cdr cm) cm))
 	     (loc `(at ,(string-append name ".js") 0))
-	     (mo (make-file-path (hop-lib-directory)
-		    "hop" (hop-version) "mo"
-		    (string-append base ".mod.mo"))))
+	     (modir (config-get args :mo-dir
+		       (make-file-path (hop-lib-directory)
+			  "hop" (hop-version) "mo")))
+	     (mo (make-file-name modir (string-append base ".mod.mo"))))
 	 (co-instantiate ((decl (instantiate::J2SDecl
 				   (id 'default)
 				   (loc loc)
