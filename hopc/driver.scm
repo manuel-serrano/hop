@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Tue Jun 18 07:42:54 2024 (serrano)                */
+;*    Last change :  Wed Jun 19 15:24:19 2024 (serrano)                */
 ;*    Copyright   :  2014-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
@@ -230,6 +230,7 @@
 			 (pp mod out)
 			 (pp `(define the-loading-file
 				 (let ((file (hop-sofile-rebase ,(sobase-path fname))))
+				    (tprint "FILE=" file)
 				    (lambda ()
 				       file)))
 			    out)
@@ -651,7 +652,7 @@
 
       (define (dest-opts dest opts)
 	 (append opts (list "-o" dest)))
-      
+
       (let* ((opts (bigloo-options))
 	     (file (when (and (pair? (hopc-sources))
 			      (string? (car (hopc-sources))))

@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Sep 17 14:27:28 2004                          */
-#*    Last change :  Tue Jun 18 07:57:46 2024 (serrano)                */
+#*    Last change :  Wed Jun 19 18:41:13 2024 (serrano)                */
 #*    Copyright   :  2004-24 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The autoconf Makefile skeleton for HOP.                          */
@@ -72,7 +72,7 @@ BLFLAGS         = @BLFLAGS@ $(BLIBFLAGS)
 BHFLAGS		= @BHFLAGS@ -q -mkaddheap -mkaddlib $(EFLAGS)
 BJFLAGS		= -j
 CCFLAGS		= @CCFLAGS@
-HCOMMONFLAGS    = --reset-bigloo-options --bigloo=$(BIGLOO) --bigloo-lib-dir=$(BIGLOOLIBDIR) --mo-dir=$(BUILDDIR)/nodejs/modules/mo $(EFLAGS) --
+HCOMMONFLAGS    = --reset-bigloo-options --bigloo=$(BIGLOO) --bigloo-lib-dir=$(BIGLOOLIBDIR) --mo-dir=$(BUILDDIR)/nodejs/modules/mo --share-dir $(BUILDSHAREDIR) $(EFLAGS) --
 HFLAGS		= @HFLAGS@ $(HCOMMONFLAGS)
 HSFLAGS		= @HSFLAGS@ $(HCOMMONFLAGS)
 
