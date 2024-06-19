@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Tue May  7 18:52:51 2024 (serrano)                */
+#*    Last change :  Wed Jun 19 13:12:47 2024 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOP library.                           */
 #*=====================================================================*/
@@ -58,7 +58,8 @@ include ../etc/Makefile.library
 
 .PHONY: build native jvm distrib distrib-clean
 
-build: .afile $(BACKEND)
+build: .afile
+	$(MAKE) $(BACKEND)
 
 native: o heap-c lib-c
 jvm: heap-jvm lib-jvm

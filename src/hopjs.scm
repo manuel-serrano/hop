@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Wed Jun 19 08:02:04 2024 (serrano)                */
+;*    Last change :  Wed Jun 19 10:35:21 2024 (serrano)                */
 ;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -46,10 +46,13 @@
       
       ;; gc traces
       (let ((env (getenv "HOPTRACE")))
-	 (when (and (string? env) (string-contains env "hopscript:gc"))
-	    (cond-expand
-	       (gc ($bgl-gc-verbose-set! #t))
-	       (else #unspecified))))
+	 (when (string? env)
+	    (when (string-contains env "hopscript:gc")
+	       (cond-expand
+		  (gc ($bgl-gc-verbose-set! #t))
+		  (else #unspecified)))
+	    (when (string-contains env "hopscript:cache")
+	       (hop-profile-set! #t))))
       
       ;; catch critical signals
       (signal-init!)
