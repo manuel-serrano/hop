@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Wed Jun 19 13:12:47 2024 (serrano)                */
+#*    Last change :  Wed Jun 19 14:35:27 2024 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOP library.                           */
 #*=====================================================================*/
@@ -76,7 +76,7 @@ ude:
 	@ $(MAKE) dep
 
 .afile: $(SOURCES)
-	@ $(AFILE) -suffix hop -o .afile $(SOURCES)
+	$(AFILE) -suffix hop -o .afile $(SOURCES)
 
 .jfile: $(SOURCES)
 	@ $(JFILE) -suffix hop -o .jfile \
