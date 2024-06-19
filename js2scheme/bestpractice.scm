@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Tue Feb 22 07:58:39 2022 (serrano)                */
-;*    Copyright   :  2013-22 Manuel Serrano                            */
+;*    Last change :  Wed Jun 19 10:09:00 2024 (serrano)                */
+;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Check strict mode best practice rules                            */
 ;*=====================================================================*/
@@ -75,7 +75,10 @@
 ;*    bestpractice ::J2SDeclFun ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (bestpractice this::J2SDeclFun mode parent)
-   (when (and (eq? mode 'strict) parent (not (isa? parent J2SFun)))
+   (when (and #f (eq? mode 'strict) parent (not (isa? parent J2SFun)))
+      ;; as of 19jun2024, it seems that node (and v8) no longer enforces
+      ;; that function must be at top-level or at the beginning of the
+      ;; parent function
       (with-access::J2SDeclFun this (id loc)
 	 (raise
 	    (instantiate::&io-parse-error

@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Thu May 16 19:46:25 2024 (serrano)                */
+#*    Last change :  Wed Jun 19 09:47:29 2024 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the NODEJS library.                        */
 #*=====================================================================*/
@@ -81,7 +81,7 @@ include ../etc/Makefile.library
 #*---------------------------------------------------------------------*/
 .PHONY: build native jvm
 
-build: .afile
+build: .afile modules/mo
 	$(MAKE) heap-c
 	$(MAKE) $(BACKEND)
 
@@ -142,7 +142,7 @@ o/%.mod.o: modules/%.mod.js
 o/%.mod.o: modules/%.mod.scm
 	@ $(call compile2,$(BIGLOO),$(BCFLAGS),$(BLFLAGS),-c,$< -o $@)
 
-modules/mo/%.mod.mo: modules/%.mod.js modules/mo
+modules/mo/%.mod.mo: modules/%.mod.js
 	@ $(call compile3,$(HOPC),$(HFLAGS),$(BCFLAGS),$(BLFLAGS),$(BHOPCFLAGS) --js-driver j2s-export-driver -s,$< -o $@)
 
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Tue Jun 18 11:17:39 2024 (serrano)                */
+;*    Last change :  Wed Jun 19 08:27:45 2024 (serrano)                */
 ;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -161,7 +161,7 @@
 		   (when jsctx
 		      (js-worker-push! (jsctx-worker jsctx)
 			 "init"
-			 (lambda ()
+			 (lambda (%this)
 			    (users-close!)
 			    (hop-filters-close!)))
 		      (javascript-load-files files exprsjs jsctx)
@@ -191,7 +191,7 @@
 		  (jsctx
 		   (js-worker-push! (jsctx-worker jsctx)
 		      "init"
-		      (lambda ()
+		      (lambda (%this)
 			 (users-close!)
 			 (hop-filters-close!)))
 		   (javascript-load-files files exprsjs jsctx)

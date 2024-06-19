@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Tue Jun 18 13:01:37 2024 (serrano)                */
+;*    Last change :  Wed Jun 19 08:02:04 2024 (serrano)                */
 ;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -79,9 +79,7 @@
 	 (bigloo-debug-set! (maxfx (bigloo-debug) 2)))
       
       (nodejs-command-line-set!
-	 (if (string? source)
-	     (cons* (car (command-line)) source options)
-	     (cons (car (command-line)) options)))
+	 (cons (car (command-line)) options))
       
       ;; default dummy js compiler (for HTML tag embeded expressions)
       (init-clientc-compiler!
@@ -216,7 +214,7 @@
    
    (let ((d (getenv "NODE_DEBUG")))
       (when (string? d)
-	 (let ((l (filter integer? (map string->number (string-split d #\,)))))
+	 (let ((l (filter integer? (map string->number (string-split d ",")))))
 	    (when (pair? l)
 	       (bigloo-debug-set! (car l))))))
    
