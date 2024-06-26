@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Apr  2 19:46:13 2017                          */
-;*    Last change :  Fri Feb 17 08:28:23 2023 (serrano)                */
-;*    Copyright   :  2017-23 Manuel Serrano                            */
+;*    Last change :  Tue Jun 25 22:39:22 2024 (serrano)                */
+;*    Copyright   :  2017-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Annotate property accesses with cache level information          */
 ;*    This analysis scans the AST to find property assignments and     */
@@ -69,9 +69,9 @@
 		       ;; fast code
 		       (cspecs
 			  ;; access
-			  (config-get conf :cspecs-get '(imap emap cmap vtable))
+			  (config-get conf :cspecs-get '(imap emap cmap))
 			  ;; assig
-			  (config-get conf :cspecs-put '(imap emap cmap nmap amap vtable))
+			  (config-get conf :cspecs-put '(imap emap cmap nmap))
 			  ;; assiggop
 			  (config-get conf :cspecs-assigop '(imap cmap))
 			  ;; assignew
@@ -79,7 +79,7 @@
 			  ;; call
 			  (config-get conf :cspecs-call '(pmap nmap cmap vtable poly))
 			  ;; assigthis
-			  (config-get conf :cspecs-put '(imap emap cmap nmap amap vtable))))))
+			  (config-get conf :cspecs-put '(imap emap cmap nmap amap))))))
 	 (cspecs-default! this csdef)
 	 (when (or (config-get conf :optim-cspecs) (config-get conf :cspecs))
 	    (let loop ((log (config-get conf :profile-log #f)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Thu May 16 11:29:30 2024 (serrano)                */
+;*    Last change :  Tue Jun 25 21:13:16 2024 (serrano)                */
 ;*    Copyright   :  2018-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -469,7 +469,21 @@
 		       (profile (js-profile-log-cache cache :xmap #t)))
 		    (js-undefined))
 		   (else
-		    (js-get-jsobject-name/cache-miss o name throw %this cache))))))))
+		    (with-access::JsConstructMap omap (vtable %id)
+		       (let ((vidx (js-pcache-vindex cache)))
+			  (if (<fx vidx (vector-length vtable))
+			      (let ((idx (vector-ref vtable vidx)))
+				 (if (fixnum? idx)
+				     (begin
+					(cond-expand
+					   (profile 
+					    (js-profile-log-cache cache :vtable #t)
+					    (js-profile-log-index idx)))
+					(js-object-ref o idx))
+				     (js-get-jsobject-name/cache-miss o
+					name throw %this cache)))
+			      (js-get-jsobject-name/cache-miss o
+				 name throw %this cache)))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-jsobject-name/cache-miss ::JsProxy ...                    */
@@ -532,8 +546,37 @@
 	   point::long cachefun::bool)
    (if (js-proxy? o)
        (js-proxy-put! o prop v throw %this)
-       (js-put-jsobject-name/cache-miss! o prop v throw %this cache
-	  point cachefun)))
+       (with-access::JsPropertyCache cache (xmap pmap amap)
+	  (with-access::JsObject o (cmap)
+	     (let ((omap cmap))
+		(cond
+		   ((eq? omap amap)
+		    (let* ((idx (js-pcache-aindex cache))
+			   (propowner (js-pcache-owner cache))
+			   (desc (js-object-ref propowner idx)))
+		       (cond-expand
+			  (profile
+			   (js-profile-log-cache ,cache :amap #t)
+			   (js-profile-log-index idx)))
+		       (js-property-value-set! o
+			  propowner prop desc v %this)
+		       v))
+		   (else
+		    (with-access::JsConstructMap omap (vtable)
+		       (let ((vtable vtable)
+			     (vidx (js-pcache-vindex cache)))
+			  (if (and (<fx vidx (vector-length vtable))
+				   (pair? (vector-ref vtable vidx)))
+			      (let ((idx (car (vector-ref vtable vidx)))
+				    (ncmap (cdr (vector-ref vtable vidx))))
+				 (cond-expand
+				    (profile
+				     (js-profile-log-cache cache :vtable #t)
+				     (js-profile-log-index idx)))
+				 (js-object-vtable-push! o idx v ncmap)
+				 v)
+			      (js-put-jsobject-name/cache-miss! o prop v throw %this cache
+				 point cachefun)))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-put-jsobject-name/cache-miss! ::JsProxy ...                   */

@@ -697,7 +697,7 @@
       ((not (pair? val))
        (error "hopc" (format "Illegal `~a' option value" opt) val))
       ((not (every (lambda (v)
-		      (memq v '(imap emap cmap vtable nmap amap pmap)))
+		      (memq v '(imap emap cmap vtable nmap amap pmap poly)))
 	       val))
        (error "hopc" (format "Illegal `~a' option value" opt) val))
       (else

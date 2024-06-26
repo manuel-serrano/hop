@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Thu Jan 25 10:10:32 2024 (serrano)                */
+;*    Last change :  Tue Jun 25 20:55:46 2024 (serrano)                */
 ;*    Copyright   :  2016-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -72,8 +72,10 @@
    (match-case x
       ((?- (and (? integer?) ?num))
        (e `(cond-expand
+	     (rewrite
+	      (static-pragma ,(format "static struct BgL_jspropertycachez00_bgl __bgl_pcache[~a]; HOP_REWRITE_LOCATIONS(~a);" num num)))
 	     (bigloo-c
-	      (static-pragma ,(format "static struct BgL_jspropertycachez00_bgl __bgl_pcache[~a]; HOP_REWRITE_LOCATIONS(~a);" num num))))
+	      (static-pragma ,(format "static struct BgL_jspropertycachez00_bgl __bgl_pcache[~a];" num))))
 	  e))
       (else
        (error "%define-pache" "bad syntax" x))))
@@ -639,7 +641,8 @@
 		   ((imap imap+)
 		    ;; direct inlined property get
 		    (let ((rewrite (match-case cache
-				      ((js-pcache-ref %pcache ?-) #t)
+				      ((js-pcache-ref %pcache ?-)
+				       (cond-expand (rewrite #t) (else #f)))
 				      (else #f))))
 		       `(if (eq? %cmap (js-pcache-imap ,cache))
 			    (begin
