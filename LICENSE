@@ -1,5 +1,5 @@
 ---------------------------------------------------------------------
-    HOP, a web development kit - copyright (c) 2006-2021 INRIA
+    HOP, a web development kit - copyright (c) 2006-2024 INRIA
                                                                      
     Bug descriptions, user reports, comments, suggestions and
     pull requests are welcome. Send them to
@@ -13,11 +13,8 @@
       - The compiler and the tools are distributed under the terms of the
       GNU General Public License.
 
-      - The Bigloo run-time system and the libraries are distributed under 
-      the terms of the GNU Library General Public License. The source code
-      of the Bigloo runtime system is located in the ./runtime directory.
-      The source code of the FairThreads library is located in the
-      ./fthread directory.
+      - The Hop run-time system and the libraries are distributed under 
+      the terms of the GNU Library General Public License.
 
    This program is distributed in the hope that it will be useful,   
    but WITHOUT ANY WARRANTY; without even the implied warranty of    

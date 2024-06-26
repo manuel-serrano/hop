@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Wed Jun 19 15:24:19 2024 (serrano)                */
+;*    Last change :  Tue Jun 25 16:33:17 2024 (serrano)                */
 ;*    Copyright   :  2014-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
@@ -230,7 +230,6 @@
 			 (pp mod out)
 			 (pp `(define the-loading-file
 				 (let ((file (hop-sofile-rebase ,(sobase-path fname))))
-				    (tprint "FILE=" file)
 				    (lambda ()
 				       file)))
 			    out)
