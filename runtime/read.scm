@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Tue Jun 18 10:15:45 2024 (serrano)                */
+;*    Last change :  Thu Jul  4 09:27:07 2024 (serrano)                */
 ;*    Copyright   :  2005-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -79,8 +79,8 @@
 	    
 	    (hop-load-rc ::bstring)
 	    
-	    (hop-find-sofile::obj ::bstring #!key (suffix "") (ignore-age #f))
-	    (hop-sofile-cache-path::bstring ::bstring #!key (suffix "") root)
+	    (hop-find-sofile::obj ::bstring #!key (mt "") (ignore-age #f))
+	    (hop-sofile-cache-path::bstring ::bstring #!key (mt "") suffix root)
 	    (hop-sofile-rebase::bstring ::bstring)
 	    
 	    (read-error msg obj port)
@@ -1000,7 +1000,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    hop-find-sofile ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (hop-find-sofile path #!key (suffix "") (ignore-age #f))
+(define (hop-find-sofile path #!key (mt "") (ignore-age #f))
    
    (define (file-younger? sopath)
       (when (file-exists? sopath)
@@ -1039,9 +1039,9 @@
 	    (else
 	     #f))))
    
-   (define (find-in-dir dir base suffix)
+   (define (find-in-dir dir base mt)
       (when (getenv "DEBUG")
-	 (tprint "find-in-dir dir=" dir " base=" base " suffix=" suffix))
+	 (tprint "find-in-dir dir=" dir " base=" base " mt=" mt))
       ;; scan recursively the so directories
       (with-trace 'sofile "hop-find-sofile.find-in-dir"
 	 (trace-item "dir=" dir)
@@ -1050,11 +1050,11 @@
 		(or (soprecompiled
 		       ;; non path relative so filename
 		       (make-file-name sodir
-			  (string-append (prefix base) suffix (so-suffix))))
+			  (string-append (prefix base) mt (so-suffix))))
 		    (soprecompiled
 		       ;; relative local so filename
 		       (make-file-name sodir
-			  (hop-soname base suffix))))
+			  (hop-soname base mt))))
 		(let loop ((dir dir)
 			   (reldir (basename dir)))
 		   (let ((parent (dirname dir)))
@@ -1066,47 +1066,45 @@
 				(soprecompiled
 				   (make-file-name sodir
 				      (hop-soname
-					 (make-file-name reldir base) suffix)))
+					 (make-file-name reldir base) mt)))
 				(loop parent
 				   (make-file-name (basename parent)
 				      reldir)))))))))))
 
-   (define (find-in-cache dir suffix)
-      (soprecompiled (hop-sofile-cache-path path :suffix suffix)))
+   (define (find-in-cache dir mt)
+      (soprecompiled (hop-sofile-cache-path path :mt mt)))
    
    ;; check the path directory first
    (with-trace 'sofile "hop-find-sofile"
       (trace-item "path=" path)
       (let ((dir (dirname path))
 	    (base (basename path)))
-	 (or (find-in-dir dir base suffix)
-	     (find-in-cache dir suffix)))))
+	 (or (find-in-dir dir base mt)
+	     (find-in-cache dir mt)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-soname ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define (hop-soname path::bstring suffix::bstring)
+(define (hop-soname path::bstring mt::bstring #!key suffix)
    (let ((base (prefix (basename path))))
-      (when (getenv "DEBUG")
-	 (tprint "hop-soname path=" path " -> "
-	    (string-append base "-" (md5sum-string path) suffix (so-suffix))))
-      (string-append base "-" (md5sum-string path) suffix (so-suffix))))
+      (string-append base "-" (md5sum-string path) mt
+	 (or suffix (so-suffix)))))
    
 ;*---------------------------------------------------------------------*/
 ;*    hop-sofile-cache-path ...                                        */
 ;*---------------------------------------------------------------------*/
-(define (hop-sofile-cache-path path #!key (suffix "") root)
+(define (hop-sofile-cache-path path #!key (mt "") suffix root)
    (if (hop-cache-enable)
        (make-file-path
 	  (hop-cache-directory)
 	  (hop-so-dirname)
 	  (if (string? root)
-	      (hop-soname (substring path (+fx (string-length root) 1)) suffix)
-	      (hop-soname path suffix)))
+	      (hop-soname (substring path (+fx (string-length root) 1)) mt :suffix suffix)
+	      (hop-soname path mt :suffix suffix)))
        (make-file-path
 	  (dirname path)
 	  (hop-so-dirname)
-	  (string-append (prefix (basename path)) (so-suffix)))))
+	  (string-append (prefix (basename path)) (or suffix (so-suffix))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-current-sobase ...                                           */
@@ -1275,7 +1273,7 @@
 	 (trace-item "afile=" afile)
 	 (if (eq? mode 'load)
 	     (let ((sopath (hop-find-sofile path
-			      :suffix (if ws "_w" ""))))
+			      :mt (if ws "_w" ""))))
 		(cond
 		   ((string? sopath)
 		    ;; a compiled file has been found, try to load that one

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Tue May 14 13:56:12 2024 (serrano)                */
+;*    Last change :  Tue Jul  2 08:17:14 2024 (serrano)                */
 ;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -43,9 +43,6 @@
 	    (hop-ip-blacklist::obj)
 	    (hop-ip-blacklist-set! ::obj)
 	    (hop-ip-blacklist-table::obj)
-	    
-	    (hop-log-file::obj)
-	    (hop-log-file-set! ::obj)
 	    
 	    (hop-scheduling::symbol)
 	    (hop-scheduling-set! ::symbol)
@@ -196,12 +193,6 @@
       (if (hashtable? v)
 	  v
 	  (error "hop-ip-blacklist-table" "Illegal hashtable" v))))
-
-;*---------------------------------------------------------------------*/
-;*    hop-log-file ...                                                 */
-;*---------------------------------------------------------------------*/
-(define-parameter hop-log-file
-   #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-scheduling ...                                               */

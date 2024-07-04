@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Tue May  7 08:38:27 2024 (serrano)                */
+;*    Last change :  Wed Jul  3 07:45:08 2024 (serrano)                */
 ;*    Copyright   :  2018-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -62,14 +62,9 @@
 			   (context-get ctx :profile-location #f))
 		       (list `',(j2s-profile-cache this))
 		       '())))
+	   ,@(j2s-profile-headers ctx this)
 	   (define %source ,(context-get ctx :source))
 	   (define %resource (dirname %source))
-	   ,(when (context-get ctx :profile-call #f)
-	       `(define %call-log (make-vector ,call-size #l0)))
-	   ,(when (context-get ctx :profile-cmap #f)
-	       `(define %cmap-log (make-vector ,call-size '())))
-	   ,(when (context-get ctx :profile-call #f)
-	       `(define %call-locations ',(call-locations this)))
 	   ,@(map j2s-record-predicate records)
 	   ,@(js-declare-tls this ctx)
 	   ,(epairify-deep loc
@@ -131,13 +126,7 @@
 				    (context-get ctx :profile-location #f))
 				(list `',(j2s-profile-cache this))
 				'())))
-		    ,@(if (context-get ctx :profile-call #f)
-			  `((define %call-log (make-vector ,call-size #l0))
-			    (define %call-locations ',(call-locations this)))
-			  '())
-		    ,@(if (context-get ctx :profile-cmap #f)
-			  `((define %cmap-log (make-vector ,call-size '())))
-			  '())
+		    ,@(j2s-profile-headers ctx this)
 		    (define %worker (js-current-worker))
 		    (define %cnst-table ,cnsttable)
 		    ,@(js-define-tls this ctx)
@@ -189,13 +178,7 @@
 				(context-get ctx :profile-location #f))
 			    (list `',(j2s-profile-cache this))
 			    '())))
-		,@(if (context-get ctx :profile-call #f)
-		      `((define %call-log (make-vector ,call-size #l0))
-			(define %call-locations ',(call-locations this)))
-		      '())
-		,@(if (context-get ctx :profile-cmap #f)
-		      `((define %cmap-log (make-vector ,call-size '())))
-		      '())
+		,@(j2s-profile-headers ctx this)
 		(define %worker (js-current-worker))
 		(define %source ,(context-get ctx :source))
 		(define %resource (dirname %source))
@@ -319,6 +302,35 @@
       headers))
    
 ;*---------------------------------------------------------------------*/
+;*    j2s-profile-headers ...                                          */
+;*---------------------------------------------------------------------*/
+(define (j2s-profile-headers ctx this::J2SProgram)
+   (with-access::J2SProgram this (call-size)
+      (filter (lambda (x) x)
+	 (list
+	    (when (or (context-get ctx :profile-cache #f)
+		      (context-get ctx :profile-snapshot #f))
+	       '(define %log-event-count 0))
+	    (cond
+	       ((context-get ctx :profile-snapshot #f)
+		`(define %log-event-max-count
+		  (let ((l (getenv "HOP_PROFILE_SNAPSHOT_LENGTH"))
+			(d ,(context-get ctx :profile-snapshot-length
+			       1000000)))
+		     (if (string? l)
+			 (or (string->integer l) d)
+			 d))))
+	       ((or (context-get ctx :profile-cache #f)
+		    (context-get ctx :profile-location #f))
+		'(define %log-event-max-count -1)))
+	    (when (context-get ctx :profile-call #f)
+	       `(define %call-log (make-vector ,call-size #l0)))
+	    (when (context-get ctx :profile-cmap #f)
+	       `(define %cmap-log (make-vector ,call-size '())))
+	    (when (context-get ctx :profile-call #f)
+	       `(define %call-locations ',(call-locations this)))))))
+	       
+;*---------------------------------------------------------------------*/
 ;*    j2s-main-worker-module ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (j2s-main-worker-module this::J2SProgram cnsttable
@@ -374,15 +386,7 @@
 			   (context-get ctx :profile-location #f))
 		       (list `',(j2s-profile-cache this))
 		       '())))
-	   ,@(if (context-get ctx :profile-call #f)
-		 `((define %call-log (make-vector ,call-size #l0)))
-		 '())
-	   ,@(if (context-get ctx :profile-cmap #f)
-		 `((define %cmap-log (make-vector ,call-size '())))
-		 '())
-	   ,@(if (context-get ctx :profile-call #f)
-		 `((define %call-locations ',(call-locations this)))
-		 '())
+	   ,@(j2s-profile-headers ctx this)
 	   (hopjs-standalone-set! #t)
 	   (define %source ,path)
 	   (define %resource (dirname %source))
@@ -440,13 +444,7 @@
 				(context-get ctx :profile-location #f))
 			    (list `',(j2s-profile-cache this))
 			    '())))
-		,@(if (context-get ctx :profile-call #f)
-		      `((define %call-log (make-vector ,call-size #l0))
-			(define %call-locations ',(call-locations this)))
-		      '())
-		,@(if (context-get ctx :profile-cmap #f)
-		      `((define %cmap-log (make-vector ,call-size '())))
-		      '())
+		,@(j2s-profile-headers ctx this)
 		(hop-sofile-compile-policy-set! 'static)
 		(hopjs-standalone-set! #t)
 		(define %this (nodejs-new-global-object :name ,name))

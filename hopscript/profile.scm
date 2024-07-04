@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
-;*    Last change :  Mon Feb 13 08:28:14 2023 (serrano)                */
-;*    Copyright   :  2018-23 Manuel Serrano                            */
+;*    Last change :  Wed Jul  3 08:21:41 2024 (serrano)                */
+;*    Copyright   :  2018-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript profiler.                                              */
 ;*=====================================================================*/
@@ -28,7 +28,9 @@
    (import __hopscript_types
 	   __hopscript_property)
 
-   (export (js-profile-init conf calltable symtable)
+   (export (js-profile-init conf calltable symtable ::bstring)
+	   (js-profile-snapshot source::bstring)
+	   (js-profile-snapshot-add-listener! source::bstring ::procedure)
 	   *profile-cache*
 
 	   (js-profile-register-pcache ::JsPropertyCache)
@@ -85,23 +87,23 @@
      callCacheMissUncachable))
 
 (define *format-json-version* "0.0.1")
-(define *format-fprofile-version* "0.0.1")
+(define *format-pgo-version* "0.0.1")
 (define *format-memviz-version* "0.0.1")
 
 ;*---------------------------------------------------------------------*/
 ;*    js-profile-init ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (js-profile-init conf calltable symtable)
+(define (js-profile-init conf calltable symtable trc)
    (unless *profile*
       (set! *profile* #t)
-      (let ((trc (or (getenv "HOPTRACE") "")))
+      (let ((trc (or (getenv "HOPTRACE") trc)))
 	 (when (string-contains trc "hopscript")
 	    (let ((m (pregexp-match "logfile=([^ ]+)" trc)))
 	       (when m
 		  (set! *profile-port* (open-output-file (cadr m)))))
 	    (profile-cache-start! trc)
-	    (when (string-contains trc "hopscript:fprofile")
-	       (set! trc (string-append "hopscript:cache hopscript:call hopscript:cmap format:fprofile " trc)))
+	    (when (string-contains trc "hopscript:pgo")
+	       (set! trc (string-append "hopscript:cache hopscript:call hopscript:cmap format:pgo " trc)))
 	    (when (string-contains trc "hopscript:cache")
 	       (log-cache-miss!))
 	    (when (string-contains trc "hopscript:function")
@@ -124,7 +126,8 @@
 		     (begin
 			(profile-report-start trc conf)
 			(when (string-contains trc "hopscript:cache")
-			   (profile-report-cache trc))
+			   (profile-report-cache trc)
+			   (display "," *profile-port*))
 			(when (string-contains trc "hopscript:hint")
 			   (profile-hints trc))
 			(when (string-contains trc "hopscript:alloc")
@@ -150,6 +153,44 @@
       (set! *profile-caches*
 	 (map (lambda (k) (cons k '()))
 	    (append *profile-cache-hit* *profile-cache-miss*)))))
+
+;*---------------------------------------------------------------------*/
+;*    snapshot-mutex ...                                               */
+;*---------------------------------------------------------------------*/
+(define snapshot-mutex (make-mutex))
+(define snapshot-listeners '())
+
+;*---------------------------------------------------------------------*/
+;*    js-profile-snapshot ...                                          */
+;*---------------------------------------------------------------------*/
+(define (js-profile-snapshot source)
+   (let ((path (hop-sofile-cache-path source :suffix ".prof")))
+      (with-handler
+	 (lambda (e)
+	    (when (file-exists? path)
+	       (delete-path path)))
+	 (synchronize snapshot-mutex
+	    (let ((oport *profile-port*))
+	       (make-directories (dirname path))
+	       (call-with-output-file path
+		  (lambda (port)
+		     (unwind-protect
+			(begin
+			   (set! *profile-port* port)
+			   (display "{\n\"format\": \"pgo\",\n" port)
+			   (profile-report-cache
+			      (format "srcfile=~a format:pgo" source))
+			   (display "}" port))
+			(set! *profile-port* oport))))
+	       (let ((ltn (assoc source snapshot-listeners)))
+		  (when (pair? ltn)
+		     ((cdr ltn) path))))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-profile-snapshot-add-listener! ...                            */
+;*---------------------------------------------------------------------*/
+(define (js-profile-snapshot-add-listener! source proc)
+   (set! snapshot-listeners (cons (cons source proc) snapshot-listeners)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-cache-table ...                                               */
@@ -728,9 +769,9 @@
 	    ((string-contains trc "format:json")
 	     (print "{\n\"format\": \"json\",")
 	     (printf "\"version\": \"~a\",\n" *format-json-version*))
-	    ((string-contains trc "format:fprofile")
-	     (print "{\n\"format\": \"fprofile\",")
-	     (printf "\"version\": \"~a\",\n" *format-fprofile-version*))
+	    ((string-contains trc "format:pgo")
+	     (print "{\n\"format\": \"pgo\",")
+	     (printf "\"version\": \"~a\",\n" *format-pgo-version*))
 	    ((string-contains trc "format:memviz")
 	     (print "{\n\"format\": \"memviz\",")
 	     (printf "\"version\": \"~a\",\n" *format-memviz-version*))))))
@@ -740,7 +781,7 @@
 ;*---------------------------------------------------------------------*/
 (define (profile-report-end trc conf)
    (when (or (string-contains trc "format:json")
-	     (string-contains trc "format:fprofile")
+	     (string-contains trc "format:pgo")
 	     (string-contains trc "format:memviz"))
       (with-output-to-port *profile-port*
 	 (lambda ()
@@ -995,7 +1036,7 @@
 	 (print "    }")
 	 (print "  },")))
 
-   (define (show-fprofile-pcaches fc::vector)
+   (define (show-pgo-pcaches fc::vector)
       (let ((vpc (collapse
 		    (sort (lambda (x y)
 			     (with-access::JsPropertyCache x ((xpoint point))
@@ -1058,7 +1099,7 @@
 	     vec)))
 
    (cond
-      ((string-contains trc "format:fprofile")
+      ((string-contains trc "format:pgo")
        (when (pair? filecaches)
 	  (with-output-to-port *profile-port*
 	     (lambda ()
@@ -1077,11 +1118,11 @@
 				   (when (pair? pcs)
 				      (print "  { \"filename\": \"" s "\",")
 				      (print "    \"caches\": [")
-				      (show-fprofile-pcaches (list->vector pcs))
+				      (show-pgo-pcaches (list->vector pcs))
 				      (print "   ] },"))))
 		      srcs))
 		(print "  { \"filename\": \"\", \"caches\": [] }")
-		(print "],")))))
+		(print "]")))))
       ((string-contains trc "format:json")
        (with-output-to-port *profile-port*
 	  (lambda ()
@@ -1108,7 +1149,7 @@
 		(print "  \"hclasses\": " (gencmapid) ",")
 		(print "  \"invalidations\": " *pmap-invalidations* ",")
 		(print "  \"vtables\": { \"number\": " *vtables-cnt* ", \"mem\": " (vector-mem-size *vtables-mem*) ", \"locations\": " locations ", \"degree\":" degree ", \"conflicts\":" *vtables-conflicts* "}")
-		(print "},")))))
+		(print "}")))))
       (else
        (fprint *profile-port* "\nCACHES:\n" "=======")
        (fprintf *profile-port* "~(, )\n\n" trc)
@@ -1447,7 +1488,7 @@
 	    (map cons counts locations))))
    
    (cond
-      ((or (string-contains trc "format:fprofile")
+      ((or (string-contains trc "format:pgo")
 	   (string-contains trc "format:json"))
        (with-output-to-port *profile-port*
 	  (lambda ()
@@ -1514,7 +1555,7 @@
 		     (< (cdr x) (cdr y)))
 	       (map cons counts locations)))))
 
-   (when (or #t (string-contains trc "format:fprofile"))
+   (when (string-contains trc "format:pgo")
       (with-output-to-port *profile-port*
 	 (lambda ()
 	    (print "\"cmaps\": [")

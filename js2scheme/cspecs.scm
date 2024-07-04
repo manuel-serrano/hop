@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Apr  2 19:46:13 2017                          */
-;*    Last change :  Tue Jun 25 22:39:22 2024 (serrano)                */
+;*    Last change :  Wed Jun 26 10:19:51 2024 (serrano)                */
 ;*    Copyright   :  2017-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Annotate property accesses with cache level information          */
@@ -69,7 +69,7 @@
 		       ;; fast code
 		       (cspecs
 			  ;; access
-			  (config-get conf :cspecs-get '(imap emap cmap))
+			  (config-get conf :cspecs-get '(imap cmap))
 			  ;; assig
 			  (config-get conf :cspecs-put '(imap emap cmap nmap))
 			  ;; assiggop
@@ -79,7 +79,21 @@
 			  ;; call
 			  (config-get conf :cspecs-call '(pmap nmap cmap vtable poly))
 			  ;; assigthis
-			  (config-get conf :cspecs-put '(imap emap cmap nmap amap))))))
+			  (config-get conf :cspecs-put '(imap emap cmap nmap amap)))
+		       #;(cspecs
+			  ;; access
+			  (config-get conf :cspecs-get '(imap emap cmap vtable))
+			  ;; assig
+			  (config-get conf :cspecs-put '(imap emap cmap nmap amap vtable))
+			  ;; assiggop
+			  (config-get conf :cspecs-assigop '(imap cmap))
+			  ;; assignew
+			  (config-get conf :cspecs-assignew '(emap imap cmap))
+			  ;; call
+			  (config-get conf :cspecs-call '(pmap nmap cmap vtable poly))
+			  ;; assigthis
+			  (config-get conf :cspecs-put '(imap emap cmap nmap amap vtable)))
+		       )))
 	 (cspecs-default! this csdef)
 	 (when (or (config-get conf :optim-cspecs) (config-get conf :cspecs))
 	    (let loop ((log (config-get conf :profile-log #f)))
@@ -124,25 +138,33 @@
 
    (cache-verb conf "loading log file " (string-append "\"" logfile "\""))
    
-   (let* ((log (load-profile-log logfile))
-	  (srcs (get 'caches log))
-	  (file (config-get conf :filename)))
-      (when (vector? srcs)
-	 (let loop ((i (-fx (vector-length srcs) 1))
-		    (r #f))
-	    (if (>=fx i 0)
-		(let ((filename (get 'filename (vector-ref srcs i))))
-		   (if (string=? file filename)
-		       (let ((verb (make-cell 0))
-			     (caches (get 'caches (vector-ref srcs i))))
-			  (if caches
-			      (let ((logtable (val->logtable caches)))
-				 (cpsecs-profile this logtable 'get verb conf)
-				 (cache-verb conf "cspecs " (cell-ref verb))
-				 (loop (-fx i 1) #t))
-			      (loop (-fx i 1) r)))
-		       (loop (-fx i 1) #f)))
-		r)))))
+   (with-access::J2SProgram this (path)
+      (let* ((log (load-profile-log logfile))
+	     (srcs (get 'caches log))
+	     (file (config-get conf :filename))
+	     (path (cond
+		      ((not (string? path))
+		       file)
+		      ((char=? (string-ref path 0) (file-separator))
+		       path)
+		      (else
+		       (file-name-unix-canonicalize (make-file-name (pwd) path))))))
+	 (when (vector? srcs)
+	    (let loop ((i (-fx (vector-length srcs) 1))
+		       (r #f))
+	       (if (>=fx i 0)
+		   (let ((filename (get 'filename (vector-ref srcs i))))
+		      (if (or (string=? file filename) (string=? path filename))
+			  (let ((verb (make-cell 0))
+				(caches (get 'caches (vector-ref srcs i))))
+			     (if caches
+				 (let ((logtable (val->logtable caches)))
+				    (cpsecs-profile this logtable 'get verb conf)
+				    (cache-verb conf "cspecs " (cell-ref verb))
+				    (loop (-fx i 1) #t))
+				 (loop (-fx i 1) r)))
+			  (loop (-fx i 1) #f)))
+		   r))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    cspecs-update ...                                                */
@@ -194,7 +216,7 @@
 (define (load-profile-log logfile)
    (call-with-input-file logfile
       (lambda (ip)
-	 (let ((fprofile #f))
+	 (let ((pgo #f))
 	    (json-parse ip
 	       :array-alloc (lambda () (make-cell '()))
 	       :array-set (lambda (a i val)
@@ -206,14 +228,14 @@
 	       :object-set (lambda (o p val)
 			      (cond
 				 ((string=? p "caches")
-				  (unless fprofile
-				     (error "fprofile" "Wrong log format"
+				  (unless pgo
+				     (error "pgo" "Bad log format"
 					logfile))
 				  (cell-set! o
 				     (cons (cons 'caches val)
 					(cell-ref o))))
 				 ((string=? p "format")
-				  (set! fprofile (equal? val "fprofile")))
+				  (set! pgo (equal? val "pgo")))
 				 (else
 				  (cell-set! o
 				     (cons (cons (string->symbol p) val)
@@ -221,7 +243,7 @@
 	       :object-return (lambda (o)
 				 (reverse! (cell-ref o)))
 	       :parse-error (lambda (msg fname loc)
-			       (error/location "fprofile" "Wrong JSON file" msg
+			       (error/location "pgo" "Bad JSON file" msg
 				  fname loc)))))))
 
 ;*---------------------------------------------------------------------*/

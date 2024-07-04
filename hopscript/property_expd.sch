@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Tue Jun 25 20:55:46 2024 (serrano)                */
+;*    Last change :  Wed Jul  3 07:50:22 2024 (serrano)                */
 ;*    Copyright   :  2016-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -33,15 +33,29 @@
 ;*    js-profile-log-cache-expander ...                                */
 ;*---------------------------------------------------------------------*/
 (define (js-profile-log-cache-expander x e)
-   (cond-expand
-      (profile
-       (match-case x
-	  ((js-profile-log-cache ?cache . ?cspecs)
-	   (e `(with-access::JsPropertyCache ,cache (cntimap cntemap
-						       cntcmap cntpmap 
-						       cntamap cntnmap
-						       cntxmap
-						       cntvtable cntmiss src)
+   
+   (define (expand x)
+      (match-case x
+	 ((js-profile-log-cache ?cache . ?cspecs)
+	  `(with-access::JsPropertyCache ,cache (cntimap cntemap
+						  cntcmap cntpmap 
+						  cntamap cntnmap
+						  cntxmap
+						  cntvtable cntmiss)
+	     (cond-expand
+		 (pgo
+		  (unless (=fx %log-event-count %log-event-max-count)
+		     (set! %log-event-count (+fx 1 %log-event-count))
+		     ,@(filter-map (lambda (c)
+				      (when (keyword? c)
+					 (let ((id (symbol-append 'cnt
+						      (string->symbol
+							 (keyword->string c)))))
+					    `(set! ,id (+u32 #u32:1 ,id)))))
+			  cspecs)
+		     (when (=fx %log-event-count %log-event-max-count)
+			(js-profile-snapshot %sourcepath))))
+		 (profile
 		  ,@(filter-map (lambda (c)
 				   (when (keyword? c)
 				      (let ((id (symbol-append 'cnt
@@ -49,11 +63,12 @@
 						      (keyword->string c)))))
 					 `(set! ,id (+u32 #u32:1 ,id)))))
 		       cspecs))
-	      e))
-	  (else
-	   (map (lambda (x) (e x e)) x))))
-      (else
-       #unspecified)))
+		 (else
+		  #unspecified))))
+	 (else
+	  #unspecified)))
+
+   (e (expand x) e))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-profile-log-index-expander ...                                */

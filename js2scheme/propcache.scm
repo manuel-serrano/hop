@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Wed Feb  2 18:11:54 2022 (serrano)                */
-;*    Copyright   :  2013-22 Manuel Serrano                            */
+;*    Last change :  Thu Jul  4 07:16:11 2024 (serrano)                */
+;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Add caches to object property lookups                            */
 ;*    -------------------------------------------------------------    */
@@ -51,7 +51,7 @@
 	 (fprintf (current-error-port) " [optim-ccall]"))
       (when j2s-shared-pcache
 	 (fprintf (current-error-port) " [shared-pcache]")))
-   
+
    (when (isa? this J2SProgram)
       (with-access::J2SProgram this (nodes headers decls loc pcache-size)
 	 (let* ((count (make-counter pcache-size))

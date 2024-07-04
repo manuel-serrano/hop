@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Wed Jun 19 10:35:21 2024 (serrano)                */
+;*    Last change :  Tue Jul  2 08:18:30 2024 (serrano)                */
 ;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -102,7 +102,7 @@
 		    (display (js-trivial-compiler obj) p)))
       
       ;; final configuration
-      (when (hop-profile) (js-profile-init `(:server #t) #f #f))
+      (when (hop-profile) (js-profile-init `(:server #t) #f #f ""))
       
       ;; disable JS global service declaration
       (js-service-support-set! #f)
@@ -202,6 +202,7 @@
       (print "   - NODE_DEBUG: nodejs internal debugging [NODE_DEBUG=key]")
       (print "   - NODE_PATH: nodejs require path")
       (print "   - HOP_OPTIONS: additional command line options")
+      (print "   - NODE_LOG: log file")
       (print "   - BIGLOOHEAP: Initial size of the heap (in Mbytes)")
       (print "   - BIGLOOTRACE: List of active traces")
       (print "   - BIGLOODEBUG: Bigloo debug level")
@@ -277,10 +278,21 @@
 	      (hop-hopc-flags-set! "--safe")
 	      (j2s-compile-options-set!
 		 (cons* :optim level (j2s-compile-options))))))
-	 (("--so-policy" ?policy (help "Sofile compile policy [none, aot, aot+, nte, nte1, nte+]"))
+	 (("--so-policy" ?policy (help "Sofile compile policy [none, aot, aot+, nte, nte1, nte+, pgo]"))
 	  (hop-sofile-compile-policy-set! (string->symbol policy))
 	  (when (eq? (hop-sofile-compile-policy) 'none)
 	     (hop-sofile-enable-set! #f)))
+	 (("--log" ?file (help "Generate log file [filename, stdout, stderr]"))
+	  (let ((p (cond
+		      ((string=? file "stdout")
+		       (current-output-port))
+		      ((string=? file "stderr")
+		       (current-error-port))
+		      (else
+		       (append-output-file file)))))
+	     (unless p
+		(error "hopjs" "Cannot open log file" file))
+	     (hop-log-file-set! p)))
 	 (else
 	  (set! source else)
 	  (set! options (append! options rest))

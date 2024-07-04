@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 12 08:50:30 2022                          */
-;*    Last change :  Sat Feb 12 09:20:48 2022 (serrano)                */
-;*    Copyright   :  2022 Manuel Serrano                               */
+;*    Last change :  Thu Jul  4 08:54:16 2024 (serrano)                */
+;*    Copyright   :  2022-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Profile based inlining                                           */
 ;*=====================================================================*/
@@ -653,7 +653,7 @@
 (define (load-profile-log logfile)
    (call-with-input-file logfile
       (lambda (ip)
-	 (let ((fprofile #f))
+	 (let ((pgo #f))
 	    (json-parse ip
 	       :array-alloc (lambda () (make-cell '()))
 	       :array-set (lambda (a i val)
@@ -665,14 +665,14 @@
 	       :object-set (lambda (o p val)
 			      (cond
 				 ((string=? p "calls")
-				  (unless fprofile
-				     (error "fprofile" "Wrong log format"
+				  (unless pgo
+				     (error "pgo" "Wrong log format"
 					logfile))
 				  (cell-set! o
 				     (cons (cons 'calls val)
 					(cell-ref o))))
 				 ((string=? p "format")
-				  (set! fprofile (equal? val "fprofile")))
+				  (set! pgo (equal? val "pgo")))
 				 (else
 				  (cell-set! o
 				     (cons (cons (string->symbol p) val)
@@ -680,7 +680,7 @@
 	       :object-return (lambda (o)
 				 (reverse! (cell-ref o)))
 	       :parse-error (lambda (msg fname loc)
-			       (error/location "fprofile" "Wrong JSON file" msg
+			       (error/location "pgo" "Wrong JSON file" msg
 				  fname loc)))))))
 
 

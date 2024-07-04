@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Wed May 29 07:28:36 2024 (serrano)                */
+;*    Last change :  Tue Jul  2 08:08:34 2024 (serrano)                */
 ;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -27,6 +27,9 @@
 	    
 	    (hop-rc-file::bstring)
 	    (hop-rc-file-set! ::bstring)
+
+	    (hop-log-file::obj)
+	    (hop-log-file-set! ::obj)
 
 	    (hop-cache-directory::bstring)
 	    (hop-cache-directory-set! ::bstring)
@@ -425,6 +428,17 @@
    (lambda (v)
       (hop-path-set! (cons v (hop-path)))
       v))
+
+;*---------------------------------------------------------------------*/
+;*    hop-log-file ...                                                 */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-log-file
+   (let ((l (getenv "HOP_LOG")))
+      (cond
+	 ((not l) #f)
+	 ((string=? l "stdout") (current-output-port))
+	 ((string=? l "stderr") (current-error-port))
+	 (else (append-output-file (hop-log-file))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-cache-enable ...                                             */

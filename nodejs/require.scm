@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Mon Jun 17 18:00:23 2024 (serrano)                */
+;*    Last change :  Tue Jul  2 07:59:44 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -182,8 +182,8 @@
    (synchronize require-mutex
       (unless require-init
 	 (set! require-init #t)
-	 (when (memq (hop-sofile-compile-policy) '(nte nte1 nte+))
-	    (nodejs-compile-workers-inits!))
+	 (when (memq (hop-sofile-compile-policy) '(nte nte1 nte+ pgo))
+	    (nodejs-socompile-workers-inits!))
 	 (unless (or (and (<=fx (hop-port) -1) (<=fx (hop-ssl-port) -1))
 		     *resolve-service*)
 	    (set! *resolve-service* (nodejs-make-resolve-service %this))))))
@@ -230,7 +230,8 @@
 ;*    socompile ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define-struct socompile proc cmd src ksucc kfail abortp)
-(define-struct soentry filename lang mtime wslave key)
+(define-struct soentry filename lang mtime wslave key opts)
+(define-struct compentry src target k)
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-compile-client-file ...                                   */
@@ -457,6 +458,8 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    module->javascript ...                                           */
+;*    -------------------------------------------------------------    */
+;*    Client, i.e., browser, module compilation.                       */
 ;*---------------------------------------------------------------------*/
 (define (module->javascript obj filename id op compile isexpr
 	   srcmap query srcalias
@@ -589,7 +592,7 @@
 ;*    nodejs-driver ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-driver)
-   (if (> (nodejs-hop-debug) 0) (j2s-debug-driver) (j2s-optim-driver)))
+   (if (>= (nodejs-hop-debug) 1) (j2s-debug-driver) (j2s-optim-driver)))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-file-paths ...                                            */
@@ -1166,12 +1169,6 @@
 			   (js-toboolean (js-get attrs (& "rts") %scope))
 			   (hop-runtime-client))))
 	       (apply <HEAD> :idiom "javascript" :rts #f :%context %scope
-;* 		  (unless (eq? rts #f)                                 */
-;* 		     (<SCRIPT>                                         */
-;* 			(format "hop[ '%root' ] = ~s"                  */
-;* 			   (dirname                                    */
-;* 			      (js-jsstring->string                     */
-;* 				 (js-get %module (& "filename") %scope)))))) */
 		  (when (js-object? attrs)
 		     (js-object->keyword-arguments* attrs %this))
 		  (filter (lambda (n)
@@ -1500,9 +1497,43 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-compile ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-compile src filename::bstring
+(define (nodejs-compile source filename::bstring
 	   %ctxthis %ctxmodule
-	   #!key lang worker-slave (commonjs-export #t) warning-global)
+	   #!key
+	   language
+	   worker-slave
+	   (commonjs-export #t)
+	   (pgo #f))
+
+   (define (compile in filename)
+      (let ((mmap (when (file-exists? filename)
+		     (open-mmap filename :read #t :write #f)))
+	    (mod (format "__~a_~a" (basename filename) (md5sum filename))))
+	 (when (hop-log-file)
+	    (fprintf (hop-log-file) "SCM ~a\n" filename))
+	 (unwind-protect
+	    (j2s-compile in
+	       :driver (nodejs-driver)
+	       :driver-name "nodejs-driver"
+	       :filename filename
+	       :source source
+	       :language (or language "hopscript")
+	       :node-modules-directory (nodejs-node-modules-directory)
+	       :mmap-src mmap
+	       :module-main #f
+	       :module-name mod
+	       :worker-slave worker-slave
+	       :verbose (if (>=fx (hop-verbose) 10) (-fx (hop-verbose) 10) 0)
+	       :loader-resolve (nodejs-make-j2s-loader %ctxthis)
+	       :commonjs-export commonjs-export
+	       :es6-module-client #t
+	       :warning-global #f
+	       :debug (nodejs-hop-debug)
+	       :optim-propcache pgo
+	       :profile-snapshot pgo
+	       :profile-cache pgo)
+	    (when (mmap? mmap)
+	       (close-mmap mmap)))))
    
    (define (cache-path filename)
       (make-cache-name 
@@ -1521,7 +1552,9 @@
    (define (store-cache filename expr)
       (when (hop-cache-enable)
 	 (let ((path (cache-path filename)))
-	    (debug-load filename path 3)
+	    (when (hop-log-file)
+	       (fprintf (hop-log-file) "CACHING ~a -> ~a\n" filename
+		  (hop-color 4 "" path)))
 	    (with-handler
 	       (lambda (e)
 		  (when (>=fx (nodejs-hop-debug) 1)
@@ -1537,7 +1570,7 @@
 		     (for-each (lambda (e) (pp e op)) expr))))))
       expr)
    
-   (define (compile-file filename::bstring mod)
+   (define (compile-file filename::bstring)
       (with-trace 'require "compile-file"
 	 (trace-item "filename=" filename)
 	 (or (load-cache filename)
@@ -1550,28 +1583,9 @@
 		   (call-with-input-file filename
 		      (lambda (in)
 			 (debug-compile "compile-file" filename)
-			 (let ((m (open-mmap filename read: #t :write #f)))
-			    (unwind-protect
-			       (j2s-compile in
-				  :driver (nodejs-driver)
-				  :driver-name "nodejs-driver"
-				  :filename filename
-				  :source src
-				  :language (or lang "hopscript")
-				  :node-modules-directory (nodejs-node-modules-directory)
-				  :mmap-src m
-				  :module-main #f
-				  :module-name (symbol->string mod)
-				  :worker-slave worker-slave
-				  :verbose (if (>=fx (hop-verbose) 10) (-fx (hop-verbose) 10) 0)
-				  :loader-resolve (nodejs-make-j2s-loader %ctxthis)
-				  :commonjs-export commonjs-export
-				  :es6-module-client #t
-				  :warning-global warning-global
-				  :debug (nodejs-hop-debug))
-			       (close-mmap m))))))))))
+			 (compile in filename))))))))
    
-   (define (compile-url url::bstring mod)
+   (define (compile-url url::bstring)
       (with-trace 'require "compile-url"
 	 (trace-item "url=" url)
 	 (trace-item "filename=" filename)
@@ -1579,50 +1593,16 @@
 	    (lambda (in)
 	       (debug-compile "compile-url" filename)
 	       (input-port-name-set! in url)
-	       (j2s-compile in
-		  :driver (nodejs-driver)
-		  :driver-name "nodejs-driver"
-		  :language (or lang "hopscript")
-		  :filename filename
-		  :source src
-		  :node-modules-directory (nodejs-node-modules-directory)
-		  :module-main #f
-		  :module-name (symbol->string mod)
-		  :worker-slave worker-slave
-		  :verbose (if (>=fx (hop-verbose) 10) (-fx (hop-verbose) 10) 0)
-		  :loader-resolve (nodejs-make-j2s-loader %ctxthis)
-		  :commonjs-export commonjs-export
-		  :es6-module-client #t
-		  :debug (nodejs-hop-debug))))))
+	       (compile in filename)))))
    
-   (define (compile-ast ast::J2SProgram mod)
+   (define (compile-ast ast::J2SProgram)
       (with-trace 'require "compile-ast"
 	 (with-access::J2SProgram ast (path)
 	    (trace-item "ast=" path)
 	    (debug-compile "compile-ast" path)
-	    (let ((m (when (file-exists? path)
-			(open-mmap filename read: #t :write #f))))
-	       (unwind-protect
-		  (j2s-compile ast
-		     :driver (nodejs-driver)
-		     :driver-name "nodejs-driver"
-		     :filename filename
-		     :source src
-		     :language (or lang "hopscript")
-		     :node-modules-directory (nodejs-node-modules-directory)
-		     :module-main #f
-		     :mmap-src m
-		     :module-name (symbol->string mod)
-		     :worker-slave worker-slave
-		     :verbose (if (>=fx (hop-verbose) 10) (-fx (hop-verbose) 10) 0)
-		     :loader-resolve (nodejs-make-j2s-loader %ctxthis)
-		     :commonjs-export commonjs-export
-		     :es6-module-client #t
-		     :debug (nodejs-hop-debug))
-		  (when (mmap? m)
-		     (close-mmap m)))))))
+	    (compile ast filename))))
 
-   (define (compile-lang src::bstring mod lang)
+   (define (compile-lang src::bstring lang)
       (let* ((comp (nodejs-language-toplevel-loader))
 	     (obj (comp lang src '((module-main . #f))))
 	     (ty (assq :type obj))
@@ -1636,44 +1616,37 @@
 	     (nodejs-language-notify-error (cdr val) lang)
 	     (error lang "aborting" src))
 	    ((equal? (cdr ty) "filename")
-	     (compile-file (cdr val) mod))
+	     (compile-file (cdr val)))
 	    (else
 	     (error lang "don't know what to do with" obj)))))
    
-   (define (compile src mod lang)
+   (define (compile-src src lang)
       (with-trace 'require "compile"
 	 (trace-item "src=" src)
 	 (trace-item "lang=" lang)
 	 (cond
 	    ((isa? src J2SProgram)
-	     (compile-ast src mod))
+	     (compile-ast src))
 	    ((not (string? src))
 	     (bigloo-type-error "nodejs-compile" "string or J2SProgram" src))
 	    ((and (string? lang) (not (builtin-language? lang)))
-	     (compile-lang src mod lang))
+	     (compile-lang src lang))
 	    ((file-exists? filename)
-	     (compile-file filename mod))
+	     (compile-file filename))
 	    (else
-	     (compile-url filename mod)))))
+	     (compile-url filename)))))
    
-   (unless nodejs-debug-compile
-      (set! nodejs-debug-compile
-	 (if (string-contains (or (getenv "HOPTRACE") "") "nodejs:compile")
-	     'yes
-	     'no)))
-
    (synchronize compile-mutex
       (with-trace 'require "nodejs-compile"
 	 (trace-item "filename=" filename)
-	 (trace-item "lang=" lang)
+	 (trace-item "language=" language)
 	 (let ((key (if worker-slave
 			(string-append filename "_w")
 			filename))
 	       (tgt #f))
-	    (or (let* ((mod (gensym (string->symbol (basename filename))))
-		       (expr (compile src mod lang))
-		       (evmod (eval-module)))
-		   (when (eq? nodejs-debug-compile 'yes)
+	    (or (let ((expr (compile-src source language))
+		      (evmod (eval-module)))
+		   (when env-debug-compile
 		      (unless (directory? "/tmp/HOP")
 			 (make-directory "/tmp/HOP"))
 		      (set! tgt (make-file-name "/tmp/HOP"
@@ -1700,11 +1673,6 @@
 			    (for-each eval nexpr)
 			    (eval! 'hopscript)))
 		      (eval-module-set! evmod))))))))
-
-;*---------------------------------------------------------------------*/
-;*    nodejs-debug-compile ...                                         */
-;*---------------------------------------------------------------------*/
-(define nodejs-debug-compile #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-load-cache ...                                               */
@@ -1834,137 +1802,70 @@
       (set! socompile-ended #t)))
 
 ;*---------------------------------------------------------------------*/
-;*    nodejs-compile-workers-inits! ...                                */
+;*    nodejs-socompile-workers-inits! ...                              */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-compile-workers-inits!)
+(define (nodejs-socompile-workers-inits!)
    
-   (define (compile-worker e::struct)
-      (let loop ()
-	 (if (<fx socompile-worker-count (hop-sofile-max-workers))
-	     (begin
-		(set! socompile-worker-count
-		   (+fx 1 socompile-worker-count))
-		(set! socompile-queue
-		   (remq! e socompile-queue))
-		(set! socompile-incompile
-		   (cons (soentry-key e) socompile-incompile))
-		(thread-start! (make-compile-worker e)))
-	     (begin
-		(condition-variable-wait!/debug socompile-condv socompile-mutex)
-		(loop)))))
-
-   (register-exit-function!
-      (lambda (status)
-	 (nodejs-compile-abort-all!)
-	 status))
-
-   (thread-start!
+   (define worker-count 0)
+   
+   (define (make-socompile-worker en::struct)
       (instantiate::hopthread
-	 (name "socompile-orchestrator")
+	 (name "hopjs-socompiler-worker")
 	 (body (lambda ()
-		  (thread-name-set! (current-thread) "hopjs-socompile")
+		  (thread-name-set! (current-thread) "hopjs-socompile-worker")
 		  (with-handler
 		     (lambda (e)
 			(exception-notify e))
-		     (synchronize/debug socompile-mutex
-			(let loop ()
-			   (let liip ()
-			      (when (pair? socompile-queue)
-				 (let ((e (nodejs-select-socompile
-					     socompile-queue)))
-				    (or (string? (find-new-sofile
-						    (soentry-filename e)
-						    (soentry-wslave e)))
-					(compile-worker e))
-				    (liip))))
-			   (condition-variable-wait!/debug
-			      socompile-condv socompile-mutex)
-			   (loop)))))))))
-
-;*---------------------------------------------------------------------*/
-;*    register-socompile-process! ...                                  */
-;*---------------------------------------------------------------------*/
-(define (register-socompile-process! proc::process cmd::bstring src ksucc kfail)
-   ;; socompile-mutex already locked
-   (set! socompile-processes
-      (cons (socompile proc cmd src ksucc kfail #f) socompile-processes))
-   proc)
-
-;*---------------------------------------------------------------------*/
-;*    unregister-socomopile-process! ...                               */
-;*---------------------------------------------------------------------*/
-(define (unregister-socompile-process! proc)
-   ;; socompile-mutex already locked
-   (let ((el (find (lambda (s) (eq? (socompile-proc s) proc))
-		socompile-processes)))
-      (set! socompile-processes (delete! el socompile-processes))
-      el))
-
-;*---------------------------------------------------------------------*/
-;*    soworker-name ...                                                */
-;*---------------------------------------------------------------------*/
-(define soworker-name
-   (let ((count 0))
-      (lambda ()
-	 (set! count (+fx 1 count))
-	 (string-append "socompile-worker-" (integer->string count)))))
-
-;*---------------------------------------------------------------------*/
-;*    make-compile-worker ...                                          */
-;*---------------------------------------------------------------------*/
-(define (make-compile-worker en::struct)
-   (instantiate::hopthread
-      (name (soworker-name))
-      (body (lambda ()
-	       (thread-name-set! (current-thread) "hopjs-compile-worker")
-	       (with-handler
-		  (lambda (e)
-		     (exception-notify e))
-		  (with-trace 'sorequire "make-compile-worker"
-		     (trace-item "thread=" (current-thread))
-		     (trace-item "en=" en)
-		     (nodejs-socompile (soentry-filename en)
-			(soentry-filename en)
-			(soentry-lang en)
-			(soentry-wslave en))
-		     (synchronize/debug socompile-mutex
-			(set! socompile-worker-count
-			   (-fx socompile-worker-count 1))
-			(set! socompile-compiled
-			   (cons (soentry-key en) socompile-compiled))
-			(set! socompile-incompile
-			   (remq! (soentry-key en) socompile-incompile))
-			(condition-variable-broadcast! socompile-condv))))))))
+		     (with-trace 'so "make-socompile-worker"
+			(trace-item "thread=" (current-thread))
+			(trace-item "en=" en)
+			(nodejs-socompile (soentry-filename en)
+			   (soentry-filename en)
+			   (soentry-lang en)
+			   (soentry-wslave en)
+			   (soentry-opts en))
+			(synchronize socompile-mutex
+			   (set! worker-count (-fx worker-count 1))
+			   (condition-variable-broadcast! socompile-condv))))))))
    
-;*---------------------------------------------------------------------*/
-;*    nodejs-select-socompile ...                                      */
-;*    -------------------------------------------------------------    */
-;*    Select one entry amongst the compile queue. The current          */
-;*    strategy is to select the last modified file.                    */
-;*---------------------------------------------------------------------*/
-(define (nodejs-select-socompile::struct queue::pair)
-   ;; socompile-mutex is already acquired
-   (let loop ((entries (cdr queue))
-	      (entry (car queue)))
-      (cond
-	 ((null? entries)
-	  entry)
-	 ((<elong (soentry-mtime (car entries)) (soentry-mtime entry))
-	  ;; select the oldest entry
-	  (loop (cdr entries) (car entries)))
-	 (else
-	  (loop (cdr entries) entry)))))
+;*    (register-exit-function!                                         */
+;*       (lambda (status)                                              */
+;* 	 (nodejs-compile-abort-all!)                                   */
+;* 	 status))                                                      */
+;*                                                                     */
+   (thread-start!
+      (instantiate::hopthread
+	 (name "hop-socompile-orchestrator")
+	 (body (lambda ()
+		  (thread-name-set! (current-thread) "hopjs-socompile-orchestrator")
+		  (with-handler
+		     (lambda (e)
+			(exception-notify e))
+		     (synchronize socompile-mutex
+			(let loop ()
+			   (condition-variable-wait!
+			      socompile-condv socompile-mutex)
+			   (when (<fx worker-count (hop-sofile-max-workers))
+			      (when (pair? socompile-queue)
+				 (let ((e (car socompile-queue)))
+				    (set! socompile-queue (cdr socompile-queue))
+				    (unless (string? (find-new-sofile
+							(soentry-filename e)
+							(soentry-wslave e)))
+				       (set! worker-count (+fx 1 worker-count))
+				       (thread-start! (make-socompile-worker e))))))
+			   (loop)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-socompile-queue-push ...                                  */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-socompile-queue-push filename lang worker-slave)
-   (with-trace 'sorequire "nodejs-socompile-queue-push"
+(define (nodejs-socompile-queue-push filename lang worker-slave #!optional (opts '()))
+   (with-trace 'so "nodejs-socompile-queue-push"
+      (trace-item "filename=" filename)
+      (trace-item "workfer-slave=" worker-slave)
+      (trace-item "socompile-queue=" (map soentry-filename socompile-queue))
+      (trace-item "socompile-compiled=" socompile-compiled)
       (synchronize/debug socompile-mutex
-	 (trace-item "filename=" filename)
-	 (trace-item "workfer-slave=" worker-slave)
-	 (trace-item "socompile-queue=" (map soentry-filename socompile-queue))
-	 (trace-item "socompile-compiled=" socompile-compiled)
 	 (let ((key (if worker-slave (string-append filename "_w") filename)))
 	    (when (and (file-exists? filename)
 		       (not (member key socompile-compiled))
@@ -1974,232 +1875,186 @@
 			       socompile-queue)))
 	       (let ((en (soentry filename lang
 			    (file-modification-time filename)
-			    (if worker-slave #t #f) key)))
+			    (if worker-slave #t #f)
+			    key
+			    opts)))
+		  (tprint "QUEUE-PUSH")
 		  (set! socompile-queue (cons en socompile-queue)))))
 	 (condition-variable-broadcast! socompile-condv))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-socompile ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-socompile src::obj filename::bstring lang worker-slave::bool)
-   
-   (define (exec line::pair ksucc::procedure kfail::procedure)
-      
-      (let ((cmd (format "~( )" line))
-	    (mutex (make-mutex "compilation"))
-	    (estr #f)
-	    (proc #f))
-	 
-	 (synchronize/debug socompile-mutex
-	    (set! proc (unless socompile-ended
-			  (register-socompile-process!
-			     (apply run-process (car line)
-				:wait #f
-				error: pipe:
-				output: "/dev/null"
-				(cdr line))
-			     cmd filename ksucc kfail)))
-	    ;; error logger (mandatory to flush child stderr)
-	    (when (process? proc)
-	       (thread-start!
-		  (instantiate::hopthread
-		     (name "errlogger")
-		     (body (lambda ()
-			      (thread-name-set! (current-thread) "hopjs-socompile-errlogger")
-			      (let ((err (process-error-port proc)))
-				 (with-handler
-				    (lambda (e) e)
-				    (unwind-protect
-				       (synchronize mutex
-					  (set! estr (read-string err)))
-				       (close-input-port err)))))))))
-	    (with-handler
-	       (lambda (e)
-		  (fprint (current-error-port) "**** ERROR: compilation failed " filename)
-		  (exception-notify e))
-	       (when (process? proc)
-		  (set! compile-pending (+fx compile-pending 1))
-		  (when (pair? compile-listeners-start)
-		     (let ((evt (instantiate::event
-				   (name "start")
-				   (target filename)
-				   (value `(pending: ,compile-pending
-					      command: ,cmd)))))
-			(apply-listeners compile-listeners-start evt))))))
-	 (nodejs-process-wait proc filename)
-	 (synchronize mutex
-	    (if (and socompile-ended (=fx (process-exit-status proc) 0))
-		'ended
-		(let ((soc (unregister-socompile-process! proc)))
-		   (unless (=fx (process-exit-status proc) 0)
-		      (if soc
-			  (unless (socompile-abortp soc)
-			     estr))))))))
-   
-   (define (dump-error cmd sopath msg)
-      (fprint (current-error-port) msg "\n")
-      (call-with-output-file (string-append sopath ".err")
-	 (lambda (op)
-	    (display cmd op)
-	    (newline op)
-	    (display msg op))))
-   
-   (define (make-ksucc sopath sopathtmp misctmp)
-      (lambda ()
-	 (let ((o (string-append (prefix sopathtmp) ".o")))
-	    (when (file-exists? o) (delete-file o))
-	    (cond
-	       ((file-exists? sopathtmp)
-		(rename-file sopathtmp sopath)
-		(when (and misctmp (file-exists? misctmp)) (delete-file misctmp))
-		sopath)
-	       ((file-exists? sopath)
-		sopath)))))
-   
-   (define (make-kfail sopath sopathtmp misctmp)
-      (lambda ()
-	 (let ((o (string-append (prefix sopathtmp) ".o"))
-	       (c (string-append (prefix sopathtmp) ".c")))
-	    (when (file-exists? o) (delete-file o))
-	    (when (file-exists? c) (delete-file c)))
-	 (when (file-exists? sopath) (delete-file sopath))
-	 (when (file-exists? sopathtmp) (delete-file sopathtmp))
-	 (when (and misctmp (file-exists? misctmp)) (delete-file misctmp))))
+(define (nodejs-socompile src::obj filename::bstring lang worker-slave::bool
+	   #!optional (opts '()))
+   (with-trace 'so "nodejs-socompile"
+      (trace-item "filename: " filename)
+      (let ((target (hop-sofile-cache-path filename
+		       :mt (if worker-slave "_w" ""))))
+	 (trace-item "target: " target)
+	 (nodejs-socompile-sync src target opts)
+	 target)))
 
-   (with-trace 'sorequire (format "nodejs-socompile ~a" filename)
-      (let ((sopath (hop-sofile-cache-path filename
-		       :suffix (if worker-slave "_w" ""))))
-	 (trace-item "sopath=" sopath)
-	 (let loop ()
-	    (let ((tmp (synchronize/debug socompile-mutex
-			  (cond
-			     ((file-younger? sopath filename)
-			      sopath)
-			     ((member filename socompile-files)
-			      (condition-variable-wait!/debug
-				 socompile-condv socompile-mutex)
-			      'loop)
-			     (else
-			      (set! socompile-files
-				 (cons filename socompile-files))
-			      'compile)))))
-	       (trace-item "tmp=" tmp)
-	       (cond
-		  (socompile-ended #f)
-		  ((string? tmp) tmp)
-		  ((eq? tmp 'loop) (loop))
-		  (else
-		   (with-handler
-		      (lambda (e)
-			 (exception-notify e)
-			 (fprintf (current-error-port) "sofile ~s (~s) not generated."
-			    (hop-sofile-cache-path filename
-			       :suffix (if worker-slave "_w" ""))
-			    filename))
-		      (let* ((sopathtmp (make-file-name
-					   (dirname sopath)
-					   (string-append "#" (basename sopath))))
-			     (astfile (when (isa? src J2SProgram)
-					 (make-file-name (dirname sopath)
-					    (string-append (basename filename) ".ast"))))
-			     (cmd `(,(hop-hopc)
-				    ;; bigloo
-				    ,(format "--bigloo=~a" (hop-bigloo))
-				    ;; verbosity
-				    ,@(if (eq? nodejs-debug-compile 'yes)
-					  (list (format "-v~a" (hop-verbose)))
-					  '())
-				    ;; source
-				    ,@(cond
-					 ((string? src)
-					  (list src))
-					 ((isa? src J2SProgram)
-					  `(,filename "--ast-file" ,astfile))
-					 (else
-					  (error "nodejs-socompile"
-					     (format "bad source format `~a'" (typeof src)) filename)))
-				    ;; target
-				    "-y" "--js-no-module-main" "-o" ,sopathtmp
-				    ;; loaders
-				    ,@(append-map (lambda (l) (list "--js-loader" l)) loader-names)
-				    ;; profiling
-				    ,@(if (hop-profile) '("--profile") '())
-				    ;; worker
-				    ,@(if worker-slave '("--js-worker-slave") '())
-				    ;; debug
-				    ,@(if (eq? nodejs-debug-compile 'yes)
-					  `("-t" ,(make-file-name "/tmp/HOP"
-						     (string-append
-							(prefix (basename filename))
-							".scm")))
-					  '())
-				    ;; config
-				    ,@(if (pair? (j2s-compile-options))
-					  `("--js-config"
-					      ,(string-for-read
-						  (format "~s"
-						     (j2s-compile-options))))
-					  '())
-				    ;; loaders
-				    ,@(append-map (lambda (l)
-						     `("--js-loader" ,l))
-					 (nodejs-loaders))
-				    ;; other options
-				    ,@(call-with-input-string (hop-hopc-flags)
-					 port->string-list)))
-			     (ksucc (make-ksucc sopath sopathtmp astfile))
-			     (kfail (make-kfail sopath sopathtmp astfile)))
-			 (make-directories (dirname sopath))
-			 (when astfile
-			    (call-with-output-file astfile
-			       (lambda (out)
-				  (display (obj->string src) out))))
-			 (trace-item "sopathtmp=" sopathtmp)
-			 (trace-item "cmd=" cmd)
-			 (synchronize-global
-			    (make-file-name
-			       (dirname (hop-sofile-cache-path "hop.lock"))
-			       "hop.lock")
-			    (lambda ()
-			       ;; check if the file has already been compiled while
-			       ;; we were waiting for the lock
-			       (let ((msg (unless (file-younger? sopath filename)
-					     (debug-compile "nodejs-socompile" filename sopath)
-					     (hop-verb 2 (hop-color -2 -2 " COMPILE") " "
-						(format "~( )\n"
-						   (map (lambda (s)
-							   (if (string-index s #\space)
-							       (string-append "\"" s "\"")
-							       s))
-						      cmd)))
-					     (exec cmd ksucc kfail))))
-				  (trace-item "msg=" msg)
-				  (unwind-protect
-				     (cond
-					((not msg)
-					 ;; compilation succeeded
-					 (ksucc))
-					((string? msg)
-					 ;; compilation failed
-					 (kfail)
-					 (hop-verb 1
-					    (hop-color -1 -1 " COMPILE-ERROR")
-					    " " cmd "\n" msg)
-					 (dump-error cmd sopath msg)
-					 'error))
-				     (synchronize/debug socompile-mutex
-					(unless socompile-ended
-					   (set! socompile-files
-					      (delete! filename socompile-files))
-					   (condition-variable-broadcast!
-					      socompile-condv))))))))))))))))
+;*---------------------------------------------------------------------*/
+;*    nodejs-socompile-sync ...                                        */
+;*---------------------------------------------------------------------*/
+(define (nodejs-socompile-sync src target::bstring opts)
+   
+   (define (exec cmd::pair)
+      (let ((proc (apply run-process (car cmd)
+		     :wait #f error: pipe: output: "/dev/null"
+		     (cdr cmd)))
+	    (estr #f)
+	    (emutex (make-mutex))
+	    (econdv (make-condition-variable)))
+	 ;; error logger (mandatory to flush child stderr)
+	 (when (process? proc)
+	    (thread-start!
+	       (instantiate::hopthread
+		  (name "errlogger")
+		  (body (lambda ()
+			   (thread-name-set! (current-thread)
+			      "nodejs-compile-errlogger")
+			   (let ((err (process-error-port proc)))
+			      (with-handler
+				 (lambda (e)
+				    (set! estr
+				       (call-with-output-string
+					  (lambda ()
+					     (exception-notify e)))))
+				 (unwind-protect
+				    (begin
+				       (set! estr (read-string err))
+				       (synchronize emutex
+					  (condition-variable-broadcast! econdv)))
+				    (close-input-port err))))))))
+	    (process-wait proc)
+	    (unless (=fx (process-exit-status proc) 0)
+	       (synchronize emutex
+		  (unless (string? estr)
+		     (condition-variable-wait! econdv emutex)
+		     estr))))))
+   
+   (define (compile cmd::pair filename::bstring target::bstring tmp::bstring)
+      (trace-item "cmd=" cmd)
+      (let ((tag (get-socompile-tag)))
+	 (when (hop-log-file)
+	    (fprintf (hop-log-file) "COMP [~a] ~( )\n" (hop-color 0 "" tag) cmd)
+	    (synchronize-global
+	       (make-file-name
+		  (dirname (hop-sofile-cache-path "hop.lock"))
+		  "hop.lock")
+	       (lambda ()
+		  (debug-compile "nodejs-socompile-sync" filename target)
+		  (let ((retval (exec cmd)))
+		     ;; cleanup temporary files
+		     (let ((o (string-append (prefix tmp) ".o"))
+			   (c (string-append (prefix tmp) ".c")))
+			(when (file-exists? o) (delete-file o))
+			(when (file-exists? c) (delete-file c)))
+		     ;; check the code status
+		     (if (or (string? retval) (not (file-exists? tmp)))
+			 (begin
+			    (when (hop-log-file)
+			       (fprintf (hop-log-file) "~a [~a] ~a\n"
+				  (hop-color 1 "" "FAIL")
+				  (hop-color 0 "" tag)
+				  retval))
+			    (let ((err (make-file-name (dirname target)
+					  (string-append (basename target)
+					     ".err"))))
+			       (call-with-output-file err
+				  (lambda (out)
+				     (display retval out))))
+			    (error "nodejs-socompile-sync"
+			       "compilation failed" filename))
+			 (when (hop-log-file)
+			    (rename-file tmp target)
+			    (fprintf (hop-log-file) "~a [~a] ~a\n"
+			       (hop-color 2 "" "OK")
+			       (hop-color 0 "" tag)
+			       (hop-color 3 "" target))
+			    target))))))))
+   
+   (define (compile-program src::J2SProgram target tmp::bstring)
+      (with-access::J2SProgram src (path)
+	 (let ((astfile (make-file-name (dirname target)
+			   (string-append (basename path) ".ast"))))
+	    (call-with-output-file astfile
+	       (lambda (out)
+		  (display (obj->string src) out)))
+	    (let ((cmd (hopc-compile-command src target opts :astfile astfile)))
+	       (unwind-protect
+		  (compile cmd path target tmp)
+		  (when (file-exists? astfile) (delete-file astfile)))))))
+   
+   (define (compile-src src::bstring target tmp::bstring)
+      (let ((cmd (hopc-compile-command src tmp opts)))
+	 (compile cmd src target tmp)))
+   
+   (with-trace 'sofile "nodejs-socompile-sync"
+      (trace-item "src=" (if (string? src) src (typeof src)))
+      (trace-item "target=" target)
+      (let ((tmp (make-file-name (dirname target)
+		    (string-append "#" (basename target)))))
+	 (tprint "com tmp=" tmp " target=" target)
+	 (if (isa? src J2SProgram)
+	     (compile-program src target tmp)
+	     (compile-src src target tmp)))))
+
+;*---------------------------------------------------------------------*/
+;*    hopc-compile-command ...                                         */
+;*---------------------------------------------------------------------*/
+(define (hopc-compile-command src target::bstring opts::pair-nil
+	   #!key astfile worker-slave)
+   `(,(hop-hopc)
+     ;; source
+     ,src ,@(if astfile `("--ast-file" ,astfile) '())
+     ;; bigloo
+     ,(format "--bigloo=~a" (hop-bigloo))
+     ;; verbosity
+     ,@(if env-debug-compile (list (format "-v~a" (hop-verbose))) '())
+     ;; profiling
+     ,@(if (hop-profile) '("--profile") '())
+     ;; worker
+     ,@(if worker-slave '("--js-worker-slave") '())
+     ;; debug
+     ,@(if env-debug-compile
+	   `("-t" ,(make-file-name "/tmp/HOP"
+		      (format "~a.scm" (prefix (basename src)))))
+	   '())
+     ;; config
+     ,@(if (pair? (j2s-compile-options))
+	   `("--js-config"
+	       ,(string-for-read (format "~s" (j2s-compile-options))))
+	   '())
+     ;; loaders
+     ,@(append-map (lambda (l) `("--js-loader" ,l)) (nodejs-loaders))
+     ;; other options
+     ,@(call-with-input-string (hop-hopc-flags) port->string-list)
+     ;; explicit additional options
+     ,@opts
+     ;; target
+     "-y" "--js-no-module-main" "-o" ,target))
+
+;*---------------------------------------------------------------------*/
+;*    *compile-tag* ...                                                */
+;*---------------------------------------------------------------------*/
+(define *socompile-tag* 0)
+
+;*---------------------------------------------------------------------*/
+;*    get-socompile-tag ...                                            */
+;*---------------------------------------------------------------------*/
+(define (get-socompile-tag)
+   (set! *socompile-tag* (+fx 1 *socompile-tag*))
+   *socompile-tag*)
 
 ;*---------------------------------------------------------------------*/
 ;*    builtin-find-sofile ...                                          */
 ;*    -------------------------------------------------------------    */
-;*    Check if there exists a precompiled so file for this module.     */
+;*    Check if there exists a precompiled sofile for this module.      */
 ;*---------------------------------------------------------------------*/
-(define (builtin-find-sofile filename #!key suffix)
+(define (builtin-find-sofile filename #!key mt)
    (with-trace 'sofile "builtin-find-sofile"
       (let* ((dir (dirname filename))
 	     (subdir (basename dir))
@@ -2232,7 +2087,7 @@
 				 (when (string=? md5
 					  (md5sum (call-with-input-file bpkgjson read-string)))
 				    ;; the two package.json are the same
-				    (let ((sofile (hop-find-sofile (make-file-path broot subdir base) :ignore-age #t)))
+				    (let ((sofile (hop-find-sofile (make-file-path broot subdir base) :mt mt :ignore-age #t)))
 				       (trace-item "sofile=" sofile)
 				       (when (file-exists? sofile)
 					  sofile))))))))))))))
@@ -2240,9 +2095,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-find-sofile ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-find-sofile filename #!key suffix)
-   (or (builtin-find-sofile filename :suffix suffix)
-       (hop-find-sofile filename :suffix suffix)))
+(define (nodejs-find-sofile filename #!key mt)
+   (or (builtin-find-sofile filename :mt mt)
+       (hop-find-sofile filename :mt mt)))
 
 ;*---------------------------------------------------------------------*/
 ;*    find-new-sofile ...                                              */
@@ -2252,7 +2107,7 @@
       (trace-item "filename=" filename)
       (when (or (hop-cache-enable) enable-cache)
 	 (let ((sopath (nodejs-find-sofile filename
-			  :suffix (if worker-slave "_w" ""))))
+			  :mt (if worker-slave "_w" ""))))
 	    (trace-item "sopath=" sopath)
 	    (match-case sopath
 	       ((? string?)
@@ -2278,7 +2133,7 @@
 	   #!key lang srcalias (commonjs-export #unspecified))
    
    (define (loadso-or-compile filename lang worker-slave)
-      (with-trace 'require "loadso-or-compile"
+      (with-trace 'require "nodejs-load.loadso-or-compile"
 	 (trace-item "filename=" filename " lang=" lang
 	    " slave=" (if worker-slave #t #f))
 	 (let loop ((sopath (find-new-sofile filename worker-slave)))
@@ -2299,25 +2154,38 @@
 		    (if (hop-sofile-enable)
 			(loop (nodejs-socompile src filename lang worker-slave))
 			(nodejs-compile src filename %ctxthis %ctxmodule
-			   :lang lang :commonjs-export commonjs-export
+			   :language lang :commonjs-export commonjs-export
 			   :worker-slave worker-slave)))
 		   ((nte nte1 nte+)
 		    (when (hop-sofile-enable)
 		       (nodejs-socompile-queue-push filename lang worker-slave))
 		    (nodejs-compile src filename %ctxthis %ctxmodule
-		       :lang lang :commonjs-export commonjs-export
+		       :language lang :commonjs-export commonjs-export
 		       :worker-slave worker-slave))
+		   ((pgo)
+		    (unless (eval-srfi? 'pgo)
+		       (js-profile-init '(:server #t) #f #f
+			  "hopscript:cache hopscript:access")
+		       (register-eval-srfi! 'pgo))
+		    (js-profile-snapshot-add-listener! filename
+		       (lambda (path)
+			  (tprint "IN LISTENER " filename " " path)
+			  (nodejs-socompile-queue-push filename lang worker-slave
+			     `("-Ox" "-fpgo" ,path))))
+		    (nodejs-compile src filename %ctxthis %ctxmodule
+		       :language lang :commonjs-export commonjs-export
+		       :worker-slave worker-slave :pgo #t))
 		   (else
 		    (nodejs-compile src filename %ctxthis %ctxmodule
-		       :lang lang :commonjs-export commonjs-export
+		       :language lang :commonjs-export commonjs-export
 		       :worker-slave worker-slave))))
 	       (else
 		(nodejs-compile src filename %ctxthis %ctxmodule
-		   :lang lang :commonjs-export commonjs-export
+		   :language lang :commonjs-export commonjs-export
 		   :worker-slave worker-slave))))))
    
    (define (load-module-js filename lang)
-      (with-trace 'require "require@load-module-js"
+      (with-trace 'require "hopjs-load.load-module-js"
 	 (with-access::WorkerHopThread worker (%this prehook parent)
 	    (with-access::JsGlobalObject %this (js-object js-main)
 	       (let ((hopscript (loadso-or-compile filename lang parent))
@@ -2346,14 +2214,13 @@
 		  mod)))))
    
    (define (load-module-html)
-      (with-trace 'require "require@load-module-html"
+      (with-trace 'require "nodejs-load.load-module-html"
 	 (with-access::WorkerHopThread worker (%this prehook)
 	    (with-access::JsGlobalObject %this (js-object js-main)
 	       (let ((hopscript (nodejs-compile filename filename
 				   %ctxthis %ctxmodule
-				   :lang lang
-				   :commonjs-export #f
-				   :warning-global #f))
+				   :language lang
+				   :commonjs-export #f))
 		     (this (js-new0 %this js-object))
 		     (scope (nodejs-new-scope-object %this))
 		     (mod (nodejs-new-module (if js-main filename ".")
@@ -3372,11 +3239,6 @@
 (define loader-condv (make-condition-variable))
 (define loader-module #f)
 (define loader-loaders '())
-
-;*---------------------------------------------------------------------*/
-;*    loader-names ...                                                 */
-;*---------------------------------------------------------------------*/
-(define loader-names '())
 
 ;*---------------------------------------------------------------------*/
 ;*    make-resolver-worker ...                                         */
