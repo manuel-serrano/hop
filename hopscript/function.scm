@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Fri Feb 23 07:13:53 2024 (serrano)                */
+;*    Last change :  Thu Jul  4 16:27:24 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -1576,9 +1576,19 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    js-function-info ...                                             */
+;*    -------------------------------------------------------------    */
+;*    See function.sch, which overrides this definition.               */
 ;*---------------------------------------------------------------------*/
 (define (js-function-info #!key name len tostring path start end (maxconstrsize 100) new-target)
-   (vector name len tostring path start end maxconstrsize new-target))
+   (vector name     ;; 0: name of the function
+      len           ;; 1: ctor size
+      tostring      ;; 2: tostring conversion
+      path          ;; 3: source file definining the function
+      start         ;; 4: first character of the function definition
+      end           ;; 5: last character of the function
+      maxconstrsize ;; 6: maximum constructor size
+      new-target    ;; 7: 
+      -1))          ;; 8: ctor profile mark
 
 ;*---------------------------------------------------------------------*/
 ;*    js-function-arity ...                                            */

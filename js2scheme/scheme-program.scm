@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Wed Jul  3 07:45:08 2024 (serrano)                */
+;*    Last change :  Thu Jul  4 15:28:01 2024 (serrano)                */
 ;*    Copyright   :  2018-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -316,7 +316,7 @@
 		`(define %log-event-max-count
 		  (let ((l (getenv "HOP_PROFILE_SNAPSHOT_LENGTH"))
 			(d ,(context-get ctx :profile-snapshot-length
-			       1000000)))
+			       10000000)))
 		     (if (string? l)
 			 (or (string->integer l) d)
 			 d))))
@@ -731,7 +731,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    profilers ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define (profilers this ctx)
+(define (profilers this::J2SProgram ctx)
    (when (or (context-get ctx :profile-call #f)
 	     (context-get ctx :profile-cmap #f)
 	     (context-get ctx :profile-cache #f)
@@ -750,7 +750,9 @@
 	      (else
 	       #f))
 	  ,(when (context-get ctx :profile-symbols #f)
-	      `',(profile-symbols this)))))
+	      `',(profile-symbols this))
+	  ,(with-access::J2SProgram this (path)
+	      (context-get ctx :filename path)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    filter-config ...                                                */

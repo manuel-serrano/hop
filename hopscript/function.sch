@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Dec  7 06:32:41 2019                          */
-;*    Last change :  Mon Jul 24 16:24:39 2023 (serrano)                */
-;*    Copyright   :  2019-23 Manuel Serrano                            */
+;*    Last change :  Thu Jul  4 16:39:06 2024 (serrano)                */
+;*    Copyright   :  2019-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function macros for js2scheme                                    */
 ;*=====================================================================*/
@@ -122,7 +122,7 @@
 	 ((?- :name (and (? string?) ?name)
 	     :len (and (? fixnum?) ?len)
 	     :tostring (and (? string?) ?tostring))
-	  (e `'#(,name ,len ,tostring "?" -1 -1 #f) e))
+	  (e `'#(,name ,len ,tostring "?" -1 -1 #f -1) e))
 	 ((?- :name (and (? string?) ?name)
 	     :len (and (? fixnum?) ?len)
 	     :tostring #f
@@ -131,13 +131,13 @@
 	     :end (and (? fixnum?) ?end))
 	  (e (cond
 		((string? path)
-		 `'#(,name ,len #f ,path ,start ,end 100 #f))
+		 `'#(,name ,len #f ,path ,start ,end 100 #f -1))
 		((eq? path '%sourcepath)
-		 `(let ((v '#(,name ,len #f "" ,start ,end 100 #f)))
+		 `(let ((v '#(,name ,len #f "" ,start ,end 100 #f -1)))
 		     (vector-set! v 3 %sourcepath)
 		     v))
 		(else
-		 `(vector ,name ,len #f ,path ,start ,end 100 #f)))
+		 `(vector ,name ,len #f ,path ,start ,end 100 #f -1)))
 	     e))
 	 ((?- :name (and (? string?) ?name)
 	     :len (and (? integer?) ?len)
@@ -146,13 +146,13 @@
 	     :end (and (? fixnum?) ?end))
 	  (e (cond
 		((string? path)
-		 `'#(,name ,len #f ,path ,start ,end 100 #f))
+		 `'#(,name ,len #f ,path ,start ,end 100 #f-1))
 		((eq? path '%sourcepath)
-		 `(let ((v '#(,name ,len #f "" ,start ,end 100 #f)))
+		 `(let ((v '#(,name ,len #f "" ,start ,end 100 #f -1)))
 		     (vector-set! v 3 %sourcepath)
 		     v))
 		(else
-		 `(vector ,name ,len #f ,path ,start ,end 100 #f)))
+		 `(vector ,name ,len #f ,path ,start ,end 100 #f -1)))
 	     e))
 	 ((?- :name (and (? string?) ?name)
 	     :len (and (? integer?) ?len)
@@ -162,44 +162,44 @@
 	     :new-target ?new-target)
 	  (e (cond
 		((string? path)
-		 `'#(,name ,len #f ,path ,start ,end 100 ,new-target))
+		 `'#(,name ,len #f ,path ,start ,end 100 ,new-target -1))
 		((eq? path '%sourcepath)
-		 `(let ((v '#(,name ,len #f "" ,start ,end 100 ,new-target)))
+		 `(let ((v '#(,name ,len #f "" ,start ,end 100 ,new-target -1)))
 		     (vector-set! v 3 %sourcepath)
 		     v))
 		(else
-		 `(vector ,name ,len #f ,path ,start ,end 100 ,new-target)))
+		 `(vector ,name ,len #f ,path ,start ,end 100 ,new-target -1)))
 	     e))
 	 ((?- :name (and (? string?) ?name)
 	     :len (and (? integer?) ?len))
 	  (if (epair? x)
-	      (e `'#(,name ,len ,(format "function ~a() { [native code] }" name) ,(cadr (cer x)) ,(caddr (cer x)) -1 100 #F) e)
-	      (e `'#(,name ,len ,(format "function ~a() { [native code] }" name) "?" -1 -1 100 #f) e)))
+	      (e `'#(,name ,len ,(format "function ~a() { [native code] }" name) ,(cadr (cer x)) ,(caddr (cer x)) -1 100 #f -1) e)
+	      (e `'#(,name ,len ,(format "function ~a() { [native code] }" name) "?" -1 -1 100 #f -1) e)))
 	 ((?- :name (and (? string?) ?name)
 	     :len (and (? integer?) ?len)
 	     :maxconstrsize (and (? fixnum?) ?maxconstrsize))
 	  (if (epair? x)
-	      (e `'#(,name ,len ,(format "function ~a() { [native code] }" name) ,(cadr (cer x)) ,(caddr (cer x)) -1 ,maxconstrsize #f) e)
-	      (e `'#(,name ,len ,(format "function ~a() { [native code] }" name) "?" -1 -1 ,maxconstrsize #f) e)))
+	      (e `'#(,name ,len ,(format "function ~a() { [native code] }" name) ,(cadr (cer x)) ,(caddr (cer x)) -1 ,maxconstrsize #f -1) e)
+	      (e `'#(,name ,len ,(format "function ~a() { [native code] }" name) "?" -1 -1 ,maxconstrsize #f -1) e)))
 	 ((?- :name ?name :len ?len)
 	  (let ((tmp (gensym 'name)))
 	     (if (epair? x)
 		 (e `(let ((,tmp ,name))
 			(vector ,tmp ,len (format "function ~a() { [native code] }" ,tmp)
-			   ,(cadr (cer x)) ,(caddr (cer x)) -1 100 #f))
+			   ,(cadr (cer x)) ,(caddr (cer x)) -1 100 #f -1))
 		    e)
 		 (e `(let ((,tmp ,name))
-			(vector ,tmp ,len (format "function ~a() { [native code] }" ,tmp) "?" -1 -1 100 #f))
+			(vector ,tmp ,len (format "function ~a() { [native code] }" ,tmp) "?" -1 -1 100 #f -1))
 		    e))))
 	 ((?- :name ?name :len ?len :new-target ?new-target)
 	  (let ((tmp (gensym 'name)))
 	     (if (epair? x)
 		 (e `(let ((,tmp ,name))
 			(vector ,tmp ,len (format "function ~a() { [native code] }" ,tmp)
-			   ,(cadr (cer x)) ,(caddr (cer x)) -1 100 ,new-target))
+			   ,(cadr (cer x)) ,(caddr (cer x)) -1 100 ,new-target -1))
 		    e)
 		 (e `(let ((,tmp ,name))
-			(vector ,tmp ,len (format "function ~a() { [native code] }" ,tmp) "?" -1 -1 100 ,new-target))
+			(vector ,tmp ,len (format "function ~a() { [native code] }" ,tmp) "?" -1 -1 100 ,new-target -1))
 		    e))))
 	 (else
 	  (error "js-function-info" "bad form" x)))))
@@ -278,3 +278,27 @@
 ;*---------------------------------------------------------------------*/
 (define-macro (js-function-info-maxconstrsize info)
    `(vector-ref ,info 6))
+
+;*---------------------------------------------------------------------*/
+;*    js-function-info-path ...                                        */
+;*---------------------------------------------------------------------*/
+(define-macro (js-function-info-path info)
+   `(vector-ref ,info 3))
+
+;*---------------------------------------------------------------------*/
+;*    js-function-info-start ...                                       */
+;*---------------------------------------------------------------------*/
+(define-macro (js-function-info-start info)
+   `(vector-ref ,info 4))
+
+;*---------------------------------------------------------------------*/
+;*    js-function-info-constrsize ...                                  */
+;*---------------------------------------------------------------------*/
+(define-macro (js-function-info-constrsize info)
+   `(vector-ref ,info 8))
+
+;*---------------------------------------------------------------------*/
+;*    js-function-info-constrsize-set! ...                             */
+;*---------------------------------------------------------------------*/
+(define-macro (js-function-info-constrsize-set! info size)
+   `(vector-set! ,info 8 ,size))

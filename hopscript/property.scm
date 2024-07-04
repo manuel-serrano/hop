@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed Jun 12 13:16:14 2024 (serrano)                */
+;*    Last change :  Tue Jul  2 18:32:24 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -674,6 +674,9 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    js-ctor-constrsize-extend! ...                                   */
+;*    -------------------------------------------------------------    */
+;*    This function is used to instruct constructors to enlarge        */
+;*    futur objects they will allocate.                                */
 ;*---------------------------------------------------------------------*/
 (define (js-ctor-constrsize-extend! ctor sz)
    (cond
@@ -686,7 +689,8 @@
 	      #unspecified)
 	     (else
 	      (set! constrmap (clone-cmap constrmap))
-	      (set! constrsize sz)))))
+	      (set! constrsize sz)
+	      (js-profile-log-ctor ctor)))))
       ((cell? ctor)
        ;; only used for functions (see function.scm)
        (cond
@@ -718,8 +722,6 @@
       (let* ((ilen (js-object-inline-length obj))
 	     (rnlen (-fx nlen ilen))
 	     (nels (copy-vector elements rnlen)))
-;* 	 (tprint "COPY-VECTOR el=" (vector-length elements) " rnlne=" rnlen */
-;* 	    " ilen=" ilen " idx=" idx " nlen=" nlen)                   */
 	 (vector-set! nels (-fx idx ilen) value)
 	 (set! elements nels)
 	 obj)))

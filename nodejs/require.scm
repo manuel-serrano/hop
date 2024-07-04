@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Tue Jul  2 07:59:44 2024 (serrano)                */
+;*    Last change :  Thu Jul  4 15:21:32 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -1531,7 +1531,8 @@
 	       :debug (nodejs-hop-debug)
 	       :optim-propcache pgo
 	       :profile-snapshot pgo
-	       :profile-cache pgo)
+	       :profile-cache pgo
+	       :profile-ctor pgo)
 	    (when (mmap? mmap)
 	       (close-mmap mmap)))))
    
@@ -1828,11 +1829,14 @@
 			   (set! worker-count (-fx worker-count 1))
 			   (condition-variable-broadcast! socompile-condv))))))))
    
-;*    (register-exit-function!                                         */
-;*       (lambda (status)                                              */
-;* 	 (nodejs-compile-abort-all!)                                   */
-;* 	 status))                                                      */
-;*                                                                     */
+   (register-exit-function!
+      (lambda (status)
+	 (synchronize socompile-mutex
+	    (let loop ()
+	       (when (>fx worker-count 0)
+		  (condition-variable-wait! socompile-condv socompile-mutex)
+		  (loop))))))
+
    (thread-start!
       (instantiate::hopthread
 	 (name "hop-socompile-orchestrator")
@@ -1878,7 +1882,6 @@
 			    (if worker-slave #t #f)
 			    key
 			    opts)))
-		  (tprint "QUEUE-PUSH")
 		  (set! socompile-queue (cons en socompile-queue)))))
 	 (condition-variable-broadcast! socompile-condv))))
 
@@ -1997,7 +2000,6 @@
       (trace-item "target=" target)
       (let ((tmp (make-file-name (dirname target)
 		    (string-append "#" (basename target)))))
-	 (tprint "com tmp=" tmp " target=" target)
 	 (if (isa? src J2SProgram)
 	     (compile-program src target tmp)
 	     (compile-src src target tmp)))))
@@ -2165,11 +2167,10 @@
 		   ((pgo)
 		    (unless (eval-srfi? 'pgo)
 		       (js-profile-init '(:server #t) #f #f
-			  "hopscript:cache hopscript:access")
+			  "hopscript:cache hopscript:access hopscript:ctor format:pgo")
 		       (register-eval-srfi! 'pgo))
 		    (js-profile-snapshot-add-listener! filename
 		       (lambda (path)
-			  (tprint "IN LISTENER " filename " " path)
 			  (nodejs-socompile-queue-push filename lang worker-slave
 			     `("-Ox" "-fpgo" ,path))))
 		    (nodejs-compile src filename %ctxthis %ctxmodule

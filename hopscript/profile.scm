@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
-;*    Last change :  Wed Jul  3 08:21:41 2024 (serrano)                */
+;*    Last change :  Thu Jul  4 16:16:39 2024 (serrano)                */
 ;*    Copyright   :  2018-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript profiler.                                              */
@@ -13,6 +13,8 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module __hopscript_profile
+
+   (include "function.sch")
    
    (library hop)
    
@@ -32,8 +34,10 @@
 	   (js-profile-snapshot source::bstring)
 	   (js-profile-snapshot-add-listener! source::bstring ::procedure)
 	   *profile-cache*
+	   *profile-ctor*
 
 	   (js-profile-register-pcache ::JsPropertyCache)
+	   (js-profile-register-ctor ::vector)
 	   
 	   (js-profile-log-cache ::JsPropertyCache
 	      #!key imap emap cmap pmap nmap amap vtable xmap)
@@ -43,6 +47,8 @@
 	   (js-profile-log-put ::obj loc)
 	   (js-profile-log-method ::obj point)
 
+	   (js-profile-log-ctor ::JsFunction)
+	   
 	   (inline js-profile-log-call ::vector ::long)
 	   (js-profile-log-funcall ::vector ::long ::obj ::obj)
 	   (js-profile-log-cmap ::vector ::long ::obj)
@@ -65,6 +71,7 @@
 ;*---------------------------------------------------------------------*/
 (define *profile* #f)
 (define *profile-cache* #f)
+(define *profile-ctor* #f)
 (define *profile-caches* '())
 (define *profile-gets* #l0)
 (define *profile-gets-props* #f)
@@ -117,30 +124,31 @@
 	       (when calltable
 		  (set! *profile-call-tables*
 		     (cons calltable *profile-call-tables*))))
-	    (register-exit-function!
-	       (lambda (n)
-		  (with-handler
-		     (lambda (e)
-			(exception-notify e)
-			(exit -1))
-		     (begin
-			(profile-report-start trc conf)
-			(when (string-contains trc "hopscript:cache")
-			   (profile-report-cache trc)
-			   (display "," *profile-port*))
-			(when (string-contains trc "hopscript:hint")
-			   (profile-hints trc))
-			(when (string-contains trc "hopscript:alloc")
-			   (profile-allocs trc))
-			(when (string-contains trc "hopscript:call")
-			   (profile-calls trc (or symtable '())))
-			(when (string-contains trc "hopscript:symtable")
-			   (profile-symtable trc (or symtable '()) conf))
-			(when (string-contains trc "hopscript:cmap")
-			   (profile-cmaps trc))
-			(profile-report-end trc conf)
-			(unless (eq? *profile-port* (current-error-port))
-			   (close-output-port *profile-port*))))))))))
+	    (unless (string-contains trc "format:pgo")
+	       (register-exit-function!
+		  (lambda (n)
+		     (with-handler
+			(lambda (e)
+			   (exception-notify e)
+			   (exit -1))
+			(begin
+			   (profile-report-start trc conf)
+			   (when (string-contains trc "hopscript:cache")
+			      (profile-report-cache trc)
+			      (display "," *profile-port*))
+			   (when (string-contains trc "hopscript:hint")
+			      (profile-hints trc))
+			   (when (string-contains trc "hopscript:alloc")
+			      (profile-allocs trc))
+			   (when (string-contains trc "hopscript:call")
+			      (profile-calls trc (or symtable '())))
+			   (when (string-contains trc "hopscript:symtable")
+			      (profile-symtable trc (or symtable '()) conf))
+			   (when (string-contains trc "hopscript:cmap")
+			      (profile-cmaps trc))
+			   (profile-report-end trc conf)
+			   (unless (eq? *profile-port* (current-error-port))
+			      (close-output-port *profile-port*)))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    profile-cache-start! ...                                         */
@@ -148,6 +156,8 @@
 (define (profile-cache-start! trc)
    (when (string-contains trc "hopscript:cache")
       (set! *profile-cache* #t))
+   (when (string-contains trc "hopscript:ctor")
+      (set! *profile-ctor* #t))
    (when (string-contains trc "hopscript:access")
       (set! *profile-cache* #t)
       (set! *profile-caches*
@@ -165,8 +175,10 @@
 ;*---------------------------------------------------------------------*/
 (define (js-profile-snapshot source)
    (let ((path (hop-sofile-cache-path source :suffix ".prof")))
+      (tprint "SNAPSHOT " path)
       (with-handler
 	 (lambda (e)
+	    (exception-notify e)
 	    (when (file-exists? path)
 	       (delete-path path)))
 	 (synchronize snapshot-mutex
@@ -180,7 +192,10 @@
 			   (display "{\n\"format\": \"pgo\",\n" port)
 			   (profile-report-cache
 			      (format "srcfile=~a format:pgo" source))
-			   (display "}" port))
+			   (display ",\n" port)
+			   (profile-report-ctor
+			      (format "srcfile=~a format:pgo" source))
+			   (display "}\n" port))
 			(set! *profile-port* oport))))
 	       (let ((ltn (assoc source snapshot-listeners)))
 		  (when (pair? ltn)
@@ -195,15 +210,16 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-cache-table ...                                               */
 ;*---------------------------------------------------------------------*/
-(define js-profile-pcaches-lock (make-spinlock "js-profile-pcaches"))
+(define js-profile-lock (make-spinlock "js-profile-pcaches"))
 (define js-profile-pcaches '())
+(define js-profile-ctors '())
 
 ;*---------------------------------------------------------------------*/
 ;*    js-profile-register-pcache ...                                   */
 ;*---------------------------------------------------------------------*/
 (define (js-profile-register-pcache pcache::JsPropertyCache)
    (when *profile-cache*
-      (synchronize js-profile-pcaches-lock
+      (synchronize js-profile-lock
 	 (set! js-profile-pcaches (cons pcache js-profile-pcaches)))))
 
 ;*---------------------------------------------------------------------*/
@@ -211,6 +227,13 @@
 ;*---------------------------------------------------------------------*/
 (define (js-profile-get-all-pcaches)
    (append js-profile-pcaches ($js-profile-get-pcaches)))
+
+;*---------------------------------------------------------------------*/
+;*    js-profile-register-ctor ...                                     */
+;*---------------------------------------------------------------------*/
+(define (js-profile-register-ctor ctor::vector)
+   (synchronize js-profile-lock
+      (set! js-profile-ctors (cons ctor js-profile-ctors))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-profile-log-cache ...                                         */
@@ -273,6 +296,16 @@
 	 (if (pair? c)
 	     (set-cdr! c (+ 1 (cdr c)))
 	     (set! *profile-methods-props* (cons (cons prop 1) *profile-methods-props*))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-profile-log-ctor ...                                          */
+;*---------------------------------------------------------------------*/
+(define (js-profile-log-ctor ctor::JsFunction)
+   (when *profile-ctor*
+      (with-access::JsFunction ctor (info constrsize)
+	 (when (<fx (js-function-info-constrsize info) 0)
+	    (js-profile-register-ctor info))
+	 (js-function-info-constrsize-set! info constrsize))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-profile-log-call ...                                          */
@@ -1122,7 +1155,7 @@
 				      (print "   ] },"))))
 		      srcs))
 		(print "  { \"filename\": \"\", \"caches\": [] }")
-		(print "]")))))
+		(display "]")))))
       ((string-contains trc "format:json")
        (with-output-to-port *profile-port*
 	  (lambda ()
@@ -1284,6 +1317,42 @@
        (cond-expand
 	  (profile #f)
 	  (else (fprint *profile-port* "reconfigure with --profile for loging xmap, amap, and pmap"))))))
+
+;*---------------------------------------------------------------------*/
+;*    profile-report-ctor ...                                          */
+;*---------------------------------------------------------------------*/
+(define (profile-report-ctor trc)
+   
+   (define filecaches
+      (let ((m (pregexp-match "srcfile=([^ ]+)" trc)))
+	 (if m
+	     (let ((filename (cadr m)))
+		(filter (lambda (info)
+			   (string=? (js-function-info-path info) filename))
+		   js-profile-ctors))
+	     js-profile-ctors)))
+
+   (define (display-ctor info)
+      (display "      { \"point\": "       *profile-port*)
+      (display (js-function-info-start info) *profile-port*)
+      (display ", \"constrsize\": "  *profile-port*)
+      (display (js-function-info-constrsize info) *profile-port*)
+      (display "}" *profile-port*))
+
+   (if (null? filecaches)
+       (display "ctors\": []" *profile-port*)
+       (begin
+	  (display "\"ctors\": [\n" *profile-port*)
+	  (display "  { \"filename\": \"" *profile-port*)
+	  (display (js-function-info-path (car filecaches)))
+	  (display "\",\n"  *profile-port*)
+	  (display "    \"ctors\": [\n" *profile-port*)
+	  (display-ctor (car filecaches))
+	  (for-each (lambda (info)
+		       (display ",\n" *profile-port*)
+		       (display-ctor info))
+	     (cdr filecaches))
+	  (display "]}\n]" *profile-port*))))
 
 ;*---------------------------------------------------------------------*/
 ;*    profile-uncached ...                                             */
