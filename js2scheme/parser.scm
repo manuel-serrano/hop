@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Fri Jul  5 16:04:17 2024 (serrano)                */
+;*    Last change :  Fri Jul  5 19:02:15 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -2151,7 +2151,7 @@
 		       (id (token-value token))
 		       (utype typ)
 		       (hint hint)
-		       (optional #t))
+		       (optional opt))
 		    #f))))
 	 ((LBRACE)
 	  (let* ((id (string->symbol (format "%~a" idx)))
