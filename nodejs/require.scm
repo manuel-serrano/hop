@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Thu Jul  4 15:21:32 2024 (serrano)                */
+;*    Last change :  Fri Jul  5 09:52:57 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -1921,10 +1921,13 @@
 			   (let ((err (process-error-port proc)))
 			      (with-handler
 				 (lambda (e)
-				    (set! estr
-				       (call-with-output-string
-					  (lambda ()
-					     (exception-notify e)))))
+				    (let ((es (call-with-output-string
+						 (lambda ()
+						    (exception-notify e)))))
+				       (set! estr
+					  (if (string? estr)
+					      (string-append es "\n" estr)
+					      es))))
 				 (unwind-protect
 				    (begin
 				       (set! estr (read-string err))
@@ -1942,7 +1945,9 @@
       (trace-item "cmd=" cmd)
       (let ((tag (get-socompile-tag)))
 	 (when (hop-log-file)
-	    (fprintf (hop-log-file) "COMP [~a] ~( )\n" (hop-color 0 "" tag) cmd)
+	    (fprintf (hop-log-file) "~a [~a] ~( )\n"
+	       (hop-color 1 "" "COMP")
+	       (hop-color 0 "" tag) cmd)
 	    (synchronize-global
 	       (make-file-name
 		  (dirname (hop-sofile-cache-path "hop.lock"))
@@ -1957,18 +1962,16 @@
 			(when (file-exists? c) (delete-file c)))
 		     ;; check the code status
 		     (if (or (string? retval) (not (file-exists? tmp)))
-			 (begin
+			 (let ((err (make-file-name (dirname target)
+				       (string-append (prefix (basename target)) ".err"))))
 			    (when (hop-log-file)
 			       (fprintf (hop-log-file) "~a [~a] ~a\n"
-				  (hop-color 1 "" "FAIL")
+				  (hop-color 4 "" "FAIL")
 				  (hop-color 0 "" tag)
-				  retval))
-			    (let ((err (make-file-name (dirname target)
-					  (string-append (basename target)
-					     ".err"))))
-			       (call-with-output-file err
-				  (lambda (out)
-				     (display retval out))))
+				  err))
+			    (call-with-output-file err
+			       (lambda (out)
+				  (display retval out)))
 			    (error "nodejs-socompile-sync"
 			       "compilation failed" filename))
 			 (when (hop-log-file)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
-;*    Last change :  Thu Jul  4 16:16:39 2024 (serrano)                */
+;*    Last change :  Fri Jul  5 08:15:57 2024 (serrano)                */
 ;*    Copyright   :  2018-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript profiler.                                              */
@@ -175,7 +175,6 @@
 ;*---------------------------------------------------------------------*/
 (define (js-profile-snapshot source)
    (let ((path (hop-sofile-cache-path source :suffix ".prof")))
-      (tprint "SNAPSHOT " path)
       (with-handler
 	 (lambda (e)
 	    (exception-notify e)
@@ -1340,11 +1339,11 @@
       (display "}" *profile-port*))
 
    (if (null? filecaches)
-       (display "ctors\": []" *profile-port*)
+       (display "\"ctors\": []" *profile-port*)
        (begin
 	  (display "\"ctors\": [\n" *profile-port*)
 	  (display "  { \"filename\": \"" *profile-port*)
-	  (display (js-function-info-path (car filecaches)))
+	  (display (js-function-info-path (car filecaches)) *profile-port*)
 	  (display "\",\n"  *profile-port*)
 	  (display "    \"ctors\": [\n" *profile-port*)
 	  (display-ctor (car filecaches))

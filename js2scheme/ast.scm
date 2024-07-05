@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Sun Jun  2 09:34:22 2024 (serrano)                */
+;*    Last change :  Fri Jul  5 07:50:36 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -59,7 +59,8 @@
 	      (direct-eval::bool (default #t))
 	      (source-map (default #f))
 	      (imports::pair-nil (default '()))
-	      (exports::pair-nil (default '()) (info '("notraverse"))))
+	      (exports::pair-nil (default '()) (info '("notraverse")))
+	      (profiling::pair-nil (default '()) (info '("nojson" "notraverse"))))
 
 	   (class J2SDecl::J2SStmt
 	      id::symbol

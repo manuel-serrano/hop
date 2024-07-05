@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Apr  2 19:46:13 2017                          */
-;*    Last change :  Wed Jun 26 10:19:51 2024 (serrano)                */
+;*    Last change :  Fri Jul  5 07:37:33 2024 (serrano)                */
 ;*    Copyright   :  2017-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Annotate property accesses with cache level information          */
@@ -24,8 +24,6 @@
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_cspecs
 
-   (library web)
-   
    (include "ast.sch"
 	    "usage.sch")
    
@@ -131,40 +129,13 @@
 ;*    cache-profile-log ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (cache-profile-log this::J2SProgram logfile conf)
-
-   (define (get key lst)
-      (let ((c (assq key lst)))
-	 (when (pair? c) (cdr c))))
-
-   (cache-verb conf "loading log file " (string-append "\"" logfile "\""))
-   
-   (with-access::J2SProgram this (path)
-      (let* ((log (load-profile-log logfile))
-	     (srcs (get 'caches log))
-	     (file (config-get conf :filename))
-	     (path (cond
-		      ((not (string? path))
-		       file)
-		      ((char=? (string-ref path 0) (file-separator))
-		       path)
-		      (else
-		       (file-name-unix-canonicalize (make-file-name (pwd) path))))))
-	 (when (vector? srcs)
-	    (let loop ((i (-fx (vector-length srcs) 1))
-		       (r #f))
-	       (if (>=fx i 0)
-		   (let ((filename (get 'filename (vector-ref srcs i))))
-		      (if (or (string=? file filename) (string=? path filename))
-			  (let ((verb (make-cell 0))
-				(caches (get 'caches (vector-ref srcs i))))
-			     (if caches
-				 (let ((logtable (val->logtable caches)))
-				    (cpsecs-profile this logtable 'get verb conf)
-				    (cache-verb conf "cspecs " (cell-ref verb))
-				    (loop (-fx i 1) #t))
-				 (loop (-fx i 1) r)))
-			  (loop (-fx i 1) #f)))
-		   r))))))
+   (with-access::J2SProgram this (profiling)
+      (let ((verb (make-cell 0))
+	    (caches (assq 'caches profiling)))
+	 (when caches
+	    (let ((logtable (val->logtable (cdr caches))))
+	       (cpsecs-profile this logtable 'get verb conf)
+	       (cache-verb conf "cspecs " (cell-ref verb)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    cspecs-update ...                                                */
@@ -176,7 +147,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    pcache ...                                                       */
 ;*---------------------------------------------------------------------*/
-(define-struct pcache point usage imap cmap emap pmap amap vtable)
+(define-struct pcache point usage imap cmap emap pmap amap xmap vtable)
 
 ;*---------------------------------------------------------------------*/
 ;*    val->logtable ...                                                */
@@ -184,7 +155,7 @@
 (define (val->logtable vals::vector)
    
    (define (alist->pcache l)
-      (let ((p (pcache -1 '- 0 0 0 0 0 0)))
+      (let ((p (pcache -1 '- 0 0 0 0 0 0 0)))
 	 (for-each (lambda (l)
 		      (case (car l)
 			 ((point)
@@ -201,6 +172,8 @@
 			  (pcache-pmap-set! p (cdr l)))
 			 ((amap)
 			  (pcache-amap-set! p (cdr l)))
+			 ((xmap)
+			  (pcache-xmap-set! p (cdr l)))
 			 ((vtable)
 			  (pcache-vtable-set! p (cdr l)))))
 	    l)
@@ -209,42 +182,6 @@
    (sort (lambda (x y)
 	    (<=fx (pcache-point x) (pcache-point y)))
       (vector-map! alist->pcache vals)))
-
-;*---------------------------------------------------------------------*/
-;*    load-profile-log ...                                             */
-;*---------------------------------------------------------------------*/
-(define (load-profile-log logfile)
-   (call-with-input-file logfile
-      (lambda (ip)
-	 (let ((pgo #f))
-	    (json-parse ip
-	       :array-alloc (lambda () (make-cell '()))
-	       :array-set (lambda (a i val)
-			     (cell-set! a (cons val (cell-ref a))))
-	       :array-return (lambda (a i)
-				(list->vector (reverse! (cell-ref a))))
-	       :object-alloc (lambda ()
-				(make-cell '()))
-	       :object-set (lambda (o p val)
-			      (cond
-				 ((string=? p "caches")
-				  (unless pgo
-				     (error "pgo" "Bad log format"
-					logfile))
-				  (cell-set! o
-				     (cons (cons 'caches val)
-					(cell-ref o))))
-				 ((string=? p "format")
-				  (set! pgo (equal? val "pgo")))
-				 (else
-				  (cell-set! o
-				     (cons (cons (string->symbol p) val)
-					(cell-ref o))))))
-	       :object-return (lambda (o)
-				 (reverse! (cell-ref o)))
-	       :parse-error (lambda (msg fname loc)
-			       (error/location "pgo" "Bad JSON file" msg
-				  fname loc)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    propinfo ...                                                     */
@@ -265,7 +202,7 @@
       (let ((entry (logtable-find logtable (loc->point loc) ctx)))
 	 (cond
 	    (entry
-	     (let ((policy (or (pcache->cspecs entry) '())))
+	     (let ((policy (or (pcache->cspecs entry ctx) '())))
 		(when (>=fx (config-get conf :verbose 0) 4)
 		   (with-output-to-port (current-error-port)
 		      (lambda ()
@@ -297,7 +234,7 @@
 	    (let ((entryc (logtable-find logtable (loc->point loc) 'call))
 		  (entrya (logtable-find logtable (loc->point loc) 'get)))
 	       (when entryc
-		  (let ((policy (pcache->cspecs entryc)))
+		  (let ((policy (pcache->cspecs entryc ctx)))
 		     (when policy
 			(when (>=fx (config-get conf :verbose 0) 4)
 			   (with-output-to-port (current-error-port)
@@ -309,7 +246,7 @@
 			(with-access::J2SCall this (cspecs)
 			   (set! cspecs policy)))))
 	       (when entrya
-		  (let ((policy (or (pcache->cspecs entrya) '(cmap+))))
+		  (let ((policy (or (pcache->cspecs entrya ctx) '(cmap+))))
 		     (when (>=fx (config-get conf :verbose 0) 4)
 			(with-output-to-port (current-error-port)
 			   (lambda ()
@@ -402,113 +339,154 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    pcache->cspecs ...                                               */
+;*    -------------------------------------------------------------    */
+;*    Transforms a profiling cache statistics into an actual           */
+;*    compiler cspecs directive.                                       */
 ;*---------------------------------------------------------------------*/
-(define (pcache->cspecs pc)
+(define (pcache->cspecs pc ctx)
 
-   (define threshold 100)
-   
-   (cond
-      ((and (> (pcache-imap pc) threshold)
-	    (< (pcache-cmap pc) threshold)
-	    (< (pcache-emap pc) threshold)
-	    (< (pcache-pmap pc) threshold)
-	    (< (pcache-amap pc) threshold)
-	    (< (pcache-vtable pc) threshold))
-       '(imap))
-      ((and (> (pcache-imap pc) threshold)
-	    (< (pcache-cmap pc) threshold)
-	    (> (pcache-emap pc) threshold)
-	    (< (pcache-pmap pc) threshold)
-	    (< (pcache-amap pc) threshold)
-	    (< (pcache-vtable pc) threshold))
-       (if (> (pcache-imap pc) (pcache-emap pc))
-	   '(imap emap)
-	   '(emap imap)))
-      ((and (> (pcache-imap pc) threshold)
-	    (< (pcache-cmap pc) threshold)
-	    (< (pcache-emap pc) threshold)
-	    (< (pcache-pmap pc) threshold)
-	    (< (pcache-amap pc) threshold)
-	    (< (pcache-vtable pc) threshold))
-       (if (> (pcache-imap pc) (pcache-cmap pc))
-	   '(imap cmap)
-	   '(cmap imap)))
-      ((and (> (pcache-cmap pc) threshold)
-	    (< (pcache-imap pc) threshold)
-	    (< (pcache-emap pc) threshold)
-	    (< (pcache-pmap pc) threshold)
-	    (< (pcache-amap pc) threshold)
-	    (< (pcache-vtable pc) threshold))
-       '(cmap))
-      ((and (> (pcache-pmap pc) threshold)
-	    (< (pcache-imap pc) threshold)
-	    (< (pcache-emap pc) threshold)
-	    (< (pcache-cmap pc) threshold)
-	    (< (pcache-amap pc) threshold)
-	    (< (pcache-vtable pc) threshold))
-       '(pmap))
-      ((and (> (pcache-vtable pc) threshold)
-	    (< (pcache-imap pc) threshold)
-	    (< (pcache-emap pc) threshold)
-	    (< (pcache-cmap pc) threshold)
-	    (< (pcache-pmap pc) threshold)
-	    (< (pcache-amap pc) threshold))
-       '(vtable))
-      ((and (> (pcache-amap pc) threshold)
-	    (< (pcache-imap pc) threshold)
-	    (< (pcache-emap pc) threshold)
-	    (< (pcache-cmap pc) threshold)
-	    (< (pcache-pmap pc) threshold)
-	    (< (pcache-vtable pc) threshold))
-       '(amap))
-      ((and (> (pcache-emap pc) threshold)
-	    (< (pcache-imap pc) threshold)
-	    (< (pcache-cmap pc) threshold)
-	    (< (pcache-pmap pc) threshold)
-	    (< (pcache-amap pc) threshold)
-	    (< (pcache-vtable pc) threshold))
-       '(emap))
-      ((and (> (pcache-imap pc) threshold)
-	    (> (pcache-emap pc) threshold)
-	    (< (pcache-cmap pc) threshold)
-	    (< (pcache-vtable pc) threshold)
-	    (< (pcache-pmap pc) threshold))
-       (if (> (pcache-imap pc) (pcache-emap pc))
-	   '(imap emap)
-	   '(emap imap)))
-      ((and (> (pcache-emap pc) threshold)
-	    (> (pcache-cmap pc) threshold)
-	    (< (pcache-imap pc) threshold)
-	    (< (pcache-vtable pc) threshold)
-	    (< (pcache-pmap pc) threshold))
-       (if (> (pcache-cmap pc) (pcache-emap pc))
-	   '(cmap emap)
-	   '(emap cmap)))
-      ((and (> (pcache-imap pc) threshold)
-	    (> (pcache-vtable pc) threshold)
-	    (< (pcache-emap pc) threshold)
-	    (< (pcache-pmap pc) threshold))
-       '(imap vtable))
-      ((and (> (pcache-cmap pc) threshold)
-	    (> (pcache-vtable pc) threshold)
-	    (< (pcache-pmap pc) threshold)
-	    (< (pcache-imap pc) threshold)
-	    (< (pcache-emap pc) threshold))
-       '(cmap vtable))
-      ((and (> (pcache-emap pc) threshold)
-	    (> (pcache-vtable pc) threshold)
-	    (< (pcache-pmap pc) threshold)
-	    (< (pcache-imap pc) threshold)
-	    (< (pcache-cmap pc) threshold))
-       '(emap vtable))
-      ((and (> (pcache-pmap pc) threshold)
-	    (> (pcache-vtable pc) threshold)
-	    (< (pcache-imap pc) threshold)
-	    (< (pcache-cmap pc) threshold)
-	    (< (pcache-emap pc) threshold))
-       '(pmap vtable))
-      (else
-       #f)))
+   (define threshold 10000)
+
+   (define threshold-min 1000)
+
+   (define (generic-cspecs)
+      (cond
+	 ((and (> (pcache-imap pc) threshold)
+	       (< (pcache-cmap pc) threshold)
+	       (< (pcache-emap pc) threshold)
+	       (< (pcache-pmap pc) threshold)
+	       (< (pcache-amap pc) threshold)
+	       (< (pcache-vtable pc) threshold))
+	  '(imap))
+	 ((and (> (pcache-imap pc) threshold)
+	       (< (pcache-cmap pc) threshold)
+	       (> (pcache-emap pc) threshold)
+	       (< (pcache-pmap pc) threshold)
+	       (< (pcache-amap pc) threshold)
+	       (< (pcache-vtable pc) threshold))
+	  (if (> (pcache-imap pc) (pcache-emap pc))
+	      '(imap emap)
+	      '(emap imap)))
+	 ((and (> (pcache-imap pc) threshold)
+	       (< (pcache-cmap pc) threshold)
+	       (< (pcache-emap pc) threshold)
+	       (< (pcache-pmap pc) threshold)
+	       (< (pcache-amap pc) threshold)
+	       (< (pcache-vtable pc) threshold))
+	  (if (> (pcache-imap pc) (pcache-cmap pc))
+	      '(imap cmap)
+	      '(cmap imap)))
+	 ((and (> (pcache-cmap pc) threshold)
+	       (< (pcache-imap pc) threshold)
+	       (< (pcache-emap pc) threshold)
+	       (< (pcache-pmap pc) threshold)
+	       (< (pcache-amap pc) threshold)
+	       (< (pcache-vtable pc) threshold))
+	  '(cmap))
+	 ((and (> (pcache-pmap pc) threshold)
+	       (< (pcache-imap pc) threshold)
+	       (< (pcache-emap pc) threshold)
+	       (< (pcache-cmap pc) threshold)
+	       (< (pcache-amap pc) threshold)
+	       (< (pcache-vtable pc) threshold))
+	  '(pmap))
+	 ((and (> (pcache-vtable pc) threshold)
+	       (< (pcache-imap pc) threshold)
+	       (< (pcache-emap pc) threshold)
+	       (< (pcache-cmap pc) threshold)
+	       (< (pcache-pmap pc) threshold)
+	       (< (pcache-amap pc) threshold))
+	  '(vtable))
+	 ((and (> (pcache-amap pc) threshold)
+	       (< (pcache-imap pc) threshold)
+	       (< (pcache-emap pc) threshold)
+	       (< (pcache-cmap pc) threshold)
+	       (< (pcache-pmap pc) threshold)
+	       (< (pcache-vtable pc) threshold))
+	  '(amap))
+	 ((and (> (pcache-emap pc) threshold)
+	       (< (pcache-imap pc) threshold)
+	       (< (pcache-cmap pc) threshold)
+	       (< (pcache-pmap pc) threshold)
+	       (< (pcache-amap pc) threshold)
+	       (< (pcache-vtable pc) threshold))
+	  '(emap))
+	 ((and (> (pcache-imap pc) threshold)
+	       (> (pcache-emap pc) threshold)
+	       (< (pcache-cmap pc) threshold)
+	       (< (pcache-vtable pc) threshold)
+	       (< (pcache-pmap pc) threshold))
+	  (if (> (pcache-imap pc) (pcache-emap pc))
+	      '(imap emap)
+	      '(emap imap)))
+	 ((and (> (pcache-emap pc) threshold)
+	       (> (pcache-cmap pc) threshold)
+	       (< (pcache-imap pc) threshold)
+	       (< (pcache-vtable pc) threshold)
+	       (< (pcache-pmap pc) threshold))
+	  (if (> (pcache-cmap pc) (pcache-emap pc))
+	      '(cmap emap)
+	      '(emap cmap)))
+	 ((and (> (pcache-imap pc) threshold)
+	       (> (pcache-vtable pc) threshold)
+	       (< (pcache-emap pc) threshold)
+	       (< (pcache-pmap pc) threshold))
+	  '(imap vtable))
+	 ((and (> (pcache-cmap pc) threshold)
+	       (> (pcache-vtable pc) threshold)
+	       (< (pcache-pmap pc) threshold)
+	       (< (pcache-imap pc) threshold)
+	       (< (pcache-emap pc) threshold))
+	  '(cmap vtable))
+	 ((and (> (pcache-emap pc) threshold)
+	       (> (pcache-vtable pc) threshold)
+	       (< (pcache-pmap pc) threshold)
+	       (< (pcache-imap pc) threshold)
+	       (< (pcache-cmap pc) threshold))
+	  '(emap vtable))
+	 ((and (> (pcache-pmap pc) threshold)
+	       (> (pcache-vtable pc) threshold)
+	       (< (pcache-imap pc) threshold)
+	       (< (pcache-cmap pc) threshold)
+	       (< (pcache-emap pc) threshold))
+	  '(pmap vtable))
+	 (else
+	  #f)))
+
+   (define (get-cspecs)
+      (let ((cs '()))
+	 (when (or (>fx (pcache-imap pc) threshold-min)
+		   (>fx (pcache-cmap pc) threshold-min))
+	    ;; imap: inline direct properties
+	    ;; the ctor pgo optimization might turn cmap into imap
+	    (set! cs (cons 'imap cs)))
+	 (when (>fx (pcache-cmap pc) threshold-min)
+	    ;; imap: noinline direct properties
+	    (set! cs (cons 'cmap cs)))
+	 (when (>fx (pcache-pmap pc) threshold-min)
+	    ;; pmap: prototype properties
+	    (set! cs (cons 'pmap cs)))
+	 (when (>fx (pcache-amap pc) threshold)
+	    ;; amap: accessor properties
+	    (set! cs (cons 'amap cs)))
+	 (when (>fx (pcache-xmap pc) threshold)
+	    ;; xmap: cache miss
+	    (set! cs (cons 'xmap cs)))
+	 (when (>fx (pcache-vtable pc) threshold)
+	    ;; polymorphic caches
+	    (set! cs (cons 'vmap cs)))))
+
+   (define (put-cspecs)
+      (let ((cs (generic-cspecs)))
+	 (when cs
+	    (if (not (memq 'imap cs))
+		(cons 'imap cs)
+		cs))))
+
+   (case ctx
+      ((get) (get-cspecs))
+      ((put) (put-cspecs))
+      (else (generic-cspecs))))
 
 ;*---------------------------------------------------------------------*/
 ;*    prop-collect* ...                                                */

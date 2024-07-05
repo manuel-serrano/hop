@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb  1 13:36:09 2017                          */
-;*    Last change :  Tue Oct 12 12:06:58 2021 (serrano)                */
-;*    Copyright   :  2017-21 Manuel Serrano                            */
+;*    Last change :  Fri Jul  5 07:44:22 2024 (serrano)                */
+;*    Copyright   :  2017-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Static approximation of constructors size                        */
 ;*=====================================================================*/
@@ -39,9 +39,12 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-constrsize! ::obj ...                                        */
 ;*---------------------------------------------------------------------*/
-(define (j2s-constrsize! this args)
+(define (j2s-constrsize! this conf)
    (when (isa? this J2SProgram)
-      (j2s-constrsize-program! this args)
+      (j2s-constrsize-program! this conf)
+      (let ((log (config-get conf :profile-log #f)))
+	 (when log
+	    (j2s-update-constrsize-program! this log conf)))
       this))
 
 ;*---------------------------------------------------------------------*/
@@ -169,3 +172,47 @@
 		   (count-this-assig body acc))))
 	  (call-next-method))))
 
+;*---------------------------------------------------------------------*/
+;*    j2s-update-constrsize-program! ...                               */
+;*---------------------------------------------------------------------*/
+(define (j2s-update-constrsize-program! this::J2SProgram logfile::bstring conf)
+   (with-access::J2SProgram this (profiling decls nodes)
+      (let ((prof (assq 'ctors profiling)))
+	 (when (pair? prof)
+	    (let ((log (cdr prof)))
+	       (for-each (lambda (n) (pconstrsize! n log)) decls)
+	       (for-each (lambda (n) (pconstrsize! n log)) nodes))))))
+
+;*---------------------------------------------------------------------*/
+;*    pconstrsize! ::J2SNode ...                                       */
+;*---------------------------------------------------------------------*/
+(define-walk-method (pconstrsize! this::J2SNode log)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    pconstrsize! ::J2SFun ...                                        */
+;*---------------------------------------------------------------------*/
+(define-walk-method (pconstrsize! this::J2SFun log)
+   (with-access::J2SFun this (body constrsize loc)
+      (match-case loc
+	 ((at ?file ?point)
+	  (let ((sz (find-log-constrsize log point)))
+	     (when (and sz (>fx (cdr sz) constrsize))
+		(set! constrsize (cdr sz))))))
+      this))
+
+;*---------------------------------------------------------------------*/
+;*    find-log-constrsize ...                                          */
+;*---------------------------------------------------------------------*/
+(define (find-log-constrsize log point)
+   (let loop ((i (-fx (vector-length log) 1)))
+      (when (>=fx i 0)
+	 (let* ((e (vector-ref log i))
+		(p (assq 'point e)))
+	    (when (pair? p)
+	       (let ((v (cdr p)))
+		  (cond
+		     ((=fx v point)
+		      (assq 'constrsize e))
+		     ((>fx v point)
+		      (loop (-fx i 1))))))))))

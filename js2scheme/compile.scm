@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Thu Jun 13 07:49:28 2024 (serrano)                */
+;*    Last change :  Fri Jul  5 07:52:21 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -81,7 +81,8 @@
 	   __js2scheme_procedure
 	   __js2scheme_strbuffer
 	   __js2scheme_cnstlift
-	   __js2scheme_testreduce)
+	   __js2scheme_testreduce
+	   __js2scheme_pgo)
 
    (export (j2s-compile-options::pair-nil)
 	   (j2s-compile-options-set! ::pair-nil)
@@ -191,6 +192,7 @@
       j2s-syntax-stage
       j2s-sourcemap-stage
       j2s-hopscript-stage
+      j2s-pgo-stage
       j2s-loopexit-stage
       j2s-bestpractice-stage
       j2s-module-stage
