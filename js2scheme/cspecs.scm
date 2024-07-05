@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Apr  2 19:46:13 2017                          */
-;*    Last change :  Fri Jul  5 07:37:33 2024 (serrano)                */
+;*    Last change :  Fri Jul  5 12:28:33 2024 (serrano)                */
 ;*    Copyright   :  2017-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Annotate property accesses with cache level information          */
@@ -297,45 +297,6 @@
 		   (unless (=fx end pivot)
 		      (loop (+fx pivot 1) end
 			 (+fx pivot (+fx 1 (/fx (-fx end (+fx pivot 1)) 2))))))))))))
-
-(define (logtable-find-TBR-18nov1029 table::vector point #!optional usage)
-
-   (define (find-left pivot)
-      (let loop ((i pivot))
-	 (if (>=fx i 0)
-	     (let ((pi (vector-ref table i)))
-		(if (=fx (pcache-point pi) point)
-		    (loop (-fx i 1))
-		    (+fx i 1)))
-	     0)))
-
-   (define (find-right pivot end)
-      (let loop ((i pivot))
-	 (when (<=fx i end)
-	    (let ((pi (vector-ref table i)))
-	       (when (=fx (pcache-point pi) point)
-		  (if (eq? (pcache-usage pi) usage)
-		      pi
-		      (loop (+fx i 1))))))))
-   
-   (let ((len (vector-length table)))
-      (when (>fx len 0)
-	 (let loop ((start 0)
-		    (end (-fx len 1))
-		    (pivot (/fx len 2)))
-	    (let* ((pi (vector-ref table pivot))
-		   (po (pcache-point pi)))
-	       (cond
-		  ((=fx po point)
-		   (find-right (find-left pivot) end))
-		  ((or (=fx start end) (=fx start pivot) (=fx end pivot))
-		   #f)
-		  ((>fx po point)
-		   (loop start pivot
-		      (+fx start (/fx (-fx pivot start) 2))))
-		  (else
-		   (loop (+fx pivot 1) end
-		      (+fx pivot (+fx 1 (/fx (-fx end (+fx pivot 1)) 2)))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    pcache->cspecs ...                                               */

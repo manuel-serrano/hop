@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Fri Jul  5 07:52:21 2024 (serrano)                */
+;*    Last change :  Fri Jul  5 12:23:31 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -25,6 +25,7 @@
 	   __js2scheme_header
 	   __js2scheme_resolve
 	   __js2scheme_return
+	   __js2scheme_topasync
 	   __js2scheme_bestpractice
 	   __js2scheme_this
 	   __js2scheme_callapply
@@ -220,6 +221,7 @@
       j2s-testreduce-stage
       j2s-cspecs-stage
       j2s-method-stage
+      j2s-topasync-stage
       j2s-return-stage
       j2s-newtarget-stage
       j2s-inline-stage
@@ -271,6 +273,7 @@
       j2s-ronly-stage
       j2s-uninit-force-stage
       j2s-cspecs-stage
+      j2s-topasync-stage
       j2s-return-stage
       j2s-cps-stage
       j2s-any-stage
@@ -298,6 +301,7 @@
       j2s-use-stage
       j2s-ronly-stage
       j2s-uninit-force-stage
+      j2s-topasync-stage
       j2s-return-stage
       j2s-cps-stage
       j2s-any-stage
@@ -324,6 +328,7 @@
       j2s-use-stage
       j2s-ronly-stage
       j2s-uninit-force-stage
+      j2s-topasync-stage
       j2s-return-stage
       j2s-cps-stage
       j2s-any-stage
@@ -393,6 +398,7 @@
       j2s-module-stage
       j2s-symbol-stage
       j2s-letfusion-stage
+      j2s-topasync-stage
       j2s-return-stage
       j2s-cps-stage
       j2s-ecmascript5-stage

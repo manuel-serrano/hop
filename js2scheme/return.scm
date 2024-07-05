@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.3.x/js2scheme/return.scm              */
+;*    serrano/prgm/project/hop/hop/js2scheme/return.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Fri Jun 12 12:02:07 2020 (serrano)                */
-;*    Copyright   :  2013-20 Manuel Serrano                            */
+;*    Last change :  Fri Jul  5 12:18:46 2024 (serrano)                */
+;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript Return -> bind-exit                                   */
 ;*    -------------------------------------------------------------    */
@@ -292,7 +292,7 @@
 ;*    unreturn! ::J2SYield ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (unreturn! this::J2SYield target tail? in-handler args)
-   (with-access::J2SYield this (expr)
+   (with-access::J2SYield this (expr await)
       (cond
 	 ((not target)
 	  (syntax-error this "Illegal \"yield/await\" statement"))
