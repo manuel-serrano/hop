@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Fri Jul  5 11:58:21 2024 (serrano)                */
+;*    Last change :  Fri Jul  5 14:17:54 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -1945,10 +1945,10 @@
       (trace-item "cmd=" cmd)
       (let ((tag (get-socompile-tag)))
 	 (when (hop-log-file)
-	    (fprintf (hop-log-file) "~a [~a] ~( )\n"
+	    (fprintf (hop-log-file) "~a [~a] ~a\n"
 	       (hop-color 1 "" "COMP")
 	       (hop-color 0 "" tag)
-	       (hop-color 2 "" cmd)))
+	       (hop-color 2 "" (format "~( )" cmd))))
 	 (synchronize-global
 	    (make-file-name
 	       (dirname (hop-sofile-cache-path "hop.lock"))
@@ -2061,7 +2061,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    builtin-find-sofile ...                                          */
 ;*    -------------------------------------------------------------    */
-;*    Check if there exists a precompiled sofile for this module.      */
+;*    Check if it exists a precompiled sofile for this module.         */
 ;*---------------------------------------------------------------------*/
 (define (builtin-find-sofile filename #!key mt)
    (with-trace 'sofile "builtin-find-sofile"
@@ -2094,9 +2094,12 @@
 				 (lambda (e)
 				    #f)
 				 (when (string=? md5
-					  (md5sum (call-with-input-file bpkgjson read-string)))
+					  (md5sum (call-with-input-file
+							bpkgjson read-string)))
 				    ;; the two package.json are the same
-				    (let ((sofile (hop-find-sofile (make-file-path broot subdir base) :mt mt :ignore-age #t)))
+				    (let ((sofile (hop-find-sofile
+						     (make-file-path broot subdir base)
+						     :mt mt :ignore-age #t)))
 				       (trace-item "sofile=" sofile)
 				       (when (file-exists? sofile)
 					  sofile))))))))))))))

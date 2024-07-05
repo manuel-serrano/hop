@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Fri Jul  5 07:50:36 2024 (serrano)                */
+;*    Last change :  Fri Jul  5 16:03:46 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -97,7 +97,7 @@
 	      (hint::pair-nil (default '()) (info '("notraverse")))
 	      ;; export clause (if any)
 	      (export::obj (default #f) (info '("notraverse")))
-	      ;; optional typescript argument
+	      ;; optional argument
 	      (optional::bool (default #f)))
 
 	   (class J2SDeclRest::J2SDecl

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Fri Jan 26 11:54:18 2024 (serrano)                */
+;*    Last change :  Fri Jul  5 15:52:28 2024 (serrano)                */
 ;*    Copyright   :  2016-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -940,8 +940,8 @@
       (>fx (cdr hint) 0))
    
    (define (param-best-hint-type p::J2SDecl)
-      (with-access::J2SDecl p (hint usecnt useinloop vtype id)
-	 (if (and (<=fx usecnt 1) (not useinloop))
+      (with-access::J2SDecl p (hint usecnt useinloop vtype id optional binder)
+	 (if (or (and (<=fx usecnt 1) (not useinloop)) optional)
 	     '(any 0 0)
 	     (let ((hint (filter interesting-hint-type? hint)))
 		(cond
@@ -1376,21 +1376,6 @@
        (duplicate::J2SDecl p
 	  (key (ast-decl-key))
 	  (hint '()))))
-
-(define (j2sdecl-duplicate-as-any-TBR-12jul21 p::J2SDecl)
-   (if (isa? p J2SDeclInit)
-       (duplicate::J2SDeclInit p
-	  (key (ast-decl-key))
-	  (hint '())
-	  (utype 'unknown)
-	  (vtype 'any)
-	  (itype 'any))
-       (duplicate::J2SDecl p
-	  (key (ast-decl-key))
-	  (hint '())
-	  (utype 'unknown)
-	  (vtype 'any)
-	  (itype 'any))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-call-hint! ::J2SNode ...                                     */

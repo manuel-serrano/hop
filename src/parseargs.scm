@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Sat Jun  8 06:15:03 2024 (serrano)                */
+;*    Last change :  Fri Jul  5 15:15:29 2024 (serrano)                */
 ;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -122,7 +122,7 @@
 	     (hop-clientc-clear-cache-set! #f))
 	    (("--no-so" (help "Disable loading pre-compiled file"))
 	     (hop-sofile-enable-set! #f))
-	    (("--so-policy" ?policy (help "Sofile compile policy [none, aot, aot+, nte, nte1, nte+]"))
+	    (("--so-policy" ?policy (help "Sofile compile policy [none, aot, aot+, nte, nte1, nte+, pgo, ifexists]"))
 	     (hop-sofile-compile-policy-set! (string->symbol policy)))
 	    (("--sofile-policy" ?policy (help "Deprecated, use \"--so-policy\" instead"))
 	     (hop-sofile-compile-policy-set! (string->symbol policy)))

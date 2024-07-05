@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Tue Jul  2 08:18:30 2024 (serrano)                */
+;*    Last change :  Fri Jul  5 15:14:54 2024 (serrano)                */
 ;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -278,7 +278,7 @@
 	      (hop-hopc-flags-set! "--safe")
 	      (j2s-compile-options-set!
 		 (cons* :optim level (j2s-compile-options))))))
-	 (("--so-policy" ?policy (help "Sofile compile policy [none, aot, aot+, nte, nte1, nte+, pgo]"))
+	 (("--so-policy" ?policy (help "Sofile compile policy [none, aot, aot+, nte, nte1, nte+, pgo, ifexists]"))
 	  (hop-sofile-compile-policy-set! (string->symbol policy))
 	  (when (eq? (hop-sofile-compile-policy) 'none)
 	     (hop-sofile-enable-set! #f)))
