@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Wed May 22 19:07:03 2024 (serrano)                */
+;*    Last change :  Mon Jul  8 10:27:05 2024 (serrano)                */
 ;*    Copyright   :  2014-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -450,6 +450,11 @@
 			(else #unspecified))))
 	       
 	       ;; request
+	       (define-js isLocalRequest 1
+		  (lambda (this req)
+		     (when (isa? req http-request)
+			(http-request-local? req))))
+
 	       (define-js requestLocalAddr 1
 		  (lambda (this req)
 		     (when (isa? req http-request)

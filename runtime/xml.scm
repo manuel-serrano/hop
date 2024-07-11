@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Thu May 16 14:24:25 2024 (serrano)                */
+;*    Last change :  Mon Jul  8 10:30:44 2024 (serrano)                */
 ;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -1031,31 +1031,6 @@
 	 (else
 	  "")))
 
-   (define (js-catch-callback/location stmt parent file point)
-      ;; this is an inlined version of hop_callback (hop-lib.js)
-      (let ((ctx (gensym 'ctx)))
-	 (format "var ~a=hop_callback_html_context( \"~a\", \"~a\", ~a );
-hop_current_stack_context = ~a;
-try { ~a } catch( e ) {
-hop_callback_handler(e, ~a); }"
-	    ctx
-	    (string-replace (xml-attribute-encode (parent-context parent))
-	       #\Newline #\Space)
-	    file point ctx stmt
-	    ctx)))
-
-   (define (js-catch-callback stmt parent)
-      (let ((ctx (gensym 'ctx)))
-	 (format "var ~a=hop_callback_listener_context( \"~a\" );
-hop_current_stack_context = ~a;
-try { ~a } catch( e ) { hop_callback_handler(e, ~a); }"
-	    ctx
-	    (string-replace (xml-attribute-encode (parent-context parent))
-	       #\Newline #\Space)
-	    ctx
-	    stmt
-	    ctx)))
-   
    (with-access::xml-tilde obj (%js-statement body loc parent debug)
       (unless (string? %js-statement)
 	 (if (eq? (hop-clientc) #unspecified)
@@ -1063,15 +1038,7 @@ try { ~a } catch( e ) { hop_callback_handler(e, ~a); }"
 	     (set! %js-statement (vector-ref body 4))
 	     (with-access::clientc (hop-clientc) (precompiled->JS-statement)
 		(let ((stmt (precompiled->JS-statement body debug)))
-		   (if debug
-		       (match-case loc
-			  ((at (and (? string?) ?file) (and (? integer?) ?point))
-			   (set! %js-statement
-			      (js-catch-callback/location stmt parent file point)))
-			  (else
-			   (set! %js-statement
-			      (js-catch-callback stmt parent))))
-		       (set! %js-statement stmt))))))
+		   (set! %js-statement stmt)))))
       %js-statement))
 
 ;*---------------------------------------------------------------------*/

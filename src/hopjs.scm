@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Fri Jul  5 15:14:54 2024 (serrano)                */
+;*    Last change :  Mon Jul  8 10:39:19 2024 (serrano)                */
 ;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -76,6 +76,9 @@
 	    (set! argv
 	       (append (call-with-input-string ho port->string-list) argv)))
 	 (parse-args! argv))
+
+      ;; no default client runtime (see nodejs-head@nodejs/require.scm)
+      (hop-runtime-client-set! #f) 
       
       ;; debug traces
       (when (getenv "BIGLOOTRACE")

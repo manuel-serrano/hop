@@ -4,8 +4,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Sun Apr 11 07:24:53 2021 (serrano)                */
-/*    Copyright   :  2006-21 Manuel Serrano                            */
+/*    Last change :  Mon Jul  8 10:54:47 2024 (serrano)                */
+/*    Copyright   :  2006-24 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
 /*    HOP script libraries are supposed *not* to check features        */
@@ -141,6 +141,9 @@ Object.defineProperty( HopServer.prototype, "reactProxy", {
       return proxy;
    }
 } );
+
+HopServer.prototype.import = function(base) {
+}
 
 /*---------------------------------------------------------------------*/
 /*    Hop configuration                                                */
