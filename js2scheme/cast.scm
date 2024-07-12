@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Fri Oct  6 18:09:19 2023 (serrano)                */
-;*    Copyright   :  2016-23 Manuel Serrano                            */
+;*    Last change :  Fri Jul 12 15:00:24 2024 (serrano)                */
+;*    Copyright   :  2016-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
 ;*    -------------------------------------------------------------    */
@@ -224,6 +224,14 @@
 (define-method (type-cast! this::J2SArray totype)
    (with-access::J2SArray this (exprs)
       (set! exprs (map! (lambda (e) (type-cast! e 'any)) exprs))
+      (cast this totype)))
+
+;*---------------------------------------------------------------------*/
+;*    type-cast! ::J2SSpread ...                                       */
+;*---------------------------------------------------------------------*/
+(define-method (type-cast! this::J2SSpread totype)
+   (with-access::J2SSpread this (expr)
+      (set! expr (type-cast! expr 'any))
       (cast this totype)))
 
 ;*---------------------------------------------------------------------*/

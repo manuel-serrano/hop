@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb  7 09:48:34 2018                          */
-/*    Last change :  Fri Jun 23 10:38:13 2023 (serrano)                */
-/*    Copyright   :  2018-23 Manuel Serrano                            */
+/*    Last change :  Fri Jul 12 14:50:25 2024 (serrano)                */
+/*    Copyright   :  2018-24 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 2015+ destructuring function parameters       */
 /*=====================================================================*/

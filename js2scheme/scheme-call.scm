@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Thu Feb 29 09:46:08 2024 (serrano)                */
+;*    Last change :  Fri Jul 12 14:45:15 2024 (serrano)                */
 ;*    Copyright   :  2018-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -2061,12 +2061,12 @@
 		   `(let* ((,o ,(j2s-scheme obj mode return ctx))
 			   (,f ,(j2s-scheme axs mode return ctx)))
 		       ,(if (spread-stack-vararg? (car args))
-			    `(with-access::J2SSpread (car args) (expr)
+			    (with-access::J2SSpread (car args) (expr)
 				`(js-function-maybe-spread-arguments %this
-				    ,f
-				    (js-undefined)
-				    ,(j2s-scheme expr mode return ctx)
-				    ,(j2s-arguments-object-id)))
+				   ,f
+				   (js-undefined)
+				   ,(j2s-scheme expr mode return ctx)
+				   ,(j2s-arguments-object-id)))
 			    `(js-apply-array %this ,f ,o
 			       ,(j2s-scheme expr mode return ctx)))))))
 	    ((isa? fun J2SHopRef)
