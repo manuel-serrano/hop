@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Tue Jul  2 08:08:34 2024 (serrano)                */
+;*    Last change :  Fri Jul 12 16:48:26 2024 (serrano)                */
 ;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -438,7 +438,7 @@
 	 ((not l) #f)
 	 ((string=? l "stdout") (current-output-port))
 	 ((string=? l "stderr") (current-error-port))
-	 (else (append-output-file (hop-log-file))))))
+	 (else (append-output-file l)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-cache-enable ...                                             */

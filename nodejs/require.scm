@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Mon Jul  8 10:33:20 2024 (serrano)                */
+;*    Last change :  Fri Jul 12 15:28:32 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -1973,8 +1973,7 @@
 			 (call-with-output-file err
 			    (lambda (out)
 			       (display retval out)))
-			 (error "nodejs-socompile-sync"
-			    "compilation failed" filename))
+			 #f)
 		      (begin
 			 (rename-file tmp target)
 			 (when (hop-log-file)
