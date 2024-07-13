@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Fri Jul 12 15:28:32 2024 (serrano)                */
+;*    Last change :  Sat Jul 13 06:40:48 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -1970,9 +1970,15 @@
 			       (hop-color 3 "" "FAIL")
 			       (hop-color 0 "" tag)
 			       err))
-			 (call-with-output-file err
-			    (lambda (out)
-			       (display retval out)))
+			 (with-handler
+			    (lambda (_)
+			       ;; catch errors that might be triggered when logging the
+			       ;; compilation error
+			       (display retval (current-error-port))
+			       #f)
+			    (call-with-output-file err
+			       (lambda (out)
+				  (display retval out))))
 			 #f)
 		      (begin
 			 (rename-file tmp target)
@@ -2114,8 +2120,9 @@
 ;*    find-new-sofile ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (find-new-sofile filename::bstring worker-slave #!optional enable-cache)
-   (with-trace 'sofile "find-new-sofile"
+   (with-trace 'require "find-new-sofile"
       (trace-item "filename=" filename)
+      (trace-item "cace=" (or (hop-cache-enable) enable-cache))
       (when (or (hop-cache-enable) enable-cache)
 	 (let ((sopath (nodejs-find-sofile filename
 			  :mt (if worker-slave "_w" ""))))
@@ -2160,6 +2167,7 @@
 			  (format "Wrong compiled file format ~s" sopath)
 			  sopath))))
 	       ((or (not (symbol? sopath)) (not (eq? sopath 'error)))
+		(trace-item "policy=" (hop-sofile-compile-policy))
 		(case (hop-sofile-compile-policy)
 		   ((aot)
 		    (if (hop-sofile-enable)
