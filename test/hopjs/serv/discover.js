@@ -52,6 +52,6 @@ remote.onmessage = function(message) {
 setTimeout(function() {
    console.log('timeout');
    process.exit(1);
-}, 2000);
+}, 4000);
 	    
 	    

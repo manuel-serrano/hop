@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Thu Jul  4 09:27:07 2024 (serrano)                */
+;*    Last change :  Sat Jul 13 07:15:32 2024 (serrano)                */
 ;*    Copyright   :  2005-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -1104,7 +1104,7 @@
        (make-file-path
 	  (dirname path)
 	  (hop-so-dirname)
-	  (string-append (prefix (basename path)) (or suffix (so-suffix))))))
+	  (string-append (prefix (basename path)) mt (or suffix (so-suffix))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-current-sobase ...                                           */

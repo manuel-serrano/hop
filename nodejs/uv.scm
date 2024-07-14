@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Wed Jun 12 09:06:23 2024 (serrano)                */
+;*    Last change :  Sat Jul 13 07:00:04 2024 (serrano)                */
 ;*    Copyright   :  2014-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -520,7 +520,6 @@
 		  (exit %retval)))
 	    (with-access::WorkerHopThread th (svctable subworkers)
 	       ;; unregister all the worker services
-	       (tprint "------------------------------------------")
 	       (for-each unregister-service! services)
 	       ;; tell the subworkers that they will never receive
 	       ;; any new message from their parent

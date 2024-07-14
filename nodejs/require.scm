@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Sat Jul 13 06:40:48 2024 (serrano)                */
+;*    Last change :  Sat Jul 13 07:01:22 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -1725,22 +1725,24 @@
 ;*    hop-dynamic-load ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (hop-dynamic-load sopath)
-   (synchronize soload-mutex
-      (let ((old (hashtable-get sofile-cache sopath)))
-	 (if old
-	     (values (car old) (cdr old))
-	     (multiple-value-bind (proc mod)
-		(dynamic-load sopath)
-		(hop-verb 2 "loading \"" (hop-color 5 "" sopath) "\"\n")
-		(let ((v (cond
-			    ((procedure? proc)
-			     proc)
-			    ((dynamic-load-symbol sopath "hopscript-env" mod)
-			     =>
-			     (lambda (sym)
-				(dynamic-load-symbol-get sym))))))
-		   (hashtable-put! sofile-cache sopath (cons v mod))
-		   (values v mod)))))))
+   (with-trace 'require "hop-dynamic-load"
+      (trace-item "sopath=" sopath)
+      (synchronize soload-mutex
+	 (let ((old (hashtable-get sofile-cache sopath)))
+	    (if old
+		(values (car old) (cdr old))
+		(multiple-value-bind (proc mod)
+		   (dynamic-load sopath)
+		   (hop-verb 2 "loading \"" (hop-color 5 "" sopath) "\"\n")
+		   (let ((v (cond
+			       ((procedure? proc)
+				proc)
+			       ((dynamic-load-symbol sopath "hopscript-env" mod)
+				=>
+				(lambda (sym)
+				   (dynamic-load-symbol-get sym))))))
+		      (hashtable-put! sofile-cache sopath (cons v mod))
+		      (values v mod))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-process-wait ...                                          */
@@ -1892,10 +1894,12 @@
 	   #!optional (opts '()))
    (with-trace 'so "nodejs-socompile"
       (trace-item "filename: " filename)
+      (trace-item "worker-slave: " worker-slave)
       (let ((target (hop-sofile-cache-path filename
 		       :mt (if worker-slave "_w" ""))))
 	 (trace-item "target: " target)
-	 (nodejs-socompile-sync src target opts)
+	 (nodejs-socompile-sync src target
+	    (if worker-slave (cons "--js-worker-slave" opts) opts))
 	 target)))
 
 ;*---------------------------------------------------------------------*/
@@ -2020,7 +2024,7 @@
 ;*    hopc-compile-command ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (hopc-compile-command src target::bstring opts::pair-nil
-	   #!key astfile worker-slave)
+	   #!key astfile)
    `(,(hop-hopc)
      ;; source
      ,src ,@(if astfile `("--ast-file" ,astfile) '())
@@ -2030,8 +2034,6 @@
      ,@(if env-debug-compile (list (format "-v~a" (hop-verbose))) '())
      ;; profiling
      ,@(if (hop-profile) '("--profile") '())
-     ;; worker
-     ,@(if worker-slave '("--js-worker-slave") '())
      ;; debug
      ,@(if env-debug-compile
 	   `("-t" ,(make-file-name "/tmp/HOP"
@@ -3095,13 +3097,16 @@
       (js-tostring (js-get %module (& "filename") %this) %this))
    
    (define (loader filename worker this)
-      (let ((parent (nodejs-new-module (basename filename)
-		       parentfile worker this)))
-	 (if (string? filename)
-	     (nodejs-require-module filename worker this parent)
-	     (js-raise-error %this
-		(format "cannot load worker module ~a" filename)
-		filename))))
+      (with-trace 'worker "nodejs-worker.loader"
+	 (trace-item "filename=" filename)
+	 (trace-item "worker=" worker)
+	 (let ((parent (nodejs-new-module (basename filename)
+			  parentfile worker this)))
+	    (if (string? filename)
+		(nodejs-require-module filename worker this parent)
+		(js-raise-error %this
+		   (format "cannot load worker module ~a" filename)
+		   filename)))))
 
    (define %js-worker
       (js-worker-construct %this loader))
