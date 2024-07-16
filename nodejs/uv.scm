@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Sat Jul 13 07:00:04 2024 (serrano)                */
+;*    Last change :  Mon Jul 15 11:13:43 2024 (serrano)                */
 ;*    Copyright   :  2014-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -440,7 +440,10 @@
 				       call %retval prerun state svctable)
       ;; set thread name for better debugging
       (thread-name-set! (current-thread)
-	 (if (symbol? name) (symbol->string name) "hopjs"))
+	 (cond
+	    ((symbol? name) (symbol->string name))
+	    ((string? name) name)
+	    (else "hopjs")))
       ;; mimic nodejs file descriptor limit
       (cond-expand
 	 (rlimit
@@ -657,7 +660,7 @@
 		  proc::procedure)
    [assert (proc) (correct-arity? proc 1)]
    [assert (th name) (not (eq? (current-thread) th))]
-   (with-access::WorkerHopThread th (%this %loop mutex condv)
+   (with-access::WorkerHopThread th (%this %loop condv)
       (let ((loop %loop))
 	 (with-access::JsLoop loop (mutex condv)
 	    (let ((response 'unassigned))

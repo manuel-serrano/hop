@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Sat Jun 15 18:58:25 2024 (serrano)                */
+#*    Last change :  Mon Jul 15 10:07:46 2024 (serrano)                */
 #*    Copyright   :  2004-24 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -521,6 +521,7 @@ while : ; do
       echo "Misc settings:" >&2;
       echo "   --devel..................... enables devel mode (safe but not debug)" >&2;
       echo "   --debug[2].................. enables Bigloo debug mode" >&2;
+      echo "   --debug-c................... enables C debug mode" >&2;
       echo "   --pmem[2]................... enables memory profiling mode" >&2;
       echo "   --profile................... enables Bigloo profiling mode" >&2;
       echo "   --optimize.................. enables Bigloo optimization mode (default)" >&2;

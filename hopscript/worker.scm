@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Wed Jun 12 09:18:49 2024 (serrano)                */
+;*    Last change :  Mon Jul 15 10:24:04 2024 (serrano)                */
 ;*    Copyright   :  2014-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -136,8 +136,10 @@
    (define (remove-subworker! parent thread)
       (with-access::WorkerHopThread parent (mutex condv subworkers)
 	 (synchronize mutex
-	    (set! subworkers (delete! thread subworkers))
-	    (condition-variable-signal! condv))))
+	    (set! subworkers (delete! thread subworkers)))
+	 (js-worker-push! parent "worker cleanup"
+	    (lambda (%this)
+	       'tick))))
    
    (define (add-subworker! parent thread)
       (with-access::WorkerHopThread parent (mutex subworkers)
@@ -220,9 +222,10 @@
 			       (loader source thread %this))))
 		   (mutex (make-mutex))
 		   (condv (make-condition-variable))
+		   (thname (gensym (string-append "WWorker@"
+				    (prefix (basename (js-jsstring->string src))))))
 		   (thread (instantiate::WorkerHopThread
-			      (name (gensym (string-append "WebWorker@"
-					       (js-jsstring->string src))))
+			      (name thname)
 			      (parent parent)
 			      (mutex (if (isa? parent WorkerHopThread)
 					 (with-access::WorkerHopThread parent (mutex)
@@ -245,14 +248,11 @@
 			      (cleanup (lambda (thread)
 					  (when (isa? parent WorkerHopThread)
 					     (remove-subworker! parent thread)))))))
+	    
 	    ;; add the worker to the parent list
 	    (when (isa? parent WorkerHopThread)
 	       (add-subworker! parent thread))
 
-	    ;; start the worker thread
-	    (thread-start! thread)
-	    (condition-variable-wait! condv mutex)
-	       
 	    ;; create the worker object
 	    (let ((worker (instantiateJsWorker
 			     (__proto__ js-worker-prototype)
@@ -314,6 +314,12 @@
 		     :configurable #t
 		     :enumerable #t
 		     :hidden-class #t))
+
+	       ;; prepare the worker start
+	       (js-worker-push! (js-current-worker)  "worker"
+		  (lambda (%this)
+		     (synchronize mutex
+			(thread-start! thread))))
 	       
 	       ;; return the newly created worker
 	       worker)))))
@@ -375,18 +381,22 @@
    
 ;*---------------------------------------------------------------------*/
 ;*    js-worker-post-slave-message ::WorkerHopThread ...               */
+;*    -------------------------------------------------------------    */
+;*    slave posts a message to its parent.                             */
 ;*---------------------------------------------------------------------*/
 (define-generic (js-worker-post-slave-message worker::JsWorker data)
-   (with-access::JsWorker worker (thread)
-      (with-access::WorkerHopThread thread (parent listeners %this)
+   (with-access::JsWorker worker (thread listener)
+      ;; listener is the parent message listener, although stored in the worker
+      (with-access::WorkerHopThread thread (parent %this listeners)
 	 (when (isa? parent WorkerHopThread)
-	    (js-worker-push! parent "post-slave-message"
-	       (lambda (%this)
-		  (let ((e (instantiate::MessageEvent
-			      (name "message")
-			      (target worker)
-			      (data (js-donate data parent %this)))))
-		     (apply-listeners listeners e))))))))
+	    (with-access::WorkerHopThread parent (%this)
+	       (js-worker-push! parent "post-slave-message"
+		  (lambda (%this)
+		     (let ((e (instantiate::MessageEvent
+				 (name "message")
+				 (target worker)
+				 (data (js-donate data parent %this)))))
+			(apply-listeners listeners e)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-worker-thread-post-slave-error ...                            */
@@ -395,19 +405,22 @@
    (with-handler
       exception-notify 
       (with-access::WorkerHopThread thread (parent errorlisteners %this mutex)
-	 (js-worker-push! parent "post-slave-message"
-	    (lambda (%this)
-	       (let ((e (instantiate::MessageEvent
-			   (name "error")
-			   (target parent)
-			   (data (js-donate data parent %this)))))
-		  (synchronize mutex
-		     (if (pair? errorlisteners)
-			 (apply-listeners errorlisteners e)
-			 (exception-notify data)))))))))
+	 (when (isa? parent WorkerHopThread)
+	    (with-access::WorkerHopThread parent (%this)
+	       (js-worker-push! parent "post-slave-message"
+		  (lambda (%this)
+		     (let ((e (instantiate::MessageEvent
+				 (name "error")
+				 (target parent)
+				 (data (js-donate data parent %this)))))
+			(when (pair? errorlisteners)
+			   (apply-listeners errorlisteners e)))))
+	       (exception-notify data))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-worker-post-master-message ::WorkerHopThread ...              */
+;*    -------------------------------------------------------------    */
+;*    Master posts a message to a worker.                              */
 ;*---------------------------------------------------------------------*/
 (define-generic (js-worker-post-master-message this::JsWorker data)
    (with-access::JsWorker this (thread)
@@ -423,6 +436,8 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    add-event-listener! ::JsWorker ...                               */
+;*    -------------------------------------------------------------    */
+;*    Add a listener to a master.                                      */
 ;*---------------------------------------------------------------------*/
 (define-method (add-event-listener! obj::JsWorker evt proc . capture)
    (cond

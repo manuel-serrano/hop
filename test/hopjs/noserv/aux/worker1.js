@@ -3,13 +3,13 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Vincent Prunet                                    */
 /*    Creation    :  Mon Sep  28 18:43:00 2015                         */
-/*    Last change :  Thu May  2 14:16:01 2019 (serrano)                */
-/*    Copyright   :  2015-19 Inria                                     */
+/*    Last change :  Mon Jul 15 14:01:03 2024 (serrano)                */
+/*    Copyright   :  2015-24 Inria                                     */
 /*    -------------------------------------------------------------    */
 /*    Testing workers                                                  */
 /*=====================================================================*/
 
-onmessage = function( e ) {
-   console.log( 'worker processing ', e.data );
-   postMessage( 'Response' );
+onmessage = function(e) {
+   console.log('worker processing ', e.data);
+   postMessage('Response');
 };

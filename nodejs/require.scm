@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Sat Jul 13 07:01:22 2024 (serrano)                */
+;*    Last change :  Mon Jul 15 10:34:14 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -231,7 +231,6 @@
 ;*---------------------------------------------------------------------*/
 (define-struct socompile proc cmd src ksucc kfail abortp)
 (define-struct soentry filename lang mtime wslave key opts)
-(define-struct compentry src target k)
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-compile-client-file ...                                   */
@@ -1843,7 +1842,8 @@
       (instantiate::hopthread
 	 (name "hop-socompile-orchestrator")
 	 (body (lambda ()
-		  (thread-name-set! (current-thread) "hopjs-socompile-orchestrator")
+		  (thread-name-set! (current-thread)
+		     "hopjs-socompile-orchestrator")
 		  (with-handler
 		     (lambda (e)
 			(exception-notify e))
@@ -1888,6 +1888,12 @@
 	 (condition-variable-broadcast! socompile-condv))))
 
 ;*---------------------------------------------------------------------*/
+;*    socompile-table ...                                              */
+;*---------------------------------------------------------------------*/
+(define socompile-table (make-hashtable))
+(define-struct compentry mutex condv)
+
+;*---------------------------------------------------------------------*/
 ;*    nodejs-socompile ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-socompile src::obj filename::bstring lang worker-slave::bool
@@ -1898,9 +1904,27 @@
       (let ((target (hop-sofile-cache-path filename
 		       :mt (if worker-slave "_w" ""))))
 	 (trace-item "target: " target)
-	 (nodejs-socompile-sync src target
-	    (if worker-slave (cons "--js-worker-slave" opts) opts))
-	 target)))
+	 (let ((incomp #unspecified)
+	       (ce #unspecified))
+	    (synchronize socompile-mutex
+	       (set! incomp (hashtable-get socompile-table target))
+	       (if incomp
+		   (set! ce incomp)
+		   (begin
+		      (set! ce (compentry (make-mutex) (make-condition-variable)))
+		      (hashtable-put! socompile-table target ce))))
+	    (if incomp
+		(synchronize (compentry-mutex ce)
+		   (condition-variable-wait! (compentry-condv ce) (compentry-mutex ce))
+		   target)
+		(begin
+		   (nodejs-socompile-sync src target
+		      (if worker-slave (cons "--js-worker-slave" opts) opts))
+		   (synchronize (compentry-mutex ce)
+		      (condition-variable-broadcast! (compentry-condv ce)))
+		   (synchronize socompile-mutex
+		      (hashtable-remove! socompile-table target))
+		   target))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-socompile-sync ...                                        */
@@ -2166,8 +2190,8 @@
 		   (if (and (procedure? p) (=fx (procedure-arity p) 4))
 		       p
 		       (js-raise-error %ctxthis
-			  (format "Wrong compiled file format ~s" sopath)
-			  sopath))))
+			  (format "Wrong compiled file format ~s -- ~~a" sopath)
+			  p))))
 	       ((or (not (symbol? sopath)) (not (eq? sopath 'error)))
 		(trace-item "policy=" (hop-sofile-compile-policy))
 		(case (hop-sofile-compile-policy)
@@ -3301,7 +3325,6 @@
 			  (onexit #f)
 			  (keep-alive #t)
 			  (body (lambda ()
-				   (thread-name-set! (current-thread) name)
 				   (setup-worker! worker)
 				   (load-loader worker module)
 				   (synchronize mutex
