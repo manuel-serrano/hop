@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Wed Jul 17 09:04:26 2024 (serrano)                */
+/*    Last change :  Wed Jul 17 09:29:25 2024 (serrano)                */
 /*    Copyright   :  2014-24 Manuel Serrano                            */
 /*    Copyright   :  2014-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
@@ -143,14 +143,6 @@ assert.ok( d.getMinutes() == 0, "getMinutes" );
 assert.ok( d.setMinutes( 60 ) == 1445367605260, "setMinutes" );
 assert.ok( d.getMinutes() == 0, "getMinutes" );
 
-/* // Hours                                                            */
-/* d = new Date( s );                                                  */
-/* assert.ok( d.setHours( 0 ) == 1445295545260, "setHours" );          */
-/* assert.ok( d.getHours() == 0, "getHours" );                         */
-/*                                                                     */
-/* assert.ok( d.setHours( 24 ) == 1445381945260, "setHours" );         */
-/* assert.ok( d.getHours() == 0, "getHours" );                         */
-
 // Month
 d = new Date( s );
 assert.ok( d.setUTCMonth( 0 ) == 1421780345260, "setMonth.1" );
@@ -167,10 +159,10 @@ assert.ok( d.getHours() === d2.getHours(), "get/setJours.4" );
 
 // Month + day
 d = new Date( s );
-assert.ok( d.setMonth( 0, 14 ) == 1421265545260, "setMonthDay.1" );
-assert.ok( d.getMonth() == 0, "getMonth" );
-assert.ok( d.setMonth( 12, 14 ) == 1452801545260, "setMonthDay.2" );
-assert.ok( d.getMonth() == 0, "getMonth" );
+assert.ok( d.setUTCMonth( 0, 14 ) == 1421261945260, "setUTCMonthDay.1" );
+assert.ok( d.getUTCMonth() == 0, "getMonth" );
+assert.ok( d.setUTCMonth( 12, 14 ) == 1452797945260, "setMonthDay.2" );
+assert.ok( d.getUTCMonth() == 0, "getMonth" );
 
 // UTCDate
 d = new Date( s );
