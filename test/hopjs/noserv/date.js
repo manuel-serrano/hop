@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Wed Jul 17 10:19:49 2024 (serrano)                */
+/*    Last change :  Wed Jul 17 15:33:23 2024 (serrano)                */
 /*    Copyright   :  2014-24 Manuel Serrano                            */
 /*    Copyright   :  2014-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
@@ -328,6 +328,7 @@ d = new Date(Date.UTC(2015, 9));
 assert.ok(d.getTime() === 1443657600000, "year+month");
 
 d = new Date(Date.UTC(2015));
+console.log(d.getTime());
 assert.ok(d.getTime() === 3602015, "time");
 
 /*---------------------------------------------------------------------*/
