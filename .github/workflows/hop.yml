@@ -22,5 +22,5 @@ jobs:
       - run: (cd /tmp/bigloo-unstable && ./configure && make && sudo make install)
 
       - run: ./configure && make && sudo make install
-      - run: (cd test/hopjs; ./TEST)
+      - run: (cd test/hopjs; ../../bin/hop.sh --no-zeroconf noserv/date.js --so-policy none -g --clear-cache -q --no-server; ./TEST)
 
