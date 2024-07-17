@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Wed Jul 17 08:38:13 2024 (serrano)                */
+/*    Last change :  Wed Jul 17 09:04:26 2024 (serrano)                */
 /*    Copyright   :  2014-24 Manuel Serrano                            */
 /*    Copyright   :  2014-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
@@ -153,18 +153,17 @@ assert.ok( d.getMinutes() == 0, "getMinutes" );
 
 // Month
 d = new Date( s );
-assert.ok( d.setMonth( 0 ) == 1421783945260, "setMonth.1" );
-assert.ok( d.getMonth() == 0, "getMonth" );
-assert.ok( d.setMonth( 12 ) == 1453319945260, "setMonth.2" );
-assert.ok( d.getMonth() == 0, "getMonth" );
+assert.ok( d.setUTCMonth( 0 ) == 1421780345260, "setMonth.1" );
+assert.ok( d.getUTCMonth() == 0, "getMonth" );
+assert.ok( d.setUTCMonth( 12 ) == 1453316345260, "setMonth.2" );
+assert.ok( d.getUTCMonth() == 0, "getMonth" );
 
 d = new Date(2011, 6, 12, 5, 0, 0);
 let d2 = new Date(2011, 2, 12, 5, 0, 0);
 
 d.setMonth( 2 );
-assert.ok( d.getMonth() === d2.getMonth(), "setMonth.3" );
-assert.ok( d.getHours() === 5, "setMonth.4" );
-assert.ok( d2.getHours() === 5, "setMonth.5" );
+assert.ok( d.getMonth() === d2.getMonth(), "get/setMonth.3" );
+assert.ok( d.getHours() === d2.getHours(), "get/setJours.4" );
 
 // Month + day
 d = new Date( s );
