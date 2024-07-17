@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Sat May 20 14:46:47 2023 (serrano)                */
-/*    Copyright   :  2014-23 Manuel Serrano                            */
+/*    Last change :  Wed Jul 17 08:00:55 2024 (serrano)                */
+/*    Copyright   :  2014-24 Manuel Serrano                            */
 /*    Copyright   :  2014-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing Date                                                     */
@@ -92,6 +92,8 @@ test( "2000-11-01T12:00:00+05:00" );
 var s = Date.parse( "2015-10-20T18:59:05+00:00" ) + 260;
 var d = new Date( s );
 
+console.log("d=", d);
+console.log("d.h=", d.getHours());
 assert.ok( s == 1445367545260, "parse" );
 assert.ok( d.getMonth() == 9, "getMonth" );
 assert.ok( d.getDate() == 20, "getDate" );
