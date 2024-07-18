@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Thu Jul 18 08:43:25 2024 (serrano)                */
+/*    Last change :  Thu Jul 18 17:29:26 2024 (serrano)                */
 /*    Copyright   :  2014-24 Manuel Serrano                            */
 /*    Copyright   :  2014-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
@@ -373,6 +373,7 @@ function toPostgresString(date) {
 
 var d = new Date(Date.UTC(2014, 10, 4, 0, 22, 45));
 
+console.log("toP=", toPostgresString(d));
 assert.ok(toPostgresString(d) === "2014-11-4 0:22:45", "UTC date");
 
 /*---------------------------------------------------------------------*/
