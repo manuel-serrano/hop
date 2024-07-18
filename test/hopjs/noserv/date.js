@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Wed Jul 17 15:33:23 2024 (serrano)                */
+/*    Last change :  Thu Jul 18 08:01:43 2024 (serrano)                */
 /*    Copyright   :  2014-24 Manuel Serrano                            */
 /*    Copyright   :  2014-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
@@ -329,7 +329,7 @@ assert.ok(d.getTime() === 1443657600000, "year+month");
 
 d = new Date(Date.UTC(2015));
 console.log(d.getTime());
-assert.ok(d.getTime() === 3602015, "time");
+assert.ok(d.getTime() === 1420070400000, "time");
 
 /*---------------------------------------------------------------------*/
 /*    creation                                                         */

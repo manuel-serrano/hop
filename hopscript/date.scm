@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Thu May 16 19:31:01 2024 (serrano)                */
+;*    Last change :  Thu Jul 18 07:49:45 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript dates                        */
@@ -309,14 +309,32 @@
       (define (js-date-utc this . args)
 	 (if (any (lambda (a) (eq? a (js-undefined))) args)
 	     +nan.0
-	     (let ((dt (parse-date-arguments args)))
-		(if (date? dt)
-		    (let ((ctz (date-timezone dt)))
-		       (js-flonum->integer
-			  (llong->flonum
-			     (+llong (date->milliseconds dt)
-				(*llong (fixnum->llong ctz) #l1000)))))
-		    0))))
+	     (match-case args
+		(()
+		 (js-date-utc0 %this))
+		((?a0)
+		 (js-date-utc1 %this a0))
+		((?a0 ?a1)
+		 (js-date-utc2 %this a0 a1))
+		((?a0 ?a1 ?a2)
+		 (js-date-utc3 %this a0 a1 a2))
+		((?a0 ?a1 ?a2 ?a3)
+		 (js-date-utc4 %this a0 a1 a2 a3))
+		((?a0 ?a1 ?a2 ?a3 ?a4)
+		 (js-date-utc5 %this a0 a1 a2 a3 a4))
+		((?a0 ?a1 ?a2 ?a3 ?a4 ?a5)
+		 (js-date-utc6 %this a0 a1 a2 a3 a4 a5))
+		((?a0 ?a1 ?a2 ?a3 ?a4 ?a5 ?a6)
+		 (js-date-utc7 %this a0 a1 a2 a3 a4 a5 a6))
+		(else
+		 (let ((dt (parse-date-arguments args)))
+		    (if (date? dt)
+			(let ((ctz (date-timezone dt)))
+			   (js-flonum->integer
+			      (llong->flonum
+				 (+llong (date->milliseconds dt)
+				    (*llong (fixnum->llong ctz) #l1000)))))
+			0))))))
       
       (js-bind! %this js-date (& "UTC")
 	 :value (js-make-function %this js-date-utc
@@ -564,7 +582,7 @@
 ;*    js-date-utc1 ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (js-date-utc1 %this year)
-   (let ((dt (js-date-value1 %this year)))
+   (let ((dt (make-date :year year)))
       (if (date? dt)
 	  (let ((ctz (date-timezone dt)))
 	     (js-flonum->integer
