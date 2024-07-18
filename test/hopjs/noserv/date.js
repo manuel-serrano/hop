@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Thu Jul 18 08:20:38 2024 (serrano)                */
+/*    Last change :  Thu Jul 18 08:43:25 2024 (serrano)                */
 /*    Copyright   :  2014-24 Manuel Serrano                            */
 /*    Copyright   :  2014-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
@@ -353,6 +353,12 @@ assert.ok(date2.getTime() === date3.getTime(), "getTime");
 var date4 = new Date(6.54321);
 assert.ok(date4.valueOf() === 6, "valueOf");
 
+// no time given, must be considered as an UTC date
+var date5a = new Date("2017-04-08");
+var date5b = new Date(Date.UTC(2017,3,8));
+assert.ok(date5a.toISOString() === date5b.toISOString(), "UTC dates");
+assert.ok(date5a.toISOString() === '2017-04-08T00:00:00.000Z', "UTC dates (2)");
+
 /*---------------------------------------------------------------------*/
 /*    utc                                                              */
 /*---------------------------------------------------------------------*/
@@ -385,10 +391,10 @@ function checkDate(d, year, month, date, hours, mins, secs, mils) {
 assert.ok(isNaN(new Date('not a date').getDate()), "invalid date");
 
 checkDate(new Date('2014-11-03'), 2014, 10, 3, 0, 0, 0, 0);
-checkDate(new Date('2014-11-03 19:00'), 2014, 10, 3, 19, 0, 0, 0);
-checkDate(new Date('2014-11-03 19:23'), 2014, 10, 3, 19, 23, 0, 0);
-checkDate(new Date('2014-11-03 19:23:22'), 2014, 10, 3, 19, 23, 22, 0);
-checkDate(new Date('2014-11-03 19:23:22.478'), 2014, 10, 3, 19, 23, 22, 478);
+checkDate(new Date('2014-11-03 19:00Z'), 2014, 10, 3, 19, 0, 0, 0);
+checkDate(new Date('2014-11-03 19:23Z'), 2014, 10, 3, 19, 23, 0, 0);
+checkDate(new Date('2014-11-03 19:23:22Z'), 2014, 10, 3, 19, 23, 22, 0);
+checkDate(new Date('2014-11-03 19:23:22.478Z'), 2014, 10, 3, 19, 23, 22, 478);
 checkDate(new Date('2014-11-03 19:23:22.478+01:00'), 2014, 10, 3, 18, 23, 22, 478);
 
 function zdate() {

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Thu Jul 18 07:49:45 2024 (serrano)                */
+;*    Last change :  Thu Jul 18 08:57:53 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript dates                        */
@@ -675,16 +675,37 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.1.15    */
 ;*---------------------------------------------------------------------*/
 (define (parse-date v::bstring)
-   (let ((ip (open-input-string v)))
-      (unwind-protect
-	 (with-handler
-	    (lambda (e)
-	       (input-port-reopen! ip)
-	       (with-handler
-		  (lambda (e) "Invalid Date")
-		  (iso8601-parse-date ip)))
-	    (rfc2822-parse-date ip))
-	 (close-input-port ip))))
+   ;; JS dates are weird, if no time nor timezone is give, the string
+   ;; representation denotes an UTC date, otherwise, a local time zone date!
+   ;; For extra details, see:
+   ;; https://maggiepint.com/2017/04/11/fixing-javascript-date-web-compatibility-and-reality/
+   (match-case (pregexp-match "^([0-9]{4})(?:-([0-9]{2})(?:-([0-9]{2}))?)?$" v)
+      ((?- ?year #f #f)
+       ;; utc date because to time nor time zone
+       (make-date :year (string->integer year)
+	  :timezone 0))
+      ((?- ?year ?month #f)
+       ;; utc date because to time nor time zone
+       (make-date :year (string->integer year)
+	  :month (string->integer month)
+	  :timezone 0))
+      ((?- ?year ?month ?day)
+       ;; utc date because to time nor time zone
+       (make-date :year (string->integer year)
+	  :month (string->integer month)
+	  :day (string->integer day)
+	  :timezone 0))
+      (else
+       (let ((ip (open-input-string v)))
+	  (unwind-protect
+	     (with-handler
+		(lambda (e)
+		   (input-port-reopen! ip)
+		   (with-handler
+		      (lambda (e) "Invalid Date")
+		      (iso8601-parse-date ip)))
+		(rfc2822-parse-date ip))
+	     (close-input-port ip))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    init-builtin-date-prototype! ...                                 */
