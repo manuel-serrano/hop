@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Thu Jul 18 08:01:43 2024 (serrano)                */
+/*    Last change :  Thu Jul 18 08:20:38 2024 (serrano)                */
 /*    Copyright   :  2014-24 Manuel Serrano                            */
 /*    Copyright   :  2014-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
@@ -328,7 +328,6 @@ d = new Date(Date.UTC(2015, 9));
 assert.ok(d.getTime() === 1443657600000, "year+month");
 
 d = new Date(Date.UTC(2015));
-console.log(d.getTime());
 assert.ok(d.getTime() === 1420070400000, "time");
 
 /*---------------------------------------------------------------------*/
@@ -366,9 +365,9 @@ function toPostgresString(date) {
       + ':' + date.getUTCSeconds();
 }
 
-var d = new Date(2014, 10, 4, 0, 22, 45);
+var d = new Date(Date.UTC(2014, 10, 4, 0, 22, 45));
 
-assert.ok(toPostgresString(d) === "2014-11-3 23:22:45", "UTC date");
+assert.ok(toPostgresString(d) === "2014-11-4 0:22:45", "UTC date");
 
 /*---------------------------------------------------------------------*/
 /*    parsing                                                          */
