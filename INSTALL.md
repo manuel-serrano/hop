@@ -1,4 +1,21 @@
-### Prerequisites ###
+## Hop Installation
+
+### Nodejs installation ###
+
+The Hop JavaScript version can be executed with the Nodejs environment. For
+that it can be installed using the `npm` package system:
+
+```
+npm install https://www-sop.inria.fr/members/Manuel.Serrano/software/npmx/hop.tgz
+```
+
+### Native installation ###
+
+This section describes the installation of the Hop native version,
+which supports both JavaScript and Scheme.
+
+
+#### Prerequisites ####
 
 The Hop system requires at a minimum a Linux or OSX environment and
 the standard suite of compilation tools. 
@@ -70,7 +87,6 @@ change other env. variables. You must set `C\_INCLUDE\_PATH` and
 autoconfiguration tool to detect and use libraries installed in
 `/opt/local`.
 
-
     export C_INCLUDE_PATH=/opt/local/include 
     export LIBRARY_PATH=/opt/local/lib
 
@@ -100,12 +116,11 @@ accordingly.
 
 Hop.js requires that bigloo (a scheme compiler and runtime) is
 installed on the target machine. bigloo can be downloaded from
-<ftp://ftp-sop.inria.fr/indes/fp/Bigloo/bigloo4.3c.tar.gz> (or a newer
-version).
+http://www-sop.inria.fr/indes/fp/Bigloo/download/bigloo-latest.tar.gz
 
-    tar xvf bigloo4.3c.tar.gz
+    tar xvf bigloo-latest.tar.gz
 
-and cd to the build directory (bigloo4.3c) .
+and cd to the build directory.
 
 Run the configure script:
 
@@ -184,61 +199,15 @@ The main documentation file is `<share-dir>/doc/hop/index.html` where
 <share-dir> defaults to `/usr/local/share`.
 
 
-### Set startup preferences and run hop ###
-
-Make sure that your `$PATH` variable includes the bin install
-directory (which defaults to `/usr/local/bin`).
-
-
-By default Hop.js only accepts to serve authenticated requests. Before
-executing any programs users must be declared. These declarations go
-into the `$HOME/.config/hop/hoprc.js` file. The following declare a user
-named hopjs whose password is inria and that is allowed to execute any
-Hop.js service, the declaration services: "*", and download any file
-readable from the server process, the declaration directories: "*":
-
-    mkdir -p $HOME/.config/hop && cat > $HOME/.config/hop/hoprc.js << EOF
-    hop = require( "hop" );
-    var user = require( hop.user );
-    var config = require( hop.config );
-
-    user.add( { name: "hopjs",
-                password: user.encryptPassword( "hopjs", "inria" ),
-                services: "*",
-                directories: "*"
-              } );
-    EOF
-
-Then start hop by running:
-
-    hop
-
-hop starts the builtin web server on the default 8080 port. You may
-define an alternative port by typing instead the command:
-
-    hop -p <port>
-
-Open your browser to the builtin web server:
-<http://localhost:8080/hop> (or <http://localhost:PORT/hop> )
-
-
-You may also enforce the use of a custom preferences files using
-the `--hoprc` option.
-
-    hop --rc-file myrcfile.js
-
-
 ### Run examples ###
 
     cd <hop-build-dir>
 
 then run
 
-    hop examples/examples/examples.js
+    hopjs examples/ls/ls.hop.js
 
-and open a browser on http://localhost:8080/hop/examples to play with
-hop.js examples.
-
+and open a browser on http://localhost:8888/ls/ls.
 
 ### Edit source code ###
 
