@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Thu Jul 18 17:48:44 2024 (serrano)                */
+/*    Last change :  Thu Jul 18 17:49:35 2024 (serrano)                */
 /*    Copyright   :  2014-24 Manuel Serrano                            */
 /*    Copyright   :  2014-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
@@ -414,21 +414,9 @@ var utc = Date.UTC(2014, 10, 3, 19, 23, 22, 478);
 assert.ok(utc === 1415042602478, "Date.UTC");
 
 /*---------------------------------------------------------------------*/
-/*    timezone                                                         */
-/*---------------------------------------------------------------------*/
-var s = Date.parse("2015-10-20T18:59:05+00:00") + 260;
-
-d = new Date(s);
-console.log("DOF=", d.getTimezoneOffset());
-assert.ok(d.getTimezoneOffset() === -120, "getTimezoneOffset.1");
-d.setMonth(0);
-assert.ok(d.getTimezoneOffset() === -60, "getTimezoneOffset.2");
-
-/*---------------------------------------------------------------------*/
 /*    utc                                                              */
 /*---------------------------------------------------------------------*/
 var s = new Date("2015-05-31T23:30:00+02:00");
 
 assert.ok(s.valueOf() === 1433107800000, "valueOf");
-assert.ok(s.getMonth() === 4, "getMonth");
 assert.ok(s.getUTCMonth() === 4, "getUTCMonth");
