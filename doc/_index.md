@@ -15,14 +15,14 @@ Hop.js (aka Hop) is:
   - **websockets**.
 * A builtin web server.
 
-${<span class="label label-warning">Note:</span>}
-Hop also supports the [Scheme](http://www-sop.inria.fr/indes/fp/Bigloo/)
-programming language. When using the nativer Hop.js version (as opposed
-to the Nodejs hostsed version), JavaScript and Scheme are fully 
-interoperable and applications can mix both languages. This
-page mostly describes the JavaScript layer. The Scheme layer is
-described in a dedicated
-[programming manual](http://hop.inria.fr/hop/doc?lang=hop).
+> [!NOTE]
+> Hop also supports the [Scheme](http://www-sop.inria.fr/indes/fp/Bigloo/)
+> programming language. When using the nativer Hop.js version (as opposed
+> to the Nodejs hostsed version), JavaScript and Scheme are fully 
+> interoperable and applications can mix both languages. This
+> page mostly describes the JavaScript layer. The Scheme layer is
+> described in a dedicated
+> [programming manual](http://hop.inria.fr/hop/doc?lang=hop).
 
 Hop programs execute in the context of a builtin web server. They
 define services, which are _super_ JavaScript functions that get
