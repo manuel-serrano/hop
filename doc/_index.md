@@ -1,6 +1,8 @@
 ![http://hop.inria.fr](./logo.svg) Hop.js: a multitier JavaScript
 =================================================================
 
+TBR, replaced by README.md
+
 This is the documentation of the JavaScript embedding. The Scheme embedding
 is documented [here](http://hop.inria.fr/hop/doc?lang=hop).
 

@@ -1,132 +1,126 @@
-![http://hop.inria.fr](./logo.svg) Hop --- Multitier JavaScript Web Programming
-=============================================================================
+![http://hop.inria.fr](./logo.svg) Hop.js: a multitier JavaScript
+=================================================================
 
-Hop is a multier programming language for the Web. It exists in two versions:
-
-  * a JavaScript embedding;
-  * a Scheme embedding.
-  
 This is the documentation of the JavaScript embedding. The Scheme embedding
 is documented [here](http://hop.inria.fr/hop/doc?lang=hop).
 
   1. [Introduction](./_index.md), _general introduction to Hop._
   2. [License](./license.md), _the license of this release._
   3. [Download](./download.md), _how to get Hop._
+  4. [Hello World](./hello.md), _A complete example._
   9. [Syntax](./syntax/syntax.bnf) _the Hop BNF syntax._
   
-  
-Hello World
------------
+Hop.js (aka Hop) is:
 
-The following example illustrates the Hop programming flavor:
+* A multitier JavaScript:
+  - a single code runs on the client and the server.
+* A compliant JavaScript implementation:
+  - EcmaScript 5.1 compliant;
+  - EcmaScript 6 features (modules, `async`/`await`, proxy objects, ...);
+  - Nodejs compatibility.
+* An extended JavaScript:
+  - builtin **HTML**: native HTML syntax support and multitier dom.
+  - server-side web **workers**.
+  - **websockets**.
+* A builtin web server.
 
-```javascript
-// ls.mjs
+${<span class="label label-warning">Note:</span>}
+Hop also supports the [Scheme](http://www-sop.inria.fr/indes/fp/Bigloo/)
+programming language. When using the nativer Hop.js version (as opposed
+to the Nodejs hostsed version), JavaScript and Scheme are fully 
+interoperable and applications can mix both languages. This
+page mostly describes the JavaScript layer. The Scheme layer is
+described in a dedicated
+[programming manual](http://hop.inria.fr/hop/doc?lang=hop).
+
+Hop programs execute in the context of a builtin web server. They
+define services, which are _super_ JavaScript functions that get
+automatically invoked when HTTP requests are received. As service
+associates an URL to a JavaScript and enables calls by the means
+of HTTP requests:
+
+```hopscript[:prog1@hopscript]
 import { Hop } from "@hop/hop";
-import * as fs from "node:fs";
-import * as path from "node:path";
 
-const hopConfig = {
-   ports: { http: 8888 },
-   users:  [ { name: "anonymous", services: ["/ls"] } ]
-};
+const hop = new Hop({ports: {http: 8888}});
 
-const hop = new Hop(hopConfig);
-const R = hop.Resolver();
-
-async function ls(o) {
-   const dir = o.dir || "/tmp";
-   const files = await fs.readdirSync(dir);
-   
-   return <html>
-      <script type="module" src=${R.url('./client.mjs')}/>
-      
-      ${files
-	 .filter(p => !p.match(/^\.|^#.*#$/))
-	 .sort((x, y) => x >= y ? 1 : -1 )
-	 .map(p => {
-	    const ap = path.join(dir, p);
-
-	    if (fs.statSync(ap).isDirectory()) {
-	       return <div onclick=~{location = ${Ls}({ dir: ${ap} })}>${p}/</div>;
-	    } else {
-	       return <div>${p}</div>;
-	    }
-	 })}
-   
-   </html>;
+function hello(o) {
+  return "hello world";
 }
 
-const Ls = hop.Service(ls);
-hop.listen().then(() => console.log(`${Ls()} ready...`));
+const Hello = hop.Service(hello);
+hop.listen().then(() => console.log(`${Hello()} ready...);
 ```
 
-  * The first three lines are regular JavaScript module imports. Note that
-Hop imposes to use ECMAScript modules on the server-side and
-client-side of the application.
+To run this program put this code in the file `hello.hop.mjs`, compile it
 
-  * The variable `hopConfig` holds the server configuration used for that
-example. It will expect http connection on the port `8888` and it will
-allow unauthentified users to execute the service named `ls`;
+```sh[:@shell]
+$ hopc.mjs hello.hop.mjs -o hello.mjs
+```
 
-  * The variable `hop` is bound to the running Hop server and the variable
-`R` is bound to a _static resolver_ of that service. It will be used
-to enable the server to delivery static page.
+and execute it:
 
-  * The asynchronous function `ls` is the implementation of the unique
-service of this example. It takes an object as parameter that contains
-the name of the directory to be scaned. Using the Nodejs' asynchronous API
-it reads files on the disk and it builds the result as a web page.
-Inside an HTML fragments the syntax `${...}` is similar to that of
-JavaScript string patterns. It insert the rsult of the evaluation in the
-HTML fragment that is finally assembled.
-Hop uses an extension to HTML to denote attributes that hold client
-side code. This is the `~{...}` syntax. Inside a client code, the
-pattern `${...}` is another sort of hole. It denotes a server side expression.
+```sh[:@shell]
+$ nodejs hello.mjs
+```
 
-  * The variable `Ls` is the Web service. The implementation is the function
-  `ls`. As no URL is specified when the service is created, it takes its name
-  from the JavaScript function. The URL for that service is then `http://localhost:8888/ls`.
-  
-  * Finally, the last line of the program starts the web server.
+You can now browse `http://localhost:8888/hello`.
 
 
-Installation
-------------
+Hop extends JavaScript with the geniune HTML. if we want to modify
+our service to make it return an HTML document, we can use:
 
-A Hop program can be executed in a regular Node.js environment or in a
-native version. For the sake of simplicity we assume in this example
-an execution within Node.js.
-
-To install the Hop dependencies to run this program, use the following
-`package.json` file:
-
-```json
-{
-   "name": "ls",
-   "dependencies": {
-     "@hop/hop": "file:/home/serrano/www/public_html/software/npmx/hop.tgz",
-     "@hop/hopc": "file:/home/serrano/www/public_html/software/npmx/hopc.tgz"
-   },
-   "scripts": {
-      "build": "./node_modules/@hop/hopc/bin/hopc.mjs ls.hop.mjs -o ls.mjs",
-      "run": "node --enable-source-maps ls.mjs"
-   }
+```hopscript[:prog2@hopscript]
+function hello() {
+  return <html><div>hello world</div></html>;
 }
 ```
 
-and in the same directory
+Hop is multitier. That is client-side codes are also implemented in Hop. The
+`~{` mark switches from server-side context to client-side context:
 
-```shell
-npm install
-npm build
+```hopscript[:prog3@hopscript]
+function hello() {
+  return <html><div onclick=~{alert("world")}>hello</div></html>;
+}
 ```
 
-Finally, to run the program:
+Hop client-side code and server-side can also be mixed using the
+`${` mark:
 
-```shell
-npm run
+```hopscript[:prog4@hopscript]
+service hello({ name: who }) {
+  return <html><div onclick=~{ lert("Hi " + ${who} + "!")}>hello</div></html>;
+}
 ```
+
+By default Hop.js only accepts to serve authenticated requests. Users
+must be declared when creating the server. The following declare a
+user named `hopjs` whose password is `inria` and that is
+allowed to execute any Hop.js service, the declaration `services: "\*"`, and
+download any file readable from the server process, the declaration
+`directories: "\*"`:
+
+```hopscript[:prog2@hopscript]
+import { Hop } from "@hop/hop";
+
+const users = [ {
+      "name": "hopjs",
+      "password": "ENCRYPTED-PASSWORD",
+      services: "*",
+      directories: "*"
+   }, { 
+      name: "anonymous",
+      services: ["wizard"],
+      directories: hop.loadPath
+   } ];
+   
+const hop = new Hop({ports: {http: 8888}, users});
+```
+
+You are now ready to execute Hop.js programs! Many more additional examples
+can be found in the
+[source development tree](https://github.com/manuel-serrano/hop/tree/3.1.x/examples).
 
  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-[[main page]](../README.md) | [[language]](./lang/README.md) | [[license]](./license.md)
+[[main page]](../README.md) | [[hello world]](./hello.md) | [[language]](./lang/README.md) | [[license]](./license.md)
