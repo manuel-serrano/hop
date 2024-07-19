@@ -31,6 +31,7 @@ associates an URL to a JavaScript and enables calls by the means
 of HTTP requests:
 
 ```javascript
+// hello.hop.mjs
 import { Hop } from "@hop/hop";
 
 const hop = new Hop({ports: {http: 8888}});
