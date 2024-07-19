@@ -1,0 +1,11 @@
+{
+   "name": "ls",
+   "dependencies": {
+     "@hop/hop": "file:/home/serrano/www/public_html/software/npmx/hop.tgz",
+     "@hop/hopc": "file:/home/serrano/www/public_html/software/npmx/hopc.tgz"
+   },
+   "scripts": {
+      "build": "./node_modules/@hop/hopc/bin/hopc.mjs ls.hop.mjs -o ls.mjs",
+      "run": "node --enable-source-maps ls.mjs"
+   }
+}
