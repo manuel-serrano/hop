@@ -1,17 +1,6 @@
 ![http://hop.inria.fr](./logo.svg) Hop.js: a multitier JavaScript
 =================================================================
 
-TBR, replaced by README.md
-
-This is the documentation of the JavaScript embedding. The Scheme embedding
-is documented [here](http://hop.inria.fr/hop/doc?lang=hop).
-
-  1. [Introduction](./_index.md), _general introduction to Hop._
-  2. [License](./license.md), _the license of this release._
-  3. [Download](./download.md), _how to get Hop._
-  4. [Hello World](./hello.md), _A complete example._
-  9. [Syntax](./syntax/syntax.bnf) _the Hop BNF syntax._
-  
 Hop.js (aka Hop) is:
 
 * A multitier JavaScript:
@@ -41,7 +30,7 @@ automatically invoked when HTTP requests are received. As service
 associates an URL to a JavaScript and enables calls by the means
 of HTTP requests:
 
-```hopscript[:prog1@hopscript]
+```javascript
 import { Hop } from "@hop/hop";
 
 const hop = new Hop({ports: {http: 8888}});
@@ -56,13 +45,13 @@ hop.listen().then(() => console.log(`${Hello()} ready...);
 
 To run this program put this code in the file `hello.hop.mjs`, compile it
 
-```sh[:@shell]
+```shell
 $ hopc.mjs hello.hop.mjs -o hello.mjs
 ```
 
 and execute it:
 
-```sh[:@shell]
+```shell
 $ nodejs hello.mjs
 ```
 
@@ -72,7 +61,7 @@ You can now browse `http://localhost:8888/hello`.
 Hop extends JavaScript with the geniune HTML. if we want to modify
 our service to make it return an HTML document, we can use:
 
-```hopscript[:prog2@hopscript]
+```javascript
 function hello() {
   return <html><div>hello world</div></html>;
 }
@@ -81,16 +70,16 @@ function hello() {
 Hop is multitier. That is client-side codes are also implemented in Hop. The
 `~{` mark switches from server-side context to client-side context:
 
-```hopscript[:prog3@hopscript]
+```javascript
 function hello() {
   return <html><div onclick=~{alert("world")}>hello</div></html>;
 }
 ```
 
 Hop client-side code and server-side can also be mixed using the
-`${` mark:
+`\${` mark:
 
-```hopscript[:prog4@hopscript]
+```javascript
 service hello({ name: who }) {
   return <html><div onclick=~{ lert("Hi " + ${who} + "!")}>hello</div></html>;
 }
@@ -103,7 +92,7 @@ allowed to execute any Hop.js service, the declaration `services: "\*"`, and
 download any file readable from the server process, the declaration
 `directories: "\*"`:
 
-```hopscript[:prog2@hopscript]
+```javascript
 import { Hop } from "@hop/hop";
 
 const users = [ {
