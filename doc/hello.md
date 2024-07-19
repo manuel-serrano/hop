@@ -3,8 +3,8 @@
 
 The following example illustrates the Hop programming flavor:
 
-<span class="hiphop">&#x2605;</span> Example: [ls.hop.mjs](../../examples/ls/ls.hop.mjs)
-<!-- ${doc.includeCode("../../examples/ls/ls.hop.mjs")} -->
+<span class="hiphop">&#x2605;</span> Example: [ls.hop.mjs](../examples/ls/ls.hop.mjs)
+<!-- ${doc.includeCode("../examples/ls/ls.hop.mjs")} -->
 
   * The first three lines are regular JavaScript module imports. Note that
 Hop imposes to use ECMAScript modules on the server-side and
