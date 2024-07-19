@@ -35,8 +35,6 @@ $ npm install https://www-sop.inria.fr/members/Manuel.Serrano/software/npmx/hop.
 Scheme Multitier Programming
 ----------------------------
 
-### To build:
-
 Prerequisites:
 
  * GCC
@@ -48,9 +46,7 @@ Prerequisites:
 Unix/Machintosh:
 
 ```sh
-./configure
-make
-make install
+./configure && make && make install
 ```
 
 ### To run the tests:
