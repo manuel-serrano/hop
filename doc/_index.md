@@ -13,7 +13,9 @@ Hop.js (aka Hop) is:
   - builtin **HTML**: native HTML syntax support and multitier dom.
   - server-side web **workers**.
   - **websockets**.
-* A builtin web server.
+* Two implementations:
+  1. A Nodejs embedding (i.e., Hop can be installed inside Nodejs via an NPM package).
+  2. A builtin **multi-threaded** web server.
 
 > [!NOTE]
 > Hop also supports the [Scheme](http://www-sop.inria.fr/indes/fp/Bigloo/)
