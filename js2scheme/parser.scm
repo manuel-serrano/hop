@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Fri Jul  5 19:02:15 2024 (serrano)                */
+;*    Last change :  Fri Jul 19 11:31:34 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1441,11 +1441,12 @@
 		 ((or (isa? p J2SObjInit) (isa? p J2SArray))
 		  (with-access::J2SExpr p (loc)
 		     (let ((id (string->symbol (format "%~a" idx))))
-			(instantiate::J2SDecl
+			(instantiate::J2SDeclDestructure
 			   (loc loc)
 			   (id id)
 			   (_scmid id)
-			   (binder 'param)))))
+			   (binder 'param)
+			   (literal p)))))
 		 ((isa? p J2SDecl)
 		  p)
 		 ((arrow-param-bind-exit-desctructure? p)
@@ -2162,29 +2163,33 @@
 		 (begin
 		    (consume-any!)
 		    (let* ((expr (assig-expr #f #f #f))
-			   (arg (instantiate::J2SDeclInit
+			   (arg (instantiate::J2SDeclInitDestructure
 				   (binder 'param)
 				   (loc loc)
 				   (id id)
 				   (val expr)
-				   (_scmid id))))
+				   (_scmid id)
+				   (literal lit))))
 		       (values arg lit)))
-		 (let ((arg (instantiate::J2SDecl
+		 (let ((arg (instantiate::J2SDeclDestructure
 			       (binder 'param)
 			       (loc loc)
 			       (id id)
-			       (_scmid id))))
+			       (_scmid id)
+			       (literal lit))))
 		    (values arg lit)))))
 	 ((LBRACKET)
 	  (let ((id (string->symbol (format "%~a" idx)))
-		(loc (token-loc (peek-token))))
+		(loc (token-loc (peek-token)))
+		(lit (array-literal #f #f 'array)))
 	     (values
-		(instantiate::J2SDecl
+		(instantiate::J2SDeclDestructure
 		   (binder 'param)
 		   (loc loc)
 		   (id id)
-		   (_scmid id))
-		(array-literal #f #f 'array))))
+		   (_scmid id)
+		   (literal lit))
+		lit)))
 	 (else
 	  (if maybe-expr?
 	      (values #f (assig-expr #f #f #f))

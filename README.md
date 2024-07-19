@@ -11,21 +11,25 @@ be developped in either
   * JavaScript/TypeScript;
   * Scheme.
   
-  
 <!-- github -->
-The documentation is available in two formats:
+The JavaScript documentation is available in two formats:
 
 |     HTML generic documentation     | Markdown commit documentation     |
 |------------------------------------|-----------------------------------|
 | [HTML](http://hop.inria.fr)        | [markdown](./doc/README.md)       |
+
+The Scheme documentation is available online:
+
+|     HTML generic documentation     |
+|------------------------------------|
+| [HTML](http://hop.inria.fr/hop/doc?lang=hop)
 <!-- /github -->
 
-  
 JavaScript/TypeScript Multitier Programming
 -------------------------------------------
 
 ```shell
-$ npm install npm install https://www-sop.inria.fr/members/Manuel.Serrano/software/npmx/hop.tgz --save
+$ npm install https://www-sop.inria.fr/members/Manuel.Serrano/software/npmx/hop.tgz --save
 ```
 
 Scheme Multitier Programming

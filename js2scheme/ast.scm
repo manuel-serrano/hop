@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Fri Jul  5 16:03:46 2024 (serrano)                */
+;*    Last change :  Fri Jul 19 11:31:08 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -100,6 +100,10 @@
 	      ;; optional argument
 	      (optional::bool (default #f)))
 
+	   (class J2SDeclDestructure::J2SDecl
+	      ;; the literal is only used to keep track of the original src code
+	      (literal::J2SNode (info '("nojson" "notraverse"))))
+
 	   (class J2SDeclRest::J2SDecl
 	      ;; lonly, 
 	      (alloc-policy::symbol (default 'heap) (info '("notraverse"))))
@@ -111,6 +115,10 @@
 	   
 	   (class J2SDeclInit::J2SDecl
 	      (val::J2SExpr (info '("ast"))))
+
+	   (class J2SDeclInitDestructure::J2SDeclInit
+	      ;; the literal is only used to keep track of the original src code
+	      (literal::J2SNode (info '("nojson" "notraverse"))))
 
 	   (class J2SDeclFun::J2SDeclInit
 	      (parent read-only (default #f) (info '("nojson" "notraverse")))

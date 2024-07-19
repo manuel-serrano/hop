@@ -1,0 +1,129 @@
+![http://hop.inria.fr](./logo.svg) Hop --- Multitier JavaScript Web Programming
+=============================================================================
+
+Hop is a multier programming language for the Web. It exists in two versions:
+
+  * a JavaScript embedding;
+  * a Scheme embedding.
+  
+This is the documentation of the JavaScript version. The Scheme version
+is documented [here](http://hop.inria.fr/hop/doc?lang=hop).
+
+  1. [Introduction](./_index.md), _general introduction to Hop._
+  2. [License](./license.md), _the license of this release._
+  3. [Download](./download.md), _how to get Hop._
+  9. [Syntax](./syntax/syntax.bnf) _the Hop BNF syntax._
+  
+  
+Hello World
+-----------
+
+To illustrate the Hop programming flavor, we present here a minimal Hop example.
+
+```javascript
+// ls.mjs
+import { Hop } from "@hop/hop";
+import * as fs from "node:fs";
+import * as path from "node:path";
+
+const hopConfig = {
+   ports: { http: 8888 },
+   users:  [ { name: "anonymous", services: ["/ls"] } ]
+};
+
+const hop = new Hop(hopConfig);
+const R = hop.Resolver();
+
+async function ls(o) {
+   const dir = o.dir || "/tmp";
+   const files = await fs.readdirSync(dir);
+   
+   return <html>
+      <script type="module" src=${R.url('./client.mjs')}/>
+      
+      ${files
+	 .filter(p => !p.match(/^\.|^#.*#$/))
+	 .sort((x, y) => x >= y ? 1 : -1 )
+	 .map(p => {
+	    const ap = path.join(dir, p);
+
+	    if (fs.statSync(ap).isDirectory()) {
+	       return <div onclick=~{location = ${Ls}({ dir: ${ap} })}>${p}/</div>;
+	    } else {
+	       return <div>${p}</div>;
+	    }
+	 })}
+   
+   </html>;
+}
+
+const Ls = hop.Service(ls);
+hop.listen().then(() => console.log(`${Ls()} ready...`));
+```
+
+A Hop program can be executed in a regular Node.js environment or in a
+native version. For the sake of simplicity we assume in this example
+an execution within Node.js.
+
+To install the Hop dependencies to run this program, use the following
+`package.json` file:
+
+```json
+{
+   "name": "ls",
+   "dependencies": {
+     "@hop/hop": "file:/home/serrano/www/public_html/software/npmx/hop.tgz",
+     "@hop/hopc": "file:/home/serrano/www/public_html/software/npmx/hopc.tgz"
+   },
+   "scripts": {
+      "build": "./node_modules/@hop/hopc/bin/hopc.mjs ls.hop.mjs -o ls.mjs",
+      "run": "node --enable-source-maps ls.mjs"
+   }
+}
+```
+
+and in the same directory
+
+```shell
+npm install
+npm build
+```
+
+Finally, to run the program:
+
+```shell
+npm run
+```
+
+  * The first three lines are regular JavaScript module imports. Note that
+Hop imposes to use ECMAScript modules on the server-side and
+client-side of the application.
+
+  * The variable `hopConfig` holds the server configuration used for that
+example. It will expect http connection on the port `8888` and it will
+allow unauthentified users to execute the service named `ls`;
+
+  * The variable `hop` is bound to the running Hop server and the variable
+`R` is bound to a _static resolver_ of that service. It will be used
+to enable the server to delivery static page.
+
+  * The asynchronous function `ls` is the implementation of the unique
+service of this example. It takes an object as parameter that contains
+the name of the directory to be scaned. Using the Nodejs' asynchronous API
+it reads files on the disk and it builds the result as a web page.
+Inside an HTML fragments the syntax `${...}` is similar to that of
+JavaScript string patterns. It insert the rsult of the evaluation in the
+HTML fragment that is finally assembled.
+Hop uses an extension to HTML to denote attributes that hold client
+side code. This is the `~{...}` syntax. Inside a client code, the
+pattern `${...}` is another sort of hole. It denotes a server side expression.
+
+  * The variable `Ls` is the Web service. The implementation is the function
+  `ls`. As no URL is specified when the service is created, it takes its name
+  from the JavaScript function. The URL for that service is then `http://localhost:8888/ls`.
+  
+  * Finally, the last line of the program starts the web server.
+
+
+ - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+[[main page]](../README.md) | [[language]](./lang/README.md) [[license]](./license.md)

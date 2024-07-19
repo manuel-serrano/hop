@@ -1,12 +1,9 @@
-~~ This describes how to run HOP inside a Java Virtual Machine. Although
-it is still possible to compile HOP to JVM bytecodes, we no longer
-distribute pre-compiled JVM version of HOP. This manual is then
-obsolete and most applies to old HOP versions.
+This describes how to run HOP inside a Java Virtual Machine. 
 
 == 1. Introduction ==
 
-~~ HOP can either be executed in native mode or in JVM mode. The native
-mode is only operational on Unix systems. The pre-compiled JVM mode
+HOP can either be executed in native mode or in JVM mode. The native
+mode is only operational on Linux systems. The pre-compiled JVM mode
 is available on all computers equipped with a complete Java
 Development Kit 1.4 or greater. In particular, this port is operational
 on Linux, MacOS X, and Microsoft Windows.
@@ -29,15 +26,3 @@ To start HOP, simply launch the jvm with the ++hop.jar++ file. This
 operation is machine dependent. On Unix system, the command looks like:
 
     java -jar hop-<VERSION>.jar
-
-== 4. Compiling HOP for the JVM ==
-
-~~ For compiling HOP to JVM bytecodes, follows the procedure described in 
-[[/hop/home/install|HOP Installation page]] with one exception: one 
-configure option must be added. For the JVM backend, HOP must be configured
-as:
-
-    ./configure --backend=jvm
-
- or
-    ./configure --backend=jvm --prefix=<your-prefix>
