@@ -70,7 +70,7 @@ npm build
 Finally, to run the program:
 
 ```shell
-npm run
+npm start
 ```
 
  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -6,6 +6,6 @@
    },
    "scripts": {
       "build": "./node_modules/@hop/hopc/bin/hopc.mjs ls.hop.mjs -o ls.mjs",
-      "run": "node --enable-source-maps ls.mjs"
+      "start": "node --enable-source-maps ls.mjs"
    }
 }

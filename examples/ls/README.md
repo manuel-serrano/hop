@@ -4,5 +4,5 @@ files contained in the directory whose name is an argument of the
 service. Directories can be clicked to walk the sub-directories.
 
 ```
-npm install && npm build && npm run
+npm install && npm build && npm start
 ```
