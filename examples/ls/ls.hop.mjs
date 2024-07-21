@@ -11,7 +11,7 @@ const hop = new Hop(hopConfig);
 const R = hop.Resolver();
 
 async function ls(o) {
-   const dir = o.dir || "/tmp";
+   const dir = o?.dir || "/tmp";
    const files = await fs.readdirSync(dir);
    
    return <html>
