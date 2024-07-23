@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Tue Jul 23 15:20:57 2024 (serrano)                */
+#*    Last change :  Tue Jul 23 18:56:59 2024 (serrano)                */
 #*    Copyright   :  2004-24 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -1446,7 +1446,7 @@ for d in hop node; do
    cat node_modules/hop/config.mjs.in | sed -e "s|@VERSION@|$version|" -e "s|@BUILDTAG@|$buildtag|" >> node_modules/hop/$d/config.mjs
 done
 
-for d in exif fontifier hop hopc readlines syslog; do
+for d in exif fontifier hop hopc markdown readlines syslog; do
   cat node_modules/$d/package.json.in \
     | sed -e "s|@VERSION@|$version|" \
 	  -e "s|@BUILDTAG@|$buildtag|" \
