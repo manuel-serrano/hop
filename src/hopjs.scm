@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Mon Jul  8 10:39:19 2024 (serrano)                */
+;*    Last change :  Tue Jul 23 18:37:10 2024 (serrano)                */
 ;*    Copyright   :  2004-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -412,7 +412,10 @@
 	     (with-access::WorkerHopThread %worker (%this prerun)
 		(js-worker-push! %worker (format "nodejs-load(~a)" path)
 		   (lambda (%this)
-		      (nodejs-load-module path %worker %global %module :commonjs-export #t))))))
+		      (with-handler
+			 (lambda (e)
+			    (raise e))
+			 (nodejs-load-module path %worker %global %module :commonjs-export #t)))))))
 	 ((string-suffix? ".ts" path)
 	  ;; typescript
 	  (when %worker

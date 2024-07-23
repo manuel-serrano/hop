@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Mon Jul 15 10:34:14 2024 (serrano)                */
+;*    Last change :  Tue Jul 23 15:30:34 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -1576,8 +1576,6 @@
 	 (or (load-cache filename)
 	     (with-handler
 		(lambda (e)
-		   (when (>=fx (nodejs-hop-debug) 1)
-		      (exception-notify e))
 		   (raise e))
 		(store-cache filename
 		   (call-with-input-file filename
@@ -1644,35 +1642,35 @@
 			(string-append filename "_w")
 			filename))
 	       (tgt #f))
-	    (or (let ((expr (compile-src source language))
-		      (evmod (eval-module)))
-		   (when env-debug-compile
-		      (unless (directory? "/tmp/HOP")
-			 (make-directory "/tmp/HOP"))
-		      (set! tgt (make-file-name "/tmp/HOP"
-				   (string-append
-				      (string-replace (prefix filename) #\/ #\_)
-				      ".scm")))
-			 (call-with-output-file tgt
-			    (lambda (op)
-			       (for-each (lambda (e) (pp e op)) expr))))
-		   (trace-item "thread=" (current-thread))
-		   (trace-item "expr=" (format "~s" expr))
-		   (unwind-protect
-		      (begin
-			 (hop-verb 2 "loading \"" (hop-color 7 "" filename) "\""
-			    (if tgt (format " (~s)\n" tgt) "\n"))
-			 ;; evaluate the module clause first
-			 (eval! (car expr))
-			 (let ((nexpr (map (lambda (x)
-					      (eval `(expand ',x)))
-					 (cdr expr))))
-			    ;; the forms to be evaluated have to be expanded
-			    ;; first in order to resolve the &begin! ... &end!
-			    ;; construct
-			    (for-each eval nexpr)
-			    (eval! 'hopscript)))
-		      (eval-module-set! evmod))))))))
+	    (let ((expr (compile-src source language))
+		  (evmod (eval-module)))
+	       (when env-debug-compile
+		  (unless (directory? "/tmp/HOP")
+		     (make-directory "/tmp/HOP"))
+		  (set! tgt (make-file-name "/tmp/HOP"
+			       (string-append
+				  (string-replace (prefix filename) #\/ #\_)
+				  ".scm")))
+		  (call-with-output-file tgt
+		     (lambda (op)
+			(for-each (lambda (e) (pp e op)) expr))))
+	       (trace-item "thread=" (current-thread))
+	       (trace-item "expr=" (format "~s" expr))
+	       (unwind-protect
+		  (begin
+		     (hop-verb 2 "loading \"" (hop-color 7 "" filename) "\""
+			(if tgt (format " (~s)\n" tgt) "\n"))
+		     ;; evaluate the module clause first
+		     (eval! (car expr))
+		     (let ((nexpr (map (lambda (x)
+					  (eval `(expand ',x)))
+				     (cdr expr))))
+			;; the forms to be evaluated have to be expanded
+			;; first in order to resolve the &begin! ... &end!
+			;; construct
+			(for-each eval nexpr)
+			(eval! 'hopscript)))
+		  (eval-module-set! evmod)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-load-cache ...                                               */
@@ -1993,15 +1991,18 @@
 		  (if (or (string? retval) (not (file-exists? tmp)))
 		      (let ((err (make-file-name (dirname target)
 				    (string-append (prefix (basename target)) ".err"))))
+			 ;; notify the compilation error
+			 (display retval (current-error-port))
+			 ;; log the error
 			 (when (hop-log-file)
 			    (fprintf (hop-log-file) "~a [~a] ~a\n"
 			       (hop-color 3 "" "FAIL")
 			       (hop-color 0 "" tag)
 			       err))
 			 (with-handler
-			    (lambda (_)
-			       ;; catch errors that might be triggered when logging the
-			       ;; compilation error
+			    (lambda (e)
+			       ;; catch errors that might be triggered
+			       ;; when logging the compilation error
 			       (display retval (current-error-port))
 			       #f)
 			    (call-with-output-file err
@@ -2185,13 +2186,15 @@
 	    (cond
 	       ((and (string? sopath) (hop-sofile-enable))
 		(debug-load src sopath 1)
-		(multiple-value-bind (p _)
-		   (hop-dynamic-load sopath)
-		   (if (and (procedure? p) (=fx (procedure-arity p) 4))
-		       p
-		       (js-raise-error %ctxthis
-			  (format "Wrong compiled file format ~s -- ~~a" sopath)
-			  p))))
+		(if (file-exists? sopath)
+		    (multiple-value-bind (p _)
+		       (hop-dynamic-load sopath)
+		       (if (and (procedure? p) (=fx (procedure-arity p) 4))
+			   p
+			   (js-raise-error %ctxthis
+			      (format "Wrong compiled file format ~s -- ~~a" sopath)
+			      p)))
+		    (error "hop" "cannot load file" src)))
 	       ((or (not (symbol? sopath)) (not (eq? sopath 'error)))
 		(trace-item "policy=" (hop-sofile-compile-policy))
 		(case (hop-sofile-compile-policy)
