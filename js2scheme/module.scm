@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 15 15:16:16 2018                          */
-;*    Last change :  Tue Jun 18 08:14:15 2024 (serrano)                */
+;*    Last change :  Thu Jul 25 19:06:55 2024 (serrano)                */
 ;*    Copyright   :  2018-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES6 Module handling                                              */
@@ -522,10 +522,11 @@
       (trace-item "thread=" (current-thread))
       (with-handler
 	 (lambda (e)
-	    (with-access::&exception e (fname location)
-	       (unless (and fname location)
-		  (set! fname (cadr loc))
-		  (set! location (caddr loc)))
+	    (when (isa? e &exception)
+	       (with-access::&exception e (fname location)
+		  (unless (and fname location)
+		     (set! fname (cadr loc))
+		     (set! location (caddr loc))))
 	       (raise e)))
 	 (let ((resolve (config-get args :loader-resolve)))
 	    (cond
