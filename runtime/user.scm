@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Mon May 27 08:08:42 2024 (serrano)                */
+;*    Last change :  Thu Jul 25 18:10:39 2024 (serrano)                */
 ;*    Copyright   :  2005-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
@@ -189,7 +189,7 @@
 			   (error "add-user!" "Illegal directories" (cadr a)))))))
 		((:events)
 		 (when (cadr a)
-		    (unless (eq? d '*)
+		    (unless (eq? e '*)
 		       (cond
 			  ((eq? (cadr a) '*)
 			   (set! e '*))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Tue Jun 18 11:33:55 2024 (serrano)                */
+;*    Last change :  Thu Jul 25 18:03:21 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -658,8 +658,9 @@
 	     (let ((s (integer->string time)))
 		(format "D~d.~a" (string-length s) s))))
 	 (else
-	  (let* ((s (js-json-stringify (js-undefined) v
+	  (let* ((j (js-json-stringify (js-undefined) v
 		       (js-undefined) (js-undefined) %this))
+		 (s (if (js-jsstring? j) (js-jsstring->string j) j))
 		 (e (url-path-encode s)))
 	     (if (string=? s e)
 		 (format "J~d.~a" (string-length e) e)

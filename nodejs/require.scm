@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Tue Jul 23 15:30:34 2024 (serrano)                */
+;*    Last change :  Tue Jul 23 19:14:09 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -98,6 +98,17 @@
 	     (string-prefix? "load," env)
 	     (string-suffix? ",load" env)
 	     (string-contains env ",load,")))))
+
+;*---------------------------------------------------------------------*/
+;*    env-debug-resolve ...                                            */
+;*---------------------------------------------------------------------*/
+(define env-debug-resolve
+   (let ((env (getenv "NODE_DEBUG")))
+      (when (string? env)
+	 (or (string=? env "resolve")
+	     (string-prefix? "resolve," env)
+	     (string-suffix? ",resolve" env)
+	     (string-contains env ",resolve,")))))
 
 ;*---------------------------------------------------------------------*/
 ;*    env-debug-compile ...                                            */

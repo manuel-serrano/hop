@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 05:30:17 2007                          */
-;*    Last change :  Tue May 14 12:54:20 2024 (serrano)                */
+;*    Last change :  Tue Jul 23 19:16:41 2024 (serrano)                */
 ;*    Copyright   :  2007-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with HZ packages.                          */
@@ -180,12 +180,18 @@
 			      ;; the version number matches.
 			      (make-file-path parent dir))))))))))
    
-   (multiple-value-bind (base version regexp)
-      (hz-package-pattern->regexp url)
-      (findv (lambda (dir)
-		(findv (lambda (p) (find-in-dir base regexp p dir))
-		   (directory->list dir)))
-	 path)))
+   (with-trace 'hz "hz-load-weblet-path"
+      (trace-item "url=" url)
+      (trace-item "path=" path)
+      (multiple-value-bind (base version regexp)
+	 (hz-package-pattern->regexp url)
+	 (trace-item "base=" base)
+	 (trace-item "version=" version)
+	 (trace-item "regexp=" regexp)
+	 (findv (lambda (dir)
+		   (findv (lambda (p) (find-in-dir base regexp p dir))
+		      (directory->list dir)))
+	    path))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-cache-path ...                                                */
@@ -203,36 +209,44 @@
 ;*    hz-download-to-cache ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (hz-download-to-cache hzurl hzrepo)
-   (let ((url (hz-resolve-name hzurl hzrepo)))
-      (multiple-value-bind (scheme _ host port abspath)
-	 (url-parse url)
-	 (let ((apath (abspath->filename abspath)))
-	    (multiple-value-bind (base version)
-	       (hz-package-name-parse apath)
-	       (let* ((dest (make-cache-name "api"))
-		      (dir (if host
-			       (make-file-name dest
-				  (format "~a_~a~a"
-				     host port
-				     (prefix (basename apath))))
-			       (make-file-name dest (prefix (basename apath))))))
-		  (cond
-		     ((directory? dir)
-		      (make-file-name dir base))
-		     ((file-exists? url)
-		      (download-url url dir)
-		      (make-file-name dir base))
-		     ((not (string=? scheme "*"))
-		      (error "hz" (format "Cannot find module ~s in repository" hzurl)
-			 hzrepo))
-		     (else
-		      (let* ((name (hz-server-resolve-name url))
-			     (dir (make-file-name dest (prefix name)))
-			     (url (string-append
-				     (hop-hz-server)
-				     "/hop/weblets/download?weblet=" name)))
+   (with-trace 'hz "hz-download-to-cache"
+      (trace-item "hzurl=" hzurl)
+      (trace-item "hzrepo=" hzrepo)
+      (let ((url (hz-resolve-name hzurl hzrepo)))
+	 (trace-item "url=" url)
+	 (multiple-value-bind (scheme _ host port abspath)
+	    (url-parse url)
+	    (trace-item "host=" host)
+	    (trace-item "abspath=" abspath)
+	    (let ((apath (abspath->filename abspath)))
+	       (multiple-value-bind (base version)
+		  (hz-package-name-parse apath)
+		  (trace-item "base=" base)
+		  (trace-item "versin=" version)
+		  (let* ((dest (make-cache-name "api"))
+			 (dir (if host
+				  (make-file-name dest
+				     (format "~a_~a~a"
+					host port
+					(prefix (basename apath))))
+				  (make-file-name dest (prefix (basename apath))))))
+		     (cond
+			((directory? dir)
+			 (make-file-name dir base))
+			((file-exists? url)
 			 (download-url url dir)
-			 (make-file-name dir base))))))))))
+			 (make-file-name dir base))
+			((not (string=? scheme "*"))
+			 (error "hz" (format "Cannot find module ~s in repository" hzurl)
+			    hzrepo))
+			(else
+			 (let* ((name (hz-server-resolve-name url))
+				(dir (make-file-name dest (prefix name)))
+				(url (string-append
+					(hop-hz-server)
+					"/hop/weblets/download?weblet=" name)))
+			    (download-url url dir)
+			    (make-file-name dir base)))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-resolve-name ...                                              */
