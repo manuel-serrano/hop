@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 15 15:16:16 2018                          */
-;*    Last change :  Thu Jul 25 19:06:55 2024 (serrano)                */
+;*    Last change :  Thu Aug  1 10:40:57 2024 (serrano)                */
 ;*    Copyright   :  2018-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES6 Module handling                                              */
@@ -504,7 +504,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-resolve ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (j2s-resolve name::bstring from::bstring args loc)
+(define (j2s-resolve::pair name::bstring from::bstring args loc)
    
    (define paths
       (let* ((name (config-get args :source (config-get args :filename #f)))
@@ -526,8 +526,8 @@
 	       (with-access::&exception e (fname location)
 		  (unless (and fname location)
 		     (set! fname (cadr loc))
-		     (set! location (caddr loc))))
-	       (raise e)))
+		     (set! location (caddr loc)))))
+	    (raise e))
 	 (let ((resolve (config-get args :loader-resolve)))
 	    (cond
 	       ((core-module? name args)
@@ -548,7 +548,7 @@
 ;*    Almost similar to nodejs's resolve method (see                   */
 ;*    nodejs/require.scm).                                             */
 ;*---------------------------------------------------------------------*/
-(define (resolve-module-file name::bstring from::bstring paths::pair-nil args)
+(define (resolve-module-file::pair name::bstring from::bstring paths::pair-nil args)
 
    (define dir (dirname from))
    

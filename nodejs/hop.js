@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Mar 22 15:03:30 2014                          */
-/*    Last change :  Fri Jun  9 08:48:31 2023 (serrano)                */
-/*    Copyright   :  2014-23 Manuel Serrano                            */
+/*    Last change :  Thu Aug  1 11:06:58 2024 (serrano)                */
+/*    Copyright   :  2014-24 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hopscript/Hop binding.                                           */
 /*=====================================================================*/
@@ -297,18 +297,18 @@ exports.compilerDriver = hop.compilerDriver;
 /*---------------------------------------------------------------------*/
 /*    Hop sub modules                                                  */
 /*---------------------------------------------------------------------*/
+exports.fontifier = hop.modulesDir + "/@hop/fontifier";
+exports.hopc = hop.modulesDir + "/@hop/hopc";
+exports.markdown = hop.modulesDir + "/@hop/markdown";
+exports.syslog = hop.modulesDir + "/@hop/syslog";
 exports.config = hop.modulesDir + "/config";
 exports.csv = hop.modulesDir + "/csv";
 exports.feed = hop.modulesDir + "/feed";
-exports.fontifier = hop.modulesDir + "/fontifier";
 exports.hss = hop.modulesDir + "/hss";
-exports.hopc = hop.modulesDir + "/hopc";
 exports.hopdroid = hop.modulesDir + "/hopdroid";
-exports.markdown = hop.modulesDir + "/markdown";
 exports.notepad = hop.modulesDir + "/notepad";
 exports.security = hop.modulesDir + "/security";
 exports.spage = hop.modulesDir + "/spage";
-exports.syslog = hop.modulesDir + "/syslog";
 exports.system = hop.modulesDir + "/system";
 exports.systime = hop.modulesDir + "/systime";
 exports.texinfo = hop.modulesDir + "/texinfo";

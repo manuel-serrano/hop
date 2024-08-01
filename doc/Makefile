@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Mon Jun  3 09:11:19 2024 (serrano)                */
+#*    Last change :  Thu Aug  1 13:58:47 2024 (serrano)                */
 #*    Copyright   :  2006-24 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Doc Makefile                                                     */
@@ -91,7 +91,7 @@ VPATH=api lang dev widget intf \
   ../node_modules/hopdroid/doc \
   ../node_modules/config/doc \
   ../node_modules/user/doc \
-  ../node_modules/markdown/doc \
+  ../node_modules/@hop/markdown/doc \
   ../node_modules/syslog/doc \
   ../node_modules/system/doc \
   ../node_modules/utils/doc \
@@ -249,10 +249,10 @@ download.html: license.md ../INSTALL.md
 bib.html: hop.bib
 lang.html: _lang.md
 
-hss/markdown.css: ../node_modules/markdown/hss/markdown.hss
+hss/markdown.css: ../node_modules/@hop/markdown/hss/markdown.hss
 	cp $< $@
 
-hss/fontifier.css: ../node_modules/fontifier/hss/fontifier.hss
+hss/fontifier.css: ../node_modules/@hop/fontifier/hss/fontifier.hss
 	cp $< $@
 
 hss/doc.css: hss/doc.hss

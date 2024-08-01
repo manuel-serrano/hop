@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Jul 30 17:20:13 2015                          */
-/*    Last change :  Tue Jun  4 18:16:54 2024 (serrano)                */
+/*    Last change :  Thu Aug  1 13:52:51 2024 (serrano)                */
 /*    Copyright   :  2015-24 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Tools to build the Hop.js documentation.                         */
@@ -19,18 +19,6 @@ const markdown = require(hop.markdown);
 const fontifier = require(hop.fontifier);
 const hopdoc = require("hopdoc")
 const docxml = require("./xml.js");
-
-/*---------------------------------------------------------------------*/
-/*    alias                                                            */
-/*---------------------------------------------------------------------*/
-const alias = {
-   "user.md": "api",
-   "config.md": "api",
-   "hss.md": "api",
-   "markdown.md": "api",
-   "tree.md": "widget",
-   "spage.md": "widget"
-}
 
 /*---------------------------------------------------------------------*/
 /*    findDirFiles ...                                                 */

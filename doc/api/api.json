@@ -15,7 +15,7 @@
 	      "../node_modules/system/doc/system.md",
 	      "../node_modules/utils/doc/utils.md",
  	      [], 
-	      "../node_modules/markdown/doc/markdown.md", 
+	      "../node_modules/@hop/markdown/doc/markdown.md", 
 	      "../node_modules/cpp/doc/cpp.md",
 	      "../node_modules/texinfo/doc/texinfo.md",
 	      "../node_modules/csv/doc/csv.md",
