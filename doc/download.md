@@ -1,8 +1,7 @@
-<!-- ${ var doc = require( "hopdoc" ) }
-${ var config = require( hop.config ) }
-${ var xml = require( doc.BUILDDIR + "/doc/xml.js" ) }
-${ var cfg = require( doc.BUILDDIR + "/doc/doc.json" ) } -->
-
+<!-- ${ var doc = require( "hopdoc" );
+        var config = require( hop.config );
+        var xml = require( doc.BUILDDIR + "/doc/xml.js" );
+        var cfg = require( doc.BUILDDIR + "/doc/doc.json" ) } -->
 
 Getting HipHop.js
 =================
