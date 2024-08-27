@@ -84,7 +84,7 @@ Hop client-side code and server-side can also be mixed using the
 
 ```javascript
 service hello({ name: who }) {
-  return <html><div onclick=~{ lert("Hi " + ${who} + "!")}>hello</div></html>;
+  return <html><div onclick=~{alert("Hi " + ${who} + "!")}>hello</div></html>;
 }
 ```
 
