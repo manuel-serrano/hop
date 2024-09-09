@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Tue Jul 23 19:14:09 2024 (serrano)                */
+;*    Last change :  Wed Aug 28 09:43:00 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -2130,7 +2130,7 @@
 		     (trace-item "dir=" dir)
 		     (let ((broot (make-file-path dir pkgname)))
 			(trace-item "broot=" broot)
-			(when (and (directory? broot) (not (string=? root broot)))
+			(when (directory? broot)
 			   (let ((bpkgjson (make-file-name broot "package.json")))
 			      (trace-item "bpkgjson=" bpkgjson)
 			      (with-handler
@@ -2150,9 +2150,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-find-sofile ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-find-sofile filename #!key mt)
+(define (nodejs-find-sofile filename mt enable-cache)
    (or (builtin-find-sofile filename :mt mt)
-       (hop-find-sofile filename :mt mt)))
+       (and (or (hop-cache-enable) enable-cache)
+	    (hop-find-sofile filename :mt mt))))
 
 ;*---------------------------------------------------------------------*/
 ;*    find-new-sofile ...                                              */
@@ -2161,9 +2162,9 @@
    (with-trace 'require "find-new-sofile"
       (trace-item "filename=" filename)
       (trace-item "cace=" (or (hop-cache-enable) enable-cache))
-      (when (or (hop-cache-enable) enable-cache)
 	 (let ((sopath (nodejs-find-sofile filename
-			  :mt (if worker-slave "_w" ""))))
+			  (if worker-slave "_w" "")
+			  enable-cache)))
 	    (trace-item "sopath=" sopath)
 	    (match-case sopath
 	       ((? string?)
@@ -2180,7 +2181,7 @@
 			 (file-modification-time filename))
 		   'error))
 	       (else
-		#f))))))
+		#f)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-load ...                                                  */

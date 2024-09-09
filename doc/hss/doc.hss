@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Aug  1 10:20:48 2015                          */
-/*    Last change :  Wed May 27 13:23:10 2020 (serrano)                */
-/*    Copyright   :  2015-20 Manuel Serrano                            */
+/*    Last change :  Wed Aug 28 11:10:52 2024 (serrano)                */
+/*    Copyright   :  2015-24 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HSS for the Hop.js documentation                                 */
 /*=====================================================================*/
@@ -140,6 +140,11 @@ p.danger {
 /*---------------------------------------------------------------------*/
 /*    footer                                                           */
 /*---------------------------------------------------------------------*/
+hr.markdown,
+hr.markdown + p.markdown {
+    display: none;
+}
+
 footer {
   border-top: 1px solid #ddd;
   padding-top: 4ex;
@@ -588,6 +593,7 @@ body.hop pre.config {
 }
 
 body.home pre.homeprog .fontifier-prog-string,
+body.home pre.homeprog .fontifier-prog-template,
 body.home pre.homeprog .fontifier-prog-define,
 body.home pre.homeprog .fontifier-prog-keyword,
 body.home pre.homeprog .fontifier-prog-tag,
@@ -703,6 +709,62 @@ body.bib pre {
 blockquote.markdown {
     font-size: 100%;
 }
+
+/*---------------------------------------------------------------------*/
+/*    alert                                                            */
+/*---------------------------------------------------------------------*/
+blockquote.NOTE {
+    border-left-color: #0969da;
+    margin-top: 2ex;
+}
+
+blockquote.NOTE p.alert-title {
+    color: #0969da;
+}
+
+blockquote.NOTE p.alert-title:before {
+    content: "\1f6c8  Note";
+}
+
+blockquote.IMPORTANT {
+    border-left-color: #8250df;
+    margin-top: 2ex;
+}
+
+blockquote.IMPORTANT p.alert-title {
+    color: #8250df;
+}
+
+blockquote.IMPORTANT p.alert-title:before {
+    content: "\1f6c8  Important";
+}
+
+blockquote.WARNING {
+    border-left-color: #bb8a33;
+    margin-top: 2ex;
+}
+
+blockquote.WARNING p.alert-title {
+    color: #bb8a33;
+}
+
+blockquote.WARNING p.alert-title:before {
+    content: "\26A0  Warning";
+}
+
+blockquote.CAUTION {
+    border-left-color: #c52d2d;
+    margin-top: 2ex;
+}
+
+blockquote.CAUTION p.alert-title {
+    color: #c52d2d;
+}
+
+blockquote.CAUTION p.alert-title:before {
+    content: "\26A0  Caution";
+}
+
 
 /*---------------------------------------------------------------------*/
 /*    media                                                            */
