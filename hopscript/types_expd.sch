@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 25 15:52:55 2017                          */
-;*    Last change :  Wed Mar 29 18:23:08 2023 (serrano)                */
-;*    Copyright   :  2017-23 Manuel Serrano                            */
+;*    Last change :  Wed Sep  4 08:28:34 2024 (serrano)                */
+;*    Copyright   :  2017-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Types Companion macros                                           */
 ;*=====================================================================*/
@@ -479,7 +479,7 @@
 (define (js-import-ref-expander x e)
    (match-case x
       ((?- ?v ?idx ?loc . ?debug)
-       (if hop-debug
+       (if (hop-debug)
 	   (e `(with-handler
 		  (lambda (e)
 		     (fprintf (current-error-port)
