@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Thu Jul 20 17:45:47 2023 (serrano)                */
-;*    Copyright   :  2017-23 Manuel Serrano                            */
+;*    Last change :  Sun Sep  8 11:17:31 2024 (serrano)                */
+;*    Copyright   :  2017-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on 64 bit platforms                        */
 ;*=====================================================================*/
@@ -363,41 +363,6 @@
 (define-inline (js-int53-touint32 i)
    (fixnum->uint32 i))
    
-(define (js-int53-touint32-TOBEREMOVED-4sep2018 i)
-   (define 2^32 (exptfl 2. 32.))
-   
-   (define (positive-double->uint32::uint32 i::double)
-      (if (<fl i 2^32)
-	  (flonum->uint32 i)
-	  (flonum->uint32 (remainderfl i 2^32))))
-   
-   (define (double->uint32::uint32 i::double)
-      (cond
-	 ((or (=fl i +inf.0) (=fl i -inf.0) (not (=fl i i)))
-	  #u32:0)
-	 ((<fl i 0.)
-	  (positive-double->uint32 (+fl 2^32 (*fl -1. (floor (abs i))))))
-	 (else
-	  (positive-double->uint32 i))))
-   
-   (cond
-      ((fixnum? i)
-       (if (<=fx i (-fx (bit-lsh 1 32) 1))
-	   (fixnum->uint32 i)
-	   (let* ((^31 (bit-lsh 1 31))
-		  (^32 (bit-lsh 1 32))
-		  (posint (if (<fx i 0) (+fx ^32 i) i))
-		  (int32bit (modulofx posint ^32)))
-	      (fixnum->uint32 int32bit))))
-      ((uint32? i)
-       i)
-      ((int32? i)
-       (int32->uint32 i))
-      ((flonum? i)
-       (double->uint32 i))
-      (else
-       (error "js-int53-touint32" "Illegal value" i))))
-
 ;*---------------------------------------------------------------------*/
 ;*    js-int53-toint32 ...                                             */
 ;*    -------------------------------------------------------------    */
@@ -405,57 +370,6 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-int53-toint32 i)
    (fixnum->int32 i))
-
-(define (js-int53-toint32-TOBEREMOVED-4sep2018 i)
-   
-   (define (int64->int32::int32 i::int64)
-      (let* ((i::elong (int64->elong i))
-	     (^31 (fixnum->elong (bit-lsh 1 31)))
-	     (^32 (fixnum->elong (bit-lsh 1 32)))
-	     (posint (if (<elong i #e0) (+elong ^32 i) i))
-	     (int32bit (moduloelong posint ^32))
-	     (n (if (>=elong int32bit ^31)
-		    (-elong int32bit ^32)
-		    int32bit)))
-	 (elong->int32 n)))
-   
-   (cond
-      ((int32? i)
-       i)
-      ((uint32? i)
-       (uint32->int32 i))
-      ((fixnum? i)
-       (cond-expand
-	  (bint61
-	   (if (and (<=fx i (-fx (bit-lsh 1 31) 1))
-		    (>=fx i (negfx (bit-lsh 1 31))))
-	       (fixnum->int32 i)
-	       (let* ((^31 (bit-lsh 1 31))
-		      (^32 (bit-lsh 1 32))
-		      (posint (if (<fx i 0) (+fx ^32 i) i))
-		      (int32bit (modulofx posint ^32))
-		      (n (if (>=fx int32bit ^31)
-			     (-fx int32bit ^32)
-			     int32bit)))
-		  (fixnum->int32 n))))
-	  (else
-	   (int64->int32 (fixnum->int64 i)))))
-      ((flonum? i)
-       (cond
-	  ((or (=fl i +inf.0) (=fl i -inf.0) (nanfl? i))
-	   (fixnum->int32 0))
-	  ((<fl i 0.)
-	   (let ((i (*fl -1. (floor (abs i)))))
-	      (if (>=fl i (negfl (exptfl 2. 31.)))
-		  (fixnum->int32 (flonum->fixnum i))
-		  (int64->int32 (flonum->int64 i)))))
-	  (else
-	   (let ((i (floor i)))
-	      (if (<=fl i (-fl (exptfl 2. 31.) 1.))
-		  (fixnum->int32 (flonum->fixnum i))
-		  (int64->int32 (flonum->int64 i)))))))
-      (else
-       (error "js-int53-toint32" "Illegal value" i))))
 
 ;*---------------------------------------------------------------------*/
 ;*    tolong ...                                                       */
