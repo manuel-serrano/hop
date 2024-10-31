@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/hopscript/types.scm                 */
+;*    serrano/hop-ddt/hop/hopscript/types.scm                          */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Wed Jun 12 09:08:24 2024 (serrano)                */
+;*    Last change :  Thu Oct 31 10:42:58 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -30,8 +30,7 @@
 	__hopscript_profile
 	__hopscript_lib)
 
-   (extern (include "bglhopscript.h")
-	   (include "bglhopscript_malloc.h"))
+   (extern (include "bglhopscript.h"))
 
    (extern (macro $pointer?::bool (::obj) "POINTERP")
 	   (macro $hop-object-header-size::long (::object)
@@ -679,6 +678,7 @@
 	   (inline js-object-inline-elements-length::long ::JsObject)
 	   (inline js-object-alloc-elements::vector ::JsObject)	   
 	   (inline js-object-noinline-elements::vector ::JsObject)
+	   (inline js-object-try-inline-elements::vector ::JsObject)
 	   (inline js-object-inline-length::long ::JsObject)
 	   (inline js-object-noinline-length::long ::JsObject)
 	   (inline js-object-length::long ::JsObject)
@@ -1298,6 +1298,21 @@
       elements))
 
 ;*---------------------------------------------------------------------*/
+;*    js-object-try-inline-elements ...                                */
+;*    -------------------------------------------------------------    */
+;*    If configured returns the inline elements, if not configured     */
+;*    returns the regular elements.                                    */
+;*---------------------------------------------------------------------*/
+(define-inline (js-object-try-inline-elements o::JsObject)
+   (cond-expand
+      ((and bigloo-c (not disable-inline))
+       (if (js-object-mode-inline? o)
+	   ($js-object-inline-elements o)
+	   (js-object-noinline-elements o)))
+      (else
+       (js-object-noinline-elements o))))
+   
+;*---------------------------------------------------------------------*/
 ;*    js-object-alloc-elements ...                                     */
 ;*    -------------------------------------------------------------    */
 ;*    Only to be used to instantiateJsObjectXXX                        */
@@ -1444,7 +1459,7 @@
 (define-inline (js-vector-inline-ref o::JsArray idx::long)
    (cond-expand
       ((and bigloo-c (not disable-inline))
-       (pragma::obj "VECTOR_REF( BVECTOR( (obj_t)(( ((obj_t *)(&(((BgL_jsarrayz00_bglt)(COBJECT($1)))->BgL_vecz00))) + 1))), $2 )" o idx))
+       (pragma::obj "VECTOR_REF(BVECTOR( (obj_t)(( ((obj_t *)(&(((BgL_jsarrayz00_bglt)(COBJECT($1)))->BgL_vecz00))) + 1))), $2)" o idx))
       (else
        (with-access::JsArray o (vec)
 	  (vector-ref vec idx)))))
@@ -1455,7 +1470,7 @@
 (define-inline (js-vector-inline-set! o::JsArray idx::long val)
    (cond-expand
       ((and bigloo-c (not disable-inline))
-       (pragma::obj "VECTOR_SET( BVECTOR( (obj_t)(( ((obj_t *)(&(((BgL_jsarrayz00_bglt)(COBJECT($1)))->BgL_vecz00))) + 1))), $2, $3 )" o idx val))
+       (pragma::obj "VECTOR_SET(BVECTOR( (obj_t)(( ((obj_t *)(&(((BgL_jsarrayz00_bglt)(COBJECT($1)))->BgL_vecz00))) + 1))), $2, $3)" o idx val))
       (else
        (with-access::JsArray o (vec)
 	  (vector-set! vec idx val)))))
@@ -2252,7 +2267,7 @@
 (define-inline (js-generator-inline-ref o::JsGenerator idx::long)
    (cond-expand
       ((and bigloo-c (not disable-inline))
-       (pragma::obj "VECTOR_REF( BVECTOR( (obj_t)(( ((obj_t *)(&(((BgL_jsgeneratorz00_bglt)(COBJECT($1)))->BgL_z52envz52))) + 1))), $2 )" o idx))
+       (pragma::obj "VECTOR_REF(BVECTOR( (obj_t)(( ((obj_t *)(&(((BgL_jsgeneratorz00_bglt)(COBJECT($1)))->BgL_z52envz52))) + 1))), $2)" o idx))
       (else
        (with-access::JsGenerator o (%env)
 	  (vector-ref %env idx)))))
@@ -2263,7 +2278,7 @@
 (define-inline (js-generator-inline-set! o::JsGenerator idx::long val::obj)
    (cond-expand
       ((and bigloo-c (not disable-inline))
-       (pragma::obj "VECTOR_SET( BVECTOR( (obj_t)(( ((obj_t *)(&(((BgL_jsgeneratorz00_bglt)(COBJECT($1)))->BgL_z52envz52))) + 1))), $2, $3 )" o idx val))
+       (pragma::obj "VECTOR_SET(BVECTOR( (obj_t)(( ((obj_t *)(&(((BgL_jsgeneratorz00_bglt)(COBJECT($1)))->BgL_z52envz52))) + 1))), $2, $3)" o idx val))
       (else
        (with-access::JsGenerator o (%env)
 	  (vector-set! %env idx val)))))

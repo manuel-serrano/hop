@@ -1,11 +1,11 @@
 ;; -*- mode: bee -*-
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/etc/hopscript.init.in               */
+;*    serrano/hop-ddt/hop/etc/hopscript.init.in                        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 21 08:47:34 2008                          */
-;*    Last change :  Wed Jul 12 08:14:55 2023 (serrano)                */
-;*    Copyright   :  2008-23 Manuel Serrano                            */
+;*    Last change :  Thu Oct 31 10:42:14 2024 (serrano)                */
+;*    Copyright   :  2008-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPSCRIPT init file.                                             */
 ;*=====================================================================*/
@@ -47,7 +47,7 @@
     (for-each use-library! '(@BIGLOOCLOSELIBS@))
     ;; hopscript includes
     (set! *additional-include-foreign*
-       (cons* "bglhopscript.h" "bglhopscript_malloc.h" "bglhopscript_call.h" *additional-include-foreign*))
+       (cons* "bglhopscript.h" "bglhopscript_call.h" *additional-include-foreign*))
     ;; C compilation options
     (set! *cc-options*
        (cons "-I@BUILDDIR@/hopscript -I@LIBPATH@" *cc-options*))))
