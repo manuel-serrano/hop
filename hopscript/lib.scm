@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Thu Oct 31 12:05:11 2024 (serrano)                */
+;*    Last change :  Thu Oct 31 16:52:46 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -598,8 +598,8 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (fixnums? a b)
    (cond-expand
-      ((and bigloo-c (config nan-tagging #f))
-       (pragma::bool "INTEGERP(TAG_INT == 0 ? ((long)$1 | (long)$2) : ((long)$1 & (long)$2))" a b))
+      ((and bigloo-c (config nan-tagging #f) (config fl-tagging #f))
+       (pragma::bool "(TAG_INT == 0 ? INTEGERP((long)$1 | (long)$2) : (INTEGERP($1) && INTEGERP($2)))" a b))
       (else
        (and (fixnum? a) (fixnum? b)))))
 
