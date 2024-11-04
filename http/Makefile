@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Florian Loitsch                                   */
 #*    Creation    :  Wed Mar 15 07:27:50 2006                          */
-#*    Last change :  Tue May 14 12:45:17 2024 (serrano)                */
+#*    Last change :  Mon Nov  4 11:55:31 2024 (serrano)                */
 #*    Copyright   :  2006-24 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build the hopsched library.                     */
@@ -59,7 +59,8 @@ include ../etc/Makefile.library
 
 .PHONY: build native jvm
 
-build: $(BACKEND)
+build: .afile
+	$(MAKE) $(BACKEND)
 
 native: o heap-c lib-c
 jvm: heap-jvm lib-jvm
