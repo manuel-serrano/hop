@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/nodejs/uv.scm                       */
+;*    serrano/hop-ddt/hop/nodejs/uv.scm                                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Mon Jul 15 11:13:43 2024 (serrano)                */
+;*    Last change :  Thu Oct 31 12:37:57 2024 (serrano)                */
 ;*    Copyright   :  2014-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -1670,14 +1670,14 @@
 				   (stat-cmap %this)
 				   js-stats-proto)))
 			(let ((res (uv-fs-fstat file
-				      :vector (js-object-inline-elements obj))))
+				      :vector (js-object-try-inline-elements obj))))
 			   (if (integer? res)
 			       (js-raise
 				  (fs-errno-exn
 				     (format "fstat: cannot stat ~a -- ~~s" fd)
 				     res %this))
 			       (begin
-				  (stat->jsobj! %this (js-object-inline-elements obj))
+				  (stat->jsobj! %this (js-object-try-inline-elements obj))
 				  obj)))))
 		    (else
 		     (let ((res (uv-fs-fstat file)))
@@ -1702,14 +1702,14 @@
 			js-stats-proto))
 		(str (js-jsstring->string path)))
 	     (let ((res (uv-fs-stat str
-			   :vector (js-object-inline-elements obj))))
+			   :vector (js-object-try-inline-elements obj))))
 		(if (integer? res)
 		    (js-raise
 		       (fs-errno-exn
 			  (format "stat: cannot stat ~a -- ~~s" str)
 			  res %this))
 		    (begin
-		       (stat->jsobj! %this (js-object-inline-elements obj))
+		       (stat->jsobj! %this (js-object-try-inline-elements obj))
 		       obj)))))
 	 (else
 	  (let* ((str (js-jsstring->string path))
@@ -1820,14 +1820,14 @@
 			js-stats-proto))
 		(str (js-jsstring->string path)))
 	     (let ((res (uv-fs-lstat str
-			   :vector (js-object-inline-elements obj))))
+			   :vector (js-object-try-inline-elements obj))))
 		(if (integer? res)
 		    (js-raise
 		       (fs-errno-exn
 			  (format "lstat: cannot stat ~a -- ~~s" str)
 			  res %this))
 		    (begin
-		       (stat->jsobj! %this (js-object-inline-elements obj))
+		       (stat->jsobj! %this (js-object-try-inline-elements obj))
 		       obj)))))
 	 (else
 	  (let* ((str (js-jsstring->string path))

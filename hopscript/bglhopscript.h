@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/hop/hopscript/bglhopscript.h            */
+/*    serrano/hop-ddt/hop/hopscript/bglhopscript.h                     */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 11 09:35:38 2022                          */
-/*    Last change :  Fri Oct 20 13:52:57 2023 (serrano)                */
-/*    Copyright   :  2022-23 Manuel Serrano                            */
+/*    Last change :  Wed Oct 30 22:21:28 2024 (serrano)                */
+/*    Copyright   :  2022-24 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Macros for accelerating C compilation.                           */
 /*=====================================================================*/
@@ -128,14 +128,16 @@ extern bool_t hop_js_toboolean_no_boolean(obj_t);
 /*---------------------------------------------------------------------*/
 /*    Overflow ...                                                     */
 /*---------------------------------------------------------------------*/
-#if BGL_HAVE_OVERFLOW && TAG_INT == 0 && 0
-#  define BGL_ADDFX_OV53(x, y, res) \
-   !__builtin_saddl_overflow(CINT(x) << (63-53), CINT(y) << (63-53), (long *)(&res)) \
-   ? BINT((long)res >> 63-53) : DOUBLE_TO_REAL((double)((long)res))
-#  define BGL_SUBFX_OV53(x, y, res) \
-   !__builtin_ssubl_overflow(CINT(x) << (63-53), CINT(y) << (63-53), (long *)(&res)) \
-   ? BINT((long)res >> 63-53) : DOUBLE_TO_REAL((double)((long)res))
-#else
+/* #if BGL_HAVE_OVERFLOW && TAG_INT == 0                               */
+/* #  define BGL_ADDFX_OV53(x, y, res) \                               */
+/*    !__builtin_saddl_overflow(CINT(x) << (63-53), CINT(y) << (63-53), (long *)(&res)) \ */
+/*    ? BINT((long)res >> 63-53) : DOUBLE_TO_REAL((double)((long)res)) */
+/* #  define BGL_SUBFX_OV53(x, y, res) \                               */
+/*    !__builtin_ssubl_overflow(CINT(x) << (63-53), CINT(y) << (63-53), (long *)(&res)) \ */
+/*    ? BINT((long)res >> 63-53) : DOUBLE_TO_REAL((double)((long)res)) */
+/* #elif TAG_INT == 0                                                  */
+
+#if TAG_INT == 0
 #define BGL_OV53(res) \
    ((uint64_t)((long)res - (long)BINT(-9007199254740992)) <= (uint64_t)BINT(18014398509481983))
 #  define BGL_ADDFX_OV53(x, y, res) \
@@ -144,6 +146,15 @@ extern bool_t hop_js_toboolean_no_boolean(obj_t);
 #  define BGL_SUBFX_OV53(x, y, res) \
    (res = (obj_t)((long)x - (long)y), \
     BGL_OV53(res) ? res : DOUBLE_TO_REAL((double)((long)res)))
+#else
+#define BGL_OV53(res) \
+   ((uint64_t)((long)res - (long)(-9007199254740992)) <= (uint64_t)(18014398509481983))
+#  define BGL_ADDFX_OV53(x, y, res) \
+   (res = (obj_t)(CINT(x) + CINT(y)), \
+    BGL_OV53(res) ? BINT(res) : DOUBLE_TO_REAL((double)((long)res)))
+#  define BGL_SUBFX_OV53(x, y, res) \
+   (res = (obj_t)(CINT(x) - CINT(y)), \
+    BGL_OV53(res) ? BINT(res) : DOUBLE_TO_REAL((double)((long)res)))
 #endif 
 
 /*---------------------------------------------------------------------*/
@@ -151,7 +162,7 @@ extern bool_t hop_js_toboolean_no_boolean(obj_t);
 /*---------------------------------------------------------------------*/
 #if (!defined(TAG_VECTOR))
 #  define BGL_TAG_VECTOR(_vec) \
-     _vec->vector.header = MAKE_HEADER(VECTOR_TYPE, 0)
+   ((obj_t)(_vec))->vector.header = MAKE_HEADER(VECTOR_TYPE, 0)
 #else
 #  define BGL_TAG_VECTOR(_vec) \
      0

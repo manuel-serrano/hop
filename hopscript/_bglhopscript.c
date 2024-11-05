@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/hop/hopscript/_bglhopscript.c           */
+/*    serrano/hop-ddt/hop/hopscript/_bglhopscript.c                    */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Thu Jan 25 13:25:10 2024 (serrano)                */
+/*    Last change :  Thu Oct 31 10:43:42 2024 (serrano)                */
 /*    Copyright   :  2016-24 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -14,7 +14,6 @@
 #include <bigloo.h>
 #include "bglhopscript.h"
 #include "bglhopscript_types.h"
-#include "bglhopscript_malloc.h"
 #if BGL_HAS_THREAD_SETNAME
 #  define _PTHREAD_SETNAME(t, n) pthread_setname_np(t, n)
 #else
@@ -854,7 +853,7 @@ bgl_init_jsalloc_date(uint32_t mode) {
 
 BGL_MAKE_JSOBJECT_SANS(int constrsize, obj_t constrmap, obj_t __proto__, uint32_t mode) {
    long bsize = JSOBJECT_SIZE + VECTOR_SIZE + ((constrsize-1) * OBJ_SIZE);
-   BgL_jsobjectz00_bglt o = (BgL_jsobjectz00_bglt)HOP_MALLOC(bsize);
+   BgL_jsobjectz00_bglt o = (BgL_jsobjectz00_bglt)GC_MALLOC(bsize);
    obj_t vector;
    int i;
 
@@ -1015,7 +1014,7 @@ BGL_MAKE_JSPROXY_SANS(obj_t target, obj_t handler,
 		       obj_t getcache, obj_t setcache, obj_t applycache,
 		       uint32_t mode) {   
    long bsize = JSPROXY_SIZE;
-   BgL_jsproxyz00_bglt o = (BgL_jsproxyz00_bglt)HOP_MALLOC(bsize);
+   BgL_jsproxyz00_bglt o = (BgL_jsproxyz00_bglt)GC_MALLOC(bsize);
 
    // class initialization
    BGL_OBJECT_CLASS_NUM_SET(BHOPOBJECT(o), JSPROXY_CLASS_NUM);
@@ -1129,7 +1128,7 @@ bgl_make_jsproxy(obj_t target, obj_t handler,
 BGL_MAKE_JSFUNCTION_SANS(obj_t procedure,
 			  long arity, long constrsize,
 			  obj_t __proto__, obj_t info) {
-   BgL_jsfunctionz00_bglt o = (BgL_jsfunctionz00_bglt)HOP_MALLOC(JSFUNCTION_SIZE);
+   BgL_jsfunctionz00_bglt o = (BgL_jsfunctionz00_bglt)GC_MALLOC(JSFUNCTION_SIZE);
 
    // class initialization
    BGL_OBJECT_CLASS_NUM_SET(BHOPOBJECT(o), JSFUNCTION_CLASS_NUM);
@@ -1265,7 +1264,7 @@ bgl_make_jsfunction(obj_t procedure,
 BGL_MAKE_JSMETHOD_SANS(obj_t procedure, obj_t method,
 			  long arity, long constrsize,
 			  obj_t __proto__, obj_t info) {
-   BgL_jsmethodz00_bglt o = (BgL_jsmethodz00_bglt)HOP_MALLOC(JSMETHOD_SIZE);
+   BgL_jsmethodz00_bglt o = (BgL_jsmethodz00_bglt)GC_MALLOC(JSMETHOD_SIZE);
 
    // class initialization
    BGL_OBJECT_CLASS_NUM_SET(BHOPOBJECT(o), JSMETHOD_CLASS_NUM);
@@ -1395,7 +1394,7 @@ bgl_make_jsmethod(obj_t procedure, obj_t method,
 #endif
 
 BGL_MAKE_JSPROCEDURE_SANS(obj_t procedure, long arity, obj_t __proto__) {
-   BgL_jsprocedurez00_bglt o = (BgL_jsprocedurez00_bglt)HOP_MALLOC(JSPROCEDURE_SIZE);
+   BgL_jsprocedurez00_bglt o = (BgL_jsprocedurez00_bglt)GC_MALLOC(JSPROCEDURE_SIZE);
 
    // class initialization
    BGL_OBJECT_CLASS_NUM_SET(BHOPOBJECT(o), JSPROCEDURE_CLASS_NUM);
@@ -1506,7 +1505,7 @@ bgl_make_jsprocedure_bmem(obj_t procedure, long arity, obj_t __proto__) {
 #endif
 
 BGL_MAKE_JSSTRINGLITERALASCII_SANS(uint32_t len, obj_t left, obj_t right) {
-   BgL_jsstringliteralasciiz00_bglt o = (BgL_jsstringliteralasciiz00_bglt)HOP_MALLOC(JSSTRINGLITERALASCII_SIZE);
+   BgL_jsstringliteralasciiz00_bglt o = (BgL_jsstringliteralasciiz00_bglt)GC_MALLOC(JSSTRINGLITERALASCII_SIZE);
 
    // class initialization
    BGL_OBJECT_CLASS_NUM_SET(BHOPOBJECT(o), JSSTRINGLITERALASCII_CLASS_NUM);
@@ -1668,7 +1667,7 @@ bgl_jsstring_append_ascii(obj_t left, obj_t right) {
    
 BGL_MAKE_JSDATE_SANS(BgL_jsconstructmapz00_bglt cmap, obj_t __proto__) {
    long bsize = JSDATE_SIZE;
-   BgL_jsdatez00_bglt o = (BgL_jsdatez00_bglt)HOP_MALLOC(bsize);
+   BgL_jsdatez00_bglt o = (BgL_jsdatez00_bglt)GC_MALLOC(bsize);
 
    // class initialization
    BGL_OBJECT_CLASS_NUM_SET(BHOPOBJECT(o), JSDATE_CLASS_NUM);
@@ -1776,7 +1775,7 @@ static obj_t empty_vector = BVECTOR(&(_empty_vector.length));
 /*---------------------------------------------------------------------*/
 #define BGL_MAKE_JSARRAY_SANS_INIT(o, size, len, ilen, constrmap, __proto___, mode) \
    long bsize = JSARRAY_SIZE + VECTOR_SIZE + ((size-1) * OBJ_SIZE); \
-   BgL_jsarrayz00_bglt o = (BgL_jsarrayz00_bglt)HOP_MALLOC(bsize);  \
+   BgL_jsarrayz00_bglt o = (BgL_jsarrayz00_bglt)GC_MALLOC(bsize);  \
    obj_t vector;						      \
 								      \
    /* class initialization */					      \
@@ -1963,7 +1962,7 @@ bgl_profile_get_pcaches() {
 obj_t
 bgl_make_jsgenerator(obj_t constrmap, obj_t __proto__, long sz, obj_t next, uint32_t mode) {
    long bsize = JSGENERATOR_SIZE + VECTOR_SIZE + ((sz-1) * OBJ_SIZE);
-   BgL_jsgeneratorz00_bglt o = (BgL_jsgeneratorz00_bglt)HOP_MALLOC(bsize);
+   BgL_jsgeneratorz00_bglt o = (BgL_jsgeneratorz00_bglt)GC_MALLOC(bsize);
    obj_t env;
 
    /* class initialization */
