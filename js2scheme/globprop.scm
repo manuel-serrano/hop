@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Fri Oct  6 18:31:09 2023 (serrano)                */
-;*    Copyright   :  2017-23 Manuel Serrano                            */
+;*    Last change :  Wed Nov  6 15:01:01 2024 (serrano)                */
+;*    Copyright   :  2017-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Global properties optimization (constant propagation).           */
 ;*                                                                     */
@@ -102,6 +102,7 @@
 		  (when (>=fx (config-get conf :verbose 0) 3)
 		     (display " rewrite-access" (current-error-port)))
 		  (rewrite-accesses! this)
+		  (rewrite-decl-inits! gcnsts)
 		  (let ((ndecls (append-map globprop-const gcnsts)))
 		     (set! decls (append decls ndecls))
 		     (when (>=fx (config-get conf :verbose 0) 3)
@@ -391,6 +392,37 @@
 (define-walk-method (collect-globprops-toplevel! this::J2SFun ctx)
    this)
 
+;*---------------------------------------------------------------------*/
+;*    rewrite-decl-inits! ...                                          */
+;*---------------------------------------------------------------------*/
+(define (rewrite-decl-inits! decls)
+   (for-each rewrite-decl-init! decls))
+
+;*---------------------------------------------------------------------*/
+;*    rewrite-decl-init! ::J2SNode ...                                 */
+;*---------------------------------------------------------------------*/
+(define-generic (rewrite-decl-init! this::J2SNode))
+
+;*---------------------------------------------------------------------*/
+;*    rewrite-decl-init! ::J2SDeclInit ...                             */
+;*    -------------------------------------------------------------    */
+;*    The original properpties are still stored in the object          */
+;*    but as the optimization removes references to the global         */
+;*    variable pointing to the object, the GC will collect them.       */
+;*    To avoid that, this code forces a eternal reference to the       */
+;*    initial object.                                                  */
+;*---------------------------------------------------------------------*/
+(define-method (rewrite-decl-init! this::J2SDeclInit)
+   (with-access::J2SDeclInit this (val loc)
+      (set! val (J2SHopCall (J2SHopRef 'js-tls-gc-mark!) val))
+      this))
+
+;*---------------------------------------------------------------------*/
+;*    rewrite-decl-init! ::J2SDeclFun ...                              */
+;*---------------------------------------------------------------------*/
+(define-method (rewrite-decl-init! this::J2SDeclFun)
+   this)
+   
 ;*---------------------------------------------------------------------*/
 ;*    rewrite-accesses! ...                                            */
 ;*---------------------------------------------------------------------*/
