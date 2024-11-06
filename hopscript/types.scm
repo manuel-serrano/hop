@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/hop-ddt/hop/hopscript/types.scm                          */
+;*    serrano/prgm/project/hop/hop/hopscript/types.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Thu Oct 31 10:42:58 2024 (serrano)                */
+;*    Last change :  Wed Nov  6 14:45:40 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -58,6 +58,8 @@
 	      "bgl_init_jsalloc_stringliteralascii")
 	   ($js-init-jsalloc-date::int (::uint32)
 	      "bgl_init_jsalloc_date")
+	   ($js-init-jsalloc-yield::int (::uint32)
+	      "bgl_init_jsalloc_yield")
 	   ($js-make-jsobject::JsObject (::int ::JsConstructMap ::obj ::uint32)
 	      "bgl_make_jsobject")
 	   ($js-make-jsproxy::JsProxy (::obj ::obj ::obj ::obj ::obj ::uint32)

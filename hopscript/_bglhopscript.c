@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/hop-ddt/hop/hopscript/_bglhopscript.c                    */
+/*    serrano/prgm/project/hop/hop/hopscript/_bglhopscript.c           */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Thu Oct 31 10:43:42 2024 (serrano)                */
+/*    Last change :  Wed Nov  6 13:02:28 2024 (serrano)                */
 /*    Copyright   :  2016-24 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -120,6 +120,7 @@ static uint32_t jsprocedure_mode;
 static BgL_jsconstructmapz00_bglt jsprocedure_cmap;
 
 static uint32_t jsdate_mode;
+static uint32_t jsyield_mode;
 
 static uint32_t jsstringliteralascii_mode, jsstringliteralascii_normmode;
 static obj_t jsstringliteralascii_not_a_string_cache;
@@ -156,6 +157,9 @@ typedef struct BgL_jspropertycachez00_bgl pcache_t;
 #  undef HOP_ALLOC_POLICY
 #  define HOP_ALLOC_POLICY HOP_ALLOC_CLASSIC
 #endif
+
+#  undef HOP_ALLOC_POLICY
+#  define HOP_ALLOC_POLICY HOP_ALLOC_CLASSIC
 
 #define HOP_ALLOC_JSOBJECT_POLICY HOP_ALLOC_POLICY
 #define HOP_ALLOC_JSPROXY_POLICY HOP_ALLOC_POLICY
@@ -832,6 +836,15 @@ bgl_init_jsalloc_date(uint32_t mode) {
    jsinit = 1;
 
    jsdate_mode = mode;
+}
+
+/*---------------------------------------------------------------------*/
+/*    int                                                              */
+/*    bgl_init_jsalloc_yield ...                                       */
+/*---------------------------------------------------------------------*/
+int
+bgl_init_jsalloc_yield(uint32_t mode) {
+   jsyield_mode = mode;
 }
 
 /*---------------------------------------------------------------------*/
@@ -2002,7 +2015,7 @@ bgl_init_jsyield_object(obj_t p) {
 
    // fields init
    o->BgL_elementsz00 = empty_vector;
-   HOP_OBJECT_HEADER_SIZE_SET(BHOPOBJECT(o), jsobject_mode);
+   HOP_OBJECT_HEADER_SIZE_SET(BHOPOBJECT(o), jsyield_mode);
    
    // elements initialization
    vector = (obj_t)(&(o->BgL_elementsz00) + 1);

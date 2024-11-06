@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Tue Nov  5 18:52:14 2024 (serrano)                */
+;*    Last change :  Wed Nov  6 11:57:03 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -3358,7 +3358,6 @@
 		  (cond
 		     ((or (not cachefun) (not (js-function? v)))
 		      (unless (<fx index (vector-length methods))
-			 (tprint "ERROR..." prop " index=" index)
 			 (js-inspect-object o)
 			 (js-inspect-cmap nextmap))
 		      (when (js-function? (vector-ref methods index))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 29 21:14:17 2015                          */
-;*    Last change :  Sun Mar  3 11:19:46 2024 (serrano)                */
+;*    Last change :  Wed Nov  6 14:40:51 2024 (serrano)                */
 ;*    Copyright   :  2015-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript generators                   */
@@ -97,6 +97,10 @@
 (define (js-init-generator! %this::JsGlobalObject)
    (unless (vector? __js_strings) (set! __js_strings (&init!)))
    (js-init-generator-cmap! %this)
+   
+   ($js-init-jsalloc-yield
+      (bit-oru32 (js-object-default-mode) (JS-OBJECT-MODE-INLINE)))
+
    (with-access::JsGlobalObject %this (js-function-prototype
 					 js-generator-prototype
 					 js-generatorfunction-prototype
