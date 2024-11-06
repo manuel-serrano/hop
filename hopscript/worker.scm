@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Mon Jul 15 10:24:04 2024 (serrano)                */
+;*    Last change :  Wed Nov  6 07:54:28 2024 (serrano)                */
 ;*    Copyright   :  2014-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -45,6 +45,7 @@
 	   (js-worker-load::procedure)
 	   (js-worker-load-set! ::procedure)
 
+	   (generic js-worker-start! worker::WorkerHopThread)
 	   (generic js-worker-loop ::object ::procedure)
 	   (generic js-worker-tick ::object)
 	   (generic js-worker-exception-handler ::object ::obj ::int)
@@ -559,7 +560,8 @@
 	    ;; where the worker is running or not
 	    (set! module-cache (js-new0 %this js-object))
 	    (set! %this %global)
-	    (js-put! module-cache (js-string->jsstring path) %module #f %this))))
+	    (js-put! module-cache
+	       (js-string->jsstring path) %module #f %this))))
 
    (unless %worker
       ($js-init-jsalloc (js-object-default-mode))
@@ -650,6 +652,16 @@
 	  (begin
 	     (exception-notify exn)
 	     errval))))
+
+;*---------------------------------------------------------------------*/
+;*    js-worker-start! ::WorkerHopThread ...                           */
+;*    -------------------------------------------------------------    */
+;*    To be used when the worker has been created with :autostart #f   */
+;*---------------------------------------------------------------------*/
+(define-generic (js-worker-start! worker::WorkerHopThread)
+   (with-access::WorkerHopThread worker (condv mutex)
+       (synchronize mutex
+	  (condition-variable-broadcast! condv))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-worker-loop ...                                               */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Thu Jul  4 15:28:01 2024 (serrano)                */
+;*    Last change :  Wed Nov  6 08:04:30 2024 (serrano)                */
 ;*    Copyright   :  2018-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -405,13 +405,15 @@
 		 ((not bigloo-eval) (pragma "HOP_REWRITE_INIT($1)" ,pcache-size)))
 	      (multiple-value-bind (%worker %t %m)
 		 (js-main-worker! ,name ,(absolute path) #f
-		    nodejs-new-global-object nodejs-new-module)
+		    nodejs-new-global-object nodejs-new-module
+		    :autostart #f)
 		 (js-worker-push! %worker "nodejs-toplevel"
 		    ,(if (context-get ctx :function-nice-name #f)
 			 (let ((id (string->symbol "#main")))
 			    `(let ((,id ,thunk))
 				,id))
 			 thunk))
+		 (js-worker-start! %worker)
 		 ,(profilers this ctx)
 		 ,(js-wait-worker '%worker)))))))
 
