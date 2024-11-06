@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Mar 15 07:22:39 2006                          */
-#*    Last change :  Tue May 14 09:29:29 2024 (serrano)                */
+#*    Last change :  Wed Nov  6 19:05:28 2024 (serrano)                */
 #*    Copyright   :  2006-24 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The common Makefile for building libraries                       */
@@ -216,7 +216,6 @@ devclean: cleanall
 #*    clean                                                            */
 #*---------------------------------------------------------------------*/
 clean: stdclean
-	$(RM) -rf o
 
 cleanall: stdclean udeclean
 

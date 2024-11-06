@@ -5086,7 +5086,7 @@
    
    (define (array-flatmap this o len proc thisarg i::uint32 %this)
       (js-call-with-stack-vector
-	 (make-vector (js-uint32-tointeger len))
+	 (make-vector (uint32->fixnum len))
 	 (lambda (v)
 	    (array-flatmap/array this o len proc thisarg i v #u32:0 %this))))
 
@@ -5168,7 +5168,7 @@
    
    (define (array-flatmap this o len proc thisarg i::uint32 %this)
       (js-call-with-stack-vector
-	 (make-vector (js-uint32-tointeger len))
+	 (make-vector (uint32->fixnum len))
 	 (lambda (v)
 	    (array-flatmap/array this o len proc thisarg i v #u32:0 %this))))
 

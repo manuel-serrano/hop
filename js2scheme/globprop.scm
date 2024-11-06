@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Wed Nov  6 15:01:01 2024 (serrano)                */
+;*    Last change :  Wed Nov  6 19:29:31 2024 (serrano)                */
 ;*    Copyright   :  2017-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Global properties optimization (constant propagation).           */
@@ -401,7 +401,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    rewrite-decl-init! ::J2SNode ...                                 */
 ;*---------------------------------------------------------------------*/
-(define-generic (rewrite-decl-init! this::J2SNode))
+(define-generic (rewrite-decl-init! this::J2SNode)
+   this)
 
 ;*---------------------------------------------------------------------*/
 ;*    rewrite-decl-init! ::J2SDeclInit ...                             */

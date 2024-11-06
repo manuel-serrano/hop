@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/hop-ddt/hop/nodejs/uv.scm                                */
+;*    serrano/prgm/project/hop/hop/nodejs/uv.scm                       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Thu Oct 31 12:37:57 2024 (serrano)                */
+;*    Last change :  Wed Nov  6 19:56:48 2024 (serrano)                */
 ;*    Copyright   :  2014-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -1532,8 +1532,13 @@
        (+fl (fixnum->flonum (*fx 1000 sec))
 	  (/fl (fixnum->flonum nsec) 1000000.)))
       (else
-       (+fl (*fl 1000. (elong->flonum sec))
-	  (/fl (elong->flonum nsec) 1000000.)))))
+       (+fl (*fl 1000. (if (fixnum? sec)
+			   (fixnum->flonum sec)
+			   (elong->flonum sec)))
+	  (/fl (if (fixnum? nsec)
+		   (fixnum->flonum nsec)
+		   (elong->flonum nsec))
+	     1000000.)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    stat->jsobj! ...                                                 */
