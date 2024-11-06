@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Sun Jun  2 10:01:19 2024 (serrano)                */
+;*    Last change :  Wed Nov  6 06:23:51 2024 (serrano)                */
 ;*    Copyright   :  2017-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Casting values from JS types to SCM implementation types.        */
@@ -202,7 +202,7 @@
      (real
 	((uint32 ,js-number-touint32)
 	 (length ,js-number-tolength)
-	 (int32 ,js-number-toint32)
+	 (int32 ,(lambda (v expr ctx) (js-number-toint32 v)))
 	 (object ,js-number->jsobject)
 	 (number nop)
 	 (string ,js-number->string)
