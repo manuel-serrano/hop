@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Sun May 21 06:23:03 2023 (serrano)                */
-;*    Copyright   :  2017-23 Manuel Serrano                            */
+;*    Last change :  Wed Nov  6 06:16:32 2024 (serrano)                */
+;*    Copyright   :  2017-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Array functions.            */
 ;*=====================================================================*/
@@ -588,7 +588,9 @@
 		   (let ((i (gensym 'idx)))
 		      `(let ((,i ,(j2s-scheme-as-uint32 field mode
 				     return ctx)))
-			  (if (<u32 ,i ,(fixnum->uint32 vrange))
+			  (if (<u32 ,i ,(if (interval? vrange)
+					    (llong->fixnum (interval-max vrange))
+					    (fixnum->uint32 vrange)))
 			      (vector-ref
 				 ,(j2s-scheme obj
 				     mode return ctx)
@@ -598,7 +600,9 @@
 		   (let ((i (gensym 'idx)))
 		      `(let ((,i ,(j2s-scheme-as-integer field
 				     mode return ctx)))
-			  (if (and (<fx ,i ,(llong->fixnum (interval-max vrange)))
+			  (if (and (<fx ,i ,(if (interval? vrange)
+						(llong->fixnum (interval-max vrange))
+						vrange))
 				   (>=fx ,i 0))
 			      (vector-ref
 				 ,(j2s-scheme obj mode return ctx) ,i)

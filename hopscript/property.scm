@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Tue Jul  2 18:32:24 2024 (serrano)                */
+;*    Last change :  Tue Nov  5 18:52:14 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -386,7 +386,7 @@
 ;*       4) a property hidding a prototype property is added.          */
 ;*       5) ...                                                        */
 ;*---------------------------------------------------------------------*/
-(define (js-invalidate-pmap-pcaches! %this::JsGlobalObject reason who)
+(define (js-invalidate-pmap-pcaches! reason who)
    
    (define (invalidate-pcache-pmap! pcache)
       (with-access::JsPropertyCache pcache (pmap emap amap nmap xmap)
@@ -446,10 +446,9 @@
 ;*    Method invalidation must be propagated to all the sub hidden     */
 ;*    classes (see bug nodejs/simple/test-stream2-readable-wrap.js).   */
 ;*---------------------------------------------------------------------*/
-(define (js-invalidate-cache-pmap-method! %this::JsGlobalObject
-	   cmap::JsConstructMap idx::long reason who)
+(define (js-invalidate-cache-pmap-method! cmap::JsConstructMap idx::long reason who)
    (when (js-invalidate-cache-method! cmap idx reason who)
-      (js-invalidate-pmap-pcaches! %this reason who)))
+      (js-invalidate-pmap-pcaches! reason who)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-init-property! ...                                            */
@@ -1361,11 +1360,11 @@
 ;*---------------------------------------------------------------------*/
 (define (js-object-literal-init! o::JsObject)
    (with-access::JsObject o (cmap)
-      (with-access::JsConstructMap cmap ((%methods methods) (%props props))
+      (with-access::JsConstructMap cmap (%id (%methods methods) (%props props))
 	 (let ((methods %methods)
 	       (props %props))
 	    ;; Because the inline size might be dynamically extended
-	    ;; if might be that elements.length > cmap.props.length
+	    ;; it might be that elements.length > cmap.props.length
 	    ;; so to avoid array overflows, it is required to scan only
 	    ;; the elements that have an associated prop
 	    (let loop ((i (-fx (vector-length props) 1)))
@@ -1381,7 +1380,7 @@
 			 ((eq? (vector-ref methods i) #unspecified)
 			  (vector-set! methods i v))
 			 (else
-			  (js-invalidate-cache-method! cmap i
+			  (js-invalidate-cache-pmap-method! cmap i
 			     "new function in literal"
 			     (vector-ref props i))))
 		      (loop (-fx i 1)))))))))
@@ -3245,7 +3244,7 @@
 		    v)
 		   (else
 		    ;; invalidate cache method and re-cache
-		    (js-invalidate-cache-pmap-method! %this cmap i
+		    (js-invalidate-cache-pmap-method! cmap i
 		       "update-mapped with new function" name)
 		    (reset-cmap-vtable! cmap "update-mapped" name)
 		    (when cache
@@ -3254,7 +3253,7 @@
 		    v)))
 	       ((js-function? (vector-ref methods i))
 		;; invalidate cache method and cache
-		(js-invalidate-cache-pmap-method! %this cmap i
+		(js-invalidate-cache-pmap-method! cmap i
 		   "update-mapped with non function" name)
 		(reset-cmap-vtable! cmap "update-mapped:function" name)
 		(when cache
@@ -3366,7 +3365,7 @@
 			 ;; invalidate cache method and cache
 			 (cond
 			    ((js-object-mode-isprotoof? o)
-			    (js-invalidate-cache-pmap-method! %this nextmap index
+			    (js-invalidate-cache-pmap-method! nextmap index
 			     "extend-mapped with non-function" v))
 			    (cache
 			     ;; see update-mapped-object-value
@@ -3396,7 +3395,7 @@
 		      ;; see the prototype initialization
 		      ;; in js-make-function@function.scm
 		      ;; invalidate cache method and cache
-		      (js-invalidate-cache-pmap-method! %this nextmap index
+		      (js-invalidate-cache-pmap-method! nextmap index
 			 "extend-mapped polymorphic threshold" name)
 		      (reset-cmap-vtable! nextmap "extend-mapped" name)
 		      (when cache
@@ -3440,7 +3439,7 @@
 			 (when (and (js-jsstring? name) (js-jsstring->number name))
 			    (js-object-mode-hasnumeralprop-set! o #t))
 			 (when (js-object-mode-isprotoof? o)
-			    (js-invalidate-pmap-pcaches! %this "extend-mapped.5" name))
+			    (js-invalidate-pmap-pcaches! "extend-mapped.5" name))
 			 (synchronize lock
 			    (cond
 			       ((cmap-find-transition cmap name v flags)
@@ -3455,7 +3454,7 @@
 					  ;; validate cache method and don't cache
 					  (vector-set! methods index v)
 					  (begin
-					     (js-invalidate-cache-pmap-method! %this cmap index
+					     (js-invalidate-cache-pmap-method! cmap index
 						"extend-mapped single non-function" name)
 					     (when cache
 						(js-pcache-update-next-direct! cache o cmap index
@@ -3473,7 +3472,7 @@
 					     (vector-set! methods index v)
 					     ;; invalidate cache method and cache
 					     (begin
-						(js-invalidate-cache-pmap-method! %this nextmap index
+						(js-invalidate-cache-pmap-method! nextmap index
 						   "extend-mapped non-function" name)
 						(when cache
 						   (js-pcache-update-next-direct! cache o nextmap index
@@ -3544,7 +3543,7 @@
 	 (when (and (js-jsstring? name) (js-jsstring->number name))
 	    (js-object-mode-hasnumeralprop-set! o #t))
 	 (when (js-object-mode-isprotoof? o)
-	    (js-invalidate-pmap-pcaches! %this "extend-hashed" name))
+	    (js-invalidate-pmap-pcaches! "extend-hashed" name))
 	 (let ((descv (if (and writable enumerable configurable)
 			  v
 			  (instantiate::JsValueDescriptor
@@ -3616,7 +3615,7 @@
 			   (enumerable #t)
 			   (configurable #t))))
 	    (when (js-object-mode-isprotoof? o)
-	       (js-invalidate-pmap-pcaches! %this "extend-property" name))
+	       (js-invalidate-pmap-pcaches! "extend-property" name))
 	    (js-define-own-property o name newdesc throw %this)
 	    v)))
 
@@ -4158,7 +4157,7 @@
 			  (configurable-mapped-property? o i)
 			  (lambda (o)
 			     (when (js-object-mode-isprotoof? o)
-				(js-invalidate-pmap-pcaches! %this "js-delete" p))
+				(js-invalidate-pmap-pcaches! "js-delete" p))
 			     (cond
 				((cmap-find-transition cmap n #f -1)
 				 =>
@@ -4311,7 +4310,7 @@
 	 (if (isa? desc JsValueDescriptor)
 	     (with-access::JsValueDescriptor desc ((dvalue value))
 		(when (js-function? dvalue)
-		   (js-invalidate-pmap-pcaches! %this
+		   (js-invalidate-pmap-pcaches!
 		      "js-define-own-property%, both accessor" name))
 		(cond
 		   ((isa? current JsValueDescriptor)
@@ -4320,7 +4319,7 @@
 			  (set! writable dwritable)))
 		    (with-access::JsValueDescriptor current (value)
 		       (when (js-function? value)
-			  (js-invalidate-pmap-pcaches! %this
+			  (js-invalidate-pmap-pcaches!
 			     "js-define-own-property%, both accessor" name))
 		       (set! value dvalue)))
 		   ((isa? current JsWrapperDescriptor)
@@ -4449,7 +4448,7 @@
    (define (define-own-property-extend-mapped o name desc)
       ;; MS 30apr2023, fix ctor3@property.scm test
       (when (js-object-mode-isprotoof? o)
-	 (js-invalidate-pmap-pcaches! %this
+	 (js-invalidate-pmap-pcaches!
 	    "define-own-property-extend-unmapped" name))
       (cond
 	 ((isa? desc JsValueDescriptor)
@@ -4478,7 +4477,7 @@
 
    (define (define-own-property-extend-hashed o name desc)
       (when (js-object-mode-isprotoof? o)
-	 (js-invalidate-pmap-pcaches! %this
+	 (js-invalidate-pmap-pcaches!
 	    "define-own-property-extend-hashed" name))
       (let ((ndesc (cond
 		      ((isa? desc JsValueDescriptor)
@@ -4531,7 +4530,7 @@
 
    (define (define-own-property-extend-unmapped o name desc)
       (when (js-object-mode-isprotoof? o)
-	 (js-invalidate-pmap-pcaches! %this
+	 (js-invalidate-pmap-pcaches! 
 	    "define-own-property-extend-unmapped" name))
       (let ((ndesc (cond
 		      ((isa? desc JsValueDescriptor)
@@ -4699,7 +4698,7 @@
 			     (propagate-accessor-descriptor! current desc)))
 			 (propagate-accessor-descriptor! current desc)))
 		    (else
-		     (js-invalidate-pmap-pcaches! %this
+		     (js-invalidate-pmap-pcaches! 
 			"js-define-own-property%, one accessor" name)
 		     ;; 12 & 13
 		     (propagate-property-descriptor! current desc)))))))))
@@ -4733,7 +4732,8 @@
 	  (with-access::JsObject o (cmap)
 	     (unless (eq? (js-object-proto o) v)
 		(when (js-object-mode-isprotoof? o)
-		   (js-invalidate-pmap-pcaches! %this "js-setprototypeof" "__proto__"))
+		   (js-invalidate-pmap-pcaches!
+		      "js-setprototypeof" "__proto__"))
 		(unless (eq? cmap (js-not-a-cmap))
 		   (with-access::JsConstructMap cmap (parent single)
 		      (if single
