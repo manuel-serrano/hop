@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Wed Nov  6 13:02:28 2024 (serrano)                */
+/*    Last change :  Thu Nov  7 07:27:41 2024 (serrano)                */
 /*    Copyright   :  2016-24 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -157,9 +157,6 @@ typedef struct BgL_jspropertycachez00_bgl pcache_t;
 #  undef HOP_ALLOC_POLICY
 #  define HOP_ALLOC_POLICY HOP_ALLOC_CLASSIC
 #endif
-
-#  undef HOP_ALLOC_POLICY
-#  define HOP_ALLOC_POLICY HOP_ALLOC_CLASSIC
 
 #define HOP_ALLOC_JSOBJECT_POLICY HOP_ALLOC_POLICY
 #define HOP_ALLOC_JSPROXY_POLICY HOP_ALLOC_POLICY
