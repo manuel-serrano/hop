@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 29 21:14:17 2015                          */
-;*    Last change :  Wed Nov  6 14:40:51 2024 (serrano)                */
+;*    Last change :  Thu Nov  7 18:12:55 2024 (serrano)                */
 ;*    Copyright   :  2015-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript generators                   */
@@ -558,21 +558,31 @@
 ;*    js-generator-maybe-next ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (js-generator-maybe-next this val %this cache)
-   (if (and (isa? this JsGenerator) (js-object-mode-plain? this))
+   (cond
+      ((and (isa? this JsGenerator) (js-object-mode-plain? this))
        (let ((yield (js-make-yield #unspecified #t %this)))
-	  (js-generator-next val #f this yield %this))
+	  (js-generator-next val #f this yield %this)))
+      (cache
        (let ((next (js-get-name/cache this (& "next") #f %this cache)))
-	  (js-call1 %this next this val))))
+	  (js-call1 %this next this val)))
+      (else
+       (let ((next (js-get this (& "next") %this)))
+	  (js-call1 %this next this val)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-generator-maybe-next0 ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (js-generator-maybe-next0 this %this cache)
-   (if (and (isa? this JsGenerator) (js-object-mode-plain? this))
+   (cond
+      ((and (isa? this JsGenerator) (js-object-mode-plain? this))
        (let ((yield (js-make-yield #unspecified #t %this)))
-	  (js-generator-next (js-undefined) #f this yield %this))
+	  (js-generator-next (js-undefined) #f this yield %this)))
+      (cache
        (let ((next (js-get-name/cache this (& "next") #f %this cache)))
-	  (js-call0 %this next this))))
+	  (js-call0 %this next this)))
+      (else
+       (let ((next (js-get this (& "next") %this)))
+	  (js-call0 %this next this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-generator-maybe-stack-next0 ...                               */
