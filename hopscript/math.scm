@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Tue Mar 28 08:05:29 2023 (serrano)                */
-;*    Copyright   :  2013-23 Manuel Serrano                            */
+;*    Last change :  Fri Nov  8 10:54:35 2024 (serrano)                */
+;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Math                         */
 ;*    -------------------------------------------------------------    */
@@ -334,43 +334,9 @@
       
       ;; pow
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.8.2.13
-      (define (js-math-pow-tbr-27mar203 this x y)
-	 
-	 (define (bignum->js-number o)
-	    (if (bignum? o)
-		(bignum->flonum o)
-		o))
-	 
-	 (let ((n1 (js-tonumber x %this))
-	       (n2 (js-tonumber y %this)))
-	    (cond
-	       ((flonum? n1)
-		(expt n1 n2))
-	       ((and (< n2 0) (exact? n2))
-		(expt n1 (exact->inexact n2)))
-	       ((and (flonum? n2) (or (=fl n2 +inf.0) (nanfl? n2)))
-		+nan.0)
-	       ((= n2 -inf.0)
-		(if (= (abs n1) 1)
-		    +nan.0
-		    0))
-	       ((flonum? n2)
-		(exptfl (fixnum->flonum n1) n2))
-	       (else
-		(let loop ((x n1)
-			   (y (inexact->exact n2)))
-		   (cond
-		      ((= y 0)
-		       1)
-		      ((even? y)
-		       (bignum->js-number (loop (* x x) (quotient y 2))))
-		      ((< y 0)
-		       (bignum->js-number (* x (loop x (+ y 1)))))
-		      (else
-		       (bignum->js-number (* x (loop x (- y 1)))))))))))
-      
       (js-bind! %this js-math (& "pow")
-	 :value (js-make-function %this (lambda (this x y) (js-math-pow x y %this))
+	 :value (js-make-function %this (lambda (this x y)
+					   (js-math-pow x y %this))
 		   (js-function-arity 2 0)
 		   (js-function-info :name "pow" :len 1))
 	 :writable #t
