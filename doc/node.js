@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.5.x/doc/node.js                       */
+/*    serrano/prgm/project/hop/hop/doc/node.js                         */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  4 17:59:11 2016                          */
-/*    Last change :  Thu Jan  6 16:55:51 2022 (serrano)                */
-/*    Copyright   :  2016-22 Manuel Serrano                            */
+/*    Last change :  Sat Nov  9 08:23:21 2024 (serrano)                */
+/*    Copyright   :  2016-24 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Generate the NODE index                                          */
 /*=====================================================================*/
@@ -16,7 +16,8 @@ const node = "https://nodejs.org/api";
 /*    stdlib                                                           */
 /*---------------------------------------------------------------------*/
 const stdlib = [ "console", "buffer", "child_process", "cluster",
-		 "crypto", "dns", "domain", "events", "fs", "globals",
+		 "crypto", "dns", "domain", "events", "fs",
+		 "https://nodejs.org/docs/latest-v20.x/api/globals.html",
 		 "http", "https", "modules", "net", "os", "path",
 		 "process", "punycode", "querystring", "stream",
 		 "string_decoder", "timers", "tls", "tty", "dgram",
@@ -61,7 +62,7 @@ function getChapterBindings( chapter, _i, _arr ) {
       return arr;
    }
       
-   const url = node + "/" + chapter + ".html";
+   const url = chapter.indexOf("https://") === 0 ? chapter : node + "/" + chapter + ".html";
    const html = require( url, "html" );
 
    // get the properties

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed Nov  6 11:57:03 2024 (serrano)                */
+;*    Last change :  Sat Nov  9 08:03:16 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -2603,8 +2603,7 @@
       ((pair? throw)
        (match-case throw
 	  ((at ?fname ?point)
-	   (js-raise-reference-error %this "\"~a\" is not defined" name
-	      fname point))
+	   (js-raise-reference-error/loc %this throw "\"~a\" is not defined" name))
 	  (else
 	   (js-raise-reference-error %this "\"~a\" is not defined" name))))
       (else
