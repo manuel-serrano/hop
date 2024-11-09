@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 23 07:35:40 2017                          */
-;*    Last change :  Mon Feb  7 08:09:26 2022 (serrano)                */
-;*    Copyright   :  2017-22 Manuel Serrano                            */
+;*    Last change :  Sat Nov  9 09:26:59 2024 (serrano)                */
+;*    Copyright   :  2017-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript public expanders                                       */
 ;*    -------------------------------------------------------------    */
@@ -347,7 +347,7 @@
       ((?- (and ?yield (js-make-yield ?val ?done ?%this))
 	  (and ?proc (lambda (?y) . ?body)))
        (cond-expand
-	  ((and bigloo-c (not devel) (not debug))
+	  ((and bigloo-c (config nan-tagging #f) (not devel) (not debug))
 	   (let ((tmp (gensym 'aux)))
 	      (e `(let ()
 		     (pragma ,(format "struct BgL_jsyieldz00_bgl ~a;" tmp))

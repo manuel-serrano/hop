@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec 18 08:02:30 2016                          */
-;*    Last change :  Sun Apr 30 21:17:30 2023 (serrano)                */
-;*    Copyright   :  2016-23 Manuel Serrano                            */
+;*    Last change :  Sat Nov  9 09:25:13 2024 (serrano)                */
+;*    Copyright   :  2016-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Array macros for js2scheme                                       */
 ;*=====================================================================*/
@@ -250,7 +250,7 @@
        (match-case proc
 	  ((lambda (?v) . ?body)
 	   (cond-expand
-	      ((and bigloo-c (not bigloo-saw) (config have-c99-stack-alloc #t) (not devel) (not debug))
+	      ((and bigloo-c (config nan-tagging #f) (not bigloo-saw) (config have-c99-stack-alloc #t) (not devel) (not debug))
 	       (let ((p (gensym 'p))
 		     (len (length args)))
 		  `(let ()
@@ -269,7 +269,7 @@
        (match-case proc
 	  ((lambda (?v) . ?body)
 	   (cond-expand
-	      ((and bigloo-c (not bigloo-saw) (config have-c99-stack-alloc #t) (not devel) (not debug))
+	      ((and bigloo-c (config nan-tagging #f) (not bigloo-saw) (config have-c99-stack-alloc #t) (not devel) (not debug))
 	       (let ((p (gensym 'p)))
 		  `(let ()
 		      ,(decl-vector p len)
@@ -284,7 +284,7 @@
        (match-case proc
 	  ((lambda (?v) . ?body)
 	   (cond-expand
-	      ((and bigloo-c (not bigloo-saw) (config have-c99-stack-alloc #t) (not devel) (not debug))
+	      ((and bigloo-c (config nan-tagging #f) (not bigloo-saw) (config have-c99-stack-alloc #t) (not devel) (not debug))
 	       (let ((p (gensym 'p))
 		     (l (gensym 'l)))
 		  `(let ((,l ,len))
@@ -302,7 +302,7 @@
        (match-case proc
 	  ((lambda (?v) . ?body)
 	   (cond-expand
-	      ((and bigloo-c (not bigloo-saw) (config have-c99-stack-alloc #t) (not devel) (not debug))
+	      ((and bigloo-c (config nan-tagging #f) (not bigloo-saw) (config have-c99-stack-alloc #t) (not devel) (not debug))
 	       (let* ((p (gensym 'p))
 		      (i (gensym 'i))
 		      (len (gensym 'l))

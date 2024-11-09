@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Fri Jul  5 07:35:02 2024 (serrano)                */
+;*    Last change :  Sat Nov  9 09:26:36 2024 (serrano)                */
 ;*    Copyright   :  2016-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -1446,7 +1446,7 @@
        (match-case proc
 	  ((lambda (?l) . ?body)
 	   (cond-expand
-	      ((and bigloo-c (config have-c99-stack-alloc #t) (not devel) (not debug))
+	      ((and bigloo-c (config nan-tagging #f) (config have-c99-stack-alloc #t) (not devel) (not debug))
 	       (let ((stk (gensym 'stk))
 		     (p (gensym 'p))
 		     (aux (gensym 'aux))
