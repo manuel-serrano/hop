@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Fri Jul  7 16:49:17 2023 (serrano)                */
-;*    Copyright   :  2016-23 Manuel Serrano                            */
+;*    Last change :  Sun Nov 10 08:39:12 2024 (serrano)                */
+;*    Copyright   :  2016-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
 ;*    -------------------------------------------------------------    */
@@ -2638,6 +2638,7 @@
    (define (type-eq? t1 t2)
       (or (eq? t1 t2)
 	  (and (eq? t1 'number) (eq? t2 'integer))
+	  (and (eq? t1 'number) (eq? t2 'real))
 	  (and (eq? t1 'integer) (eq? t2 'number))))
 	      
    (with-access::J2SDeclInit this (vtype loc val)

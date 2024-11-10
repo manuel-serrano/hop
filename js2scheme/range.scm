@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Sun Jun  2 10:20:50 2024 (serrano)                */
+;*    Last change :  Sun Nov 10 08:06:51 2024 (serrano)                */
 ;*    Copyright   :  2016-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -870,29 +870,29 @@
 ;*---------------------------------------------------------------------*/
 ;*    interval-div ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (interval-div left right)
-   (when (and (interval? left) (interval? right))
-      ;; MS: 22 May 2017, don't know how to ensure that the result is
-      ;; an integer
-      (with-handler
-	 ;; ignore floating point exceptions
-	 (lambda (e) #f)
-	 (when (and (> (interval-min left) 0)
-		    (> (interval-max left) 0)
-		    (> (interval-min right) 0)
-		    (> (interval-max right) 0))
-	    (let ((min (/ (interval-min left) (interval-max right)))
-		  (max (/ (interval-max left) (interval-min right))))
-	       ;; (when (and (integer? min) (integer? max))
-	       (let ((intr (interval
-			      (if (flonum? min)
-				  (flonum->llong (truncate min))
-				  min)
-			      (if (flonum? max)
-				  (flonum->llong (ceiling max))
-				  max)
-			      'real)))
-		  (widening left right intr)))))))
+;* (define (interval-div left right)                                   */
+;*    (when (and (interval? left) (interval? right))                   */
+;*       ;; MS: 22 May 2017, don't know how to ensure that the result is */
+;*       ;; an integer                                                 */
+;*       (with-handler                                                 */
+;* 	 ;; ignore floating point exceptions                           */
+;* 	 (lambda (e) #f)                                               */
+;* 	 (when (and (> (interval-min left) 0)                          */
+;* 		    (> (interval-max left) 0)                          */
+;* 		    (> (interval-min right) 0)                         */
+;* 		    (> (interval-max right) 0))                        */
+;* 	    (let ((min (/ (interval-min left) (interval-max right)))   */
+;* 		  (max (/ (interval-max left) (interval-min right))))  */
+;* 	       ;; (when (and (integer? min) (integer? max))            */
+;* 	       (let ((intr (interval                                   */
+;* 			      (if (flonum? min)                        */
+;* 				  (flonum->llong (truncate min))       */
+;* 				  min)                                 */
+;* 			      (if (flonum? max)                        */
+;* 				  (flonum->llong (ceiling max))        */
+;* 				  max)                                 */
+;* 			      'real)))                                 */
+;* 		  (widening left right intr)))))))                     */
    
 ;*---------------------------------------------------------------------*/
 ;*    interval-bitop ...                                               */
@@ -1728,7 +1728,8 @@
 	    ((**)
 	     (expr-range-add! this env fix (interval-expt intl intr)))
 	    ((/)
-	     (expr-range-add! this env fix (interval-div intl intr)))
+;* 	     (expr-range-add! this env fix (interval-div intl intr)))  */
+	     (return *infinity-intv* env))
 	    ((%)
 	     (if (and (interval? intl) (interval? intr))
 		 (if (and (> (interval-min intr) 0)
