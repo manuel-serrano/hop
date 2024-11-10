@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Jul 30 17:20:13 2015                          */
-/*    Last change :  Thu Aug  1 13:52:51 2024 (serrano)                */
+/*    Last change :  Sun Nov 10 18:12:33 2024 (serrano)                */
 /*    Copyright   :  2015-24 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Tools to build the Hop.js documentation.                         */
@@ -306,9 +306,12 @@ function compileSection(page, target) {
      </body>
    </html>;
 
-   fs.writeFileSync(target || process.stdout,
-		    hop.compileXML(document),
-		    { flush: true });
+   const xml = hop.compileXML(document);
+   if (target) {
+      fs.writeFileSync(target, xml, { flush: true });
+   } else {
+      fs.writeSync(process.stdout.fd, xml);
+   }
 }
 
 /*---------------------------------------------------------------------*/
@@ -368,9 +371,12 @@ function compileChapter(json, target) {
      </body>
    </html>;
 
-   fs.writeFileSync(target || process.stdout,
-		    hop.compileXML(document),
-		    { flush: true });
+   const xml = hop.compileXML(document);
+   if (target) {
+      fs.writeFileSync(target, xml, { flush: true });
+   } else {
+      fs.writeFileSync(process.stdout.fd, xml);
+   }
 }
 
 /*---------------------------------------------------------------------*/
@@ -415,9 +421,12 @@ function compileMain(content, target) {
      </body>
    </html>;
 
-   fs.writeFileSync(target || process.stdout,
-		    hop.compileXML(document),
-		    { flush: true });
+   const xml = hop.compileXML(document);
+   if (target) {
+      fs.writeFileSync(target, xml, { flush: true });
+   } else {
+      fs.writeFileSync(process.stdout.fd, xml);
+   }
 }
 
 /*---------------------------------------------------------------------*/
@@ -514,9 +523,12 @@ function compileIdx(json, target) {
      </body>
    </html>;
 
-   fs.writeFileSync(target || process.stdout,
-		    hop.compileXML(document),
-		    { flush: true });
+   const xml = hop.compileXML(document);
+   if (target) {
+      fs.writeFileSync(target, xml, { flush: true });
+   } else {
+      fs.writeFileSync(process.stdout.fd, xml);
+   }
 }
 
 /*---------------------------------------------------------------------*/

@@ -393,7 +393,7 @@
 	     (if (=fx i 0)
 		 (cons (vector-ref vec i) acc)
 		 (loop (-fx i 1) (cons (vector-ref vec i) acc))))))
-   
+
    (if (isa? ctx JsGlobalObject)
        (with-access::JsArray obj (vec length)
 	  (if (js-array-full-inlined? obj)
