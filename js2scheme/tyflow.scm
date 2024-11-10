@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Sun Nov 10 08:39:12 2024 (serrano)                */
+;*    Last change :  Sun Nov 10 13:59:46 2024 (serrano)                */
 ;*    Copyright   :  2016-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -987,7 +987,13 @@
 			     (when (and (isa? lhs J2SAccess)
 					(class-private-element-access lhs))
 				(class-element-access-type-add! lhs ctx tyr))
-			     (expr-type-add! this nenv ctx tyr (append lbk rbk)))
+			     ;; MS 10Nov2024, for non variable assignment, the
+			     ;; type to be considered for the expression is
+			     ;; lhs expression, not the rhs! This works because
+			     ;; the cast pass handles differently var
+			     ;; assignments and expression assignments.
+			     ;; see cast.scm
+			     (expr-type-add! this nenv ctx tyv (append lbk rbk)))
 			  (return 'unknown env (append lbk rbk)))))))))))
 
 ;*---------------------------------------------------------------------*/

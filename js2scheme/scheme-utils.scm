@@ -117,7 +117,7 @@
 	   (inrange-int53?::bool ::J2SExpr)
 	   (inrange-uint53?::bool ::J2SExpr)
 
-	   (boxed-type?::bool ::obj)
+	   (unboxed-type?::bool ::obj)
 	   (box ::obj ::obj ::struct #!optional proc::obj)
 	   (box32 ::obj ::obj ::struct  #!optional proc::obj)
 	   (box64 ::obj ::obj ::struct #!optional proc::obj)
@@ -986,7 +986,7 @@
 			  `(let ((,tmp ,obj))
 			      ,(loop tmp)))))))))
 
-   (if (boxed-type? tyval)
+   (if (unboxed-type? tyval)
        (if (number? val)
 	   `(begin
 	       ,(j2s-put! loc obj field tyobj prop typrop
@@ -1329,9 +1329,9 @@
 		     (memq type '(int32 uint32 integer bint)))))))))
 
 ;*---------------------------------------------------------------------*/
-;*    boxed-type? ...                                                  */
+;*    unboxed-type? ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (boxed-type? type)
+(define (unboxed-type? type)
    (memq type '(uint32 int32)))
 
 ;*---------------------------------------------------------------------*/

@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.7.x/test/hopjs/noserv/ecma51.js       */
+/*    serrano/prgm/project/hop/hop/test/hopjs/noserv/ecma51.js         */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Fri Jan 26 11:35:27 2024 (serrano)                */
+/*    Last change :  Sun Nov 10 10:57:35 2024 (serrano)                */
 /*    Copyright   :  2014-24 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing basic ECMA 262, 5.1 features                             */
@@ -798,3 +798,23 @@ assert.ok((typeof undefined) === "undefined", "typeof undefined.1");
 assert.ok((typeof window) === "undefined", "typeof undefined.2");
 assert.ok((typeof ((() => 1))) === "function", "typeof function.1");
 
+/*---------------------------------------------------------------------*/
+/*    octane_navier_stokes_10Nov2024 ...                               */
+/*---------------------------------------------------------------------*/
+function octane_navier_stokes_10Nov2024() {
+   let a = [0, 0, 0];
+   let b = [1, 2, 3];
+   
+   function bug(x, x0) {
+      let currentRow = 1;
+      let lastX;
+      
+      lastX = x[currentRow] = x0[currentRow] + x0[++currentRow];
+      return lastX - x[currentRow];
+   }
+
+   return (bug(a, b) !== 0);
+   
+}
+
+assert.ok(octane_navier_stokes_10Nov2024());

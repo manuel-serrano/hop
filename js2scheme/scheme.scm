@@ -1717,7 +1717,7 @@
 		       `(let ((,id (j2s-scheme rhs mode return ctx)))
 			   (check-array-set lhs (J2SHopRef id))))))
 	       (else
-		(let* ((tmp (gensym 'assigtmp))
+		(let* ((tmp (gensym 'assigobj))
 		       (access (duplicate::J2SAccess lhs (obj (J2SHopRef tmp))))
 		       (tyo (j2s-type obj)))
 		   (cond
@@ -1726,22 +1726,25 @@
 		      ((memq tyo '(int8array uint8array))
 		       (j2s-tarray-set! this mode return ctx))
 		      (else
-		       (let ((tmpr (gensym 'rhs)))
-			  `(let ((,tmp ,(j2s-scheme obj mode return ctx))
-				 (,tmpr ,(j2s-scheme rhs mode return ctx)))
+		       (let ((tmpf (gensym 'prop))
+			     (tmpr (gensym 'rhs)))
+			  `(let* ((,tmp ,(j2s-scheme obj mode return ctx))
+				  (,tmpf ,(j2s-scheme field mode return ctx))
+				  (,tmpr ,(j2s-scheme rhs mode return ctx)))
 			      (if (js-array? ,tmp)
 				  ,(j2s-array-set!
 				      (duplicate::J2SAssig this
 					 (lhs (duplicate::J2SAccess lhs
-						 (obj (J2SHopRef tmp))))
+						 (obj (J2SHopRef tmp))
+						 (field (J2SHopRef tmpf))))
 					 (rhs (J2SHopRef/type tmpr (j2s-type rhs))))
 				      mode return ctx)
 				  ,(j2s-put! loc tmp
 				      field
 				      (typeof-this obj ctx)
-				      (j2s-scheme field mode return ctx)
+				      tmpf
 				      (j2s-type field)
-				      (j2s-scheme (J2SHopRef tmpr) mode return ctx)
+				      tmpr
 				      (j2s-type rhs)
 				      (strict-mode? mode)
 				      ctx
@@ -1817,7 +1820,7 @@
 	     (with-access::J2SUnresolvedRef lhs (id loc)
 		(let ((rhse (j2s-scheme rhs mode return ctx)))
 		   (epairify loc
-		      (if (boxed-type? (j2s-type rhs))
+		      (if (unboxed-type? (j2s-type rhs))
 			  (let ((tmp (gensym 'assigtmp)))
 			     `(let ((,tmp ,rhse))
 				 ,(j2s-unresolved-put!
@@ -2576,7 +2579,7 @@
 		(with-access::J2SUnresolvedRef lhs (id loc)
 		   (let ((rhse (js-binop2 loc op type lhs rhs mode return ctx)))
 		      (epairify loc
-			 (if (boxed-type? type)
+			 (if (unboxed-type? type)
 			     (let ((tmp (gensym)))
 				`(let ((,tmp ,rhse))
 				    ,(j2s-unresolved-put!
@@ -3043,7 +3046,7 @@
 		    ,(j2s-scheme-set! lhs rhs
 			(j2s-scheme rhs mode return ctx)
 			#f mode return ctx #t loc)
-		    (js-undefined))))
+		    ,(j2s-scheme lhs mode return ctx))))
 	  (call-next-method))))
 
 ;*---------------------------------------------------------------------*/
