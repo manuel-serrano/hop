@@ -3039,15 +3039,28 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SInit mode return ctx)
    (with-access::J2SAssig this (loc lhs rhs)
-      (if (isa? lhs J2SRef)
+      (cond
+	 ((isa? lhs J2SRef)
 	  (with-access::J2SRef lhs (decl)
 	     (epairify-deep loc
 		`(begin
 		    ,(j2s-scheme-set! lhs rhs
 			(j2s-scheme rhs mode return ctx)
 			#f mode return ctx #t loc)
-		    ,(j2s-scheme lhs mode return ctx))))
-	  (call-next-method))))
+		    ,(j2s-scheme lhs mode return ctx)))))
+	 ((isa? lhs J2SCast)
+	  (with-access::J2SCast lhs (expr)
+	     (if (isa? expr J2SRef)
+		 (with-access::J2SRef expr (decl)
+		    (epairify-deep loc
+		       `(begin
+			   ,(j2s-scheme-set! expr rhs
+			       (j2s-scheme rhs mode return ctx)
+			       #f mode return ctx #t loc)
+			   ,(j2s-scheme lhs mode return ctx))))
+		 (call-next-method))))
+	 (else
+	  (call-next-method)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SObjInit ...                                      */
