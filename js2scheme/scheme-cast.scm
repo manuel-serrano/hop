@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Wed Nov  6 06:23:51 2024 (serrano)                */
+;*    Last change :  Tue Nov 12 09:54:45 2024 (serrano)                */
 ;*    Copyright   :  2017-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Casting values from JS types to SCM implementation types.        */
@@ -581,12 +581,16 @@
 (define (js-integer->int32 v expr ctx)
    (with-tmp1 v
       (lambda (v)
-	 `(if (fixnum? ,v) (fixnum->int32 ,v) (flonum->int32 ,v)))))
+	 `(if (fixnum? ,v)
+	      (fixnum->int32 ,v)
+	      (fixnum->int32 (flonum->fixnum ,v))))))
 
 (define (js-integer->uint32 v expr ctx)
    (with-tmp1 v
       (lambda (v)
-	 `(if (fixnum? ,v) (fixnum->uint32 ,v) (flonum->uint32 ,v)))))
+	 `(if (fixnum? ,v)
+	      (fixnum->uint32 ,v)
+	      (fixnum->uint32 (flonum->fixnum ,v))))))
 
 (define (js-integer->string v expr ctx)
    (if (integer? v)
@@ -810,7 +814,7 @@
       ((fixnum? v)
        (fixnum->int32 v))
       ((flonum? v)
-       (flonum->int32 v))
+       (fixnum->int32 (flonum->fixnum v)))
       (else
        `(js-number-toint32 ,v))))
 

@@ -622,13 +622,13 @@
 	     (else val)))
 	 ((eq? type 'int32)
 	  (cond
-	     ((flonum? val) (flonum->int32 val))
+	     ((flonum? val) (fixnum->int32 (flonum->fixnum val)))
 	     ((int32? val) val)
 	     ((uint32? val) (uint32->int32 val))
 	     (else (fixnum->int32 val))))
 	 ((eq? type 'uint32)
 	  (cond
-	     ((flonum? val) (flonum->uint32 val))
+	     ((flonum? val) (fixnum->uint32 (flonum->fixnum val)))
 	     ((int32? val) (int32->uint32 val))
 	     ((uint32? val) val)
 	     (else (fixnum->uint32 val))))

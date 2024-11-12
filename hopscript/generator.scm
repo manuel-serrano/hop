@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 29 21:14:17 2015                          */
-;*    Last change :  Thu Nov  7 18:12:55 2024 (serrano)                */
+;*    Last change :  Tue Nov 12 07:56:36 2024 (serrano)                */
 ;*    Copyright   :  2015-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript generators                   */
@@ -355,6 +355,9 @@
 (define-inline (js-make-yield val done %this)
    (with-access::JsGlobalObject %this (js-yield-cmap)
       (let ((o (js-make-jsobject 2 js-yield-cmap (js-object-proto %this))))
+	 ;; transform the JsObject allocated object into a JsYield object
+	 ($bgl-init-jsyield-object! (pragma::obj "COBJECT($1)" o))
+	 (js-init-yield! o %this)
 	 (js-yield-set! o val done))))
 
 ;*---------------------------------------------------------------------*/

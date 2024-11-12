@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Mon Jul 10 09:10:30 2023 (serrano)                */
-;*    Copyright   :  2013-23 Manuel Serrano                            */
+;*    Last change :  Tue Nov 12 09:54:17 2024 (serrano)                */
+;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Private (i.e., not exported by the lib) utilitary functions      */
 ;*=====================================================================*/
@@ -101,7 +101,7 @@
 (define (->int32 r)
    (cond
       ((fixnum? r) (fixnum->int32 r))
-      ((flonum? r) (flonum->int32 r))
+      ((flonum? r) (fixnum->int32 (flonum->fixnum r)))
       (else (error "->int32" (format "Illegal number (~a)" (typeof r)) r))))
 
 ;*---------------------------------------------------------------------*/

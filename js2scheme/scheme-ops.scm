@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Sun May 19 10:43:54 2024 (serrano)                */
+;*    Last change :  Tue Nov 12 09:56:30 2024 (serrano)                */
 ;*    Copyright   :  2017-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -2155,13 +2155,13 @@
 	 ((and (eq? tr 'uint32) (inrange-int32? rhs))
 	  (if-fixnum? left tl
 	     `(fixnum->int32 (/fx ,(asfixnum left tl) ,(asfixnum right tr)))
-	     `(flonum->int32 (/fl ,(asreal left tl) ,(asreal right tr)))))
+	     `(fixnum->int32 (flonum->fixnum (/fl ,(asreal left tl) ,(asreal right tr))))))
 	 ((eq? tr 'int32)
 	  (if-fixnum? left tl
 	     `(fixnum->int32 (/fx ,(asfixnum left tl) ,(asfixnum right tr)))
-	     `(flonum->int32 (/fl ,(asreal left tl) ,(asreal right tr)))))
+	     `(fixnum->int32 (flonum->fixnum (/fl ,(asreal left tl) ,(asreal right tr))))))
 	 ((or (eq? tl 'real) (eq? tl 'real))
-	  `(flonum->int32 (/fl ,(asreal left tl) ,(asreal right tr))))
+	  `(fixnum->int32 (flonum->fixnum (/fl ,(asreal left tl) ,(asreal right tr)))))
 	 (else
 	  (if-fixnums? left tl right tr
 	     `(fixnum->int32 (/fx ,left ,right))
@@ -2180,7 +2180,7 @@
 	 (else
 	  (if-fixnums? left tl right tr
 	     `(fixnum->uint32 (/fx ,(asfixnum left tl) ,(asfixnum right tr)))
-	     `(flonum->uint32 (/fl ,(asreal left tl) ,(asreal right tr)))))))
+	     `(fixnum->uint32 (flonum->fixnum (/fl ,(asreal left tl) ,(asreal right tr))))))))
 
    (define (divfl left right tl tr)
       (cond
@@ -2573,10 +2573,10 @@
 	      (else `(fixnum->int32 ,val)))))
       ((real)
        (if (real? val)
-	   (flonum->int32 val)
+	   (fixnum->int32 (flonum->fixnum val))
 	   (match-case val
 	      ((int32->flonum ?expr) expr)
-	      (else `(flonum->int32 ,val)))))
+	      (else `(fixnum->int32 (flonum->fixnum ,val))))))
       (else
        `(fixnum->int32 ,val))))
 
@@ -2601,10 +2601,10 @@
 	      (else `(fixnum->uint32 ,val)))))
       ((real)
        (if (real? val)
-	   (flonum->uint32 val)
+	   (fixnum->uint32 (flonum->fixnum val))
 	   (match-case val
 	      ((uint32->flonum ?expr) expr)
-	      (else `(flonum->uint32 ,val)))))
+	      (else `(fixnum->uint32 (flonum->fixnum ,val))))))
       (else
        `(fixnum->uint32 ,val))))
 
@@ -2688,13 +2688,17 @@
 ;*    known to fit the types but the static type is not known.         */
 ;*---------------------------------------------------------------------*/
 (define (coerceint32 val type::symbol ctx)
-   `(if ,(j2s-fixnum? val) ,(asint32 val type) (flonum->int32 ,val)))
+   `(if ,(j2s-fixnum? val)
+	,(asint32 val type)
+	(fixnum->int32 (flonum->fixnum ,val))))
    
 ;*---------------------------------------------------------------------*/
 ;*    coerceuint32 ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (coerceuint32 val type::symbol ctx)
-   `(if ,(j2s-fixnum? val) ,(asuint32 val type) (flonum->uint32 ,val)))
+   `(if ,(j2s-fixnum? val)
+	,(asuint32 val type)
+	(fixnum->uint32 (flonum->fixnum ,val))))
 
 ;*---------------------------------------------------------------------*/
 ;*    coercereal ...                                                   */
@@ -2766,11 +2770,17 @@
       ((uint32)
        val)
       ((integer)
-       (if (fixnum? val) (fixnum->uint32 val) `(fixnum->uint32 ,val)))
+       (if (fixnum? val)
+	   (fixnum->uint32 val)
+	   `(fixnum->uint32 ,val)))
       ((int53)
-       (if (fixnum? val) (fixnum->uint32 val) `(fixnum->uint32 ,val)))
+       (if (fixnum? val)
+	   (fixnum->uint32 val)
+	   `(fixnum->uint32 ,val)))
       ((real)
-       (if (flonum? val) (double->uint32 val) `(flonum->uint32 ,val)))
+       (if (flonum? val)
+	   (double->uint32 val)
+	   `(fixnum->uint32 (flonum->fixnum ,val))))
       (else
        (if (fixnum? val)
 	   (fixnum->uint32 val)
@@ -3643,9 +3653,9 @@
 		(else (symbol-append op 'fl)))))
       (case type
 	 ((int32)
-	  `(flonum->int32 ,(binop-flip op left right flip)))
+	  `(fixnum->int32 (flonum->fixnum ,(binop-flip op left right flip))))
 	 ((uint32)
-	  `(flonum->uint32 ,(binop-flip op left right flip)))
+	  `(fixnum->uint32 (flonum->fixnum ,(binop-flip op left right flip))))
 	 ((bool)
 	  (binop-flip op left right flip))
 	 (else
