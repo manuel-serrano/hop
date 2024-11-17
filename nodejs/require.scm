@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Wed Aug 28 09:43:00 2024 (serrano)                */
+;*    Last change :  Sun Nov 17 12:28:39 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -30,7 +30,8 @@
 	   (nodejs-loaders::pair-nil)
 	   (nodejs-loaders-set! ::pair-nil)
 	   (nodejs-file-paths::JsObject ::JsStringLiteral ::JsGlobalObject)
-	   (nodejs-new-module::JsObject ::bstring ::bstring ::WorkerHopThread ::JsGlobalObject)
+;;	   (nodejs-new-module::JsObject ::bstring ::bstring ::WorkerHopThread ::JsGlobalObject)
+	   (nodejs-new-module::obj ::bstring ::bstring ::WorkerHopThread ::obj)
 	   (node-module-paths ::JsObject ::JsGlobalObject)
 	   (node-module-filename::bstring ::JsObject ::JsGlobalObject)
 	   (node-module-dirname::bstring ::JsObject ::JsGlobalObject)
@@ -680,7 +681,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-new-module ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-new-module::JsObject id::bstring filename worker::WorkerHopThread %this::JsGlobalObject)
+;;(define (nodejs-new-module::JsObject id::bstring filename worker::WorkerHopThread %this::JsGlobalObject)
+(define (nodejs-new-module id::bstring filename worker::WorkerHopThread %this)
    (with-trace 'require (format "nodejs-new-module ~a ~a" id filename)
       (let ((m (nodejs-new-module-sans-cache id filename worker %this)))
 	 ;; register the module in the current worker thread

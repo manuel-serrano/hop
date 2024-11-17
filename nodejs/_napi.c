@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 24 14:34:24 2023                          */
-/*    Last change :  Wed Nov  8 20:48:18 2023 (serrano)                */
-/*    Copyright   :  2023 Manuel Serrano                               */
+/*    Last change :  Sun Nov 17 10:46:00 2024 (serrano)                */
+/*    Copyright   :  2023-24 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop node_api implementation.                                     */
 /*=====================================================================*/
@@ -1158,7 +1158,7 @@ make_bignum(size_t sz) {
 
    obj_t o = GC_MALLOC_ATOMIC(BIGNUM_ALLOC_SIZE(sz));
    
-   o->bignum.header = MAKE_HEADER(BIGNUM_TYPE, 0);
+   o->bignum.header = BGL_MAKE_HEADER(BIGNUM_TYPE, 0);
    o->bignum.mpz._mp_d = (mp_limb_t *)&(o->bignum.mp_d);
    o->bignum.mpz._mp_alloc = sz;
 

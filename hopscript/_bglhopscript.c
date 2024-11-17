@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Thu Nov  7 07:27:41 2024 (serrano)                */
+/*    Last change :  Sun Nov 17 10:56:59 2024 (serrano)                */
 /*    Copyright   :  2016-24 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -881,7 +881,7 @@ BGL_MAKE_JSOBJECT_SANS(int constrsize, obj_t constrmap, obj_t __proto__, uint32_
    vector = (obj_t)(&(o->BgL_elementsz00) + 1);
 
 #if (!defined(TAG_VECTOR))
-   vector->vector.header = MAKE_HEADER(VECTOR_TYPE, 0);
+   vector->vector.header = BGL_MAKE_HEADER(VECTOR_TYPE, 0);
 #endif		
    vector->vector.length = constrsize;
    vector = BVECTOR(vector);
@@ -1771,7 +1771,7 @@ bgl_make_jsdate(BgL_jsconstructmapz00_bglt cmap, obj_t __proto__) {
 static struct {
    __CNST_ALIGN header_t header;
    long length;
-} _empty_vector = { __CNST_FILLER MAKE_HEADER(VECTOR_TYPE, 0), 0 };
+} _empty_vector = { __CNST_FILLER BGL_MAKE_HEADER(VECTOR_TYPE, 0), 0 };
 static obj_t empty_vector = BVECTOR(&(_empty_vector.header));
 #else   
 static struct {
@@ -2018,7 +2018,7 @@ bgl_init_jsyield_object(obj_t p) {
    vector = (obj_t)(&(o->BgL_elementsz00) + 1);
 
 #if (!defined(TAG_VECTOR))
-   vector->vector.header = MAKE_HEADER(VECTOR_TYPE, 0);
+   vector->vector.header = BGL_MAKE_HEADER(VECTOR_TYPE, 0);
 #endif		
    vector->vector.length = JSYIELD_OBJECT_CONSTRSIZE;
 

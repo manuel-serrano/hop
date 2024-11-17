@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Fri May 24 14:47:08 2024 (serrano)                */
+;*    Last change :  Sun Nov 17 11:15:24 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -1379,6 +1379,7 @@
        ((procedure? fun)
 	(,fun ,@args))
        (else
+	(tprint "NOT A FUN " (typeof ,fun))
 	(js-raise-type-error ,%this
 	   ,(format "call~a: not a function ~~s" (length args)) ,fun))))
 

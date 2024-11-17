@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Wed Jun 12 13:15:53 2024 (serrano)                */
+;*    Last change :  Sun Nov 17 12:41:07 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -325,7 +325,10 @@
 		    (mode (js-globalobject-default-mode))
 		    (cmap (js-make-jsconstructmap))
 		    (__proto__ %proto)
-		    (elements (make-vector size)))))
+		    (elements (make-vector size))))
+	  (t2 (instantiate::JsGlobalObject (name name))))
+      (js-object-mode-set! t2 (js-globalobject-default-mode))
+      (js-object-proto-set! t2 %proto)
       ;; local constant strings
       (js-init-names!)
       (unless (vector? __js_strings) (set! __js_strings (&init!)))

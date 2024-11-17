@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 11 09:35:38 2022                          */
-/*    Last change :  Tue Nov 12 08:00:35 2024 (serrano)                */
+/*    Last change :  Sun Nov 17 11:01:49 2024 (serrano)                */
 /*    Copyright   :  2022-24 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Macros for accelerating C compilation.                           */
@@ -151,7 +151,7 @@ extern bool_t hop_js_toboolean_no_boolean(obj_t);
 /*---------------------------------------------------------------------*/
 #if (!defined(TAG_VECTOR))
 #  define BGL_TAG_VECTOR(_vec) \
-   ((obj_t)(_vec))->vector.header = MAKE_HEADER(VECTOR_TYPE, 0)
+   ((obj_t)(_vec))->vector.header = BGL_MAKE_HEADER(VECTOR_TYPE, 0)
 #else
 #  define BGL_TAG_VECTOR(_vec) \
      0
