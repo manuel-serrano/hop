@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Tue Nov 19 12:04:04 2024 (serrano)                */
+/*    Last change :  Tue Nov 19 15:43:36 2024 (serrano)                */
 /*    Copyright   :  2016-24 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -130,6 +130,9 @@ static obj_t empty_vector;
 
 // yield objects have two fields, value and done
 #define JSYIELD_OBJECT_CONSTRSIZE 2
+
+#define HOP_VECTOR_LENGTH_FIELDP \
+   (!defined(BGL_VECTOR_LENGTH_FIELDP) || BGL_VECTOR_LENGTH_FIELDP)
 
 /*---------------------------------------------------------------------*/
 /*    type alias                                                       */
@@ -882,8 +885,10 @@ BGL_MAKE_JSOBJECT_SANS(int constrsize, obj_t constrmap, obj_t __proto__, uint32_
 
 #if (!defined(TAG_VECTOR))
    vector->vector.header = BGL_MAKE_HEADER(VECTOR_TYPE, 0);
-#endif		
+#endif
+#if HOP_VECTOR_LENGTH_FIELDP
    vector->vector.length = constrsize;
+#endif   
    vector = BVECTOR(vector);
    
    for (i = 0; i < constrsize; i++) {
@@ -2016,8 +2021,10 @@ bgl_init_jsyield_object(obj_t p) {
 #if (!defined(TAG_VECTOR))
    vector->vector.header = BGL_MAKE_HEADER(VECTOR_TYPE, 0);
 #endif		
+#if HOP_VECTOR_LENGTH_FIELDP
    vector->vector.length = JSYIELD_OBJECT_CONSTRSIZE;
-
+#endif
+   
 #if (defined(DEBUG))
    vector = BVECTOR(vector);
 
