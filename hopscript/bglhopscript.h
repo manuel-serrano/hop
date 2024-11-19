@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 11 09:35:38 2022                          */
-/*    Last change :  Tue Nov 19 12:03:16 2024 (serrano)                */
+/*    Last change :  Tue Nov 19 16:27:09 2024 (serrano)                */
 /*    Copyright   :  2022-24 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Macros for accelerating C compilation.                           */
@@ -20,9 +20,15 @@
 extern bool_t hop_js_toboolean_no_boolean(obj_t);
 
 /*---------------------------------------------------------------------*/
-/*    BHOPOBJECT                                                       */
+/*    BHOPOBJECT ...                                                   */
 /*---------------------------------------------------------------------*/
 #define BHOPOBJECT(o) BNANOBJECT(o)
+
+/*---------------------------------------------------------------------*/
+/*    HOP_VECTOR_LENGTH_FIELDP ...                                     */
+/*---------------------------------------------------------------------*/
+#define HOP_VECTOR_LENGTH_FIELDP \
+   (!defined(BGL_VECTOR_LENGTH_FIELDP) || BGL_VECTOR_LENGTH_FIELDP)
 
 /*---------------------------------------------------------------------*/
 /*    Type predicates                                                  */
