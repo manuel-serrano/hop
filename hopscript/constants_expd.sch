@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Mar 28 15:09:08 2019                          */
-;*    Last change :  Mon Oct 18 08:39:31 2021 (serrano)                */
-;*    Copyright   :  2019-21 Manuel Serrano                            */
+;*    Last change :  Tue Nov 19 16:13:12 2024 (serrano)                */
+;*    Copyright   :  2019-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript constant expanders                                     */
 ;*    -------------------------------------------------------------    */
@@ -22,7 +22,7 @@
 	       #unspecified)
 	      (bigloo-c
 	       ;; see bigloo_vector.h for details
-	       (static-pragma ,(format "static struct { struct bgl_vector vec; obj_t objs[ ~a ]; } __js_cnst_table = \n#if( !defined( TAG_VECTOR ) )\n { { MAKE_HEADER( VECTOR_TYPE, 0 ), ~a } }; \n#else\n { {~a } };\n#endif" num (+fx 1 num) (+fx 1 num)))))
+	       (static-pragma ,(format "static struct { struct bgl_vector vec; obj_t objs[ ~a ]; } __js_cnst_table = \n#if( !defined( TAG_VECTOR ) )\n { { BGL_MAKE_HEADER( VECTOR_TYPE, 0 ), ~a } }; \n#else\n { {~a } };\n#endif" num (+fx 1 num) (+fx 1 num)))))
 	  e))
       (else
        (error "%define-cnst" "bad syntax" x))))

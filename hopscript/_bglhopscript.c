@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Tue Nov 19 15:43:36 2024 (serrano)                */
+/*    Last change :  Tue Nov 19 15:55:30 2024 (serrano)                */
 /*    Copyright   :  2016-24 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -884,7 +884,7 @@ BGL_MAKE_JSOBJECT_SANS(int constrsize, obj_t constrmap, obj_t __proto__, uint32_
    vector = (obj_t)(&(o->BgL_elementsz00) + 1);
 
 #if (!defined(TAG_VECTOR))
-   vector->vector.header = BGL_MAKE_HEADER(VECTOR_TYPE, 0);
+   vector->vector.header = BGL_MAKE_HEADER(VECTOR_TYPE, constrsize);
 #endif
 #if HOP_VECTOR_LENGTH_FIELDP
    vector->vector.length = constrsize;
@@ -2019,7 +2019,7 @@ bgl_init_jsyield_object(obj_t p) {
    vector = (obj_t)(&(o->BgL_elementsz00) + 1);
 
 #if (!defined(TAG_VECTOR))
-   vector->vector.header = BGL_MAKE_HEADER(VECTOR_TYPE, 0);
+   vector->vector.header = BGL_MAKE_HEADER(VECTOR_TYPE, JSYIELD_OBJECT_CONSTRSIZE);
 #endif		
 #if HOP_VECTOR_LENGTH_FIELDP
    vector->vector.length = JSYIELD_OBJECT_CONSTRSIZE;
