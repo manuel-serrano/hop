@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Sun Nov 17 10:56:59 2024 (serrano)                */
+/*    Last change :  Tue Nov 19 12:04:04 2024 (serrano)                */
 /*    Copyright   :  2016-24 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -1784,12 +1784,12 @@ static obj_t empty_vector = BVECTOR(&(_empty_vector.length));
 /*    BGL_MAKE_JSARRAY_SANS_INIT                                       */
 /*---------------------------------------------------------------------*/
 #define BGL_MAKE_JSARRAY_SANS_INIT(o, size, len, ilen, constrmap, __proto___, mode) \
-   long bsize = JSARRAY_SIZE + VECTOR_SIZE + ((size-1) * OBJ_SIZE); \
-   BgL_jsarrayz00_bglt o = (BgL_jsarrayz00_bglt)GC_MALLOC(bsize);  \
+   long bsize = JSARRAY_SIZE + VECTOR_SIZE + ((size-1) * OBJ_SIZE);   \
+   BgL_jsarrayz00_bglt o = (BgL_jsarrayz00_bglt)GC_MALLOC(bsize);     \
    obj_t vector;						      \
 								      \
    /* class initialization */					      \
-   BGL_OBJECT_CLASS_NUM_SET(BHOPOBJECT(o), JSARRAY_CLASS_NUM);  \
+   BGL_OBJECT_CLASS_NUM_SET(BHOPOBJECT(o), JSARRAY_CLASS_NUM);        \
 								      \
    /* fields init */						      \
    o->BgL_cmapz00 = (BgL_jsconstructmapz00_bglt)constrmap;	      \
@@ -1797,14 +1797,13 @@ static obj_t empty_vector = BVECTOR(&(_empty_vector.length));
    o->BgL_lengthz00 = len;					      \
    o->BgL_ilenz00 = ilen;					      \
    HOP_OBJECT_HEADER_SIZE_SET(BHOPOBJECT(o), (long)mode);	      \
-   BGL_OBJECT_WIDENING_SET(BHOPOBJECT(o), __proto__);	      \
+   BGL_OBJECT_WIDENING_SET(BHOPOBJECT(o), __proto__);	              \
 								      \
    /* vector initialization */					      \
    if (size > 0) {						      \
       vector = (obj_t)(&(o->BgL_vecz00) + 1);			      \
-      BGL_TAG_VECTOR(vector);					      \
-      vector->vector.length = size;				      \
-      vector = BVECTOR(vector);				      \
+      BGL_INIT_VECTOR(vector, size);				      \
+      vector = BVECTOR(vector);				              \
    } else {							      \
       vector = empty_vector;					      \
    }								      \
@@ -1866,8 +1865,7 @@ bgl_jsarray_shift_builtin(obj_t array) {
    // avoid memory leaks
    VECTOR_SET(BVECTOR(vec), 0, BUNSPEC);
    
-   BGL_TAG_VECTOR(nvec);
-   nvec->vector.length = size - 1;
+   BGL_INIT_VECTOR(nvec, size - 1);
    nvec = BVECTOR(nvec);
 
    // assign to remember that this array is fully inlined
@@ -1890,8 +1888,7 @@ bgl_init_vector(obj_t vector, long len, obj_t init) {
    } else
 #endif
    {
-      BGL_TAG_VECTOR(vector);
-      vector->vector.length = len;
+      BGL_INIT_VECTOR(vector, len);
 
       bgl_fill_vector(BVECTOR(vector), 0, len, init);
       return BVECTOR(vector);
@@ -1986,8 +1983,7 @@ bgl_make_jsgenerator(obj_t constrmap, obj_t __proto__, long sz, obj_t next, uint
 
    /* vector initialization */
    env = (obj_t)(&(o->BgL_z52envz52) + 1);
-   BGL_TAG_VECTOR(env);
-   env->vector.length = sz;
+   BGL_INIT_VECTOR(env, sz);
    env = BVECTOR(env);
 
    /* generator field initialization */
