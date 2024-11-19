@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Feb 11 09:35:38 2022                          */
-/*    Last change :  Sun Nov 17 11:01:49 2024 (serrano)                */
+/*    Last change :  Tue Nov 19 11:57:23 2024 (serrano)                */
 /*    Copyright   :  2022-24 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Macros for accelerating C compilation.                           */
@@ -150,15 +150,15 @@ extern bool_t hop_js_toboolean_no_boolean(obj_t);
 /*    Vector manipulations                                             */
 /*---------------------------------------------------------------------*/
 #if (!defined(TAG_VECTOR))
-#  define BGL_TAG_VECTOR(_vec) \
-   ((obj_t)(_vec))->vector.header = BGL_MAKE_HEADER(VECTOR_TYPE, 0)
+#  define BGL_INIT_VECTOR(_vec, _len) \
+     (((obj_t)(_vec))->vector.header = BGL_MAKE_VECTOR_HEADER(_vec, VECTOR_TYPE, _len))
 #else
-#  define BGL_TAG_VECTOR(_vec) \
-     0
+#  define BGL_INIT_VECTOR(_vec, _len) \
+     (((obj_t)(_vec))->vector.length = _len)
 #endif
 
 #define BGL_INIT_VECTOR_SANS_FILL_SANS_CHECK(_vector, _len) \
-   ((BGL_TAG_VECTOR(_vector), ((obj_t)_vector)->vector.length = _len, BVECTOR(_vector)))
+   ((BGL_INIT_VECTOR(_vector), BVECTOR(_vector)))
 
 #if (VECTOR_SIZE_TAG_NB_BIT != 0)
 #  define BGL_INIT_VECTOR_SANS_FILL(_vector, _len) \
