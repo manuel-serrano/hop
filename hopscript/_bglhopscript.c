@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Tue Nov 19 15:55:30 2024 (serrano)                */
+/*    Last change :  Tue Nov 19 16:41:30 2024 (serrano)                */
 /*    Copyright   :  2016-24 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -130,9 +130,6 @@ static obj_t empty_vector;
 
 // yield objects have two fields, value and done
 #define JSYIELD_OBJECT_CONSTRSIZE 2
-
-#define HOP_VECTOR_LENGTH_FIELDP \
-   (!defined(BGL_VECTOR_LENGTH_FIELDP) || BGL_VECTOR_LENGTH_FIELDP)
 
 /*---------------------------------------------------------------------*/
 /*    type alias                                                       */
