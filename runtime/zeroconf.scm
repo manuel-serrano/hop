@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 15 09:00:54 2011                          */
-;*    Last change :  Sat Nov 13 21:45:12 2021 (serrano)                */
-;*    Copyright   :  2011-21 Manuel Serrano                            */
+;*    Last change :  Thu Nov 21 17:29:53 2024 (serrano)                */
+;*    Copyright   :  2011-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Zeroconf support                                             */
 ;*=====================================================================*/
@@ -18,7 +18,9 @@
    
    (cond-expand
       ((and enable-avahi (library avahi))
-       (include "zeroconf_avahi.sch")))
+       (include "zeroconf_avahi.sch"))
+      (else
+       (library pthread http)))
 
    (include "service.sch")
    
