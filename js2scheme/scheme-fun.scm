@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Sun May 19 11:12:26 2024 (serrano)                */
+;*    Last change :  Mon Dec  2 08:48:48 2024 (serrano)                */
 ;*    Copyright   :  2017-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -240,9 +240,10 @@
 (define (j2s-make-function this::J2SDeclFun mode return ctx)
    
    (define (allocator::symbol this::J2SDecl)
-      (with-access::J2SFun (declfun-fun this) (new-target)
+      (with-access::J2SFun (declfun-fun this) (new-target loc)
 	 (cond
-	    ((memq new-target '(global)) 'js-object-alloc/new-target)
+	    ((eq? new-target 'global) 'js-object-alloc/new-target)
+	    ((eq? new-target 'not-a-ctor) 'js-not-a-constructor-alloc)
 	    ((decl-usage-has? this '(new get set ref))  'js-object-alloc)
 	    (else 'js-object-alloc-lazy))))
    
@@ -730,7 +731,7 @@
    (define (allocator this::J2SFun)
       (with-access::J2SFun this (new-target)
 	 (cond
-	    ((isa? this J2SSvc) 'js-not-a-constructor-alloc)
+	    ((eq? new-target 'not-a-ctor) 'js-not-a-constructor-alloc)
 	    ((memq new-target '(global argument)) 'js-object-alloc/new-target)
 	    (else 'js-object-alloc-lazy))))
 
