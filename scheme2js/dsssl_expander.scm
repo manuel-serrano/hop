@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/scheme2js/dsssl_expander.scm      */
+;*    serrano/prgm/project/hop/hop/scheme2js/dsssl_expander.scm        */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  2007-13                                           */
-;*    Last change :  Fri Aug  2 16:23:26 2013 (serrano)                */
-;*    Copyright   :  2013 Manuel Serrano                               */
+;*    Last change :  Fri Dec 13 15:10:14 2024 (serrano)                */
+;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    DSSSL macro expansion (re-use Bigloo DSSSL utilities).           */
 ;*=====================================================================*/
@@ -36,7 +36,8 @@
        (let* ((dsssl-error (lambda (p m o) (scheme2js-error p m o exp)))
 	      (formals (dsssl-formals->scheme-typed-formals proto dsssl-error #t))
 	      (nbody (make-dsssl-function-prelude
-			exp proto (walk! `(let () ,@body)) dsssl-error)))
+			exp proto (walk! `(let () ,@(list-copy body)))
+			dsssl-error)))
 	  (set-car! (cdr exp) formals)
 	  (set-car! (cddr exp) nbody)
 	  (set-cdr! (cddr exp) '())

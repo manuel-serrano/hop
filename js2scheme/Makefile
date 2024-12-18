@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Fri Jul  5 12:31:50 2024 (serrano)                */
+#*    Last change :  Fri Dec 13 17:09:40 2024 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the JS2SCHEME library.                     */
 #*=====================================================================*/
@@ -73,7 +73,8 @@ include ../etc/Makefile.library
 
 .PHONY: build native jvm
 
-build: $(BACKEND)
+build: .afile
+	$(MAKE) $(BACKEND)
 
 native: o heap-c lib-c
 jvm: heap-jvm lib-jvm

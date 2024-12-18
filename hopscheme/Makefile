@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/3.0.x/hopscheme/Makefile                */
+#*    serrano/prgm/project/hop/hop/hopscheme/Makefile                  */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Florian Loitsch                                   */
 #*    Creation    :  Wed Mar 15 07:27:50 2006                          */
-#*    Last change :  Sat May 24 08:58:26 2014 (serrano)                */
-#*    Copyright   :  2006-20 Manuel Serrano                            */
+#*    Last change :  Fri Dec 13 17:10:08 2024 (serrano)                */
+#*    Copyright   :  2006-24 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build the hopscheme library.                     */
 #*=====================================================================*/
@@ -60,7 +60,8 @@ include ../etc/Makefile.library
 
 .PHONY: build native jvm
 
-build: $(BACKEND)
+build: .afile
+	$(MAKE) $(BACKEND)
 
 native: o heap-c lib-c
 jvm: heap-jvm lib-jvm
