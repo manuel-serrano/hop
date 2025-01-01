@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Fri Jul 19 11:31:34 2024 (serrano)                */
+;*    Last change :  Mon Dec  2 08:49:53 2024 (serrano)                */
 ;*    Copyright   :  2013-24 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1664,6 +1664,7 @@
 	    (declaration?
 	     (co-instantiate ((val (instantiate::J2SSvc
 				      (loc loc)
+				      (new-target 'not-a-ctor)
 				      (register register)
 				      (import import?)
 				      (thisp (new-decl-this loc))
@@ -1685,6 +1686,7 @@
 	    (id
 	     (co-instantiate ((svc (instantiate::J2SSvc
 				      (loc (token-loc id))
+				      (new-target 'not-a-ctor)
 				      (register register)
 				      (import import?)
 				      (decl decl)
@@ -1707,6 +1709,7 @@
 	    (else
 	     (instantiate::J2SSvc
 		(loc loc)
+		(new-target 'not-a-ctor)
 		(register register)
 		(import import?)
 		(thisp (new-decl-this loc))
@@ -2472,6 +2475,14 @@
 		      met)))
 	 (loc->funname fun loc)))
 
+   (define (new-target name)
+      (if (isa? name J2SString)
+	  (with-access::J2SString name (val)
+	     (if (string=? val "constructor")
+		 'unknown
+		 'not-a-ctor))
+	  'not-a-ctor))
+   
    (define (class-method async? static? cname super?)
       (let* ((loc (token-loc (peek-token)))
 	     (gen (when (eq? (peek-token-type) '*)
@@ -2507,6 +2518,7 @@
 		    (let* ((body (fun-body params args 'strict))
 			   (fun (instantiate::J2SFun
 				   (loc loc)
+				   (new-target (new-target name-or-get))
 				   (src fun-src)
 				   (thisp (new-decl-this loc))
 				   (params params)
@@ -2531,6 +2543,7 @@
 		(let* ((body (fun-body params args 'strict))
 		       (fun (instantiate::J2SFun
 			       (loc loc)
+			       (new-target (new-target (new-target name-or-get)))
 			       (src fun-src)
 			       (thisp (new-decl-this loc))
 			       (params params)
