@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Wed Nov  6 08:04:30 2024 (serrano)                */
-;*    Copyright   :  2018-24 Manuel Serrano                            */
+;*    Last change :  Wed Jan 22 10:12:40 2025 (serrano)                */
+;*    Copyright   :  2018-25 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
 ;*=====================================================================*/
@@ -728,7 +728,7 @@
 ;*    js-wait-worker ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (js-wait-worker worker)
-   `(thread-join! ,worker))<
+   `(thread-join! ,worker))
 	   
 ;*---------------------------------------------------------------------*/
 ;*    profilers ...                                                    */
