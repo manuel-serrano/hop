@@ -5,9 +5,9 @@
    "date": "@DATE@",
    "bglversion": "4.5b",
    "homepage": "@HOMEPAGE@",
-   "urlbase": "ftp://ftp-sop.inria.fr/indes/fp/Hop",
+   "urlbase": "http://www-sop.inria.fr/members/Manuel.Serrano/hop/download",
    "github": "https://github.com/manuel-serrano/hop.git",
-   "bglurlbase": "ftp://ftp-sop.inria.fr/indes/fp/Bigloo",
+   "bglurlbase": "http://www-sop.inria.fr/members/Manuel.Serrano/bigloo/download",
    "chapters": [ 
       { "name": "Home", "icon": "glyphicon-home", "href": "index.html" },
       { "name": "Download", "icon": "glyphicon-cloud-download", "href": "download.html" },
