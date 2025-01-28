@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Wed Aug 21 10:56:37 2024 (serrano)                */
+#*    Last change :  Fri Jan 24 07:07:39 2025 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -27,8 +27,9 @@ do: build
 
 build: build-sans-modules
 	$(MAKE) -C node_modules
+	$(MAKE) doc
 
-build-sans-modules: bindir libdir lib weblets widget nodejs doc \
+build-sans-modules: bindir libdir lib weblets widget nodejs \
   $(BUILDSPECIFIC) bin share
 
 bindir:
