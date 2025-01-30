@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 15 15:16:16 2018                          */
-;*    Last change :  Thu Aug  1 10:40:57 2024 (serrano)                */
-;*    Copyright   :  2018-24 Manuel Serrano                            */
+;*    Last change :  Thu Jan 30 11:23:52 2025 (serrano)                */
+;*    Copyright   :  2018-25 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES6 Module handling                                              */
 ;*=====================================================================*/

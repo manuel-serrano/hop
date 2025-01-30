@@ -19,7 +19,7 @@
 	      "../node_modules/cpp/doc/cpp.md",
 	      "../node_modules/texinfo/doc/texinfo.md",
 	      "../node_modules/csv/doc/csv.md",
-	      "../node_modules/vcf/doc/vcf.md",
+	      "../node_modules/@hop/vcf/doc/vcf.md",
 	      "../node_modules/texinfo/doc/texinfo.md",
 	      "../node_modules/text/doc/text.md",
               "../node_modules/xml/doc/xml.md",
