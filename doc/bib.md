@@ -1,5 +1,4 @@
-${ var doc = require( "hopdoc" ) }
-${ var config = require( hop.config ) }
+${ var doc = require( "@hop/hopdoc" ) }
 ${ var xml = require( doc.BUILDDIR + "/doc/xml.js" ) }
 ${ var cfg = require( doc.BUILDDIR + "/doc/doc.json" ) }
 ${ var bibtex = require( "./_bibtex.hop" ) }

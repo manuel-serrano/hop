@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Jul 30 17:20:13 2015                          */
-/*    Last change :  Sun Nov 10 18:12:33 2024 (serrano)                */
-/*    Copyright   :  2015-24 Manuel Serrano                            */
+/*    Last change :  Fri Jan 31 07:10:54 2025 (serrano)                */
+/*    Copyright   :  2015-25 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Tools to build the Hop.js documentation.                         */
 /*=====================================================================*/
@@ -15,9 +15,9 @@
 /*---------------------------------------------------------------------*/
 const path = require("path");
 const fs = require("fs");
-const markdown = require(hop.markdown);
-const fontifier = require(hop.fontifier);
-const hopdoc = require("hopdoc")
+const markdown = require("@hop/markdown");
+const fontifier = require("@hop/fontifier");
+const hopdoc = require("@hop/hopdoc")
 const docxml = require("./xml.js");
 
 /*---------------------------------------------------------------------*/

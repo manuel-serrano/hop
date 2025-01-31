@@ -1,4 +1,4 @@
-${ var doc = require( "hopdoc" ) }
+${ var doc = require( "@hop/hopdoc" ) }
 ${ var xml = require( doc.BUILDDIR + "/doc/xml.js" ) }
 
     HOP, a web development kit - copyright (c) ${xml.copyrightYears( 2006 )} INRIA

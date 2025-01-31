@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Thu Jan 30 11:31:18 2025 (serrano)                */
+#*    Last change :  Thu Jan 30 13:11:50 2025 (serrano)                */
 #*    Copyright   :  2006-25 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Doc Makefile                                                     */
@@ -94,7 +94,7 @@ VPATH=api lang dev widget intf \
   ../node_modules/@hop/markdown/doc \
   ../node_modules/syslog/doc \
   ../node_modules/system/doc \
-  ../node_modules/utils/doc \
+  ../node_modules/@hop/utils/doc \
   ../node_modules/texinfo/doc \
   ../node_modules/csv/doc \
   ../node_modules/text/doc \

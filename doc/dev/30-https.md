@@ -1,5 +1,4 @@
-${var hop = require( "hop" )}
-${var doc = require( "hopdoc" )}
+${var doc = require( "@hop/hopdoc" )}
 
 
 https

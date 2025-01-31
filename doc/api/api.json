@@ -13,7 +13,7 @@
 	      "../node_modules/syslog/doc/syslog.md",
 	      "../node_modules/systime/doc/systime.md",
 	      "../node_modules/system/doc/system.md",
-	      "../node_modules/utils/doc/utils.md",
+	      "../node_modules/@hop/utils/doc/utils.md",
  	      [], 
 	      "../node_modules/@hop/markdown/doc/markdown.md", 
 	      "../node_modules/cpp/doc/cpp.md",

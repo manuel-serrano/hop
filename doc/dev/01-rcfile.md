@@ -1,5 +1,4 @@
-${var hop = require( "hop" )}
-${var hopdoc = require( "hopdoc" )}
+${var hopdoc = require( "@hop/hopdoc" )}
 
 
 ### RC file ###
