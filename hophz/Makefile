@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/3.5.x/hophz/Makefile                    */
+#*    serrano/prgm/project/hop/hop/hophz/Makefile                      */
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Mon Jan  3 14:35:31 2022 (serrano)                */
+#*    Last change :  Mon Mar  3 16:55:57 2025 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds Hophz                                   */
 #*=====================================================================*/
@@ -211,6 +211,7 @@ clean:
 	$(RM) -f .afile
 	$(RM) -f $(OBJECTS)
 	$(RM) -f $(MODULES:%=%.c)
+	$(RM) -f $(HOPMODULES:%=o/%.scm)
 	$(RM) -f $(BUILDBINDIR)/$(EXEC)
 	$(RM) -f $(BUILDBINDIR)/$(EXEC).jar
 	$(RM) -rf META-INF
