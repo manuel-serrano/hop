@@ -1,7 +1,7 @@
 #*=====================================================================*/
 #*    Author      :  Florian Loitsch                                   */
 #*    Creation    :  Wed Mar 15 07:27:50 2006                          */
-#*    Last change :  Mon Jul  5 16:18:16 2021 (serrano)                */
+#*    Last change :  Tue Mar  4 11:02:09 2025 (serrano)                */
 #*    Copyright   :  2006-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build the Scheme2JS library.                     */
@@ -86,7 +86,8 @@ include ../etc/Makefile.library
 
 .PHONY: build native jvm 
 
-build: runtime-build $(BACKEND)
+build: .afile
+	$(MAKE) runtime-build $(BACKEND)
 
 native: o heap-c lib-c
 jvm: heap-jvm lib-jvm

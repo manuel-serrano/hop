@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Fri Jan 24 07:07:39 2025 (serrano)                */
+#*    Last change :  Tue Mar  4 08:26:38 2025 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -352,7 +352,7 @@ cleanall: distclean
 #*    distrib:                                                         */
 #*---------------------------------------------------------------------*/
 .PHONY: distrib newdistrib distrib-inc-version distrib-sans-version
-.PHONY: distrib-tmp distrib-pre distrib-native distrib-jvm
+.PHONY: distrib-tmp distrib-pre distrib-native
 
 distrib:
 	$(MAKE) distrib-sans-version
@@ -454,31 +454,6 @@ distrib-native: distrib-tmp
               $(RM) -rf $(HOPTMPDIR)/hop-$$distrib; \
             fi \
           fi) || exit 1
-
-distrib-jvm: distrib-tmp
-	(version=$(HOPRELEASE); \
-         devel=$(HOPDEVEL); \
-          if [ -f .hoprelease ]; then \
-             . ./.hoprelease; \
-          fi; \
-          if [ "$$devel " = " " ]; then \
-            distrib=$$version; \
-            minor=; \
-          else \
-            distrib=$$version-$$devel$$minor; \
-          fi; \
-	  echo "Building hop-$(HOPRELEASE).jar..."; \
-          $(MAKE) clone CLONEDIR=$(HOPTMPDIR)/hop-tmp && \
-          mv $(HOPTMPDIR)/hop-tmp $(HOPTMPDIR)/hop-$$distrib && \
-          (cd $(HOPTMPDIR)/hop-$$distrib && \
-           ./configure --backend=jvm && \
-           $(MAKE) && \
-	   $(MAKE) changelog > ChangeLog && \
-	   $(RM) -rf $(HOPTMPDIR)/hop-$$distrib/weblets/home/talks && \
-	   $(RM) -rf $(HOPTMPDIR)/hop-$$distrib/weblets/home/videos && \
-           $(RM) -f $(HOPDISTRIBDIR)/java/hop-$(HOPRELEASE)*.jar && \
-           mv bin/hop.jar $(HOPDISTRIBDIR)/java/hop-$$distrib.jar) && \
-          $(RM) -rf $(HOPTMPDIR)/hop-$$distrib) || exit 1
 
 distrib-tmp:
 	if [ -d $(HOPTMPDIR)/hop-tmp ]; then \
