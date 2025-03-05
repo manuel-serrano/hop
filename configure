@@ -4,8 +4,8 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Sun Nov 17 13:24:57 2024 (serrano)                */
-#*    Copyright   :  2004-24 Manuel Serrano                            */
+#*    Last change :  Tue Mar  4 18:03:44 2025 (serrano)                */
+#*    Copyright   :  2004-25 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
 #*=====================================================================*/
@@ -497,7 +497,7 @@ while : ; do
       echo "   --bigloolibdir=path......... the Bigloo lib-dir path" >&2;
       echo "   --bigloo-prce=yes|no........ enable/disable libunistring" >&2;
       echo "   --bigloo-unistring=yes|no... enable/disable pcre" >&2;
-      echo "   --backend=backend........... the execution platform [native,jvm,dotnet]" >&2;
+      echo "   --backend=backend........... the execution platform [native]" >&2;
       echo "   --link=method............... the link method [static,dynamic,library]" >&2;
       echo "   --afile=afile............... the Bigloo afile tool" >&2;
       echo "   --btags=btags............... the Bigloo btags tool" >&2;

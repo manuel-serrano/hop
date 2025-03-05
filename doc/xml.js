@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Aug  1 10:22:56 2015                          */
-/*    Last change :  Tue Apr 23 14:11:54 2024 (serrano)                */
-/*    Copyright   :  2015-24 Manuel Serrano                            */
+/*    Last change :  Wed Mar  5 14:26:48 2025 (serrano)                */
+/*    Copyright   :  2015-25 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop.js XML extensions                                            */
 /*=====================================================================*/
@@ -106,7 +106,7 @@ function navbar(attrs, ... chapters) {
        <ul class="nav navbar-nav">
          ${chapters.map(function(p, idx = undefined, arr = undefined) {
 	    if (p.entries.length == 0) {
-               const clazz = p.name.toLowerCase()==attrs.key
+               const clazz = p.name.toLowerCase() === attrs.key
 		   ? "active" : "";
                return <li class=${clazz}>
 	         <a href=${p.href}>
@@ -115,7 +115,7 @@ function navbar(attrs, ... chapters) {
 	         </a>
 	       </li>;
 	    } else {
-               const clazz = p.name.toLowerCase()==attrs.key
+               const clazz = p.name.toLowerCase() === attrs.key
 		   ? "dropdown active" : "dropdown";
                return <li class=${clazz}>
 	         <a href=${p.href}

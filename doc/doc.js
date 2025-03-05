@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Jul 30 17:20:13 2015                          */
-/*    Last change :  Fri Jan 31 07:10:54 2025 (serrano)                */
+/*    Last change :  Wed Mar  5 14:31:06 2025 (serrano)                */
 /*    Copyright   :  2015-25 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Tools to build the Hop.js documentation.                         */
@@ -237,6 +237,8 @@ function compileSection(page, target) {
    const chap = findChapter(chapters, title);
    const toc = (!chap || !("toc" in chap) || chap.toc) ? hopdoc.toc(ast) : [];
 
+   if (key === ".") key = title;
+   
    const document = <html>
       <head css=${findCss(target || page)}
 	    title=${doc.title + "/" + title}
