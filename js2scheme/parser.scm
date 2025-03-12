@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Mon Dec  2 08:49:53 2024 (serrano)                */
-;*    Copyright   :  2013-24 Manuel Serrano                            */
+;*    Last change :  Mon Mar 10 07:27:36 2025 (serrano)                */
+;*    Copyright   :  2013-25 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
 ;*=====================================================================*/
@@ -2218,7 +2218,8 @@
 	  (consume-any!)
 	  (let ((param (consume-rest-param!)))
 	     (pop-open-token (consume-token! 'RPAREN))
-	     (values (list param) '(#f))))
+	     ;; MS: 10mar2025 replace '(#f) with (list #f) for the JS parser
+	     (values (list param) (list #f))))
 	 (else
 	  (let ((token (peek-token)))
 	     (multiple-value-bind (param arg)
