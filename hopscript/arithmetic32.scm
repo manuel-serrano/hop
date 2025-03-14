@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Fri Mar 31 07:59:31 2023 (serrano)                */
-;*    Copyright   :  2017-23 Manuel Serrano                            */
+;*    Last change :  Fri Mar 14 09:38:31 2025 (serrano)                */
+;*    Copyright   :  2017-25 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on 32bit and nan64 platforms               */
 ;*=====================================================================*/
@@ -422,7 +422,7 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (+fx/overflow x::obj y::obj)
    (cond-expand
-      ((and bigloo-c (not bigloo-saw) (config have-overflow #t) (config nan-tagging #t))
+      ((and bigloo-c (not bigloo-saw) (config have-overflow #t) (or (config nan-tagging #t) (config nun-tagging #t)))
        (let ((res::int 0))
 	  (if (pragma::bool "__builtin_sadd_overflow((int)((long)$1), (int)((long)$2), &$3)"
 		 x y (pragma res))
@@ -446,7 +446,7 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (+fx32/overflow x::long y::long)
    (cond-expand
-      ((and bigloo-c (not bigloo-saw) (config have-overflow #t) (config nan-tagging #t))
+      ((and bigloo-c (not bigloo-saw) (config have-overflow #t) (or (config nan-tagging #t) (config nun-tagging #t)))
        (let ((res::int 0))
 	  (if (pragma::bool "__builtin_sadd_overflow((int)$1, (int)$2, &$3)"
 		 x y (pragma res))
@@ -477,7 +477,7 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (+u32/overflow x::uint32 y::uint32)
    (cond-expand
-      ((and bigloo-c (not bigloo-saw) (config have-overflow #t) (config nan-tagging #t))
+      ((and bigloo-c (not bigloo-saw) (config have-overflow #t) (or (config nan-tagging #t) (config nun-tagging #t)))
        (let ((res::uint32 0))
 	  (if (pragma::bool "__builtin_uadd_overflow($1, $2, &$3)"
 		 x y (pragma res))
@@ -557,7 +557,7 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (-fx/overflow x::obj y::obj)
    (cond-expand
-      ((and bigloo-c (not bigloo-saw) (config have-overflow #t) (config nan-tagging #t))
+      ((and bigloo-c (not bigloo-saw) (config have-overflow #t) (or (config nan-tagging #t) (config nun-tagging #t)))
        (let ((res::int 0))
 	  (if (pragma::bool "__builtin_ssub_overflow((int)((long)$1), (int)((long)$2), &$3)"
 		 x y (pragma res))
@@ -581,7 +581,7 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (-fx32/overflow x::long y::long)
    (cond-expand
-      ((and bigloo-c (not bigloo-saw) (config have-overflow #t) (config nan-tagging #t))
+      ((and bigloo-c (not bigloo-saw) (config have-overflow #t) (or (config nan-tagging #t) (config nun-tagging #t)))
        (let ((res::int32 #s32:0))
 	  (if (pragma::bool "__builtin_ssub_overflow($1, $2, &$3)"
 		 x y (pragma res))
@@ -612,7 +612,7 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (-u32/overflow x::uint32 y::uint32)
    (cond-expand
-      ((and bigloo-c (not bigloo-saw) (config have-overflow #t) (config nan-tagging #t))
+      ((and bigloo-c (not bigloo-saw) (config have-overflow #t) (or (config nan-tagging #t) (config nun-tagging #t)))
        (let ((res::uint32 0))
 	  (if (pragma::bool "__builtin_usub_overflow($1, $2, &$3)"
 		 x y (pragma res))
@@ -676,7 +676,7 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (*fx/overflow x::obj y::obj)
    (cond-expand
-      ((and bigloo-c (not bigloo-saw) (config have-overflow #t) (config nan-tagging #t))
+      ((and bigloo-c (not bigloo-saw) (config have-overflow #t) (or (config nan-tagging #t) (config nun-tagging #t)))
        (let ((res::int32 #s32:0))
 	  (cond
 	     ((pragma::bool "__builtin_smul_overflow((int)((long)$1), (int)((long)$2), &$3)"
@@ -741,7 +741,7 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (*u32/overflow x::uint32 y::uint32)
    (cond-expand
-      ((and bigloo-c (not bigloo-saw) (config have-overflow #t) (config nan-tagging #t))
+      ((and bigloo-c (not bigloo-saw) (config have-overflow #t) (or (config nan-tagging #t) (config nun-tagging #t)))
        (let ((res::uint32 0))
 	  (if (pragma::bool "__builtin_umul_overflow($1, $2, &$3)"
 		 x y (pragma res))
