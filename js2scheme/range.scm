@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Sun Nov 10 08:06:51 2024 (serrano)                */
-;*    Copyright   :  2016-24 Manuel Serrano                            */
+;*    Last change :  Tue Mar 18 17:47:43 2025 (serrano)                */
+;*    Copyright   :  2016-25 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
 ;*=====================================================================*/
@@ -1294,25 +1294,29 @@
 	 (node-range lhs env conf mode fix)
 	 (multiple-value-bind (intv env)
 	    (node-range rhs env conf mode fix)
-	    (cond
-	       ((isa? lhs J2SRef)
-		;; a variable assignment
-		(with-access::J2SRef lhs (decl)
-		   (with-access::J2SDecl decl (writable id)
-		      (cond
-			 ((and (not writable) (not (isa? this J2SInit)))
-			  (return intv env))
-			 (intv
-			  (decl-vrange-add! decl intv fix)
-			  (let ((nenv (extend-env env decl intv)))
-			     (expr-range-add! this nenv fix intv)))
-			 (else
-			  (return #f env))))))
-	       (else
-		;; a non variable assignment
-		(if intv
-		    (expr-range-add! this env fix intv)
-		    (return #f env))))))))
+	    (let loop ((lhs lhs))
+	       (cond
+		  ((isa? lhs J2SRef)
+		   ;; a variable assignment
+		   (with-access::J2SRef lhs (decl)
+		      (with-access::J2SDecl decl (writable id)
+			 (cond
+			    ((and (not writable) (not (isa? this J2SInit)))
+			     (return intv env))
+			    (intv
+			     (decl-vrange-add! decl intv fix)
+			     (let ((nenv (extend-env env decl intv)))
+				(expr-range-add! this nenv fix intv)))
+			    (else
+			     (return #f env))))))
+		  ((isa? lhs J2SCast)
+		   (with-access::J2SCast lhs (expr)
+		      (loop expr)))
+		  (else
+		   ;; a non variable assignment
+		   (if intv
+		       (expr-range-add! this env fix intv)
+		       (return #f env)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-range ::J2SAssigOp ...                                      */
