@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Fri Mar 21 10:35:47 2025 (serrano)                */
+;*    Last change :  Fri Mar 21 18:52:49 2025 (serrano)                */
 ;*    Copyright   :  2017-25 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Array functions.            */
@@ -359,7 +359,7 @@
 		     %this))
 		((real)
 		 (let ((v (j2s-scheme field mode return ctx)))
-		    (if (zero? v)
+		    (if (and (number? v) (zero? v))
 			`(js-array-fixnum-ref ,(j2s-scheme obj mode return ctx)
 			    0
 			    %this)
@@ -562,8 +562,11 @@
 		       `(let* ((,a ,(j2s-scheme obj mode return ctx))
 			       (,f ,(j2s-scheme field mode return ctx))
 			       (,r ,(j2s-scheme rhs mode return ctx)))
-			   (js-array-set! ,a ,f ,(box r rhs)
-			      ,(strict-mode? mode) %this)
+			   ,(if (and (number? f) (zero? f))
+				`(js-array-fixnum-set! ,a 0 ,(box r rhs)
+				    ,(strict-mode? mode) %this)
+				`(js-array-set! ,a ,f ,(box r rhs)
+				    ,(strict-mode? mode) %this))
 			   ,r)))))))))
    
    (define (aset this::J2SAssig lhs rhs)

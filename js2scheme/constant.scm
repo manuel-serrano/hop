@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Fri Mar 21 10:23:01 2025 (serrano)                */
+;*    Last change :  Fri Mar 21 18:51:12 2025 (serrano)                */
 ;*    Copyright   :  2013-25 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preallocate constant objects (regexps, literal cmaps,            */
@@ -366,7 +366,9 @@
 			  (op l r))))
 		(cond
 		   ((not (fixnum? v))
-		    (J2SNumber/type 'real v))
+		    (if (and (number? v) (zero? v))
+			(J2SNumber 0)
+			(J2SNumber/type 'real v)))
 		   ((and (in-range-53? v) (>=fx (config-get conf :int-size 0) 53))
 		    (J2SNumber/type 'integer v))
 		   ((in-range-30? v)
