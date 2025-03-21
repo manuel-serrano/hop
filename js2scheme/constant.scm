@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Mon Jun 26 10:39:06 2023 (serrano)                */
-;*    Copyright   :  2013-23 Manuel Serrano                            */
+;*    Last change :  Fri Mar 21 10:23:01 2025 (serrano)                */
+;*    Copyright   :  2013-25 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preallocate constant objects (regexps, literal cmaps,            */
 ;*    closed functions, ronly literal objects, ...)                    */

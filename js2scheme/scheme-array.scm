@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Sun Nov 10 11:09:55 2024 (serrano)                */
-;*    Copyright   :  2017-24 Manuel Serrano                            */
+;*    Last change :  Fri Mar 21 10:35:47 2025 (serrano)                */
+;*    Copyright   :  2017-25 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Array functions.            */
 ;*=====================================================================*/
@@ -357,6 +357,15 @@
 		 `(js-array-fixnum-ref ,(j2s-scheme obj mode return ctx)
 		     ,(j2s-scheme field mode return ctx)
 		     %this))
+		((real)
+		 (let ((v (j2s-scheme field mode return ctx)))
+		    (if (zero? v)
+			`(js-array-fixnum-ref ,(j2s-scheme obj mode return ctx)
+			    0
+			    %this)
+			`(js-array-ref ,(j2s-scheme obj mode return ctx)
+			    ,v
+			    %this))))
 		(else
 		 `(js-array-ref ,(j2s-scheme obj mode return ctx)
 		     ,(j2s-scheme field mode return ctx)
