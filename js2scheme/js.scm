@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Sat Jun 15 08:12:27 2024 (serrano)                */
-;*    Copyright   :  2013-24 Manuel Serrano                            */
+;*    Last change :  Fri Apr  4 06:40:42 2025 (serrano)                */
+;*    Copyright   :  2013-25 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for client side code).                                   */
 ;*=====================================================================*/
@@ -502,7 +502,7 @@
 	 ((not id)
 	  (j2s-error "js" "wrong service import (missing id)" this))
 	 ((svc-import-body? body)
-	  (format "HopService( '~a', undefined )"
+	  (format "HopService('~a', undefined)"
 	     funid funid))
 	 (else
 	  (j2s-error "js" "wrong service import (body should be omitted)" this))))

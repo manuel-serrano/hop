@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Tue Mar  4 08:26:38 2025 (serrano)                */
+#*    Last change :  Fri Apr  4 16:16:51 2025 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -535,7 +535,11 @@ npm-module-sans-rm:
 	   echo "$(MAKE) npm-module-default-build MODULEDIR=\"$(MODULEDIR)\""; \
 	   $(MAKE) npm-module-default-build MODULEDIR=$(MODULEDIR) || exit 1; \
         fi
-	(cd npm; tar --exclude="*.so" -zcf  $(MODULEDIR).tgz $(MODULEDIR))
+	if [ "`dirname $(MODULEDIR)`" = "@hop" ]; then \
+	  (moddir=`basename $(MODULEDIR)`; cd npm/@hop; tar --exclude="*.so" -zcf ../$$moddir.tgz $$moddir); \
+	else \
+	  (cd npm; tar --exclude="*.so" -zcf $(MODULEDIR).tgz $(MODULEDIR)); \
+	fi	
 	@ $(call done,npm/$(MODULEDIR))
 
 npm-module: npm-module-sans-rm
