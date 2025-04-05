@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Tue Jun 18 12:47:04 2024 (serrano)                */
-;*    Copyright   :  2006-24 Manuel Serrano                            */
+;*    Last change :  Fri Apr  4 19:21:33 2025 (serrano)                */
+;*    Copyright   :  2006-25 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
 ;*=====================================================================*/
@@ -594,6 +594,8 @@
 	       ((not (string? ctype))
 		(let ((enc (http-header-field header :hop-serialize)))
 		   (cond
+		      ((not (string? enc))
+		       '())
 		      ((string=? enc "json")
 		       (let ((args (http-header-field header :hop-arguments)))
 			  (trace-item "args=" args)
