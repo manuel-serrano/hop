@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Fri Apr  4 19:21:33 2025 (serrano)                */
+;*    Last change :  Sat Apr  5 08:57:28 2025 (serrano)                */
 ;*    Copyright   :  2006-25 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -400,6 +400,94 @@
 		(map cdr o))))))
 
 ;*---------------------------------------------------------------------*/
+;*    hopjs-encoded->obj ...                                           */
+;*---------------------------------------------------------------------*/
+(define (hopjs-encoded->obj query req)
+   
+   (define (err req::http-request reason)
+      (with-access::http-request req (path query)
+	 (error path (format "Invalid query (~a)" reason) query)))
+   
+   (define (decode-arg req::http-request query::bstring c::char j::long l::long)
+      (case c
+	 ((#\I)
+	  (string->integer query 10 j))
+	 ((#\N)
+	  (string->real (substring query j (+fx j l))))
+	 ((#\S)
+	  (substring query j (+fx j l)))
+	 ((#\s)
+	  (url-decode (substring query j (+fx j l))))
+	 ((#\D)
+	  (let ((v (string->integer query 10 j)))
+	     (milliseconds->date v)))
+	 ((#\J)
+	  (let ((v (substring query j (+fx j l))))
+	     (json-encoded->obj v)))
+	 ((#\j)
+	  (let ((v (url-decode (substring query j (+fx j l)))))
+	     (json-encoded->obj v)))
+	 (else
+	  (err req (format "wrong key `~a'" c)))))
+   
+   (define (decode-args req::http-request query::bstring vec::vector i::long)
+      (let ((slen (string-length query))
+	    (vlen (vector-length vec)))
+	 (let loop ((i i)
+		    (n 0))
+	    (if (=fx i slen)
+		(if (=fx n vlen)
+		    vec
+		    (err req "length mismatch"))
+		(let ((c (string-ref query i)))
+		   (case c
+		      ((#\U)
+		       (vector-set! vec n #unspecified)
+		       (loop (+fx i 1) (+fx n 1)))
+		      ((#\Z)
+		       (vector-set! vec n '())
+		       (loop (+fx i 1) (+fx n 1)))
+		      ((#\T)
+		       (vector-set! vec n #t)
+		       (loop (+fx i 1) (+fx n 1)))
+		      ((#\F)
+		       (vector-set! vec n #f)
+		       (loop (+fx i 1) (+fx n 1)))
+		      (else
+		       (if (>fx i (-fx slen 4))
+			   (err req (format "wrong key `~a'" c))
+			   (let ((l (string->integer query 10 (+fx i 1))))
+			      (if (not l)
+				  (err req "missing size")
+				  (let ((j (string-index query #\. (+fx i 2))))
+				     (cond
+					((not j)
+					 (err req "size mismatch"))
+					((>fx (+fx j (+fx 1 l)) slen)
+					 (err req "size mismatch"))
+					(else
+					 (vector-set! vec n
+					    (decode-arg req query c (+fx j 1) l))
+					 (loop (+fx l (+fx j 1))
+					    (+fx n 1)))))))))))))))
+   
+   (let ((i (string-length "hop-encoding=hopjs&vals="))
+	 (len (string-length query)))
+      (if (>fx i len)
+	  (err req "size missing")
+	  (let ((l (string->integer query 10 i)))
+	     (cond
+		((not l)
+		 (err req "wrong size"))
+		((=fx l 0)
+		 '#())
+		(else
+		 (let ((j (string-index query #\. i)))
+		    (if (not j)
+			(err req "wrong size format")
+			(decode-args req query (make-vector l) (+fx j 1))))))))))
+
+;*---------------------------------------------------------------------*/
 ;*    service-parse-request-get ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-generic (service-parse-request-get svc::hop-service req::http-request)
@@ -436,7 +524,7 @@
 (define (service-parse-request-put svc::hop-service req::http-request)
    (with-trace 'service "service-parse-request-put"
       (with-access::http-request req (query abspath)
-	 (with-access::hop-service svc (ctx)
+	 (with-access::hop-service svc (ctx id)
 	    (if (string? query)
 		(let ((args (cgi-args->list query)))
 		   (trace-item "encoding=" (if (pair? args) (car args) "???"))
@@ -595,7 +683,11 @@
 		(let ((enc (http-header-field header :hop-serialize)))
 		   (cond
 		      ((not (string? enc))
-		       '())
+		       (let ((a (http-header-field header :hopjs-arguments)))
+			  (if (and (string? a)
+				   (string-prefix? "hop-encoding=hopjs&vals=" a))
+			      (vector->list (hopjs-encoded->obj a req))
+			      '())))
 		      ((string=? enc "json")
 		       (let ((args (http-header-field header :hop-arguments)))
 			  (trace-item "args=" args)
