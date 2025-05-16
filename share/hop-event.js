@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Wed Sep 21 11:49:23 2022 (serrano)                */
-/*    Copyright   :  2007-22 Manuel Serrano                            */
+/*    Last change :  Fri May 16 14:47:29 2025 (serrano)                */
+/*    Copyright   :  2007-25 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
 /*=====================================================================*/
@@ -47,7 +47,7 @@ function hop_event_stoppedp(e) {
 function hop_add_event_listener(obj, event, proc, capture) {
    var p = proc;
 
-   if (hop_debug() > 0) {
+   if (window.hop?.debug) {
       var msg = obj + "<-" + event;
       p = hop_callback(proc, hop_callback_listener_context(msg));
    }

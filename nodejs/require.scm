@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Sun Nov 17 12:28:39 2024 (serrano)                */
-;*    Copyright   :  2013-24 Manuel Serrano                            */
+;*    Last change :  Fri May 16 17:46:41 2025 (serrano)                */
+;*    Copyright   :  2013-25 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
 ;*=====================================================================*/
@@ -1739,6 +1739,7 @@
       (trace-item "sopath=" sopath)
       (synchronize soload-mutex
 	 (let ((old (hashtable-get sofile-cache sopath)))
+	    (trace-item "old=" (typeof old))
 	    (if old
 		(values (car old) (cdr old))
 		(multiple-value-bind (proc mod)
@@ -1752,6 +1753,7 @@
 				(lambda (sym)
 				   (dynamic-load-symbol-get sym))))))
 		      (hashtable-put! sofile-cache sopath (cons v mod))
+		      (trace-item "v=" (typeof v) " mod=" mod)
 		      (values v mod))))))))
 
 ;*---------------------------------------------------------------------*/
@@ -2247,6 +2249,7 @@
    
    (define (load-module-js filename lang)
       (with-trace 'require "hopjs-load.load-module-js"
+	 (trace-item "filename=" filename)
 	 (with-access::WorkerHopThread worker (%this prehook parent)
 	    (with-access::JsGlobalObject %this (js-object js-main)
 	       (let ((hopscript (loadso-or-compile filename lang parent))

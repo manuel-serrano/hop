@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Wed Sep 21 12:18:29 2022 (serrano)                */
-/*    Copyright   :  2004-22 Manuel Serrano                            */
+/*    Last change :  Fri May 16 14:48:44 2025 (serrano)                */
+/*    Copyright   :  2004-25 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
 /*=====================================================================*/
@@ -494,7 +494,7 @@ function hop_request_onready(xhr, svc, succ, fail) {
    function onSuccess(xhr, svc, succ) {
       var o;
 
-      if (hop_debug() > 0) {
+      if (window.hop_debug) {
 	 succ = xhr_hop_success_callback(succ);
 	 
 	 try {
@@ -619,7 +619,7 @@ HopFrame.prototype.post = function post(success, opt_or_fail) {
 	 return withHOP(svc, resolve, reject, frame.options, false, arg);
       });
 
-      if (hop_debug() > 0) {
+      if (window.hop_debug) {
 	 var stk;
 	 
 	 try {
@@ -843,7 +843,7 @@ function hop_send_request(svc, sync, success, failure, anim, henv, auth, t, x, l
       }
    }
 
-   if ((hop_debug() > 0)
+   if (window.hop_debug
        && (svc.indexOf("/hop/public/server-debug") != 0)) {
       /* debug mode, get the context and send the client-stack to the */
       /* server, except if we are calling a debug service.            */

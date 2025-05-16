@@ -168,7 +168,7 @@ var __sc_traceHasConsole =
     && ( "groupCollapsed" in window[ "console" ])
     && ( "groupEnd" in window[ "console" ]));
 
-var __sc_traceLevel = ( "hop_debug" in window ) ? window[ "hop_debug" ]() : 0;
+var __sc_traceLevel = window.hop_debug ?? 0;
 var __sc_traceBlockStack = null
 
 var sc_withTrace =
@@ -1283,7 +1283,7 @@ function sc_isBoolean(b) {
 }
 
 #if HOP_RTS_DEBUG
-var dynamic_type_check = ((hop_debug() >= 1) && ("defineProperty" in Object));
+var dynamic_type_check = ((window.hop_debug) && ("defineProperty" in Object));
 
 function sc_Pair(car, cdr) {
    if( dynamic_type_check ) {

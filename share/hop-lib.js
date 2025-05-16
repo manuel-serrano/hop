@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.2.x/share/hop-lib.js                  */
+/*    serrano/prgm/project/hop/hop/share/hop-lib.js                    */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 08:04:30 2007                          */
-/*    Last change :  Sat Jan 27 09:01:50 2018 (serrano)                */
-/*    Copyright   :  2007-20 Manuel Serrano                            */
+/*    Last change :  Fri May 16 14:50:40 2025 (serrano)                */
+/*    Copyright   :  2007-25 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Various HOP library functions.                                   */
 /*=====================================================================*/
@@ -23,7 +23,6 @@
 /*** META ((export hop-realm) (JS hop_realm)) */
 /*** META ((export md5sum) (JS md5sum)) */
 /*** META ((export md5sum-string) (JS hdex_md5)) */
-/*** META ((export hop-debug) (JS hop_debug)) */
 /*** META ((export hop-update) (JS hop_update)) */
 /*** META ((export server) (JS hop_server)) */
 
@@ -64,7 +63,7 @@ function hop_callback( proc, ctx, id ) {
 #if HOP_SCHEME
 /*** META ((export trace) (arity -1)) */
 function hop_trace() {
-   if( hop_debug() > 0 ) {
+   if (window.hop?.debug) {
       var svc = hop_apply_url( hop_service_base() + "/trace", arguments );
       hop_send_request( svc, true, function() {}, function() {}, false, [] );
    }
@@ -424,7 +423,7 @@ function BgL_setTimeoutz00( proc, timeout ) {
 #if HOP_RTS_DEBUG
    var mark = "setTimeout trace:";
 
-   if( hop_debug() > 0 ) {
+   if (window.hop?.debug) {
       if( !sc_isNumber( timeout ) ) {
 	 sc_typeError( "setTimeout", "integer", timeout, 2 );
       }
@@ -469,7 +468,7 @@ function BgL_setIntervalz00( proc, timeout ) {
 #if HOP_RTS_DEBUG
    var mark = "setInterval trace:";
 
-   if( hop_debug() > 0 ) {
+   if (window.hop?.debug) {
       if( !sc_isNumber( timeout ) ) {
 	 sc_typeError( "setInterval", "integer", timeout, 2 );
       }
@@ -515,7 +514,7 @@ function sc_after( timeout, proc ) {
 #if HOP_RTS_DEBUG
    var mark = "After trace:";
    
-   if( hop_debug() > 0 ) {
+   if (window.hop?.debug) {
       if( !sc_isNumber( timeout ) ) {
 	 sc_typeError( "after", "integer", timeout, 2 );
       }
@@ -558,7 +557,7 @@ function sc_after( timeout, proc ) {
 /*** META ((export timeout) (arity #t)) */
 function sc_timeout( tm, proc ) {
 #if HOP_RTS_DEBUG
-   if( hop_debug() > 0 ) {
+   if (window.hop?.debug) {
       if( !sc_isNumber( tm ) ) {
 	 sc_typeError( "timeout", "integer", tm, 2 );
       }

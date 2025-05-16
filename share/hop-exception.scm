@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun  4 15:51:42 2009                          */
-;*    Last change :  Tue May 14 13:59:17 2019 (serrano)                */
-;*    Copyright   :  2009-19 Manuel Serrano                            */
+;*    Last change :  Fri May 16 15:32:53 2025 (serrano)                */
+;*    Copyright   :  2009-25 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side debugging facility (included when Hop launched in    */
 ;*    debug mode).                                                     */
@@ -254,7 +254,7 @@
 			(klass (frame-klass rest))
 			(file (js-file file)))
 		     (if (and (pair? jsline)
-			      (string=? ((@ hop_idiom js)) "scheme"))
+			      (string=? (@ hop_idiom js) "scheme"))
 			 (list
 			    (<TR:LINE> klass (js-name name)
 			       (<SPAN> :class "hop-exception-js"
@@ -270,7 +270,7 @@
 			(klass (frame-klass rest))
 			(file (js-file file)))
 		     (if (and (pair? jsline)
-			      (string=? ((@ hop_idiom js)) "scheme"))
+			      (string=? (@ hop_idiom js) "scheme"))
 			 (list
 			    (<TR:LINE> klass (js-name name)
 			       (<SPAN> :class "hop-exception-js"
@@ -493,6 +493,6 @@
 ;*---------------------------------------------------------------------*/
 ;*    install the default error handler ...                            */
 ;*---------------------------------------------------------------------*/
-(when (>= (hop-debug) 1)
+(when (and window.hop_debug)
    (set! hop_current_stack_context (list document.location.href))
    (set! window.onerror hop-onerror-handler))

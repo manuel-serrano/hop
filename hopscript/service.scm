@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Thu Jul 25 18:03:21 2024 (serrano)                */
-;*    Copyright   :  2013-24 Manuel Serrano                            */
+;*    Last change :  Fri May 16 11:03:38 2025 (serrano)                */
+;*    Copyright   :  2013-25 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
 ;*=====================================================================*/
@@ -179,6 +179,15 @@
 (define-method (xml-primitive-value o::JsHopFrame ctx)
    (with-access::JsHopFrame o (path)
       (hopframe->string o ctx)))
+
+;*---------------------------------------------------------------------*/
+;*    xml-to-errstring ::JsHopFrame ...                                */
+;*---------------------------------------------------------------------*/
+(define-method (xml-to-errstring o::JsHopFrame)
+   (with-access::JsHopFrame o (%this path)
+      ;; cannot use hopframe->string because might be invoked from
+      ;; a none in a JS thread
+      (string-append "http://..." path)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-donate ::JsService ...                                        */
