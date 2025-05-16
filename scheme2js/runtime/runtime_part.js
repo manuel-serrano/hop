@@ -1,6 +1,6 @@
 /*=====================================================================*/
 /*    Author      :  Florian Loitsch                                   */
-/*    Copyright   :  2007-20 Florian Loitsch, see LICENSE file         */
+/*    Copyright   :  2007-25 Florian Loitsch, see LICENSE file         */
 /*    -------------------------------------------------------------    */
 /*    This file is part of Scheme2Js.                                  */
 /*                                                                     */
@@ -1184,16 +1184,15 @@ var sc_asin = Math.asin;
            (arity 1))
 */
 var sc_acos = Math.acos;
-/*** META ((export #t)
+/*** META ((export atan atan-1fl atan-2fl atan-2fl-ur)
            (arity -2))
 */
 var sc_atan = Math.atan;
-
-/*** META ((export #t)
+/*** META ((export sqrt sqrtfl sqrtfl-ur)
            (arity 1))
 */
 var sc_sqrt = Math.sqrt;
-/*** META ((export #t)
+/*** META ((export pow powfl)
            (arity 2))
 */
 var sc_expt = Math.pow;
