@@ -27,7 +27,7 @@ jobs:
       - run: sudo apt install -y automake libtool
       - run: sudo apt install -y libgmp-dev libgmp3-dev libgmp10
 
-      - run: wget -nv ftp://ftp-sop.inria.fr/indes/fp/Bigloo/bigloo-unstable.tar.gz -O /tmp/bigloo-unstable.tar.gz > /dev/null
+      - run: wget -nv http://www-sop.inria.fr/indes/fp/Bigloo/download/bigloo-unstable.tar.gz -O /tmp/bigloo-unstable.tar.gz > /dev/null
       - run: (cd /tmp && tar xfz /tmp/bigloo-unstable.tar.gz)
       - run: (cd /tmp/bigloo-unstable && ./configure && make && sudo make install)
 
