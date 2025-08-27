@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Sat Apr  5 06:01:49 2025 (serrano)                */
+#*    Last change :  Tue Aug 26 16:21:09 2025 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -484,7 +484,7 @@ predistrib:
 #*---------------------------------------------------------------------*/
 .PHONY: npm npm-module npm-module-default-build
 
-MODULES=exif @hop/fontifier hop hopc @hop/markdown readlines syslog
+MODULES=exif @hop/fontifier hop hopc @hop/markdown readlines syslog system
 MODULEDIR=$(MODULE)-$(HOPRELEASE)-$(HOPBUILDTAG)
 
 npm: npm-dir
