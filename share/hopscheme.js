@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.1.x/share/hopscheme.js                */
+/*    serrano/prgm/project/hop/hop/share/hopscheme.js                  */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 24 14:35:05 2007                          */
-/*    Last change :  Mon Aug 29 13:33:19 2016 (serrano)                */
-/*    Copyright   :  2007-16 Manuel Serrano                            */
+/*    Last change :  Fri May 16 14:19:58 2025 (serrano)                */
+/*    Copyright   :  2007-25 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop adpatation of the scheme2js runtime.                         */
 /*=====================================================================*/
@@ -82,6 +82,10 @@ sc_Char.prototype.hop_typeof = function() {
 /*    Misc                                                             */
 /*---------------------------------------------------------------------*/
 #if HOP_JAVASCRIPT
+function sc_currentDate() {
+   return new Date();
+}
+
 function dom_get_element_by_id( id ) {
    return document.getElementById( id );
 }

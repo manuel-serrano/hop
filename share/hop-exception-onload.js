@@ -1,6 +1,6 @@
 var __onload = undefined;
 
-if( hop_debug() >= 1 ) {
+if (window.hop?.debug) {
    var prop = Object.getOwnPropertyDescriptor( window, "onload" );
 
    if( "get" in prop ) {

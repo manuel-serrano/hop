@@ -14,7 +14,7 @@
 /*    -------------------------------------------------------------    */
 /*    Builtin modules                                                  */
 /*---------------------------------------------------------------------*/
-if( !('hop' in window) ) {
+if (!('hop' in window)) {
    window.hop = {
       'isServer': false,
       'version': "@VERSION@",
@@ -32,8 +32,15 @@ if( !('hop' in window) ) {
       '%requires': {},
       'List': sc_list,
       'Cons': sc_cons,
-      'config': "config"
+      'config': "config",
    };
-   window.hop[ '%modules' ].hop = window.hop;
+   window.hop['%modules'].hop = window.hop;
 }
 
+if (!('hop_debug' in window)) {
+  window.hop_debug = 0;
+}
+
+if (!('hop_idiom' in window)) {
+  window.hop_idiom = "javascript";
+}

@@ -4,8 +4,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Mon Jul  8 10:54:47 2024 (serrano)                */
-/*    Copyright   :  2006-24 Manuel Serrano                            */
+/*    Last change :  Fri May 16 14:47:12 2025 (serrano)                */
+/*    Copyright   :  2006-25 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
 /*    HOP script libraries are supposed *not* to check features        */
@@ -50,8 +50,8 @@ function hop_service_base() {
 /*---------------------------------------------------------------------*/
 /*    Initial autoconfiguration                                        */
 /*---------------------------------------------------------------------*/
-if( !("defineProperty" in Object) ) {
-   Object.defineProperty = function( obj, key, props ) {
+if (!("defineProperty" in Object)) {
+   Object.defineProperty = function(obj, key, props) {
       obj[ key ] = props.value;
    }
 }
@@ -59,7 +59,7 @@ if( !("defineProperty" in Object) ) {
 /*---------------------------------------------------------------------*/
 /*    HopServer                                                        */
 /*---------------------------------------------------------------------*/
-function HopServer( host, port, version, ssl, authorization ) {
+function HopServer(host, port, version, ssl, authorization) {
 #if HOP_SCHEME
    this.version = version ? version : hop_version();
 #else
@@ -69,78 +69,91 @@ function HopServer( host, port, version, ssl, authorization ) {
    this.port = port;
    this.ssl = ssl;
    this.authorization = authorization;
-   Object.defineProperty( this, "name", { value: "Hop" } );
-   Object.defineProperty( this, "url", { value: "@URL@" } );
-   Object.defineProperty( this, "backend", { value: "@BACKEND@" } );
-   Object.defineProperty( this, "state", { value: 0, writable: true } );
+   Object.defineProperty(this, "name", { value: "Hop" });
+   Object.defineProperty(this, "url", { value: "@URL@" });
+   Object.defineProperty(this, "backend", { value: "@BACKEND@" });
+   Object.defineProperty(this, "state", { value: 0, writable: true });
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_server ...                                                   */
+/*---------------------------------------------------------------------*/
+let hop_server;
+
+/*---------------------------------------------------------------------*/
+/*    InitHopServer ...                                                */
+/*---------------------------------------------------------------------*/
+function InitHopServer(host, port) {
+   hop_server = new HopServer(host, port, "@VERSION@");
+   return hop_server;
 }
 
 #if HOP_SCHEME
-Object.defineProperty( HopServer.prototype, "sc_toDisplayString", {
+Object.defineProperty(HopServer.prototype, "sc_toDisplayString", {
    value: function() { return "[HopServer]"; }
-} );
-Object.defineProperty( HopServer.prototype, "sc_toWriteString", {
+});
+Object.defineProperty(HopServer.prototype, "sc_toWriteString", {
    value: function() { return "[HopServer]"; }
-} );
+});
 #endif
 
-Object.defineProperty( HopServer.prototype, "toString", {
+Object.defineProperty(HopServer.prototype, "toString", {
    value: function() { return "[HopServer]"; }
-} );
+});
 
-Object.defineProperty( HopServer.prototype, "hop_add_event_listener", {
+Object.defineProperty(HopServer.prototype, "hop_add_event_listener", {
    value: hop_add_server_event_listener
-} );
-Object.defineProperty( HopServer.prototype, "hop_remove_event_listener", {
+});
+Object.defineProperty(HopServer.prototype, "hop_remove_event_listener", {
    value: hop_remove_server_event_listener
-} );
+});
 
-Object.defineProperty( HopServer.prototype, "reconnect", {
-   value: function( wait, max ) {
-      if( this.state === 3 || this.state === "close" ) {
-	 if( "reconnect" in hop_servevt_proxy ) {
-	    hop_servevt_proxy.reconnect( wait, max );
+Object.defineProperty(HopServer.prototype, "reconnect", {
+   value: function(wait, max) {
+      if (this.state === 3 || this.state === "close") {
+	 if ("reconnect" in hop_servevt_proxy) {
+	    hop_servevt_proxy.reconnect(wait, max);
 	 }
       }
    }
-} );
+});
 
-Object.defineProperty( HopServer.prototype, "addEventListener", {
-   value: function( event, proc, capture ) {
-      return hop_add_event_listener( this, event, proc, capture );
+Object.defineProperty(HopServer.prototype, "addEventListener", {
+   value: function(event, proc, capture) {
+      return hop_add_event_listener(this, event, proc, capture);
    }
-} );
+});
 
-Object.defineProperty( HopServer.prototype, "removeEventListener", {
-   value: function( event, proc, capture ) {
-      return hop_remove_event_listener( this, event, proc, capture );
+Object.defineProperty(HopServer.prototype, "removeEventListener", {
+   value: function(event, proc, capture) {
+      return hop_remove_event_listener(this, event, proc, capture);
    }
-} );
+});
 
-Object.defineProperty( HopServer.prototype, "unserializer", {
-   value: function( v ) {
-      var srv = new HopServer( v[ 0 ], v[ 1 ], v[ 4 ], v[ 2 ], v[ 3 ] );
+Object.defineProperty(HopServer.prototype, "unserializer", {
+   value: function(v) {
+      var srv = new HopServer(v[ 0 ], v[ 1 ], v[ 4 ], v[ 2 ], v[ 3 ]);
       var plist = v[ 5 ];
       
-      while( sc_isPair( plist ) ) {
-	 srv[ sc_keyword2jsstring( plist.__hop_car ) ] = plist.__hop_cdr.__hop_car;
+      while (sc_isPair(plist)) {
+	 srv[ sc_keyword2jsstring(plist.__hop_car) ] = plist.__hop_cdr.__hop_car;
 	 plist = plist.__hop_cdr.__hop_cdr;
       }
       
       return srv;
    }
-} );
+});
 
-Object.defineProperty( HopServer.prototype, "reactProxy", {
-   value: function( event, defval ) {
-      var proxy = hop.reactProxy( { value: defval } );
-      hop_add_event_listener( this,
+Object.defineProperty(HopServer.prototype, "reactProxy", {
+   value: function(event, defval) {
+      var proxy = hop.reactProxy({ value: defval });
+      hop_add_event_listener(this,
 	 event,
-	 function( evt ) { proxy.value = evt.value },
-	 false );
+	 function(evt) { proxy.value = evt.value },
+	 false);
       return proxy;
    }
-} );
+});
 
 HopServer.prototype.import = function(base) {
 }
@@ -158,44 +171,44 @@ var hop_enable_location_event = @LOCEVENT@;
 /*---------------------------------------------------------------------*/
 function hop_Config() {
    /* body */
-   if( ("body" in document) && (document.body != null) ) {
+   if (("body" in document) && (document.body != null)) {
       this.body = document.body;
    } else {
-      if( ("documentElement" in document) && (document.documentElement != null) ) {
+      if (("documentElement" in document) && (document.documentElement != null)) {
 	 this.body = document.documentElement;
       } else {
-	 this.body = document.getElementsByTagName( "body" )[ 0 ];
+	 this.body = document.getElementsByTagName("body")[ 0 ];
       }
    }
       
    /* cpu speed */
    this.cpu_speed = 100;
-   if( navigator.platform.indexOf( "armv6" ) >= 0 ) this.cpu_speed = 40;
-   if( navigator.platform.indexOf( "armv5" ) >= 0 ) this.cpu_speed = 30;
-   if( navigator.platform.indexOf( "WinCE" ) >= 0 ) this.cpu_speed = 30;
+   if (navigator.platform.indexOf("armv6") >= 0) this.cpu_speed = 40;
+   if (navigator.platform.indexOf("armv5") >= 0) this.cpu_speed = 30;
+   if (navigator.platform.indexOf("WinCE") >= 0) this.cpu_speed = 30;
 
    /* gpu speed */
    this.gpu_speed = 100;
-   if( navigator.platform.indexOf( "armv6" ) >= 0 ) this.gpu_speed = 30;
+   if (navigator.platform.indexOf("armv6") >= 0) this.gpu_speed = 30;
 
    /* js speed */
    this.js_speed = 50;
 
    /* pointing device */
-   this.is_tablet = ( navigator.userAgent.indexOf( "Tablet" ) >= 0 );
+   this.is_tablet = (navigator.userAgent.indexOf("Tablet") >= 0);
 
    /* html5 */
-   this.html5_video = "play" in document.createElement( "video" );
-   var audio = document.createElement( "audio" );
+   this.html5_video = "play" in document.createElement("video");
+   var audio = document.createElement("audio");
 
-   if( !("HTMLAudioElement" in window) ) {
+   if (!("HTMLAudioElement" in window)) {
       this.html5_audio = false;
    } else {
       this.html5_audio = 
 	 ("play" in audio) 
 	 && (audio.constructor === window[ "HTMLAudioElement" ])
-	 && ((audio.canPlayType( "audio/ogg" ) != "")
-             || (audio.canPlayType( "audio/mpeg" ) != ""));
+	 && ((audio.canPlayType("audio/ogg") != "")
+             || (audio.canPlayType("audio/mpeg") != ""));
    }
 
    /* Geolocation */
@@ -222,56 +235,56 @@ function hop_Config() {
    this.uint8array = ("Uint8Array" in window);
 
    /* navigator specific configuration */
-   if( navigator.userAgent.indexOf( "MSIE" ) >= 0 ) {
+   if (navigator.userAgent.indexOf("MSIE") >= 0) {
       this.js_speed = 20;
       this.navigator_family = "msie";
       this.mouse_left_button = 1;
       this.inline_image = false;
-      if( navigator.userAgent.indexOf( "MSIE 6.0" ) >= 0 ) {
+      if (navigator.userAgent.indexOf("MSIE 6.0") >= 0) {
 	 hop_enable_location_event = false;
       }
-   } else if( navigator.userAgent.indexOf( "Opera" ) >= 0 ) {
+   } else if (navigator.userAgent.indexOf("Opera") >= 0) {
       this.js_speed = 70;
       this.navigator_family = "opera";
       this.mouse_left_button = 0;
       this.inline_image = true;
-   } else if( navigator.userAgent.indexOf( "Chrome" ) >= 0 ) {
+   } else if (navigator.userAgent.indexOf("Chrome") >= 0) {
       this.js_speed = 100;
       this.navigator_family = "chrome";
       this.mouse_left_button = 0;
       this.inline_image = true;
       this.css = 3;
       this.css_transition = true;
-      if( !("Window" in window) || window.Window === undefined ) {
+      if (!("Window" in window) || window.Window === undefined) {
 	 window.Window = window.constructor;
       }
-   } else if( navigator.userAgent.indexOf( "Safari" ) >= 0 ) {
+   } else if (navigator.userAgent.indexOf("Safari") >= 0) {
       this.js_speed = 80;
       this.navigator_family = "safari";
       this.mouse_left_button = 0;
       this.inline_image = true;
       this.css_transition = true;
-   } else if( navigator.userAgent.indexOf( "WebKit" ) >= 0 ) {
+   } else if (navigator.userAgent.indexOf("WebKit") >= 0) {
       this.navigator_family = "webkit";
       this.js_speed = 80;
       this.mouse_left_button = 0;
       this.inline_image = true;
       this.css_transition = true;
-   } else if( navigator.userAgent.indexOf( "KHTML" ) >= 0 ) {
+   } else if (navigator.userAgent.indexOf("KHTML") >= 0) {
       this.navigator_family = "khtml";
       this.mouse_left_button = 1;
       this.inline_image = true;
-   } else if( navigator.userAgent.indexOf( "Mozilla" ) >= 0 ) {
-      if( navigator.userAgent.match( /(?:[4-9]|[1-9][0-9]+).[0-9][^ ]*$/ ) ) {
+   } else if (navigator.userAgent.indexOf("Mozilla") >= 0) {
+      if (navigator.userAgent.match(/(?:[4-9]|[1-9][0-9]+).[0-9][^ ]*$/)) {
          /* Firefox 4.0 */
          this.js_speed = 100;	    
          this.css = 3;
          this.css_transition = true;
-      } else if( navigator.userAgent.match( /3.[56][^ ]*$/ ) ) {
+      } else if (navigator.userAgent.match(/3.[56][^ ]*$/)) {
          /* Firefox 3.5, 3.6 */
          this.js_speed = 75;	    
          this.css = 3;
-      } else if( navigator.userAgent.match( /3.0[^ ]*$/ ) ) {
+      } else if (navigator.userAgent.match(/3.0[^ ]*$/)) {
          /* Firefox 3.0, 3.1 */
          this.js_speed = 60;	    
       } else {
@@ -283,8 +296,8 @@ function hop_Config() {
       this.inline_image = true;
       this.filtered_errors = ["tipElement.ownerDocument is null"];
    } else {
-      alert( "Unknown navigator (" + navigator.userAgent +
-	     "), using default settings..." );
+      alert("Unknown navigator (" + navigator.userAgent +
+	     "), using default settings...");
    }
    
    /* Screen Dimensions */
@@ -314,63 +327,63 @@ var hop_config = new hop_Config();
 /*    hop_config_get ...                                               */
 /*---------------------------------------------------------------------*/
 /*** META ((export hop-config) (arity #f)) */
-function hop_config_get( key ) {
-   if( arguments.length == 0 ) {
+function hop_config_get(key) {
+   if (arguments.length == 0) {
       var l = null;
       
-      for( var p in hop_config ) {
-	 var c = new sc_Pair( sc_jsstring2symbol( p ), hop_config[ p ]);
-	 l = new sc_Pair( c, l );
+      for (var p in hop_config) {
+	 var c = new sc_Pair(sc_jsstring2symbol(p), hop_config[ p ]);
+	 l = new sc_Pair(c, l);
       }
       
       return l;
-   } else if( !sc_isSymbol( key ) && !sc_isKeyword( key ) ) {
+   } else if (!sc_isSymbol(key) && !sc_isKeyword(key)) {
       return false;
-   } else if( sc_isSymbol( key ) ) {
-      return hop_config[ sc_symbol2jsstring( key ) ];
+   } else if (sc_isSymbol(key)) {
+      return hop_config[ sc_symbol2jsstring(key) ];
    } else {
-      return hop_config[ sc_keyword2jsstring( key ) ];
+      return hop_config[ sc_keyword2jsstring(key) ];
    }
 }
 
 /*---------------------------------------------------------------------*/
 /*    cloneScriptNode ...                                              */
 /*---------------------------------------------------------------------*/
-function cloneScriptNode( node ) {
-   if( node.nodeType != 1 ) {
+function cloneScriptNode(node) {
+   if (node.nodeType != 1) {
       return node;
    }
 
-   if( (node.tagName !== "SCRIPT") && (node.tagName !== "script") ) {
+   if ((node.tagName !== "SCRIPT") && (node.tagName !== "script")) {
       var childs = node.childNodes;
 
-      for( var i = childs.length - 1; i >= 0; i-- ) {
-	 var n = cloneScriptNode( childs[ i ] );
-	 if( n != childs[ i ] ) {
-	    node.replaceChild( n, childs[ i ] );
+      for (var i = childs.length - 1; i >= 0; i--) {
+	 var n = cloneScriptNode(childs[ i ]);
+	 if (n != childs[ i ]) {
+	    node.replaceChild(n, childs[ i ]);
 	 }
       }
 
       return node;
    } else {
-      var t = document.createTextNode( node.innerHTML );
-      var s = document.createElement( "SCRIPT" );
+      var t = document.createTextNode(node.innerHTML);
+      var s = document.createElement("SCRIPT");
 
       s.id = node.id;
 
-      if( "src" in node && node.src != "" ) {
+      if ("src" in node && node.src != "") {
 	 s.src = node.src;
       }
-      if( "onload" in node && node.onload != "" ) {
+      if ("onload" in node && node.onload != "") {
 	 s.onload = node.onload;
       }
-      if( "onerror" in node && node.onerror != "" ) {
+      if ("onerror" in node && node.onerror != "") {
 	 s.onerror = node.onerror;
       }
-      if( "text" in s ) {
+      if ("text" in s) {
 	 s.text = node.innerHTML;
       } else {
-	 s.appendChild( t );
+	 s.appendChild(t);
       }
 
       return s;
@@ -384,11 +397,11 @@ function cloneScriptNode( node ) {
 /*    textual scripts.                                                 */
 /*---------------------------------------------------------------------*/
 ((function () {
-   var tmp = document.createElement( "div" );
+   var tmp = document.createElement("div");
 
-   hop_config.body.appendChild( tmp );
+   hop_config.body.appendChild(tmp);
    tmp.innerHTML = "<script type='text/javascript'>hop_config.eval_innerHTML = true;<\u002fscript>";
-   hop_config.body.removeChild( tmp );
+   hop_config.body.removeChild(tmp);
 }))
 
 /*---------------------------------------------------------------------*/
@@ -398,32 +411,32 @@ function cloneScriptNode( node ) {
 /*    the innerHTML field of their parent to be cloned.                */
 /*---------------------------------------------------------------------*/
 ((function () {
-   var tmp = document.createElement( "div" );
+   var tmp = document.createElement("div");
    tmp.innerHTML = "<script type='text/javascript'>hop_config.clone_innerHTML_tmp = 1;<\u002fscript>";
 
    hop_config.clone_innerHTML_tmp = 0;
 
-   hop_config.body.appendChild( tmp );
-   hop_config.body.removeChild( tmp );
+   hop_config.body.appendChild(tmp);
+   hop_config.body.removeChild(tmp);
 
-   if( hop_config.clone_innerHTML_tmp == 1 ) {
+   if (hop_config.clone_innerHTML_tmp == 1) {
       // cloning not needed because the script got evaluated
       hop_config.clone_innerHTML = false;
       } else {
       // check if cloning is effective
       var s = tmp.childNodes[ 0 ];
-      tmp.removeChild( s );
-      tmp.appendChild( cloneScriptNode( s ) );
+      tmp.removeChild(s);
+      tmp.appendChild(cloneScriptNode(s));
 
-      hop_config.body.appendChild( tmp );
-      hop_config.body.removeChild( tmp );
+      hop_config.body.appendChild(tmp);
+      hop_config.body.removeChild(tmp);
 
-      if( hop_config.clone_innerHTML_tmp == 1 ) {
+      if (hop_config.clone_innerHTML_tmp == 1) {
 	 hop_config.clone_innerHTML = true;
       } else {
-         alert( "hop auto-configuration: cannot get innerHTML to evaluate script nodes!" );
-alert( "hop_config.eval_innerHTML: " + hop_config.eval_innerHTML );
-	 throw new Error( "innerHTML-set!: cannot get innerHTML to evaluate script nodes!" );
+         alert("hop auto-configuration: cannot get innerHTML to evaluate script nodes!");
+alert("hop_config.eval_innerHTML: " + hop_config.eval_innerHTML);
+	 throw new Error("innerHTML-set!: cannot get innerHTML to evaluate script nodes!");
       }
    }
    
@@ -435,20 +448,20 @@ alert( "hop_config.eval_innerHTML: " + hop_config.eval_innerHTML );
 /*---------------------------------------------------------------------*/
 var hop_json_parse;
 
-if( "JSON" in window ) {
+if ("JSON" in window) {
    hop_json_parse = JSON.parse;
 } else {
-   hop_json_parse = function( o ) { return hop_unjson( eval( o ) ); };
+   hop_json_parse = function(o) { return hop_unjson(eval(o)); };
 }
 
 /*---------------------------------------------------------------------*/
 /*    hop_properties_to_string ...                                     */
 /*---------------------------------------------------------------------*/
-function hop_properties_to_string( obj ) {
+function hop_properties_to_string(obj) {
    var res = "";
    var i = 0;
-   for( var p in obj ) {
-      if( i === 10 ) {
+   for (var p in obj) {
+      if (i === 10) {
 	 res += p + "\n";
 	 i = 0;
       } else {
@@ -462,11 +475,11 @@ function hop_properties_to_string( obj ) {
 /*---------------------------------------------------------------------*/
 /*    hop_properties_values_to_string ...                              */
 /*---------------------------------------------------------------------*/
-function hop_properties_values_to_string( obj ) {
+function hop_properties_values_to_string(obj) {
    var res = "";
    var i = 0;
-   for( var p in obj ) {
-      if( i === 10 ) {
+   for (var p in obj) {
+      if (i === 10) {
 	 res += p + "=" + obj[ p ] + "\n";
 	 i = 0;
       } else {
@@ -483,23 +496,23 @@ function hop_properties_values_to_string( obj ) {
 /*** META ((export html-element?) (arity 1)) */
 var hop_is_html_element;
 
-if( !("HTMLElement" in window) ) {
-   hop_is_html_element = function hop_is_html_element( obj ) {
+if (!("HTMLElement" in window)) {
+   hop_is_html_element = function hop_is_html_element(obj) {
       return (obj != null)
               && (((obj instanceof Object) || (typeof obj == "object"))
 	      && (typeof obj.innerHTML == "string"));
    } 
 } else {
-   var ifr = document.createElement( "iframe" );
+   var ifr = document.createElement("iframe");
 
-   if( ifr instanceof HTMLElement ) {
-      hop_is_html_element = function hop_is_html_element( obj ) {
+   if (ifr instanceof HTMLElement) {
+      hop_is_html_element = function hop_is_html_element(obj) {
 	 return (obj != null) && (obj instanceof HTMLElement);
       }
    } else {
       /* this is (an old) konqueror */
       var ifproto = ifr.__proto__;
-      hop_is_html_element = function hop_is_html_element( obj ) {
+      hop_is_html_element = function hop_is_html_element(obj) {
 	 return (obj instanceof HTMLElement) || (obj.__proto__ == ifproto);
       }
    }
@@ -511,40 +524,40 @@ if( !("HTMLElement" in window) ) {
 var hop_is_dom_form_element;
 
 try {
-   if( undefined instanceof HTMLFormElement ) {
+   if (undefined instanceof HTMLFormElement) {
       /* this test is always false but it checks if HTMLFormElement */
       /* is a plain JavaScript class. See below the catch clause.   */
-      hop_is_dom_form_element = function hop_is_dom_form_element( obj ) {
+      hop_is_dom_form_element = function hop_is_dom_form_element(obj) {
 	 return false;
       };
    } else {
-      hop_is_dom_form_element = function hop_is_dom_form_element( obj ) {
+      hop_is_dom_form_element = function hop_is_dom_form_element(obj) {
 	 return obj instanceof HTMLFormElement;
       };
    }
-} catch( e ) {
+} catch(e) {
    /* on some browsers (guess how, always the same), HTMLFormElement is */
    /* an opaque object that is not implemented as a plain JavaScript    */
    /* class (i.e., a JavaScript function), hence instanceof cannot be   */
    /* used.                                                             */
-   hop_is_dom_form_element = function hop_is_dom_form_element( obj ) {
-      return hop_is_html_element( obj ) && (obj.tagName === "form");
+   hop_is_dom_form_element = function hop_is_dom_form_element(obj) {
+      return hop_is_html_element(obj) && (obj.tagName === "form");
    };
 }
   
-if( !("HTMLCollection" in window) ) {
+if (!("HTMLCollection" in window)) {
    window.HTMLCollection = function() { return false; };
 }
 
-if( !("HTMLInputElement" in window) ) {
+if (!("HTMLInputElement" in window)) {
    window.HTMLInputElement = function() { return false; };
 }
 
-if( !("HTMLTextAreaElement" in window) ) {
+if (!("HTMLTextAreaElement" in window)) {
    window.HTMLTextAreaElement = function() { return false; };
 }
 
-if( !("HTMLSelectElement" in window) ) {
+if (!("HTMLSelectElement" in window)) {
    window.HTMLSelectElement = function() { return false; };
 }
 
@@ -553,12 +566,12 @@ if( !("HTMLSelectElement" in window) ) {
 /*---------------------------------------------------------------------*/
 var hop_is_dom_formdata_element;
 
-if( "FormData" in window ) {
-   hop_is_dom_formdata_element = function( o ) {
+if ("FormData" in window) {
+   hop_is_dom_formdata_element = function(o) {
       return o && o instanceof FormData;
    }
 } else {
-   hop_is_dom_formdata_element = function( o ) {
+   hop_is_dom_formdata_element = function(o) {
       return false;
    }
 }
@@ -570,28 +583,28 @@ if( "FormData" in window ) {
 
 var hop_make_xml_http_request;
 
-if( "XMLHttpRequest" in window ) {
+if ("XMLHttpRequest" in window) {
    var req = new XMLHttpRequest();
    
    hop_make_xml_http_request = function hop_make_xml_http_request() {
       return new XMLHttpRequest();
    }
-   if( "multipart" in req ) {
+   if ("multipart" in req) {
       hop_config.xhr_multipart = true;
-      if( hop_config.server_event === "long polling" ) {
+      if (hop_config.server_event === "long polling") {
          hop_config.server_event = "xhr_multipart";
       }
    }
 } else {
-   if( "ActiveXObject" in window ) {
+   if ("ActiveXObject" in window) {
       hop_make_xml_http_request = function hop_make_xml_http_request() {
-	 function hop_make_activexobject( ax ) {
+	 function hop_make_activexobject(ax) {
 	    var o = new Object();
-	    var a = new ActiveXObject( ax );
+	    var a = new ActiveXObject(ax);
 
 	    o.activex = a;
 	    
-	    o.open = function( msg, svc, sync ) {
+	    o.open = function(msg, svc, sync) {
 	       a.onreadystatechange = function() {
 		  o.status = a.status;
 		  o.readyState = a.readyState;
@@ -599,23 +612,23 @@ if( "XMLHttpRequest" in window ) {
 		  
 		  o.onreadystatechange();
 	       }
-	       if( sync ) {
-		  var r = a.open( msg, svc, sync );
+	       if (sync) {
+		  var r = a.open(msg, svc, sync);
 		  o.status = a.status;
 		  o.readyState = a.readyState;
 		  o.responseText = a.responseText;
 		  
 		  return r;
 	       } else 
-		  return a.open( msg, svc, sync );
+		  return a.open(msg, svc, sync);
 	    }
 	    
-	    o.send = function( v ) {
-	       return a.send( v );
+	    o.send = function(v) {
+	       return a.send(v);
 	    }
 	    
-	    o.setRequestHeader = function( v ) {
-	       return a.setRequestHeader( v );
+	    o.setRequestHeader = function(v) {
+	       return a.setRequestHeader(v);
 	    };
 	    
 	    return o;
@@ -623,23 +636,23 @@ if( "XMLHttpRequest" in window ) {
 	 try {
 	    /* don't try to play with prototypes, because   */
 	    /* ActiveXObject are not fullfledged JS objects */
-	    return hop_make_activexobject( "Msxml2.XMLHTTP" );
-	 } catch( e ) {
+	    return hop_make_activexobject("Msxml2.XMLHTTP");
+	 } catch(e) {
 	    try {
-	       return hop_make_activexobject( "Microsoft.XMLHTTP" );
-	    } catch( e ) {
-	       alert( "*** ERROR: Don't know how to create XMLHttpRequest" );
+	       return hop_make_activexobject("Microsoft.XMLHTTP");
+	    } catch(e) {
+	       alert("*** ERROR: Don't know how to create XMLHttpRequest");
 	    }
 	 }
       }
    } else {
-      if( "XMLHttpRequest" in window ) {
+      if ("XMLHttpRequest" in window) {
 	 hop_make_xml_http_request = function hop_make_xml_http_request() {
 	    return new XMLHttpRequest();
 	 }
       } else {
 	 hop_make_xml_http_request = function hop_make_xml_http_request() {
-	    alert( "*** ERROR: Don't know how to create XMLHttpRequest" );
+	    alert("*** ERROR: Don't know how to create XMLHttpRequest");
 	 }
       }
    }
@@ -648,11 +661,11 @@ if( "XMLHttpRequest" in window ) {
 /*---------------------------------------------------------------------*/
 /*    web socket                                                       */
 /*---------------------------------------------------------------------*/
-if( "MozWebSocket" in window ) {
+if ("MozWebSocket" in window) {
   window.WebSocket = window.MozWebSocket;
 }
 
-if( "WebSocket" in window ) {
+if ("WebSocket" in window) {
    hop_config.server_event = "websocket";
    hop_config.websocket = true;
 }
@@ -664,137 +677,137 @@ var hop_header_autoconf = hop_make_xml_http_request();
 var hop_header_content_type;
 var hop_header_hop_serialize;
 
-if( typeof hop_header_autoconf.getResponseHeader == "function" ) {
-   hop_header_content_type = function hop_header_content_type( http ) {
-      var h = http.getResponseHeader( "Content-Type" );
+if (typeof hop_header_autoconf.getResponseHeader == "function") {
+   hop_header_content_type = function hop_header_content_type(http) {
+      var h = http.getResponseHeader("Content-Type");
 
-      if( h ) {
+      if (h) {
 	 return h;
       } else {
 	 return "application/text";
       }
    }
-   hop_header_hop_serialize = function hop_header_hop_serialize( http ) {
-      var h = http.getResponseHeader( "Hop-Serialize" );
+   hop_header_hop_serialize = function hop_header_hop_serialize(http) {
+      var h = http.getResponseHeader("Hop-Serialize");
 
-      if( h ) {
+      if (h) {
 	 return h;
       } else {
 	 return "javascript";
       }
    }
 } else {
-   hop_header_content_type = function hop_header_content_type( http ) {
+   hop_header_content_type = function hop_header_content_type(http) {
       var hds = http.getAllResponseHeaders();
-      var i = hds.indexOf( "Content-Type" );
-      if( i < 0 ) i = hds.indexOf( "content-type" );
-      if( i < 0 ) i = hds.indexOf( "Content-type" );
+      var i = hds.indexOf("Content-Type");
+      if (i < 0) i = hds.indexOf("content-type");
+      if (i < 0) i = hds.indexOf("Content-type");
       
-      if( i < 0 ) return "application/text";
+      if (i < 0) return "application/text";
 
-      var j = hds.indexOf( "\n", i + 1 );
-      var s = (j >= 0) ? hds.substring( i, j ) : hds.substring( i, s.length );
-      var m = s.match( "[ \t:]+([^\n]*)" );
+      var j = hds.indexOf("\n", i + 1);
+      var s = (j >= 0) ? hds.substring(i, j) : hds.substring(i, s.length);
+      var m = s.match("[ \t:]+([^\n]*)");
 
-      if( m )
+      if (m)
 	 return m[ 1 ];
       else
 	 return "application/text";
    }
-   hop_header_hop_serialize = function hop_header_hop_serialize( http ) {
+   hop_header_hop_serialize = function hop_header_hop_serialize(http) {
       var hds = http.getAllResponseHeaders();
-      var i = hds.indexOf( "Hop-Serialize" );
+      var i = hds.indexOf("Hop-Serialize");
 
-      if( i < 0 ) return "javascript";
+      if (i < 0) return "javascript";
       
-      var j = hds.indexOf( "\n", i + 1 );
-      return (j >= 0) ? hds.substring( i + 15, j - 1 )
-                      : hds.substring( i + 15, s.length );
+      var j = hds.indexOf("\n", i + 1);
+      return (j >= 0) ? hds.substring(i + 15, j - 1)
+                      : hds.substring(i + 15, s.length);
    }
 }
 
 /*---------------------------------------------------------------------*/
 /*    node_style_set ...                                               */
 /*---------------------------------------------------------------------*/
-function node_style_set_native( el, prop, value ) {
-   var obj = (typeof el === "string") ? document.getElementById( el ) : el;
+function node_style_set_native(el, prop, value) {
+   var obj = (typeof el === "string") ? document.getElementById(el) : el;
 
-   if( obj === undefined ) {
-      sc_error( "node-style-set!(" + prop + ")", "Cannot find object", el );
+   if (obj === undefined) {
+      sc_error("node-style-set!(" + prop + ")", "Cannot find object", el);
    }
 
-   if( arguments.length === 2 ) {
-      for( var p in prop ) {
+   if (arguments.length === 2) {
+      for (var p in prop) {
 	 var v = prop[ p ].toString() || "0";
 	 
-	 if( obj.style === undefined ) {
-	    sc_error( "node-style-set!(" + prop + ")", 
-	       "No style property in object", el );
-	 } if( p in obj.style ) {
+	 if (obj.style === undefined) {
+	    sc_error("node-style-set!(" + prop + ")", 
+	       "No style property in object", el);
+	 } if (p in obj.style) {
 	    obj.style[ p ] =  v;
 	 } else {
-	    obj.style.setProperty( p, v, "" );
+	    obj.style.setProperty(p, v, "");
 	 }
       }
    } else {
-      for( var i = 1; i < arguments.length; i += 2 ) {
+      for (var i = 1; i < arguments.length; i += 2) {
       	 var p = arguments[ i ];
       	 var v = arguments[ i + 1 ];
 
-      	 if( sc_isKeyword( p ) )
-	    p = sc_keyword2jsstring( p );
+      	 if (sc_isKeyword(p))
+	    p = sc_keyword2jsstring(p);
 
-      	 if( v == undefined ) {
-	    sc_error( "node-style-set!(" + prop + ")", 
+      	 if (v == undefined) {
+	    sc_error("node-style-set!(" + prop + ")", 
 	       "undefined value for property \"" + p + "\"",
-	       el );
+	       el);
       	 } else {
-	    if( !v ) {
+	    if (!v) {
 	       v = "0";
 	    } else {
-	       if( !(v instanceof String) && (typeof v !== "string") ) {
+	       if (!(v instanceof String) && (typeof v !== "string")) {
 	       	  v = v.toString();
 	       }
 	    }
 	    
-	    if( p in obj.style ) {
+	    if (p in obj.style) {
 	       obj.style[ p ] =  v;
 	    } else {
-	       obj.style.setProperty( p, v, "" );
+	       obj.style.setProperty(p, v, "");
 	    }
       	 }
       }
    }
 }
 
-function node_style_set_array( el, prop, value ) {
-   var obj = (typeof el === "string") ? document.getElementById( el ) : el;
+function node_style_set_array(el, prop, value) {
+   var obj = (typeof el === "string") ? document.getElementById(el) : el;
 
-   if( obj === undefined ) {
-      sc_error( "node-style-set!(" + prop + ")", "Cannot find object", el );
+   if (obj === undefined) {
+      sc_error("node-style-set!(" + prop + ")", "Cannot find object", el);
    }
 
-   if( arguments.length === 1 ) {
-      for( var p in prop ) {
+   if (arguments.length === 1) {
+      for (var p in prop) {
 	 obj.style[ p ] = prop[ p ].toString() || "0";
       }
    } else {
-      for( var i = 1; i < arguments.length; i += 2 ) {
+      for (var i = 1; i < arguments.length; i += 2) {
       	 var p = arguments[ i ];
       	 var v = arguments[ i + 1 ];
 
-      	 if( sc_isKeyword( p ) )
-	    p = sc_keyword2jsstring( p );
+      	 if (sc_isKeyword(p))
+	    p = sc_keyword2jsstring(p);
       	 
-      	 if( v == undefined ) {
-	    sc_error( "node-style-set!(" + prop + ")",
+      	 if (v == undefined) {
+	    sc_error("node-style-set!(" + prop + ")",
 	       "undefined value for property \"" + p + "\"",
-	       el );
+	       el);
       	 } else {
-	    if( !v ) {
+	    if (!v) {
 	       v = "0";
 	    } else {
-	       if( !(v instanceof String) && (typeof v !== "string") ) {
+	       if (!(v instanceof String) && (typeof v !== "string")) {
 	       	  v = v.toString();
 	       }
 	    }
@@ -806,32 +819,32 @@ function node_style_set_array( el, prop, value ) {
 }
 
 /*** META ((export node-style-set!) (arity -3)) */
-var node_style_set = function( el, prop, value ) {
+var node_style_set = function(el, prop, value) {
    var obj = el;
 
-   if( (el instanceof String) || (typeof el === "string") ) {
-      obj = document.getElementById( el );
+   if ((el instanceof String) || (typeof el === "string")) {
+      obj = document.getElementById(el);
       
-      if( obj === undefined ) {
-	 sc_error( "node-style-set!(" + prop + ")", "Cannot find object", el );
+      if (obj === undefined) {
+	 sc_error("node-style-set!(" + prop + ")", "Cannot find object", el);
       }
    }
 
    try {
-      if( obj.style === undefined ) {
-	 sc_error( "node-style-set!(" + prop + ")", 
-	    "No style property in object", el );
-      } else if( "setProperty" in obj.style ) {
+      if (obj.style === undefined) {
+	 sc_error("node-style-set!(" + prop + ")", 
+	    "No style property in object", el);
+      } else if ("setProperty" in obj.style) {
          node_style_set = node_style_set_native;
-      	 return node_style_set_native.apply( null, arguments );
+      	 return node_style_set_native.apply(null, arguments);
       } else {
 	 node_style_set = node_style_set_array;
-	 return node_style_set_array.apply( null, arguments );
+	 return node_style_set_array.apply(null, arguments);
       }
-   } catch( exc ) {
+   } catch(exc) {
       var msg = "message" in exc ? exc.message : "Cannot set style";
 
-      sc_error( "node-style-set!(" + prop + ")", msg, el );
+      sc_error("node-style-set!(" + prop + ")", msg, el);
   }
 }
 
@@ -850,9 +863,9 @@ var hop_hashchange_timeout =
 var hop_has_setInterval = true;
 
 try {
-   var i = setInterval( function() { ; }, 1000 );
-   clearInterval( i );
-} catch( e ) {
+   var i = setInterval(function() { ; }, 1000);
+   clearInterval(i);
+} catch(e) {
    var hop_has_setInterval = false;
 }
 
@@ -866,88 +879,88 @@ var hop_stop_propagation = undefined;
 var hop_has_event20 = false;
 
 try {
-   hop_has_event20 = document.implementation.hasFeature( "Events" , "2.0" );
-} catch( e ) {
+   hop_has_event20 = document.implementation.hasFeature("Events" , "2.0");
+} catch(e) {
    ;
 }
 
-if( hop_has_event20 ) {
-   hop_add_native_event_listener = function( obj, event, proc, capture ) {
-      if( "addEventListener" in obj ) {
-         var f = (hop_debug() > 0) ? hop_callback( proc, sc_cons( obj + "<-" + event, null ), obj ) : proc;
+if (hop_has_event20) {
+   hop_add_native_event_listener = function(obj, event, proc, capture) {
+      if ("addEventListener" in obj) {
+         var f = (window.hop_debug ? hop_callback(proc, sc_cons(obj + "<-" + event, null), obj) : proc);
          var i = "on" + event + "hdl";
 
-         if( !(i in obj ) ) obj[ i ] = [];
+         if (!(i in obj)) obj[ i ] = [];
          obj[ i ][ proc ] = f;
 
-	 return obj.addEventListener( event, f, capture );
+	 return obj.addEventListener(event, f, capture);
       } else {
-	 throw new Error( "add-event-listener!: cannot add `" 
+	 throw new Error("add-event-listener!: cannot add `" 
 			  + event + "' listener for object: "
-			  + obj );
+			  + obj);
       }
    }
 
-   hop_remove_native_event_listener = function( obj, event, proc, capture ) {
-      if( "removeEventListener" in obj ) {
+   hop_remove_native_event_listener = function(obj, event, proc, capture) {
+      if ("removeEventListener" in obj) {
 	var i = "on" + event + "hdl";
         var h = obj[ i ];
 
-        if( h !== undefined ) {
+        if (h !== undefined) {
 	   var p = obj[ i ][ proc ];
 
-	   if( p !== undefined ) {
+	   if (p !== undefined) {
 	      h[ p ] = undefined;
-	      return obj.removeEventListener( event, p, capture );
+	      return obj.removeEventListener(event, p, capture);
 	   }
 	}
       } else {
-	 throw new Error( "remove-event-listener!: cannot remove `"
+	 throw new Error("remove-event-listener!: cannot remove `"
 			  + event + "' listener for object: "
-			  + obj );
+			  + obj);
       }
    }
 
-   hop_stop_propagation = function( event, def ) {
-      if( !def ) event.preventDefault();
+   hop_stop_propagation = function(event, def) {
+      if (!def) event.preventDefault();
       event.stopPropagation();
       event.isStopped = true;
    }
 } else {
    var hop_event_counter = 0;
    
-   hop_add_native_event_listener = function( obj, event, proc, capture ) {
-      var f = (hop_debug() > 0) ? hop_callback( proc, sc_cons( obj + "<-" + event, null ), obj ) : proc;
+   hop_add_native_event_listener = function(obj, event, proc, capture) {
+      var f = window.hop_debug ? hop_callback(proc, sc_cons(obj + "<-" + event, null), obj) : proc;
       var procid = "on" + event + hop_event_counter++;
       obj[ procid ] = f;
-      var p = function( e ) { return obj[ procid ]( window.event ); };
+      var p = function(e) { return obj[ procid ](window.event); };
       var i = "on" + event + "hdl";
 
-      if( obj[ i ] === undefined ) obj[ i ] = [];
+      if (obj[ i ] === undefined) obj[ i ] = [];
       obj[ i ][ proc ] = { proc: p, id: procid };
       
-      return obj.attachEvent( "on" + event, p );
+      return obj.attachEvent("on" + event, p);
    }
 
-   hop_remove_native_event_listener = function( obj, event, proc, capture ) {
+   hop_remove_native_event_listener = function(obj, event, proc, capture) {
       var i = "on" + event + "hdl";
 
-      if( i in obj ) {
+      if (i in obj) {
 	 var p = obj[ i ][ proc ];
 	 
 	 delete obj[ p.id ];
 	 delete obj[ i ][ proc ] ;
 
-	 if( p.proc !== undefined ) {
-	    return obj.detachEvent( "on" + event, p.proc );
+	 if (p.proc !== undefined) {
+	    return obj.detachEvent("on" + event, p.proc);
 	 }
       }
 
       return false;
    }
 
-   hop_stop_propagation = function( event, def ) {
-      if( !def ) event.cancelBubble = true;
+   hop_stop_propagation = function(event, def) {
+      if (!def) event.cancelBubble = true;
       event.returnValue = false;
       event.isStopped = true;
    }
@@ -961,8 +974,8 @@ if( hop_has_event20 ) {
 /*    important for browsers such as IE that cannot handle inline      */
 /*    images.                                                          */
 /*---------------------------------------------------------------------*/
-function hop_deinline_image( el, src ) {
-   if( !el.deinlined ) {
+function hop_deinline_image(el, src) {
+   if (!el.deinlined) {
       el.deinlined = true;
       el.src = src;
    }
@@ -983,57 +996,57 @@ var hop_event_key_code = undefined;
 /*** META ((export event-value)
            (arity #t)
            (peephole: (postfix ".value"))) */
-function hop_event_value( evt ) { return evt.value; }
+function hop_event_value(evt) { return evt.value; }
 /*** META ((export event-response-text)
            (arity #t)
            (peephole: (postfix ".responseText"))) */
-function hop_event_response_text( evt ) { return evt.responseText; }
+function hop_event_response_text(evt) { return evt.responseText; }
 
-if( hop_has_event20  ) {
-   hop_event_mouse_x = function hop_event_mouse_x( event ) {
+if (hop_has_event20 ) {
+   hop_event_mouse_x = function hop_event_mouse_x(event) {
       return event.pageX;
    }
-   hop_event_mouse_y = function hop_event_mouse_y( event ) {
+   hop_event_mouse_y = function hop_event_mouse_y(event) {
       return event.pageY;
    }
-   hop_event_key_code = function hop_event_key_code( event ) {
+   hop_event_key_code = function hop_event_key_code(event) {
       return event.which;
    }
 } else {
-   hop_event_mouse_x = function hop_event_mouse_x( event ) {
-      if( (document.body != null) &&
-	  (document.documentElement.scrollLeft != null) ) {
+   hop_event_mouse_x = function hop_event_mouse_x(event) {
+      if ((document.body != null) &&
+	  (document.documentElement.scrollLeft != null)) {
 	 return event.clientX + document.documentElement.scrollLeft;
       } else {
 	 return event.clientX + document.body.scrollLeft;
       }
    }
-   hop_event_mouse_y = function hop_event_mouse_y( event ) {
-      if( (document.body != null) &&
-	  (document.documentElement.scrollTop != null) ) {
+   hop_event_mouse_y = function hop_event_mouse_y(event) {
+      if ((document.body != null) &&
+	  (document.documentElement.scrollTop != null)) {
 	 return event.clientY + document.documentElement.scrollTop;
       } else {
 	 return event.clientY + document.body.scrollTop;
       }
    }
-   hop_event_key_code = function hop_event_key_code( event ) {
+   hop_event_key_code = function hop_event_key_code(event) {
       return event.keyCode;
    }
 }
 
-switch( hop_config.mouse_left_button ) {
+switch(hop_config.mouse_left_button) {
    case 0:
-      hop_event_mouse_button = function hop_event_mouse_button( e ) {
+      hop_event_mouse_button = function hop_event_mouse_button(e) {
 	 return e.button + 1;
       };
       break;
    case 1:
-      hop_event_mouse_button = function hop_event_mouse_button( e ) {
+      hop_event_mouse_button = function hop_event_mouse_button(e) {
 	 return e.button;
       }
       break;
    default:
-      hop_event_mouse_button = function hop_event_mouse_button( e ) {
+      hop_event_mouse_button = function hop_event_mouse_button(e) {
 	 return e.button + (1 - hop_config.mouse_left_button);
       }
 }
@@ -1050,7 +1063,7 @@ var hop_main_window_height = undefined;
 /*** META ((export main-window-orientation) (arity 0)) */
 var hop_main_window_orientation = undefined;
 
-if( isNaN( window.innerWidth ) ) {
+if (isNaN(window.innerWidth)) {
    hop_main_window_width = function hop_main_window_width() {
       return document.documentElement.clientWidth;
    }
@@ -1068,8 +1081,8 @@ if( isNaN( window.innerWidth ) ) {
 
 var hop_orientation = false;
 hop_main_window_orientation = function hop_main_window_orientation() {
-  if( !hop_orientation ) {
-     hop_orientation = sc_jsstring2symbol( "landscape" );
+  if (!hop_orientation) {
+     hop_orientation = sc_jsstring2symbol("landscape");
   }
   return hop_orientation;
 }
@@ -1086,26 +1099,26 @@ var hop_current_window_height = hop_main_window_height;
 /*---------------------------------------------------------------------*/
 #if HOP_SCHEME
 /*** META ((export screen-dimensions) (arity -1)) */
-function hop_screen_dimensions( unit ) {
-   if( !unit ) unit = "cm";
+function hop_screen_dimensions(unit) {
+   if (!unit) unit = "cm";
 
-   var d = document.createElement( "div" );
-   var h = document.getElementsByTagName( "body" )[ 0 ];
+   var d = document.createElement("div");
+   var h = document.getElementsByTagName("body")[ 0 ];
 
-   node_style_set( d, "visibility", "hidden" );
-   node_style_set( d, "border", "0" );
+   node_style_set(d, "visibility", "hidden");
+   node_style_set(d, "border", "0");
    d.innerHTML = ".";
 
-   h.appendChild( d );
+   h.appendChild(d);
    
-   node_style_set( d, "width", "1" + unit );
-   node_style_set( d, "height", "1" + unit );
+   node_style_set(d, "width", "1" + unit);
+   node_style_set(d, "height", "1" + unit);
 
    var res =
-      new sc_Pair( Math.round( hop_config.screen_width / d.offsetWidth ),
-		   Math.round( hop_config.screen_height / d.offsetHeight ) );
+      new sc_Pair(Math.round(hop_config.screen_width / d.offsetWidth),
+		   Math.round(hop_config.screen_height / d.offsetHeight));
 
-   h.removeChild( d );
+   h.removeChild(d);
 
    return res;
 }
@@ -1116,11 +1129,11 @@ function hop_screen_dimensions( unit ) {
 /*---------------------------------------------------------------------*/
 #if HOP_SCHEME
 /*** META ((export iframe-scroll-height) (arity #t)) */
-function hop_iframe_scroll_height( e ) {
-   if( "contentDocument" in e && e.contentDocument != undefined ) {
+function hop_iframe_scroll_height(e) {
+   if ("contentDocument" in e && e.contentDocument != undefined) {
       return e.contentDocument.body.scrollHeight;
    } else {
-      if( "document" in e && e.document != undefined ) {
+      if ("document" in e && e.document != undefined) {
 	 return e.document.body.scrollHeight;
       } else {
 	 return e.scrollHeight;
@@ -1134,11 +1147,11 @@ function hop_iframe_scroll_height( e ) {
 /*---------------------------------------------------------------------*/
 #if HOP_SCHEME
 /*** META ((export iframe-scroll-width) (arity #t)) */
-function hop_iframe_scroll_width( e ) {
-   if( "contentDocument" in e && e.contentDocument != undefined ) {
+function hop_iframe_scroll_width(e) {
+   if ("contentDocument" in e && e.contentDocument != undefined) {
       return e.contentDocument.body.scrollWidth;
    } else {
-      if( "document" in e && e.document != undefined ) {
+      if ("document" in e && e.document != undefined) {
 	 return e.document.body.scrollWidth;
       } else {
 	 return e.scrollWidth;
@@ -1154,18 +1167,18 @@ function hop_iframe_scroll_width( e ) {
 /*** META ((export get-selection) (arity 0)) */
 var hop_get_selection;
 
-if( window.getSelection ) {
+if (window.getSelection) {
    hop_get_selection = function hop_get_selection() {
       return window.getSelection().toString();
    }
 } else {
-   if( document.getSelection ) {
+   if (document.getSelection) {
       hop_get_selection = function hop_get_selection() {
 	 return document.getSelection().toString();
       }
    } else {
       hop_get_selection = function hop_get_selection() {
-	 if( document.selection ) {
+	 if (document.selection) {
 	    return document.selection.createRange().text;
 	 } else {
 	    return "";
@@ -1180,44 +1193,44 @@ if( window.getSelection ) {
 /*---------------------------------------------------------------------*/
 var hop_uint8array_to_string;
 
-if( hop_config.uint8array ) {
-   var a = new Uint8Array( 1 );
+if (hop_config.uint8array) {
+   var a = new Uint8Array(1);
    var s;
    a[ 0 ] = 111;
    try {
-      s = String.fromCharCode.apply( null, a );
-   } catch( _ ) { ; }
+      s = String.fromCharCode.apply(null, a);
+   } catch(_) { ; }
 
-   if( typeof s === "string" && s.charCodeAt( 0 ) === 111 ) {
-      hop_uint8array_to_string = function hop_uint8array_to_string( o ) {
-      	 if( o.length > 10000 ) {
-	    var res = String.fromCharCode.apply( null, o.subarray( o, 10000 ) );
+   if (typeof s === "string" && s.charCodeAt(0) === 111) {
+      hop_uint8array_to_string = function hop_uint8array_to_string(o) {
+      	 if (o.length > 10000) {
+	    var res = String.fromCharCode.apply(null, o.subarray(o, 10000));
 	    var i = 10000;
 	    
 	    // split the string creation as chromium suffer a stack overflow
 	    // on large strings
-	    while( true ) {
+	    while (true) {
 	       var j = i + 10000;
 	       
-	       if( j < o.length ) {
-		  res += String.fromCharCode.apply( null, o.subarray( i, j ) );
+	       if (j < o.length) {
+		  res += String.fromCharCode.apply(null, o.subarray(i, j));
 		  i = j;
 	       } else {
-		  return res + String.fromCharCode.apply( null, o.subarray( i, o.length ) );
+		  return res + String.fromCharCode.apply(null, o.subarray(i, o.length));
 	       }
 	    }
 	 } else {
-	    return String.fromCharCode.apply( null, o );
+	    return String.fromCharCode.apply(null, o);
 	 }
       }
    } else {
-      hop_uint8array_to_string = function hop_uint8array_to_string( o ) {
-	 var a = new Array( o.length );
+      hop_uint8array_to_string = function hop_uint8array_to_string(o) {
+	 var a = new Array(o.length);
 
-	 for( var i = o.length -1; i >=0; i-- )
+	 for (var i = o.length -1; i >=0; i--)
 	    a[ i ] = o[ i ];
 	 
-	 return String.fromCharCode.apply( null, a );
+	 return String.fromCharCode.apply(null, a);
       }
    }
 }

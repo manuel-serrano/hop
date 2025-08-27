@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Mon Dec  2 08:48:48 2024 (serrano)                */
-;*    Copyright   :  2017-24 Manuel Serrano                            */
+;*    Last change :  Fri May 16 09:24:26 2025 (serrano)                */
+;*    Copyright   :  2017-25 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
 ;*=====================================================================*/
@@ -879,7 +879,7 @@
       
       (define (jscript-funcall init)
 	 ;; see runtime/service_expd.sch
-	 "HopService( ~s, ~s )")
+	 "HopService(~s, ~s)")
 
       (define (service-debug name loc body)
 	 (if (>fx (context-get ctx :debug 0) 0)

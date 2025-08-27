@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Thu May 16 14:42:24 2024 (serrano)                */
-;*    Copyright   :  2005-24 Manuel Serrano                            */
+;*    Last change :  Fri May 16 14:43:21 2025 (serrano)                */
+;*    Copyright   :  2005-25 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
 ;*=====================================================================*/
@@ -184,7 +184,7 @@ function hop_realm() {return \"" (hop-realm) "\";}"))))
 ;*---------------------------------------------------------------------*/
 (define (<HOP-SERVER>)
    (<SCRIPT> :type (hop-mime-type)
-      (string-append "var hop_server = new HopServer(\""
+      (string-append "hop_server = new HopServer(\""
 	 (hop-server-hostname) "\", " (integer->string (hop-default-port)) ", \""
 	 (hop-version)
 	 "\");var server = hop_server;")))
@@ -486,10 +486,9 @@ function hop_realm() {return \"" (hop-realm) "\";}"))))
 		    (init-head!)
 		    (cons
 		       (<SCRIPT> :type (hop-mime-type)
-			  (string-append "function hop_idiom() {return '"
-			     idiom "'};")
-			  (string-append "function hop_debug() {return "
-			     (integer->string (bigloo-debug)) "};")
+			  (string-append "window.hop_idiom = '" idiom "'};")
+			  (string-append "window.hop_debug = "
+			     (integer->string (bigloo-debug)) ";")
 			  (when (>fx (bigloo-debug) 0)
 			     (server-initial-context location
 				(get-trace-stack) context)))

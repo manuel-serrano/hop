@@ -101,7 +101,9 @@ extern obj_t string_append(obj_t, obj_t);
 
 extern obj_t bgl_js_profile_allocs;
 obj_t bgl_profile_pcache_tables = BNIL;
-extern int GC_pthread_create();
+extern int GC_pthread_create(pthread_t * t,
+                             pthread_attr_t *a,
+                             void * (* fn)(void *), void * arg);
 
 static uint32_t jsobject_mode;
 

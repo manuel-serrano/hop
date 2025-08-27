@@ -32,7 +32,7 @@ extern obj_t hop_js_call9(obj_t, obj_t, obj_t, obj_t, obj_t, obj_t, obj_t, obj_t
 extern obj_t hop_js_call10(obj_t, obj_t, obj_t, obj_t, obj_t, obj_t, obj_t, obj_t, obj_t, obj_t, obj_t, obj_t, obj_t);
 extern obj_t hop_js_calln(obj_t, obj_t, obj_t, obj_t);
 
-extern obj_t bgl_typeof();
+extern obj_t bgl_typeof(obj_t);
 
 extern uv_loop_t *bgl_napi_uvloop(obj_t);
 
@@ -93,7 +93,7 @@ static obj_t napi_method_stub(obj_t proc, ...) {
    args[cnt] = BEOA;
 
    // call the C function
-   return PROCEDURE_VA_ENTRY(proc)(PROCEDURE_ATTR(proc), args);
+   return ((obj_t (*)(obj_t, ...))PROCEDURE_VA_ENTRY(proc))(PROCEDURE_ATTR(proc), args);
 
 _slow:
    // count the number of arguments
@@ -114,7 +114,7 @@ _slow:
    aargs[cnt] = BEOA;
 
    // call the C function
-   return PROCEDURE_VA_ENTRY(proc)(PROCEDURE_ATTR(proc), aargs);
+   return ((obj_t (*)(obj_t, ...))PROCEDURE_VA_ENTRY(proc))(PROCEDURE_ATTR(proc), aargs);
 }
 
 /*---------------------------------------------------------------------*/
@@ -175,7 +175,7 @@ static obj_t napi_ctor_stub(obj_t proc, ...) {
 
    va_end(argl);
 
-   this = PROCEDURE_VA_ENTRY(proc)(_this, args);
+   this = ((obj_t (*)(obj_t, ...))PROCEDURE_VA_ENTRY(proc))(_this, args);
 
    // bind the instance properties
    for (long i = 1; i < PROCEDURE_LENGTH(proc); i++) {
@@ -519,7 +519,7 @@ bgl_napi_call_function_res(napi_env _this, obj_t this, obj_t fun, size_t argc, n
 /*---------------------------------------------------------------------*/
 static void
 napi_work_complete(obj_t env) {
-   PROCEDURE_VA_ENTRY(env)(PROCEDURE_REF(env, 0), CINT(PROCEDURE_REF(env, 1)), PROCEDURE_REF(env, 2));
+   ((obj_t (*)(obj_t, ...))PROCEDURE_VA_ENTRY(env))(PROCEDURE_REF(env, 0), CINT(PROCEDURE_REF(env, 1)), PROCEDURE_REF(env, 2));
 }
 
 

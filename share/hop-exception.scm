@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun  4 15:51:42 2009                          */
-;*    Last change :  Tue May 14 13:59:17 2019 (serrano)                */
-;*    Copyright   :  2009-19 Manuel Serrano                            */
+;*    Last change :  Sat May 17 13:48:46 2025 (serrano)                */
+;*    Copyright   :  2009-25 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side debugging facility (included when Hop launched in    */
 ;*    debug mode).                                                     */
@@ -253,8 +253,7 @@
 		  (let ((jsline (assq 'js-line-col rest))
 			(klass (frame-klass rest))
 			(file (js-file file)))
-		     (if (and (pair? jsline)
-			      (string=? ((@ hop_idiom js)) "scheme"))
+		     (if (and (pair? jsline) (equal? window.hop_idiom "scheme"))
 			 (list
 			    (<TR:LINE> klass (js-name name)
 			       (<SPAN> :class "hop-exception-js"
@@ -269,8 +268,7 @@
 		  (let ((jsline (assq 'js-line rest))
 			(klass (frame-klass rest))
 			(file (js-file file)))
-		     (if (and (pair? jsline)
-			      (string=? ((@ hop_idiom js)) "scheme"))
+		     (if (and (pair? jsline) (equal? window.hop_idiom "scheme"))
 			 (list
 			    (<TR:LINE> klass (js-name name)
 			       (<SPAN> :class "hop-exception-js"
@@ -301,10 +299,10 @@
 	 "")
 	((= s 0)
 	 (<DIV> :data-hss-class "hop-exception-stack"
-	    :data-idiom ((@ hop_idiom js))
-	    :data-debug-mode (if (string=? ((@ hop_idiom js)) "scheme")
+	    :data-idiom window.hop_idiom
+	    :data-debug-mode (if (equal? window.hop_idiom "scheme")
 				 "hop" "all")
-	    (if (string=? ((@ hop_idiom js)) "scheme")
+	    (if (equal? window.hop_idiom "scheme")
 		(<BUTTON> "Show JavaScript frames"
 		   :onclick ~(let* ((p this.parentNode)
 				    (c (p.getAttribute "data-debug-mode")))
@@ -493,6 +491,6 @@
 ;*---------------------------------------------------------------------*/
 ;*    install the default error handler ...                            */
 ;*---------------------------------------------------------------------*/
-(when (>= (hop-debug) 1)
+(when (and window.hop_debug)
    (set! hop_current_stack_context (list document.location.href))
    (set! window.onerror hop-onerror-handler))
