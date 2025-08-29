@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  manuel serrano                                    */
 ;*    Creation    :  Wed Sep 13 01:56:26 2023                          */
-;*    Last change :  Sun Jun  2 07:21:34 2024 (serrano)                */
-;*    Copyright   :  2023-24 manuel serrano                            */
+;*    Last change :  Wed Aug 27 08:51:07 2025 (serrano)                */
+;*    Copyright   :  2023-25 manuel serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    A partial Hop-to-JS compiler.                                    */
 ;*=====================================================================*/
@@ -27,6 +27,10 @@
 	  (exit 0))
 	 (("-d" ?ident (help "Only compile definition IDENT"))
 	  (set! idents (cons (string->symbol ident) idents)))
+	 (("-i" ?ident (help "Ignore definition IDENT"))
+	  (set! ignores (cons (string->symbol ident) ignores)))
+	 ((("-r" "--rename") ?old ?new (help "Rename Ident"))
+	  (hashtable-put! var-ident-table old new))
 	 (else 
 	  (set! files (cons else files))))
       (if (pair? files)
@@ -38,18 +42,33 @@
 ;*    idents ...                                                       */
 ;*---------------------------------------------------------------------*/
 (define idents '())
+(define ignores '())
+(define renames '())
 
 ;*---------------------------------------------------------------------*/
 ;*    active-ident? ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (active-ident? id)
-   (or (null? idents)
-       (let* ((s (symbol->string! id))
-	      (i (string-index s #\:)))
-	  (if i
-	      (let ((n (if i (substring s 0 i) s)))
-		 (memq n idents))
-	      (memq id idents)))))
+
+   (define (idents? id)
+      (or (null? idents)
+	  (let* ((s (symbol->string! id))
+		 (i (string-index s #\:)))
+	     (if i
+		 (let ((n (if i (substring s 0 i) s)))
+		    (memq n idents))
+		 (memq id idents)))))
+
+   (define (ignores? id)
+      (when (pair? ignores)
+	  (let* ((s (symbol->string! id))
+		 (i (string-index s #\:)))
+	     (if i
+		 (let ((n (if i (substring s 0 i) s)))
+		    (memq n ignores))
+		 (memq id ignores)))))
+
+   (unless (ignores? id) (idents? id)))
 
 ;*---------------------------------------------------------------------*/
 ;*    usage ...                                                        */
@@ -874,6 +893,13 @@
 ;*    hop2js-stmt-match-case ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (hop2js-stmt-match-case expr clauses env kont)
+
+   (define (pat-variable? e)
+      (when (symbol? e)
+	 (char=? (string-ref (symbol->string! e) 0) #\?)))
+   
+   (define (pat-variable-name e)
+      (substring (symbol->string! e) 1))
    
    (define (hop2js-match-test id expr env)
       (match-case expr
@@ -882,7 +908,33 @@
 	     (format "~a instanceof Location" id)
 	     (format "const fname = ~a.filename, loc = ~a.offset;" id id)))
 	 (else
-	  (error "hop2js-stmt-match-case" "Unsupported pattern" expr))))
+	  (let loop ((expr expr)
+		     (len 0)
+		     (vars '()))
+	     (cond
+		((null? expr)
+		 (values
+		    (format "~a.length === ~a" id len)
+		    (format "const ~(, );" vars)))
+		((pair? expr)
+		 (cond
+		    ((eq? (car expr) '?-)
+		     (loop (cdr expr) (+fx len 1) vars))
+		    ((pat-variable? (car expr))
+		     (let ((var (format "~a = ~a[~a]"
+				   (pat-variable-name (car expr))
+				   id len)))
+			(loop (cdr expr) (+fx len 1) (cons var vars))))
+		    (else
+		     (error "hop2js-stmt-match-case"
+			"Unsupported pattern" expr))))
+		((eq? expr '?-)
+		 (values
+		    (format "~a.length >= ~a" id len)
+		    (format "const ~(, );" vars)))
+		(else
+		 (error "hop2js-stmt-match-case"
+		    "Unsupported pattern" expr)))))))
    
    (let ((val (hop2js-expr expr env))
 	 (id (gensym 'mc)))

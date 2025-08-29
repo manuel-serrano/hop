@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Fri May 16 14:43:21 2025 (serrano)                */
+;*    Last change :  Sat Jun 28 09:12:04 2025 (serrano)                */
 ;*    Copyright   :  2005-25 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -486,7 +486,7 @@ function hop_realm() {return \"" (hop-realm) "\";}"))))
 		    (init-head!)
 		    (cons
 		       (<SCRIPT> :type (hop-mime-type)
-			  (string-append "window.hop_idiom = '" idiom "'};")
+			  (string-append "window.hop_idiom = '" idiom "';")
 			  (string-append "window.hop_debug = "
 			     (integer->string (bigloo-debug)) ";")
 			  (when (>fx (bigloo-debug) 0)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun  4 15:51:42 2009                          */
-;*    Last change :  Sat May 17 13:48:46 2025 (serrano)                */
+;*    Last change :  Sat Jun 28 08:46:55 2025 (serrano)                */
 ;*    Copyright   :  2009-25 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side debugging facility (included when Hop launched in    */
@@ -491,6 +491,6 @@
 ;*---------------------------------------------------------------------*/
 ;*    install the default error handler ...                            */
 ;*---------------------------------------------------------------------*/
-(when (and window.hop_debug)
+(when (and window.hop_debug (not (eq? window.hop_debug #unspecified)))
    (set! hop_current_stack_context (list document.location.href))
    (set! window.onerror hop-onerror-handler))
