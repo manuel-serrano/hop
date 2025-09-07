@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Fri May 16 17:46:41 2025 (serrano)                */
+;*    Last change :  Sun Sep  7 09:38:57 2025 (serrano)                */
 ;*    Copyright   :  2013-25 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -1996,6 +1996,9 @@
 	       "hop.lock")
 	    (lambda ()
 	       (debug-compile "nodejs-socompile-sync" filename target)
+	       (when env-debug-compile
+		  (display cmd (current-error-port))
+		  (newline (current-error-port)))
 	       (let ((retval (exec cmd)))
 		  ;; cleanup temporary files
 		  (let ((o (string-append (prefix tmp) ".o"))
