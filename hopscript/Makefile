@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/hop/hopscript/Makefile                  */
+#*    serrano/prgm/project/hop/3.7.x/hopscript/Makefile                */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Sun Sep  7 09:34:57 2025 (serrano)                */
+#*    Last change :  Sun Sep  7 10:04:49 2025 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOPSCRIPT library.                     */
 #*=====================================================================*/
@@ -14,7 +14,7 @@ install: install-library
 	cp bglhopscript.h \
            $(DESTDIR)$(HOPLIBDIR)/hop/$(HOPRELEASE)/bglhopscript.h
 	chmod $(MODFILE) $(DESTDIR)$(HOPLIBDIR)/hop/$(HOPRELEASE)/bglhopscript.h
-	cp bglhopscript-call.h \
+	cp bglhopscript_call.h \
            $(DESTDIR)$(HOPLIBDIR)/hop/$(HOPRELEASE)/bglhopscript_call.h
 	chmod $(MODFILE) $(DESTDIR)$(HOPLIBDIR)/hop/$(HOPRELEASE)/bglhopscript_call.h
 	cp bglhopscript_rewrite.h \
