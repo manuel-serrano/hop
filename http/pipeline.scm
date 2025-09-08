@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep  4 09:28:11 2008                          */
-;*    Last change :  Wed Jun 12 08:37:22 2024 (serrano)                */
-;*    Copyright   :  2008-24 Manuel Serrano                            */
+;*    Last change :  Mon Sep  8 09:38:46 2025 (serrano)                */
+;*    Copyright   :  2008-25 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The pipeline into which requests transit.                        */
 ;*=====================================================================*/
@@ -96,6 +96,8 @@
 	 (let ((req (with-time (http-parse-request sock id) id "CONNECT")))
 	    (when-trace 1
 	       (trace-http-connect scd id sock req mode num))
+	    (when (>=fx (bigloo-debug) 2)
+	       (debug-request req))
 	    ;; decrement the keep-alive number (we have a valid connection)
 	    (when (eq? mode 'keep-alive) (keep-alive--))
 	    ;; start computing the answer
@@ -133,7 +135,23 @@
 	 (if (>=fx (trace-level) 2)
 	     (with-access::http-request req (http) http)
 	     ""))))
-   
+
+;*---------------------------------------------------------------------*/
+;*    debug-request ...                                                */
+;*---------------------------------------------------------------------*/
+(define (debug-request req)
+   (with-access::http-request req (method scheme host port path header)
+      (with-output-to-port (current-error-port)
+	 (lambda ()
+	    (display* method " " scheme "://"
+	       host ":"
+	       port " "
+	       (let ((s (string-for-read path)))
+		  (if (>fx (string-length s) 80)
+		      (string-append (substring s 0 80) "...")
+		      s)))
+	    (newline)))))
+
 ;*---------------------------------------------------------------------*/
 ;*    stage-request-error-handler ...                                  */
 ;*---------------------------------------------------------------------*/

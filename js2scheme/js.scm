@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Fri Apr  4 06:40:42 2025 (serrano)                */
+;*    Last change :  Mon Sep  8 13:26:02 2025 (serrano)                */
 ;*    Copyright   :  2013-25 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for client side code).                                   */
@@ -983,6 +983,7 @@
 
    (define (num2js val)
       (cond
+	 ((bignum? val) (string-append (bignum->string val) "n"))
 	 ((not (flonum? val)) val)
 	 ((nanfl? val) "NaN")
 	 ((=fl val +inf.0) "Infinity")

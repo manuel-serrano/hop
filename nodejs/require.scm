@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Sun Sep  7 09:38:57 2025 (serrano)                */
+;*    Last change :  Mon Sep  8 07:46:19 2025 (serrano)                */
 ;*    Copyright   :  2013-25 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -1036,7 +1036,9 @@
 			 'import))
 		(mod (nodejs-import-module worker %this %module
 			path 0 commonjs-export loc)))
-	    (trace-item "mod=" (typeof mod))
+	    (trace-item "mod=" (typeof mod)
+	       " sofile-enable=" (hop-sofile-enable)
+	       " sofile-policy=" (hop-sofile-compile-policy))
 	    (nodejs-module-namespace mod worker %this)))))
 
 ;*---------------------------------------------------------------------*/
@@ -1493,7 +1495,7 @@
       (env-debug-compile
        (fprint (current-error-port) (hop-color 1 "" filename)
 	  " [" tag "] -> "
-	  (if target (hop-color 2 "" target) ""))
+	  (if target (hop-color 2 "" target) "<ast>"))
        (flush-output-port (current-error-port)))
       ((or (>=fx (nodejs-hop-debug) 2)
 	   (string-contains (or (getenv "HOPTRACE") "") "nodejs:compile"))
@@ -2215,7 +2217,6 @@
 			      p)))
 		    (error "hop" "cannot load file" src)))
 	       ((or (not (symbol? sopath)) (not (eq? sopath 'error)))
-		(trace-item "policy=" (hop-sofile-compile-policy))
 		(case (hop-sofile-compile-policy)
 		   ((aot)
 		    (if (hop-sofile-enable)
@@ -2278,6 +2279,8 @@
 		  (js-put! mod (& "loaded") #t #f %this)
 		  ;; return the newly created module
 		  (trace-item "mod=" (typeof mod) " filename=" filename)
+		  (trace-item "sofile-enable=" (hop-sofile-enable)
+		     " sofile-policy=" (hop-sofile-compile-policy))
 		  mod)))))
    
    (define (load-module-html)
@@ -2309,7 +2312,9 @@
 			(hopscript %this this scope mod)
 			#f %this))
 		  ;; return the newly created module
-		  (trace-item "mod=" (typeof mod))
+		  (trace-item "mod=" (typeof mod)
+		     " sofile-enable=" (hop-sofile-enable)
+		     " sofile-policy=" (hop-sofile-compile-policy))
 		  mod)))))
    
    (define (hop-eval filename ws)
@@ -2598,7 +2603,9 @@
 	 (let ((mod (js-get-property-value module-cache module-cache
 		       (js-string->jsstring path) %this)))
 	    (trace-item "path=" path)
-	    (trace-item "mod=" (if (eq? mod (js-absent)) 'absent (typeof mod)))
+	    (trace-item "mod=" (if (eq? mod (js-absent)) 'absent (typeof mod))
+	       " sofile-enable=" (hop-sofile-enable)
+	       " sofile-policy=" (hop-sofile-compile-policy))
 	    (if (eq? mod (js-absent))
 		(let ((env (current-dynamic-env)))
 		   (let ()
@@ -2639,7 +2646,9 @@
 	       (with-trace 'require (format "nodejs-init-core.init ~a" name)
 		  (init %this this scope mod))
 	       ;; return the module
-	       (trace-item "mod=" (typeof mod))
+	       (trace-item "mod=" (typeof mod)
+		  " sofile-enable=" (hop-sofile-enable)
+		  " sofile-policy=" (hop-sofile-compile-policy))
 	       (trace-item "gencmapid=" (gencmapid))
 	       mod))))
 

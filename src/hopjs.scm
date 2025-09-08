@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Tue Jul 23 18:37:10 2024 (serrano)                */
-;*    Copyright   :  2004-24 Manuel Serrano                            */
+;*    Last change :  Mon Sep  8 07:52:13 2025 (serrano)                */
+;*    Copyright   :  2004-25 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
 ;*=====================================================================*/
@@ -224,7 +224,7 @@
 	 (let ((l (filter integer? (map string->number (string-split d ",")))))
 	    (when (pair? l)
 	       (bigloo-debug-set! (car l))))))
-   
+
    (bind-exit (stop)
       (args-parse args
 	 (section "Misc")
