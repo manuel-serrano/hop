@@ -15,7 +15,7 @@ Disclaimer
 Developping for the Android platform is hard. It requires skills,
 practices, and experience. Debugging is generally difficult, error
 messages and exception handling is rudimentary, and development cycle
-slow. Hop tries it best to simplify the process but it cannot hide
+slow. Hop tries its best to simplify the process but it cannot hide
 all the complexity of the Android environment. At the very least, 
 you will have to understand how to create your own application
 [manifest](https://developer.android.com/guide/topics/manifest/manifest-intro)
