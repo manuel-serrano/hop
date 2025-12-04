@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Mar 22 15:03:30 2014                          */
-/*    Last change :  Thu Aug  1 11:06:58 2024 (serrano)                */
-/*    Copyright   :  2014-24 Manuel Serrano                            */
+/*    Last change :  Wed Dec  3 07:48:09 2025 (serrano)                */
+/*    Copyright   :  2014-25 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hopscript/Hop binding.                                           */
 /*=====================================================================*/
@@ -301,7 +301,7 @@ exports.fontifier = hop.modulesDir + "/@hop/fontifier";
 exports.hopc = hop.modulesDir + "/@hop/hopc";
 exports.markdown = hop.modulesDir + "/@hop/markdown";
 exports.syslog = hop.modulesDir + "/@hop/syslog";
-exports.config = hop.modulesDir + "/config";
+exports.config = hop.modulesDir + "/@hop/config";
 exports.csv = hop.modulesDir + "/csv";
 exports.feed = hop.modulesDir + "/feed";
 exports.hss = hop.modulesDir + "/hss";
@@ -309,14 +309,14 @@ exports.hopdroid = hop.modulesDir + "/hopdroid";
 exports.notepad = hop.modulesDir + "/notepad";
 exports.security = hop.modulesDir + "/security";
 exports.spage = hop.modulesDir + "/spage";
-exports.system = hop.modulesDir + "/system";
+exports.system = hop.modulesDir + "/@hop/system";
 exports.systime = hop.modulesDir + "/systime";
-exports.texinfo = hop.modulesDir + "/texinfo";
+exports.texinfo = hop.modulesDir + "/@hop/texinfo";
 exports.tree = hop.modulesDir + "/tree";
 exports.ts = hop.modulesDir + "/ts";
-exports.user = hop.modulesDir + "/user";
-exports.utils = hop.modulesDir + "/utils";
-exports.vcf = hop.modulesDir + "/vcf";
+exports.user = hop.modulesDir + "/@hop/user";
+exports.utils = hop.modulesDir + "/@hop/utils";
+exports.vcf = hop.modulesDir + "/@hop/vcf";
 exports.openpgp = hop.modulesDir + "/openpgp";
 exports.wiki = hop.modulesDir + "/wiki";
 exports.xml = hop.modulesDir + "/xml";
