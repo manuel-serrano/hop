@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  2 08:24:08 2007                          */
-;*    Last change :  Tue May 14 12:50:11 2024 (serrano)                */
-;*    Copyright   :  2007-24 Manuel Serrano                            */
+;*    Last change :  Wed Jan 14 10:52:09 2026 (serrano)                */
+;*    Copyright   :  2007-26 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop MATHML support.                                              */
 ;*=====================================================================*/
@@ -49,6 +49,7 @@
 	   (<MATH:MTR> . ::obj)
 	   (<MATH:MTD> . ::obj)
 	   (<MATH:MPADDED> . ::obj)
+	   (<MATH:MSPACE> . ::obj)
 	   (<MATH:TEX> ::obj)))
 
 ;*---------------------------------------------------------------------*/
@@ -93,6 +94,7 @@
 (define-xml xml-element #t <MATH:MTR> :tag mtr)
 (define-xml xml-element #t <MATH:MTD> :tag mtd)
 (define-xml xml-element #t <MATH:MPADDED> :tag mpadded)
+(define-xml xml-element #t <MATH:MSPACE> :tag mspace)
 
 ;*---------------------------------------------------------------------*/
 ;*    <MATH:TEX> ...                                                   */

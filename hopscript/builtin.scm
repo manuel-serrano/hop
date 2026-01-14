@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Jan 26 08:54:32 2019                          */
-;*    Last change :  Thu May 16 14:46:35 2024 (serrano)                */
-;*    Copyright   :  2019-24 Manuel Serrano                            */
+;*    Last change :  Wed Jan 14 10:51:46 2026 (serrano)                */
+;*    Copyright   :  2019-26 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop builtin JavaScript objects                                   */
 ;*                                                                     */
@@ -130,7 +130,7 @@
 	 MATH:MROW MATH:MUNDER MATH:MOVER MATH:MUNDEROVER
 	 MATH:MSUP MATH:MSUB MATH:MSUBSUP MATH:MFRAC
 	 MATH:MROOT MATH:MSQRT MATH:MTEXT MATH:MTABLE
-	 MATH:MTR MATH:MTD MATH:MPADDED MATH:TEX)
+	 MATH:MTR MATH:MTD MATH:MPADDED MATH:MSPACE MATH:TEX)
       
       (js-bind! %this builtin (& "!--")
 	 :value (js-make-function %this
