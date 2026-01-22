@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Mon Mar 10 07:27:36 2025 (serrano)                */
-;*    Copyright   :  2013-25 Manuel Serrano                            */
+;*    Last change :  Thu Jan 22 10:19:07 2026 (serrano)                */
+;*    Copyright   :  2013-26 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
 ;*=====================================================================*/
@@ -2718,8 +2718,6 @@
 	     lhs)))
    
    (define (cond-expr in-for-init? destructuring? spread?)
-      ;; MS CARE 30dec2018
-      ;; (let ((expr (binary-expr in-for-init? #t spread?))
       (let ((expr (binary-expr in-for-init? destructuring? spread?))
 	    (token (peek-token)))
 	 (if (eq? (token-type token) '?)
@@ -4013,36 +4011,52 @@
 	       v))))
    
    (set! parser-controller
-      (vector primary
+      (vector
+	 ;; 0
+	 primary
+	 ;; 1
 	 (lambda (d s ps)
 	    (let ((old plugins))
 	       (set! plugins ps)
 	       (let ((v (with-tilde (lambda () (primary d s)))))
 		  (set! plugins old)
 		  v)))
-	 peek-token consume-token! consume-any!
+	 ;; 2
+	 peek-token
+	 ;; 3
+	 consume-token!
+	 ;; 4
+	 consume-any!
+	 ;; 5
 	 (lambda (i d ps)
 	    (let ((old plugins))
 	       (set! plugins ps)
 	       (let ((v (expression i d)))
 		  (set! plugins old)
 		  v)))
+	 ;; 6
 	 (with-plugins statement)
+	 ;; 7
 	 (with-plugins block)
+	 ;; 8
 	 (lambda (i d s ps)
 	    (let ((old plugins))
 	       (set! plugins ps)
 	       (let ((v (cond-expr i d s)))
 		  (set! plugins old)
 		  v)))
+	 ;; 9
 	 (with-plugins
 	    (lambda () (with-tilde (lambda () (cond-expr #f #f #f)))))
+	 ;; 10
 	 (lambda (i d s ps)
 	    (let ((old plugins))
 	       (set! plugins ps)
 	       (let ((v (assig-expr i d s)))
 		  (set! plugins old)
-		  v)))))
+		  v)))
+	 ;; 11
+	 token-push-back!))
 
    (define (main-parser input-port conf)
       (case (config-get conf :parser #f)
