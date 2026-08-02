@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Thu Jul 25 18:10:39 2024 (serrano)                */
-;*    Copyright   :  2005-24 Manuel Serrano                            */
+;*    Last change :  Sat Jul 25 20:50:26 2026 (serrano)                */
+;*    Copyright   :  2005-26 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
 ;*=====================================================================*/
@@ -99,7 +99,7 @@
 (define (add-user! name . args)
    (if *users-open*
        (%add-user! name args)
-       (error "add-user!" "User registration closed" #f)))
+       (error "add-user!" "User registration closed" name)))
 
 ;*---------------------------------------------------------------------*/
 ;*    %add-user! ...                                                   */
@@ -386,9 +386,13 @@
    (if (isa? *anonymous-user* user)
        *anonymous-user*
        (let ((a (hashtable-get *users* "anonymous")))
-	  (if (isa? a user)
-	      (set! *anonymous-user* a)
-	      (set! *anonymous-user* (add-user! "anonymous")))
+	  (cond
+	     ((isa? a user)
+	      (set! *anonymous-user* a))
+	     ((users-closed?)
+	      (error "anonymous-user" "No anonymous user registered" #f))
+	     (else
+	      (set! *anonymous-user* (add-user! "anonymous"))))
 	  *anonymous-user*)))
 
 ;*---------------------------------------------------------------------*/
