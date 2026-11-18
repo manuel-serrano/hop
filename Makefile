@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Wed Nov 18 07:06:14 2026 (serrano)                */
+#*    Last change :  Wed Nov 18 09:43:54 2026 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -513,14 +513,16 @@ npm-module-default-build:
 	  cp -r node_modules/$(MODULE)/test npm/$(MODULEDIR); \
         fi
 	cp -r node_modules/$(MODULE)/type npm/$(MODULEDIR)
-	cp -r node_modules/$(MODULE)/node npm/$(MODULEDIR)
+	if [ -d node_modules/$(MODULE)/node ; then \
+	  cp -r node_modules/$(MODULE)/node npm/$(MODULEDIR); \
+	  touch npm/$(MODULEDIR)/node/dummy~; \
+        fi
 	cp -r node_modules/$(MODULE)/hop npm/$(MODULEDIR)
 	if [ -d node_modules/$(MODULE)/hss ]; then \
 	  cp -r node_modules/$(MODULE)/hss npm/$(MODULEDIR); \
 	fi
 	touch npm/$(MODULEDIR)/hop/dummy~
 	$(RM) -f npm/$(MODULEDIR)/hop/Makefile npm/$(MODULEDIR)/hop/*~
-	touch npm/$(MODULEDIR)/node/dummy~
 	$(RM) -f npm/$(MODULEDIR)/node/Makefile npm/$(MODULEDIR)/node/*~
 	if [ -f node_modules/$(MODULE)/hop/Makefile ]; then \
            $(MAKE) -C node_modules/$(MODULE)/hop NPMDIR=../../../npm/$(MODULEDIR) postbuild clean; \
