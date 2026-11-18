@@ -2,7 +2,7 @@
    "title": "Api",
    "key": "api",
    "files": [ "api",
-	      "../node_modules/config/doc/config.md",
+	      "../node_modules/@hop/config/doc/config.md",
 	      "../node_modules/user/doc/user.md",
 	      "../node_modules/hss/doc/hss.md",
 	      "../node_modules/hopdroid/doc/hopdroid.md",

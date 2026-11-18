@@ -1446,7 +1446,7 @@ for d in hop node; do
    cat node_modules/hop/config.mjs.in | sed -e "s|@VERSION@|$version|" -e "s|@BUILDTAG@|$buildtag|" >> node_modules/hop/$d/config.mjs
 done
 
-for d in exif @hop/fontifier hop hopc @hop/markdown readlines syslog system texinfo @hop/utils @hop/vcf; do
+for d in exif @hop/fontifier hop hopc @hop/markdown readlines syslog system texinfo @hop/utils @hop/vcf @hop/config; do
   cat node_modules/$d/package.json.in \
     | sed -e "s|@VERSION@|$version|" \
 	  -e "s|@BUILDTAG@|$buildtag|" \

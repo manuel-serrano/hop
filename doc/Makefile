@@ -3,8 +3,8 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Thu Jan 30 13:11:50 2025 (serrano)                */
-#*    Copyright   :  2006-25 Manuel Serrano                            */
+#*    Last change :  Wed Nov 18 07:24:08 2026 (serrano)                */
+#*    Copyright   :  2006-26 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Doc Makefile                                                     */
 #*=====================================================================*/
@@ -99,6 +99,7 @@ VPATH=api lang dev widget intf \
   ../node_modules/csv/doc \
   ../node_modules/text/doc \
   ../node_modules/@hop/vcf/doc \
+  ../node_modules/@hop/config/doc \
   ../node_modules/openpgp/doc \
   ../node_modules/sqlite/doc \
   ../node_modules/systime/doc \
