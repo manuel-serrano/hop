@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 15 07:21:08 2012                          */
-;*    Last change :  Tue May 14 12:36:03 2024 (serrano)                */
-;*    Copyright   :  2012-24 Manuel Serrano                            */
+;*    Last change :  Tue Nov 17 18:09:50 2026 (serrano)                */
+;*    Copyright   :  2012-26 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSocket server-side tools                                  */
 ;*=====================================================================*/
@@ -641,21 +641,37 @@
 			    (sec-ws-key (base64-encode
 					   (format "ws~a"
 					      (hop-login-cookie-crypt-key)))))
-			(http :in in :out out
-			   :method 'GET
-			   :http-version 'HTTP/1.1
-			   :host (format "~a:~a" host port)
-			   :path path
-			   :authorization authorization
-			   :header (append `((user-agent: . ,uagent)
-					     (Connection: . Upgrade)
-					     (Upgrade: . websocket)
-					     (Origin: . ,origin)
-					     (Sec-WebSocket-Key: . ,sec-ws-key)
-					     (Sec-WebSocket-Version: . 13))
-				      (if (string? protocol)
-					  `((Sec-WebSocket-Protocol: . ,protocol))
-					  '())))
+                        (cond-expand
+                           (bigloo4
+                            (http :in in :out out
+                               :method 'GET
+                               :http-version 'HTTP/1.1
+                               :host (format "~a:~a" host port)
+                               :path path
+                               :authorization authorization
+                               :header (append `((user-agent: . ,uagent)
+                                                 (Connection: . Upgrade)
+                                                 (Upgrade: . websocket)
+                                                 (Origin: . ,origin)
+                                                 (Sec-WebSocket-Key: . ,sec-ws-key)
+                                                 (Sec-WebSocket-Version: . 13))
+                                          (if (string? protocol)
+                                              `((Sec-WebSocket-Protocol: . ,protocol))
+                                              '()))))
+                           (else
+                            (http-client sock path
+                               :method 'GET
+                               :http-version 'HTTP/1.1
+                               :authorization authorization
+                               :header (append `((user-agent: . ,uagent)
+                                                 (Connection: . Upgrade)
+                                                 (Upgrade: . websocket)
+                                                 (Origin: . ,origin)
+                                                 (Sec-WebSocket-Key: . ,sec-ws-key)
+                                                 (Sec-WebSocket-Version: . 13))
+                                          (if (string? protocol)
+                                              `((Sec-WebSocket-Protocol: . ,protocol))
+                                              '())))))
 			(multiple-value-bind (http status line)
 			   (http-parse-status-line in)
 			   (trace-item "http=" http)

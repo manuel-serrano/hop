@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jul 23 17:15:52 2015                          */
-;*    Last change :  Wed Apr 24 11:17:09 2024 (serrano)                */
-;*    Copyright   :  2015-24 Manuel Serrano                            */
+;*    Last change :  Tue Nov 17 18:11:51 2026 (serrano)                */
+;*    Copyright   :  2015-26 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    J2S Html parser                                                  */
 ;*=====================================================================*/
@@ -38,9 +38,9 @@
 		(rgc-buffer-insert-char! port (char->integer #\space)))
 	     (rgc-buffer-insert-substring! port str 0 (string-length str))
 	     (read/rp xml-grammar port '()
-			 (string=? lang "hopscript") #f
-			 (lambda (x) x)
-			 (hop-locale) lang conf parser plugins))
+                (string=? lang "hopscript") #f
+                (lambda (x) x)
+                (hop-locale) lang conf parser plugins))
 	  (let loop ()
 	     (let ((v (read/rp xml-grammar port '()
 			 (string=? lang "hopscript") #f

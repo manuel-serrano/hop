@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Thu May 16 19:04:49 2024 (serrano)                */
-;*    Copyright   :  2004-24 Manuel Serrano                            */
+;*    Last change :  Tue Nov 17 18:08:09 2026 (serrano)                */
+;*    Copyright   :  2004-26 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
 ;*=====================================================================*/
@@ -292,7 +292,7 @@
 	    (flush-output-port p)
 	    ;; for chunked, write the last 0 chunk
 	    (when chunked
-	       (output-port-flush-hook-set! p #unspecified)
+	       (output-port-flush-hook-set! p list)
 	       (http-write-line p "\r\n0\r\n")
 	       (flush-output-port p))
 	    connection))))
@@ -899,16 +899,28 @@
 			   (ctype (let ((ct (assq :content-type header)))
 				     (when (pair? ct)
 					(string->symbol (cdr ct))))))
-			(http :in in :out out
-			   :protocol scheme :method method :http-version httpv
-			   :host host :port port :path path :header header
-			   :content-type (or ctype (when args 'multipart/form-data))
-			   :authorization auth
-			   :timeout timeout
-			   :login user
-			   :args args
-			   :body body
-			   :proxy (hop-use-proxy))
+                        (cond-expand
+                           (bigloo4
+                            (http :in in :out out
+                               :protocol scheme :method method :http-version httpv
+                               :host host :port port :path path :header header
+                               :content-type (or ctype (when args 'multipart/form-data))
+                               :authorization auth
+                               :timeout timeout
+                               :login user
+                               :args args
+                               :body body
+                               :proxy (hop-use-proxy)))
+                           (else
+                            (http-client sock path
+                               :method method :http-version httpv :header header
+                               :content-type (or ctype (when args 'multipart/form-data))
+                               :authorization auth
+                               :timeout timeout
+                               :login user
+                               :args args
+                               :body body
+                               :proxy (hop-use-proxy))))
 			(when (eq? connection 'close)
 			   (close-output-port out))
 			(unwind-protect

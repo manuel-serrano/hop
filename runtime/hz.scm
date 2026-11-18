@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 05:30:17 2007                          */
-;*    Last change :  Tue Jul 23 19:16:41 2024 (serrano)                */
-;*    Copyright   :  2007-24 Manuel Serrano                            */
+;*    Last change :  Tue Nov 17 18:00:34 2026 (serrano)                */
+;*    Copyright   :  2007-26 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with HZ packages.                          */
 ;*=====================================================================*/
@@ -15,6 +15,9 @@
 (module __hop_hz
 
    (library web http)
+
+   (cond-expand
+      (bigloo5 (library webdav)))
    
    (import  __hop_param
 	    __hop_misc

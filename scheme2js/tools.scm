@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/scheme2js/tools.scm               */
+;*    serrano/prgm/project/hop/hop/scheme2js/tools.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  2007-12                                           */
-;*    Last change :  Fri Aug  2 09:59:42 2013 (serrano)                */
-;*    Copyright   :  2013 Manuel Serrano                               */
+;*    Last change :  Tue Nov 17 15:13:33 2026 (serrano)                */
+;*    Copyright   :  2013-26 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme2js misc tools                                             */
 ;*=====================================================================*/
@@ -13,7 +13,7 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module tools
-   (export (inline make-eq-hashtable #!optional (size #unspecified))
+   (export (inline make-eq-hashtable #!optional (size 128))
 	   (eq-hashtable-clone ht)
 	   (hashtable-append! ht1 ht2)
 	   (macro begin0)
@@ -27,8 +27,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    make-eq-hashtable ...                                            */
 ;*---------------------------------------------------------------------*/
-(define-inline (make-eq-hashtable #!optional (size #unspecified))
-   (make-hashtable size #unspecified eq?))
+(define-inline (make-eq-hashtable #!optional (size 128))
+   (create-hashtable :size size :eqtest eq?))
 
 ;*---------------------------------------------------------------------*/
 ;*    eq-hashtable-clone ...                                           */

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Apr  1 06:54:00 2006                          */
-;*    Last change :  Wed Oct 24 14:39:07 2018 (serrano)                */
-;*    Copyright   :  2006-18 Manuel Serrano                            */
+;*    Last change :  Tue Nov 17 15:11:17 2026 (serrano)                */
+;*    Copyright   :  2006-26 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    LRU file caching.                                                */
 ;*=====================================================================*/
@@ -89,7 +89,7 @@
 	  (when clear (for-each delete-path (directory->path-list path))))
 	 ((not (make-directories path))
 	  (error "instantiate::cache" "Can't create directory" path)))
-      (set! %table (make-hashtable (*fx 4 max-entries)))
+      (set! %table (create-hashtable :size (*fx 4 max-entries)))
       (when register (set! *all-caches* (cons c *all-caches*)))
       ;; the name of the cache map path
       (unless (string? map) (set! map (make-file-name path "cache.map")))
@@ -102,7 +102,7 @@
 ;*---------------------------------------------------------------------*/
 (define (%cache-memory-new c::cache-memory)
    (with-access::cache-memory c (%table max-entries register)
-      (set! %table (make-hashtable (*fx 4 max-entries)))
+      (set! %table (create-hashtable :size (*fx 4 max-entries)))
       (when register (set! *all-caches* (cons c *all-caches*)))))
 
 ;*---------------------------------------------------------------------*/
@@ -141,7 +141,7 @@
 ;*---------------------------------------------------------------------*/
 (define-generic (cache-clear c::cache)
    (with-access::cache c (%table %head %tail current-entries uid max-entries)
-      (set! %table (make-hashtable (*fx 4 max-entries)))
+      (set! %table (create-hashtable :size (*fx 4 max-entries)))
       (set! %head #f)
       (set! %tail #f)
       (set! current-entries 0)

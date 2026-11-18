@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Sat Jul 25 20:50:26 2026 (serrano)                */
+;*    Last change :  Tue Nov 17 17:59:12 2026 (serrano)                */
 ;*    Copyright   :  2005-26 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
@@ -374,7 +374,7 @@
 ;*    We use a two level cache. A pair of global variables for         */
 ;*    level 1 and a hashtable for level 2.                             */
 ;*---------------------------------------------------------------------*/
-(define *authenticated-users* (make-hashtable 5))
+(define *authenticated-users* (create-hashtable :size 5))
 (define *last-authentication* #f)
 (define *last-user* #f)
 (define *anonymous-user* #unspecified)

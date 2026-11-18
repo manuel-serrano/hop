@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Fri May 17 10:28:35 2024 (serrano)                */
-;*    Copyright   :  2004-24 Manuel Serrano                            */
+;*    Last change :  Tue Nov 17 17:53:01 2026 (serrano)                */
+;*    Copyright   :  2004-26 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
 ;*=====================================================================*/
@@ -784,16 +784,26 @@
 	  (let loop ((ip #f)
 		     (header `((user-agent: ,(hop-user-agent))
 			       (Connection: keep-alive))))
-	     (let* ((sock (http :socket
-			     (make-ssl-client-socket host port
-				:timeout timeout)
-			     :protocol 'https
-			     :host host
-			     :port port
-			     :login login
-			     :path abspath
-			     :timeout timeout
-			     :header header))
+	     (let* ((sock (cond-expand
+                             (bigloo4
+                              (http :socket
+                                 (make-ssl-client-socket host port
+                                    :timeout timeout)
+                                 :protocol 'https
+                                 :host host
+                                 :port port
+                                 :login login
+                                 :path abspath
+                                 :timeout timeout
+                                 :header header))
+                             (else
+                              (http-client
+                                 (make-ssl-client-socket host port
+                                    :timeout timeout)
+                                 abspath
+                                 :login login
+                                 :timeout timeout
+                                 :header header))))
 		    (op (socket-output sock)))
 		(if (input-port? ip)
 		    ;; the socket has been re-opened for seek, reuse

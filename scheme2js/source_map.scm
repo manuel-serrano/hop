@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jul 26 17:18:45 2013                          */
-;*    Last change :  Thu Nov  2 14:56:26 2023 (serrano)                */
-;*    Copyright   :  2013-23 Manuel Serrano                            */
+;*    Last change :  Tue Nov 17 16:43:34 2026 (serrano)                */
+;*    Copyright   :  2013-26 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript source map generation                                 */
 ;*=====================================================================*/
@@ -40,7 +40,7 @@
 	 (exception-notify e)
 	 #f)
       (let ((nametable (make-hashtable))
-	    (sourcetable (make-hashtable 4)))
+	    (sourcetable (create-hashtable :size 4)))
 	 (display "{\n" p)
 	 (fprintf p "   \"version\": ~a,\n" (source-map-version))
 	 (fprintf p "   \"file\": \"~a\",\n" in-file)

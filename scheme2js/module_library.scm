@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/scheme2js/module_library.scm      */
+;*    serrano/prgm/project/hop/hop/scheme2js/module_library.scm        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Nov 23 11:24:26 2011                          */
-;*    Last change :  Thu Jul 18 12:13:01 2013 (serrano)                */
-;*    Copyright   :  2011-13 Manuel Serrano                            */
+;*    Last change :  Tue Nov 17 15:13:54 2026 (serrano)                */
+;*    Copyright   :  2011-26 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme2JS module library                                         */
 ;*=====================================================================*/
@@ -31,7 +31,7 @@
 ;*    *libraries* ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define *libraries*
-   (make-hashtable 16))
+   (create-hashtable :size 16))
 
 ;*---------------------------------------------------------------------*/
 ;*    *library-mutex* ...                                              */

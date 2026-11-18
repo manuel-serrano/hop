@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-13 Florian Loitsch, see LICENSE file         */
+;*    Copyright   :  2007-26 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -234,7 +234,7 @@
 					(label return-label)))
 		    (traversed-labeled (walk! return-labeled return-label fun)))
 		(with-access::Inline-Env env (counter)
-		   (set! counter (+ counter 1)))
+		   (set! counter (+fx counter 1)))
 		(instantiate::Let
 		   (scope-vars (map (lambda (f) (with-access::Ref f (var) var))
 				  formals))

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/scheme2js/nodes.scm               */
+;*    serrano/prgm/project/hop/hop/scheme2js/nodes.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  2007-12                                           */
-;*    Last change :  Sat Aug 10 09:51:15 2013 (serrano)                */
-;*    Copyright   :  2013 Manuel Serrano                               */
+;*    Last change :  Tue Nov 17 15:38:14 2026 (serrano)                */
+;*    Copyright   :  2013-26 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme2js AST definition                                         */
 ;*=====================================================================*/

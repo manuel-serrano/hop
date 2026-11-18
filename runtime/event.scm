@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Mon May 27 07:58:54 2024 (serrano)                */
-;*    Copyright   :  2005-24 Manuel Serrano                            */
+;*    Last change :  Tue Nov 17 18:09:13 2026 (serrano)                */
+;*    Copyright   :  2005-26 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
 ;*=====================================================================*/
@@ -964,7 +964,7 @@
 ;*    *server-listeners* ...                                           */
 ;*---------------------------------------------------------------------*/
 (define *server-listeners*
-   (make-hashtable 16))
+   (create-hashtable :size 16))
 
 ;*---------------------------------------------------------------------*/
 ;*    add-server-listener! ...                                         */

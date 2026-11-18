@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Sat Jul 13 07:15:32 2024 (serrano)                */
-;*    Copyright   :  2005-24 Manuel Serrano                            */
+;*    Last change :  Tue Nov 17 17:48:49 2026 (serrano)                */
+;*    Copyright   :  2005-26 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
 ;*    js-expressions. Js-expressions starts with { and ends with }.    */
@@ -1214,7 +1214,7 @@
 					     last)
 					  (let ((val (eval! e (eval-module))))
 					     (when (isa? val xml-tilde)
-						(evwarning
+						(warning
 						   (when (pair? e) (cer e))
 						   "hop-load"
 						   "Useless ~ expression"))
